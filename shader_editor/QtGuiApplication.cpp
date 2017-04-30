@@ -1,12 +1,7 @@
 #include "QtGuiApplication.h"
 
-#include "d:/rapidxml-1.13/rapidxml.hpp"
-#include "d:/rapidxml-1.13/rapidxml_utils.hpp"
-#include "d:/rapidxml-1.13/rapidxml_print.hpp"
-
+#include <sstream>
 #include <experimental/filesystem>
-
-#include "d:/VulkanSDK/1.0.37.0/Include/vulkan/vulkan.h"
 
 #include "d:/TK_Engine/src/core/utils.h"
 #include "d:/TK_Engine/src/core/render.abstract.h"
@@ -322,7 +317,7 @@ void QtGuiApplication::on_explorerPipelineFileToolButton_clicked()
 
 void QtGuiApplication::on_addStageToolButton_clicked()
 {
-	if (!currentPipeline || currentPipeline->isAllFull()) return;
+	if (!currentPipeline || currentPipeline->stages.size() >= 5) return;
 
 	bool ok;
 	QString text = QInputDialog::getText(this, "File Name",

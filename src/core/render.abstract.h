@@ -131,6 +131,8 @@ namespace tke
 		REFL_BANK;
 
 		REFLv std::string filename;
+		std::string filepath;
+		StageFlags type;
 	};
 
 	REFLECTABLE enum class SamplerType : int
@@ -234,6 +236,19 @@ namespace tke
 						{
 							StageType s;
 							cc->obtainFromAttributes(&s, s.b);
+							std::experimental::filesystem::path p(s.filename);
+							s.filepath = p.parent_path();
+							auto ext = p.extension().string();
+							if (ext == ".vert")
+								s.type = StageFlags::vert;
+							else if (ext == ".tesc")
+								s.type = StageFlags::tesc;
+							else if (ext == ".tese")
+								s.type = StageFlags::tese;
+							else if (ext == ".geom")
+								s.type = StageFlags::geom;
+							else if (ext == ".frag")
+								s.type = StageFlags::frag;
 							stages.push_back(s);
 						}
 					}
@@ -244,6 +259,19 @@ namespace tke
 		{
 			AttributeTree at("pipeline");
 			at.addAttributes(this, b);
+
+			for (auto &b : blendAttachments)
+			{
+				auto n = new AttributeTreeNode("blend_attachment");
+				n->addAttributes(&b, b.b);
+				at.children.push_back(n);
+			}
+			for (auto &d : descriptors)
+			{
+				auto n = new AttributeTreeNode("descriptor");
+				n->addAttributes(&d, d.b);
+				at.children.push_back(n);
+			}
 
 			at.saveXML(filename);
 		}

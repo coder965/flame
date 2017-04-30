@@ -1,17 +1,9 @@
 struct Pipeline;
 
-struct Stage
+struct Stage : tke::StageAbstract
 {
-    Pipeline *parent;
-
-    std::string filename;
-    std::string filepath;
-
-    int type;
-	std::string str;
-
+	std::string text;
 	bool changed = false;
-
 	std::string output;
 	std::string compileOutput;
 
@@ -26,31 +18,12 @@ const char* stageNames[] = {
     "frag"
 };
 
-int getStageIndex(const std::string &str)
+struct Pipeline : tke::PipelineAbstract<Stage>
 {
-    if (str == ".vert") return 0;
-    else if (str == ".tesc") return 1;
-    else if (str == ".tese") return 2;
-    else if (str == ".geom") return 3;
-    else if (str == ".frag") return 4;
-
-    return -1;
-}
-
-struct Pipeline : tke::PipelineAbstract
-{
-    std::string name;
-
-    std::string filename;
-    std::string filepath;
-
-	Stage *stages[5] = {};
-
     QTreeWidgetItem *item;
 
     ~Pipeline()
     {
-        for (int i = 0; i < 5; i++) delete stages[i];
         delete item;
     }
 
@@ -73,57 +46,19 @@ struct Pipeline : tke::PipelineAbstract
     void load(const char *_filename)
     {
 		setFilename(_filename);
-		tke::PipelineAbstract::loadXML();
+		loadXML();
 
-		if (strcmp(n->name(), "shader") == 0)
+		for (auto &s : stages)
 		{
-			auto shaderNode = n;
-			for (auto nn = shaderNode->first_node(); nn; nn = nn->next_sibling())
-			{
-				if (strcmp(nn->name(), "stage") == 0)
-				{
-					auto stage = new Stage;
-					stage->pipeline = this;
-					for (auto a = nn->first_attribute(); a; a = a->next_attribute())
-					{
-						if (strcmp(a->name(), "filename") == 0)
-						{
-							strcpy(stage->filename, a->value());
-							tk::getFilePath(stage->filename, stage->filepath);
-
-							char ext[32];
-							tk::getFileExt(stage->filename, ext);
-							stage->type = getStageIndex(ext);
-
-							char filename[260];
-							sprintf(filename, "%s%s", filepath, stage->filename);
-							tk::loadFile(filename, &stage->str);
-							stage->changed = false;
-						}
-					}
-					stages[stage->type] = stage;
-				}
-			}
+			tke::OnceFileBuffer file(filepath + "/" + s.filename);
+			s.text = file.data;
 		}
 
         addToTree();
     }
 
-    bool isAllFull()
-    {
-        for (int i = 0; i < 5; i++)
-        {
-            if (!stages[i])
-                return false;
-        }
-        return true;
-    }
-
     void saveXml()
     {
-		std::vector<rapidxml::xml_node<> *> nodes;
-		std::vector<rapidxml::xml_attribute<> *> attributes;
-
         for (int i = 0; i < 5; i++)
         {
             auto stage = stages[i];
@@ -196,7 +131,7 @@ struct Pipeline : tke::PipelineAbstract
     }
 };
 
-QString Stage::getFullText()
+std::string Stage::getFullText()
 {
     QString strIn(str);
     QString strOut;
