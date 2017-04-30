@@ -174,25 +174,25 @@ namespace tke
 		delete data;
 	}
 
-	Reflection::Reflection(What _what, const std::string &_name)
+	Variable::Variable(What _what, const std::string &_name)
 		: what(_what), name(_name)
 	{}
 
-	VariableReflection *Reflection::toVar()
+	NormalVariable *Variable::toVar()
 	{
-		return (VariableReflection*)this;
+		return (NormalVariable*)this;
 	}
 
-	EnumReflection *Reflection::toEnu()
+	EnumVariable *Variable::toEnu()
 	{
-		return (EnumReflection*)this;
+		return (EnumVariable*)this;
 	}
 
-	EnumReflection::EnumReflection(const std::string &_name, Enum *_pEnum, int *p)
-		: Reflection(Reflection::eEnum, _name), pEnum(_pEnum), _ptr(p)
+	EnumVariable::EnumVariable(const std::string &_name, Enum *_pEnum, int *p)
+		: Variable(Variable::eEnum, _name), pEnum(_pEnum), _ptr(p)
 	{}
 
-	int *EnumReflection::ptr(void *p)
+	int *EnumVariable::ptr(void *p)
 	{
 		if (!p) return _ptr;
 		return (int*)((int)p + (int)_ptr);
@@ -207,7 +207,7 @@ namespace tke
 		{
 			if (_reflectEnums[i].first == eName)
 			{
-				auto e = new EnumReflection(name, _reflectEnums[i].second, (int*)offset);
+				auto e = new EnumVariable(name, _reflectEnums[i].second, (int*)offset);
 				reflectons.push_back(e);
 				break;
 			}
@@ -251,40 +251,40 @@ namespace tke
 	{
 		for (auto r : b->reflectons)
 		{
-			if (r->what == Reflection::eVariable)
+			if (r->what == Variable::eVariable)
 			{
-				auto v = (VariableReflection*)r;
+				auto v = (NormalVariable*)r;
 				if (v->type() == typeid(std::string))
 				{
-					auto _v = new VariableReflection(v->name, v->ptr<std::string>(p));
+					auto _v = new NormalVariable(v->name, v->ptr<std::string>(p));
 					atrributes.emplace_back(_v, std::string());
 				}
 				else if (v->type() == typeid(int))
 				{
-					auto _v = new VariableReflection(v->name, v->ptr<int>(p));
+					auto _v = new NormalVariable(v->name, v->ptr<int>(p));
 					atrributes.emplace_back(_v, std::string());
 				}
 				else if (v->type() == typeid(float))
 				{
-					auto _v = new VariableReflection(v->name, v->ptr<float>(p));
+					auto _v = new NormalVariable(v->name, v->ptr<float>(p));
 					atrributes.emplace_back(_v, std::string());
 				}
 				else if (v->type() == typeid(bool))
 				{
-					auto _v = new VariableReflection(v->name, v->ptr<bool>(p));
+					auto _v = new NormalVariable(v->name, v->ptr<bool>(p));
 					atrributes.emplace_back(_v, std::string());
 				}
 			}
-			else if (r->what == Reflection::eEnum)
+			else if (r->what == Variable::eEnum)
 			{
-				auto e = (EnumReflection*)r;
-				auto _e = new EnumReflection(e->name, e->pEnum, e->ptr(p));
+				auto e = (EnumVariable*)r;
+				auto _e = new EnumVariable(e->name, e->pEnum, e->ptr(p));
 				atrributes.emplace_back(_e, std::string());
 			}
 		}
 	}
 
-	static void _obtainVarFromAttributes(AttributeTreeNode *n, void *p, VariableReflection *v)
+	static void _obtainVarFromAttributes(AttributeTreeNode *n, void *p, NormalVariable *v)
 	{
 		for (auto &a : n->atrributes)
 		{
@@ -308,7 +308,7 @@ namespace tke
 		}
 	}
 
-	static void _obtainEnuFromAttributes(AttributeTreeNode *n, void *p, EnumReflection *e)
+	static void _obtainEnuFromAttributes(AttributeTreeNode *n, void *p, EnumVariable *e)
 	{
 		for (auto &a : n->atrributes)
 		{
@@ -342,14 +342,14 @@ namespace tke
 	{
 		for (auto r : b->reflectons)
 		{
-			if (r->what == Reflection::eVariable)
+			if (r->what == Variable::eVariable)
 			{
-				auto v = (VariableReflection*)r;
+				auto v = (NormalVariable*)r;
 				_obtainVarFromAttributes(this, p, v);
 			}
-			else if (r->what == Reflection::eEnum)
+			else if (r->what == Variable::eEnum)
 			{
-				auto e = (EnumReflection*)r;
+				auto e = (EnumVariable*)r;
 				_obtainEnuFromAttributes(this, p, e);
 			}
 		}
@@ -359,7 +359,7 @@ namespace tke
 	{
 		for (auto a = n->first_attribute(); a; a = a->next_attribute())
 		{
-			auto v = new VariableReflection(a->name(), (std::string*)0);
+			auto v = new NormalVariable(a->name(), (std::string*)0);
 			p->atrributes.emplace_back(v, std::string(a->value()));
 		}
 
@@ -386,7 +386,7 @@ namespace tke
 	{
 		for (auto &a : p->atrributes)
 		{
-			if (a.first->what == Reflection::eVariable)
+			if (a.first->what == Variable::eVariable)
 			{
 				auto v = a.first->toVar();
 				if (v->type() == typeid(std::string))
@@ -408,7 +408,7 @@ namespace tke
 					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (*(v->ptr<bool>(p))) ? "true" : "false"));
 				}
 			}
-			else if (a.first->what == Reflection::eEnum)
+			else if (a.first->what == Variable::eEnum)
 			{
 				auto e = a.first->toEnu();
 				auto v = *e->ptr(p);

@@ -97,10 +97,10 @@ namespace tke
 		}
 	};
 
-	struct VariableReflection;
-	struct EnumReflection;
+	struct NormalVariable;
+	struct EnumVariable;
 
-	struct Reflection
+	struct Variable
 	{
 		enum What
 		{
@@ -110,18 +110,18 @@ namespace tke
 		What what;
 		std::string name;
 
-		Reflection(What _what, const std::string &_name);
-		VariableReflection *toVar();
-		EnumReflection *toEnu();
+		Variable(What _what, const std::string &_name);
+		NormalVariable *toVar();
+		EnumVariable *toEnu();
 	};
 
-	struct VariableReflection : Reflection
+	struct NormalVariable : Variable
 	{
 		Any v;
 
 		template<class T>
-		VariableReflection(const std::string &_name, T *ptr)
-			: Reflection(Reflection::eVariable, _name), v(ptr)
+		NormalVariable(const std::string &_name, T *ptr)
+			: Variable(Reflection::eVariable, _name), v(ptr)
 		{}
 
 		std::type_index type()
@@ -142,19 +142,19 @@ namespace tke
 		std::vector<std::pair<std::string, int>> items;
 	};
 
-	struct EnumReflection : Reflection
+	struct EnumVariable : Variable
 	{
 		Enum *pEnum;
 		int *_ptr;
 
-		EnumReflection(const std::string &_name, Enum *_pEnum, int *p);
+		EnumVariable(const std::string &_name, Enum *_pEnum, int *p);
 
 		int *ptr(void *p = nullptr);
 	};
 
 	struct ReflectionBank
 	{
-		std::vector<Reflection*> reflectons;
+		std::vector<Variable*> reflectons;
 
 		template<class T>
 		void addV(const std::string &name, size_t offset)
@@ -172,7 +172,7 @@ namespace tke
 	struct AttributeTreeNode
 	{
 		std::string name;
-		std::vector<std::pair<Reflection*, std::string>> atrributes;
+		std::vector<std::pair<Variable*, std::string>> atrributes;
 		std::vector<AttributeTreeNode*> children;
 
 		AttributeTreeNode(const std::string &_name);
