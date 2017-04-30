@@ -85,7 +85,12 @@
   <ItemGroup>
     <ClCompile Include="..\src\core\utils.cpp" />
     <ClCompile Include="lex.yy.c" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="reflect.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="def.h" />
+    <ClInclude Include="extra0.h" />
+    <ClInclude Include="extra1.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -121,7 +121,7 @@ namespace tke
 
 		template<class T>
 		NormalVariable(const std::string &_name, T *ptr)
-			: Variable(Reflection::eVariable, _name), v(ptr)
+			: Variable(Variable::eVariable, _name), v(ptr)
 		{}
 
 		std::type_index type()
@@ -159,7 +159,7 @@ namespace tke
 		template<class T>
 		void addV(const std::string &name, size_t offset)
 		{
-			auto v = new VariableReflection(name, (T*)offset);
+			auto v = new NormalVariable(name, (T*)offset);
 			reflectons.push_back(v);
 		}
 

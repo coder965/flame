@@ -21,11 +21,22 @@
     <ClCompile Include="lex.yy.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\core\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="reflect.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="def.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="extra0.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="extra1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

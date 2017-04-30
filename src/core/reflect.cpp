@@ -1,15 +1,16 @@
 #include "render.abstract.h"
 #include "render.h"
-#define DrawActionAbstract DrawActionAbstract<Drawcall>
-#define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>
-#define RendererAbstract RendererAbstract<RenderPass>
+ 			   #define PipelineAbstract PipelineAbstract<StageAbstract>
+ 			   #define DrawActionAbstract DrawActionAbstract<Drawcall>
+ 			   #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>
+ 			   #define RendererAbstract RendererAbstract<RenderPass>
 #include "utils.h"
 #include <string>
 namespace tke{
 tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");
 tke::ReflectionBank *Descriptor::b = tke::addReflectionBank("Descriptor");
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
-tke::ReflectionBank *Stage::b = tke::addReflectionBank("Stage");
+tke::ReflectionBank *StageAbstract::b = tke::addReflectionBank("StageAbstract");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *PipelineAbstract::b = tke::addReflectionBank("PipelineAbstract");
 tke::ReflectionBank *DrawcallAbstract::b = tke::addReflectionBank("DrawcallAbstract");
@@ -89,8 +90,8 @@ currentBank = PushConstantRange::b;
 currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
 currentBank->addV<int>("size", offsetof(PushConstantRange, size));
 currentBank->addE("StageFlags", "stage", offsetof(PushConstantRange, stage));
-currentBank = Stage::b;
-currentBank->addV<std::string>("filename", offsetof(Stage, filename));
+currentBank = StageAbstract::b;
+currentBank->addV<std::string>("filename", offsetof(StageAbstract, filename));
 currentEnum = tke::addReflectEnum("SamplerType");
 currentEnum->items.emplace_back("none", (int)SamplerType::none);
 currentEnum->items.emplace_back("screen", (int)SamplerType::screen);

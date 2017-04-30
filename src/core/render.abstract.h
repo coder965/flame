@@ -126,7 +126,7 @@ namespace tke
 		REFLe StageFlags stage = StageFlags::vert;
 	};
 
-	REFLECTABLE struct Stage
+	REFLECTABLE struct StageAbstract
 	{
 		REFL_BANK;
 
@@ -152,6 +152,7 @@ namespace tke
 		REFLe SamplerType sampler = SamplerType::none;
 	};
 
+	template <class StageType>
 	REFLECTABLE struct PipelineAbstract
 	{
 		REFL_BANK;
@@ -173,7 +174,7 @@ namespace tke
 		std::vector<BlendAttachment> blendAttachments;
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
-		std::vector<Stage> stages;
+		std::vector<StageType> stages;
 		std::vector<LinkResource> links;
 
 		inline void setFilename(const std::string &_filename)
@@ -192,7 +193,6 @@ namespace tke
 
 			AttributeTree at("pipeline");
 			at.loadXML(filename);
-
 			at.obtainFromAttributes(this, b);
 
 			for (auto c : at.children)
@@ -232,13 +232,20 @@ namespace tke
 					{
 						if (cc->name == "stage")
 						{
-							Stage s;
+							StageType s;
 							cc->obtainFromAttributes(&s, s.b);
 							stages.push_back(s);
 						}
 					}
 				}
 			}
+		}
+		inline void saveXML()
+		{
+			AttributeTree at("pipeline");
+			at.addAttributes(this, b);
+
+			at.saveXML(filename);
 		}
 	};
 

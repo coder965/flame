@@ -126,7 +126,7 @@ namespace tke
 	};
 
 	struct ResourceBank;
-	struct Pipeline : PipelineAbstract
+	struct Pipeline : PipelineAbstract<StageAbstract>
 	{
 		ResourceBank *pResource = nullptr;
 
