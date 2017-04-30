@@ -1,0 +1,17 @@
+<pipeline depth_test="true" depth_write="true">
+  
+  <push_constant size="8" stage="vert" />
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" link="0:Matrix.UniformBuffer" >
+	<link name="Matrix.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="1" count="2" stage="vert" >
+	<link array_element="0" name="LightMatrix.UniformBuffer" />
+	<link array_element="1" name="ObjectMatrix.UniformBuffer" />
+  </descriptor>
+  
+  <shader>
+	<stage filename="pickUp.vert" />
+	<stage filename="pickUp.frag" />
+  </shader>
+  
+</pipeline>

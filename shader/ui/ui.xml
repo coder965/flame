@@ -1,0 +1,10 @@
+<pipeline cull_mode="none">
+	<shader>
+		<stage filename="ui.vert"/>
+		<stage filename="ui.frag"/>
+	</shader>
+	<blend_attachment enable="true" src_color="src_alpha" dst_color="one_minus_src_alpha" src_alpha="zero" dst_alpha="one_minus_src_alpha"/>
+	<push_constant size="16" stage="vert"/>
+	<descriptor type="sampler" binding="0" count="512" stage="frag"/>
+</pipeline>
+

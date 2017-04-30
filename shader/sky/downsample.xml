@@ -1,0 +1,12 @@
+<pipeline cull_mode="none" >
+  
+  <push_constant offset="0" size="8" stage="frag" />
+  
+  <descriptor type="sampler" 		  binding="0" count="1" stage="frag" />
+  
+  <shader>
+	<stage filename="..\fullscreenUv.vert" />
+	<stage filename="downsample.frag" />
+  </shader>
+  
+</pipeline>

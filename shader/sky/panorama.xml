@@ -1,0 +1,13 @@
+<pipeline cull_mode="none" >
+  
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" >
+	<link name="Matrix.UniformBuffer" />
+  </descriptor>
+  <descriptor type="sampler" 		  binding="1" count="1" stage="frag" />
+  
+  <shader>
+	<stage filename="panorama.vert" />
+	<stage filename="panorama.frag" />
+  </shader>
+  
+</pipeline>

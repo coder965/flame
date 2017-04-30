@@ -1,0 +1,21 @@
+<pipeline depth_test="true" depth_write="true">
+  <blend_attachment />
+  <blend_attachment />
+  
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" >
+	<link name="Matrix.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="1" count="1" stage="vert" >
+	<link name="ObjectMatrix.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="2" count="1" stage="frag" >
+	<link name="Material.UniformBuffer" />
+  </descriptor>
+  <descriptor sampler 		  binding="3" count="1024" stage="frag" />
+  
+  <shader>
+	<stage filename="mrt.vert" />
+	<stage filename="mrt.frag" />
+  </shader>
+  
+</pipeline>

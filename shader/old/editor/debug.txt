@@ -1,0 +1,135 @@
+vert:
+attribute position
+attribute UV
+output vec2 tc
+void main()
+{
+	gl_Position = vec4(a_position, 0, 1);
+	vs_out.tc = a_uv;
+}
+
+frag:
+include head.h
+uniform int format
+uniform int type
+uniform int level
+uniform int depth
+uniform int cubeFace
+uniform int depthMode
+uniform vec4 color
+texture float 2D tex
+texture float 2DArray texArray
+texture float Cube texCube
+texture int 2D itex
+texture int 2DArray itexArray
+texture int cube itexCube
+texture uint 2D utex
+texture uint 2DArray utexArray
+texture uint cube utexCube
+vec3 getCubeDir(vec2 _tc, int face)
+{
+	vec2 tc = _tc * 2.0 - 1.0;
+	switch(face)
+	{
+	case 0: // x+
+		return vec3(1.0, tc.y, tc.x);
+	case 1: // x-
+		return vec3(-1.0, tc.y, -tc.x);
+	case 2: // y+
+		return vec3(tc.x, 1.0, tc.y);
+	case 3: // y-
+		return vec3(tc.x, -1.0, -tc.y);
+	case 4: // z+
+		return vec3(-tc.x, tc.y, 1.0);
+	case 5: // z-
+		return vec3(tc.x, tc.y, -1.0);
+	}
+}
+void main()
+{
+	vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+	switch (u_format)
+	{
+		case 0:
+			if (u_type == 0)
+				color = texture(tex, fs_in.tc, u_level);
+			else if(u_type == 1)
+				color = texture(texArray, vec3(fs_in.tc, u_depth), u_level);
+			else
+				color = texture(texCube, getCubeDir(fs_in.tc, u_cubeFace), u_level);
+			if (u_depthMode == 1)
+				color = vec4(vec3(LinearDepthPerspective(color.r) / FAR), color.a);
+			break;
+		case 1:
+		{
+			ivec4 v;
+			if (u_type == 0)
+				v = texture(itex, fs_in.tc, u_level);
+			else if(u_type == 1)
+				v = texture(itexArray, vec3(fs_in.tc, u_depth), u_level);
+			else
+				v = texture(itexCube, getCubeDir(fs_in.tc, u_cubeFace), u_level);
+			if (v.r < 0)
+				color.r = 0.0;
+			if (v.r == 0)
+				color.r = 0.5;
+			if (v.r > 0)
+				color.r = 1.0;
+			if (v.g < 0)
+				color.g = 0.0;
+			if (v.g == 0)
+				color.g = 0.5;
+			if (v.g > 0)
+				color.g = 1.0;
+			if (v.b < 0)
+				color.b = 0.0;
+			if (v.b == 0)
+				color.b = 0.5;
+			if (v.b > 0)
+				color.b = 1.0;
+			if (v.a < 0)
+				color.a = 0.0;
+			if (v.a == 0)
+				color.a = 0.5;
+			if (v.a > 0)
+				color.a = 1.0;
+		}
+			break;
+		case 2:
+		{
+			uvec4 v;
+			if (u_type == 0)
+				v = texture(utex, fs_in.tc, u_level);
+			else if(u_type == 1)
+				v = texture(utexArray, vec3(fs_in.tc, u_depth), u_level);
+			else
+				v = texture(utexCube, getCubeDir(fs_in.tc, u_cubeFace), u_level);
+			if (v.r == 0)
+				color.r = 0.0;
+			if (v.r > 0)
+				color.r = 0.5;
+			if (v.r == 0xffffffff)
+				color.r = 1.0;
+			if (v.g == 0)
+				color.g = 0.0;
+			if (v.g > 0)
+				color.g = 1.0;
+			if (v.g == 0xffffffff)
+				color.g = 1.0;
+			if (v.b == 0)
+				color.b = 0.0;
+			if (v.b > 0)
+				color.b = 1.0;
+			if (v.b == 0xffffffff)
+				color.b = 1.0;
+			if (v.a == 0)
+				color.a = 0.0;
+			if (v.a > 0)
+				color.a = 1.0;
+			if (v.a == 0xffffffff)
+				color.a = 1.0;
+		}
+			break;
+	}
+	o_fragColor = color * u_color;
+}

@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="png">
+    <file>down.png</file>
+    <file>up.png</file>
+    <file>save.png</file>
+    <file>add.png</file>
+    <file>delete.png</file>
+  </qresource>
+</RCC>

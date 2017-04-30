@@ -1,0 +1,8 @@
+<pipeline cull_mode="none" >
+  
+  <shader>
+	<stage filename="..\fullscreenUv.vert" />
+	<stage filename="scattering.frag" />
+  </shader>
+  
+</pipeline>

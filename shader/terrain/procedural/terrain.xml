@@ -1,0 +1,19 @@
+<pipeline primitive_topology="patch_list" patch_control_points="4" polygon_mode1="line" depth_test="true" depth_write="true" >
+  <blend_attachment />
+  <blend_attachment />
+  
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="tesc tese frag" >
+	<link name="Matrix.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="1" count="1" stage="vert tesc tese frag" >
+	<link name="ProceduralTerrain.UniformBuffer" />
+  </descriptor>
+  
+  <shader>
+	<stage filename="terrain.vert" />
+	<stage filename="terrain.tesc" />
+	<stage filename="terrain.tese" />
+	<stage filename="terrain.frag" />
+  </shader>
+  
+</pipeline>

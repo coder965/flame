@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="头文件\dialogs">
+      <UniqueIdentifier>{507bba92-abe6-40a6-9e31-6fdae0b27f14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\engine">
+      <UniqueIdentifier>{8b2cc8f5-786c-4cf7-9589-5d5ebab3d5c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\engine">
+      <UniqueIdentifier>{100b911a-0295-48fb-9f7f-40bcdf647eb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\engine\core">
+      <UniqueIdentifier>{9459cf1f-fc2e-44bf-80b5-1aa32130e600}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\engine\extension">
+      <UniqueIdentifier>{a48a03c9-8a67-47ea-bb0c-3f6248dc6506}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\engine\extension\editor">
+      <UniqueIdentifier>{b79ed709-9fa8-47b1-af2a-f1b0d0a78aff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\engine\core">
+      <UniqueIdentifier>{4e6eb208-c375-42bb-8ae7-d88857a07259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\engine\extension">
+      <UniqueIdentifier>{8287f273-8a2a-43ef-9983-94510d00ebbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\engine\extension\editor">
+      <UniqueIdentifier>{dfce71cb-1f22-4fd3-a203-add19dd9889b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\debug.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\terrainAttribute.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\scene.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\objectAttribute.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\modelEditor.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\lightAttribute.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="dialogs\image.h">
+      <Filter>头文件\dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\camera.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\controler.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\gui.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\light.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\math.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\model.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\object.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\physics.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\resource.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\scene.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\spirit.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\terrain.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\transformer.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\utils.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\vk.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\model.general.h">
+      <Filter>头文件\engine\extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\pickUp.h">
+      <Filter>头文件\engine\extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\script.h">
+      <Filter>头文件\engine\extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\startUpBoard.h">
+      <Filter>头文件\engine\extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\editor\editor.h">
+      <Filter>头文件\engine\extension\editor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\editor\history.h">
+      <Filter>头文件\engine\extension\editor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\editor\select.h">
+      <Filter>头文件\engine\extension\editor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\editor\tool.h">
+      <Filter>头文件\engine\extension\editor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\model.file.h">
+      <Filter>头文件\engine\extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\core.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\window.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\extension\image.file.h">
+      <Filter>头文件\engine\extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\render.abstract.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\core\render.h">
+      <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="app.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\imgui-master\imgui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\imgui-master\imgui_draw.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\reflect.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\math.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\utils.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\vk.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\camera.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\controler.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\gui.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\core.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\light.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\model.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\object.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\physics.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\resource.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\scene.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\spirit.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\terrain.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\transformer.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\window.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\editor\editor.cpp">
+      <Filter>源文件\engine\extension\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\editor\editor.history.cpp">
+      <Filter>源文件\engine\extension\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\editor\editor.tool.cpp">
+      <Filter>源文件\engine\extension\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\model.file.cpp">
+      <Filter>源文件\engine\extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\model.general.cpp">
+      <Filter>源文件\engine\extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\pickUp.cpp">
+      <Filter>源文件\engine\extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\script.cpp">
+      <Filter>源文件\engine\extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\startUpBoard.cpp">
+      <Filter>源文件\engine\extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\extension\image.file.cpp">
+      <Filter>源文件\engine\extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\render.cpp">
+      <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

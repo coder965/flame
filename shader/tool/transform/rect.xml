@@ -1,0 +1,12 @@
+<pipeline primitive_topology="line_strip" cull_mode="none">
+  
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" >
+	<link name="Editor.Tool.Transform.Rect.UniformBuffer" />
+  </descriptor>
+  
+  <shader>
+	<stage filename="rect.vert" />
+	<stage filename="rect.frag" />
+  </shader>
+  
+</pipeline>

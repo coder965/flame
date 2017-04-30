@@ -1,0 +1,15 @@
+<pipeline depth_test="true" depth_write="true">
+  
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" >
+	<link name="Editor.Tool.Transform.Vert.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="1" count="1" stage="frag" >
+	<link name="Editor.Tool.Transform.Frag.UniformBuffer" />
+  </descriptor>
+  
+  <shader>
+	<stage filename="transform.vert" />
+	<stage filename="transform.frag" />
+  </shader>
+  
+</pipeline>

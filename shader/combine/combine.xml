@@ -1,0 +1,18 @@
+<pipeline cull_mode="none">
+  
+	<descriptor type="sampler" binding="0" count="1" stage="frag" >
+		<link name="Original.Texture" sampler="screen" />
+	</descriptor>
+	<descriptor type="sampler" binding="1" count="1" stage="frag" >
+		<link name="Misc.Texture" sampler="screen" />
+	</descriptor>
+	<descriptor type="sampler" binding="2" count="1" stage="frag" >
+		<link name="Ui.Texture" sampler="screen" />
+	</descriptor>
+  
+	<shader>
+		<stage filename="..\fullscreen.vert" />
+		<stage filename="combine.frag" />
+	</shader>
+  
+</pipeline>

@@ -1,0 +1,30 @@
+<pipeline cull_mode="none">
+  
+  <descriptor type="uniform_buffer" binding="0" count="1" stage="frag">
+	<link name="Matrix.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="1" count="1" stage="frag" >
+	<link name="Ambient.UniformBuffer" />
+  </descriptor>
+  <descriptor type="uniform_buffer" binding="2" count="1" stage="frag" >
+	<link name="Light.UniformBuffer" />
+  </descriptor>
+  <descriptor type="sampler" 		binding="3" count="1" stage="frag" >
+	<link name="Depth.Texture" sampler="screen" />
+  </descriptor>
+  <descriptor type="sampler" 		binding="4" count="1" stage="frag" >
+	<link name="AlbedoSpec.Texture" sampler="screen" />
+  </descriptor>
+  <descriptor type="sampler" 		binding="5" count="1" stage="frag" >
+	<link name="NormalRoughness.Texture" sampler="screen" />
+  </descriptor>
+  <descriptor type="sampler" 		binding="6" count="1" stage="frag" />
+  <descriptor type="sampler" 		binding="7" count="1" stage="frag" />
+  <descriptor type="sampler" 		binding="8" count="1" stage="frag" />
+  
+  <shader>
+	<stage filename="..\fullscreenView.vert" />
+	<stage filename="deferred.frag" />
+  </shader>
+  
+</pipeline>

@@ -1,0 +1,113 @@
+vert:
+output vec2 tc
+void main()
+{
+	const vec4 vertices[] = vec4[](
+		vec4(-0.5, 0.0, -0.5, 1.0),
+		vec4(0.5, 0.0, -0.5, 1.0) ,
+		vec4(-0.5, 0.0, 0.5, 1.0) ,
+		vec4(0.5, 0.0, 0.5, 1.0) 
+	);
+	int x = gl_InstanceID & 63;
+	int y = gl_InstanceID >> 6;
+	vec2 offs = vec2(x, y) ;
+	vs_out.tc = (vertices[gl_VertexID].xz + offs + vec2(0.5)) / 64.0;
+	gl_Position = vertices[gl_VertexID] + vec4(float(x - 32) , 0.0, float(y - 32), 0.0);
+}
+
+tcs:
+uniform mat4 matrixMVP
+output vec2 tc
+layout (vertices = 4) out;
+void main(void)
+{
+	if (gl_InvocationID == 0)
+	{
+		vec4 p0 = u_matrixMVP * gl_in[0].gl_Position;
+		vec4 p1 = u_matrixMVP * gl_in[1].gl_Position;
+		vec4 p2 = u_matrixMVP * gl_in[2].gl_Position;
+		vec4 p3 = u_matrixMVP * gl_in[3].gl_Position;
+		p0 /= p0.w;
+		p1 /= p1.w;
+		p2 /= p2.w;
+		p3 /= p3.w;
+		if (p0. z <= 0.0 || p1. z <= 0.0 || p2. z <= 0.0 || p3. z <= 0.0)
+		{
+			gl_TessLevelOuter[0] = 1.0;
+			gl_TessLevelOuter[1] = 1.0;
+			gl_TessLevelOuter[2] = 1.0;
+			gl_TessLevelOuter[3] = 1.0;
+		}
+		else
+		{
+			float l0 = length(p2.xy - p0.xy) * 16.0 + 1.0;
+			float l1 = length(p3.xy - p2.xy) * 16.0 + 1.0;
+			float l2 = length(p3.xy - p1.xy) * 16.0 + 1.0;
+			float l3 = length(p1.xy - p0.xy) * 16.0 + 1.0;
+			gl_TessLevelOuter[0] = l0;
+			gl_TessLevelOuter[1] = l1;
+			gl_TessLevelOuter[2] = l2;
+			gl_TessLevelOuter[3] = l3;
+			gl_TessLevelInner[0] = min(l1, l3);
+			gl_TessLevelInner[1] = min(l0, l2);
+		}
+	}
+	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+	tcs_out[gl_InvocationID].tc = tcs_in[gl_InvocationID].tc;
+}
+
+tes:
+uniform mat4 matrixMVP
+uniform float heightScale
+texture float 2D tex_height
+output vec2 tc
+layout(quads, fractional_odd_spacing) in;
+
+void main(void)
+{
+	vec2 tc1 = mix(tes_in[0].tc, tes_in[1].tc, gl_TessCoord.x);
+	vec2 tc2 = mix(tes_in[2].tc, tes_in[3].tc, gl_TessCoord.x);
+	vec2 tc = mix(tc2, tc1, gl_TessCoord.y);
+	vec4 p1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
+	vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);
+	vec4 p = mix(p2, p1, gl_TessCoord.y);
+	p.y += texture(tex_height, tc).r * u_heightScale;
+	gl_Position = u_matrixMVP * p;
+	tes_out.tc = tc;
+}
+
+frag:
+uniform mat3 matrixNormal
+uniform float heightScale
+uniform float spec
+uniform float roughness
+texture float 2D tex_height
+texutre float 2D tex_color
+fragout vec4 albedo
+fragout vec4 normalRoughness
+void main(void)
+{
+	const ivec3 off = ivec3(-1,0,1);
+
+	float s[9];
+	s[4] = texture(tex_height, fs_in.tc).r;
+	s[5] = textureOffset(tex_height, fs_in.tc, off.zy).r;
+	s[3] = textureOffset(tex_height, fs_in.tc, off.xy).r;
+	s[7] = textureOffset(tex_height, fs_in.tc, off.yz).r;
+	s[1] = textureOffset(tex_height, fs_in.tc, off.yx).r;
+	s[0] = textureOffset(tex_height, fs_in.tc, off.xx).r;
+	s[8] = textureOffset(tex_height, fs_in.tc, off.zz).r;
+	s[6] = textureOffset(tex_height, fs_in.tc, off.xz).r;
+	s[2] = textureOffset(tex_height, fs_in.tc, off.zx).r;
+
+	vec3 n;
+	n.x = u_heightScale * -(s[2]-s[0]+2*(s[5]-s[3])+s[8]-s[6]);
+	n.y = 1.0;
+	n.z = u_heightScale * -(s[6]-s[0]+2*(s[7]-s[1])+s[8]-s[2]);
+	n = normalize(n);
+
+	o_albedo = vec4(texture(tex_color, fs_in.tc).rgb, u_spec);
+	vec3 normal = normalize(u_matrixNormal * n);
+	normal = normal * 0.5 + 0.5;
+	o_normalRoughness = vec4(normal, u_roughness);
+}
