@@ -4,8 +4,8 @@
 
 #include "def.h"
 
-#include "extra0.h"
-//#include "extra1.h"
+//#include "extra0.h"
+#include "extra1.h"
 
 #ifndef EXTRA
 #define EXTRA "\n"
@@ -148,9 +148,7 @@ int main(int argc, char **argv)
 		token = yylex();
 	}
 
-	fprintf(fout, "#include \"render.abstract.h\"\n");
 	fprintf(fout, EXTRA);
-	fprintf(fout, "#include \"utils.h\"\n");
 	fprintf(fout, "#include <string>\n");
 	fprintf(fout, "namespace tke{\n");
 

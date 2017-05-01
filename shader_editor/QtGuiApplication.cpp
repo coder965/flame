@@ -20,6 +20,8 @@ MyEdit *outputMyEdit;
 QTextBrowser *compileTextBrowser;
 QTabWidget *stageTabWidget;
 
+bool qTextDataPreparing = false;
+
 #include "shader.hpp"
 
 namespace Find
@@ -54,8 +56,6 @@ namespace Find
 		update();
 	}
 }
-
-bool qTextDataPreparing = false;
 
 void saveDataXml()
 {
@@ -163,8 +163,8 @@ void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *curr,
 
 			if (currentPipeline)
 			{
-				for (auto &s : currentPipeline->stages)
-					s.text = s.edit->toPlainText().toUtf8().data();
+				for (auto s : currentPipeline->stages)
+					s->text = s->edit->toPlainText().toUtf8().data();
 			}
 
 			qTextDataPreparing = true;
@@ -248,19 +248,19 @@ void QtGuiApplication::on_addStageToolButton_clicked()
 	std::experimental::filesystem::path p(filename);
 	auto type = tke::StageFlagByExt(p.extension().string());
 
-	for (auto &s : currentPipeline->stages)
+	for (auto s : currentPipeline->stages)
 	{
-		if (s.type == type)
+		if (s->type == type)
 			return;
 	}
 
-	Stage s;
-	s.type = type;
-	s.filename = filename;
-	s.filepath = p.parent_path().string();
+	auto s = new Stage;
+	s->type = type;
+	s->filename = filename;
+	s->filepath = p.parent_path().string();
 
-	tke::OnceFileBuffer file(currentPipeline->filepath + "/" + s.filename);
-	s.text = file.data;
+	tke::OnceFileBuffer file(currentPipeline->filepath + "/" + s->filename);
+	s->text = file.data;
 
 	currentPipeline->stages.push_back(s);
 

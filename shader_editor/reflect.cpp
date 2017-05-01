@@ -1,10 +1,10 @@
-#include "render.abstract.h"
-#include "render.h"
- 			   #define PipelineAbstract PipelineAbstract<StageAbstract>
+#include "../src/core/render.abstract.h"
+ 			   #include "../src/core/utils.h"
+ 			   #include "shader.hpp"
+ 			   #define PipelineAbstract PipelineAbstract<Stage>
  			   #define DrawActionAbstract DrawActionAbstract<Drawcall>
  			   #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>
  			   #define RendererAbstract RendererAbstract<RenderPass>
-#include "utils.h"
 #include <string>
 namespace tke{
 tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");

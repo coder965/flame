@@ -1,5 +1,13 @@
 struct Pipeline;
 
+const std::string stageNames[] = {
+	"vert",
+	"tesc",
+	"tese",
+	"geom",
+	"frag"
+};
+
 struct Stage : tke::StageAbstract, QObject
 {
 	std::string text;
@@ -64,14 +72,6 @@ struct Stage : tke::StageAbstract, QObject
 	}
 };
 
-const std::string stageNames[] = {
-    "vert",
-    "tesc",
-    "tese",
-    "geom",
-    "frag"
-};
-
 struct Pipeline : tke::PipelineAbstract<Stage>
 {
     QTreeWidgetItem *item;
@@ -99,10 +99,10 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 
 	Stage *stageByType(int type)
 	{
-		for (auto &s : stages)
+		for (auto s : stages)
 		{
-			if ((int)s.type == type)
-				return &s;
+			if ((int)s->type == type)
+				return s;
 		}
 		return nullptr;
 	}
@@ -111,8 +111,8 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 	{
 		for (auto &s : stages)
 		{
-			if (s.tabIndex == index)
-				return &s;
+			if (s->tabIndex == index)
+				return s;
 		}
 		return nullptr;
 	}
@@ -121,9 +121,9 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 	{
 		for (auto it = stages.begin(); it != stages.end(); it++)
 		{
-			if (&(*it) == p)
+			if ((*it) == p)
 			{
-				it->disappear();
+				(*it)->disappear();
 				stages.erase(it);
 				return;
 			}
@@ -137,8 +137,8 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 
 		for (auto &s : stages)
 		{
-			tke::OnceFileBuffer file(filepath + "/" + s.filename);
-			s.text = file.data;
+			tke::OnceFileBuffer file(filepath + "/" + s->filename);
+			s->text = file.data;
 		}
 
         addToTree();

@@ -26,6 +26,7 @@ namespace tke
 		if (ext == ".tese") return StageFlags::tese;
 		if (ext == ".geom") return StageFlags::geom;
 		if (ext == ".frag") return StageFlags::frag;
+		return StageFlags::vert;
 	}
 
 	REFLECTABLE enum class AspectFlags : int
@@ -186,9 +187,13 @@ namespace tke
 		std::vector<BlendAttachment> blendAttachments;
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
-		std::vector<StageType> stages;
+		std::vector<StageType*> stages;
 		std::vector<LinkResource> links;
 
+		inline ~PipelineAbstract()
+		{
+			for (auto s : stages) delete s;
+		}
 		inline void setFilename(const std::string &_filename)
 		{
 			filename = _filename;
@@ -244,12 +249,12 @@ namespace tke
 					{
 						if (cc->name == "stage")
 						{
-							StageType s;
-							cc->obtainFromAttributes(&s, s.b);
-							std::experimental::filesystem::path p(s.filename);
-							s.filepath = p.parent_path();
+							auto s = new StageType;
+							cc->obtainFromAttributes(s, s->b);
+							std::experimental::filesystem::path p(s->filename);
+							s->filepath = p.parent_path().string();
 							auto ext = p.extension().string();
-							s.type = StageFlagByExt(ext);
+							s->type = StageFlagByExt(ext);
 							stages.push_back(s);
 						}
 					}
