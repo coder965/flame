@@ -1,15 +1,14 @@
 <pipeline cull_mode="none">
   
-  <descriptor type="sampler" 		  binding="0" count="1" stage="frag" >
-	<link name="StartUp.Texture" sampler="screen_uv" />
-  </descriptor>
-  <descriptor type="uniform_buffer" binding="1" count="1" stage="frag" >
-	<link name="StartUp.UniformBuffer" />
-  </descriptor>
-  
-  <shader>
-	<stage filename="..\fullscreenUv.vert" />
-	<stage filename="startUp.frag" />
-  </shader>
+	<descriptor type="sampler" binding="0" count="1" stage="frag" />
+	<descriptor type="uniform_buffer" binding="1" count="1" stage="frag" />
+	
+	<link type="sampler" binding="0" name="StartUp.Texture" sampler="screen_uv" />
+	<link type="uniform_buffer" binding="1" name="StartUp.UniformBuffer" />
+
+	<shader>
+		<stage filename="..\fullscreenUv.vert" />
+		<stage filename="startUp.frag" />
+	</shader>
   
 </pipeline>

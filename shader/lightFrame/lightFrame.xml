@@ -1,15 +1,14 @@
 <pipeline depth_test="true" depth_write="true">
   
-  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" >
-	<link name="Matrix.UniformBuffer" />
-  </descriptor>
-  <descriptor type="uniform_buffer" binding="1" count="1" stage="vert" >
-	<link name="LightMatrix.UniformBuffer" />
-  </descriptor>
-  
-  <shader>
-	<stage filename="lightFrame.vert" />
-	<stage filename="lightFrame.frag" />
-  </shader>
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />
+	<descriptor type="uniform_buffer" binding="1" count="1" stage="vert" />
+	
+	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
+	<link type="uniform_buffer" binding="1" name="LightMatrix.UniformBuffer" />
+
+	<shader>
+		<stage filename="lightFrame.vert" />
+		<stage filename="lightFrame.frag" />
+	</shader>
   
 </pipeline>

@@ -1,19 +1,18 @@
 <pipeline polygon_mode="line" depth_clamp="none">
   
-  <push_constant offset="0" size="4" stage="vert" />
-  <descriptor type="uniform_buffer" binding="0" count="1" stage="vert" >
-	<link name="Matrix.UniformBuffer" />
-  </descriptor>
-  <descriptor type="uniform_buffer" binding="1" count="2" stage="vert" >
-	<link array_element="0" name="LightMatrix.UniformBuffer" />
-	<link array_element="1" name="ObjectMatrix.UniformBuffer" />
-  </descriptor>
-  
-  <push_constant offset="16" size="16" stage="frag" />
-  
-  <shader>
-	<stage filename="wireFrame.vert" />
-	<stage filename="wireFrame.frag" />
-  </shader>
+	<push_constant offset="0" size="4" stage="vert" />
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />
+	<descriptor type="uniform_buffer" binding="1" count="2" stage="vert" />
+	
+	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
+	<link type="uniform_buffer" binding="1" array_element="0" name="LightMatrix.UniformBuffer" />
+	<link type="uniform_buffer" binding="1" array_element="1" name="ObjectMatrix.UniformBuffer" />
+
+	<push_constant offset="16" size="16" stage="frag" />
+
+	<shader>
+		<stage filename="wireFrame.vert" />
+		<stage filename="wireFrame.frag" />
+	</shader>
   
 </pipeline>

@@ -1,10 +1,10 @@
 #include "render.abstract.h"
-#include "render.h"
- 			   #define PipelineAbstract PipelineAbstract<StageAbstract>
- 			   #define DrawActionAbstract DrawActionAbstract<Drawcall>
- 			   #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>
- 			   #define RendererAbstract RendererAbstract<RenderPass>
-#include "utils.h"
+ #include "utils.h"
+ #include "render.h"
+ #define PipelineAbstract PipelineAbstract<StageAbstract>
+ #define DrawActionAbstract DrawActionAbstract<Drawcall>
+ #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>
+ #define RendererAbstract RendererAbstract<RenderPass>
 #include <string>
 namespace tke{
 tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");
@@ -98,9 +98,9 @@ currentEnum->items.emplace_back("screen", (int)SamplerType::screen);
 currentEnum->items.emplace_back("screen_uv", (int)SamplerType::screen_uv);
 currentEnum->items.emplace_back("color", (int)SamplerType::color);
 currentBank = LinkResource::b;
-currentBank->addE("DescriptorType", "descriptorType", offsetof(LinkResource, descriptorType));
+currentBank->addE("DescriptorType", "type", offsetof(LinkResource, type));
 currentBank->addV<int>("binding", offsetof(LinkResource, binding));
-currentBank->addV<int>("arrayElement", offsetof(LinkResource, arrayElement));
+currentBank->addV<int>("array_element", offsetof(LinkResource, array_element));
 currentBank->addV<std::string>("name", offsetof(LinkResource, name));
 currentBank->addE("SamplerType", "sampler", offsetof(LinkResource, sampler));
 currentBank = PipelineAbstract::b;

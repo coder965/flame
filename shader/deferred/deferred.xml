@@ -1,30 +1,25 @@
-<pipeline cull_mode="none">
+<pipeline name="Deferred.Pipeline" cull_mode="none">
   
-  <descriptor type="uniform_buffer" binding="0" count="1" stage="frag">
-	<link name="Matrix.UniformBuffer" />
-  </descriptor>
-  <descriptor type="uniform_buffer" binding="1" count="1" stage="frag" >
-	<link name="Ambient.UniformBuffer" />
-  </descriptor>
-  <descriptor type="uniform_buffer" binding="2" count="1" stage="frag" >
-	<link name="Light.UniformBuffer" />
-  </descriptor>
-  <descriptor type="sampler" 		binding="3" count="1" stage="frag" >
-	<link name="Depth.Texture" sampler="screen" />
-  </descriptor>
-  <descriptor type="sampler" 		binding="4" count="1" stage="frag" >
-	<link name="AlbedoSpec.Texture" sampler="screen" />
-  </descriptor>
-  <descriptor type="sampler" 		binding="5" count="1" stage="frag" >
-	<link name="NormalRoughness.Texture" sampler="screen" />
-  </descriptor>
-  <descriptor type="sampler" 		binding="6" count="1" stage="frag" />
-  <descriptor type="sampler" 		binding="7" count="1" stage="frag" />
-  <descriptor type="sampler" 		binding="8" count="1" stage="frag" />
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="frag"/>
+	<descriptor type="uniform_buffer" binding="1" count="1" stage="frag" />
+	<descriptor type="uniform_buffer" binding="2" count="1" stage="frag" />
+	<descriptor type="sampler" binding="3" count="1" stage="frag" />
+	<descriptor type="sampler" binding="4" count="1" stage="frag" />
+	<descriptor type="sampler" binding="5" count="1" stage="frag" />
+	<descriptor type="sampler" binding="6" count="1" stage="frag" />
+	<descriptor type="sampler" binding="7" count="1" stage="frag" />
+	<descriptor type="sampler" binding="8" count="1" stage="frag" />
   
-  <shader>
-	<stage filename="..\fullscreenView.vert" />
-	<stage filename="deferred.frag" />
-  </shader>
+	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
+	<link type="uniform_buffer" binding="1" name="Ambient.UniformBuffer" />
+	<link type="uniform_buffer" binding="2" name="Light.UniformBuffer" />
+	<link type="sampler" binding="3" name="Depth.Texture" sampler="screen" />
+	<link type="sampler" binding="4" name="AlbedoSpec.Texture" sampler="screen" />
+	<link type="sampler" binding="5" name="NormalRoughness.Texture" sampler="screen" />
+  
+	<shader>
+		<stage filename="..\fullscreenView.vert" />
+		<stage filename="deferred.frag" />
+	</shader>
   
 </pipeline>

@@ -45,12 +45,12 @@ namespace Find
 		auto stage = currentTabStage();
 		if (!stage) return;
 
-		stage->edit->setFocus();
+		stage->wrap.edit->setFocus();
 
-		auto cursor = stage->edit->textCursor();
+		auto cursor = stage->wrap.edit->textCursor();
 		cursor.setPosition(datas[index]);
 		cursor.setPosition(datas[index] + strSize, QTextCursor::KeepAnchor);
-		stage->edit->setTextCursor(cursor);
+		stage->wrap.edit->setTextCursor(cursor);
 
 		current = index;
 		update();
@@ -134,6 +134,7 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 				{
 					auto pipeline = new Pipeline;
 					pipeline->load(a.second);
+					pipelines.push_back(pipeline);
 				}
 			}
 		}
@@ -164,7 +165,7 @@ void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *curr,
 			if (currentPipeline)
 			{
 				for (auto s : currentPipeline->stages)
-					s->text = s->edit->toPlainText().toUtf8().data();
+					s->text = s->wrap.edit->toPlainText().toUtf8().data();
 			}
 
 			qTextDataPreparing = true;
@@ -284,16 +285,16 @@ void QtGuiApplication::on_removeStageToolButton_clicked()
 void QtGuiApplication::on_saveStageToolButton_clicked()
 {
 	auto s = currentTabStage();
-	if (!s || !s->changed) return;
+	if (!s || !s->wrap.changed) return;
 
-	s->text = s->edit->toPlainText().toUtf8().data();
+	s->text = s->wrap.edit->toPlainText().toUtf8().data();
 
 	std::ofstream file(currentPipeline->filepath + "/" + s->filename);
 	file << s->text;
 
-	s->changed = false;
+	s->wrap.changed = false;
 
-	stageTabWidget->setTabText(s->tabIndex, stageNames[(int)s->type].c_str());
+	stageTabWidget->setTabText(s->wrap.tabIndex, stageNames[(int)s->type].c_str());
 }
 
 void QtGuiApplication::on_toSpvToolButton_clicked()
@@ -399,7 +400,7 @@ void QtGuiApplication::on_find()
 	auto findStr = Find::edit->text();
 	Find::strSize = findStr.size();
 
-	auto str = s->edit->toPlainText();
+	auto str = s->wrap.edit->toPlainText();
 
 	if (Find::strSize > 0)
 	{
@@ -416,14 +417,14 @@ void QtGuiApplication::on_find()
 			QColor lineColor = QColor(Qt::yellow).lighter(160);
 
 			selection.format.setBackground(lineColor);
-			selection.cursor = s->edit->textCursor();
+			selection.cursor = s->wrap.edit->textCursor();
 			selection.cursor.setPosition(offset);
 			selection.cursor.setPosition(offset + Find::strSize, QTextCursor::KeepAnchor);
 			extraSelections.append(selection);
 		}
 	}
 
-	s->edit->setExtraSelections(extraSelections);
+	s->wrap.edit->setExtraSelections(extraSelections);
 
 	Find::update();
 }

@@ -8,36 +8,49 @@ const std::string stageNames[] = {
 	"frag"
 };
 
-struct Stage : tke::StageAbstract, QObject
+struct StageWrap : QObject
 {
-	std::string text;
-	bool changed = false;
-	std::string output;
-	std::string compileOutput;
+	int type;
 
+	bool changed = false;
 	MyEdit *edit = nullptr;
 	int tabIndex = -1;
+
+	void appear()
+	{
+		edit = new MyEdit;
+		edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+		connect(edit, &QPlainTextEdit::textChanged, this, &StageWrap::on_text_changed);
+	}
 
 	void on_text_changed()
 	{
 		if (qTextDataPreparing) return;
 
 		changed = true;
-		stageTabWidget->setTabText(tabIndex, QString(stageNames[(int)type].c_str()) + "*");
+		stageTabWidget->setTabText(tabIndex, QString(stageNames[type].c_str()) + "*");
 	}
+};
+
+struct Stage : tke::StageAbstract
+{
+	std::string text;
+	std::string output;
+	std::string compileOutput;
+
+	StageWrap wrap;
 
 	void appear()
 	{
-		edit = new MyEdit;
-		edit->setLineWrapMode(QPlainTextEdit::NoWrap);
-		edit->setPlainText(text.c_str());
-		connect(edit, &QPlainTextEdit::textChanged, this, &Stage::on_text_changed);
+		wrap.type = (int)type;
+		wrap.appear();
+		wrap.edit->setPlainText(text.c_str());
 	}
 
 	void disappear() 
 	{
-		delete edit;
-		tabIndex = -1;
+		delete wrap.edit;
+		wrap.tabIndex = -1;
 	}
 
 	std::string Stage::getFullText(const std::string &parent_path)
@@ -111,7 +124,7 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 	{
 		for (auto &s : stages)
 		{
-			if (s->tabIndex == index)
+			if (s->wrap.tabIndex == index)
 				return s;
 		}
 		return nullptr;
@@ -163,8 +176,8 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 			{
 				s->appear();
 				QString title = stageNames[(int)type].c_str();
-				if (s->changed) title += "*";
-				s->tabIndex = stageTabWidget->addTab(s->edit, title);
+				if (s->wrap.changed) title += "*";
+				s->wrap.tabIndex = stageTabWidget->addTab(s->wrap.edit, title);
 			}
 		}
 

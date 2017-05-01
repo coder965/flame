@@ -157,9 +157,9 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLe DescriptorType descriptorType;
+		REFLe DescriptorType type = DescriptorType::uniform_buffer;
 		REFLv int binding = 0;
-		REFLv int arrayElement = 0;
+		REFLv int array_element = 0;
 		REFLv std::string name;
 		REFLe SamplerType sampler = SamplerType::none;
 	};
@@ -225,17 +225,12 @@ namespace tke
 					Descriptor d;
 					c->obtainFromAttributes(&d, d.b);
 					descriptors.push_back(d);
-					for (auto cc : c->children)
-					{
-						if (cc->name == "link")
-						{
-							LinkResource lr;
-							lr.descriptorType = d.type;
-							lr.binding = d.binding;
-							cc->obtainFromAttributes(&lr, lr.b);
-							links.push_back(lr);
-						}
-					}
+				}
+				else if (c->name == "link")
+				{
+					LinkResource l;
+					c->obtainFromAttributes(&l, l.b);
+					links.push_back(l);
 				}
 				else if (c->name == "push_constant")
 				{
