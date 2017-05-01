@@ -2,21 +2,21 @@ void setAddButton(QToolButton *b)
 {
 	b->setMaximumWidth(21);
 	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":png/add.png"));
+	b->setIcon(QIcon(":image/misc/add.png"));
 }
 
 void setRemoveButton(QToolButton *b)
 {
 	b->setMaximumWidth(21);
 	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":png/delete.png"));
+	b->setIcon(QIcon(":image/misc/delete.png"));
 }
 
 void setUpButton(QToolButton *b)
 {
 	b->setMaximumWidth(21);
 	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":png/up.png"));
+	b->setIcon(QIcon(":image/misc/up.png"));
 }
 
 void setDownButton(QToolButton *b)
@@ -73,8 +73,6 @@ namespace tke
 
 	struct DrawcallExtraData : ExtType, QObject
 	{
-		Drawcall *pDrawcall = nullptr;
-
 		QTreeItemPair<QToolButton> item;
 
 		~DrawcallExtraData()
@@ -105,8 +103,6 @@ namespace tke
 
 	struct DrawActionExtraData : ExtType, QObject
 	{
-		DrawAction *pAction = nullptr;
-
 		QTreeItemPair<QToolButton> item;
 		QTreeItemPair<QIntDropCombo> typeItem;
 		QTreeItemPair<QToolButton> drawcallsItem;
@@ -119,12 +115,6 @@ namespace tke
 		void destroyThis()
 		{
 			pAction->parent->removeAction(pAction);
-		}
-
-		void cleanUp()
-		{
-			for (auto dc : pAction->m_drawcalls)
-				dc->ext->item.item = nullptr;
 		}
 
 		void newDrawcall()
@@ -165,8 +155,6 @@ namespace tke
 
 	struct AttachmentExtraData : ExtType, QObject
 	{
-		Attachment *pAttachment = nullptr;
-
 		int type;
 
 		QTreeItemPair<QToolButton> item;
@@ -204,8 +192,6 @@ namespace tke
 
 	struct DependencyExtraData : ExtType, QObject
 	{
-		Dependency *pDependency = nullptr;
-
 		QTreeWidgetItem *item;
 		QComboBox *combo;
 		QToolButton *deleteButton;
@@ -238,8 +224,6 @@ namespace tke
 
 	struct RenderPassExtraData : ExtType, QObject
 	{
-		RenderPass *pRenderPass = nullptr;
-
 		int index;
 
 		QTreeItemPair<QGroupBox> item;
@@ -253,21 +237,6 @@ namespace tke
 		{
 			cleanUp();
 			delete item.item;
-		}
-
-		void cleanUp()
-		{
-			for (auto action : pRenderPass->actions)
-			{
-				action->ext->cleanUp();
-				action->ext->item.item = nullptr;
-			}
-			if (pRenderPass->depthStencilAttachment.get())
-				pRenderPass->depthStencilAttachment->ext->item.item = nullptr;
-			for (auto a : pRenderPass->colorAttachments)
-				a->ext->item.item = nullptr;
-			for (auto d : pRenderPass->dependencies)
-				d->ext->item = nullptr;
 		}
 
 		void destroyThis()
@@ -418,20 +387,9 @@ namespace tke
 
 	struct RendererExtraData : ExtType, QObject
 	{
-		Renderer *pRenderer = nullptr;
-
 		QTreeItemPair<QToolButton> passesItem;
 
 		QListWidgetItem *listItem = nullptr;
-
-		void cleanUp()
-		{
-			for (auto p : pRenderer->passes)
-			{
-				p->ext->cleanUp();
-				p->ext->item.item = nullptr;
-			}
-		}
 
 		void newPass()
 		{

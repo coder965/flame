@@ -61,8 +61,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/add.png</normaloff>:/png/add.png</iconset>
+            <iconset resource="render_editor.qrc">
+             <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="saveButton">
@@ -84,8 +84,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/save.png</normaloff>:/png/save.png</iconset>
+            <iconset resource="render_editor.qrc">
+             <normaloff>:/image/misc/save.png</normaloff>:/image/misc/save.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="removeButton">
@@ -107,8 +107,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/delete.png</normaloff>:/png/delete.png</iconset>
+            <iconset resource="render_editor.qrc">
+             <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
            </property>
           </widget>
          </widget>
@@ -166,7 +166,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="QtGuiApplication.qrc"/>
+  <include location="render_editor.qrc"/>
  </resources>
  <connections/>
 </ui>

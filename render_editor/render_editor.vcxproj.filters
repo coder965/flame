@@ -14,6 +14,9 @@
     <ClCompile Include="..\src\core\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_render_editor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resource Files">
@@ -49,10 +52,36 @@
     <CustomBuild Include="QtGuiApplication.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="render_editor.qrc">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="render.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\misc\add.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\delete.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\down.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\new.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\open.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\save.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\up.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -87,7 +87,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\core\utils.cpp" />
-    <ClCompile Include="GeneratedFiles\Debug\moc_QtGuiApplication.cpp" />
+    <ClCompile Include="GeneratedFiles\Debug\moc_QtGuiApplication.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_shader_editor.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
