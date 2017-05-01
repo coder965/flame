@@ -11,8 +11,6 @@ auto glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/gl
 
 #include "edit.hpp"
 
-MyEdit *qTexts[5];
-int qTabIndexs[5];
 QTreeWidget *pipelineTree;
 QToolButton *explorerButton;
 QTabWidget *bottomTabWidget;
@@ -20,17 +18,7 @@ MyEdit *outputMyEdit;
 QTextBrowser *compileTextBrowser;
 QTabWidget *stageTabWidget;
 
-int getCurrentStageIndex()
-{
-	auto index = stageTabWidget->currentIndex();
-	if (index == -1) return -1;
-	for (int i = 0; i < 5; i++)
-	{
-		if (qTabIndexs[i] == index)
-			return i;
-	}
-	return -1;
-}
+#include "shader.hpp"
 
 namespace Find
 {
@@ -50,17 +38,15 @@ namespace Find
 	{
 		if (datas.size() == 0 || index < 0 || index >= datas.size() || current == index) return;
 
-		auto stageIndex = getCurrentStageIndex();
-		if (stageIndex == -1) return;
+		auto stage = getCurrentStage();
+		if (!stage) return;
 
-		auto text = qTexts[stageIndex];
+		stage->edit->setFocus();
 
-		text->setFocus();
-
-		auto cursor = text->textCursor();
+		auto cursor = stage->edit->textCursor();
 		cursor.setPosition(datas[index]);
 		cursor.setPosition(datas[index] + strSize, QTextCursor::KeepAnchor);
-		text->setTextCursor(cursor);
+		stage->edit->setTextCursor(cursor);
 
 		current = index;
 		update();
@@ -68,8 +54,6 @@ namespace Find
 }
 
 bool qTextDataPreparing = false;
-
-#include "shader.hpp"
 
 void saveDataXml()
 {
@@ -148,12 +132,6 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 		}
 	}
 
-	for (int i = 0; i < 5; i++)
-	{
-		qTexts[i] = new MyEdit;
-		qTexts[i]->setLineWrapMode(QPlainTextEdit::NoWrap);
-	}
-
 	connect(qTexts[0], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text0_changed);
 	connect(qTexts[1], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text1_changed);
 	connect(qTexts[2], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text2_changed);
@@ -161,18 +139,18 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	connect(qTexts[4], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text4_changed);
 }
 
-void on_text_changed(int index)
+void on_text_changed(int type)
 {
 	if (qTextDataPreparing) return;
 
 	for (auto &s : currentPipeline->stages)
 	{
-		if ((int)s.type == index)
+		if ((int)s.type == type)
 		{
 			if (!s.changed)
 			{
 				s.changed = true;
-				stageTabWidget->setTabText(qTabIndexs[index], QString(stageNames[index]) + "*");
+				stageTabWidget->setTabText(qTabIndexs[type], QString(stageNames[type]) + "*");
 			}
 		}
 	}
@@ -476,8 +454,8 @@ void QtGuiApplication::on_explorerStageFileToolButton_clicked()
 	}
 	else
 	{
-		sprintf(cmd, "explorer /select,%s%s", currentPipeline->filepath, currentPipeline->stages[index]->filename);
-		WinExec(cmd, SW_SHOWNORMAL);
+		std::string cmd = "explorer /select," + currentPipeline->filepath + "/" + currentPipeline->stages[index]->filename;
+		WinExec(cmd.c_str(), SW_SHOWNORMAL);
 	}
 }
 
