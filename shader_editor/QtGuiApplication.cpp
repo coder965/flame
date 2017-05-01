@@ -73,26 +73,15 @@ bool qTextDataPreparing = false;
 
 void saveDataXml()
 {
-	rapidxml::xml_document<> xmlDoc;
-	auto dataNode = xmlDoc.allocate_node(rapidxml::node_element, "data");
-	xmlDoc.append_node(dataNode);
+	tke::AttributeTree at("data");
 
 	for (auto pipeline : pipelines)
 	{
-		auto node = xmlDoc.allocate_node(rapidxml::node_element, "pipeline");
-		node->append_attribute(xmlDoc.allocate_attribute("name", pipeline->name));
-		node->append_attribute(xmlDoc.allocate_attribute("filename", pipeline->filename));
-		dataNode->append_node(node);
+		auto node = new tke::AttributeTreeNode("pipeline");
+		node->atrributes.emplace_back(new tke::NormalVariable("filename", &pipeline->filename), std::string());
 	}
 
-	std::string dst;
-	rapidxml::print(std::back_inserter(dst), xmlDoc);
-
-	auto f = fopen("data.xml", "wb");
-	fprintf(f, dst.c_str());
-	fclose(f);
-
-	xmlDoc.clear();
+	at.saveXML("data.xml");
 }
 
 QtGuiApplication::QtGuiApplication(QWidget *parent) :
@@ -141,27 +130,20 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 		stageTabWidget->setCornerWidget(group);
 	}
 
-	tke::OnceFileBuffer dataFile("data.xml");
+	tke::AttributeTree at("data");
+	at.loadXML("data.xml");
 
-	rapidxml::xml_document<> dataXmlDoc;
-	dataXmlDoc.parse<0>(dataFile.data);
-
-	auto firstNode = dataXmlDoc.first_node();
-	if (strcmp(firstNode->name(), "data") == 0)
+	for (auto c : at.children)
 	{
-		for (auto n = firstNode->first_node(); n; n = n->next_sibling())
+		if (c->name == "pipeline")
 		{
-			if (strcmp(n->name(), "pipeline") == 0)
+			for (auto &a : c->atrributes)
 			{
-				auto pipeline = new Pipeline;
-				for (auto a = n->first_attribute(); a; a = a->next_attribute())
+				if (a.first->name == "filename")
 				{
-					if (strcmp(a->name(), "name") == 0)
-						strcpy(pipeline->name, a->value());
-					else if (strcmp(a->name(), "filename") == 0)
-						pipeline->load(a->value());
+					auto pipeline = new Pipeline;
+					pipeline->load(a.second);
 				}
-				pipelines.push_back(pipeline);
 			}
 		}
 	}
@@ -183,13 +165,18 @@ void on_text_changed(int index)
 {
 	if (qTextDataPreparing) return;
 
-	auto stage = currentPipeline->stages[index];
-
-	if (!stage->changed)
+	for (auto &s : currentPipeline->stages)
 	{
-		stage->changed = true;
-		stageTabWidget->setTabText(qTabIndexs[index], QString(stageNames[index]) + "*");
+		if ((int)s.type == index)
+		{
+			if (!s.changed)
+			{
+				s.changed = true;
+				stageTabWidget->setTabText(qTabIndexs[index], QString(stageNames[index]) + "*");
+			}
+		}
 	}
+
 }
 
 void QtGuiApplication::on_text0_changed()
@@ -484,7 +471,7 @@ void QtGuiApplication::on_explorerStageFileToolButton_clicked()
 	char cmd[260];
 	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
 	{
-		sprintf(cmd, "%s%s", currentPipeline->filename, currentPipeline->stages[index]->filename);
+		sprintf(cmd, "%s%s", currentPipeline->filepath, currentPipeline->stages[index]->filename);
 		ShellExecuteA(NULL, "open", cmd, nullptr, nullptr, SW_SHOWNORMAL);
 	}
 	else

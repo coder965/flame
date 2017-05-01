@@ -43,7 +43,7 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 		pipelineTree->addTopLevelItem(item);
     }
 
-    void load(const char *_filename)
+    void load(const std::string &_filename)
     {
 		setFilename(_filename);
 		loadXML();
@@ -59,41 +59,19 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 
     void saveXml()
     {
-        for (int i = 0; i < 5; i++)
-        {
-            auto stage = stages[i];
-            if (stage)
-            {
-                auto stageNode = new rapidxml::xml_node<>(rapidxml::node_element);
-				nodes.push_back(stageNode);
-				stageNode->name("stage");
-
-                auto stageAttribute = new rapidxml::xml_attribute<>();
-				attributes.push_back(stageAttribute);
-				stageAttribute->name("filename");
-				stageAttribute->value(stage->filename);
-				stageNode->append_attribute(stageAttribute);
-
-                xmlShaderNode->append_node(stageNode);
-            }
-        }
-
-        std::string dst;
-        rapidxml::print(std::back_inserter(dst), xmlDoc);
-
-        auto f = fopen(filename, "wb");
-        fprintf(f, dst.c_str());
-        fclose(f);
-
-        xmlShaderNode->remove_all_nodes();
-
-        for (auto node : nodes) delete node;
-		for (auto attribute : attributes) delete attribute;
+		saveXML();
     }
 
     void qTextToStageStr(int index)
     {
-        tk::setStr(&stages[index]->str, qTexts[index]->toPlainText().toUtf8().data());
+		for (auto &s : stages)
+		{
+			if ((int)s.type == index)
+			{
+				s.text = qTexts[index]->toPlainText().toUtf8().data();
+				return;
+			}
+		}
     }
 
     void setTabData(int index)
@@ -102,10 +80,16 @@ struct Pipeline : tke::PipelineAbstract<Stage>
         {
             if (qTabIndexs[i] == index)
             {
-                auto stage = stages[i];
-                explorerButton->setStatusTip(stage->filename);
-                outputMyEdit->setPlainText(stage->output);
-                compileTextBrowser->setText(stage->compileOutput);
+				for (auto &s : stages)
+				{
+					if ((int)s.type == index)
+					{
+						explorerButton->setStatusTip(s.filename.c_str());
+						outputMyEdit->setPlainText(s.output.c_str());
+						compileTextBrowser->setText(s.compileOutput.c_str());
+						return;
+					}
+				}
                 return;
             }
         }
@@ -133,35 +117,34 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 
 std::string Stage::getFullText()
 {
-    QString strIn(str);
-    QString strOut;
+    std::stringstream strIn(text);
+	std::string strOut;
     strOut += "#version 450 core\n";
     strOut += "#extension GL_ARB_separate_shader_objects : enable\n";
     strOut += "#extension GL_ARB_shading_language_420pack : enable\n";
     strOut += "\n";
 
-    auto list = strIn.split("\n");
-    for (int i = 0; i < list.size(); i++)
-    {
-        auto str = list[i];
-
-        QString pat = R"(#include\s+\"([\w\.\\]+)\")";
-        QRegExp reg(pat);
-        auto firstPos = reg.indexIn(str);
-        if (firstPos >= 0)
-        {
-            auto include = reg.cap(1);
-            char _filename[260];
-            sprintf(_filename, "%s%s%s", pipeline->filepath, filepath, include.toUtf8().data());
+	std::string line;
+	while (strIn.eof())
+	{
+		std::getline(strIn, line);
+		QString pat = R"(#include\s+\"([\w\.\\]+)\")";
+		QRegExp reg(pat);
+		auto firstPos = reg.indexIn(str);
+		if (firstPos >= 0)
+		{
+			auto include = reg.cap(1);
+			char _filename[260];
+			sprintf(_filename, "%s%s%s", pipeline->filepath, filepath, include.toUtf8().data());
 
 			tke::OnceFileBuffer file(_filename);
-            strOut += QString(file.data) + "\n";
-        }
-        else
-        {
-            strOut += str + "\n";
-        }
-    }
+			strOut += QString(file.data) + "\n";
+		}
+		else
+		{
+			strOut += str + "\n";
+		}
+	}
     return strOut;
 }
 

@@ -159,6 +159,7 @@ namespace tke
 	{
 		REFL_BANK;
 
+		REFLv std::string name;
 		REFLv std::string filename;
 		REFLv std::string filepath;
 
