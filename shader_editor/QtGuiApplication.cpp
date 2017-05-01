@@ -1,13 +1,15 @@
 #include "QtGuiApplication.h"
 
+#include <assert.h>
 #include <sstream>
+#include <regex>
 #include <experimental/filesystem>
 
 #include "d:/TK_Engine/src/core/utils.h"
 #include "d:/TK_Engine/src/core/render.abstract.h"
 
 auto shaderPath = "D:\\TK_Engine\\shader";
-auto glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe";
+std::string glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe";
 
 #include "edit.hpp"
 
@@ -38,7 +40,7 @@ namespace Find
 	{
 		if (datas.size() == 0 || index < 0 || index >= datas.size() || current == index) return;
 
-		auto stage = getCurrentStage();
+		auto stage = currentTabStage();
 		if (!stage) return;
 
 		stage->edit->setFocus();
@@ -72,6 +74,11 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	QMainWindow(parent)
 {
 	ui.setupUi(this);
+
+	{
+		std::ifstream check(glslangValidatorPath);
+		assert(check.good());
+	}
 
 	pipelineTree = ui.pipelineTree;
 	explorerButton = ui.explorerStageFileToolButton;
@@ -131,55 +138,6 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 			}
 		}
 	}
-
-	connect(qTexts[0], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text0_changed);
-	connect(qTexts[1], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text1_changed);
-	connect(qTexts[2], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text2_changed);
-	connect(qTexts[3], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text3_changed);
-	connect(qTexts[4], &QPlainTextEdit::textChanged, this, &QtGuiApplication::on_text4_changed);
-}
-
-void on_text_changed(int type)
-{
-	if (qTextDataPreparing) return;
-
-	for (auto &s : currentPipeline->stages)
-	{
-		if ((int)s.type == type)
-		{
-			if (!s.changed)
-			{
-				s.changed = true;
-				stageTabWidget->setTabText(qTabIndexs[type], QString(stageNames[type]) + "*");
-			}
-		}
-	}
-
-}
-
-void QtGuiApplication::on_text0_changed()
-{
-	on_text_changed(0);
-}
-
-void QtGuiApplication::on_text1_changed()
-{
-	on_text_changed(1);
-}
-
-void QtGuiApplication::on_text2_changed()
-{
-	on_text_changed(2);
-}
-
-void QtGuiApplication::on_text3_changed()
-{
-	on_text_changed(3);
-}
-
-void QtGuiApplication::on_text4_changed()
-{
-	on_text_changed(4);
 }
 
 void QtGuiApplication::keyPressEvent(QKeyEvent *k)
@@ -195,25 +153,22 @@ void QtGuiApplication::keyPressEvent(QKeyEvent *k)
 	}
 }
 
-void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *_curr, QTreeWidgetItem *_prev)
+void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *curr, QTreeWidgetItem *)
 {
 	for (auto pipeline : pipelines)
 	{
-		if (pipeline->item == _curr)
+		if (pipeline->item == curr)
 		{
 			if (pipeline == currentPipeline) return;
 
 			if (currentPipeline)
 			{
-				for (int i = 0; i < 5; i++)
-				{
-					if (currentPipeline->stages[i])
-						currentPipeline->qTextToStageStr(i);
-				}
+				for (auto &s : currentPipeline->stages)
+					s.text = s.edit->toPlainText().toUtf8().data();
 			}
 
 			qTextDataPreparing = true;
-			ui.pipelineNameLineEdit->setText(pipeline->name);
+			ui.pipelineNameLineEdit->setText(pipeline->name.c_str());
 			pipeline->refreshTabs();
 			qTextDataPreparing = false;
 
@@ -267,16 +222,14 @@ void QtGuiApplication::on_explorerPipelineFileToolButton_clicked()
 {
 	if (!currentPipeline) return;
 
-	char cmd[260];
 	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
 	{
-		sprintf(cmd, "%s", currentPipeline->filename);
-		ShellExecuteA(NULL, "open", cmd, nullptr, nullptr, SW_SHOWNORMAL);
+		ShellExecuteA(NULL, "open", currentPipeline->filename.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	}
 	else
 	{
-		sprintf(cmd, "explorer /select,%s", currentPipeline->filename);
-		WinExec(cmd, SW_SHOWNORMAL);
+		std::string cmd = "explorer /select," + currentPipeline->filename;
+		WinExec(cmd.c_str(), SW_SHOWNORMAL);
 	}
 }
 
@@ -292,133 +245,100 @@ void QtGuiApplication::on_addStageToolButton_clicked()
 	if (!ok) return;
 
 	std::string filename = text.toUtf8().data();
-	char ext[32];
-	tk::getFileExt(filename, ext);
+	std::experimental::filesystem::path p(filename);
+	auto type = tke::StageFlagByExt(p.extension().string());
 
-	auto index = getStageIndex(ext);
-	if (index == -1) return;
-
-	if (currentPipeline->stages[index]) return;
-
-	auto stage = new Stage;
-	strcpy(stage->filename, filename);
-	tk::getFilePath(stage->filename, stage->filepath);
-	stage->type = index;
-
-	sprintf(filename, "%s%s", currentPipeline->filepath, stage->filename);
-	auto f = fopen(filename, "rb");
-	if (f)
+	for (auto &s : currentPipeline->stages)
 	{
-		tk::loadFile(f, &stage->str);
-		fclose(f);
-	}
-	else
-	{
-		f = fopen(filename, "wb");
-		fclose(f);
+		if (s.type == type)
+			return;
 	}
 
-	currentPipeline->stages[index] = stage;
+	Stage s;
+	s.type = type;
+	s.filename = filename;
+	s.filepath = p.parent_path().string();
+
+	tke::OnceFileBuffer file(currentPipeline->filepath + "/" + s.filename);
+	s.text = file.data;
+
+	currentPipeline->stages.push_back(s);
+
 	qTextDataPreparing = true;
 	currentPipeline->refreshTabs();
 	qTextDataPreparing = false;
 
-	currentPipeline->saveXml();
+	currentPipeline->saveXML();
 }
 
 void QtGuiApplication::on_removeStageToolButton_clicked()
 {
-	auto index = stageTabWidget->currentIndex();
-	if (index == -1) return;
+	auto s = currentTabStage();
+	if (!s) return;
 
-	stageTabWidget->removeTab(index);
+	currentPipeline->removeStage(s);
 
-	for (int i = 0; i < 5; i++)
-	{
-		if (qTabIndexs[i] == index)
-		{
-			delete currentPipeline->stages[i];
-			currentPipeline->stages[i] = nullptr;
-			currentPipeline->saveXml();
-			return;
-		}
-	}
+	currentPipeline->saveXML();
 }
 
 void QtGuiApplication::on_saveStageToolButton_clicked()
 {
-	auto i = getCurrentStageIndex();
-	if (i == -1) return;
+	auto s = currentTabStage();
+	if (!s || !s->changed) return;
 
-	auto stage = currentPipeline->stages[i];
-	if (!stage->changed) return;
+	s->text = s->edit->toPlainText().toUtf8().data();
 
-	currentPipeline->qTextToStageStr(i);
+	std::ofstream file(currentPipeline->filepath + "/" + s->filename);
+	file << s->text;
 
-	char filename[260];
-	sprintf(filename, "%s%s", currentPipeline->filepath, stage->filename);
+	s->changed = false;
 
-	auto f = fopen(filename, "wb");
-	fprintf(f, "%s", stage->str);
-	fclose(f);
-
-	stage->changed = false;
-	stageTabWidget->setTabText(stageTabWidget->currentIndex(), stageNames[stage->type]);
+	stageTabWidget->setTabText(s->tabIndex, stageNames[(int)s->type].c_str());
 }
 
 void QtGuiApplication::on_toSpvToolButton_clicked()
 {
+	auto s = currentTabStage();
+	if (!s) return;
+
 	on_saveStageToolButton_clicked();
 
 	outputMyEdit->clear();
 	compileTextBrowser->clear();
 
-	auto i = getCurrentStageIndex();
-	if (i == -1) return;
+	auto string = s->getFullText(currentPipeline->filepath);
+	outputMyEdit->setPlainText(string.c_str());
+	s->output = string;
 
-	auto stage = currentPipeline->stages[i];
+	std::ofstream file("temp.glsl");
+	file << string;
+	file.close();
 
-	auto string = stage->getFullText();
-	outputMyEdit->setPlainText(string);
-	tk::setStr(&stage->output, string.toUtf8().data());
+	std::string spvFilename = currentPipeline->filepath + "/" + s->filename + ".spv";
+	std::string cmd = "/C " + glslangValidatorPath + "-V temp.glsl -S " + stageNames[(int)s->type] + " -q -o " + spvFilename + " >> output.txt";
+	tke::exec("cmd", cmd);
+	tke::OnceFileBuffer output("output.txt");
+	s->compileOutput = output.data;
 
-	auto f = fopen("temp.glsl", "wb");
-	fprintf(f, "%s", string.toUtf8().data());
-	fclose(f);
+	compileTextBrowser->setText(output.data);
 
-	char spvFilename[260];
-	char cmd[260];
-	sprintf(spvFilename, "%s%s.spv", currentPipeline->filepath, stage->filename);
-	sprintf(cmd, "/C %s -V temp.glsl -S %s -q -o %s >> output.txt", glslangValidatorPath, stageNames[stage->type], spvFilename);
-	tk::Win::exec("cmd", cmd);
-	char *output = nullptr;
-	tk::loadFile("output.txt", &output);
-	if (output)
+	std::stringstream outputStream(s->compileOutput);
+
+	std::string line;
+	while (!outputStream.eof())
 	{
-		tk::setStr(&stage->compileOutput, output);
+		std::getline(outputStream, line);
 
-		auto outputString = QString(output);
-		compileTextBrowser->setText(outputString);
-
-		auto list = outputString.split("\n");
-		for (int i = 0; i < list.size(); i++)
+		std::regex pat(R"(ERROR:.*)");
+		std::smatch sm;
+		if (std::regex_search(line, sm, pat))
 		{
-			auto line = list[i];
-
-			QString pat = R"(ERROR:.*)";
-			QRegExp reg(pat);
-			auto firstPos = reg.indexIn(line);
-			if (firstPos >= 0)
-			{
-				QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
-				break;
-			}
+			QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
+			break;
 		}
-
-		delete[]output;
-		DeleteFileA("output.txt");
 	}
 
+	DeleteFileA("output.txt");
 	DeleteFileA("temp.glsl");
 
 	auto pipeName = R"(\\.\pipe\tke)";
@@ -428,9 +348,8 @@ void QtGuiApplication::on_toSpvToolButton_clicked()
 		auto hPipe = CreateFileA(pipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		DWORD length = 0;
-		char buf[260];
-		sprintf(buf, "reload %s", currentPipeline->name);
-		WriteFile(hPipe, buf, strlen(buf) + 1, &length, NULL);
+		std::string cmd = "reload " + currentPipeline->name;
+		WriteFile(hPipe, cmd.data(), cmd.size() + 1, &length, NULL);
 		CloseHandle(hPipe);
 	}
 
@@ -443,18 +362,17 @@ void QtGuiApplication::on_stageTabWidget_tabBarClicked(int index)
 
 void QtGuiApplication::on_explorerStageFileToolButton_clicked()
 {
-	auto index = getCurrentStageIndex();
-	if (index == -1) return;
-
-	char cmd[260];
+	auto s = currentTabStage();
+	if (!s) return;
+	
 	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
 	{
-		sprintf(cmd, "%s%s", currentPipeline->filepath, currentPipeline->stages[index]->filename);
-		ShellExecuteA(NULL, "open", cmd, nullptr, nullptr, SW_SHOWNORMAL);
+		std::string cmd = currentPipeline->filepath + "/" + s->filename;
+		ShellExecuteA(NULL, "open", cmd.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	}
 	else
 	{
-		std::string cmd = "explorer /select," + currentPipeline->filepath + "/" + currentPipeline->stages[index]->filename;
+		std::string cmd = "explorer /select," + currentPipeline->filepath + "/" + s->filename;
 		WinExec(cmd.c_str(), SW_SHOWNORMAL);
 	}
 }
@@ -463,18 +381,15 @@ void QtGuiApplication::on_savePipelineToolButton_clicked()
 {
 	if (qTextDataPreparing || !currentPipeline) return;
 
-	auto str = ui.pipelineNameLineEdit->text();
-	if (str.size() < 50) strcpy(currentPipeline->name, str.toUtf8().data());
+	currentPipeline->name = ui.pipelineNameLineEdit->text().toUtf8().data();
 
 	saveDataXml();
 }
 
 void QtGuiApplication::on_find()
 {
-	auto index = getCurrentStageIndex();
-	if (index == -1) return;
-
-	auto text = qTexts[index];
+	auto s = currentTabStage();
+	if (!s) return;
 
 	QList<QTextEdit::ExtraSelection> extraSelections;
 
@@ -484,7 +399,7 @@ void QtGuiApplication::on_find()
 	auto findStr = Find::edit->text();
 	Find::strSize = findStr.size();
 
-	auto str = text->toPlainText();
+	auto str = s->edit->toPlainText();
 
 	if (Find::strSize > 0)
 	{
@@ -501,14 +416,14 @@ void QtGuiApplication::on_find()
 			QColor lineColor = QColor(Qt::yellow).lighter(160);
 
 			selection.format.setBackground(lineColor);
-			selection.cursor = text->textCursor();
+			selection.cursor = s->edit->textCursor();
 			selection.cursor.setPosition(offset);
 			selection.cursor.setPosition(offset + Find::strSize, QTextCursor::KeepAnchor);
 			extraSelections.append(selection);
 		}
 	}
 
-	text->setExtraSelections(extraSelections);
+	s->edit->setExtraSelections(extraSelections);
 
 	Find::update();
 }

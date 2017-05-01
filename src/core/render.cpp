@@ -520,13 +520,14 @@ namespace tke
 			VkPipelineShaderStageCreateInfo i = {};
 			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			i.pName = "main";
-			std::experimental::filesystem::path p(s.filename);
-			auto ext = p.extension().string();
-			if (ext == ".vert") i.stage = VK_SHADER_STAGE_VERTEX_BIT;
-			else if (ext == ".tesc") i.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			else if (ext == ".tese") i.stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			else if (ext == ".geom") i.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
-			else if (ext == ".frag") i.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+			switch (s.type)
+			{
+			case StageFlags::vert: i.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
+			case StageFlags::tesc: i.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT; break;
+			case StageFlags::tese: i.stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT; break;
+			case StageFlags::geom: i.stage = VK_SHADER_STAGE_GEOMETRY_BIT; break;
+			case StageFlags::frag: i.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
+			}
 			i.module = getShaderModule(filepath + "/" + s.filename + ".spv");
 			vkStages.push_back(i);
 		}

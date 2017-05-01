@@ -1,6 +1,6 @@
 struct Pipeline;
 
-struct Stage : tke::StageAbstract
+struct Stage : tke::StageAbstract, QObject
 {
 	std::string text;
 	bool changed = false;
@@ -10,10 +10,20 @@ struct Stage : tke::StageAbstract
 	MyEdit *edit = nullptr;
 	int tabIndex = -1;
 
+	void on_text_changed()
+	{
+		if (qTextDataPreparing) return;
+
+		changed = true;
+		stageTabWidget->setTabText(tabIndex, QString(stageNames[(int)type].c_str()) + "*");
+	}
+
 	void appear()
 	{
 		edit = new MyEdit;
 		edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+		edit->setPlainText(text.c_str());
+		connect(edit, &QPlainTextEdit::textChanged, this, &Stage::on_text_changed);
 	}
 
 	void disappear() 
@@ -22,7 +32,7 @@ struct Stage : tke::StageAbstract
 		tabIndex = -1;
 	}
 
-	std::string Stage::getFullText()
+	std::string Stage::getFullText(const std::string &parent_path)
 	{
 		std::stringstream strIn(text);
 		std::string strOut;
@@ -32,34 +42,29 @@ struct Stage : tke::StageAbstract
 		strOut += "\n";
 
 		std::string line;
-		while (strIn.eof())
+		while (!strIn.eof())
 		{
 			std::getline(strIn, line);
-			QString pat = R"(#include\s+\"([\w\.\\]+)\")";
-			QRegExp reg(pat);
-			auto firstPos = reg.indexIn(str);
-			if (firstPos >= 0)
-			{
-				auto include = reg.cap(1);
-				char _filename[260];
-				sprintf(_filename, "%s%s%s", pipeline->filepath, filepath, include.toUtf8().data());
 
-				tke::OnceFileBuffer file(_filename);
+			std::regex pat(R"(#include\s+\"([\w\.\\]+)\")");
+			std::smatch sm;
+			if (std::regex_search(line, sm, pat))
+			{
+				auto include = sm[1].str();
+				tke::OnceFileBuffer file(parent_path + "/" + filepath + include);
 				strOut += file.data;
 				strOut += "\n";
 			}
 			else
 			{
-				strOut += str + "\n";
+				strOut += line + "\n";
 			}
 		}
 		return strOut;
 	}
-
-	void on_text_changed();
 };
 
-const char* stageNames[] = {
+const std::string stageNames[] = {
     "vert",
     "tesc",
     "tese",
@@ -92,12 +97,36 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 		pipelineTree->addTopLevelItem(item);
     }
 
-	Stage *getStage(int type)
+	Stage *stageByType(int type)
 	{
 		for (auto &s : stages)
 		{
 			if ((int)s.type == type)
 				return &s;
+		}
+		return nullptr;
+	}
+
+	Stage *stageByTabIndex(int index)
+	{
+		for (auto &s : stages)
+		{
+			if (s.tabIndex == index)
+				return &s;
+		}
+		return nullptr;
+	}
+
+	void removeStage(Stage *p)
+	{
+		for (auto it = stages.begin(); it != stages.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				it->disappear();
+				stages.erase(it);
+				return;
+			}
 		}
 	}
 
@@ -115,19 +144,9 @@ struct Pipeline : tke::PipelineAbstract<Stage>
         addToTree();
     }
 
-    void saveXml()
-    {
-		saveXML();
-    }
-
-    void qTextToStageText(int type)
-    {
-		getStage(type)->text = qTexts[type]->toPlainText().toUtf8().data();
-    }
-
     void setTabData(int index)
     {
-		auto s = getStage(qTabTypes[index]);
+		auto s = stageByTabIndex(index);
 		explorerButton->setStatusTip(s->filename.c_str());
 		outputMyEdit->setPlainText(s->output.c_str());
 		compileTextBrowser->setText(s->compileOutput.c_str());
@@ -137,14 +156,16 @@ struct Pipeline : tke::PipelineAbstract<Stage>
     {
         stageTabWidget->clear();
 		int i = 0;
-		for (auto &s : stages)
+		for (int type = 0; type < 5; type++)
 		{
-			qTexts[i]->setPlainText(s.text.c_str());
-			QString title = stageNames[(int)s.type];
-			if (stage->changed) title += "*";
-			qTabIndexs[i] = stageTabWidget->addTab(qTexts[i], title);
-			qTabTypes[i] = (int)s.type;
-			i++;
+			auto s = stageByType(type);
+			if (s)
+			{
+				s->appear();
+				QString title = stageNames[(int)type].c_str();
+				if (s->changed) title += "*";
+				s->tabIndex = stageTabWidget->addTab(s->edit, title);
+			}
 		}
 
         setTabData(0);
@@ -154,15 +175,8 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 std::vector<Pipeline*> pipelines;
 Pipeline *currentPipeline = nullptr;
 
-Stage *getCurrentStage()
+Stage *currentTabStage()
 {
 	if (!currentPipeline) return nullptr;
-	auto index = stageTabWidget->currentIndex();
-	if (index == -1) return nullptr;
-	for (auto &s : currentPipeline->stages)
-	{
-		if (s.tabIndex == index)
-			return &s;
-	}
-	return nullptr;
+	return currentPipeline->stageByTabIndex(stageTabWidget->currentIndex());
 }

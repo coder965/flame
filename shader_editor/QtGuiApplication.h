@@ -29,12 +29,6 @@ public:
 	QtGuiApplication(QWidget *parent = Q_NULLPTR);
 
 private slots:
-	void on_text0_changed();
-	void on_text1_changed();
-	void on_text2_changed();
-	void on_text3_changed();
-	void on_text4_changed();
-
 	void on_pipelineTree_currentItemChanged(QTreeWidgetItem *_curr, QTreeWidgetItem *_prev);
 
 	void on_addPipelineToolButton_clicked();
