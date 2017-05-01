@@ -32,10 +32,10 @@
     <ClInclude Include="def.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="extra0.h">
+    <ClInclude Include="core.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="extra1.h">
+    <ClInclude Include="shader_editor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

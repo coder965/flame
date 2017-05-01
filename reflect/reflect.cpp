@@ -1,15 +1,36 @@
 #include <stdio.h>
-#include <string.h>
 #include <string>
+
+#include <windows.h>
 
 #include "def.h"
 
-//#include "extra0.h"
-#include "extra1.h"
+//#include "core.h"
+#include "shader_editor.h"
 
 #ifndef EXTRA
 #define EXTRA "\n"
 #endif
+
+const std::string defaultSkip[] = {""};
+
+#ifndef SKIP
+#define SKIP defaultSkip
+#endif
+
+#ifndef OUTPUT
+#define OUTPUT ""
+#endif
+
+bool needSkip(const char *name)
+{
+	for (auto i = 0; i < ARRAYSIZE(SKIP); i++)
+	{
+		if (SKIP[i] == name)
+			return true;
+	}
+	return false;
+}
 
 extern "C" {
 	extern FILE *yyin;
@@ -24,14 +45,14 @@ char currentEnumName[100];
 
 int main(int argc, char **argv)
 {
-	if (argc < 3)
+	if (argc < 2)
 		return 1;
 
 	yyin = fopen(argv[1], "rb");
 	if (!yyin)
 		return 1;
 
-	FILE *fout = fopen(argv[2], "wb");
+	FILE *fout = fopen(OUTPUT, "wb");
 	if (!fout) return 1;
 
 	std::string declString;
@@ -55,11 +76,14 @@ int main(int argc, char **argv)
 
 					current = 0;
 					strcpy(currentStructName, yytext);
-					printf("current struct: %s\n", yytext);
-					sprintf(line, "tke::ReflectionBank *%s::b = tke::addReflectionBank(\"%s\");\n", currentStructName, currentStructName);
-					declString += line;
-					sprintf(line, "currentBank = %s::b;\n", currentStructName);
-					implString += line;
+					if (!needSkip(currentStructName))
+					{
+						printf("current struct: %s\n", yytext);
+						sprintf(line, "tke::ReflectionBank *%s::b = tke::addReflectionBank(\"%s\");\n", currentStructName, currentStructName);
+						declString += line;
+						sprintf(line, "currentBank = %s::b;\n", currentStructName);
+						implString += line;
+					}
 				}
 				else if (token0 == ENUM)
 				{
@@ -73,9 +97,12 @@ int main(int argc, char **argv)
 
 					current = 1;
 					strcpy(currentEnumName, yytext);
-					printf("current enum: %s\n", yytext);
-					sprintf(line, "currentEnum = tke::addReflectEnum(\"%s\");\n", currentEnumName);
-					implString += line;
+					if (!needSkip(currentEnumName))
+					{
+						printf("current enum: %s\n", yytext);
+						sprintf(line, "currentEnum = tke::addReflectEnum(\"%s\");\n", currentEnumName);
+						implString += line;
+					}
 				}
 				else
 				{
@@ -100,9 +127,12 @@ int main(int argc, char **argv)
 					return 1;
 				strcpy(valueName, yytext);
 
-				printf("reflect: %s %s\n", typeName, valueName);
-				sprintf(line, "currentBank->addV<%s>(\"%s\", offsetof(%s, %s));\n", typeName, valueName, currentStructName, valueName);
-				implString += line;
+				if (!needSkip(currentStructName))
+				{
+					printf("reflect: %s %s\n", typeName, valueName);
+					sprintf(line, "currentBank->addV<%s>(\"%s\", offsetof(%s, %s));\n", typeName, valueName, currentStructName, valueName);
+					implString += line;
+				}
 			}
 				break;
 			case REFLe:
@@ -119,9 +149,12 @@ int main(int argc, char **argv)
 						return 1;
 					strcpy(name, yytext);
 
-					printf("reflect: %s\n", name);
-					sprintf(line, "currentEnum->items.emplace_back(\"%s\", (int)%s::%s);\n", name, currentEnumName, name);
-					implString += line;
+					if (!needSkip(currentEnumName))
+					{
+						printf("reflect: %s\n", name);
+						sprintf(line, "currentEnum->items.emplace_back(\"%s\", (int)%s::%s);\n", name, currentEnumName, name);
+						implString += line;
+					}
 				}
 				else if (current == 0)
 				{
@@ -138,9 +171,12 @@ int main(int argc, char **argv)
 						return 1;
 					strcpy(name, yytext);
 
-					printf("reflect: %s %s\n", eName, name);
-					sprintf(line, "currentBank->addE(\"%s\", \"%s\", offsetof(%s, %s));\n", eName, name, currentStructName, name);
-					implString += line;
+					if (!needSkip(currentStructName))
+					{
+						printf("reflect: %s %s\n", eName, name);
+						sprintf(line, "currentBank->addE(\"%s\", \"%s\", offsetof(%s, %s));\n", eName, name, currentStructName, name);
+						implString += line;
+					}
 				}
 			}
 				break;

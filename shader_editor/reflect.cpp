@@ -1,10 +1,8 @@
 #include "../src/core/render.abstract.h"
- 			   #include "../src/core/utils.h"
- 			   #include "shader.hpp"
- 			   #define PipelineAbstract PipelineAbstract<Stage>
- 			   #define DrawActionAbstract DrawActionAbstract<Drawcall>
- 			   #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>
- 			   #define RendererAbstract RendererAbstract<RenderPass>
+ #include "../src/core/utils.h"
+ struct Stage;
+ struct Pipeline;
+ #define PipelineAbstract PipelineAbstract<Stage>
 #include <string>
 namespace tke{
 tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");
@@ -13,12 +11,6 @@ tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstant
 tke::ReflectionBank *StageAbstract::b = tke::addReflectionBank("StageAbstract");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *PipelineAbstract::b = tke::addReflectionBank("PipelineAbstract");
-tke::ReflectionBank *DrawcallAbstract::b = tke::addReflectionBank("DrawcallAbstract");
-tke::ReflectionBank *DrawActionAbstract::b = tke::addReflectionBank("DrawActionAbstract");
-tke::ReflectionBank *AttachmentAbstract::b = tke::addReflectionBank("AttachmentAbstract");
-tke::ReflectionBank *DependencyAbstract::b = tke::addReflectionBank("DependencyAbstract");
-tke::ReflectionBank *RenderPassAbstract::b = tke::addReflectionBank("RenderPassAbstract");
-tke::ReflectionBank *RendererAbstract::b = tke::addReflectionBank("RendererAbstract");
 struct ReflectInit{ReflectInit(){
 tke::Enum *currentEnum = nullptr;
 tke::ReflectionBank *currentBank = nullptr;
@@ -116,55 +108,5 @@ currentBank->addV<bool>("depthClamp", offsetof(PipelineAbstract, depthClamp));
 currentBank->addE("PrimitiveTopology", "primitiveTopology", offsetof(PipelineAbstract, primitiveTopology));
 currentBank->addE("PolygonMode", "polygonMode", offsetof(PipelineAbstract, polygonMode));
 currentBank->addE("CullMode", "cullMode", offsetof(PipelineAbstract, cullMode));
-currentBank = DrawcallAbstract::b;
-currentBank->addV<std::string>("name", offsetof(DrawcallAbstract, name));
-currentBank->addV<int>("instance_count", offsetof(DrawcallAbstract, instance_count));
-currentBank->addV<int>("first_instance", offsetof(DrawcallAbstract, first_instance));
-currentBank->addE("DrawcallType", "type", offsetof(DrawcallAbstract, type));
-currentBank->addV<int>("vertex_count", offsetof(DrawcallAbstract, vertex_count));
-currentBank->addV<int>("first_vertex", offsetof(DrawcallAbstract, first_vertex));
-currentBank->addV<int>("index_count", offsetof(DrawcallAbstract, index_count));
-currentBank->addV<int>("first_index", offsetof(DrawcallAbstract, first_index));
-currentBank->addV<int>("vertex_offset", offsetof(DrawcallAbstract, vertex_offset));
-currentBank->addV<std::string>("indirect_vertex_buffer_name", offsetof(DrawcallAbstract, indirect_vertex_buffer_name));
-currentBank->addV<std::string>("indirect_index_buffer_name", offsetof(DrawcallAbstract, indirect_index_buffer_name));
-currentBank->addV<int>("first_indirect", offsetof(DrawcallAbstract, first_indirect));
-currentBank->addV<int>("indirect_count", offsetof(DrawcallAbstract, indirect_count));
-currentBank->addV<StageFlags>("push_constant_stage", offsetof(DrawcallAbstract, push_constant_stage));
-currentBank->addV<int>("push_constant_offset", offsetof(DrawcallAbstract, push_constant_offset));
-currentBank->addE("PushConstantType", "push_constant_type", offsetof(DrawcallAbstract, push_constant_type));
-currentBank = DrawActionAbstract::b;
-currentBank->addV<std::string>("name", offsetof(DrawActionAbstract, name));
-currentBank->addE("DrawActionType", "type", offsetof(DrawActionAbstract, type));
-currentBank->addV<std::string>("vertex_buffer_name", offsetof(DrawActionAbstract, vertex_buffer_name));
-currentBank->addV<std::string>("index_buffer_name", offsetof(DrawActionAbstract, index_buffer_name));
-currentBank->addV<std::string>("pipeline_name", offsetof(DrawActionAbstract, pipeline_name));
-currentBank->addV<std::string>("renderable_name", offsetof(DrawActionAbstract, renderable_name));
-currentBank->addV<int>("cx", offsetof(DrawActionAbstract, cx));
-currentBank->addV<int>("cy", offsetof(DrawActionAbstract, cy));
-currentBank = AttachmentAbstract::b;
-currentBank->addV<std::string>("name", offsetof(AttachmentAbstract, name));
-currentBank->addV<std::string>("image_name", offsetof(AttachmentAbstract, image_name));
-currentBank->addV<int>("level", offsetof(AttachmentAbstract, level));
-currentBank->addV<int>("layer", offsetof(AttachmentAbstract, layer));
-currentBank->addE("AspectFlags", "aspect", offsetof(AttachmentAbstract, aspect));
-currentBank->addV<bool>("clear", offsetof(AttachmentAbstract, clear));
-currentBank->addV<float>("clear_r", offsetof(AttachmentAbstract, clear_r));
-currentBank->addV<float>("clear_g", offsetof(AttachmentAbstract, clear_g));
-currentBank->addV<float>("clear_b", offsetof(AttachmentAbstract, clear_b));
-currentBank->addV<float>("clear_a", offsetof(AttachmentAbstract, clear_a));
-currentBank->addV<float>("clear_depth", offsetof(AttachmentAbstract, clear_depth));
-currentBank->addV<int>("clear_stencil", offsetof(AttachmentAbstract, clear_stencil));
-currentBank = DependencyAbstract::b;
-currentBank->addV<std::string>("pass_name", offsetof(DependencyAbstract, pass_name));
-currentBank = RenderPassAbstract::b;
-currentBank->addE("RenderPassType", "type", offsetof(RenderPassAbstract, type));
-currentBank->addV<std::string>("name", offsetof(RenderPassAbstract, name));
-currentBank->addV<std::string>("secondary_cmd_name", offsetof(RenderPassAbstract, secondary_cmd_name));
-currentBank = RendererAbstract::b;
-currentBank->addV<int>("cx", offsetof(RendererAbstract, cx));
-currentBank->addV<int>("cy", offsetof(RendererAbstract, cy));
-currentBank->addV<std::string>("name", offsetof(RendererAbstract, name));
-currentBank->addV<std::string>("filename", offsetof(RendererAbstract, filename));
 }};static ReflectInit init;
 }
