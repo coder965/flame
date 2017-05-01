@@ -98,19 +98,19 @@ public:
         addPipelineToolButton->setObjectName(QStringLiteral("addPipelineToolButton"));
         addPipelineToolButton->setGeometry(QRect(0, 0, 21, 21));
         QIcon icon;
-        icon.addFile(QStringLiteral(":/png/add.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QStringLiteral(":/image/misc/add.png"), QSize(), QIcon::Normal, QIcon::Off);
         addPipelineToolButton->setIcon(icon);
         removePipelineToolButton = new QToolButton(groupBox);
         removePipelineToolButton->setObjectName(QStringLiteral("removePipelineToolButton"));
         removePipelineToolButton->setGeometry(QRect(30, 0, 21, 21));
         QIcon icon1;
-        icon1.addFile(QStringLiteral(":/png/delete.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QStringLiteral(":/image/misc/delete.png"), QSize(), QIcon::Normal, QIcon::Off);
         removePipelineToolButton->setIcon(icon1);
         explorerPipelineFileToolButton = new QToolButton(groupBox);
         explorerPipelineFileToolButton->setObjectName(QStringLiteral("explorerPipelineFileToolButton"));
         explorerPipelineFileToolButton->setGeometry(QRect(60, 0, 21, 21));
         QIcon icon2;
-        icon2.addFile(QStringLiteral(":/png/open.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon2.addFile(QStringLiteral(":/image/misc/open.png"), QSize(), QIcon::Normal, QIcon::Off);
         explorerPipelineFileToolButton->setIcon(icon2);
 
         verticalLayout_2->addWidget(groupBox);
@@ -135,7 +135,7 @@ public:
         savePipelineToolButton = new QToolButton(groupBox_5);
         savePipelineToolButton->setObjectName(QStringLiteral("savePipelineToolButton"));
         QIcon icon3;
-        icon3.addFile(QStringLiteral(":/png/save.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon3.addFile(QStringLiteral(":/image/misc/save.png"), QSize(), QIcon::Normal, QIcon::Off);
         savePipelineToolButton->setIcon(icon3);
 
         horizontalLayout_2->addWidget(savePipelineToolButton);
@@ -183,7 +183,7 @@ public:
         toSpvToolButton->setObjectName(QStringLiteral("toSpvToolButton"));
         toSpvToolButton->setGeometry(QRect(90, 0, 21, 21));
         QIcon icon4;
-        icon4.addFile(QStringLiteral(":/png/spv.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon4.addFile(QStringLiteral(":/image/misc/spv.png"), QSize(), QIcon::Normal, QIcon::Off);
         toSpvToolButton->setIcon(icon4);
         explorerStageFileToolButton = new QToolButton(groupBox_4);
         explorerStageFileToolButton->setObjectName(QStringLiteral("explorerStageFileToolButton"));

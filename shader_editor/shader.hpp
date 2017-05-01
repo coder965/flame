@@ -15,7 +15,7 @@ struct StageWrap : QObject
 	bool changed = false;
 	MyEdit *edit = nullptr;
 	int tabIndex = -1;
-
+	~StageWrap(){ delete edit; }
 	void appear()
 	{
 		edit = new MyEdit;
@@ -45,12 +45,6 @@ struct Stage : tke::StageAbstract
 		wrap.type = (int)type;
 		wrap.appear();
 		wrap.edit->setPlainText(text.c_str());
-	}
-
-	void disappear() 
-	{
-		delete wrap.edit;
-		wrap.tabIndex = -1;
 	}
 
 	std::string Stage::getFullText(const std::string &parent_path)
@@ -136,8 +130,9 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 		{
 			if ((*it) == p)
 			{
-				(*it)->disappear();
+				auto s = *it;
 				stages.erase(it);
+				delete s;
 				return;
 			}
 		}

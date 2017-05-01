@@ -5,22 +5,13 @@
     <ClCompile Include="QtGuiApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_QtGuiApplication.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_QtGuiApplication.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\tk-sdk\tk.qt.cpp">
+    <ClCompile Include="..\src\core\qt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\tk-sdk\tk.utils.cpp">
+    <ClCompile Include="..\src\core\reflect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\tk-sdk\engine\core\tke.render.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\tk-sdk\engine\core\reflect.cpp">
+    <ClCompile Include="..\src\core\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -58,18 +49,9 @@
     <CustomBuild Include="QtGuiApplication.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="QtGuiApplication.qrc">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_QtGuiApplication.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="render.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\tk-sdk\qt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

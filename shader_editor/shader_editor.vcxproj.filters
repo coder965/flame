@@ -34,6 +34,9 @@
     <CustomBuild Include="QtGuiApplication.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="shader_editor.qrc">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="edit.hpp">
@@ -50,20 +53,46 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QtGuiApplication.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\core\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="reflect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_QtGuiApplication.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_QtGuiApplication.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QtGuiApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_shader_editor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\misc\add.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\delete.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\down.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\new.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\open.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\save.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\spv.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\misc\up.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

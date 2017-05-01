@@ -67,8 +67,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/add.png</normaloff>:/png/add.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="removePipelineToolButton">
@@ -84,8 +84,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/delete.png</normaloff>:/png/delete.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="explorerPipelineFileToolButton">
@@ -101,8 +101,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/open.png</normaloff>:/png/open.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/open.png</normaloff>:/image/misc/open.png</iconset>
            </property>
           </widget>
          </widget>
@@ -155,8 +155,8 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="QtGuiApplication.qrc">
-               <normaloff>:/png/save.png</normaloff>:/png/save.png</iconset>
+              <iconset resource="shader_editor.qrc">
+               <normaloff>:/image/misc/save.png</normaloff>:/image/misc/save.png</iconset>
              </property>
             </widget>
            </item>
@@ -221,8 +221,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/add.png</normaloff>:/png/add.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="removeStageToolButton">
@@ -238,8 +238,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/delete.png</normaloff>:/png/delete.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="saveStageToolButton">
@@ -255,8 +255,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/save.png</normaloff>:/png/save.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/save.png</normaloff>:/image/misc/save.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="toSpvToolButton">
@@ -272,8 +272,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/spv.png</normaloff>:/png/spv.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/spv.png</normaloff>:/image/misc/spv.png</iconset>
            </property>
           </widget>
           <widget class="QToolButton" name="explorerStageFileToolButton">
@@ -289,8 +289,8 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="QtGuiApplication.qrc">
-             <normaloff>:/png/open.png</normaloff>:/png/open.png</iconset>
+            <iconset resource="shader_editor.qrc">
+             <normaloff>:/image/misc/open.png</normaloff>:/image/misc/open.png</iconset>
            </property>
           </widget>
          </widget>
@@ -338,7 +338,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="QtGuiApplication.qrc"/>
+  <include location="shader_editor.qrc"/>
  </resources>
  <connections/>
 </ui>

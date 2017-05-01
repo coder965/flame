@@ -11,22 +11,11 @@
 #include <fstream>
 #include <sstream> 
 
-#define TKE_DRAWCALL_EXT_TYPE DrawcallExtraData
-//#define TKE_PUSHCONSTANT_EXT_TYPE PushConstantExtraData
-#define TKE_DEPENDENCY_EXT_TYPE DependencyExtraData
-#define TKE_DRAWACTION_EXT_TYPE DrawActionExtraData
-#define TKE_ATTACHMENT_EXT_TYPE AttachmentExtraData
-#define TKE_RENDERPASS_EXT_TYPE RenderPassExtraData
-#define TKE_RENDERER_EXT_TYPE RendererExtraData
-#include "d:/tk-sdk/utils.h"
-#include "d:/tk-sdk/qt.h"
-#include "d:/tk-sdk/engine/core/render.h"
+#include "d:/TK_Engine/src/core/utils.h"
+#include "d:/TK_Engine/src/core/qt.h"
+#include "d:/TK_Engine/src/core/render.abstract.h"
 
-#include "d:/rapidxml-1.13/rapidxml.hpp"
-#include "d:/rapidxml-1.13/rapidxml_utils.hpp"
-#include "d:/rapidxml-1.13/rapidxml_print.hpp"
-
-auto rendererPath = "D:/tk-sdk/engine/renderer";
+const std::string rendererPath = "D:/TK_Engine/renderer";
 
 bool appearing = false;
 

@@ -1,7 +1,7 @@
 #include "qt.h"
 #include <qvalidator.h>
 
-namespace tk
+namespace tke
 {
 	QIntEdit::QIntEdit(int *_p, int min, int max)
 	{

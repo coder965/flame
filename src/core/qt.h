@@ -8,7 +8,7 @@
 #include <qtoolbutton.h>
 #include <qgroupbox.h>
 
-namespace tk
+namespace tke
 {
 	struct QIntEdit : QLineEdit
 	{
