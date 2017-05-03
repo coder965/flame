@@ -2,6 +2,7 @@
 #define __TKE_RENDER__
 
 #include <vector>
+#include <list>
 #include <string>
 #include <memory>
 #include <experimental/filesystem>
@@ -278,9 +279,9 @@ namespace tke
 		}
 	};
 
-	REFLECTABLE struct DrawcallAbstract
+	REFLECTABLE struct DrawcallAbstract : Element
 	{
-		void *parent = nullptr;
+		Container *parent = nullptr;
 
 		REFL_BANK;
 
@@ -331,9 +332,9 @@ namespace tke
 	};
 
 	template <class DrawcallType>
-	REFLECTABLE struct DrawActionAbstract
+	REFLECTABLE struct DrawActionAbstract : Element, Container
 	{
-		void *parent = nullptr;
+		Container *parent = nullptr;
 
 		REFL_BANK;
 
@@ -350,48 +351,20 @@ namespace tke
 		REFLv int cx = 0;
 		REFLv int cy = 0;
 
-		std::vector<std::shared_ptr<DrawcallType>> m_drawcalls;
-
-		inline void addDrawcall(std::shared_ptr<DrawcallType> drawcall)
+		std::list<DrawcallType> drawcalls;
+		
+		template <class... _Valty>
+		inline DrawcallType *addDrawcall(_Valty&&... _Val)
 		{
-			drawcall->parent = this;
-			m_drawcalls.push_back(drawcall);
+			drawcalls.emplace_back(_Val);
+			auto d = &drawcalls.back();
+			d->parent = this;
+			return d;
 		}
-		inline void removeDrawcall(DrawcallType *p)
+		inline void eraseDrawcallBack(int count)
 		{
-			auto it = std::find_if(m_drawcalls.begin(), m_drawcalls.end(), [&](std::shared_ptr<Drawcall> const& p) {
-				return p.get() == drawcall;
-			});
-			if (it != m_drawcalls.end())
-				m_drawcalls.erase(it);
-		}
-		inline int upDrawcall(DrawcallType *c)
-		{
-			for (int i = 0; i < m_drawcalls.size(); i++)
-			{
-				if (m_drawcalls[i].get() == c)
-				{
-					if (i > 0) std::swap(m_drawcalls[i], m_drawcalls[i - 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
-		inline int downDrawcall(DrawcallType *c)
-		{
-			for (int i = 0; i < m_drawcalls.size(); i++)
-			{
-				if (m_drawcalls[i].get() == c)
-				{
-					if (i < m_drawcalls.size() - 1) std::swap(m_drawcalls[i], m_drawcalls[i + 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
-		inline void clearDrawcalls()
-		{
-			m_drawcalls.clear();
+			if (count <= 0 || count >= drawcalls.size()) return;
+			drawcalls.erase(drawcalls.begin() + (drawcalls.size() - count), drawcalls.end());
 		}
 		inline void loadFromAt(AttributeTreeNode *n)
 		{
@@ -404,9 +377,8 @@ namespace tke
 				{
 					if (nn->name == "drawcall")
 					{
-						auto drawcall = std::make_shared<DrawcallType>();
-						addDrawcall(drawcall);
-						drawcall->loadFromAt(nn);
+						auto d = addDrawcall();
+						d->loadFromAt(nn);
 					}
 				}
 			}
@@ -421,14 +393,18 @@ namespace tke
 			{
 				auto n = new AttributeTreeNode("drawcall");
 				drawcallsNode->children.push_back(n);
-				d->saveToAt(n);
+				d.saveToAt(n);
 			}
+		}
+		inline void maintain(int row) override
+		{
+			maintainVector(m_drawcalls);
 		}
 	};
 
-	REFLECTABLE struct AttachmentAbstract
+	REFLECTABLE struct AttachmentAbstract : Element
 	{
-		void *parent;
+		Container *parent;
 
 		REFL_BANK;
 
@@ -457,9 +433,9 @@ namespace tke
 		}
 	};
 
-	REFLECTABLE struct DependencyAbstract
+	REFLECTABLE struct DependencyAbstract : Element
 	{
-		void *parent;
+		Container *parent;
 
 		REFL_BANK;
 
@@ -475,13 +451,21 @@ namespace tke
 		}
 	};
 
-	template <class AttachmentType, class DependencyType, class DrawActionType>
-	REFLECTABLE struct RenderPassAbstract
+	enum class RenderPassElement
 	{
-		void *parent;
+		eAction,
+		eColorAttachment,
+		eDepthStencilAttachment,
+		eDependency
+	};
+
+	template <class AttachmentType, class DependencyType, class DrawActionType>
+	REFLECTABLE struct RenderPassAbstract : Element, Container
+	{
+		Container *parent;
 
 		std::vector<std::shared_ptr<AttachmentType>> colorAttachments;
-		std::shared_ptr<AttachmentType> depthStencilAttachment = nullptr;
+		std::shared_ptr<AttachmentType> depthStencilAttachment;
 
 		std::vector<std::shared_ptr<DependencyType>> dependencies;
 
@@ -500,120 +484,20 @@ namespace tke
 			p->parent = this;
 			colorAttachments.push_back(p);
 		}
-		void removeColorAttachment(AttachmentType *attachment)
-		{
-			auto it = std::find_if(colorAttachments.begin(), colorAttachments.end(), [&](std::shared_ptr<Attachment> const& p) {
-				return p.get() == attachment;
-			});
-			if (it != colorAttachments.end())
-				colorAttachments.erase(it);
-		}
-		int upColorAttachment(AttachmentType *a)
-		{
-			for (int i = 0; i < colorAttachments.size(); i++)
-			{
-				if (colorAttachments[i].get() == a)
-				{
-					if (i > 0) std::swap(colorAttachments[i], colorAttachments[i - 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
-		int downColorAttachment(AttachmentType *a)
-		{
-			for (int i = 0; i < colorAttachments.size(); i++)
-			{
-				if (colorAttachments[i].get() == a)
-				{
-					if (i < colorAttachments.size() - 1) std::swap(colorAttachments[i], colorAttachments[i + 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
 		void addDepthStencilAttachment(std::shared_ptr<AttachmentType> p)
 		{
 			p->parent = this;
 			depthStencilAttachment = p;
-		}
-		void removeDepthStencilAttachment()
-		{
-			depthStencilAttachment.reset();
 		}
 		void addDependency(std::shared_ptr<DependencyType> p)
 		{
 			p->parent = this;
 			dependencies.push_back(p);
 		}
-		void removeDependency(DependencyType *dependency)
-		{
-			auto it = std::find_if(dependencies.begin(), dependencies.end(), [&](std::shared_ptr<Dependency> const& p) {
-				return p.get() == dependency;
-			});
-			if (it != dependencies.end())
-				dependencies.erase(it);
-		}
-		int upDependency(DependencyType *d)
-		{
-			for (int i = 0; i < dependencies.size(); i++)
-			{
-				if (dependencies[i].get() == d)
-				{
-					if (i > 0) std::swap(dependencies[i], dependencies[i - 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
-		int downDependency(DependencyType *d)
-		{
-			for (int i = 0; i < dependencies.size(); i++)
-			{
-				if (dependencies[i].get() == d)
-				{
-					if (i < dependencies.size() - 1) std::swap(dependencies[i], dependencies[i + 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
 		void addAction(std::shared_ptr<DrawActionType> action)
 		{
 			action->parent = this;
 			actions.push_back(action);
-		}
-		void removeAction(DrawActionType *action)
-		{
-			auto it = std::find_if(actions.begin(), actions.end(), [&](std::shared_ptr<DrawAction> const& p) {
-				return p.get() == action;
-			});
-			if (it != actions.end())
-				actions.erase(it);
-		}
-		int upAction(DrawActionType *a)
-		{
-			for (int i = 0; i < actions.size(); i++)
-			{
-				if (actions[i].get() == a)
-				{
-					if (i > 0) std::swap(actions[i], actions[i - 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
-		int downAction(DrawActionType *a)
-		{
-			for (int i = 0; i < actions.size(); i++)
-			{
-				if (actions[i].get() == a)
-				{
-					if (i < actions.size() - 1) std::swap(actions[i], actions[i + 1]);
-					return i;
-				}
-			}
-			return -1;
 		}
 		inline void loadFromAt(AttributeTreeNode *n)
 		{
@@ -711,10 +595,32 @@ namespace tke
 				a->saveToAt(n);
 			}
 		}
+		inline void maintain(int row) override
+		{
+			switch (row)
+			{
+			case RenderPassElement::eAction:
+				maintainVector(actions);
+				break;
+			case RenderPassElement::eColorAttachment:
+				maintainVector(colorAttachments);
+				break;
+			case RenderPassElement::eDepthStencilAttachment:
+				if (depthStencilAttachment)
+				{
+					if (depthStencilAttachment->mark == Element::eMarkClear)
+						depthStencilAttachment.reset();
+				}
+				break;
+			case RenderPassElement::eDependency:
+				maintainVector(dependencies);
+				break;
+			}
+		}
 	};
 
 	template <class RenderPassType>
-	REFLECTABLE struct RendererAbstract
+	REFLECTABLE struct RendererAbstract : Container
 	{
 		REFL_BANK;
 
@@ -828,6 +734,10 @@ namespace tke
 			}
 
 			at.saveXML(filename);
+		}
+		inline void maintain(int row) override
+		{
+			maintainVector(passes);
 		}
 	};
 }

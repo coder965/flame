@@ -154,18 +154,13 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 		masterRenderer = new tke::MasterRenderer(1600, 900, this, &tke::scene->vertexBuffer, &tke::scene->indexBuffer, &tke::scene->objectIndirectBuffer);
 
-		auto miscWireFrameFragPc = std::make_shared<tke::Drawcall>(VK_SHADER_STAGE_FRAGMENT_BIT, 16, sizeof(glm::vec4), &glm::vec4(0.f, 1.f, 0.f, 1.f));
 		int index;
 		index = 0;
-		auto miscWireFrameLightVertPc = std::make_shared<tke::Drawcall>(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(int), &index);
+		miscWireFrameLightAction->addDrawcall(VK_SHADER_STAGE_VERTEX_BIT, &index);
+		miscWireFrameLightAction->addDrawcall(VK_SHADER_STAGE_FRAGMENT_BIT, &glm::vec4(0.f, 1.f, 0.f, 1.f), 16);
 		index = 1;
-		auto miscWireFrameObjectVertPc = std::make_shared<tke::Drawcall>(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(int), &index);
-
-		miscWireFrameLightAction->addDrawcall(miscWireFrameLightVertPc);
-		miscWireFrameLightAction->addDrawcall(miscWireFrameFragPc);
-		miscWireFrameLightAction->m_drawcalls.resize(3);
-		miscWireFrameObjectAction->addDrawcall(miscWireFrameObjectVertPc);
-		miscWireFrameObjectAction->addDrawcall(miscWireFrameFragPc);
+		miscWireFrameObjectAction->addDrawcall(VK_SHADER_STAGE_VERTEX_BIT, &index);
+		miscWireFrameObjectAction->addDrawcall(VK_SHADER_STAGE_FRAGMENT_BIT, &glm::vec4(0.f, 1.f, 0.f, 1.f), 16);
 
 		masterRenderer->miscPass->addAction(miscLightFrameAction);
 		masterRenderer->miscPass->addAction(miscWireFrameLightAction);
@@ -207,7 +202,7 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 			masterRenderer->mrtObjectDrawcall->indirect_count = tke::scene->drawCallCount;
 
-			masterRenderer->mrtHeightMapTerrainAction->clearDrawcalls();
+			masterRenderer->mrtHeightMapTerrainAction->drawcalls.clear();
 			auto terrainIndex = 0;
 			for (auto pTerrain : tke::scene->pTerrains)
 			{
@@ -218,7 +213,7 @@ struct MainWindow : tke::UI::EngineGuiWindow
 			miscParallaxLightDrawcall->setIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
 			miscPointLightDrawcall->setIndex(tke::sphereModel->indices.size(), tke::sphereModel->indiceBase, tke::sphereModel->vertexBase);
 
-			miscLightFrameAction->clearDrawcalls();
+			miscLightFrameAction->drawcalls.clear();
 			auto lightIndex = 0;
 			for (auto pLight : tke::scene->pLights)
 			{

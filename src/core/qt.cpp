@@ -66,6 +66,9 @@ namespace tke
 	}
 
 	template<class T>
+	QTreeItemPair<T>::~QTreeItemPair() { delete item;  }
+
+	template<class T>
 	void QTreeItemPair<T>::setup(QTreeWidget *tree, QTreeWidgetItem *parent, const char *name, std::string *str)
 	{
 		item = new QTreeWidgetItem;
@@ -101,4 +104,47 @@ namespace tke
 	template struct QTreeItemPair<QStringCombo>;
 	template struct QTreeItemPair<QBoolCheck>;
 	template struct QTreeItemPair<QGroupBox>;
+
+	void qAddTreeItem(QTreeWidget *tree, QTreeWidgetItem *parent, void *p, Variable *r)
+	{
+		if (r->what == Variable::eVariable)
+		{
+			auto v = (NormalVariable*)r;
+			if (v->type() == typeid(int))
+			{
+				QTreeItemPair<QIntEdit> item;
+				item.partner = new QIntEdit(v->ptr<int>(p), 0, 10000);
+				item.setup(tree, parent, v->name.c_str());
+			}
+			else if (v->type() == typeid(float))
+			{
+				QTreeItemPair<QFloatEdit> item;
+				item.partner = new QFloatEdit(v->ptr<float>(p));
+				item.setup(tree, parent, v->name.c_str());
+			}
+			else if (v->type() == typeid(bool))
+			{
+				QTreeItemPair<QBoolCheck> item;
+				item.partner = new QBoolCheck(v->ptr<bool>(p));
+				item.setup(tree, parent, v->name.c_str());
+			}
+			else if (v->type() == typeid(std::string))
+			{
+				QTreeItemPair<QStringCombo> item;
+				item.partner = new QStringCombo(v->ptr<std::string>(p));
+				item.setup(tree, parent, v->name.c_str());
+			}
+		}
+		else if (r->what == Variable::eEnum)
+		{
+			auto e = (EnumVariable*)r;
+			auto v = e->ptr(p);
+			QTreeItemPair<QIntDropCombo> item;
+			item.partner = new QIntDropCombo(v);
+			for (auto &i : e->pEnum->items)
+				item.partner->addItem(i.first.c_str());
+			item.partner->setCurrentIndex(*v);
+			item.setup(tree, parent, e->name.c_str());
+		}
+	}
 }

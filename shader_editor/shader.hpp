@@ -8,37 +8,35 @@ const std::string stageNames[] = {
 	"frag"
 };
 
-struct StageWrap : QObject
-{
-	int type;
-
-	bool changed = false;
-	MyEdit *edit = nullptr;
-	int tabIndex = -1;
-	~StageWrap(){ delete edit; }
-	void appear()
-	{
-		edit = new MyEdit;
-		edit->setLineWrapMode(QPlainTextEdit::NoWrap);
-		connect(edit, &QPlainTextEdit::textChanged, this, &StageWrap::on_text_changed);
-	}
-
-	void on_text_changed()
-	{
-		if (qTextDataPreparing) return;
-
-		changed = true;
-		stageTabWidget->setTabText(tabIndex, QString(stageNames[type].c_str()) + "*");
-	}
-};
-
 struct Stage : tke::StageAbstract
 {
 	std::string text;
 	std::string output;
 	std::string compileOutput;
 
-	StageWrap wrap;
+	struct Wrap : QObject
+	{
+		int type;
+
+		bool changed = false;
+		MyEdit *edit = nullptr;
+		int tabIndex = -1;
+		~Wrap() { delete edit; }
+		void appear()
+		{
+			edit = new MyEdit;
+			edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+			connect(edit, &QPlainTextEdit::textChanged, this, &Wrap::on_text_changed);
+		}
+
+		void on_text_changed()
+		{
+			if (qTextDataPreparing) return;
+
+			changed = true;
+			stageTabWidget->setTabText(tabIndex, QString(stageNames[type].c_str()) + "*");
+		}
+	}wrap;
 
 	void appear()
 	{

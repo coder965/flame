@@ -495,9 +495,9 @@ namespace tke
 		for (auto &l : links)
 		{
 			LinkResourceVk v = {};
-			v.type = _vkDescriptorType(l.descriptorType);
+			v.type = _vkDescriptorType(l.type);
 			v.binding = l.binding;
-			v.arrayElement = l.arrayElement;
+			v.arrayElement = l.array_element;
 			v.name = l.name;
 			switch (l.sampler)
 			{
@@ -515,12 +515,12 @@ namespace tke
 			}
 			vkLinks.push_back(v);
 		}
-		for (auto &s : stages)
+		for (auto s : stages)
 		{
 			VkPipelineShaderStageCreateInfo i = {};
 			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			i.pName = "main";
-			switch (s.type)
+			switch (s->type)
 			{
 			case StageFlags::vert: i.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
 			case StageFlags::tesc: i.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT; break;
@@ -528,7 +528,7 @@ namespace tke
 			case StageFlags::geom: i.stage = VK_SHADER_STAGE_GEOMETRY_BIT; break;
 			case StageFlags::frag: i.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
 			}
-			i.module = getShaderModule(filepath + "/" + s.filename + ".spv");
+			i.module = getShaderModule(filepath + "/" + s->filename + ".spv");
 			vkStages.push_back(i);
 		}
 	}
@@ -756,10 +756,12 @@ namespace tke
 		type = DrawcallType::indirect_index;
 	}
 
-	Drawcall::Drawcall(VkShaderStageFlags stage, size_t offset, size_t size, void *data)
+	template <class T>
+	Drawcall::Drawcall(VkShaderStageFlags stage, T *data, size_t offset)
 	{
 		m_pushConstantStage = stage;
 		push_constant_offset = offset;
+		auto size = sizeof(T);
 		m_pushConstantSize = size;
 		push_constant_value = malloc(size);
 		memcpy(push_constant_value, data, size);
@@ -974,24 +976,24 @@ namespace tke
 							currentDescriptorSet = action->m_descriptorSet;
 						}
 
-						for (auto drawcall : action->m_drawcalls)
+						for (auto &drawcall : action->drawcalls)
 						{
-							switch (drawcall->type)
+							switch (drawcall.type)
 							{
 							case DrawcallType::vertex:
-								vkCmdDraw(cmd, drawcall->vertex_count, drawcall->instance_count, drawcall->first_vertex, drawcall->first_instance);
+								vkCmdDraw(cmd, drawcall.vertex_count, drawcall.instance_count, drawcall.first_vertex, drawcall.first_instance);
 								break;
 							case DrawcallType::index:
-								vkCmdDrawIndexed(cmd, drawcall->index_count, drawcall->instance_count, drawcall->first_index, drawcall->vertex_offset, drawcall->first_instance);
+								vkCmdDrawIndexed(cmd, drawcall.index_count, drawcall.instance_count, drawcall.first_index, drawcall.vertex_offset, drawcall.first_instance);
 								break;
 							case DrawcallType::indirect_vertex:
-								vkCmdDrawIndirect(cmd, drawcall->m_vertexIndirectBuffer->m_buffer, drawcall->first_indirect * drawcall->m_vertexIndirectBuffer->stride(), drawcall->indirect_count, drawcall->m_vertexIndirectBuffer->stride());
+								vkCmdDrawIndirect(cmd, drawcall.m_vertexIndirectBuffer->m_buffer, drawcall.first_indirect * drawcall.m_vertexIndirectBuffer->stride(), drawcall.indirect_count, drawcall.m_vertexIndirectBuffer->stride());
 								break;
 							case DrawcallType::indirect_index:
-								vkCmdDrawIndexedIndirect(cmd, drawcall->m_indexedIndirectBuffer->m_buffer, drawcall->first_indirect * drawcall->m_indexedIndirectBuffer->stride(), drawcall->indirect_count, drawcall->m_indexedIndirectBuffer->stride());
+								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indexedIndirectBuffer->m_buffer, drawcall.first_indirect * drawcall.m_indexedIndirectBuffer->stride(), drawcall.indirect_count, drawcall.m_indexedIndirectBuffer->stride());
 								break;
 							case DrawcallType::push_constant:
-								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout, drawcall->m_pushConstantStage, drawcall->push_constant_offset, drawcall->m_pushConstantSize, drawcall->push_constant_value);
+								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout, drawcall.m_pushConstantStage, drawcall.push_constant_offset, drawcall.m_pushConstantSize, drawcall.push_constant_value);
 								break;
 							}
 						}

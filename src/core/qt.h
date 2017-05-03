@@ -8,6 +8,8 @@
 #include <qtoolbutton.h>
 #include <qgroupbox.h>
 
+#include "utils.h"
+
 namespace tke
 {
 	struct QIntEdit : QLineEdit
@@ -56,9 +58,12 @@ namespace tke
 		QTreeWidgetItem *item = nullptr;
 		T *partner = nullptr;
 
+		~QTreeItemPair();
 		void setup(QTreeWidget *tree, QTreeWidgetItem *parent, const char *name, std::string *str = nullptr);
 		void setup(QTreeWidgetItem *parent, const char *name0, const char *name1);
 	};
+
+	void qAddTreeItem(QTreeWidget *tree, QTreeWidgetItem *parent, void *p, Variable *r);
 }
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef __TKE_UTILS__
 #define __TKE_UTILS__
 
+#include <memory>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -191,6 +192,45 @@ namespace tke
 #define REFLv
 #define REFLe
 
+	struct Element
+	{
+		enum Mark
+		{
+			eDefault,
+			eMarkUp,
+			eMarkDown,
+			eMarkClear
+		};
+		Mark mark = eDefault;
+	};
+
+	struct Container
+	{
+		virtual void maintain(int row) = 0;
+	};
+
+	// one operation a time
+	template <class T>
+	void maintainVector(std::vector<T> &v)
+	{
+		for (auto i = 0; i < v.size(); i++)
+		{
+			switch (v[i]->mark)
+			{
+			case Element::eMarkUp:
+				if (i > 0) std::swap(v[i], v[i - 1]);
+				v[i]->mark = Element::eDefault;
+				return;
+			case Element::eMarkDown:
+				if (i < v.size() - 1) std::swap(v[i], v[i + 1]);
+				v[i]->mark = Element::eDefault;
+				return;
+			case Element::eMarkClear:
+				v.erase(v.begin() + i);
+				return;
+			}
+		}
+	}
 }
 
 #endif

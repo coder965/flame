@@ -209,7 +209,8 @@ namespace tke
 		Drawcall(int indexCount, int firstIndex, int vertexOffset, int instanceCount, int firstInstance);
 		Drawcall(VertexIndirectBuffer *vertexIndirectBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
 		Drawcall(IndexedIndirectBuffer *m_indexedIndirectBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
-		Drawcall(VkShaderStageFlags stage, size_t offset = 0, size_t size = 0, void *data = nullptr);
+		template <class T>
+		Drawcall(VkShaderStageFlags stage, T *data, size_t offset = 0);
 	};
 
 	struct ImageResourceLink

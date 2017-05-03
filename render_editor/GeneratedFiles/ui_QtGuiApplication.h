@@ -80,21 +80,21 @@ public:
         addButton->setGeometry(QRect(0, 0, 21, 21));
         addButton->setMaximumSize(QSize(21, 21));
         QIcon icon;
-        icon.addFile(QStringLiteral(":/png/add.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QStringLiteral(":/image/misc/add.png"), QSize(), QIcon::Normal, QIcon::Off);
         addButton->setIcon(icon);
         saveButton = new QToolButton(groupBox);
         saveButton->setObjectName(QStringLiteral("saveButton"));
         saveButton->setGeometry(QRect(60, 0, 21, 21));
         saveButton->setMaximumSize(QSize(21, 21));
         QIcon icon1;
-        icon1.addFile(QStringLiteral(":/png/save.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QStringLiteral(":/image/misc/save.png"), QSize(), QIcon::Normal, QIcon::Off);
         saveButton->setIcon(icon1);
         removeButton = new QToolButton(groupBox);
         removeButton->setObjectName(QStringLiteral("removeButton"));
         removeButton->setGeometry(QRect(30, 0, 21, 21));
         removeButton->setMaximumSize(QSize(21, 21));
         QIcon icon2;
-        icon2.addFile(QStringLiteral(":/png/delete.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon2.addFile(QStringLiteral(":/image/misc/delete.png"), QSize(), QIcon::Normal, QIcon::Off);
         removeButton->setIcon(icon2);
 
         verticalLayout->addWidget(groupBox);
