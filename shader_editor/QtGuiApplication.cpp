@@ -64,7 +64,7 @@ void saveDataXml()
 	for (auto pipeline : pipelines)
 	{
 		auto node = new tke::AttributeTreeNode("pipeline");
-		node->atrributes.emplace_back(new tke::NormalVariable("filename", &pipeline->filename), std::string());
+		node->attributes.emplace_back(new tke::NormalVariable("filename", &pipeline->filename), std::string());
 	}
 
 	at.saveXML("data.xml");
