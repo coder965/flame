@@ -100,13 +100,9 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 	tke::MasterRenderer *masterRenderer;
 
-	std::shared_ptr<tke::Drawcall> miscParallaxLightDrawcall = std::make_shared<tke::Drawcall>();
-	std::shared_ptr<tke::Drawcall> miscPointLightDrawcall = std::make_shared<tke::Drawcall>();
-	std::shared_ptr<tke::Drawcall> miscObjectDrawcall = std::make_shared<tke::Drawcall>();
-
 	std::shared_ptr<tke::DrawAction> miscLightFrameAction = std::make_shared<tke::DrawAction>(&lightFramePipeline);
 	std::shared_ptr<tke::DrawAction> miscWireFrameLightAction = std::make_shared<tke::DrawAction>(&wireFramePipeline);
-	std::shared_ptr<tke::DrawAction> miscWireFrameObjectAction = std::make_shared<tke::DrawAction>(&wireFramePipeline, miscObjectDrawcall);
+	std::shared_ptr<tke::DrawAction> miscWireFrameObjectAction = std::make_shared<tke::DrawAction>(&wireFramePipeline);
 	std::shared_ptr<tke::DrawAction> miscToolAction = std::make_shared<tke::DrawAction>();
 
 	VkCommandBuffer cmd[2];
@@ -198,7 +194,7 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 			tke::vk::beginCommandBuffer(cmd[i]);
 
-			masterRenderer->skyDrawcall->setIndex(tke::sphereModel->indices.size(), tke::sphereModel->indiceBase, tke:: sphereModel->vertexBase);
+			masterRenderer->skyAction->addDrawcall(tke::sphereModel);
 
 			masterRenderer->mrtObjectDrawcall->indirect_count = tke::scene->drawCallCount;
 
@@ -206,21 +202,18 @@ struct MainWindow : tke::UI::EngineGuiWindow
 			auto terrainIndex = 0;
 			for (auto pTerrain : tke::scene->pTerrains)
 			{
-				masterRenderer->mrtHeightMapTerrainAction->addDrawcall(std::make_shared<tke::Drawcall>(4, 0, pTerrain->patchSize * pTerrain->patchSize, terrainIndex * 0xffff));
+				masterRenderer->mrtHeightMapTerrainAction->addDrawcall(4, 0, pTerrain->patchSize * pTerrain->patchSize, terrainIndex * 0xffff);
 				terrainIndex++;
 			}
-
-			miscParallaxLightDrawcall->setIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
-			miscPointLightDrawcall->setIndex(tke::sphereModel->indices.size(), tke::sphereModel->indiceBase, tke::sphereModel->vertexBase);
 
 			miscLightFrameAction->drawcalls.clear();
 			auto lightIndex = 0;
 			for (auto pLight : tke::scene->pLights)
 			{
 				if (pLight->type == tke::Light::Type::eParallax)
-					miscLightFrameAction->addDrawcall(miscParallaxLightDrawcall);
+					miscLightFrameAction->addDrawcall(tke::arrowModel);
 				else if (pLight->type == tke::Light::Type::ePoint)
-					miscLightFrameAction->addDrawcall(miscPointLightDrawcall);
+					miscLightFrameAction->addDrawcall(tke::sphereModel);
 				lightIndex++;
 			}
 			miscWireFrameLightAction->show = false;
@@ -230,19 +223,20 @@ struct MainWindow : tke::UI::EngineGuiWindow
 				if (tke::selectType == tke::SelectType::eLight)
 				{
 					miscWireFrameLightAction->show = true;
+					miscWireFrameLightAction->drawcalls.resize(2);
 					auto pLight = tke::selectLight();
 					if (pLight->type == tke::Light::Type::eParallax)
-						miscWireFrameLightAction->m_drawcalls[2] = miscParallaxLightDrawcall;
+						miscWireFrameLightAction->addDrawcall(tke::arrowModel);
 					else if (pLight->type == tke::Light::Type::ePoint)
-						miscWireFrameLightAction->m_drawcalls[2] = miscPointLightDrawcall;
+						miscWireFrameLightAction->addDrawcall(tke::sphereModel);
 				}
 				else if (tke::selectType == tke::SelectType::eObject)
 				{
 					miscWireFrameObjectAction->show = true;
+					miscWireFrameObjectAction->drawcalls.clear();
 					auto pObject = tke::selectObject();
 					auto pModel = pObject->pModel;
-					miscObjectDrawcall->setIndex(pModel->indices.size(), pModel->indiceBase, pModel->vertexBase);
-					miscObjectDrawcall->first_instance = pObject->sceneIndex;
+					miscWireFrameObjectAction->addDrawcall(pModel, 1, pObject->sceneIndex);
 				}
 			}
 			miscToolAction->m_pRenderable = tke::currentTool;

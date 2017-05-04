@@ -197,6 +197,7 @@ namespace tke
 		virtual void render(VkCommandBuffer) = 0;
 	};
 
+	struct Model;
 	struct Drawcall : DrawcallAbstract
 	{
 		VertexIndirectBuffer *m_vertexIndirectBuffer = nullptr;
@@ -207,10 +208,20 @@ namespace tke
 		Drawcall();
 		Drawcall(int vertexCount, int firstVertex, int instanceCount, int firstInstance);
 		Drawcall(int indexCount, int firstIndex, int vertexOffset, int instanceCount, int firstInstance);
+		Drawcall(Model *p, int instanceCount = 1, int firstInstance = 0);
 		Drawcall(VertexIndirectBuffer *vertexIndirectBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
 		Drawcall(IndexedIndirectBuffer *m_indexedIndirectBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
 		template <class T>
-		Drawcall(VkShaderStageFlags stage, T *data, size_t offset = 0);
+		inline Drawcall(VkShaderStageFlags stage, T *data, size_t offset = 0)
+		{
+			m_pushConstantStage = stage;
+			push_constant_offset = offset;
+			auto size = sizeof(T);
+			m_pushConstantSize = size;
+			push_constant_value = malloc(size);
+			memcpy(push_constant_value, data, size);
+			type = DrawcallType::push_constant;
+		}
 	};
 
 	struct ImageResourceLink
@@ -241,7 +252,6 @@ namespace tke
 
 		DrawAction();
 		DrawAction(Pipeline *pipeline);
-		DrawAction(Pipeline *pipeline, std::shared_ptr<Drawcall> initDrawcall);
 		DrawAction(Renderable *pRenderable);
 		void preprocess(Pipeline* &currentPipeline);
 	};
@@ -330,10 +340,7 @@ namespace tke
 		Pipeline deferredPipeline;
 		Pipeline combinePipeline;
 
-		std::shared_ptr<Drawcall> skyDrawcall;
-		std::shared_ptr<Drawcall> mrtObjectDrawcall;
-		std::shared_ptr<Drawcall> mrtProceduralTerrainDrawcall;
-		std::shared_ptr<Drawcall> fullscreenDrawcall;
+		Drawcall *mrtObjectDrawcall;
 
 		std::shared_ptr<DrawAction> skyAction;
 		std::shared_ptr<DrawAction> mrtObjectAction;

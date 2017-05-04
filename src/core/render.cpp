@@ -4,6 +4,7 @@
 #include "core.h"
 #include "gui.h"
 #include "render.h"
+#include "model.h"
 
 namespace tke
 {
@@ -740,6 +741,16 @@ namespace tke
 		type = DrawcallType::index;
 	}
 
+	Drawcall::Drawcall(Model *p, int instanceCount, int firstInstance)
+	{
+		index_count = p->indices.size();
+		first_index = p->indiceBase;
+		vertex_offset = p->vertexBase;
+		instance_count = instanceCount;
+		first_instance = firstInstance;
+		type = DrawcallType::index;
+	}
+
 	Drawcall::Drawcall(VertexIndirectBuffer *vertexIndirectBuffer, uint32_t firstIndirect, uint32_t indirectCount)
 	{
 		m_vertexIndirectBuffer = vertexIndirectBuffer;
@@ -756,18 +767,6 @@ namespace tke
 		type = DrawcallType::indirect_index;
 	}
 
-	template <class T>
-	Drawcall::Drawcall(VkShaderStageFlags stage, T *data, size_t offset)
-	{
-		m_pushConstantStage = stage;
-		push_constant_offset = offset;
-		auto size = sizeof(T);
-		m_pushConstantSize = size;
-		push_constant_value = malloc(size);
-		memcpy(push_constant_value, data, size);
-		type = DrawcallType::push_constant;
-	}
-
 	ImageResourceLink::ImageResourceLink(Image *image)
 		: m_image(image) {}
 
@@ -776,17 +775,13 @@ namespace tke
 	DrawAction::DrawAction(Pipeline *pipeline)
 	{
 		m_pipeline = pipeline;
-	}
-
-	DrawAction::DrawAction(Pipeline *pipeline, std::shared_ptr<Drawcall> initDrawcall)
-		: DrawAction(pipeline)
-	{
-		addDrawcall(initDrawcall);
+		type = DrawActionType::draw_action;
 	}
 
 	DrawAction::DrawAction(Renderable *pRenderable)
 	{
 		m_pRenderable = pRenderable;
+		type = DrawActionType::call_fuction;
 	}
 
 	void DrawAction::preprocess(Pipeline* &currentPipeline)
@@ -1176,17 +1171,16 @@ namespace tke
 		uiAi->setClear({ 0.f, 0.f, 0.f, 1.f });
 		swapchainAi->setClear({ 1.f, 0.f, 0.f, 0.f });
 
-		skyDrawcall = std::make_shared<Drawcall>();
-		mrtObjectDrawcall = std::make_shared<Drawcall>(indirectBuffer);
-		mrtProceduralTerrainDrawcall = std::make_shared<Drawcall>(4, 0, 100 * 100, 0);
-		fullscreenDrawcall = std::make_shared<Drawcall>(3, 0, 1, 0);
-
-		skyAction = std::make_shared<DrawAction>(&panoramaPipeline, skyDrawcall);
-		mrtObjectAction = std::make_shared<DrawAction>(&mrtPipeline, mrtObjectDrawcall);
+		skyAction = std::make_shared<DrawAction>(&panoramaPipeline);
+		mrtObjectAction = std::make_shared<DrawAction>(&mrtPipeline);
+		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
 		mrtHeightMapTerrainAction = std::make_shared<DrawAction>(&heightMapTerrainPipeline);
-		mrtProceduralTerrainAction = std::make_shared<DrawAction>(&proceduralTerrainPipeline, mrtProceduralTerrainDrawcall);
-		deferredAction = std::make_shared<DrawAction>(&deferredPipeline, fullscreenDrawcall);
-		combineAction = std::make_shared<DrawAction>(&combinePipeline, fullscreenDrawcall);
+		mrtProceduralTerrainAction = std::make_shared<DrawAction>(&proceduralTerrainPipeline);
+		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
+		deferredAction = std::make_shared<DrawAction>(&deferredPipeline);
+		deferredAction->addDrawcall(3, 0, 1, 0);
+		combineAction = std::make_shared<DrawAction>(&combinePipeline);
+		combineAction->addDrawcall(3, 0, 1, 0);
 
 		skyPass = std::make_shared<RenderPass>(originalAi);
 		mrtPass = std::make_shared<RenderPass>();

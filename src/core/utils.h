@@ -4,6 +4,7 @@
 #include <memory>
 #include <fstream>
 #include <vector>
+#include <list>
 #include <string>
 #include <typeindex>
 #include <Windows.h>
@@ -210,6 +211,7 @@ namespace tke
 	};
 
 	// one operation a time
+
 	template <class T>
 	void maintainVector(std::vector<T> &v)
 	{
@@ -229,6 +231,30 @@ namespace tke
 				v.erase(v.begin() + i);
 				return;
 			}
+		}
+	}
+
+	template <class T>
+	void maintainList(std::list<T> &v)
+	{
+		std::list<T>::iterator prevIt = v.begin();
+		for (auto it = v.begin(); it != v.end(); it++)
+		{
+			switch (it->mark)
+			{
+			case Element::eMarkUp:
+				if (prevIt != v.begin()) std::swap(*it, *prevIt);
+				it->mark = Element::eDefault;
+				return;
+			case Element::eMarkDown:
+				if (it != v.end()) std::swap(*it, *(++it));
+				it->mark = Element::eDefault;
+				return;
+			case Element::eMarkClear:
+				v.erase(it);
+				return;
+			}
+			prevIt = it;
 		}
 	}
 }

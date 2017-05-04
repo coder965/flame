@@ -356,15 +356,10 @@ namespace tke
 		template <class... _Valty>
 		inline DrawcallType *addDrawcall(_Valty&&... _Val)
 		{
-			drawcalls.emplace_back(_Val);
+			drawcalls.emplace_back(_Val...);
 			auto d = &drawcalls.back();
 			d->parent = this;
 			return d;
-		}
-		inline void eraseDrawcallBack(int count)
-		{
-			if (count <= 0 || count >= drawcalls.size()) return;
-			drawcalls.erase(drawcalls.begin() + (drawcalls.size() - count), drawcalls.end());
 		}
 		inline void loadFromAt(AttributeTreeNode *n)
 		{
@@ -398,7 +393,7 @@ namespace tke
 		}
 		inline void maintain(int row) override
 		{
-			maintainVector(m_drawcalls);
+			maintainList(drawcalls);
 		}
 	};
 
