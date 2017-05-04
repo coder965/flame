@@ -8,10 +8,10 @@
     <ClCompile Include="..\src\core\qt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\core\reflect.cpp">
+    <ClCompile Include="..\src\core\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\core\utils.cpp">
+    <ClCompile Include="reflect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

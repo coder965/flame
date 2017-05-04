@@ -1,30 +1,18 @@
-void setAddButton(QToolButton *b)
-{
-	b->setMaximumWidth(21);
-	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":image/misc/add.png"));
-}
+#include <sstream>
 
-void setRemoveButton(QToolButton *b)
-{
-	b->setMaximumWidth(21);
-	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":image/misc/delete.png"));
-}
+#include <qtreewidget.h>
+#include <qlayout.h>
+#include "../src/core/qt.h"
 
-void setUpButton(QToolButton *b)
-{
-	b->setMaximumWidth(21);
-	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":image/misc/up.png"));
-}
+extern QTreeWidget *tree;
 
-void setDownButton(QToolButton *b)
-{
-	b->setMaximumWidth(21);
-	b->setMaximumHeight(21);
-	b->setIcon(QIcon(":image/misc/down.png"));
-}
+void setAddButton(QToolButton *b);
+
+void setRemoveButton(QToolButton *b);
+
+void setUpButton(QToolButton *b);
+
+void setDownButton(QToolButton *b);
 
 struct Drawcall : tke::DrawcallAbstract
 {
@@ -90,8 +78,8 @@ struct DrawAction : tke::DrawActionAbstract<Drawcall>
 			drawcallsItem.setup(tree, item.item, "Drawcalls");
 			connect(drawcallsItem.partner, &QToolButton::clicked, this, &Wrap::newDrawcall);
 
-			for (auto drawcall : p->m_drawcalls)
-				drawcall->appear(drawcallsItem.item);
+			for (auto &drawcall : p->drawcalls)
+				drawcall.appear(drawcallsItem.item);
 		}
 		void remove()
 		{
@@ -100,11 +88,10 @@ struct DrawAction : tke::DrawActionAbstract<Drawcall>
 		}
 		void newDrawcall()
 		{
-			auto drawcall = std::make_shared<Drawcall>();
+			auto drawcall = p->addDrawcall();
 			std::stringstream name;
-			name << p->m_drawcalls.size() + 1;
+			name << p->drawcalls.size() + 1;
 			drawcall->name = name.str();
-			p->addDrawcall(drawcall);
 			drawcall->appear(drawcallsItem.item);
 		}
 	}wrap;
@@ -230,8 +217,8 @@ struct RenderPass : tke::RenderPassAbstract<Attachment, Dependency, DrawAction>
 			setAddButton(colorsItem.partner);
 			colorsItem.setup(tree, attachmentsItem, "Color");
 			connect(colorsItem.partner, &QToolButton::clicked, this, &Wrap::newColorAttachment);
-			for (auto color : p->colorAttachments)
-				color->appear(colorsItem.item, 0);
+			for (auto &color : p->colorAttachments)
+				color.appear(colorsItem.item, 0);
 
 			depthStencilItem.partner = new QToolButton;
 			setAddButton(depthStencilItem.partner);
@@ -244,15 +231,15 @@ struct RenderPass : tke::RenderPassAbstract<Attachment, Dependency, DrawAction>
 			setAddButton(dependenciesItem.partner);
 			dependenciesItem.setup(tree, item.item, "Dependencies");
 			connect(dependenciesItem.partner, &QToolButton::clicked, this, &Wrap::newDependency);
-			for (auto dependency : p->dependencies)
-				dependency->appear(dependenciesItem.item);
+			for (auto &dependency : p->dependencies)
+				dependency.appear(dependenciesItem.item);
 
 			actionsItem.partner = new QToolButton;
 			setAddButton(actionsItem.partner);
 			actionsItem.setup(tree, item.item, "Action");
 			connect(actionsItem.partner, &QToolButton::clicked, this, &Wrap::newAction);
-			for (auto action : p->actions)
-				action->appear(actionsItem.item);
+			for (auto &action : p->actions)
+				action.appear(actionsItem.item);
 		}
 		void up()
 		{
@@ -272,39 +259,35 @@ struct RenderPass : tke::RenderPassAbstract<Attachment, Dependency, DrawAction>
 
 		void newColorAttachment()
 		{
-			auto attachment = std::make_shared<Attachment>();
+			auto attachment = p->addColorAttachment();
 			std::stringstream name;
 			name << p->colorAttachments.size() + 1;
 			attachment->name = name.str();
-			p->addColorAttachment(attachment);
 			attachment->appear(colorsItem.item, 0);
 		}
 
 		void newDepthStencilAttachment()
 		{
 			if (p->depthStencilAttachment) return;
-			auto attachment = std::make_shared<Attachment>();
+			auto attachment = p->addDepthStencilAttachment();
 			attachment->name = "1";
 			attachment->aspect = tke::AspectFlags::depth;
-			p->addDepthStencilAttachment(attachment);
 			attachment->appear(depthStencilItem.item, 1);
 		}
 
 		void newDependency()
 		{
-			auto dependency = std::make_shared<Dependency>();
-			p->addDependency(dependency);
+			auto dependency = p->addDependency();
 			dependency->appear(dependenciesItem.item);
 		}
 
 		void newAction()
 		{
-			auto action = std::make_shared<DrawAction>();
+			auto action = p->addAction();
 			std::stringstream name;
 			name << "Action";
 			name << p->actions.size() + 1;
 			action->name = name.str();
-			p->addAction(action);
 			action->appear(actionsItem.item);
 		}
 	}wrap;
@@ -321,64 +304,44 @@ struct Renderer : tke::RendererAbstract<RenderPass>
 	{
 		Renderer *p;
 		tke::QTreeItemPair<QToolButton> passesItem;
-	}wrap;
 
-	void newPass()
-	{
-		auto pass = std::make_shared<RenderPass>();
-
-		std::stringstream name;
-		name << "Render Pass";
-		name << pRenderer->passes.size() + 1;
-		pass->name = name.str();
-		pass->ext = new RenderPassExtraData;
-		pass->ext->pRenderPass = pass.get();
-		pRenderer->addPass(pass);
-		for (auto p : pRenderer->passes)
+		void newPass()
 		{
-			if (p == pass) continue;
-			for (auto d : p->dependencies)
-			{
-				p->ext->setDependencyCombo(d->ext->combo);
-				d->ext->setComboIndex();
-			}
+			auto pass = p->addPass();
+			std::stringstream name;
+			name << "Render Pass";
+			name << p->passes.size() + 1;
+			pass->name = name.str();
+			pass->appear(passesItem.item);
 		}
-		pass->ext->appear(passesItem.item);
-	}
 
-	void reappearPassItem()
-	{
-		delete passesItem.item;
-		passesItem.partner = new QToolButton;
-		passesItem.setup(tree, reinterpret_cast<QTreeWidgetItem*>(tree), "passes");
-		setAddButton(passesItem.partner);
-		connect(passesItem.partner, &QToolButton::clicked, this, &RendererExtraData::newPass);
-		for (auto pass : pRenderer->passes)
-			pass->ext->appear(passesItem.item);
-	}
+		void reappearPassItem()
+		{
+			delete passesItem.item;
+			passesItem.partner = new QToolButton;
+			passesItem.setup(tree, reinterpret_cast<QTreeWidgetItem*>(tree), "passes");
+			setAddButton(passesItem.partner);
+			connect(passesItem.partner, &QToolButton::clicked, this, &Wrap::newPass);
+			for (auto &pass : p->passes)
+				pass.appear(passesItem.item);
+		}
+
+		void appear(Renderer *_p)
+		{
+			p = _p;
+			for (auto r : p->b->reflectons)
+			{
+				if (r->name ==  "name" || r->name == "filename")
+					continue;
+				tke::qAddTreeItem(tree, reinterpret_cast<QTreeWidgetItem*>(tree), p, r);
+			}
+
+			reappearPassItem();
+		}
+	}wrap;
 
 	void appear()
 	{
-		for (auto r : pRenderer->b->reflectons)
-		{
-			if (r->what == Reflection::eVariable && (r->toVar()->name == "name" || r->toVar()->name == "filename"))
-				continue;
-			addItem(tree, reinterpret_cast<QTreeWidgetItem*>(tree), pRenderer, r);
-		}
-
-		reappearPassItem();
+		wrap.appear(this);
 	}
 };
-
-
-void RenderPassExtraData::upThis()
-{
-	if (pRenderPass->parent->upPass(pRenderPass) != -1)
-		pRenderPass->parent->reappearPassItem();
-}
-
-void RenderPassExtraData::downThis()
-{
-	if (pRenderPass->parent->downPass(pRenderPass) != -1)
-		pRenderPass->parent->reappearPassItem();
-}

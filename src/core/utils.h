@@ -235,26 +235,24 @@ namespace tke
 	}
 
 	template <class T>
-	void maintainList(std::list<T> &v)
+	void maintainList(std::list<T> &l)
 	{
-		std::list<T>::iterator prevIt = v.begin();
-		for (auto it = v.begin(); it != v.end(); it++)
+		for (auto it = l.begin(); it != l.end(); it++)
 		{
 			switch (it->mark)
 			{
 			case Element::eMarkUp:
-				if (prevIt != v.begin()) std::swap(*it, *prevIt);
+				if (it != l.begin()) l.splice(it, l, --it);
 				it->mark = Element::eDefault;
 				return;
 			case Element::eMarkDown:
-				if (it != v.end()) std::swap(*it, *(++it));
+				if (it != l.end()) l.splice(it, l, ++it);
 				it->mark = Element::eDefault;
 				return;
 			case Element::eMarkClear:
-				v.erase(it);
+				l.erase(it);
 				return;
 			}
-			prevIt = it;
 		}
 	}
 }

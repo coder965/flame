@@ -841,6 +841,16 @@ void reportProgress(int which, float v)
 
 int main()
 {
+	std::list<int> l;
+	l.push_back(1);
+	int *p0 = &l.back();
+	l.push_back(2);
+	int *p1 = &l.back();
+
+	l.splice(l.begin(), l, ++l.begin());
+
+	std::iter_swap(l.begin(), ++l.begin());
+
 	auto resCx = 1600, resCy = 900;
 	if (sayError(tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw)))
 		return 0;

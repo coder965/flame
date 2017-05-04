@@ -7,5 +7,4 @@
 #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>\n \
 #define RendererAbstract RendererAbstract<RenderPass>\n"
 
-
 #define OUTPUT "../src/core/reflect.cpp"

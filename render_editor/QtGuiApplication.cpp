@@ -19,12 +19,40 @@ const std::string rendererPath = "D:/TK_Engine/renderer";
 
 bool appearing = false;
 
-QTreeWidget *tree;
+QTreeWidget *tree; 
+
+void setAddButton(QToolButton *b)
+{
+	b->setMaximumWidth(21);
+	b->setMaximumHeight(21);
+	b->setIcon(QIcon(":image/misc/add.png"));
+}
+
+void setRemoveButton(QToolButton *b)
+{
+	b->setMaximumWidth(21);
+	b->setMaximumHeight(21);
+	b->setIcon(QIcon(":image/misc/delete.png"));
+}
+
+void setUpButton(QToolButton *b)
+{
+	b->setMaximumWidth(21);
+	b->setMaximumHeight(21);
+	b->setIcon(QIcon(":image/misc/up.png"));
+}
+
+void setDownButton(QToolButton *b)
+{
+	b->setMaximumWidth(21);
+	b->setMaximumHeight(21);
+	b->setIcon(QIcon(":image/misc/down.png"));
+}
 
 #include "render.h"
 
-std::vector<tk::Engine::Renderer*> renderers;
-tk::Engine::Renderer *currentRenderer = nullptr;
+std::vector<tke::RendererAbstract<RenderPass>*> renderers;
+tke::RendererAbstract<RenderPass> *currentRenderer = nullptr;
 
 void saveDataXml()
 {

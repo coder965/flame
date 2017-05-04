@@ -71,10 +71,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\core\qt.cpp" />
-    <ClCompile Include="..\src\core\reflect.cpp" />
     <ClCompile Include="..\src\core\utils.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QtGuiApplication.cpp" />
+    <ClCompile Include="reflect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="QtGuiApplication.h">
