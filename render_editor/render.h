@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include <qtreewidget.h>
+#include <qlistwidget.h>
 #include <qlayout.h>
 #include "../src/core/qt.h"
 
@@ -300,6 +301,7 @@ struct RenderPass : tke::RenderPassAbstract<Attachment, Dependency, DrawAction>
 
 struct Renderer : tke::RendererAbstract<RenderPass>
 {
+	QListWidgetItem *listItem;
 	struct Wrap : QObject
 	{
 		Renderer *p;

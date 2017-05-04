@@ -247,6 +247,16 @@ namespace tke
 		return nullptr;
 	}
 
+	std::pair<Variable*, std::string> &AttributeTreeNode::firstAttribute(const std::string &_name)
+	{
+		for (auto &a : attributes)
+		{
+			if (a.first->name == _name)
+				return a;
+		}
+		assert(0);
+	}
+
 	void AttributeTreeNode::addAttributes(void *p, ReflectionBank *b)
 	{
 		for (auto r : b->reflectons)
@@ -257,36 +267,36 @@ namespace tke
 				if (v->type() == typeid(std::string))
 				{
 					auto _v = new NormalVariable(v->name, v->ptr<std::string>(p));
-					atrributes.emplace_back(_v, std::string());
+					attributes.emplace_back(_v, std::string());
 				}
 				else if (v->type() == typeid(int))
 				{
 					auto _v = new NormalVariable(v->name, v->ptr<int>(p));
-					atrributes.emplace_back(_v, std::string());
+					attributes.emplace_back(_v, std::string());
 				}
 				else if (v->type() == typeid(float))
 				{
 					auto _v = new NormalVariable(v->name, v->ptr<float>(p));
-					atrributes.emplace_back(_v, std::string());
+					attributes.emplace_back(_v, std::string());
 				}
 				else if (v->type() == typeid(bool))
 				{
 					auto _v = new NormalVariable(v->name, v->ptr<bool>(p));
-					atrributes.emplace_back(_v, std::string());
+					attributes.emplace_back(_v, std::string());
 				}
 			}
 			else if (r->what == Variable::eEnum)
 			{
 				auto e = (EnumVariable*)r;
 				auto _e = new EnumVariable(e->name, e->pEnum, e->ptr(p));
-				atrributes.emplace_back(_e, std::string());
+				attributes.emplace_back(_e, std::string());
 			}
 		}
 	}
 
 	static void _obtainVarFromAttributes(AttributeTreeNode *n, void *p, NormalVariable *v)
 	{
-		for (auto &a : n->atrributes)
+		for (auto &a : n->attributes)
 		{
 			if (a.first->name == v->name)
 			{
@@ -310,7 +320,7 @@ namespace tke
 
 	static void _obtainEnuFromAttributes(AttributeTreeNode *n, void *p, EnumVariable *e)
 	{
-		for (auto &a : n->atrributes)
+		for (auto &a : n->attributes)
 		{
 			if (a.first->name == e->name)
 			{
@@ -360,7 +370,7 @@ namespace tke
 		for (auto a = n->first_attribute(); a; a = a->next_attribute())
 		{
 			auto v = new NormalVariable(a->name(), (std::string*)0);
-			p->atrributes.emplace_back(v, std::string(a->value()));
+			p->attributes.emplace_back(v, std::string(a->value()));
 		}
 
 		for (auto nn = n->first_node(); nn; nn = nn->next_sibling())
@@ -384,7 +394,7 @@ namespace tke
 
 	static void _saveXML(rapidxml::xml_document<> &doc, rapidxml::xml_node<> *n, AttributeTreeNode *p)
 	{
-		for (auto &a : p->atrributes)
+		for (auto &a : p->attributes)
 		{
 			if (a.first->what == Variable::eVariable)
 			{

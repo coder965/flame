@@ -377,7 +377,7 @@ namespace tke
 
 			auto drawcallsNode = new AttributeTreeNode("drawcalls");
 			n->children.push_back(drawcallsNode);
-			for (auto &d : m_drawcalls)
+			for (auto &d : drawcalls)
 			{
 				auto n = new AttributeTreeNode("drawcall");
 				drawcallsNode->children.push_back(n);
@@ -571,7 +571,7 @@ namespace tke
 			}
 			auto depthStencilNode = new AttributeTreeNode("depth_stencil");
 			attachmentNode->children.push_back(depthStencilNode);
-			if (depthStencilAttachment.get())
+			if (depthStencilAttachment)
 			{
 				auto n = new AttributeTreeNode("attachment");
 				depthStencilNode->children.push_back(n);
@@ -677,18 +677,17 @@ namespace tke
 		}
 		void saveXML()
 		{
-			for (auto p : passes)
+			for (auto &p : passes)
 			{
-				for (auto d : p->dependencies)
+				for (auto &d : p.dependencies)
 				{
-					if (d->target)
+					if (d.target)
 					{
-						auto pp = (RenderPassType)d->target;
-						d->pass_name = pp->name;
+						auto pp = (RenderPassType*)d.target;
+						d.pass_name = pp->name;
 					}
 				}
 			}
-			n->children.push_back(new AttributeTreeNode(de->target->name));
 
 			AttributeTree at("renderer");
 

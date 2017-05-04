@@ -174,12 +174,13 @@ namespace tke
 	struct AttributeTreeNode
 	{
 		std::string name;
-		std::vector<std::pair<Variable*, std::string>> atrributes;
+		std::vector<std::pair<Variable*, std::string>> attributes;
 		std::vector<AttributeTreeNode*> children;
 
 		AttributeTreeNode(const std::string &_name);
 		~AttributeTreeNode();
 		AttributeTreeNode *firstNode(const std::string &_name);
+		std::pair<Variable*, std::string> &firstAttribute(const std::string &_name);
 		void addAttributes(void *p, ReflectionBank *b);
 		void obtainFromAttributes(void *p, ReflectionBank *b);
 		void loadXML(const std::string &filename);

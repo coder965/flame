@@ -51,31 +51,18 @@ void setDownButton(QToolButton *b)
 
 #include "render.h"
 
-std::vector<tke::RendererAbstract<RenderPass>*> renderers;
-tke::RendererAbstract<RenderPass> *currentRenderer = nullptr;
+std::vector<Renderer*> renderers;
+Renderer *currentRenderer = nullptr;
 
 void saveDataXml()
 {
-	rapidxml::xml_document<> xmlDoc;
-	auto dataNode = xmlDoc.allocate_node(rapidxml::node_element, "data");
-	xmlDoc.append_node(dataNode);
+	tke::AttributeTree at("data");
 
 	for (auto r : renderers)
 	{
-		auto node = xmlDoc.allocate_node(rapidxml::node_element, "renderer");
-		node->append_attribute(xmlDoc.allocate_attribute("name", r->name.c_str()));
-		node->append_attribute(xmlDoc.allocate_attribute("filename", r->filename.c_str()));
-		dataNode->append_node(node);
+		auto node = new tke::AttributeTreeNode("renderer");
+		node->attributes.emplace_back(new tke::NormalVariable("filename", &r->filename), std::string());
 	}
-
-	std::string dst;
-	rapidxml::print(std::back_inserter(dst), xmlDoc);
-
-	auto f = fopen("data.xml", "wb");
-	fprintf(f, dst.c_str());
-	fclose(f);
-
-	xmlDoc.clear();
 }
 
 QtGuiApplication::QtGuiApplication(QWidget *parent)
@@ -85,62 +72,40 @@ QtGuiApplication::QtGuiApplication(QWidget *parent)
 
 	tree = ui.treeWidget;
 
-	char *dataFile;
-	tk::loadFile("data.xml", &dataFile);
+	tke::AttributeTree at("data");
+	at.loadXML("data.xml");
 
-	rapidxml::xml_document<> dataXmlDoc;
-	dataXmlDoc.parse<0>(dataFile);
-
-	auto firstNode = dataXmlDoc.first_node();
-	if (strcmp(firstNode->name(), "data") == 0)
+	for (auto c : at.children)
 	{
-		for (auto n = firstNode->first_node(); n; n = n->next_sibling())
+		if (c->name == "renderer")
 		{
-			if (strcmp(n->name(), "renderer") == 0)
-			{
-				auto renderer = new tk::Engine::Renderer;
-				auto a = n->first_attribute("name");
-				if (a) renderer->name = a->value();
-				a = n->first_attribute("filename");
-				if (a)
-				{
-					renderer->filename = a->value();
-					renderer->loadXML();
-					setupRenderer(renderer);
-					renderer->ext->listItem = new QListWidgetItem;
-					std::string title = renderer->filename;
-					if (title.compare(0, strlen(rendererPath), rendererPath) == 0)
-						title = title.c_str() + strlen(rendererPath);
-					renderer->ext->listItem->setText(title.c_str());
-					ui.listWidget->addItem(renderer->ext->listItem);
-				}
-
-				renderers.push_back(renderer);
-			}
+			auto a = c->firstAttribute("filename");
+			auto r = new Renderer;
+			r->filename = a.second;
+			r->loadXML();
+			renderers.push_back(r);
 		}
 	}
-	delete[]dataFile;
 
 	appearing = true;
 }
 
 void QtGuiApplication::on_addButton_clicked()
 {
-	auto list = QFileDialog::getOpenFileNames(this, "", rendererPath);
+	auto list = QFileDialog::getOpenFileNames(this, "", rendererPath.c_str());
 	if (list.size() == 0) return;
 
 	for (auto i = 0; i < list.size(); i++)
 	{
-		auto renderer = new tk::Engine::Renderer;
+		auto renderer = new Renderer;
 		renderer->filename = list[i].toUtf8().data();
 		renderer->loadXML();
-		setupRenderer(renderer);
-		renderer->ext->listItem = new QListWidgetItem;
+		renderer->listItem = new QListWidgetItem;
 		std::string title = renderer->filename;
-		if (title.compare(0, strlen(rendererPath), rendererPath) == 0)
-			title = title.c_str() + strlen(rendererPath);
-		renderer->ext->listItem->setText(title.c_str());
-		ui.listWidget->addItem(renderer->ext->listItem);
+		if (title.compare(0, rendererPath.size(), rendererPath) == 0)
+			title = title.c_str() + rendererPath.size();
+		renderer->listItem->setText(title.c_str());
+		ui.listWidget->addItem(renderer->listItem);
 		renderers.push_back(renderer);
 	}
 
@@ -160,8 +125,7 @@ void QtGuiApplication::on_removeButton_clicked()
 		}
 	}
 
-	currentRenderer->ext->cleanUp();
-	delete currentRenderer->ext->listItem;
+	delete currentRenderer->listItem;
 	delete currentRenderer;
 	currentRenderer = nullptr;
 
@@ -170,17 +134,12 @@ void QtGuiApplication::on_removeButton_clicked()
 
 void QtGuiApplication::on_listWidget_currentItemChanged(QListWidgetItem *_curr, QListWidgetItem *_prev)
 {
-	if (currentRenderer)
-	{
-		currentRenderer->ext->passesItem.item = nullptr;
-		tree->clear();
-	}
 	for (auto r : renderers)
 	{
-		if (r->ext->listItem == _curr)
+		if (r->listItem == _curr)
 		{
 			currentRenderer = r;
-			currentRenderer->ext->appear();
+			currentRenderer->appear();
 			return;
 		}
 	}

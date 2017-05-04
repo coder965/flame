@@ -128,15 +128,10 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	{
 		if (c->name == "pipeline")
 		{
-			for (auto &a : c->atrributes)
-			{
-				if (a.first->name == "filename")
-				{
-					auto pipeline = new Pipeline;
-					pipeline->load(a.second);
-					pipelines.push_back(pipeline);
-				}
-			}
+			auto a = c->firstAttribute("filename");
+			auto pipeline = new Pipeline;
+			pipeline->load(a.second);
+			pipelines.push_back(pipeline);
 		}
 	}
 }

@@ -72,6 +72,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\core\qt.cpp" />
     <ClCompile Include="..\src\core\utils.cpp" />
+    <ClCompile Include="GeneratedFiles\Debug\moc_QtGuiApplication.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QtGuiApplication.cpp" />
     <ClCompile Include="reflect.cpp" />
