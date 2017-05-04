@@ -1,4 +1,4 @@
-<pipeline polygon_mode="line" depth_clamp="none">
+<pipeline polygon_mode="line" depth_clamp="none" >
   
 	<push_constant offset="0" size="4" stage="vert" />
 	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />

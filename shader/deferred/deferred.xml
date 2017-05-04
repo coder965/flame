@@ -13,7 +13,7 @@
 	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
 	<link type="uniform_buffer" binding="1" name="Ambient.UniformBuffer" />
 	<link type="uniform_buffer" binding="2" name="Light.UniformBuffer" />
-	<link type="sampler" binding="3" name="Depth.Texture" sampler="screen" />
+	<link type="sampler" binding="3" name="Depth.Image" sampler="screen" />
 	<link type="sampler" binding="4" name="AlbedoSpec.Texture" sampler="screen" />
 	<link type="sampler" binding="5" name="NormalRoughness.Texture" sampler="screen" />
   

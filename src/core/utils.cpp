@@ -294,74 +294,73 @@ namespace tke
 		}
 	}
 
-	static void _obtainVarFromAttributes(AttributeTreeNode *n, void *p, NormalVariable *v)
+	static void _obtainVarFromAttributes(const std::string &value, void *p, NormalVariable *v)
 	{
-		for (auto &a : n->attributes)
+		if (v->type() == typeid(std::string))
+			*(v->ptr<std::string>(p)) = value;
+		else if (v->type() == typeid(int))
+			*(v->ptr<int>(p)) = std::stoi(value);
+		else if (v->type() == typeid(float))
+			*(v->ptr<float>(p)) = std::stof(value);
+		else if (v->type() == typeid(bool))
 		{
-			if (a.first->name == v->name)
-			{
-				if (v->type() == typeid(std::string))
-					*(v->ptr<std::string>(p)) = a.second;
-				else if (v->type() == typeid(int))
-					*(v->ptr<int>(p)) = std::stoi(a.second);
-				else if (v->type() == typeid(float))
-					*(v->ptr<float>(p)) = std::stof(a.second);
-				else if (v->type() == typeid(bool))
-				{
-					if (a.second == "true")
-						*(v->ptr<bool>(p)) = true;
-					else if (a.second == "false")
-						*(v->ptr<bool>(p)) = false;
-				}
-				return;
-			}
+			if (value == "true")
+				*(v->ptr<bool>(p)) = true;
+			else if (value == "false")
+				*(v->ptr<bool>(p)) = false;
 		}
 	}
 
-	static void _obtainEnuFromAttributes(AttributeTreeNode *n, void *p, EnumVariable *e)
+	static void _obtainEnuFromAttributes(const std::string &value, void *p, EnumVariable *e)
 	{
-		for (auto &a : n->attributes)
+		auto v = e->ptr(p);
+		*v = 0;
+
+		std::regex pat(R"(\w+)");
+		std::string string(value);
+
+		std::smatch sm;
+		while (std::regex_search(string, sm, pat))
 		{
-			if (a.first->name == e->name)
+			auto s = sm[0].str();
+			auto found = false;
+			for (auto &i : e->pEnum->items)
 			{
-				*e->ptr(p) = 0;
-
-				std::regex pat(R"(\w+)");
-				std::string string(a.second);
-
-				std::smatch sm;
-				while (std::regex_search(string, sm, pat))
+				if (s == i.first)
 				{
-					auto s = sm[0].str();
-					for (auto &i : e->pEnum->items)
-					{
-						if (s.compare(i.first) == 0)
-						{
-							*e->ptr(p) |= i.second;
-							break;
-						}
-					}
-					string = sm.suffix();
+					*v |= i.second;
+					found = true;
+					break;
 				}
-				return;
 			}
+			assert(found);
+			string = sm.suffix();
 		}
 	}
 
 	void AttributeTreeNode::obtainFromAttributes(void *p, ReflectionBank *b)
 	{
-		for (auto r : b->reflectons)
+		for (auto &a : attributes)
 		{
-			if (r->what == Variable::eVariable)
+			auto found = false;
+			for (auto r : b->reflectons)
 			{
-				auto v = (NormalVariable*)r;
-				_obtainVarFromAttributes(this, p, v);
+				if (r->name == a.first->name)
+				{
+					switch (r->what)
+					{
+					case Variable::eVariable:
+						_obtainVarFromAttributes(a.second, p, (NormalVariable*)r);
+						break;
+					case Variable::eEnum:
+						_obtainEnuFromAttributes(a.second, p, (EnumVariable*)r);
+						break;
+					}
+					found = true;
+					break;
+				}
 			}
-			else if (r->what == Variable::eEnum)
-			{
-				auto e = (EnumVariable*)r;
-				_obtainEnuFromAttributes(this, p, e);
-			}
+			assert(found);
 		}
 	}
 

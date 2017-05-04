@@ -5,9 +5,9 @@
 
 #include "def.h"
 
-//#include "core.h"
+#include "core.h"
 //#include "shader_editor.h"
-#include "render_editor.h"
+//#include "render_editor.h"
 
 #ifndef EXTRA
 #define EXTRA "\n"

@@ -1,7 +1,7 @@
 <pipeline depth_test="true" depth_write="true">
   
 	<push_constant size="8" stage="vert" />
-	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" link="0:Matrix.UniformBuffer" />
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />
 	<descriptor type="uniform_buffer" binding="1" count="2" stage="vert" />
 	
 	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />

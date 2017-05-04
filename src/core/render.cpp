@@ -402,25 +402,19 @@ namespace tke
 	}
 	VkShaderStageFlags _vkStage(StageFlags f)
 	{
-		switch (f)
-		{
-		case StageFlags::vert:
-			return VK_SHADER_STAGE_VERTEX_BIT;
-		case StageFlags::tesc:
-			return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-		case StageFlags::tese:
-			return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-		case StageFlags::geom:
-			return VK_SHADER_STAGE_GEOMETRY_BIT;
-		case StageFlags::frag:
-			return VK_SHADER_STAGE_FRAGMENT_BIT;
-		}
+		VkShaderStageFlags v = 0;
+		if ((int)f & (int)StageFlags::vert) v |= VK_SHADER_STAGE_VERTEX_BIT;
+		if ((int)f & (int)StageFlags::tesc) v |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+		if ((int)f & (int)StageFlags::tese) v |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+		if ((int)f & (int)StageFlags::geom) v |= VK_SHADER_STAGE_GEOMETRY_BIT;
+		if ((int)f & (int)StageFlags::frag) v |= VK_SHADER_STAGE_FRAGMENT_BIT;
+		return v;
 	}
 	void Pipeline::loadXML()
 	{
 		PipelineAbstract::loadXML();
 
-		switch (primitiveTopology)
+		switch (primitive_topology)
 		{
 		case PrimitiveTopology::triangle_list:
 			vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -435,7 +429,7 @@ namespace tke
 			vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 			break;
 		}
-		switch (polygonMode)
+		switch (polygon_mode)
 		{
 		case PolygonMode::fill:
 			vkPolygonMode = VK_POLYGON_MODE_FILL;
@@ -444,7 +438,7 @@ namespace tke
 			vkPolygonMode = VK_POLYGON_MODE_LINE;
 			break;
 		}
-		switch (cullMode)
+		switch (cull_mode)
 		{
 		case CullMode::none:
 			vkCullMode = VK_CULL_MODE_NONE;
@@ -557,12 +551,12 @@ namespace tke
 
 		VkPipelineTessellationStateCreateInfo tessState = {};
 		tessState.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-		tessState.patchControlPoints = patchControlPoints;
+		tessState.patchControlPoints = patch_control_points;
 
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
 		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilState.depthTestEnable = depthTest;
-		depthStencilState.depthWriteEnable = depthWrite;
+		depthStencilState.depthTestEnable = depth_test;
+		depthStencilState.depthWriteEnable = depth_write;
 		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
 
 		VkViewport viewport;
@@ -591,7 +585,7 @@ namespace tke
 		rasterState.polygonMode = vkPolygonMode;
 		rasterState.cullMode = vkCullMode;
 		rasterState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterState.depthClampEnable = depthClamp;
+		rasterState.depthClampEnable = depth_clamp;
 		rasterState.rasterizerDiscardEnable = VK_FALSE;
 		rasterState.lineWidth = 1.f;
 		rasterState.depthBiasEnable = VK_FALSE;
@@ -628,7 +622,7 @@ namespace tke
 		pipelineInfo.pStages = vkStages.data();
 		pipelineInfo.pVertexInputState = m_pVertexInputState;
 		pipelineInfo.pInputAssemblyState = &assemblyState;
-		pipelineInfo.pTessellationState = patchControlPoints ? &tessState : nullptr;
+		pipelineInfo.pTessellationState = patch_control_points ? &tessState : nullptr;
 		pipelineInfo.pDepthStencilState = &depthStencilState;
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterState;

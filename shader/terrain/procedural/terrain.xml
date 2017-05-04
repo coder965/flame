@@ -1,4 +1,4 @@
-<pipeline name="ProceduralTerrain.Pipeline" primitive_topology="patch_list" patch_control_points="4" polygon_mode1="line" depth_test="true" depth_write="true" >
+<pipeline name="ProceduralTerrain.Pipeline" primitive_topology="patch_list" patch_control_points="4" depth_test="true" depth_write="true" >
 	<blend_attachment />
 	<blend_attachment />
 

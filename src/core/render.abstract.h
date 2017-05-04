@@ -13,11 +13,12 @@ namespace tke
 {
 	REFLECTABLE enum class StageFlags : int
 	{
-		REFLe vert,
-		REFLe tesc,
-		REFLe tese,
-		REFLe geom,
-		REFLe frag
+		zero,
+		REFLe vert = 1 << 0,
+		REFLe tesc = 1 << 1,
+		REFLe tese = 1 << 2,
+		REFLe geom = 1 << 3,
+		REFLe frag = 1 << 4
 	};
 
 	inline StageFlags StageFlagByExt(const std::string &ext)
@@ -177,14 +178,14 @@ namespace tke
 		REFLv int m_cx;
 		REFLv int m_cy;
 
-		REFLv int patchControlPoints = 0;
-		REFLv bool depthTest = false;
-		REFLv bool depthWrite = false;
-		REFLv bool depthClamp = false;
+		REFLv int patch_control_points = 0;
+		REFLv bool depth_test = false;
+		REFLv bool depth_write = false;
+		REFLv bool depth_clamp = false;
 
-		REFLe PrimitiveTopology primitiveTopology = PrimitiveTopology::triangle_list;
-		REFLe PolygonMode polygonMode = PolygonMode::fill;
-		REFLe CullMode cullMode = CullMode::back;
+		REFLe PrimitiveTopology primitive_topology = PrimitiveTopology::triangle_list;
+		REFLe PolygonMode polygon_mode = PolygonMode::fill;
+		REFLe CullMode cull_mode = CullMode::back;
 		std::vector<BlendAttachment> blendAttachments;
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
