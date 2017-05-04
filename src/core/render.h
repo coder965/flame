@@ -267,8 +267,7 @@ namespace tke
 		int index;
 
 		Attachment();
-		Attachment(Image *image);
-		void setClear(VkClearValue _clearValue = {});
+		Attachment(Image *image, VkClearValue _clearValue = {9999.f});
 	};
 
 	struct Dependency : DependencyAbstract
@@ -285,8 +284,7 @@ namespace tke
 		int index = 0;
 
 		RenderPass();
-		RenderPass(std::shared_ptr<Attachment> ai);
-		RenderPass(std::shared_ptr<Attachment> ai, VkCommandBuffer cmd);
+		RenderPass(VkCommandBuffer cmd);
 	};
 
 	struct Renderer : RendererAbstract<RenderPass>
@@ -342,19 +340,15 @@ namespace tke
 
 		Drawcall *mrtObjectDrawcall;
 
-		std::shared_ptr<DrawAction> skyAction;
-		std::shared_ptr<DrawAction> mrtObjectAction;
-		std::shared_ptr<DrawAction> mrtHeightMapTerrainAction;
-		std::shared_ptr<DrawAction> mrtProceduralTerrainAction;
-		std::shared_ptr<DrawAction> deferredAction;
-		std::shared_ptr<DrawAction> combineAction;
+		DrawAction *skyAction;
+		DrawAction *mrtHeightMapTerrainAction;
 
-		std::shared_ptr<RenderPass> skyPass;
-		std::shared_ptr<RenderPass> mrtPass;
-		std::shared_ptr<RenderPass> deferredPass;
-		std::shared_ptr<RenderPass> miscPass;
-		std::shared_ptr<RenderPass> uiPass;
-		std::shared_ptr<RenderPass> combinePass;
+		RenderPass *skyPass;
+		RenderPass *mrtPass;
+		RenderPass *deferredPass;
+		RenderPass *miscPass;
+		RenderPass *uiPass;
+		RenderPass *combinePass;
 
 		Renderer *renderer;
 

@@ -803,13 +803,10 @@ namespace tke
 
 	Attachment::Attachment() {}
 
-	Attachment::Attachment(Image *_image)
+	Attachment::Attachment(Image *_image, VkClearValue _clearValue)
 	{
 		image = _image;
-	}
-
-	void Attachment::setClear(VkClearValue _clearValue)
-	{
+		if (_clearValue.color.float32[0] == 9999.f) return;
 		loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		clearValue = _clearValue;
 	}
@@ -828,14 +825,8 @@ namespace tke
 
 	RenderPass::RenderPass() {}
 
-	RenderPass::RenderPass(std::shared_ptr<Attachment> ai)
+	RenderPass::RenderPass(VkCommandBuffer cmd)
 	{
-		addColorAttachment(ai);
-	}
-
-	RenderPass::RenderPass(std::shared_ptr<Attachment> ai, VkCommandBuffer cmd)
-	{
-		addColorAttachment(ai);
 		type = RenderPassType::call_secondary_cmd;
 		secondaryCmd = cmd;
 	}
@@ -894,10 +885,10 @@ namespace tke
 	{
 		currentPipeline = initPipeline;
 
-		for (auto pass : passes)
+		for (auto &pass : passes)
 		{
-			for (auto action : pass->actions)
-				action->preprocess(currentPipeline);
+			for (auto &action : pass.actions)
+				action.preprocess(currentPipeline);
 		}
 
 		currentPipeline = nullptr;
@@ -919,23 +910,23 @@ namespace tke
 			currentIndexBuffer->bind(cmd);
 
 		bool firstPass = true;
-		for (auto pass : passes)
+		for (auto &pass : passes)
 		{
-			switch (pass->type)
+			switch (pass.type)
 			{
 			case RenderPassType::draw_action:
 				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-				for (auto action : pass->actions)
+				for (auto &action : pass.actions)
 				{
-					if (!action->show) continue;
+					if (!action.show) continue;
 
-					if (action->cx || action->cy)
+					if (action.cx || action.cy)
 					{
 						VkViewport viewport;
 						viewport.x = 0;
 						viewport.y = 0;
-						viewport.width = action->cx;
-						viewport.height = action->cy;
+						viewport.width = action.cx;
+						viewport.height = action.cy;
 						viewport.minDepth = 0.0f;
 						viewport.maxDepth = 1.0f;
 						vkCmdSetViewport(cmd, 0, 1, &viewport);
@@ -943,35 +934,35 @@ namespace tke
 						VkRect2D scissor;
 						scissor.offset.x = 0;
 						scissor.offset.y = 0;
-						scissor.extent.width = action->cx;
-						scissor.extent.height = action->cy;
+						scissor.extent.width = action.cx;
+						scissor.extent.height = action.cy;
 						vkCmdSetScissor(cmd, 0, 1, &scissor);
 					}
-					switch (action->type)
+					switch (action.type)
 					{
 					case DrawActionType::draw_action:
-						if (action->m_pipeline && action->m_pipeline != currentPipeline)
+						if (action.m_pipeline && action.m_pipeline != currentPipeline)
 						{
-							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action->m_pipeline->m_pipeline);
-							currentPipeline = action->m_pipeline;
+							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipeline);
+							currentPipeline = action.m_pipeline;
 						}
-						if (action->m_vertexBuffer && action->m_vertexBuffer != currentVertexBuffer)
+						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
 						{
-							action->m_vertexBuffer->bind(cmd);
-							currentVertexBuffer = action->m_vertexBuffer;
+							action.m_vertexBuffer->bind(cmd);
+							currentVertexBuffer = action.m_vertexBuffer;
 						}
-						if (action->m_indexBuffer && action->m_indexBuffer != currentIndexBuffer)
+						if (action.m_indexBuffer && action.m_indexBuffer != currentIndexBuffer)
 						{
-							action->m_indexBuffer->bind(cmd);
-							currentIndexBuffer = action->m_indexBuffer;
+							action.m_indexBuffer->bind(cmd);
+							currentIndexBuffer = action.m_indexBuffer;
 						}
-						if (action->m_descriptorSet && action->m_descriptorSet != currentDescriptorSet)
+						if (action.m_descriptorSet && action.m_descriptorSet != currentDescriptorSet)
 						{
-							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action->m_pipeline->m_pipelineLayout, 0, 1, &action->m_descriptorSet, 0, nullptr);
-							currentDescriptorSet = action->m_descriptorSet;
+							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipelineLayout, 0, 1, &action.m_descriptorSet, 0, nullptr);
+							currentDescriptorSet = action.m_descriptorSet;
 						}
 
-						for (auto &drawcall : action->drawcalls)
+						for (auto &drawcall : action.drawcalls)
 						{
 							switch (drawcall.type)
 							{
@@ -994,15 +985,15 @@ namespace tke
 						}
 						break;
 					case DrawActionType::call_fuction:
-						if (action->m_pRenderable)
-							action->m_pRenderable->render(cmd);
+						if (action.m_pRenderable)
+							action.m_pRenderable->render(cmd);
 						break;
 					}
 				}
 				break;
 			case RenderPassType::call_secondary_cmd:
 				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-				if (pass->secondaryCmd) vkCmdExecuteCommands(cmd, 1, &pass->secondaryCmd);
+				if (pass.secondaryCmd) vkCmdExecuteCommands(cmd, 1, &pass.secondaryCmd);
 				break;
 			}
 			firstPass = false;
@@ -1025,23 +1016,23 @@ namespace tke
 		std::vector<VkSubpassDescription> vkSubpasses;
 		std::vector<VkSubpassDependency> vkDependencies;
 
-		for (auto p : passes)
+		for (auto &p : passes)
 		{
-			for (auto a : p->colorAttachments)
+			for (auto &a : p.colorAttachments)
 			{
-				if (a->image_name != "")
+				if (a.image_name != "")
 				{
 					if (pResource)
-						a->image = resources(pResource)->getImage(a->image_name);
+						a.image = resources(pResource)->getImage(a.image_name);
 				}
 			}
 		}
 
-		for (auto p : passes)
+		for (auto &p : passes)
 		{
-			for (auto a : p->colorAttachments)
+			for (auto &a : p.colorAttachments)
 			{
-				if (a->image->type == Image::eSwapchain)
+				if (a.image->type == Image::eSwapchain)
 				{
 					containSwapchain = true;
 					break;
@@ -1050,36 +1041,38 @@ namespace tke
 		}
 
 		int subpassIndex = 0;
-		for (auto pass : passes)
+		for (auto &pass : passes)
 		{
-			pass->index = subpassIndex;
+			pass.index = subpassIndex;
 
-			for (auto color : pass->colorAttachments)
-				pushImage(color.get());
+			for (auto &color : pass.colorAttachments)
+				pushImage(&color);
 
-			if (pass->depthStencilAttachment)
-				pushImage(pass->depthStencilAttachment.get());
+			if (pass.depthStencilAttachment)
+				pushImage(pass.depthStencilAttachment);
 
 			VkSubpassDescription desc = {};
 			desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-			if (pass->colorAttachments.size() > 0)
+			if (pass.colorAttachments.size() > 0)
 			{
-				auto refs = new VkAttachmentReference[pass->colorAttachments.size()];
-				for (int i = 0; i < pass->colorAttachments.size(); i++)
+				auto refs = new VkAttachmentReference[pass.colorAttachments.size()];
+				int i = 0;
+				for (auto &c : pass.colorAttachments)
 				{
-					refs[i].attachment = pass->colorAttachments[i]->index;
+					refs[i].attachment = c.index;
 					refs[i].layout = VK_IMAGE_LAYOUT_GENERAL;
+					i++;
 				}
-				desc.colorAttachmentCount = pass->colorAttachments.size();
+				desc.colorAttachmentCount = pass.colorAttachments.size();
 				desc.pColorAttachments = refs;
 				vkReferenceGroups.push_back(refs);
 			}
 
-			if (pass->depthStencilAttachment)
+			if (pass.depthStencilAttachment)
 			{
 				auto refs = new VkAttachmentReference[1];
-				refs[0].attachment = pass->depthStencilAttachment->index;
+				refs[0].attachment = pass.depthStencilAttachment->index;
 				refs[0].layout = VK_IMAGE_LAYOUT_GENERAL;
 				desc.pDepthStencilAttachment = refs;
 				vkReferenceGroups.push_back(refs);
@@ -1087,22 +1080,22 @@ namespace tke
 
 			vkSubpasses.push_back(desc);
 
-			for (auto dependency : pass->dependencies)
+			for (auto &dependency : pass.dependencies)
 			{
-				auto pass = (RenderPass*)dependency->target;
+				auto pass = (RenderPass*)dependency.target;
 				vkDependencies.push_back(vk::subpassDependency(pass->index, subpassIndex));
 			}
 
-			switch (pass->type)
+			switch (pass.type)
 			{
 			case RenderPassType::draw_action:
-				for (auto action : pass->actions)
+				for (auto &action : pass.actions)
 				{
-					switch (action->type)
+					switch (action.type)
 					{
 					case DrawActionType::draw_action:
-						if (action->pipeline_name != "")
-							action->m_pipeline = resources(pResource)->getPipeline(action->pipeline_name.c_str());
+						if (action.pipeline_name != "")
+							action.m_pipeline = resources(pResource)->getPipeline(action.pipeline_name.c_str());
 						break;
 					case DrawActionType::call_fuction:
 						break;
@@ -1110,8 +1103,8 @@ namespace tke
 				}
 				break;
 			case RenderPassType::call_secondary_cmd:
-				if (pass->secondary_cmd_name != "")
-					pass->secondaryCmd = resources(pResource)->getCmd(pass->secondary_cmd_name.c_str());
+				if (pass.secondary_cmd_name != "")
+					pass.secondaryCmd = resources(pResource)->getCmd(pass.secondary_cmd_name.c_str());
 				break;
 			}
 
@@ -1156,86 +1149,63 @@ namespace tke
 		resources()->setPipeline(&deferredPipeline, "Deferred.Pipeline");
 		resources()->setPipeline(&combinePipeline, "Combine.Pipeline");
 
-		auto originalAi = std::make_shared<Attachment>(&originalImage);
-		auto albedoSpecAi = std::make_shared<Attachment>(&albedoSpecImage);
-		auto normalRoughnessAi = std::make_shared<Attachment>(&normalRoughnessImage);
-		auto depthAi = std::make_shared<Attachment>(resources()->getImage("Depth.Image"));
-		auto miscAi = std::make_shared<Attachment>(&miscImage);
-		auto uiAi = std::make_shared<Attachment>(&uiImage);
-		auto swapchainAi = std::make_shared<Attachment>(pWindow->m_image);
-
-		albedoSpecAi->setClear();
-		normalRoughnessAi->setClear();
-		depthAi->setClear({ 1.f, 0 });
-		miscAi->setClear();
-		uiAi->setClear({ 0.f, 0.f, 0.f, 1.f });
-		swapchainAi->setClear({ 1.f, 0.f, 0.f, 0.f });
-
-		skyAction = std::make_shared<DrawAction>(&panoramaPipeline);
-		mrtObjectAction = std::make_shared<DrawAction>(&mrtPipeline);
-		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
-		mrtHeightMapTerrainAction = std::make_shared<DrawAction>(&heightMapTerrainPipeline);
-		mrtProceduralTerrainAction = std::make_shared<DrawAction>(&proceduralTerrainPipeline);
-		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
-		deferredAction = std::make_shared<DrawAction>(&deferredPipeline);
-		deferredAction->addDrawcall(3, 0, 1, 0);
-		combineAction = std::make_shared<DrawAction>(&combinePipeline);
-		combineAction->addDrawcall(3, 0, 1, 0);
-
-		skyPass = std::make_shared<RenderPass>(originalAi);
-		mrtPass = std::make_shared<RenderPass>();
-		deferredPass = std::make_shared<RenderPass>(originalAi);
-		miscPass = std::make_shared<RenderPass>(miscAi);
-		uiPass = std::make_shared<RenderPass>(uiAi, pWindow->m_uiCommandBuffer);
-		combinePass = std::make_shared<RenderPass>(swapchainAi);
-
-		skyPass->addAction(skyAction);
-		deferredPass->addAction(deferredAction);
-		combinePass->addAction(combineAction);
-
-		mrtPass->addColorAttachment(albedoSpecAi);
-		mrtPass->addColorAttachment(normalRoughnessAi);
-		mrtPass->addDepthStencilAttachment(depthAi);
-		mrtPass->addAction(mrtObjectAction);
-		mrtPass->addAction(mrtProceduralTerrainAction);
-
-		deferredPass->addDependency(std::make_shared<Dependency>(skyPass.get()));
-		deferredPass->addDependency(std::make_shared<Dependency>(mrtPass.get()));
-
-		miscPass->addDepthStencilAttachment(depthAi);
-		miscPass->addDependency(std::make_shared<Dependency>(mrtPass.get()));
-
-		combinePass->addDependency(std::make_shared<Dependency>(deferredPass.get()));
-		combinePass->addDependency(std::make_shared<Dependency>(miscPass.get()));
-		combinePass->addDependency(std::make_shared<Dependency>(uiPass.get()));
-
 		renderer = new Renderer();
 		renderer->cx = _cx;
 		renderer->cy = _cy;
 
-		renderer->addPass(skyPass);
-		renderer->addPass(mrtPass);
-		renderer->addPass(deferredPass);
-		renderer->addPass(miscPass);
-		renderer->addPass(uiPass);
-		renderer->addPass(combinePass);
+		skyPass = renderer->addPass();
+		skyPass->addColorAttachment(&originalImage);
+		skyAction = skyPass->addAction(&panoramaPipeline);
+		
+		mrtPass = renderer->addPass();
+		mrtPass->addColorAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		mrtPass->addColorAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		mrtPass->addDepthStencilAttachment(resources()->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
+		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
+		mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
+		auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
+		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
+
+		deferredPass = renderer->addPass();
+		deferredPass->addColorAttachment(&originalImage);
+		deferredPass->addDependency(skyPass);
+		deferredPass->addDependency(mrtPass);
+		auto deferredAction = deferredPass->addAction(&deferredPipeline);
+		deferredAction->addDrawcall(3, 0, 1, 0);
+
+		miscPass = renderer->addPass();
+		miscPass->addColorAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		miscPass->addDepthStencilAttachment(resources()->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		miscPass->addDependency(mrtPass);
+
+		uiPass = renderer->addPass(pWindow->m_uiCommandBuffer);
+		uiPass->addColorAttachment(&uiImage, VkClearValue{ 0.f, 0.f, 0.f, 1.f });
+
+		combinePass = renderer->addPass();
+		combinePass->addColorAttachment(pWindow->m_image);
+		combinePass->addDependency(deferredPass);
+		combinePass->addDependency(miscPass);
+		combinePass->addDependency(uiPass);
+		auto combineAction = combinePass->addAction(&combinePipeline);
+		combineAction->addDrawcall(3, 0, 1, 0);
 
 		renderer->initVertexBuffer = vertexBuffer;
 		renderer->initIndexBuffer = indexBuffer;
 
 		renderer->setup();
 
-		panoramaPipeline.create("../../shader/sky/panorama.xml", &vertexInputState,
+		panoramaPipeline.create("../shader/sky/panorama.xml", &vertexInputState,
 			resCx, resCy, renderer->vkRenderPass, skyPass->index);
-		heightMapTerrainPipeline.create("../../shader/terrain/height_map/terrain.xml", &zeroVertexInputState,
+		heightMapTerrainPipeline.create("../shader/terrain/height_map/terrain.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		proceduralTerrainPipeline.create("../../shader/terrain/procedural/terrain.xml", &zeroVertexInputState,
+		proceduralTerrainPipeline.create("../shader/terrain/procedural/terrain.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		mrtPipeline.create("../../shader/deferred/mrt.xml", &vertexInputState,
+		mrtPipeline.create("../shader/deferred/mrt.xml", &vertexInputState,
 			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		deferredPipeline.create("../../shader/deferred/deferred.xml", &zeroVertexInputState,
+		deferredPipeline.create("../shader/deferred/deferred.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, deferredPass->index);
-		combinePipeline.create("../../shader/combine/combine.xml", &zeroVertexInputState,
+		combinePipeline.create("../shader/combine/combine.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, combinePass->index);
 
 		renderer->getDescriptorSets();

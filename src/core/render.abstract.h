@@ -191,17 +191,17 @@ namespace tke
 		std::vector<StageType*> stages;
 		std::vector<LinkResource> links;
 
-		inline ~PipelineAbstract()
+		~PipelineAbstract()
 		{
 			for (auto s : stages) delete s;
 		}
-		inline void setFilename(const std::string &_filename)
+		void setFilename(const std::string &_filename)
 		{
 			filename = _filename;
 			std::experimental::filesystem::path p(filename);
 			filepath = p.parent_path().string();
 		}
-		inline void loadXML()
+		void loadXML()
 		{
 			blendAttachments.clear();
 			descriptors.clear();
@@ -257,7 +257,7 @@ namespace tke
 				}
 			}
 		}
-		inline void saveXML()
+		void saveXML()
 		{
 			AttributeTree at("pipeline");
 			at.addAttributes(this, b);
@@ -314,18 +314,11 @@ namespace tke
 		{
 			delete push_constant_value;
 		}
-		inline void setIndex(int _indexCount, int _firstIndex, int _vertexOffset)
-		{
-			index_count = _indexCount;
-			first_index = _firstIndex;
-			vertex_offset = _vertexOffset;
-			type = DrawcallType::index;
-		}
-		inline void loadFromAt(AttributeTreeNode *n)
+		void loadFromAt(AttributeTreeNode *n)
 		{
 			n->obtainFromAttributes(this, b);
 		}
-		inline void saveToAt(AttributeTreeNode *n)
+		void saveToAt(AttributeTreeNode *n)
 		{
 			n->addAttributes(this, b);
 		}
@@ -354,14 +347,14 @@ namespace tke
 		std::list<DrawcallType> drawcalls;
 		
 		template <class... _Valty>
-		inline DrawcallType *addDrawcall(_Valty&&... _Val)
+		DrawcallType *addDrawcall(_Valty&&... _Val)
 		{
 			drawcalls.emplace_back(_Val...);
 			auto d = &drawcalls.back();
 			d->parent = this;
 			return d;
 		}
-		inline void loadFromAt(AttributeTreeNode *n)
+		void loadFromAt(AttributeTreeNode *n)
 		{
 			n->obtainFromAttributes(this, b);
 
@@ -378,7 +371,7 @@ namespace tke
 				}
 			}
 		}
-		inline void saveToAt(AttributeTreeNode *n)
+		void saveToAt(AttributeTreeNode *n)
 		{
 			n->addAttributes(this, b);
 
@@ -391,7 +384,7 @@ namespace tke
 				d.saveToAt(n);
 			}
 		}
-		inline void maintain(int row) override
+		void maintain(int row) override
 		{
 			maintainList(drawcalls);
 		}
@@ -418,11 +411,11 @@ namespace tke
 		REFLv float clear_a = 0.f;
 		REFLv float clear_depth = 1.f;
 		REFLv int clear_stencil = 0;
-		inline void loadFromAt(AttributeTreeNode *n)
+		void loadFromAt(AttributeTreeNode *n)
 		{
 			n->obtainFromAttributes(this, b);
 		}
-		inline void saveToAt(AttributeTreeNode *n)
+		void saveToAt(AttributeTreeNode *n)
 		{
 			n->addAttributes(this, b);
 		}
@@ -436,11 +429,11 @@ namespace tke
 
 		REFLv std::string pass_name;
 		void *target = nullptr;
-		inline void loadFromAt(AttributeTreeNode *n)
+		void loadFromAt(AttributeTreeNode *n)
 		{
 			n->obtainFromAttributes(this, b);
 		}
-		inline void saveToAt(AttributeTreeNode *n)
+		void saveToAt(AttributeTreeNode *n)
 		{
 			n->addAttributes(this, b);
 		}
@@ -459,12 +452,12 @@ namespace tke
 	{
 		Container *parent;
 
-		std::vector<std::shared_ptr<AttachmentType>> colorAttachments;
-		std::shared_ptr<AttachmentType> depthStencilAttachment;
+		std::list<AttachmentType> colorAttachments;
+		AttachmentType *depthStencilAttachment = nullptr;
 
-		std::vector<std::shared_ptr<DependencyType>> dependencies;
+		std::list<DependencyType> dependencies;
 
-		std::vector<std::shared_ptr<DrawActionType>> actions;
+		std::list<DrawActionType> actions;
 
 		REFL_BANK;
 
@@ -474,27 +467,40 @@ namespace tke
 
 		REFLv std::string secondary_cmd_name;
 
-		void addColorAttachment(std::shared_ptr<AttachmentType> p)
+		~RenderPassAbstract() { delete depthStencilAttachment; }
+		template <class... _Valty>
+		AttachmentType *addColorAttachment(_Valty&&... _Val)
 		{
+			colorAttachments.emplace_back(_Val...);
+			auto p = &colorAttachments.back();
 			p->parent = this;
-			colorAttachments.push_back(p);
+			return p;
 		}
-		void addDepthStencilAttachment(std::shared_ptr<AttachmentType> p)
+		template <class... _Valty>
+		AttachmentType *addDepthStencilAttachment(_Valty&&... _Val)
 		{
+			auto p = new AttachmentType(_Val...);
 			p->parent = this;
 			depthStencilAttachment = p;
+			return p;
 		}
-		void addDependency(std::shared_ptr<DependencyType> p)
+		template <class... _Valty>
+		DependencyType *addDependency(_Valty&&... _Val)
 		{
+			dependencies.emplace_back(_Val...);
+			auto p = &dependencies.back();
 			p->parent = this;
-			dependencies.push_back(p);
+			return p;
 		}
-		void addAction(std::shared_ptr<DrawActionType> action)
+		template <class... _Valty>
+		DrawActionType *addAction(_Valty&&... _Val)
 		{
-			action->parent = this;
-			actions.push_back(action);
+			actions.emplace_back(_Val...);
+			auto p = &actions.back();
+			p->parent = this;
+			return p;
 		}
-		inline void loadFromAt(AttributeTreeNode *n)
+		void loadFromAt(AttributeTreeNode *n)
 		{
 			n->obtainFromAttributes(this, b);
 
@@ -508,8 +514,7 @@ namespace tke
 					{
 						if (n->name == "attachment")
 						{
-							auto attachment = std::make_shared<AttachmentType>();
-							addColorAttachment(attachment);
+							auto attachment = addColorAttachment();
 							attachment->loadFromAt(n);
 						}
 					}
@@ -520,8 +525,7 @@ namespace tke
 					auto attachmentNode = depthStencilNode->firstNode("attachment");
 					if (attachmentNode)
 					{
-						depthStencilAttachment = std::make_shared<AttachmentType>();
-						addDepthStencilAttachment(depthStencilAttachment);
+						depthStencilAttachment = addDepthStencilAttachment();
 						depthStencilAttachment->loadFromAt(attachmentNode);
 					}
 				}
@@ -533,8 +537,7 @@ namespace tke
 				{
 					if (n->name == "dependency")
 					{
-						auto dependency = std::make_shared<DependencyType>();
-						addDependency(dependency);
+						auto dependency = addDependency();
 						dependency->loadFromAt(n);
 					}
 				}
@@ -546,14 +549,13 @@ namespace tke
 				{
 					if (n->name == "action")
 					{
-						auto action = std::make_shared<DrawActionType>();
-						addAction(action);
+						auto action = addAction();
 						action->loadFromAt(n);
 					}
 				}
 			}
 		}
-		inline void saveToAt(AttributeTreeNode *n)
+		void saveToAt(AttributeTreeNode *n)
 		{
 			n->addAttributes(this, b);
 
@@ -565,7 +567,7 @@ namespace tke
 			{
 				auto n = new AttributeTreeNode("attachment");
 				colorNode->children.push_back(n);
-				c->saveToAt(n);
+				c.saveToAt(n);
 			}
 			auto depthStencilNode = new AttributeTreeNode("depth_stencil");
 			attachmentNode->children.push_back(depthStencilNode);
@@ -580,35 +582,38 @@ namespace tke
 			{
 				auto n = new AttributeTreeNode("dependency");
 				dependenciesNode->children.push_back(n);
-				d->saveToAt(n);
+				d.saveToAt(n);
 			}
 			auto actionsNode = new AttributeTreeNode("actions");
 			for (auto &a : actions)
 			{
 				auto n = new AttributeTreeNode("action");
 				actionsNode->children.push_back(n);
-				a->saveToAt(n);
+				a.saveToAt(n);
 			}
 		}
-		inline void maintain(int row) override
+		void maintain(int row) override
 		{
 			switch (row)
 			{
 			case RenderPassElement::eAction:
-				maintainVector(actions);
+				maintainList(actions);
 				break;
 			case RenderPassElement::eColorAttachment:
-				maintainVector(colorAttachments);
+				maintainList(colorAttachments);
 				break;
 			case RenderPassElement::eDepthStencilAttachment:
 				if (depthStencilAttachment)
 				{
 					if (depthStencilAttachment->mark == Element::eMarkClear)
-						depthStencilAttachment.reset();
+					{
+						delete depthStencilAttachment;
+						depthStencilAttachment = nullptr;
+					}
 				}
 				break;
 			case RenderPassElement::eDependency:
-				maintainVector(dependencies);
+				maintainList(dependencies);
 				break;
 			}
 		}
@@ -625,44 +630,15 @@ namespace tke
 		REFLv std::string name;
 		REFLv std::string filename;
 
-		std::vector<std::shared_ptr<RenderPassType>> passes;
+		std::list<RenderPassType> passes;
 
-		void addPass(std::shared_ptr<RenderPassType> p)
+		template <class... _Valty>
+		RenderPassType *addPass(_Valty&&... _Val)
 		{
+			passes.emplace_back(_Val...);
+			auto p = &passes.back();
 			p->parent = this;
-			passes.push_back(p);
-		}
-		void removePass(RenderPassType *pass)
-		{
-			auto it = std::find_if(passes.begin(), passes.end(), [&](std::shared_ptr<RenderPass> const& p) {
-				return p.get() == pass;
-			});
-			if (it != passes.end())
-				passes.erase(it);
-		}
-		int upPass(RenderPassType *p)
-		{
-			for (int i = 0; i < passes.size(); i++)
-			{
-				if (passes[i].get() == p)
-				{
-					if (i > 0) std::swap(passes[i], passes[i - 1]);
-					return i;
-				}
-			}
-			return -1;
-		}
-		int downPass(RenderPassType *p)
-		{
-			for (int i = 0; i < passes.size(); i++)
-			{
-				if (passes[i].get() == p)
-				{
-					if (i < passes.size() - 1) std::swap(passes[i], passes[i + 1]);
-					return i;
-				}
-			}
-			return -1;
+			return p;
 		}
 		void loadXML()
 		{
@@ -678,22 +654,21 @@ namespace tke
 				{
 					if (c->name == "pass")
 					{
-						auto pass = std::make_shared<RenderPassType>();
-						addPass(pass);
+						auto pass = addPass();
 						pass->loadFromAt(c);
 					}
 				}
 			}
 
-			for (auto p : passes)
+			for (auto &p : passes)
 			{
-				for (auto d : p->dependencies)
+				for (auto &d : p.dependencies)
 				{
 					for (auto &pp : passes)
 					{
-						if (d->pass_name == pp->name)
+						if (d.pass_name == pp.name)
 						{
-							d->target = pp.get();
+							d.target = &pp;
 							break;
 						}
 					}
@@ -725,14 +700,14 @@ namespace tke
 			{
 				auto n = new AttributeTreeNode("pass");
 				passesNode->children.push_back(n);
-				p->saveToAt(n);
+				p.saveToAt(n);
 			}
 
 			at.saveXML(filename);
 		}
-		inline void maintain(int row) override
+		void maintain(int row) override
 		{
-			maintainVector(passes);
+			maintainList(passes);
 		}
 	};
 }

@@ -100,10 +100,10 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 	tke::MasterRenderer *masterRenderer;
 
-	std::shared_ptr<tke::DrawAction> miscLightFrameAction = std::make_shared<tke::DrawAction>(&lightFramePipeline);
-	std::shared_ptr<tke::DrawAction> miscWireFrameLightAction = std::make_shared<tke::DrawAction>(&wireFramePipeline);
-	std::shared_ptr<tke::DrawAction> miscWireFrameObjectAction = std::make_shared<tke::DrawAction>(&wireFramePipeline);
-	std::shared_ptr<tke::DrawAction> miscToolAction = std::make_shared<tke::DrawAction>();
+	tke::DrawAction *miscLightFrameAction;
+	tke::DrawAction *miscWireFrameLightAction;
+	tke::DrawAction *miscWireFrameObjectAction;
+	tke::DrawAction *miscToolAction;
 
 	VkCommandBuffer cmd[2];
 
@@ -150,6 +150,9 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 		masterRenderer = new tke::MasterRenderer(1600, 900, this, &tke::scene->vertexBuffer, &tke::scene->indexBuffer, &tke::scene->objectIndirectBuffer);
 
+		miscLightFrameAction = masterRenderer->miscPass->addAction(&lightFramePipeline);
+		miscWireFrameLightAction = masterRenderer->miscPass->addAction(&wireFramePipeline);
+		miscWireFrameObjectAction = masterRenderer->miscPass->addAction(&wireFramePipeline);
 		int index;
 		index = 0;
 		miscWireFrameLightAction->addDrawcall(VK_SHADER_STAGE_VERTEX_BIT, &index);
@@ -157,12 +160,8 @@ struct MainWindow : tke::UI::EngineGuiWindow
 		index = 1;
 		miscWireFrameObjectAction->addDrawcall(VK_SHADER_STAGE_VERTEX_BIT, &index);
 		miscWireFrameObjectAction->addDrawcall(VK_SHADER_STAGE_FRAGMENT_BIT, &glm::vec4(0.f, 1.f, 0.f, 1.f), 16);
-
-		masterRenderer->miscPass->addAction(miscLightFrameAction);
-		masterRenderer->miscPass->addAction(miscWireFrameLightAction);
-		masterRenderer->miscPass->addAction(miscWireFrameObjectAction);
+		miscToolAction = masterRenderer->miscPass->addAction();
 		miscToolAction->type = tke::DrawActionType::call_fuction;
-		masterRenderer->miscPass->addAction(miscToolAction);
 
 		lightFramePipeline.create("d:/tk-sdk/engine/shader/lightFrame/lightFrame.xml", &tke::vertexInputState,
 			tke::resCx, tke::resCy, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
