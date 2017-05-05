@@ -18,7 +18,7 @@
 	<link type="sampler" binding="5" name="NormalRoughness.Texture" sampler="screen" />
   
 	<shader>
-		<stage filename="..\fullscreenView.vert" />
+		<stage filename="../fullscreenView.vert" />
 		<stage filename="deferred.frag" />
 	</shader>
   

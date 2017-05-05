@@ -31,10 +31,10 @@ struct Stage : tke::StageAbstract
 
 		void on_text_changed()
 		{
-			if (qTextDataPreparing) return;
+			if (preparingData) return;
 
 			changed = true;
-			stageTabWidget->setTabText(tabIndex, QString(stageNames[type].c_str()) + "*");
+			stageTab->setTabText(tabIndex, QString(stageNames[type].c_str()) + "*");
 		}
 	}wrap;
 
@@ -64,7 +64,7 @@ struct Stage : tke::StageAbstract
 			if (std::regex_search(line, sm, pat))
 			{
 				auto include = sm[1].str();
-				tke::OnceFileBuffer file(parent_path + "/" + filepath + include);
+				tke::OnceFileBuffer file(parent_path + "/" + filepath + "/" + include);
 				strOut += file.data;
 				strOut += "\n";
 			}
@@ -90,9 +90,8 @@ struct Pipeline : tke::PipelineAbstract<Stage>
     {
         QString _filename;
         {
-            auto length = strlen(shaderPath);
-            if (filename.compare(0, length, shaderPath) == 0)
-                _filename = filename.c_str() + length;
+            if (filename.compare(0, shaderPath.size(), shaderPath) == 0)
+                _filename = filename.c_str() + shaderPath.size();
             else
                 _filename = filename.c_str();
         }
@@ -154,27 +153,32 @@ struct Pipeline : tke::PipelineAbstract<Stage>
     {
 		auto s = stageByTabIndex(index);
 		explorerButton->setStatusTip(s->filename.c_str());
-		outputMyEdit->setPlainText(s->output.c_str());
-		compileTextBrowser->setText(s->compileOutput.c_str());
+		outputText->setPlainText(s->output.c_str());
+		compileText->setText(s->compileOutput.c_str());
     }
 
     void refreshTabs()
     {
-        stageTabWidget->clear();
+        stageTab->clear();
 		int i = 0;
 		for (int type = 0; type < 5; type++)
 		{
-			auto s = stageByType(type);
+			const int types[] = {
+				(int)tke::StageFlags::vert,
+				(int)tke::StageFlags::tesc,
+				(int)tke::StageFlags::tese,
+				(int)tke::StageFlags::geom,
+				(int)tke::StageFlags::frag
+			};
+			auto s = stageByType(types[type]);
 			if (s)
 			{
 				s->appear();
 				QString title = stageNames[(int)type].c_str();
 				if (s->wrap.changed) title += "*";
-				s->wrap.tabIndex = stageTabWidget->addTab(s->wrap.edit, title);
+				s->wrap.tabIndex = stageTab->addTab(s->wrap.edit, title);
 			}
 		}
-
-        setTabData(0);
     }
 };
 
@@ -184,5 +188,5 @@ Pipeline *currentPipeline = nullptr;
 Stage *currentTabStage()
 {
 	if (!currentPipeline) return nullptr;
-	return currentPipeline->stageByTabIndex(stageTabWidget->currentIndex());
+	return currentPipeline->stageByTabIndex(stageTab->currentIndex());
 }

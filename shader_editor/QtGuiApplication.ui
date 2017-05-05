@@ -54,7 +54,7 @@
           <property name="title">
            <string/>
           </property>
-          <widget class="QToolButton" name="addPipelineToolButton">
+          <widget class="QToolButton" name="addPipeline">
            <property name="geometry">
             <rect>
              <x>0</x>
@@ -71,7 +71,7 @@
              <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
            </property>
           </widget>
-          <widget class="QToolButton" name="removePipelineToolButton">
+          <widget class="QToolButton" name="removePipeline">
            <property name="geometry">
             <rect>
              <x>30</x>
@@ -88,7 +88,7 @@
              <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
            </property>
           </widget>
-          <widget class="QToolButton" name="explorerPipelineFileToolButton">
+          <widget class="QToolButton" name="explorerPipeline">
            <property name="geometry">
             <rect>
              <x>60</x>
@@ -147,10 +147,10 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QLineEdit" name="pipelineNameLineEdit"/>
+            <widget class="QLineEdit" name="pipelineNameEdit"/>
            </item>
            <item>
-            <widget class="QToolButton" name="savePipelineToolButton">
+            <widget class="QToolButton" name="savePipeline">
              <property name="text">
               <string>...</string>
              </property>
@@ -208,7 +208,7 @@
           <property name="title">
            <string/>
           </property>
-          <widget class="QToolButton" name="addStageToolButton">
+          <widget class="QToolButton" name="addStage">
            <property name="geometry">
             <rect>
              <x>0</x>
@@ -225,7 +225,7 @@
              <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
            </property>
           </widget>
-          <widget class="QToolButton" name="removeStageToolButton">
+          <widget class="QToolButton" name="removeStage">
            <property name="geometry">
             <rect>
              <x>30</x>
@@ -242,7 +242,7 @@
              <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
            </property>
           </widget>
-          <widget class="QToolButton" name="saveStageToolButton">
+          <widget class="QToolButton" name="saveStage">
            <property name="geometry">
             <rect>
              <x>60</x>
@@ -259,7 +259,7 @@
              <normaloff>:/image/misc/save.png</normaloff>:/image/misc/save.png</iconset>
            </property>
           </widget>
-          <widget class="QToolButton" name="toSpvToolButton">
+          <widget class="QToolButton" name="toSpv">
            <property name="geometry">
             <rect>
              <x>90</x>
@@ -276,7 +276,7 @@
              <normaloff>:/image/misc/spv.png</normaloff>:/image/misc/spv.png</iconset>
            </property>
           </widget>
-          <widget class="QToolButton" name="explorerStageFileToolButton">
+          <widget class="QToolButton" name="explorerStage">
            <property name="geometry">
             <rect>
              <x>120</x>
@@ -300,7 +300,7 @@
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QTabWidget" name="stageTabWidget">
+          <widget class="QTabWidget" name="stageTab">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -308,7 +308,7 @@
             </sizepolicy>
            </property>
           </widget>
-          <widget class="QTabWidget" name="bottomTabWidget">
+          <widget class="QTabWidget" name="bottomTab">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>

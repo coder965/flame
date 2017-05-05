@@ -1,20 +1,20 @@
 <data>
-	<pipeline filename="D:\TK_Engine\shader\combine\combine.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\deferred\deferred.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\deferred\mrt.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\lightFrame\lightFrame.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\pickUp\pickUp.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\sky\convolve.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\sky\downsample.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\sky\panorama.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\sky\scattering.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\startUp\startUp.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\terrain\height_map\terrain.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\terrain\procedural\terrain.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\tool\transform\pickUp.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\tool\transform\rect.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\tool\transform\transform.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\ui\ui.xml"/>
-	<pipeline filename="D:\TK_Engine\shader\wireFrame\wireFrame.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/combine/combine.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/deferred/deferred.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/deferred/mrt.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/lightFrame/lightFrame.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/pickUp\pickUp.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/sky/convolve.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/sky/downsample.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/sky/panorama.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/sky/scattering.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/startUp/startUp.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/terrain/height_map/terrain.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/terrain/procedural/terrain.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/tool/transform/pickUp.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/tool/transform/rect.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/tool/transform/transform.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/ui/ui.xml"/>
+	<pipeline filename="D:/TK_Engine/shader/wireFrame/wireFrame.xml"/>
 </data>
 

@@ -8,19 +8,19 @@
 #include "d:/TK_Engine/src/core/utils.h"
 #include "d:/TK_Engine/src/core/render.abstract.h"
 
-auto shaderPath = "D:\\TK_Engine\\shader";
-std::string glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe";
+const std::string shaderPath = "D:/TK_Engine/shader";
+const std::string glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe";
 
 #include "edit.hpp"
 
 QTreeWidget *pipelineTree;
 QToolButton *explorerButton;
-QTabWidget *bottomTabWidget;
-MyEdit *outputMyEdit;
-QTextBrowser *compileTextBrowser;
-QTabWidget *stageTabWidget;
+QTabWidget *bottomTab;
+MyEdit *outputText;
+QTextBrowser *compileText;
+QTabWidget *stageTab;
 
-bool qTextDataPreparing = false;
+bool preparingData = false;
 
 #include "shader.hpp"
 
@@ -81,14 +81,14 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	}
 
 	pipelineTree = ui.pipelineTree;
-	explorerButton = ui.explorerStageFileToolButton;
-	bottomTabWidget = ui.bottomTabWidget;
-	outputMyEdit = new MyEdit;
-	outputMyEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
-	bottomTabWidget->addTab(outputMyEdit, "Output");
-	compileTextBrowser = new QTextBrowser;
-	bottomTabWidget->addTab(compileTextBrowser, "Compile");
-	stageTabWidget = ui.stageTabWidget;
+	explorerButton = ui.explorerStage;
+	bottomTab = ui.bottomTab;
+	outputText = new MyEdit;
+	outputText->setLineWrapMode(QPlainTextEdit::NoWrap);
+	bottomTab->addTab(outputText, "Output");
+	compileText = new QTextBrowser;
+	bottomTab->addTab(compileText, "Compile");
+	stageTab = ui.stageTab;
 	{
 		Find::edit = new QLineEdit;
 		connect(Find::edit, &QLineEdit::textChanged, this, &QtGuiApplication::on_find);
@@ -118,7 +118,7 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 		group->setLayout(layout);
 		group->setStyleSheet("QGroupBox{border:0px;padding-top:-10px;padding-bottom:-10px;}");
 
-		stageTabWidget->setCornerWidget(group);
+		stageTab->setCornerWidget(group);
 	}
 
 	tke::AttributeTree at("data");
@@ -141,11 +141,11 @@ void QtGuiApplication::keyPressEvent(QKeyEvent *k)
 	if (k->key() == Qt::Key_S)
 	{
 		if (k->modifiers() == Qt::ControlModifier)
-			on_saveStageToolButton_clicked();
+			on_saveStage_clicked();
 	}
 	else if (k->key() == Qt::Key_F5)
 	{
-		on_toSpvToolButton_clicked();
+		on_toSpv_clicked();
 	}
 }
 
@@ -163,12 +163,12 @@ void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *curr,
 					s->text = s->wrap.edit->toPlainText().toUtf8().data();
 			}
 
-			qTextDataPreparing = true;
-			ui.pipelineNameLineEdit->setText(pipeline->name.c_str());
-			pipeline->refreshTabs();
-			qTextDataPreparing = false;
-
 			currentPipeline = pipeline;
+
+			preparingData = true;
+			ui.pipelineNameEdit->setText(pipeline->name.c_str());
+			pipeline->refreshTabs();
+			preparingData = false;
 
 			on_find();
 
@@ -177,9 +177,9 @@ void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *curr,
 	}
 }
 
-void QtGuiApplication::on_addPipelineToolButton_clicked()
+void QtGuiApplication::on_addPipeline_clicked()
 {
-	auto list = QFileDialog::getOpenFileNames(this, "", shaderPath);
+	auto list = QFileDialog::getOpenFileNames(this, "", shaderPath.c_str());
 	if (list.size() == 0) return;
 
 	for (auto i = 0; i < list.size(); i++)
@@ -192,7 +192,7 @@ void QtGuiApplication::on_addPipelineToolButton_clicked()
 	saveDataXml();
 }
 
-void QtGuiApplication::on_removePipelineToolButton_clicked()
+void QtGuiApplication::on_removePipeline_clicked()
 {
 	if (!currentPipeline) return;
 
@@ -214,7 +214,7 @@ void QtGuiApplication::on_removePipelineToolButton_clicked()
 }
 
 
-void QtGuiApplication::on_explorerPipelineFileToolButton_clicked()
+void QtGuiApplication::on_explorerPipeline_clicked()
 {
 	if (!currentPipeline) return;
 
@@ -224,12 +224,12 @@ void QtGuiApplication::on_explorerPipelineFileToolButton_clicked()
 	}
 	else
 	{
-		std::string cmd = "explorer /select," + currentPipeline->filename;
+		std::string cmd("explorer /select," + currentPipeline->filename);
 		WinExec(cmd.c_str(), SW_SHOWNORMAL);
 	}
 }
 
-void QtGuiApplication::on_addStageToolButton_clicked()
+void QtGuiApplication::on_addStage_clicked()
 {
 	if (!currentPipeline || currentPipeline->stages.size() >= 5) return;
 
@@ -260,24 +260,23 @@ void QtGuiApplication::on_addStageToolButton_clicked()
 
 	currentPipeline->stages.push_back(s);
 
-	qTextDataPreparing = true;
+	preparingData = true;
 	currentPipeline->refreshTabs();
-	qTextDataPreparing = false;
+	preparingData = false;
 
 	currentPipeline->saveXML();
 }
 
-void QtGuiApplication::on_removeStageToolButton_clicked()
+void QtGuiApplication::on_removeStage_clicked()
 {
 	auto s = currentTabStage();
 	if (!s) return;
 
 	currentPipeline->removeStage(s);
-
 	currentPipeline->saveXML();
 }
 
-void QtGuiApplication::on_saveStageToolButton_clicked()
+void QtGuiApplication::on_saveStage_clicked()
 {
 	auto s = currentTabStage();
 	if (!s || !s->wrap.changed) return;
@@ -289,21 +288,21 @@ void QtGuiApplication::on_saveStageToolButton_clicked()
 
 	s->wrap.changed = false;
 
-	stageTabWidget->setTabText(s->wrap.tabIndex, stageNames[(int)s->type].c_str());
+	stageTab->setTabText(s->wrap.tabIndex, stageNames[(int)s->type].c_str());
 }
 
-void QtGuiApplication::on_toSpvToolButton_clicked()
+void QtGuiApplication::on_toSpv_clicked()
 {
 	auto s = currentTabStage();
 	if (!s) return;
 
-	on_saveStageToolButton_clicked();
+	on_saveStage_clicked();
 
-	outputMyEdit->clear();
-	compileTextBrowser->clear();
+	outputText->clear();
+	compileText->clear();
 
 	auto string = s->getFullText(currentPipeline->filepath);
-	outputMyEdit->setPlainText(string.c_str());
+	outputText->setPlainText(string.c_str());
 	s->output = string;
 
 	std::ofstream file("temp.glsl");
@@ -316,7 +315,7 @@ void QtGuiApplication::on_toSpvToolButton_clicked()
 	tke::OnceFileBuffer output("output.txt");
 	s->compileOutput = output.data;
 
-	compileTextBrowser->setText(output.data);
+	compileText->setText(output.data);
 
 	std::stringstream outputStream(s->compileOutput);
 
@@ -351,12 +350,15 @@ void QtGuiApplication::on_toSpvToolButton_clicked()
 
 }
 
-void QtGuiApplication::on_stageTabWidget_tabBarClicked(int index)
+void QtGuiApplication::on_stageTab_currentChanged(int index)
 {
+	if (preparingData) return;
+
 	currentPipeline->setTabData(index);
+	on_find();
 }
 
-void QtGuiApplication::on_explorerStageFileToolButton_clicked()
+void QtGuiApplication::on_explorerStage_clicked()
 {
 	auto s = currentTabStage();
 	if (!s) return;
@@ -373,11 +375,11 @@ void QtGuiApplication::on_explorerStageFileToolButton_clicked()
 	}
 }
 
-void QtGuiApplication::on_savePipelineToolButton_clicked()
+void QtGuiApplication::on_savePipeline_clicked()
 {
-	if (qTextDataPreparing || !currentPipeline) return;
+	if (preparingData || !currentPipeline) return;
 
-	currentPipeline->name = ui.pipelineNameLineEdit->text().toUtf8().data();
+	currentPipeline->name = ui.pipelineNameEdit->text().toUtf8().data();
 
 	saveDataXml();
 }
@@ -438,9 +440,3 @@ void QtGuiApplication::on_find_next()
 {
 	Find::gotoIndex(Find::current + 1);
 }
-
-void QtGuiApplication::on_stageTabWidget_currentChanged(int index)
-{
-	on_find();
-}
-

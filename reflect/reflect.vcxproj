@@ -85,7 +85,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\core\utils.cpp" />
     <ClCompile Include="lex.yy.c" />
-    <ClCompile Include="reflect.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="def.h" />

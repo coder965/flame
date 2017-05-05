@@ -7,7 +7,7 @@
 	<link type="uniform_buffer" binding="1" name="StartUp.UniformBuffer" />
 
 	<shader>
-		<stage filename="..\fullscreenUv.vert" />
+		<stage filename="../fullscreenUv.vert" />
 		<stage filename="startUp.frag" />
 	</shader>
   

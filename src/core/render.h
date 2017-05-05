@@ -125,7 +125,6 @@ namespace tke
 		VkSampler sampler = 0;
 	};
 
-	struct ResourceBank;
 	struct Pipeline : PipelineAbstract<StageAbstract>
 	{
 		ResourceBank *pResource = &globalResource;
