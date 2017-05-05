@@ -39,14 +39,14 @@ namespace tke
 		lightBuffer.create(sizeof(LightBufferStruct));
 		ambientBuffer.create(sizeof glm::vec4);
 
-		resources()->setBuffer(&matrixBuffer, "Matrix.UniformBuffer");
-		resources()->setBuffer(&objectMatrixBuffer, "ObjectMatrix.UniformBuffer");
-		resources()->setBuffer(&lightMatrixBuffer, "LightMatrix.UniformBuffer");
-		resources()->setBuffer(&materialBuffer, "Material.UniformBuffer");
-		resources()->setBuffer(&heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
-		resources()->setBuffer(&proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
-		resources()->setBuffer(&lightBuffer, "Light.UniformBuffer");
-		resources()->setBuffer(&ambientBuffer, "Ambient.UniformBuffer");
+		globalResource.setBuffer(&matrixBuffer, "Matrix.UniformBuffer");
+		globalResource.setBuffer(&objectMatrixBuffer, "ObjectMatrix.UniformBuffer");
+		globalResource.setBuffer(&lightMatrixBuffer, "LightMatrix.UniformBuffer");
+		globalResource.setBuffer(&materialBuffer, "Material.UniformBuffer");
+		globalResource.setBuffer(&heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
+		globalResource.setBuffer(&proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
+		globalResource.setBuffer(&lightBuffer, "Light.UniformBuffer");
+		globalResource.setBuffer(&ambientBuffer, "Ambient.UniformBuffer");
 	}
 
 	Scene::~Scene()
@@ -639,19 +639,19 @@ namespace tke
 					{
 						scatteringPipeline.create("../shader/sky/scattering.xml", &zeroVertexInputState,
 							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, postRenderPass, 0);
-						resources()->setPipeline(&scatteringPipeline, "Scattering.Pipeline");
+						globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
 
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 						downsamplePipeline.create("../shader/sky/downsample.xml", &zeroVertexInputState,
 							0, 0, postRenderPass, 0);
-						resources()->setPipeline(&downsamplePipeline, "Downsample.Pipeline");
+						globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
 
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 						convolvePipeline.create("../shader/sky/convolve.xml", &zeroVertexInputState,
 							0, 0, postRenderPass, 0);
-						resources()->setPipeline(&convolvePipeline, "Convolve.Pipeline");
+						globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 
 						envrImage.m_mipmapLevels = 4;
 						envrImage.create(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

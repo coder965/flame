@@ -135,7 +135,7 @@ namespace tke
 		}
 
 		_depthImage.create(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		resources()->setImage(&_depthImage, "Depth.Image");
+		globalResource.setImage(&_depthImage, "Depth.Image");
 
 
 		UI::init();

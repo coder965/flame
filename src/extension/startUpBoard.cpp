@@ -109,9 +109,9 @@ namespace tke
 				pImage = createImage("../misc/start_up.jpg", true, false);
 				uniformBuffer.create(sizeof glm::vec2);
 
-				resources(&_resources)->setImage(pImage, "StartUp.Texture");
-				resources(&_resources)->setBuffer(&uniformBuffer, "StartUp.UniformBuffer");
-				resources(&_resources)->setPipeline(&pipeline, "StartUp.Pipeline");
+				_resources.setImage(pImage, "StartUp.Texture");
+				_resources.setBuffer(&uniformBuffer, "StartUp.UniformBuffer");
+				_resources.setPipeline(&pipeline, "StartUp.Pipeline");
 
 				renderer = new Renderer();
 				renderer->filename = "../renderer/start_up_board.xml";
@@ -126,8 +126,8 @@ namespace tke
 
 			pWindow = new MainWindow(renderer->cx, renderer->cy, "", WS_POPUP, 0, false);
 
-			resources(&_resources)->setImage(pWindow->m_image, "Window.Image");
-			resources(&_resources)->setCmd(pWindow->m_uiCommandBuffer, "Ui.Cmd");
+			_resources.setImage(pWindow->m_image, "Window.Image");
+			_resources.setCmd(pWindow->m_uiCommandBuffer, "Ui.Cmd");
 
 			renderer->setup();
 

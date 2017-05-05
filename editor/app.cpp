@@ -829,18 +829,16 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 bool MainWindow::needRedraw = true;
 
-void report(const std::string &str)
+int fuck;
+struct A 
 {
-	pMainWindow->m_uiDialogs->messageDialog.add(str);
-}
-
-void reportProgress(int which, float v)
-{
-	tke::StartUpBoard::setProgress(which, v);
-}
+	int *p = &fuck;
+};
 
 int main()
 {
+	A a;
+
 	auto resCx = 1600, resCy = 900;
 	if (sayError(tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw)))
 		return 0;
@@ -849,8 +847,8 @@ int main()
 
 	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, WS_EX_ACCEPTFILES, true);
 
-	tke::setReporter(report);
-	tke::setProgressReporter(reportProgress);
+	tke::setReporter([](const std::string &str) { pMainWindow->m_uiDialogs->messageDialog.add(str); });
+	tke::setProgressReporter([](int which, float v) { tke::StartUpBoard::setProgress(which, v); });
 
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();

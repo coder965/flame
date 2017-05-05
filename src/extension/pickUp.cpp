@@ -63,11 +63,11 @@ namespace tke
 	void initPickUp()
 	{
 		pickUpImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		resources()->setImage(&pickUpImage, "PickUp.Image");
+		globalResource.setImage(&pickUpImage, "PickUp.Image");
 
-		resources()->setPipeline(&plainPickUpPipeline, "PickUp.Pipeline");
+		globalResource.setPipeline(&plainPickUpPipeline, "PickUp.Pipeline");
 
-		auto pDepthImage = resources()->getImage("Depth.Image");
+		auto pDepthImage = globalResource.getImage("Depth.Image");
 
 		VkAttachmentDescription attachments[] = {
 			vk::colorAttachment(pickUpImage.m_format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image

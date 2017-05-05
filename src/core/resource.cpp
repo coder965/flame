@@ -2,7 +2,7 @@
 
 namespace tke
 {
-	ResourceBank _resources;
+	ResourceBank globalResource;
 
 	void ResourceBank::setBuffer(Buffer *p, const std::string &str)
 	{
@@ -29,8 +29,8 @@ namespace tke
 		auto it = bufferResources.find(str);
 		if (it == bufferResources.end())
 		{
-			it = _resources.bufferResources.find(str);
-			if (it == _resources.bufferResources.end())
+			it = globalResource.bufferResources.find(str);
+			if (it == globalResource.bufferResources.end())
 				return nullptr;
 		}
 		return it->second;
@@ -41,8 +41,8 @@ namespace tke
 		auto it = imageResources.find(str);
 		if (it == imageResources.end())
 		{
-			it = _resources.imageResources.find(str);
-			if (it == _resources.imageResources.end())
+			it = globalResource.imageResources.find(str);
+			if (it == globalResource.imageResources.end())
 				return nullptr;
 		}
 		return it->second;
@@ -53,8 +53,8 @@ namespace tke
 		auto it = pipelineResources.find(str);
 		if (it == pipelineResources.end())
 		{
-			it = _resources.pipelineResources.find(str);
-			if (it == _resources.pipelineResources.end())
+			it = globalResource.pipelineResources.find(str);
+			if (it == globalResource.pipelineResources.end())
 				return nullptr;
 		}
 		return it->second;
@@ -65,16 +65,10 @@ namespace tke
 		auto it = cmdResources.find(str);
 		if (it == cmdResources.end())
 		{
-			it = _resources.cmdResources.find(str);
-			if (it == _resources.cmdResources.end())
+			it = globalResource.cmdResources.find(str);
+			if (it == globalResource.cmdResources.end())
 				return nullptr;
 		}
 		return it->second;
-	}
-
-	ResourceBank *resources(ResourceBank *b)
-	{
-		if (b) return b;
-		return &_resources;
 	}
 }

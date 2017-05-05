@@ -651,7 +651,7 @@ namespace tke
 			{
 			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 			{
-				auto pUniformBuffer = (UniformBuffer*)resources(pResource)->getBuffer(link.name);
+				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.name);
 				if (pUniformBuffer)
 					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, &pUniformBuffer->m_info, link.arrayElement));
 				else
@@ -660,7 +660,7 @@ namespace tke
 				break;
 			case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
 			{
-				auto pStorageBuffer = (UniformBuffer*)resources(pResource)->getBuffer(link.name);
+				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.name);
 				if (pStorageBuffer)
 					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, &pStorageBuffer->m_info, link.arrayElement));
 				else
@@ -669,7 +669,7 @@ namespace tke
 				break;
 			case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
 			{
-				auto pStorageImage = resources(pResource)->getImage(link.name);
+				auto pStorageImage = pResource->getImage(link.name);
 				if (pStorageImage)
 					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, pStorageImage->getInfo(0), link.arrayElement));
 				else
@@ -678,7 +678,7 @@ namespace tke
 				break;
 			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 			{
-				auto pTexture = resources(pResource)->getImage(link.name);
+				auto pTexture = pResource->getImage(link.name);
 				if (pTexture)
 					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, pTexture->getInfo(link.sampler), link.arrayElement));
 				else
@@ -1015,10 +1015,7 @@ namespace tke
 			for (auto &a : p.colorAttachments)
 			{
 				if (a.image_name != "")
-				{
-					if (pResource)
-						a.image = resources(pResource)->getImage(a.image_name);
-				}
+					a.image = pResource->getImage(a.image_name);
 			}
 		}
 
@@ -1089,7 +1086,7 @@ namespace tke
 					{
 					case DrawActionType::draw_action:
 						if (action.pipeline_name != "")
-							action.m_pipeline = resources(pResource)->getPipeline(action.pipeline_name.c_str());
+							action.m_pipeline = pResource->getPipeline(action.pipeline_name.c_str());
 						break;
 					case DrawActionType::call_fuction:
 						break;
@@ -1098,7 +1095,7 @@ namespace tke
 				break;
 			case RenderPassType::call_secondary_cmd:
 				if (pass.secondary_cmd_name != "")
-					pass.secondaryCmd = resources(pResource)->getCmd(pass.secondary_cmd_name.c_str());
+					pass.secondaryCmd = pResource->getCmd(pass.secondary_cmd_name.c_str());
 				break;
 			}
 
@@ -1130,38 +1127,39 @@ namespace tke
 		miscImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		uiImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-		resources()->setImage(&originalImage, "Original.Texture");
-		resources()->setImage(&albedoSpecImage, "AlbedoSpec.Texture");
-		resources()->setImage(&normalRoughnessImage, "NormalRoughness.Texture");
-		resources()->setImage(&miscImage, "Misc.Texture");
-		resources()->setImage(&uiImage, "Ui.Texture");
-
-		resources()->setPipeline(&panoramaPipeline, "Panorama.Pipeline");
-		resources()->setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
-		resources()->setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
-		resources()->setPipeline(&mrtPipeline, "Mrt.Pipeline");
-		resources()->setPipeline(&deferredPipeline, "Deferred.Pipeline");
-		resources()->setPipeline(&combinePipeline, "Combine.Pipeline");
-
 		renderer = new Renderer();
 		renderer->cx = _cx;
 		renderer->cy = _cy;
+		auto res = renderer->pResource;
 
-		skyPass = renderer->addPass();
+		res->setImage(&originalImage, "Original.Texture");
+		res->setImage(&albedoSpecImage, "AlbedoSpec.Texture");
+		res->setImage(&normalRoughnessImage, "NormalRoughness.Texture");
+		res->setImage(&miscImage, "Misc.Texture");
+		res->setImage(&uiImage, "Ui.Texture");
+
+		res->setPipeline(&panoramaPipeline, "Panorama.Pipeline");
+		res->setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
+		res->setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
+		res->setPipeline(&mrtPipeline, "Mrt.Pipeline");
+		res->setPipeline(&deferredPipeline, "Deferred.Pipeline");
+		res->setPipeline(&combinePipeline, "Combine.Pipeline");
+
+		auto skyPass = renderer->addPass();
 		skyPass->addColorAttachment(&originalImage);
 		skyAction = skyPass->addAction(&panoramaPipeline);
 		
-		mrtPass = renderer->addPass();
+		auto mrtPass = renderer->addPass();
 		mrtPass->addColorAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
 		mrtPass->addColorAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		mrtPass->addDepthStencilAttachment(resources()->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		mrtPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
 		auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
 		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
 		mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
 		auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
 		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
 
-		deferredPass = renderer->addPass();
+		auto deferredPass = renderer->addPass();
 		deferredPass->addColorAttachment(&originalImage);
 		deferredPass->addDependency(skyPass);
 		deferredPass->addDependency(mrtPass);
@@ -1170,13 +1168,13 @@ namespace tke
 
 		miscPass = renderer->addPass();
 		miscPass->addColorAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		miscPass->addDepthStencilAttachment(resources()->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		miscPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
 		miscPass->addDependency(mrtPass);
 
 		uiPass = renderer->addPass(pWindow->m_uiCommandBuffer);
 		uiPass->addColorAttachment(&uiImage, VkClearValue{ 0.f, 0.f, 0.f, 1.f });
 
-		combinePass = renderer->addPass();
+		auto combinePass = renderer->addPass();
 		combinePass->addColorAttachment(pWindow->m_image);
 		combinePass->addDependency(deferredPass);
 		combinePass->addDependency(miscPass);

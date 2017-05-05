@@ -128,7 +128,7 @@ namespace tke
 	struct ResourceBank;
 	struct Pipeline : PipelineAbstract<StageAbstract>
 	{
-		ResourceBank *pResource = nullptr;
+		ResourceBank *pResource = &globalResource;
 
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
@@ -291,7 +291,7 @@ namespace tke
 	{
 		bool containSwapchain = false;
 
-		ResourceBank *pResource = nullptr;
+		ResourceBank *pResource = &globalResource;
 
 		VertexBuffer *initVertexBuffer = nullptr;
 		IndexBuffer *initIndexBuffer = nullptr;
@@ -343,12 +343,8 @@ namespace tke
 		DrawAction *skyAction;
 		DrawAction *mrtHeightMapTerrainAction;
 
-		RenderPass *skyPass;
-		RenderPass *mrtPass;
-		RenderPass *deferredPass;
 		RenderPass *miscPass;
 		RenderPass *uiPass;
-		RenderPass *combinePass;
 
 		Renderer *renderer;
 

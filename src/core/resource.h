@@ -28,7 +28,7 @@ namespace tke
 		VkCommandBuffer getCmd(const std::string &str);
 	};
 
-	ResourceBank *resources(ResourceBank *b = nullptr);
+	extern ResourceBank globalResource;
 }
 
 #endif

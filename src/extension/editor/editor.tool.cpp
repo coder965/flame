@@ -40,9 +40,9 @@ namespace tke
 			vertBuffer.create(sizeof VertData);
 			fragBuffer.create(sizeof FragData);
 			rectBuffer.create(sizeof glm::vec4);
-			resources()->setBuffer(&vertBuffer, "Editor.Tool.Transform.Vert.UniformBuffer");
-			resources()->setBuffer(&fragBuffer, "Editor.Tool.Transform.Frag.UniformBuffer");
-			resources()->setBuffer(&rectBuffer, "Editor.Tool.Transform.Rect.UniformBuffer");
+			globalResource.setBuffer(&vertBuffer, "Editor.Tool.Transform.Vert.UniformBuffer");
+			globalResource.setBuffer(&fragBuffer, "Editor.Tool.Transform.Frag.UniformBuffer");
+			globalResource.setBuffer(&rectBuffer, "Editor.Tool.Transform.Rect.UniformBuffer");
 
 			pipeline.create("../shader/tool/transform/transform.xml", &vertexInputState, 0, 0, renderPass, subpassIndex);
 			rectPipeline.create("../shader/tool/transform/rect.xml", &zeroVertexInputState, 0, 0, renderPass, subpassIndex);
