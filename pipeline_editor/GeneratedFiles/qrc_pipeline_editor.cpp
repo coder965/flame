@@ -550,16 +550,16 @@ bool qUnregisterResourceData(int, const unsigned char *, const unsigned char *, 
 }
 #endif
 
-int QT_RCC_MANGLE_NAMESPACE(qInitResources_shader_editor)();
-int QT_RCC_MANGLE_NAMESPACE(qInitResources_shader_editor)()
+int QT_RCC_MANGLE_NAMESPACE(qInitResources_pipeline_editor)();
+int QT_RCC_MANGLE_NAMESPACE(qInitResources_pipeline_editor)()
 {
     QT_RCC_PREPEND_NAMESPACE(qRegisterResourceData)
         (0x02, qt_resource_struct, qt_resource_name, qt_resource_data);
     return 1;
 }
 
-int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_shader_editor)();
-int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_shader_editor)()
+int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_pipeline_editor)();
+int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_pipeline_editor)()
 {
     QT_RCC_PREPEND_NAMESPACE(qUnregisterResourceData)
        (0x02, qt_resource_struct, qt_resource_name, qt_resource_data);
@@ -568,7 +568,7 @@ int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_shader_editor)()
 
 namespace {
    struct initializer {
-       initializer() { QT_RCC_MANGLE_NAMESPACE(qInitResources_shader_editor)(); }
-       ~initializer() { QT_RCC_MANGLE_NAMESPACE(qCleanupResources_shader_editor)(); }
+       initializer() { QT_RCC_MANGLE_NAMESPACE(qInitResources_pipeline_editor)(); }
+       ~initializer() { QT_RCC_MANGLE_NAMESPACE(qCleanupResources_pipeline_editor)(); }
    } dummy;
 }

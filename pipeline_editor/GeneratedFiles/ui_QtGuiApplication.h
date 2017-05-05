@@ -24,6 +24,7 @@
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QToolButton>
+#include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
@@ -48,6 +49,8 @@ public:
     QListWidget *pipelineList;
     QTabWidget *tabWidget;
     QWidget *tab1;
+    QHBoxLayout *horizontalLayout_4;
+    QTreeWidget *attributeTree;
     QWidget *tab2;
     QHBoxLayout *horizontalLayout;
     QGroupBox *groupBox_3;
@@ -156,13 +159,25 @@ public:
         tabWidget = new QTabWidget(splitter);
         tabWidget->setObjectName(QStringLiteral("tabWidget"));
         QSizePolicy sizePolicy2(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy2.setHorizontalStretch(5);
+        sizePolicy2.setHorizontalStretch(4);
         sizePolicy2.setVerticalStretch(0);
         sizePolicy2.setHeightForWidth(tabWidget->sizePolicy().hasHeightForWidth());
         tabWidget->setSizePolicy(sizePolicy2);
         tabWidget->setTabPosition(QTabWidget::East);
         tab1 = new QWidget();
         tab1->setObjectName(QStringLiteral("tab1"));
+        horizontalLayout_4 = new QHBoxLayout(tab1);
+        horizontalLayout_4->setSpacing(6);
+        horizontalLayout_4->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
+        attributeTree = new QTreeWidget(tab1);
+        QTreeWidgetItem *__qtreewidgetitem = new QTreeWidgetItem();
+        __qtreewidgetitem->setText(0, QStringLiteral("1"));
+        attributeTree->setHeaderItem(__qtreewidgetitem);
+        attributeTree->setObjectName(QStringLiteral("attributeTree"));
+
+        horizontalLayout_4->addWidget(attributeTree);
+
         tabWidget->addTab(tab1, QString());
         tab2 = new QWidget();
         tab2->setObjectName(QStringLiteral("tab2"));
@@ -253,7 +268,7 @@ public:
 
         retranslateUi(QtGuiApplicationClass);
 
-        tabWidget->setCurrentIndex(1);
+        tabWidget->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(QtGuiApplicationClass);

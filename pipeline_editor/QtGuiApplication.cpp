@@ -8,8 +8,8 @@
 #include "d:/TK_Engine/src/core/utils.h"
 #include "d:/TK_Engine/src/core/render.abstract.h"
 
-const std::string shaderPath = "D:/TK_Engine/shader";
-const std::string glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe";
+const std::string shaderPath("D:/TK_Engine/pipeline");
+const std::string glslangValidatorPath("d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe");
 
 #include "edit.hpp"
 
@@ -18,11 +18,12 @@ QToolButton *explorerButton;
 QTabWidget *bottomTab;
 MyEdit *outputText;
 QTextBrowser *compileText;
+QTreeWidget *attributeTree;
 QTabWidget *stageTab;
 
 bool preparingData = false;
 
-#include "shader.hpp"
+#include "pipeline.h"
 
 namespace Find
 {
@@ -88,6 +89,7 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	bottomTab->addTab(outputText, "Output");
 	compileText = new QTextBrowser;
 	bottomTab->addTab(compileText, "Compile");
+	attributeTree = ui.attributeTree;
 	stageTab = ui.stageTab;
 	{
 		Find::edit = new QLineEdit;
@@ -167,7 +169,7 @@ void QtGuiApplication::on_pipelineList_currentItemChanged(QListWidgetItem *curr,
 
 			preparingData = true;
 			ui.pipelineNameEdit->setText(pipeline->name.c_str());
-			pipeline->refreshTabs();
+			pipeline->appear();
 			preparingData = false;
 
 			on_find();
@@ -261,7 +263,7 @@ void QtGuiApplication::on_addStage_clicked()
 	currentPipeline->stages.push_back(s);
 
 	preparingData = true;
-	currentPipeline->refreshTabs();
+	currentPipeline->appear();
 	preparingData = false;
 
 	currentPipeline->saveXML();

@@ -67,7 +67,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="shader_editor.qrc">
+            <iconset resource="pipeline_editor.qrc">
              <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
            </property>
           </widget>
@@ -84,7 +84,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="shader_editor.qrc">
+            <iconset resource="pipeline_editor.qrc">
              <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
            </property>
           </widget>
@@ -101,7 +101,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="shader_editor.qrc">
+            <iconset resource="pipeline_editor.qrc">
              <normaloff>:/image/misc/open.png</normaloff>:/image/misc/open.png</iconset>
            </property>
           </widget>
@@ -155,7 +155,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="shader_editor.qrc">
+              <iconset resource="pipeline_editor.qrc">
                <normaloff>:/image/misc/save.png</normaloff>:/image/misc/save.png</iconset>
              </property>
             </widget>
@@ -171,7 +171,7 @@
       <widget class="QTabWidget" name="tabWidget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>5</horstretch>
+         <horstretch>4</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -179,12 +179,23 @@
         <enum>QTabWidget::East</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab1">
         <attribute name="title">
          <string>Attribute</string>
         </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QTreeWidget" name="attributeTree">
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="tab2">
         <attribute name="title">
@@ -239,7 +250,7 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="shader_editor.qrc">
+                <iconset resource="pipeline_editor.qrc">
                  <normaloff>:/image/misc/add.png</normaloff>:/image/misc/add.png</iconset>
                </property>
               </widget>
@@ -256,7 +267,7 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="shader_editor.qrc">
+                <iconset resource="pipeline_editor.qrc">
                  <normaloff>:/image/misc/delete.png</normaloff>:/image/misc/delete.png</iconset>
                </property>
               </widget>
@@ -273,7 +284,7 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="shader_editor.qrc">
+                <iconset resource="pipeline_editor.qrc">
                  <normaloff>:/image/misc/save.png</normaloff>:/image/misc/save.png</iconset>
                </property>
               </widget>
@@ -290,7 +301,7 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="shader_editor.qrc">
+                <iconset resource="pipeline_editor.qrc">
                  <normaloff>:/image/misc/spv.png</normaloff>:/image/misc/spv.png</iconset>
                </property>
               </widget>
@@ -307,7 +318,7 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="shader_editor.qrc">
+                <iconset resource="pipeline_editor.qrc">
                  <normaloff>:/image/misc/open.png</normaloff>:/image/misc/open.png</iconset>
                </property>
               </widget>
@@ -360,7 +371,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="shader_editor.qrc"/>
+  <include location="pipeline_editor.qrc"/>
  </resources>
  <connections/>
 </ui>

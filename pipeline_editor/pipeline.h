@@ -157,8 +157,10 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 		compileText->setText(s->compileOutput.c_str());
     }
 
-    void refreshTabs()
+    void appear()
     {
+		attributeTree->clear();
+
         stageTab->clear();
 		int i = 0;
 		for (int type = 0; type < 5; type++)
