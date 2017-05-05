@@ -172,8 +172,8 @@ namespace tke
 		REFL_BANK;
 
 		REFLv std::string name;
-		REFLv std::string filename;
-		REFLv std::string filepath;
+		std::string filename;
+		std::string filepath;
 
 		REFLv int m_cx;
 		REFLv int m_cy;
@@ -625,11 +625,11 @@ namespace tke
 	{
 		REFL_BANK;
 
+		REFLv std::string name;
+		std::string filename;
+
 		REFLv int cx = 0;
 		REFLv int cy = 0;
-
-		REFLv std::string name;
-		REFLv std::string filename;
 
 		std::list<RenderPassType> passes;
 

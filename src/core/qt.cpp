@@ -66,9 +66,6 @@ namespace tke
 	}
 
 	template<class T>
-	QTreeItemPair<T>::~QTreeItemPair() { delete item;  }
-
-	template<class T>
 	void QTreeItemPair<T>::setup(QTreeWidget *tree, QTreeWidgetItem *parent, const char *name, std::string *str)
 	{
 		item = new QTreeWidgetItem;

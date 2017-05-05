@@ -58,7 +58,6 @@ namespace tke
 		QTreeWidgetItem *item = nullptr;
 		T *partner = nullptr;
 
-		~QTreeItemPair();
 		void setup(QTreeWidget *tree, QTreeWidgetItem *parent, const char *name, std::string *str = nullptr);
 		void setup(QTreeWidgetItem *parent, const char *name0, const char *name1);
 	};

@@ -34,7 +34,7 @@ struct Drawcall : tke::DrawcallAbstract
 			{
 				if (r->name == "name")
 					continue;
-				tke::qAddTreeItem(tree, item.item, this, r);
+				tke::qAddTreeItem(tree, item.item, p, r);
 			}
 		}
 		void remove()
@@ -71,7 +71,7 @@ struct DrawAction : tke::DrawActionAbstract<Drawcall>
 			{
 				if (r->name == "name")
 					continue;
-				tke::qAddTreeItem(tree, item.item, this, r);
+				tke::qAddTreeItem(tree, item.item, p, r);
 			}
 
 			drawcallsItem.partner = new QToolButton;
@@ -124,7 +124,7 @@ struct Attachment : tke::AttachmentAbstract
 			{
 				if (r->name == "name")
 					continue;
-				tke::qAddTreeItem(tree, item.item, this, r);
+				tke::qAddTreeItem(tree, item.item, p, r);
 			}
 		}
 		void remove()
@@ -333,11 +333,11 @@ struct Renderer : tke::RendererAbstract<RenderPass>
 			p = _p;
 			for (auto r : p->b->reflectons)
 			{
-				if (r->name ==  "name" || r->name == "filename")
+				if (r->name ==  "name")
 					continue;
 				tke::qAddTreeItem(tree, reinterpret_cast<QTreeWidgetItem*>(tree), p, r);
 			}
-
+			passesItem.item = nullptr;
 			reappearPassItem();
 		}
 	}wrap;

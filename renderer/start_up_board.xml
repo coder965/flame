@@ -1,4 +1,4 @@
-<renderer cx="800" cy="300" name="" filename="D:/tk-sdk/engine/renderer/start_up_board.xml">
+<renderer cx="800" cy="300" name="" >
 	<passes>
 		<pass type="draw_action" name="pass1" secondary_cmd_name="">
 			<attachments>

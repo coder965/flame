@@ -1,4 +1,4 @@
-<renderer cx="1600" cy="900" name="" filename="D:/tk-sdk/engine/renderer/master.xml">
+<renderer cx="1600" cy="900" name="" >
 	<passes>
 		<pass type="call_secondary_cmd" name="Render Pass2" secondary_cmd_name="Ui.Cmd">
 			<attachments>

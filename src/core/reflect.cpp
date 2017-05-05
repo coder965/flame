@@ -105,8 +105,6 @@ currentBank->addV<std::string>("name", offsetof(LinkResource, name));
 currentBank->addE("SamplerType", "sampler", offsetof(LinkResource, sampler));
 currentBank = PipelineAbstract::b;
 currentBank->addV<std::string>("name", offsetof(PipelineAbstract, name));
-currentBank->addV<std::string>("filename", offsetof(PipelineAbstract, filename));
-currentBank->addV<std::string>("filepath", offsetof(PipelineAbstract, filepath));
 currentBank->addV<int>("m_cx", offsetof(PipelineAbstract, m_cx));
 currentBank->addV<int>("m_cy", offsetof(PipelineAbstract, m_cy));
 currentBank->addV<int>("patch_control_points", offsetof(PipelineAbstract, patch_control_points));
@@ -165,6 +163,5 @@ currentBank = RendererAbstract::b;
 currentBank->addV<int>("cx", offsetof(RendererAbstract, cx));
 currentBank->addV<int>("cy", offsetof(RendererAbstract, cy));
 currentBank->addV<std::string>("name", offsetof(RendererAbstract, name));
-currentBank->addV<std::string>("filename", offsetof(RendererAbstract, filename));
 }};static ReflectInit init;
 }

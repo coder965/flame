@@ -83,6 +83,12 @@ QtGuiApplication::QtGuiApplication(QWidget *parent)
 			auto r = new Renderer;
 			r->filename = a.second;
 			r->loadXML();
+			r->listItem = new QListWidgetItem;
+			std::string title = r->filename;
+			if (title.compare(0, rendererPath.size(), rendererPath) == 0)
+				title = title.c_str() + rendererPath.size();
+			r->listItem->setText(title.c_str());
+			ui.listWidget->addItem(r->listItem);
 			renderers.push_back(r);
 		}
 	}
@@ -134,6 +140,7 @@ void QtGuiApplication::on_removeButton_clicked()
 
 void QtGuiApplication::on_listWidget_currentItemChanged(QListWidgetItem *_curr, QListWidgetItem *_prev)
 {
+	tree->clear();
 	for (auto r : renderers)
 	{
 		if (r->listItem == _curr)

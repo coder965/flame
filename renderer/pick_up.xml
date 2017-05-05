@@ -1,4 +1,4 @@
-<renderer cx="1600" cy="900" name="" filename="D:/tk-sdk/engine/renderer/pick_up.xml">
+<renderer cx="1600" cy="900" name="" >
 	<passes>
 		<pass type="" name="Render Pass1" secondary_cmd_name="">
 			<attachments>
