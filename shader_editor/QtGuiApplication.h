@@ -29,7 +29,7 @@ public:
 	QtGuiApplication(QWidget *parent = Q_NULLPTR);
 
 private slots:
-	void on_pipelineTree_currentItemChanged(QTreeWidgetItem *_curr, QTreeWidgetItem *_prev);
+	void on_pipelineList_currentItemChanged(QListWidgetItem *_curr, QListWidgetItem *_prev);
 
 	void on_addPipeline_clicked();
 

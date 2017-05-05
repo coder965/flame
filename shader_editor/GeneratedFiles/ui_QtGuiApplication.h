@@ -17,13 +17,13 @@
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLineEdit>
+#include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QToolButton>
-#include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
@@ -33,7 +33,7 @@ class Ui_QtGuiApplicationClass
 {
 public:
     QWidget *centralWidget;
-    QHBoxLayout *horizontalLayout;
+    QHBoxLayout *horizontalLayout_3;
     QSplitter *splitter;
     QGroupBox *groupBox_2;
     QVBoxLayout *verticalLayout_2;
@@ -45,7 +45,11 @@ public:
     QHBoxLayout *horizontalLayout_2;
     QLineEdit *pipelineNameEdit;
     QToolButton *savePipeline;
-    QTreeWidget *pipelineTree;
+    QListWidget *pipelineList;
+    QTabWidget *tabWidget;
+    QWidget *tab1;
+    QWidget *tab2;
+    QHBoxLayout *horizontalLayout;
     QGroupBox *groupBox_3;
     QVBoxLayout *verticalLayout;
     QGroupBox *groupBox_4;
@@ -67,10 +71,10 @@ public:
         QtGuiApplicationClass->resize(947, 783);
         centralWidget = new QWidget(QtGuiApplicationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
-        horizontalLayout = new QHBoxLayout(centralWidget);
-        horizontalLayout->setSpacing(6);
-        horizontalLayout->setContentsMargins(11, 11, 11, 11);
-        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
+        horizontalLayout_3 = new QHBoxLayout(centralWidget);
+        horizontalLayout_3->setSpacing(6);
+        horizontalLayout_3->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
         splitter = new QSplitter(centralWidget);
         splitter->setObjectName(QStringLiteral("splitter"));
         splitter->setOrientation(Qt::Horizontal);
@@ -143,20 +147,36 @@ public:
 
         verticalLayout_2->addWidget(groupBox_5);
 
-        pipelineTree = new QTreeWidget(groupBox_2);
-        pipelineTree->headerItem()->setText(0, QString());
-        pipelineTree->setObjectName(QStringLiteral("pipelineTree"));
+        pipelineList = new QListWidget(groupBox_2);
+        pipelineList->setObjectName(QStringLiteral("pipelineList"));
 
-        verticalLayout_2->addWidget(pipelineTree);
+        verticalLayout_2->addWidget(pipelineList);
 
         splitter->addWidget(groupBox_2);
-        groupBox_3 = new QGroupBox(splitter);
-        groupBox_3->setObjectName(QStringLiteral("groupBox_3"));
-        QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Preferred);
-        sizePolicy2.setHorizontalStretch(4);
+        tabWidget = new QTabWidget(splitter);
+        tabWidget->setObjectName(QStringLiteral("tabWidget"));
+        QSizePolicy sizePolicy2(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        sizePolicy2.setHorizontalStretch(5);
         sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(groupBox_3->sizePolicy().hasHeightForWidth());
-        groupBox_3->setSizePolicy(sizePolicy2);
+        sizePolicy2.setHeightForWidth(tabWidget->sizePolicy().hasHeightForWidth());
+        tabWidget->setSizePolicy(sizePolicy2);
+        tabWidget->setTabPosition(QTabWidget::East);
+        tab1 = new QWidget();
+        tab1->setObjectName(QStringLiteral("tab1"));
+        tabWidget->addTab(tab1, QString());
+        tab2 = new QWidget();
+        tab2->setObjectName(QStringLiteral("tab2"));
+        horizontalLayout = new QHBoxLayout(tab2);
+        horizontalLayout->setSpacing(6);
+        horizontalLayout->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
+        groupBox_3 = new QGroupBox(tab2);
+        groupBox_3->setObjectName(QStringLiteral("groupBox_3"));
+        QSizePolicy sizePolicy3(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        sizePolicy3.setHorizontalStretch(4);
+        sizePolicy3.setVerticalStretch(0);
+        sizePolicy3.setHeightForWidth(groupBox_3->sizePolicy().hasHeightForWidth());
+        groupBox_3->setSizePolicy(sizePolicy3);
         verticalLayout = new QVBoxLayout(groupBox_3);
         verticalLayout->setSpacing(6);
         verticalLayout->setContentsMargins(11, 11, 11, 11);
@@ -197,26 +217,30 @@ public:
         splitter_2->setOrientation(Qt::Vertical);
         stageTab = new QTabWidget(splitter_2);
         stageTab->setObjectName(QStringLiteral("stageTab"));
-        QSizePolicy sizePolicy3(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy3.setHorizontalStretch(0);
-        sizePolicy3.setVerticalStretch(3);
-        sizePolicy3.setHeightForWidth(stageTab->sizePolicy().hasHeightForWidth());
-        stageTab->setSizePolicy(sizePolicy3);
+        QSizePolicy sizePolicy4(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        sizePolicy4.setHorizontalStretch(0);
+        sizePolicy4.setVerticalStretch(3);
+        sizePolicy4.setHeightForWidth(stageTab->sizePolicy().hasHeightForWidth());
+        stageTab->setSizePolicy(sizePolicy4);
         splitter_2->addWidget(stageTab);
         bottomTab = new QTabWidget(splitter_2);
         bottomTab->setObjectName(QStringLiteral("bottomTab"));
-        QSizePolicy sizePolicy4(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy4.setHorizontalStretch(0);
-        sizePolicy4.setVerticalStretch(1);
-        sizePolicy4.setHeightForWidth(bottomTab->sizePolicy().hasHeightForWidth());
-        bottomTab->setSizePolicy(sizePolicy4);
+        QSizePolicy sizePolicy5(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        sizePolicy5.setHorizontalStretch(0);
+        sizePolicy5.setVerticalStretch(1);
+        sizePolicy5.setHeightForWidth(bottomTab->sizePolicy().hasHeightForWidth());
+        bottomTab->setSizePolicy(sizePolicy5);
         splitter_2->addWidget(bottomTab);
 
         verticalLayout->addWidget(splitter_2);
 
-        splitter->addWidget(groupBox_3);
 
-        horizontalLayout->addWidget(splitter);
+        horizontalLayout->addWidget(groupBox_3);
+
+        tabWidget->addTab(tab2, QString());
+        splitter->addWidget(tabWidget);
+
+        horizontalLayout_3->addWidget(splitter);
 
         QtGuiApplicationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QtGuiApplicationClass);
@@ -228,6 +252,9 @@ public:
         QtGuiApplicationClass->setStatusBar(statusBar);
 
         retranslateUi(QtGuiApplicationClass);
+
+        tabWidget->setCurrentIndex(1);
+
 
         QMetaObject::connectSlotsByName(QtGuiApplicationClass);
     } // setupUi
@@ -242,6 +269,7 @@ public:
         explorerPipeline->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
         groupBox_5->setTitle(QString());
         savePipeline->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
+        tabWidget->setTabText(tabWidget->indexOf(tab1), QApplication::translate("QtGuiApplicationClass", "Attribute", Q_NULLPTR));
         groupBox_3->setTitle(QString());
         groupBox_4->setTitle(QString());
         addStage->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
@@ -249,6 +277,7 @@ public:
         saveStage->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
         toSpv->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
         explorerStage->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
+        tabWidget->setTabText(tabWidget->indexOf(tab2), QApplication::translate("QtGuiApplicationClass", "Shader", Q_NULLPTR));
     } // retranslateUi
 
 };

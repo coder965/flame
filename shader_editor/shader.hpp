@@ -79,7 +79,7 @@ struct Stage : tke::StageAbstract
 
 struct Pipeline : tke::PipelineAbstract<Stage>
 {
-    QTreeWidgetItem *item;
+    QListWidgetItem *item;
 
     ~Pipeline()
     {
@@ -96,9 +96,9 @@ struct Pipeline : tke::PipelineAbstract<Stage>
                 _filename = filename.c_str();
         }
 
-        item = new QTreeWidgetItem;
-		item->setText(0, _filename);
-		pipelineTree->addTopLevelItem(item);
+        item = new QListWidgetItem;
+		item->setText(_filename);
+		pipelineList->addItem(item);
     }
 
 	Stage *stageByType(int type)

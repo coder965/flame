@@ -13,7 +13,7 @@ const std::string glslangValidatorPath = "d:/VulkanSDK/1.0.37.0/glslang/StandAlo
 
 #include "edit.hpp"
 
-QTreeWidget *pipelineTree;
+QListWidget *pipelineList;
 QToolButton *explorerButton;
 QTabWidget *bottomTab;
 MyEdit *outputText;
@@ -80,7 +80,7 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 		assert(check.good());
 	}
 
-	pipelineTree = ui.pipelineTree;
+	pipelineList = ui.pipelineList;
 	explorerButton = ui.explorerStage;
 	bottomTab = ui.bottomTab;
 	outputText = new MyEdit;
@@ -149,7 +149,7 @@ void QtGuiApplication::keyPressEvent(QKeyEvent *k)
 	}
 }
 
-void QtGuiApplication::on_pipelineTree_currentItemChanged(QTreeWidgetItem *curr, QTreeWidgetItem *)
+void QtGuiApplication::on_pipelineList_currentItemChanged(QListWidgetItem *curr, QListWidgetItem *)
 {
 	for (auto pipeline : pipelines)
 	{
@@ -365,12 +365,13 @@ void QtGuiApplication::on_explorerStage_clicked()
 	
 	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
 	{
-		std::string cmd = currentPipeline->filepath + "/" + s->filename;
+		std::string cmd(currentPipeline->filepath + "/" + s->filename);
 		ShellExecuteA(NULL, "open", cmd.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	}
 	else
 	{
-		std::string cmd = "explorer /select," + currentPipeline->filepath + "/" + s->filename;
+		std::experimental::filesystem::path p(currentPipeline->filepath + "/" + s->filename);
+		std::string cmd("explorer /select," + std::experimental::filesystem::absolute(p).string());
 		WinExec(cmd.c_str(), SW_SHOWNORMAL);
 	}
 }
