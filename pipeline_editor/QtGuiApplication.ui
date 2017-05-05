@@ -190,7 +190,7 @@
           <widget class="QTreeWidget" name="attributeTree">
            <column>
             <property name="text">
-             <string notr="true">1</string>
+             <string/>
             </property>
            </column>
           </widget>

@@ -133,7 +133,7 @@ namespace tke
 
 			if (first)
 			{
-				pipeline.create("../shader/startUp/startUp.xml", &zeroVertexInputState, renderer->cx, renderer->cy, renderer->vkRenderPass, 0);
+				pipeline.create("../pipeline/startUp/startUp.xml", &zeroVertexInputState, renderer->cx, renderer->cy, renderer->vkRenderPass, 0);
 				first = false;
 			}
 

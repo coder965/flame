@@ -175,8 +175,8 @@ namespace tke
 		std::string filename;
 		std::string filepath;
 
-		REFLv int m_cx;
-		REFLv int m_cy;
+		REFLv int cx;
+		REFLv int cy;
 
 		REFLv int patch_control_points = 0;
 		REFLv bool depth_test = false;
@@ -186,6 +186,7 @@ namespace tke
 		REFLe PrimitiveTopology primitive_topology = PrimitiveTopology::triangle_list;
 		REFLe PolygonMode polygon_mode = PolygonMode::fill;
 		REFLe CullMode cull_mode = CullMode::back;
+
 		std::vector<BlendAttachment> blendAttachments;
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;

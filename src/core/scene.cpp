@@ -637,19 +637,19 @@ namespace tke
 					}
 
 					{
-						scatteringPipeline.create("../shader/sky/scattering.xml", &zeroVertexInputState,
+						scatteringPipeline.create("../pipeline/sky/scattering.xml", &zeroVertexInputState,
 							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, postRenderPass, 0);
 						globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
 
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-						downsamplePipeline.create("../shader/sky/downsample.xml", &zeroVertexInputState,
+						downsamplePipeline.create("../pipeline/sky/downsample.xml", &zeroVertexInputState,
 							0, 0, postRenderPass, 0);
 						globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
 
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-						convolvePipeline.create("../shader/sky/convolve.xml", &zeroVertexInputState,
+						convolvePipeline.create("../pipeline/sky/convolve.xml", &zeroVertexInputState,
 							0, 0, postRenderPass, 0);
 						globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 

@@ -800,8 +800,8 @@ namespace tke
 		static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, 
 			int32_t messageCode, 
 			const char* pLayerPrefix,
-			const char*                 pMessage,
-			void*                       pUserData)
+			const char* pMessage,
+			void* pUserData)
 		{
 			if (messageCode == 1) return VK_FALSE; // THREADING ERROR, 0.0 what is this
 			if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind

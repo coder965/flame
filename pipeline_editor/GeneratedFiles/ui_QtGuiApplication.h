@@ -171,9 +171,7 @@ public:
         horizontalLayout_4->setContentsMargins(11, 11, 11, 11);
         horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
         attributeTree = new QTreeWidget(tab1);
-        QTreeWidgetItem *__qtreewidgetitem = new QTreeWidgetItem();
-        __qtreewidgetitem->setText(0, QStringLiteral("1"));
-        attributeTree->setHeaderItem(__qtreewidgetitem);
+        attributeTree->headerItem()->setText(0, QString());
         attributeTree->setObjectName(QStringLiteral("attributeTree"));
 
         horizontalLayout_4->addWidget(attributeTree);

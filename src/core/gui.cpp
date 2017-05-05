@@ -442,7 +442,7 @@ namespace tke
 		static Pipeline				  g_Pipeline;
 		static VkPipeline			  g_vkPipeline = VK_NULL_HANDLE;
 
-		static void RenderDrawLists(ImDrawData* draw_data)
+		static void _guiRenderer(ImDrawData* draw_data)
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			if ((int)(io.DisplaySize.x * io.DisplayFramebufferScale.x) == 0 || (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y) == 0)
@@ -692,7 +692,7 @@ namespace tke
 			io.KeyMap[ImGuiKey_Y] = 'Y';
 			io.KeyMap[ImGuiKey_Z] = 'Z';
 
-			io.RenderDrawListsFn = RenderDrawLists;
+			io.RenderDrawListsFn = _guiRenderer;
 			io.SetClipboardTextFn = _SetClipboardCallback;
 			io.GetClipboardTextFn = _GetClipboardCallback;
 
@@ -746,7 +746,7 @@ namespace tke
 
 			g_Pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 			g_Pipeline.m_pVertexInputState = &vertex_info;
-			g_Pipeline.setFilename("../shader/ui/ui.xml");
+			g_Pipeline.setFilename("../pipeline/ui/ui.xml");
 			g_Pipeline.loadXML();
 			g_Pipeline.getLayout();
 			g_Pipeline.reallocateDescriptorSet();

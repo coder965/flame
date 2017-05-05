@@ -44,9 +44,9 @@ namespace tke
 			globalResource.setBuffer(&fragBuffer, "Editor.Tool.Transform.Frag.UniformBuffer");
 			globalResource.setBuffer(&rectBuffer, "Editor.Tool.Transform.Rect.UniformBuffer");
 
-			pipeline.create("../shader/tool/transform/transform.xml", &vertexInputState, 0, 0, renderPass, subpassIndex);
-			rectPipeline.create("../shader/tool/transform/rect.xml", &zeroVertexInputState, 0, 0, renderPass, subpassIndex);
-			pickUpPipeline.create("../shader/tool/transform/pickUp.xml", &vertexInputState, 0, 0, renderPass, subpassIndex);
+			pipeline.create("../pipeline/tool/transform/transform.xml", &vertexInputState, 0, 0, renderPass, subpassIndex);
+			rectPipeline.create("../pipeline/tool/transform/rect.xml", &zeroVertexInputState, 0, 0, renderPass, subpassIndex);
+			pickUpPipeline.create("../pipeline/tool/transform/pickUp.xml", &vertexInputState, 0, 0, renderPass, subpassIndex);
 		}
 	}
 

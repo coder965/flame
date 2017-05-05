@@ -640,7 +640,7 @@ namespace tke
 
 		getLayout();
 
-		m_pipeline = getPipeline(m_cx, m_cy, m_renderPass, m_subpassIndex);
+		m_pipeline = getPipeline(cx, cy, m_renderPass, m_subpassIndex);
 
 		reallocateDescriptorSet();
 
@@ -694,18 +694,18 @@ namespace tke
 
 	void Pipeline::create(const char *_f,
 		VkPipelineVertexInputStateCreateInfo *pVertexInputState,
-		std::uint16_t cx, std::uint16_t cy, VkRenderPass renderPass, std::uint32_t subpassIndex)
+		std::uint16_t _cx, std::uint16_t _cy, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
 		setFilename(_f);
 
 		m_pVertexInputState = pVertexInputState;
 
-		m_cx = cx;
-		m_cy = cy;
+		cx = _cx;
+		cy = _cy;
 		m_renderPass = renderPass;
 		m_subpassIndex = subpassIndex;
 
-		if (m_cx == 0 && m_cy == 0)
+		if (cx == 0 && cy == 0)
 		{
 			m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 			m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
@@ -1187,17 +1187,17 @@ namespace tke
 
 		renderer->setup();
 
-		panoramaPipeline.create("../shader/sky/panorama.xml", &vertexInputState,
+		panoramaPipeline.create("../pipeline/sky/panorama.xml", &vertexInputState,
 			resCx, resCy, renderer->vkRenderPass, skyPass->index);
-		heightMapTerrainPipeline.create("../shader/terrain/height_map/terrain.xml", &zeroVertexInputState,
+		heightMapTerrainPipeline.create("../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		proceduralTerrainPipeline.create("../shader/terrain/procedural/terrain.xml", &zeroVertexInputState,
+		proceduralTerrainPipeline.create("../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		mrtPipeline.create("../shader/deferred/mrt.xml", &vertexInputState,
+		mrtPipeline.create("../pipeline/deferred/mrt.xml", &vertexInputState,
 			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		deferredPipeline.create("../shader/deferred/deferred.xml", &zeroVertexInputState,
+		deferredPipeline.create("../pipeline/deferred/deferred.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, deferredPass->index);
-		combinePipeline.create("../shader/combine/combine.xml", &zeroVertexInputState,
+		combinePipeline.create("../pipeline/combine/combine.xml", &zeroVertexInputState,
 			resCx, resCy, renderer->vkRenderPass, combinePass->index);
 
 		renderer->getDescriptorSets();
