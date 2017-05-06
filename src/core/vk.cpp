@@ -7,24 +7,6 @@ namespace tke
 	{
 		CRITICAL_SECTION cs;
 
-		struct Instance
-		{
-			CRITICAL_SECTION cs;
-			VkInstance inst;
-			Instance()
-			{
-				InitializeCriticalSection(&cs);
-			}
-			void lock()
-			{
-				EnterCriticalSection(&cs);
-			}
-			void unlock()
-			{
-				LeaveCriticalSection(&cs);
-			}
-		};
-
 		VkInstance inst;
 		VkPhysicalDevice physicalDevice;
 		VkDevice device;

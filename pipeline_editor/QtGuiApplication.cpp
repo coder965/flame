@@ -9,7 +9,6 @@
 #include "d:/TK_Engine/src/core/render.abstract.h"
 
 const std::string shaderPath("D:/TK_Engine/pipeline");
-const std::string glslangValidatorPath("d:/VulkanSDK/1.0.37.0/glslang/StandAlone/Release/glslangValidator.exe");
 
 #include "edit.hpp"
 
@@ -75,11 +74,6 @@ QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	QMainWindow(parent)
 {
 	ui.setupUi(this);
-
-	{
-		std::ifstream check(glslangValidatorPath);
-		assert(check.good());
-	}
 
 	pipelineList = ui.pipelineList;
 	explorerButton = ui.explorerStage;
@@ -311,9 +305,9 @@ void QtGuiApplication::on_toSpv_clicked()
 	file << string;
 	file.close();
 
-	std::string spvFilename = currentPipeline->filepath + "/" + s->filename + ".spv";
-	std::string cmd = "/C " + glslangValidatorPath + "-V temp.glsl -S " + stageNames[(int)s->type] + " -q -o " + spvFilename + " >> output.txt";
-	tke::exec("cmd", cmd);
+	std::experimental::filesystem::path spv(currentPipeline->filepath + "/" + s->filename + ".spv");
+
+	tke::exec("cmd", "/C glslangValidator -V temp.glsl -S " + stageNames[(int)log2((int)s->type)] + " -q -o " + spv.string() + " >> output.txt");
 	tke::OnceFileBuffer output("output.txt");
 	s->compileOutput = output.data;
 

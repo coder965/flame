@@ -35,10 +35,10 @@
     <ClInclude Include="core.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="shader_editor.h">
+    <ClInclude Include="render_editor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="render_editor.h">
+    <ClInclude Include="pipeline_editor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

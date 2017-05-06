@@ -91,7 +91,7 @@
     <ClInclude Include="def.h" />
     <ClInclude Include="core.h" />
     <ClInclude Include="render_editor.h" />
-    <ClInclude Include="shader_editor.h" />
+    <ClInclude Include="pipeline_editor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
