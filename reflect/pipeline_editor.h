@@ -16,4 +16,6 @@ const std::string my_skip[] = {
 
 #define SKIP my_skip
 
+#define INPUT "../src/core/render.abstract.h"
+
 #define OUTPUT "../pipeline_editor/reflect.cpp"

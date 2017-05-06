@@ -302,7 +302,7 @@ void QtGuiApplication::on_toSpv_clicked()
 	s->output = string;
 
 	std::ofstream file("temp.glsl");
-	file << string;
+	file.write(string.c_str(), string.size());
 	file.close();
 
 	std::experimental::filesystem::path spv(currentPipeline->filepath + "/" + s->filename + ".spv");

@@ -19,11 +19,15 @@ const std::string defaultSkip[] = {""};
 #define SKIP defaultSkip
 #endif
 
+#ifndef INPUT
+#define INPUT ""
+#endif
+
 #ifndef OUTPUT
 #define OUTPUT ""
 #endif
 
-bool needSkip(const char *name)
+bool needSkip(const std::string &name)
 {
 	for (auto i = 0; i < ARRAYSIZE(SKIP); i++)
 	{
@@ -41,25 +45,19 @@ extern "C" {
 }
 
 int current = -1;
-char currentStructName[100];
-char currentEnumName[100];
+std::string currentStructName;
+std::string currentEnumName;
 
 int main(int argc, char **argv)
 {
-	if (argc < 2)
-		return 1;
-
-	yyin = fopen(argv[1], "rb");
-	if (!yyin)
-		return 1;
+	yyin = fopen(INPUT, "rb");
+	if (!yyin) return 1;
 
 	FILE *fout = fopen(OUTPUT, "wb");
 	if (!fout) return 1;
 
 	std::string declString;
 	std::string implString;
-
-	char line[200];
 
 	int token = yylex();
 	while(token)
@@ -76,14 +74,12 @@ int main(int argc, char **argv)
 						return 1;
 
 					current = 0;
-					strcpy(currentStructName, yytext);
+					currentStructName = yytext;
 					if (!needSkip(currentStructName))
 					{
 						printf("current struct: %s\n", yytext);
-						sprintf(line, "tke::ReflectionBank *%s::b = tke::addReflectionBank(\"%s\");\n", currentStructName, currentStructName);
-						declString += line;
-						sprintf(line, "currentBank = %s::b;\n", currentStructName);
-						implString += line;
+						declString += "tke::ReflectionBank *" + currentStructName + "::b = tke::addReflectionBank(\"" + currentStructName + "\");\n";
+						implString += "currentBank = " + currentStructName + "::b;\n";
 					}
 				}
 				else if (token0 == ENUM)
@@ -97,12 +93,11 @@ int main(int argc, char **argv)
 						return 1;
 
 					current = 1;
-					strcpy(currentEnumName, yytext);
+					currentEnumName = yytext;
 					if (!needSkip(currentEnumName))
 					{
 						printf("current enum: %s\n", yytext);
-						sprintf(line, "currentEnum = tke::addReflectEnum(\"%s\");\n", currentEnumName);
-						implString += line;
+						implString += "currentEnum = tke::addReflectEnum(\"" + currentEnumName + "\");\n";
 					}
 				}
 				else
@@ -116,23 +111,22 @@ int main(int argc, char **argv)
 				if (current != 0)
 					return 1;
 
-				char typeName[100];
-				char valueName[100];
+				std::string typeName;
+				std::string valueName;
 
 				int token1 = yylex();
 				if (token1 != IDENTIFIER)
 					return 1;
-				strcpy(typeName, yytext);
+				typeName = yytext;
 				int token2 = yylex();
 				if (token2 != IDENTIFIER)
 					return 1;
-				strcpy(valueName, yytext);
+				valueName = yytext;
 
 				if (!needSkip(currentStructName))
 				{
 					printf("reflect: %s %s\n", typeName, valueName);
-					sprintf(line, "currentBank->addV<%s>(\"%s\", offsetof(%s, %s));\n", typeName, valueName, currentStructName, valueName);
-					implString += line;
+					implString += "currentBank->addV<" + typeName + ">(\"" + valueName + "\", offsetof(" + currentStructName + ", " + valueName + "));\n";
 				}
 			}
 				break;
@@ -143,40 +137,38 @@ int main(int argc, char **argv)
 
 				if (current == 1)
 				{
-					char name[100];
+					std::string name;
 
 					int token1 = yylex();
 					if (token1 != IDENTIFIER)
 						return 1;
-					strcpy(name, yytext);
+					name = yytext;
 
 					if (!needSkip(currentEnumName))
 					{
 						printf("reflect: %s\n", name);
-						sprintf(line, "currentEnum->items.emplace_back(\"%s\", (int)%s::%s);\n", name, currentEnumName, name);
-						implString += line;
+						implString += "currentEnum->items.emplace_back(\"" + name + "\", (int)" + currentEnumName + "::" + name + ");\n";
 					}
 				}
 				else if (current == 0)
 				{
-					char eName[100];
-					char name[100];
+					std::string eName;
+					std::string name;
 
 					int token1 = yylex();
 					if (token1 != IDENTIFIER)
 						return 1;
-					strcpy(eName, yytext);
+					eName = yytext;
 
 					int token2 = yylex();
 					if (token2 != IDENTIFIER)
 						return 1;
-					strcpy(name, yytext);
+					name = yytext;
 
 					if (!needSkip(currentStructName))
 					{
 						printf("reflect: %s %s\n", eName, name);
-						sprintf(line, "currentBank->addE(\"%s\", \"%s\", offsetof(%s, %s));\n", eName, name, currentStructName, name);
-						implString += line;
+						implString += "currentBank->addE(\"" + eName + "\", \"" + name + "\", offsetof(" + currentStructName + ", " + name + "));\n";
 					}
 				}
 			}

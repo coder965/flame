@@ -7,4 +7,6 @@
 #define RenderPassAbstract RenderPassAbstract<Attachment, Dependency, DrawAction>\n \
 #define RendererAbstract RendererAbstract<RenderPass>\n"
 
+#define INPUT "../src/core/render.abstract.h"
+
 #define OUTPUT "../render_editor/reflect.cpp"
