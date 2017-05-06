@@ -48,6 +48,9 @@
     <ClInclude Include="pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="def.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -67,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_pipeline_editor.cpp">
       <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lex.yy.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

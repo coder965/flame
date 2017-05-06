@@ -1,0 +1,1 @@
+#define ERROR_MK 1

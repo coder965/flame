@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 
 				if (!needSkip(currentStructName))
 				{
-					printf("reflect: %s %s\n", typeName, valueName);
+					printf("reflect: %s %s\n", typeName.c_str(), valueName.c_str());
 					implString += "currentBank->addV<" + typeName + ">(\"" + valueName + "\", offsetof(" + currentStructName + ", " + valueName + "));\n";
 				}
 			}
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 
 					if (!needSkip(currentEnumName))
 					{
-						printf("reflect: %s\n", name);
+						printf("reflect: %s\n", name.c_str());
 						implString += "currentEnum->items.emplace_back(\"" + name + "\", (int)" + currentEnumName + "::" + name + ");\n";
 					}
 				}
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
 					if (!needSkip(currentStructName))
 					{
-						printf("reflect: %s %s\n", eName, name);
+						printf("reflect: %s %s\n", eName.c_str(), name.c_str());
 						implString += "currentBank->addE(\"" + eName + "\", \"" + name + "\", offsetof(" + currentStructName + ", " + name + "));\n";
 					}
 				}

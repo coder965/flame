@@ -70,6 +70,14 @@ void saveDataXml()
 	at.saveXML("data.xml");
 }
 
+#include "def.h"
+extern "C" {
+	extern FILE *yyin;
+	extern int yylex();
+	extern int yylineno;
+	extern char *yytext;
+}
+
 QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	QMainWindow(parent)
 {
@@ -310,24 +318,22 @@ void QtGuiApplication::on_toSpv_clicked()
 	tke::exec("cmd", "/C glslangValidator -V temp.glsl -S " + stageNames[(int)log2((int)s->type)] + " -q -o " + spv.string() + " >> output.txt");
 	tke::OnceFileBuffer output("output.txt");
 	s->compileOutput = output.data;
-
 	compileText->setText(output.data);
 
-	std::stringstream outputStream(s->compileOutput);
+	yyin = fopen("output.txt", "rb");
 
-	std::string line;
-	while (!outputStream.eof())
+	int token = yylex();
+	while (token)
 	{
-		std::getline(outputStream, line);
-
-		std::regex pat(R"(ERROR:.*)");
-		std::smatch sm;
-		if (std::regex_search(line, sm, pat))
+		if (token == ERROR_MK)
 		{
 			QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
 			break;
 		}
+		token = yylex();
 	}
+	fclose(yyin);
+	yyin = NULL;
 
 	DeleteFileA("output.txt");
 	DeleteFileA("temp.glsl");
