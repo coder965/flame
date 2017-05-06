@@ -288,7 +288,7 @@ void QtGuiApplication::on_saveStage_clicked()
 	s->text = s->wrap.edit->toPlainText().toUtf8().data();
 
 	std::ofstream file(currentPipeline->filepath + "/" + s->filename);
-	file << s->text;
+	file.write(s->text.c_str(), s->text.size());
 
 	s->wrap.changed = false;
 
@@ -316,24 +316,34 @@ void QtGuiApplication::on_toSpv_clicked()
 	std::experimental::filesystem::path spv(currentPipeline->filepath + "/" + s->filename + ".spv");
 
 	tke::exec("cmd", "/C glslangValidator -V temp.glsl -S " + stageNames[(int)log2((int)s->type)] + " -q -o " + spv.string() + " >> output.txt");
+
 	tke::OnceFileBuffer output("output.txt");
 	s->compileOutput = output.data;
 	compileText->setText(output.data);
 
-	yyin = fopen("output.txt", "rb");
-
-	int token = yylex();
-	while (token)
 	{
-		if (token == ERROR_MK)
+		// analyzing the reflection
+
+		int current = -1;
+
+		yyin = fopen("output.txt", "rb");
+		int token = yylex();
+		while (token)
 		{
-			QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
-			break;
+			switch (token)
+			{
+			case ERROR_MK:
+				QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
+				token = 0;
+				break;
+			case UNIFORM_REFLECTION_MK:
+				break;
+			}
+			if (token) token = yylex();
 		}
-		token = yylex();
+		fclose(yyin);
+		yyin = NULL;
 	}
-	fclose(yyin);
-	yyin = NULL;
 
 	DeleteFileA("output.txt");
 	DeleteFileA("temp.glsl");

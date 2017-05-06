@@ -3,7 +3,7 @@
 	<pipeline filename="D:/TK_Engine/pipeline/deferred/deferred.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/deferred/mrt.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/lightFrame/lightFrame.xml"/>
-	<pipeline filename="D:/TK_Engine/pipeline/pickUp\pickUp.xml"/>
+	<pipeline filename="D:/TK_Engine/pipeline/pickUp/pickUp.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/sky/convolve.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/sky/downsample.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/sky/panorama.xml"/>
