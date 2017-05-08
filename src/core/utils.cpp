@@ -428,8 +428,8 @@ namespace tke
 				{
 					if (v & i.second)
 					{
-						a.second += i.first;
 						if (!first)a.second += " ";
+						a.second += i.first;
 						first = false;
 					}
 				}

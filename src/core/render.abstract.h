@@ -136,7 +136,6 @@ namespace tke
 		REFLe DescriptorType type = DescriptorType::uniform_buffer;
 		REFLv int binding = 0;
 		REFLv int count = 0;
-		REFLe StageFlags stage = StageFlags::vert;
 	};
 
 	REFLECTABLE struct PushConstantRange
@@ -145,7 +144,6 @@ namespace tke
 
 		REFLv int offset = 0;
 		REFLv int size = 0;
-		REFLe StageFlags stage = StageFlags::vert;
 	};
 
 	REFLECTABLE struct StageAbstract
@@ -155,6 +153,9 @@ namespace tke
 		REFLv std::string filename;
 		std::string filepath;
 		StageFlags type;
+
+		std::vector<Descriptor> descriptors;
+		std::vector<PushConstantRange> pushConstantRanges;
 	};
 
 	REFLECTABLE enum class SamplerType : int
@@ -199,8 +200,6 @@ namespace tke
 		REFLe CullMode cull_mode = CullMode::back;
 
 		std::vector<BlendAttachment> blendAttachments;
-		std::vector<Descriptor> descriptors;
-		std::vector<PushConstantRange> pushConstantRanges;
 		std::vector<StageType*> stages;
 		std::vector<LinkResource> links;
 
@@ -217,8 +216,6 @@ namespace tke
 		void loadXML()
 		{
 			blendAttachments.clear();
-			descriptors.clear();
-			pushConstantRanges.clear();
 			stages.clear();
 			links.clear();
 
@@ -228,31 +225,7 @@ namespace tke
 
 			for (auto c : at.children)
 			{
-				if (c->name == "blend_attachment")
-				{
-					BlendAttachment ba;
-					c->obtainFromAttributes(&ba, ba.b);
-					blendAttachments.push_back(ba);
-				}
-				else if (c->name == "descriptor")
-				{
-					Descriptor d;
-					c->obtainFromAttributes(&d, d.b);
-					descriptors.push_back(d);
-				}
-				else if (c->name == "link")
-				{
-					LinkResource l;
-					c->obtainFromAttributes(&l, l.b);
-					links.push_back(l);
-				}
-				else if (c->name == "push_constant")
-				{
-					PushConstantRange pc;
-					c->obtainFromAttributes(&pc, pc.b);
-					pushConstantRanges.push_back(pc);
-				}
-				else if (c->name == "stage")
+				if (c->name == "stage")
 				{
 					auto s = new StageType;
 					c->obtainFromAttributes(s, s->b);
@@ -260,7 +233,36 @@ namespace tke
 					s->filepath = p.parent_path().string();
 					auto ext = p.extension().string();
 					s->type = StageFlagByExt(ext);
+
+					for (auto c : c->children)
+					{
+						if (c->name == "descriptor")
+						{
+							Descriptor d;
+							c->obtainFromAttributes(&d, d.b);
+							s->descriptors.push_back(d);
+						}
+						else if (c->name == "push_constant")
+						{
+							PushConstantRange pc;
+							c->obtainFromAttributes(&pc, pc.b);
+							s->pushConstantRanges.push_back(pc);
+						}
+					}
+
 					stages.push_back(s);
+				}
+				else if (c->name == "blend_attachment")
+				{
+					BlendAttachment ba;
+					c->obtainFromAttributes(&ba, ba.b);
+					blendAttachments.push_back(ba);
+				}
+				else if (c->name == "link")
+				{
+					LinkResource l;
+					c->obtainFromAttributes(&l, l.b);
+					links.push_back(l);
 				}
 			}
 		}
@@ -269,34 +271,35 @@ namespace tke
 			AttributeTree at("pipeline");
 			at.addAttributes(this, b);
 
+			for (auto s : stages)
+			{
+				auto n = new AttributeTreeNode("stage");
+				n->addAttributes(s, s->b);
+				at.children.push_back(n);
+
+				for (auto &d : s->descriptors)
+				{
+					auto nn = new AttributeTreeNode("descriptor");
+					nn->addAttributes(&d, d.b);
+					n->children.push_back(n);
+				}
+				for (auto &p : s->pushConstantRanges)
+				{
+					auto nn = new AttributeTreeNode("push_constant");
+					nn->addAttributes(&p, p.b);
+					n->children.push_back(n);
+				}
+			}
 			for (auto &b : blendAttachments)
 			{
 				auto n = new AttributeTreeNode("blend_attachment");
 				n->addAttributes(&b, b.b);
 				at.children.push_back(n);
 			}
-			for (auto &d : descriptors)
-			{
-				auto n = new AttributeTreeNode("descriptor");
-				n->addAttributes(&d, d.b);
-				at.children.push_back(n);
-			}
 			for (auto &l : links)
 			{
 				auto n = new AttributeTreeNode("link");
 				n->addAttributes(&l, l.b);
-				at.children.push_back(n);
-			}
-			for (auto &p : pushConstantRanges)
-			{
-				auto n = new AttributeTreeNode("push_constant");
-				n->addAttributes(&p, p.b);
-				at.children.push_back(n);
-			}
-			for (auto s : stages)
-			{
-				auto n = new AttributeTreeNode("stage");
-				n->addAttributes(s, s->b);
 				at.children.push_back(n);
 			}
 

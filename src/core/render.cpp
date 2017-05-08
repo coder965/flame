@@ -470,23 +470,6 @@ namespace tke
 			s.dstAlphaBlendFactor = _vkBlendFactor(b.dst_alpha);
 			vkBlendAttachments.push_back(s);
 		}
-		for (auto &d : descriptors)
-		{
-			VkDescriptorSetLayoutBinding b = {};
-			b.descriptorType = _vkDescriptorType(d.type);
-			b.binding = d.binding;
-			b.descriptorCount = d.count;
-			b.stageFlags = _vkStage(d.stage);
-			vkDescriptors.push_back(b);
-		}
-		for (auto &p : pushConstantRanges)
-		{
-			VkPushConstantRange r = {};
-			r.offset = p.offset;
-			r.size = p.size;
-			r.stageFlags = _vkStage(p.stage);
-			vkPushConstantRanges.push_back(r);
-		}
 		for (auto &l : links)
 		{
 			LinkResourceVk v = {};
@@ -525,6 +508,48 @@ namespace tke
 			}
 			i.module = getShaderModule(filepath + "/" + s->filename + ".spv");
 			vkStages.push_back(i);
+
+			for (auto &d : s->descriptors)
+			{
+				auto found = false;
+				for (auto &b : vkDescriptors)
+				{
+					if (b.binding == d.binding)
+					{
+						b.stageFlags |= _vkStage(s->type);
+						found = true;
+						break;
+					}
+				}
+				if (found) continue;
+
+				VkDescriptorSetLayoutBinding b = {};
+				b.descriptorType = _vkDescriptorType(d.type);
+				b.binding = d.binding;
+				b.descriptorCount = d.count;
+				b.stageFlags = _vkStage(s->type);
+				vkDescriptors.push_back(b);
+			}
+			for (auto &p : s->pushConstantRanges)
+			{
+				auto found = false;
+				for (auto &r : vkPushConstantRanges)
+				{
+					if (r.offset == p.offset & r.size == p.size)
+					{
+						r.stageFlags |= _vkStage(s->type);
+						found = true;
+						break;
+					}
+				}
+				if (found) continue;
+
+				VkPushConstantRange r = {};
+				r.offset = p.offset;
+				r.size = p.size;
+				r.stageFlags = _vkStage(s->type);
+				vkPushConstantRanges.push_back(r);
+			}
 		}
 	}
 

@@ -1,13 +1,4 @@
 <pipeline name="Deferred.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<descriptor type="uniform_buffer" binding="0" count="1" stage="frag"/>
-	<descriptor type="uniform_buffer" binding="1" count="1" stage="frag"/>
-	<descriptor type="uniform_buffer" binding="2" count="1" stage="frag"/>
-	<descriptor type="sampler" binding="3" count="1" stage="frag"/>
-	<descriptor type="sampler" binding="4" count="1" stage="frag"/>
-	<descriptor type="sampler" binding="5" count="1" stage="frag"/>
-	<descriptor type="sampler" binding="6" count="1" stage="frag"/>
-	<descriptor type="sampler" binding="7" count="1" stage="frag"/>
-	<descriptor type="sampler" binding="8" count="1" stage="frag"/>
 	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="Ambient.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="2" array_element="0" name="Light.UniformBuffer" sampler="none"/>
@@ -15,6 +6,16 @@
 	<link type="sampler" binding="4" array_element="0" name="AlbedoSpec.Texture" sampler="screen"/>
 	<link type="sampler" binding="5" array_element="0" name="NormalRoughness.Texture" sampler="screen"/>
 	<stage filename="../fullscreenView.vert"/>
-	<stage filename="deferred.frag"/>
+  <stage filename="deferred.frag">
+    <descriptor type="uniform_buffer" binding="0" count="1"/>
+    <descriptor type="uniform_buffer" binding="1" count="1"/>
+    <descriptor type="uniform_buffer" binding="2" count="1"/>
+    <descriptor type="sampler" binding="3" count="1"/>
+    <descriptor type="sampler" binding="4" count="1"/>
+    <descriptor type="sampler" binding="5" count="1"/>
+    <descriptor type="sampler" binding="6" count="1"/>
+    <descriptor type="sampler" binding="7" count="1"/>
+    <descriptor type="sampler" binding="8" count="1"/>
+  </stage>
 </pipeline>
 

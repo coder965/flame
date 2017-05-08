@@ -26,6 +26,9 @@
       <Extensions>ui</Extensions>
       <ParseFiles>true</ParseFiles>
     </Filter>
+    <Filter Include="Pipelines">
+      <UniqueIdentifier>{314a0785-f241-437a-b903-7bb1f2122858}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="QtGuiApplication.h">
@@ -100,5 +103,58 @@
     <Image Include="..\misc\up.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\pipeline\combine\combine.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\lightFrame\lightFrame.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\deferred\deferred.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\deferred\mrt.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\pickUp\pickUp.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\wireFrame\wireFrame.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\ui\ui.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\tool\transform\transform.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\tool\transform\pickUp.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\tool\transform\rect.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\terrain\height_map\terrain.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\terrain\procedural\terrain.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\startUp\startUp.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\sky\convolve.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\sky\downsample.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\sky\panorama.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\sky\scattering.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

@@ -1,9 +1,10 @@
 <pipeline name="" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<descriptor type="sampler" binding="0" count="1" stage="frag"/>
-	<descriptor type="uniform_buffer" binding="1" count="1" stage="frag"/>
 	<link type="sampler" binding="0" array_element="0" name="StartUp.Texture" sampler="screen_uv"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="StartUp.UniformBuffer" sampler="none"/>
 	<stage filename="../fullscreenUv.vert"/>
-	<stage filename="startUp.frag"/>
+  <stage filename="startUp.frag">
+    <descriptor type="sampler" binding="0" count="1"/>
+	  <descriptor type="uniform_buffer" binding="1" count="1"/>
+  </stage>
 </pipeline>
 
