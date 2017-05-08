@@ -1,16 +1,13 @@
-<pipeline name="ProceduralTerrain.Pipeline" primitive_topology="patch_list" patch_control_points="4" depth_test="true" depth_write="true" >
-	<blend_attachment />
-	<blend_attachment />
-
-	<descriptor type="uniform_buffer" binding="0" count="1" stage="tesc tese frag" />
-	<descriptor type="uniform_buffer" binding="1" count="1" stage="vert tesc tese frag" />
-	
-	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
-	<link type="uniform_buffer" binding="1" name="ProceduralTerrain.UniformBuffer" />
-
-	<stage filename="terrain.vert" />
-	<stage filename="terrain.tesc" />
-	<stage filename="terrain.tese" />
-	<stage filename="terrain.frag" />
-  
+<pipeline name="ProceduralTerrain.Pipeline" cx="0" cy="0" patch_control_points="4" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="patch_list" polygon_mode="fill" cull_mode="back">
+	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
+	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="tesctese frag "/>
+	<descriptor type="uniform_buffer" binding="1" count="1" stage="verttesc tese frag "/>
+	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
+	<link type="uniform_buffer" binding="1" array_element="0" name="ProceduralTerrain.UniformBuffer" sampler="none"/>
+	<stage filename="terrain.vert"/>
+	<stage filename="terrain.tesc"/>
+	<stage filename="terrain.tese"/>
+	<stage filename="terrain.frag"/>
 </pipeline>
+

@@ -13,7 +13,7 @@ namespace tke
 {
 	REFLECTABLE enum class StageFlags : int
 	{
-		zero,
+		null,
 		REFLe vert = 1 << 0,
 		REFLe tesc = 1 << 1,
 		REFLe tese = 1 << 2,
@@ -33,70 +33,79 @@ namespace tke
 
 	REFLECTABLE enum class AspectFlags : int
 	{
-		REFLe color,
-		REFLe depth,
-		REFLe stencil,
-		REFLe depth_stencil
+		null,
+		REFLe color = 1 << 0,
+		REFLe depth = 1 << 1,
+		REFLe stencil = 1 << 2,
+		REFLe depth_stencil = 1 << 3
 	};
 
 	REFLECTABLE enum class RenderPassType : int
 	{
-		REFLe draw_action,
-		REFLe call_secondary_cmd
+		null,
+		REFLe draw_action = 1 << 0,
+		REFLe call_secondary_cmd = 1 << 1
 	};
 
 	REFLECTABLE enum class DrawActionType : int
 	{
-		REFLe draw_action,
-		REFLe call_fuction
+		null,
+		REFLe draw_action = 1 << 0,
+		REFLe call_fuction = 1 << 1
 	};
 
 	REFLECTABLE enum class DrawcallType : int
 	{
-		REFLe vertex,
-		REFLe index,
-		REFLe indirect_vertex,
-		REFLe indirect_index,
-		REFLe push_constant
+		null,
+		REFLe vertex = 1 << 0,
+		REFLe index = 1 << 1,
+		REFLe indirect_vertex = 1 << 2,
+		REFLe indirect_index = 1 << 3,
+		REFLe push_constant = 1 << 4
 	};
 
 	REFLECTABLE enum class PushConstantType : int
 	{
-		REFLe int_t,
-		REFLe float_t,
-		REFLe vec2_t,
-		REFLe vec3_t,
-		REFLe vec4_t
+		null,
+		REFLe int_t = 1 << 0,
+		REFLe float_t = 1 << 1,
+		REFLe vec2_t = 1 << 2,
+		REFLe vec3_t = 1 << 3,
+		REFLe vec4_t = 1 << 4
 	};
 
 	REFLECTABLE enum class PrimitiveTopology : int
 	{
-		REFLe triangle_list,
-		REFLe line_list,
-		REFLe line_strip,
-		REFLe patch_list
+		null,
+		REFLe triangle_list = 1 << 0,
+		REFLe line_list = 1 << 1,
+		REFLe line_strip = 1 << 2,
+		REFLe patch_list = 1 << 3
 	};
 
 	REFLECTABLE enum class PolygonMode : int
 	{
-		REFLe fill,
-		REFLe line
+		null,
+		REFLe fill = 1 << 0,
+		REFLe line = 1 << 1
 	};
 
 	REFLECTABLE enum class CullMode : int
 	{
-		REFLe none,
-		REFLe front,
-		REFLe back,
-		REFLe front_and_back
+		null,
+		REFLe none = 1 << 0,
+		REFLe front = 1 << 1,
+		REFLe back = 1 << 2,
+		REFLe front_and_back = 1 << 3
 	};
 
 	REFLECTABLE enum class BlendFactor : int
 	{
-		REFLe zero,
-		REFLe one,
-		REFLe src_alpha,
-		REFLe one_minus_src_alpha
+		null,
+		REFLe zero = 1 << 0,
+		REFLe one = 1 << 1,
+		REFLe src_alpha = 1 << 2,
+		REFLe one_minus_src_alpha = 1 << 3
 	};
 
 	REFLECTABLE struct BlendAttachment
@@ -112,11 +121,12 @@ namespace tke
 
 	REFLECTABLE enum class DescriptorType : int
 	{
-		REFLe uniform_buffer,
-		REFLe storage_buffer,
-		REFLe storage_image,
-		REFLe sampler,
-		REFLe input_attachment
+		null,
+		REFLe uniform_buffer = 1 << 0,
+		REFLe storage_buffer = 1 << 1,
+		REFLe storage_image = 1 << 2,
+		REFLe sampler = 1 << 3,
+		REFLe input_attachment = 1 << 4
 	};
 
 	REFLECTABLE struct Descriptor
@@ -149,10 +159,11 @@ namespace tke
 
 	REFLECTABLE enum class SamplerType : int
 	{
-		REFLe none,
-		REFLe screen,
-		REFLe screen_uv,
-		REFLe color
+		null,
+		REFLe none = 1 << 0,
+		REFLe screen = 1 << 1,
+		REFLe screen_uv = 1 << 2,
+		REFLe color = 1 << 3
 	};
 
 	REFLECTABLE struct LinkResource
@@ -175,8 +186,8 @@ namespace tke
 		std::string filename;
 		std::string filepath;
 
-		REFLv int cx;
-		REFLv int cy;
+		REFLv int cx = 0;
+		REFLv int cy = 0;
 
 		REFLv int patch_control_points = 0;
 		REFLv bool depth_test = false;
@@ -268,6 +279,24 @@ namespace tke
 			{
 				auto n = new AttributeTreeNode("descriptor");
 				n->addAttributes(&d, d.b);
+				at.children.push_back(n);
+			}
+			for (auto &l : links)
+			{
+				auto n = new AttributeTreeNode("link");
+				n->addAttributes(&l, l.b);
+				at.children.push_back(n);
+			}
+			for (auto &p : pushConstantRanges)
+			{
+				auto n = new AttributeTreeNode("push_constant");
+				n->addAttributes(&p, p.b);
+				at.children.push_back(n);
+			}
+			for (auto s : stages)
+			{
+				auto n = new AttributeTreeNode("stage");
+				n->addAttributes(s, s->b);
 				at.children.push_back(n);
 			}
 

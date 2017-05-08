@@ -1,17 +1,14 @@
-<pipeline name="Mrt.Pipeline" depth_test="true" depth_write="true">
-	<blend_attachment />
-	<blend_attachment />
-  
-	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />
-	<descriptor type="uniform_buffer" binding="1" count="1" stage="vert" />
-	<descriptor type="uniform_buffer" binding="2" count="1" stage="frag" />
-	<descriptor type="sampler" binding="3" count="1024" stage="frag" />
-	
-	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
-	<link type="uniform_buffer" binding="1" name="ObjectMatrix.UniformBuffer" />
-	<link type="uniform_buffer" binding="2" name="Material.UniformBuffer" />
-  
-	<stage filename="mrt.vert" />
-	<stage filename="mrt.frag" />
-  
+<pipeline name="Mrt.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
+	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
+	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert"/>
+	<descriptor type="uniform_buffer" binding="1" count="1" stage="vert"/>
+	<descriptor type="uniform_buffer" binding="2" count="1" stage="frag"/>
+	<descriptor type="sampler" binding="3" count="1024" stage="frag"/>
+	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
+	<link type="uniform_buffer" binding="1" array_element="0" name="ObjectMatrix.UniformBuffer" sampler="none"/>
+	<link type="uniform_buffer" binding="2" array_element="0" name="Material.UniformBuffer" sampler="none"/>
+	<stage filename="mrt.vert"/>
+	<stage filename="mrt.frag"/>
 </pipeline>
+

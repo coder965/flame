@@ -400,35 +400,37 @@ namespace tke
 				auto v = a.first->toVar();
 				if (v->type() == typeid(std::string))
 				{
-					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (v->ptr<std::string>(p))->c_str()));
+					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (v->ptr<std::string>())->c_str()));
 				}
 				else if (v->type() == typeid(int))
 				{
-					a.second = std::to_string(*(v->ptr<int>(p)));
+					a.second = std::to_string(*(v->ptr<int>()));
 					n->append_attribute(doc.allocate_attribute(v->name.c_str(), a.second.c_str()));
 				}
 				else if (v->type() == typeid(float))
 				{
-					a.second = std::to_string(*(v->ptr<float>(p)));
+					a.second = std::to_string(*(v->ptr<float>()));
 					n->append_attribute(doc.allocate_attribute(v->name.c_str(), a.second.c_str()));
 				}
 				else if (v->type() == typeid(bool))
 				{
-					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (*(v->ptr<bool>(p))) ? "true" : "false"));
+					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (*(v->ptr<bool>())) ? "true" : "false"));
 				}
 			}
 			else if (a.first->what == Variable::eEnum)
 			{
 				auto e = a.first->toEnu();
-				auto v = *e->ptr(p);
+				auto v = *e->ptr();
 
 				a.second.clear();
+				bool first = true;
 				for (auto &i : e->pEnum->items)
 				{
 					if (v & i.second)
 					{
 						a.second += i.first;
-						a.second += " ";
+						if (!first)a.second += " ";
+						first = false;
 					}
 				}
 				n->append_attribute(doc.allocate_attribute(e->name.c_str(), a.second.c_str()));
@@ -438,7 +440,7 @@ namespace tke
 		for (auto c : p->children)
 		{
 			auto node = doc.allocate_node(rapidxml::node_element, c->name.c_str());
-			doc.append_node(node);
+			n->append_node(node);
 			_saveXML(doc, node, c);
 		}
 	}
@@ -454,6 +456,6 @@ namespace tke
 		rapidxml::print(std::back_inserter(str), xmlDoc);
 
 		std::ofstream file(filename);
-		file << str;
+		file.write(str.data(), str.size());
 	}
 }

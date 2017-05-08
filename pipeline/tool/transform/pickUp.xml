@@ -1,10 +1,7 @@
-<pipeline depth_test="true" depth_write="true">
-  
-	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />
-	
-	<link type="uniform_buffer" binding="0" name="Editor.Tool.Transform.Vert.UniformBuffer" />
-
-	<stage filename="pickUp.vert" />
-	<stage filename="pickUp.frag" />
-  
+<pipeline name="" cx="0" cy="0" patch_control_points="0" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert"/>
+	<link type="uniform_buffer" binding="0" array_element="0" name="Editor.Tool.Transform.Vert.UniformBuffer" sampler="none"/>
+	<stage filename="pickUp.vert"/>
+	<stage filename="pickUp.frag"/>
 </pipeline>
+

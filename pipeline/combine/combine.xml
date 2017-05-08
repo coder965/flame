@@ -1,14 +1,11 @@
-<pipeline name="Combine.Pipeline" cull_mode="none">
-  
-	<descriptor type="sampler" binding="0" count="1" stage="frag" />
-	<descriptor type="sampler" binding="1" count="1" stage="frag" />
-	<descriptor type="sampler" binding="2" count="1" stage="frag" />
-	
-	<link type="sampler" binding="0" name="Original.Texture" sampler="screen" />
-	<link type="sampler" binding="1" name="Misc.Texture" sampler="screen" />
-	<link type="sampler" binding="2" name="Ui.Texture" sampler="screen" />
-  
-	<stage filename="../fullscreen.vert" />
-	<stage filename="combine.frag" />
-  
+<pipeline name="Combine.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
+	<descriptor type="sampler" binding="0" count="1" stage="frag"/>
+	<descriptor type="sampler" binding="1" count="1" stage="frag"/>
+	<descriptor type="sampler" binding="2" count="1" stage="frag"/>
+	<link type="sampler" binding="0" array_element="0" name="Original.Texture" sampler="screen"/>
+	<link type="sampler" binding="1" array_element="0" name="Misc.Texture" sampler="screen"/>
+	<link type="sampler" binding="2" array_element="0" name="Ui.Texture" sampler="screen"/>
+	<stage filename="../fullscreen.vert"/>
+	<stage filename="combine.frag"/>
 </pipeline>
+

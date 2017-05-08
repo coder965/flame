@@ -1,11 +1,8 @@
-<pipeline name="Panorama.Pipeline" cull_mode="none" >
-  
-	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert" />
-	<descriptor type="sampler" 		  binding="1" count="1" stage="frag" />
-	
-	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
-
-	<stage filename="panorama.vert" />
-	<stage filename="panorama.frag" />
-  
+<pipeline name="Panorama.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
+	<descriptor type="uniform_buffer" binding="0" count="1" stage="vert"/>
+	<descriptor type="sampler" binding="1" count="1" stage="frag"/>
+	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
+	<stage filename="panorama.vert"/>
+	<stage filename="panorama.frag"/>
 </pipeline>
+
