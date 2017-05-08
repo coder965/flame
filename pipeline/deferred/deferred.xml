@@ -17,9 +17,7 @@
 	<link type="sampler" binding="4" name="AlbedoSpec.Texture" sampler="screen" />
 	<link type="sampler" binding="5" name="NormalRoughness.Texture" sampler="screen" />
   
-	<shader>
-		<stage filename="../fullscreenView.vert" />
-		<stage filename="deferred.frag" />
-	</shader>
+	<stage filename="../fullscreenView.vert" />
+	<stage filename="deferred.frag" />
   
 </pipeline>

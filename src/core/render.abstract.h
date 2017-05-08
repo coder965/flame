@@ -241,21 +241,15 @@ namespace tke
 					c->obtainFromAttributes(&pc, pc.b);
 					pushConstantRanges.push_back(pc);
 				}
-				else if (c->name == "shader")
+				else if (c->name == "stage")
 				{
-					for (auto cc : c->children)
-					{
-						if (cc->name == "stage")
-						{
-							auto s = new StageType;
-							cc->obtainFromAttributes(s, s->b);
-							std::experimental::filesystem::path p(s->filename);
-							s->filepath = p.parent_path().string();
-							auto ext = p.extension().string();
-							s->type = StageFlagByExt(ext);
-							stages.push_back(s);
-						}
-					}
+					auto s = new StageType;
+					c->obtainFromAttributes(s, s->b);
+					std::experimental::filesystem::path p(s->filename);
+					s->filepath = p.parent_path().string();
+					auto ext = p.extension().string();
+					s->type = StageFlagByExt(ext);
+					stages.push_back(s);
 				}
 			}
 		}

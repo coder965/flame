@@ -6,9 +6,7 @@
 	<link type="uniform_buffer" binding="0" name="Editor.Tool.Transform.Vert.UniformBuffer" />
 	<link type="uniform_buffer" binding="1" name="Editor.Tool.Transform.Frag.UniformBuffer" />
 
-	<shader>
 	<stage filename="transform.vert" />
 	<stage filename="transform.frag" />
-	</shader>
   
 </pipeline>

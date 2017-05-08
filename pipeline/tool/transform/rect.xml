@@ -4,9 +4,7 @@
 	
 	<link type="uniform_buffer" binding="0" name="Editor.Tool.Transform.Rect.UniformBuffer" />
 
-	<shader>
-		<stage filename="rect.vert" />
-		<stage filename="rect.frag" />
-	</shader>
+	<stage filename="rect.vert" />
+	<stage filename="rect.frag" />
   
 </pipeline>

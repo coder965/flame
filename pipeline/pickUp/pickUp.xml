@@ -8,9 +8,7 @@
 	<link type="uniform_buffer" binding="1" array_element="0" name="LightMatrix.UniformBuffer" />
 	<link type="uniform_buffer" binding="1" array_element="1" name="ObjectMatrix.UniformBuffer" />
 
-	<shader>
-		<stage filename="pickUp.vert" />
-		<stage filename="pickUp.frag" />
-	</shader>
+	<stage filename="pickUp.vert" />
+	<stage filename="pickUp.frag" />
   
 </pipeline>

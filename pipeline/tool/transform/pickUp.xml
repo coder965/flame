@@ -4,9 +4,7 @@
 	
 	<link type="uniform_buffer" binding="0" name="Editor.Tool.Transform.Vert.UniformBuffer" />
 
-	<shader>
-		<stage filename="pickUp.vert" />
-		<stage filename="pickUp.frag" />
-	</shader>
+	<stage filename="pickUp.vert" />
+	<stage filename="pickUp.frag" />
   
 </pipeline>

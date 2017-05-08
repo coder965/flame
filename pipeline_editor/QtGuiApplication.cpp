@@ -370,7 +370,7 @@ void QtGuiApplication::on_toSpv_clicked()
 			switch (token)
 			{
 			case COLON:
-				if (currentReflectionType == eUniformBlock)
+				if (currentReflectionType != eNull)
 				{
 					if (currentReflection.name != "") reflections.push_back(currentReflection);
 					currentReflection.name = last_string;
@@ -391,7 +391,7 @@ void QtGuiApplication::on_toSpv_clicked()
 			case VALUE:
 			{
 				std::string string(yytext);
-				if (currentReflectionType == eUniformBlock)
+				if (currentReflectionType != eNull)
 				{
 					if (last_string == "offset")
 						currentReflection.offset = std::stoi(string);
@@ -468,11 +468,10 @@ void QtGuiApplication::on_explorerStage_clicked()
 
 void QtGuiApplication::on_savePipeline_clicked()
 {
-	if (preparingData || !currentPipeline) return;
-
+	if (!currentPipeline) return;
 	currentPipeline->name = ui.pipelineNameEdit->text().toUtf8().data();
 
-	saveDataXml();
+	currentPipeline->saveXML();
 }
 
 void QtGuiApplication::on_find()

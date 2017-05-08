@@ -5,9 +5,7 @@
 	
 	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
 
-	<shader>
-		<stage filename="panorama.vert" />
-		<stage filename="panorama.frag" />
-	</shader>
+	<stage filename="panorama.vert" />
+	<stage filename="panorama.frag" />
   
 </pipeline>

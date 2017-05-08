@@ -11,9 +11,7 @@
 	<link type="uniform_buffer" binding="1" name="ObjectMatrix.UniformBuffer" />
 	<link type="uniform_buffer" binding="2" name="Material.UniformBuffer" />
   
-	<shader>
-		<stage filename="mrt.vert" />
-		<stage filename="mrt.frag" />
-	</shader>
+	<stage filename="mrt.vert" />
+	<stage filename="mrt.frag" />
   
 </pipeline>

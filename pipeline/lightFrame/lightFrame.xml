@@ -6,9 +6,7 @@
 	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
 	<link type="uniform_buffer" binding="1" name="LightMatrix.UniformBuffer" />
 
-	<shader>
-		<stage filename="lightFrame.vert" />
-		<stage filename="lightFrame.frag" />
-	</shader>
+	<stage filename="lightFrame.vert" />
+	<stage filename="lightFrame.frag" />
   
 </pipeline>

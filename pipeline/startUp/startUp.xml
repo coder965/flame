@@ -6,9 +6,7 @@
 	<link type="sampler" binding="0" name="StartUp.Texture" sampler="screen_uv" />
 	<link type="uniform_buffer" binding="1" name="StartUp.UniformBuffer" />
 
-	<shader>
-		<stage filename="../fullscreenUv.vert" />
-		<stage filename="startUp.frag" />
-	</shader>
+	<stage filename="../fullscreenUv.vert" />
+	<stage filename="startUp.frag" />
   
 </pipeline>

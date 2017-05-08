@@ -9,11 +9,9 @@
 	<link type="uniform_buffer" binding="0" name="Matrix.UniformBuffer" />
 	<link type="uniform_buffer" binding="1" name="HeightMapTerrain.UniformBuffer" />
 
-	<shader>
-		<stage filename="terrain.vert" />
-		<stage filename="terrain.tesc" />
-		<stage filename="terrain.tese" />
-		<stage filename="terrain.frag" />
-	</shader>
+	<stage filename="terrain.vert" />
+	<stage filename="terrain.tesc" />
+	<stage filename="terrain.tese" />
+	<stage filename="terrain.frag" />
   
 </pipeline>

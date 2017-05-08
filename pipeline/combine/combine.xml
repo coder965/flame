@@ -8,9 +8,7 @@
 	<link type="sampler" binding="1" name="Misc.Texture" sampler="screen" />
 	<link type="sampler" binding="2" name="Ui.Texture" sampler="screen" />
   
-	<shader>
-		<stage filename="../fullscreen.vert" />
-		<stage filename="combine.frag" />
-	</shader>
+	<stage filename="../fullscreen.vert" />
+	<stage filename="combine.frag" />
   
 </pipeline>

@@ -4,10 +4,8 @@
 	<push_constant size="16" stage="vert"/>
 	<descriptor type="sampler" binding="0" count="512" stage="frag"/>
 	
-	<shader>
-		<stage filename="ui.vert"/>
-		<stage filename="ui.frag"/>
-	</shader>
+	<stage filename="ui.vert"/>
+	<stage filename="ui.frag"/>
 	
 </pipeline>
 

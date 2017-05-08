@@ -4,9 +4,7 @@
 
 	<descriptor type="sampler" binding="0" count="1" stage="frag" />
 
-	<shader>
-		<stage filename="../fullscreenUv.vert" />
-		<stage filename="convolve.frag" />
-	</shader>
+	<stage filename="../fullscreenUv.vert" />
+	<stage filename="convolve.frag" />
   
 </pipeline>
