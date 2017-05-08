@@ -74,7 +74,7 @@ void saveDataXml()
 extern "C" {
 	extern FILE *yyin;
 	extern int yylex();
-	extern int yylineno;
+	int yylex_destroy();
 	extern char *yytext;
 }
 
@@ -292,7 +292,21 @@ void QtGuiApplication::on_saveStage_clicked()
 
 	s->wrap.changed = false;
 
-	stageTab->setTabText(s->wrap.tabIndex, stageNames[(int)s->type].c_str());
+	const int types[] = {
+		(int)tke::StageFlags::vert,
+		(int)tke::StageFlags::tesc,
+		(int)tke::StageFlags::tese,
+		(int)tke::StageFlags::geom,
+		(int)tke::StageFlags::frag
+	};
+	for (int i = 0; i < 5; i++)
+	{
+		if (types[i] == (int)s->type)
+		{
+			stageTab->setTabText(s->wrap.tabIndex, QString(stageNames[i].c_str()));
+			break;
+		}
+	}
 }
 
 void QtGuiApplication::on_toSpv_clicked()
@@ -324,23 +338,87 @@ void QtGuiApplication::on_toSpv_clicked()
 	{
 		// analyzing the reflection
 
-		int current = -1;
+		enum ReflectionType
+		{
+			eNull = -1,
+			eUniform = 0,
+			eUniformBlock = 1,
+			eVertexAttribute = 2
+		};
+
+		ReflectionType currentReflectionType = eNull;
+
+		struct Reflection
+		{
+			std::string name;
+			int offset;
+			std::string type;
+			int size;
+			int index;
+			int binding;
+		};
+		std::vector<Reflection> reflections;
+		Reflection currentReflection;
+
+		yylex_destroy();
 
 		yyin = fopen("output.txt", "rb");
 		int token = yylex();
+		std::string last_string;
 		while (token)
 		{
 			switch (token)
 			{
-			case ERROR_MK:
-				QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
-				token = 0;
+			case COLON:
+				if (currentReflectionType == eUniformBlock)
+				{
+					if (currentReflection.name != "") reflections.push_back(currentReflection);
+					currentReflection.name = last_string;
+					last_string = "";
+				}
 				break;
-			case UNIFORM_REFLECTION_MK:
+			case IDENTIFIER:
+			{
+				std::string string(yytext);
+				if (string == "ERROR")
+				{
+					QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
+					token = 0;
+				}
+				last_string = string;
+			}
+				break;
+			case VALUE:
+			{
+				std::string string(yytext);
+				if (currentReflectionType == eUniformBlock)
+				{
+					if (last_string == "offset")
+						currentReflection.offset = std::stoi(string);
+					else if (last_string == "type")
+						currentReflection.type = string;
+					else if (last_string == "size")
+						currentReflection.size = std::stoi(string);
+					else if (last_string == "index")
+						currentReflection.index = std::stoi(string);
+					else if (last_string == "binding")
+						currentReflection.binding = std::stoi(string);
+				}
+			}
+				break;
+			case UR_MK:
+				currentReflectionType = eUniform;
+				break;
+			case UBR_MK:
+				currentReflectionType = eUniformBlock;
+				break;
+			case VAR_MK:
+				currentReflectionType = eVertexAttribute;
 				break;
 			}
 			if (token) token = yylex();
 		}
+		if (currentReflection.name != "") reflections.push_back(currentReflection);
 		fclose(yyin);
 		yyin = NULL;
 	}

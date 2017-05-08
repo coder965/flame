@@ -34,7 +34,21 @@ struct Stage : tke::StageAbstract
 			if (preparingData) return;
 
 			changed = true;
-			stageTab->setTabText(tabIndex, QString(stageNames[type].c_str()) + "*");
+			const int types[] = {
+				(int)tke::StageFlags::vert,
+				(int)tke::StageFlags::tesc,
+				(int)tke::StageFlags::tese,
+				(int)tke::StageFlags::geom,
+				(int)tke::StageFlags::frag
+			};
+			for (int i = 0; i < 5; i++)
+			{
+				if (types[i] == type)
+				{
+					stageTab->setTabText(tabIndex, QString(stageNames[i].c_str()) + "*");
+					break;
+				}
+			}
 		}
 	}wrap;
 

@@ -1,0 +1,19 @@
+temp.glsl
+Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
+
+Uniform reflection:
+PushConstant.index: offset 4, type 1405, size 1, index 0, binding -1
+MATRIX.matrixProjView: offset 256, type 8b5c, size 1, index 1, binding -1
+INSTANCE.matrix: offset 0, type 8b5c, size 1024, index 3, binding -1
+PushConstant.passIndex: offset 0, type 1405, size 1, index 0, binding -1
+
+Uniform block reflection:
+PushConstant: offset -1, type ffffffff, size 8, index -1, binding -1
+MATRIX: offset -1, type ffffffff, size 488, index -1, binding 0
+INSTANCE[0]: offset -1, type ffffffff, size 65536, index -1, binding 1
+INSTANCE[1]: offset -1, type ffffffff, size 65536, index -1, binding 1
+
+Vertex attribute reflection:
+gl_InstanceIndex: offset 0, type 1404, size 0, index 0, binding -1
+inVertex: offset 0, type 8b51, size 0, index 0, binding -1
+

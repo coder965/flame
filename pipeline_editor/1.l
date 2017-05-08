@@ -5,8 +5,12 @@ int yywrap(void);
 %}
 
 %%
-"ERROR:" return ERROR_MK;
-"Uniform reflection:" return UNIFORM_REFLECTION_MK;
+"Uniform reflection:" return UR_MK;
+"Uniform block reflection:" return UBR_MK;
+"Vertex attribute reflection:" return VAR_MK;
+[_a-zA-Z][_a-zA-Z0-9]* return IDENTIFIER;
+[-0-9][-a-zA-Z0-9]* return VALUE;
+":" return COLON;
 . ;
 %%
 
