@@ -370,30 +370,10 @@ namespace tke
 			endOnceCommandBuffer(commandBuffer);
 		}
 
-		VkSampler _colorSampler;
-		VkSampler _colorBorderSampler;
-		VkSampler _screenUvSampler;
-		VkSampler _screenSampler;
-
-		VkSampler getColorSampler()
-		{
-			return _colorSampler;
-		}
-
-		VkSampler getColorBorderSampler()
-		{
-			return _colorBorderSampler;
-		}
-
-		VkSampler getScreenSampler()
-		{
-			return _screenUvSampler;
-		}
-
-		VkSampler getScreenUvSampler()
-		{
-			return _screenSampler;
-		}
+		VkSampler colorSampler;
+		VkSampler colorBorderSampler;
+		VkSampler screenUvSampler;
+		VkSampler screenSampler;
 
 		VkPipelineVertexInputStateCreateInfo vertexState(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes)
 		{
@@ -1013,7 +993,7 @@ namespace tke
 				info.maxLod = 128.f;
 
 				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &_colorSampler);
+				auto res = vkCreateSampler(device, &info, nullptr, &colorSampler);
 				assert(res == VK_SUCCESS);
 				LeaveCriticalSection(&cs);
 			}
@@ -1038,7 +1018,7 @@ namespace tke
 				info.maxLod = 128.f;
 
 				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &_colorBorderSampler);
+				auto res = vkCreateSampler(device, &info, nullptr, &colorBorderSampler);
 				assert(res == VK_SUCCESS);
 				LeaveCriticalSection(&cs);
 			}
@@ -1063,7 +1043,7 @@ namespace tke
 				info.maxLod = 0.0f;
 
 				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &_screenUvSampler);
+				auto res = vkCreateSampler(device, &info, nullptr, &screenUvSampler);
 				assert(res == VK_SUCCESS);
 				LeaveCriticalSection(&cs);
 			}
@@ -1088,7 +1068,7 @@ namespace tke
 				samplerInfo.maxLod = 0.0f;
 
 				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &samplerInfo, nullptr, &_screenSampler);
+				auto res = vkCreateSampler(device, &samplerInfo, nullptr, &screenSampler);
 				assert(res == VK_SUCCESS);
 				LeaveCriticalSection(&cs);
 			}

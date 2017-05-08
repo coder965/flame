@@ -42,10 +42,10 @@ namespace tke
 		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount);
 		void transitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level);
 
-		VkSampler getColorSampler();
-		VkSampler getColorBorderSampler();
-		VkSampler getScreenUvSampler();
-		VkSampler getScreenSampler();
+		extern VkSampler colorSampler;
+		extern VkSampler colorBorderSampler;
+		extern VkSampler screenUvSampler;
+		extern VkSampler screenSampler;
 
 		VkPipelineVertexInputStateCreateInfo vertexState(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes);
 

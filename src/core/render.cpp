@@ -414,6 +414,12 @@ namespace tke
 	{
 		PipelineAbstract::loadXML();
 
+		if (cx == 0 && cy == 0)
+		{
+			m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+			m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+		}
+
 		switch (primitive_topology)
 		{
 		case PrimitiveTopology::triangle_list:
@@ -458,7 +464,6 @@ namespace tke
 		vkDescriptors.clear();
 		vkPushConstantRanges.clear();
 		vkStages.clear();
-		vkLinks.clear();
 		for (auto &b : blendAttachments)
 		{
 			VkPipelineColorBlendAttachmentState s = {};
@@ -469,29 +474,6 @@ namespace tke
 			s.srcAlphaBlendFactor = _vkBlendFactor(b.src_alpha);
 			s.dstAlphaBlendFactor = _vkBlendFactor(b.dst_alpha);
 			vkBlendAttachments.push_back(s);
-		}
-		for (auto &l : links)
-		{
-			LinkResourceVk v = {};
-			v.type = _vkDescriptorType(l.type);
-			v.binding = l.binding;
-			v.arrayElement = l.array_element;
-			v.name = l.name;
-			switch (l.sampler)
-			{
-			case SamplerType::none:
-				break;
-			case SamplerType::screen:
-				v.sampler = vk::getScreenSampler();
-				break;
-			case SamplerType::screen_uv:
-				v.sampler = vk::getScreenUvSampler();
-				break;
-			case SamplerType::color:
-				v.sampler = vk::getColorSampler();
-				break;
-			}
-			vkLinks.push_back(v);
 		}
 		for (auto s : stages)
 		{
@@ -670,42 +652,59 @@ namespace tke
 		reallocateDescriptorSet();
 
 		std::vector<VkWriteDescriptorSet> writes;
-		for (auto &link : vkLinks)
+		for (auto &link : links)
 		{
 			switch (link.type)
 			{
-			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+			case DescriptorType::uniform_buffer:
 			{
 				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.name);
 				if (pUniformBuffer)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, &pUniformBuffer->m_info, link.arrayElement));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, &pUniformBuffer->m_info, link.array_element));
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.name.c_str(), link.binding);
 			}
 				break;
-			case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+			case DescriptorType::storage_buffer:
 			{
 				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.name);
 				if (pStorageBuffer)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, &pStorageBuffer->m_info, link.arrayElement));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, &pStorageBuffer->m_info, link.array_element));
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.name.c_str(), link.binding);
 			}
 				break;
-			case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+			case DescriptorType::storage_image:
 			{
 				auto pStorageImage = pResource->getImage(link.name);
 				if (pStorageImage)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, pStorageImage->getInfo(0), link.arrayElement));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, pStorageImage->getInfo(0), link.array_element));
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.name.c_str(), link.binding);
 			}
 				break;
-			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+			case DescriptorType::sampler:
 			{
 				auto pTexture = pResource->getImage(link.name);
 				if (pTexture)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, link.type, link.binding, pTexture->getInfo(link.sampler), link.arrayElement));
+				{
+					VkSampler sampler = 0;
+					switch (link.sampler)
+					{
+					case SamplerType::none:
+						break;
+					case SamplerType::screen:
+						sampler = vk::screenSampler;
+						break;
+					case SamplerType::screen_uv:
+						sampler = vk::screenUvSampler;
+						break;
+					case SamplerType::color:
+						sampler = vk::colorSampler;
+						break;
+					}
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, pTexture->getInfo(sampler), link.array_element));
+				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.name.c_str(), link.binding);
 			}
@@ -717,24 +716,14 @@ namespace tke
 			vk::updataDescriptorSet(writes.size(), writes.data());
 	}
 
-	void Pipeline::create(const char *_f,
-		VkPipelineVertexInputStateCreateInfo *pVertexInputState,
-		std::uint16_t _cx, std::uint16_t _cy, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::create(const char *_f, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
 		setFilename(_f);
 
 		m_pVertexInputState = pVertexInputState;
 
-		cx = _cx;
-		cy = _cy;
 		m_renderPass = renderPass;
 		m_subpassIndex = subpassIndex;
-
-		if (cx == 0 && cy == 0)
-		{
-			m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-			m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-		}
 
 		make();
 	}
@@ -1212,18 +1201,12 @@ namespace tke
 
 		renderer->setup();
 
-		panoramaPipeline.create("../pipeline/sky/panorama.xml", &vertexInputState,
-			resCx, resCy, renderer->vkRenderPass, skyPass->index);
-		heightMapTerrainPipeline.create("../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState,
-			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		proceduralTerrainPipeline.create("../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState,
-			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		mrtPipeline.create("../pipeline/deferred/mrt.xml", &vertexInputState,
-			resCx, resCy, renderer->vkRenderPass, mrtPass->index);
-		deferredPipeline.create("../pipeline/deferred/deferred.xml", &zeroVertexInputState,
-			resCx, resCy, renderer->vkRenderPass, deferredPass->index);
-		combinePipeline.create("../pipeline/combine/combine.xml", &zeroVertexInputState,
-			resCx, resCy, renderer->vkRenderPass, combinePass->index);
+		panoramaPipeline.create("../pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
+		heightMapTerrainPipeline.create("../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		proceduralTerrainPipeline.create("../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		mrtPipeline.create("../pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
+		deferredPipeline.create("../pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
+		combinePipeline.create("../pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
 
 		renderer->getDescriptorSets();
 	}

@@ -116,15 +116,6 @@ namespace tke
 		unsigned char getPixel(int x, int y, int off) const;
 	};
 
-	struct LinkResourceVk
-	{
-		VkDescriptorType type;
-		int binding;
-		int arrayElement;
-		std::string name;
-		VkSampler sampler = 0;
-	};
-
 	struct Pipeline : PipelineAbstract<StageAbstract>
 	{
 		ResourceBank *pResource = &globalResource;
@@ -135,7 +126,6 @@ namespace tke
 		std::vector<VkPipelineColorBlendAttachmentState> vkBlendAttachments;
 		std::vector<VkDescriptorSetLayoutBinding> vkDescriptors;
 		std::vector<VkPushConstantRange> vkPushConstantRanges;
-		std::vector<LinkResourceVk> vkLinks;
 		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 
 		VkPipelineVertexInputStateCreateInfo *m_pVertexInputState;
@@ -153,9 +143,7 @@ namespace tke
 		void reallocateDescriptorSet();
 		VkPipeline getPipeline(int cx, int cy, VkRenderPass renderPass, std::uint32_t subpassIndex);
 		void make();
-		void create(const char *filename,
-			VkPipelineVertexInputStateCreateInfo *pVertexInputState,
-			std::uint16_t cx, std::uint16_t cy, VkRenderPass renderPass, std::uint32_t subpassIndex);
+		void create(const char *filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 	};
 
 	struct DescriptorSetLayout

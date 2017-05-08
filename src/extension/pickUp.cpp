@@ -93,6 +93,6 @@ namespace tke
 		VkImageView views[] = { pickUpImage.getView(), pDepthImage->getView() };
 		pickUpFramebuffer = vk::createFramebuffer(resCx, resCy, pickUpRenderPass, ARRAYSIZE(views), views);
 
-		plainPickUpPipeline.create("../pipeline/pickUp/pickUp.xml", &vertexInputState, resCx, resCy, pickUpRenderPass, 0);
+		plainPickUpPipeline.create("../pipeline/pickUp/pickUp.xml", &vertexInputState, pickUpRenderPass, 0);
 	}
 }

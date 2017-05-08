@@ -1,4 +1,4 @@
-<pipeline name="" cx="0" cy="0" patch_control_points="0" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
+<pipeline name="" cx="1600" cy="900" patch_control_points="0" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
 	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="LightMatrix.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="1" array_element="1" name="ObjectMatrix.UniformBuffer" sampler="none"/>

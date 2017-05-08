@@ -1,4 +1,4 @@
-<pipeline name="" cx="0" cy="0" patch_control_points="4" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="patch_list" polygon_mode="line" cull_mode="back">
+<pipeline name="" cx="1600" cy="900" patch_control_points="4" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="patch_list" polygon_mode="line" cull_mode="back">
 	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
 	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
 	<descriptor type="sampler" binding="2" count="1" stage="tesc tese frag "/>

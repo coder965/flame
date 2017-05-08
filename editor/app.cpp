@@ -163,11 +163,9 @@ struct MainWindow : tke::UI::EngineGuiWindow
 		miscToolAction = masterRenderer->miscPass->addAction();
 		miscToolAction->type = tke::DrawActionType::call_fuction;
 
-		lightFramePipeline.create("../pipeline/lightFrame/lightFrame.xml", &tke::vertexInputState,
-			tke::resCx, tke::resCy, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
+		lightFramePipeline.create("../pipeline/lightFrame/lightFrame.xml", &tke::vertexInputState, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
-		wireFramePipeline.create("../pipeline/wireFrame/wireFrame.xml", &tke::vertexInputState,
-			tke::resCx, tke::resCy, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
+		wireFramePipeline.create("../pipeline/wireFrame/wireFrame.xml", &tke::vertexInputState, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
 		masterRenderer->renderer->getDescriptorSets();
 

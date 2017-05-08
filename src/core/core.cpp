@@ -139,7 +139,7 @@ namespace tke
 
 
 		UI::init();
-		UI::setupIcons(vk::getColorSampler());
+		UI::setupIcons(vk::colorSampler);
 
 		controllingObject = nullptr;
 

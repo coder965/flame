@@ -637,20 +637,17 @@ namespace tke
 					}
 
 					{
-						scatteringPipeline.create("../pipeline/sky/scattering.xml", &zeroVertexInputState,
-							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, postRenderPass, 0);
+						scatteringPipeline.create("../pipeline/sky/scattering.xml", &zeroVertexInputState, postRenderPass, 0);
 						globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
 
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-						downsamplePipeline.create("../pipeline/sky/downsample.xml", &zeroVertexInputState,
-							0, 0, postRenderPass, 0);
+						downsamplePipeline.create("../pipeline/sky/downsample.xml", &zeroVertexInputState, postRenderPass, 0);
 						globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
 
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-						convolvePipeline.create("../pipeline/sky/convolve.xml", &zeroVertexInputState,
-							0, 0, postRenderPass, 0);
+						convolvePipeline.create("../pipeline/sky/convolve.xml", &zeroVertexInputState, postRenderPass, 0);
 						globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 
 						envrImage.m_mipmapLevels = 4;
@@ -681,13 +678,13 @@ namespace tke
 
 						std::vector<VkWriteDescriptorSet> writes;
 
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImage.getInfo(vk::getScreenUvSampler())));
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::getScreenUvSampler())));
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::getScreenUvSampler())));
+						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImage.getInfo(vk::screenUvSampler)));
+						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::screenUvSampler)));
+						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::screenUvSampler)));
 
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::getScreenUvSampler())));
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::getScreenUvSampler())));
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[2].getInfo(vk::getScreenUvSampler())));
+						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::screenUvSampler)));
+						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::screenUvSampler)));
+						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[2].getInfo(vk::screenUvSampler)));
 
 						vk::updataDescriptorSet(writes.size(), writes.data());
 					}
@@ -779,8 +776,8 @@ namespace tke
 					vk::endOnceCommandBuffer(cmd);
 				}
 
-				writes.push_back(vk::writeDescriptorSet(masterRenderer->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, envrImage.getInfo(vk::getColorSampler())));
-				writes.push_back(vk::writeDescriptorSet(masterRenderer->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, envrImage.getInfo(vk::getColorSampler(), 0, 0, envrImage.m_mipmapLevels)));
+				writes.push_back(vk::writeDescriptorSet(masterRenderer->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, envrImage.getInfo(vk::colorSampler)));
+				writes.push_back(vk::writeDescriptorSet(masterRenderer->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels)));
 
 				{
 					auto data = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -819,7 +816,7 @@ namespace tke
 					range.size = sizeof(HeightMapTerrainBufferStruct);
 					ranges.push_back(range);
 
-					writes.push_back(vk::writeDescriptorSet(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, pTerrain->heightMap->getInfo(vk::getColorBorderSampler()), terrainIndex));
+					writes.push_back(vk::writeDescriptorSet(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex));
 				}
 
 				terrainIndex++;
@@ -879,7 +876,7 @@ namespace tke
 		{
 			std::vector<VkWriteDescriptorSet> writes;
 			for (auto storeImage : storeImages)
-				writes.push_back(vk::writeDescriptorSet(masterRenderer->mrtPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3, storeImage->getInfo(vk::getColorSampler()), writes.size()));
+				writes.push_back(vk::writeDescriptorSet(masterRenderer->mrtPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3, storeImage->getInfo(vk::colorSampler), writes.size()));
 
 			if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
 			needUpdateSampler = false;
