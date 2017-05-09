@@ -232,7 +232,7 @@ public:
         stageTab->setObjectName(QStringLiteral("stageTab"));
         QSizePolicy sizePolicy4(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy4.setHorizontalStretch(0);
-        sizePolicy4.setVerticalStretch(3);
+        sizePolicy4.setVerticalStretch(4);
         sizePolicy4.setHeightForWidth(stageTab->sizePolicy().hasHeightForWidth());
         stageTab->setSizePolicy(sizePolicy4);
         splitter_2->addWidget(stageTab);
@@ -266,7 +266,7 @@ public:
 
         retranslateUi(QtGuiApplicationClass);
 
-        tabWidget->setCurrentIndex(0);
+        tabWidget->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(QtGuiApplicationClass);

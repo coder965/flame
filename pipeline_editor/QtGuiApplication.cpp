@@ -81,6 +81,8 @@ extern "C" {
 QtGuiApplication::QtGuiApplication(QWidget *parent) :
 	QMainWindow(parent)
 {
+	setWindowState(Qt::WindowMaximized);
+
 	ui.setupUi(this);
 
 	pipelineList = ui.pipelineList;
@@ -332,7 +334,7 @@ void QtGuiApplication::on_toSpv_clicked()
 
 	tke::OnceFileBuffer output("output.txt");
 	s->compileOutput = output.data;
-	compileText->setText(("Warnning:the push constants in different stages must be merged, or else they would not reflect properly.\n" + s->compileOutput).c_str());
+	compileText->setText(("Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n" + s->compileOutput).c_str());
 
 	{
 		// analyzing the reflection
@@ -531,6 +533,9 @@ void QtGuiApplication::on_savePipeline_clicked()
 	if (!currentPipeline) return;
 
 	currentPipeline->saveXML();
+
+	currentPipeline->changed = false;
+	currentPipeline->setTitle();
 }
 
 void QtGuiApplication::on_find()
