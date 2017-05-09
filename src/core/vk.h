@@ -13,7 +13,7 @@ namespace tke
 {
 	namespace vk
 	{
-		VkFormat getSwapchainFormat();
+		extern VkFormat swapchainFormat;
 
 		void queueWaitIdle();
 		void deviceWaitIdle();
@@ -42,10 +42,10 @@ namespace tke
 		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount);
 		void transitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level);
 
+		extern VkSampler plainSampler;
+		extern VkSampler plainUnnormalizedSampler;
 		extern VkSampler colorSampler;
 		extern VkSampler colorBorderSampler;
-		extern VkSampler screenUvSampler;
-		extern VkSampler screenSampler;
 
 		VkPipelineVertexInputStateCreateInfo vertexState(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes);
 

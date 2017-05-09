@@ -693,14 +693,17 @@ namespace tke
 					{
 					case SamplerType::none:
 						break;
-					case SamplerType::screen:
-						sampler = vk::screenSampler;
+					case SamplerType::plain:
+						sampler = vk::plainSampler;
 						break;
-					case SamplerType::screen_uv:
-						sampler = vk::screenUvSampler;
+					case SamplerType::plain_unnormalized:
+						sampler = vk::plainUnnormalizedSampler;
 						break;
 					case SamplerType::color:
 						sampler = vk::colorSampler;
+						break;
+					case SamplerType::color_border:
+						sampler = vk::colorBorderSampler;
 						break;
 					}
 					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, pTexture->getInfo(sampler), link.array_element));

@@ -1,5 +1,5 @@
-<pipeline name="" cx="1600" cy="900" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<link type="sampler" binding="0" array_element="0" name="StartUp.Texture" sampler="screen_uv"/>
+<pipeline name="" cx="800" cy="300" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
+	<link type="sampler" binding="0" array_element="0" name="StartUp.Texture" sampler="plain"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="StartUp.UniformBuffer" sampler="none"/>
 	<stage filename="../fullscreenUv.vert"/>
   <stage filename="startUp.frag">

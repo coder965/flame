@@ -678,13 +678,13 @@ namespace tke
 
 						std::vector<VkWriteDescriptorSet> writes;
 
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImage.getInfo(vk::screenUvSampler)));
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::screenUvSampler)));
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::screenUvSampler)));
+						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImage.getInfo(vk::plainSampler)));
+						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::plainSampler)));
+						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::plainSampler)));
 
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::screenUvSampler)));
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::screenUvSampler)));
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[2].getInfo(vk::screenUvSampler)));
+						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[0].getInfo(vk::plainSampler)));
+						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[1].getInfo(vk::plainSampler)));
+						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, envrImageDownsample[2].getInfo(vk::plainSampler)));
 
 						vk::updataDescriptorSet(writes.size(), writes.data());
 					}

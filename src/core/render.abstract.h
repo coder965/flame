@@ -162,9 +162,10 @@ namespace tke
 	{
 		null,
 		REFLe none = 1 << 0,
-		REFLe screen = 1 << 1,
-		REFLe screen_uv = 1 << 2,
-		REFLe color = 1 << 3
+		REFLe plain = 1 << 1,
+		REFLe plain_unnormalized = 1 << 2,
+		REFLe color = 1 << 3,
+		REFLe color_border = 1 << 4
 	};
 
 	REFLECTABLE struct LinkResource

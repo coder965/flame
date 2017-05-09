@@ -20,11 +20,6 @@ namespace tke
 		VkDescriptorPool descriptorPool;
 		VkFormat swapchainFormat;
 
-		VkFormat getSwapchainFormat()
-		{
-			return swapchainFormat;
-		}
-
 		void queueWaitIdle()
 		{
 			EnterCriticalSection(&cs);
@@ -370,10 +365,10 @@ namespace tke
 			endOnceCommandBuffer(commandBuffer);
 		}
 
+		VkSampler plainSampler; 
+		VkSampler plainUnnormalizedSampler;
 		VkSampler colorSampler;
 		VkSampler colorBorderSampler;
-		VkSampler screenUvSampler;
-		VkSampler screenSampler;
 
 		VkPipelineVertexInputStateCreateInfo vertexState(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes)
 		{
@@ -974,6 +969,56 @@ namespace tke
 			swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
 			{
+				VkSamplerCreateInfo samplerInfo = {};
+				samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+				samplerInfo.magFilter = VK_FILTER_NEAREST;
+				samplerInfo.minFilter = VK_FILTER_NEAREST;
+				samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				samplerInfo.anisotropyEnable = VK_FALSE;
+				samplerInfo.maxAnisotropy = 0;
+				samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+				samplerInfo.unnormalizedCoordinates = VK_FALSE;
+				samplerInfo.compareEnable = VK_FALSE;
+				samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+				samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+				samplerInfo.mipLodBias = 0.0f;
+				samplerInfo.minLod = 0.0f;
+				samplerInfo.maxLod = 0.0f;
+
+				EnterCriticalSection(&cs);
+				auto res = vkCreateSampler(device, &samplerInfo, nullptr, &plainSampler);
+				assert(res == VK_SUCCESS);
+				LeaveCriticalSection(&cs);
+			}
+
+			{
+				VkSamplerCreateInfo info = {};
+				info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+				info.magFilter = VK_FILTER_NEAREST;
+				info.minFilter = VK_FILTER_NEAREST;
+				info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+				info.anisotropyEnable = VK_FALSE;
+				info.maxAnisotropy = 0;
+				info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+				info.unnormalizedCoordinates = VK_TRUE;
+				info.compareEnable = VK_FALSE;
+				info.compareOp = VK_COMPARE_OP_ALWAYS;
+				info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+				info.mipLodBias = 0.0f;
+				info.minLod = 0.0f;
+				info.maxLod = 0.0f;
+
+				EnterCriticalSection(&cs);
+				auto res = vkCreateSampler(device, &info, nullptr, &plainUnnormalizedSampler);
+				assert(res == VK_SUCCESS);
+				LeaveCriticalSection(&cs);
+			}
+
+			{
 				VkSamplerCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 				info.magFilter = VK_FILTER_LINEAR;
@@ -1019,56 +1064,6 @@ namespace tke
 
 				EnterCriticalSection(&cs);
 				auto res = vkCreateSampler(device, &info, nullptr, &colorBorderSampler);
-				assert(res == VK_SUCCESS);
-				LeaveCriticalSection(&cs);
-			}
-
-			{
-				VkSamplerCreateInfo info = {};
-				info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-				info.magFilter = VK_FILTER_NEAREST;
-				info.minFilter = VK_FILTER_NEAREST;
-				info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				info.anisotropyEnable = VK_FALSE;
-				info.maxAnisotropy = 0;
-				info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-				info.unnormalizedCoordinates = VK_TRUE;
-				info.compareEnable = VK_FALSE;
-				info.compareOp = VK_COMPARE_OP_ALWAYS;
-				info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-				info.mipLodBias = 0.0f;
-				info.minLod = 0.0f;
-				info.maxLod = 0.0f;
-
-				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &screenUvSampler);
-				assert(res == VK_SUCCESS);
-				LeaveCriticalSection(&cs);
-			}
-
-			{
-				VkSamplerCreateInfo samplerInfo = {};
-				samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-				samplerInfo.magFilter = VK_FILTER_NEAREST;
-				samplerInfo.minFilter = VK_FILTER_NEAREST;
-				samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				samplerInfo.anisotropyEnable = VK_FALSE;
-				samplerInfo.maxAnisotropy = 0;
-				samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-				samplerInfo.unnormalizedCoordinates = VK_FALSE;
-				samplerInfo.compareEnable = VK_FALSE;
-				samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-				samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-				samplerInfo.mipLodBias = 0.0f;
-				samplerInfo.minLod = 0.0f;
-				samplerInfo.maxLod = 0.0f;
-
-				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &samplerInfo, nullptr, &screenSampler);
 				assert(res == VK_SUCCESS);
 				LeaveCriticalSection(&cs);
 			}
