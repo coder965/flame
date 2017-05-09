@@ -1,11 +1,11 @@
 <pipeline name="" cx="0" cy="0" patch_control_points="0" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
-  <link type="uniform_buffer" binding="0" array_element="0" name="Editor.Tool.Transform.Vert.UniformBuffer" sampler="none"/>
-  <link type="uniform_buffer" binding="1" array_element="0" name="Editor.Tool.Transform.Frag.UniformBuffer" sampler="none"/>
-  <stage filename="transform.vert">
-    <descriptor type="uniform_buffer" binding="0" count="1"/>
-  </stage>
-  <stage filename="transform.frag">
-    <descriptor type="uniform_buffer" binding="1" count="1"/>
-  </stage>
+	<link type="uniform_buffer" binding="0" array_element="0" name="Editor.Tool.Transform.Vert.UniformBuffer" sampler="none"/>
+	<link type="uniform_buffer" binding="1" array_element="0" name="Editor.Tool.Transform.Frag.UniformBuffer" sampler="none"/>
+	<stage filename="transform.vert">
+		<descriptor type="uniform_buffer" binding="0" count="1"/>
+	</stage>
+	<stage filename="transform.frag">
+		<descriptor type="uniform_buffer" binding="1" count="1"/>
+	</stage>
 </pipeline>
 

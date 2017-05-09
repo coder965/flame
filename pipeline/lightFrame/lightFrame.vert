@@ -1,4 +1,4 @@
-616layout(binding = 0) uniform MATRIX
+layout(binding = 0) uniform MATRIX
 {
 	mat4 matrixProj;
 	mat4 matrixProjInv;

@@ -195,6 +195,8 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 				s->wrap.tabIndex = stageTab->addTab(s->wrap.edit, title);
 			}
 		}
+
+		setTabData(0);
     }
 };
 

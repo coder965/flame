@@ -329,11 +329,11 @@ void QtGuiApplication::on_toSpv_clicked()
 
 	std::experimental::filesystem::path spv(currentPipeline->filepath + "/" + s->filename + ".spv");
 
-	tke::exec("cmd", "/C glslangValidator -V temp.glsl -S " + stageNames[(int)log2((int)s->type)] + " -q -o " + spv.string() + " >> output.txt");
+	tke::exec("cmd", "/C glslangValidator my.conf -V temp.glsl -S " + stageNames[(int)log2((int)s->type)] + " -q -o " + spv.string() + " > output.txt");
 
 	tke::OnceFileBuffer output("output.txt");
 	s->compileOutput = output.data;
-	compileText->setText(output.data);
+	compileText->setText(("Warnning:the push constants in different stages must be merged, or else they would not reflect properly.\n" + s->compileOutput).c_str());
 
 	{
 		// analyzing the reflection
@@ -350,6 +350,9 @@ void QtGuiApplication::on_toSpv_clicked()
 
 		struct Reflection
 		{
+			int COUNT = 1; // special for UBO
+
+			ReflectionType reflectionType;
 			std::string name;
 			int offset;
 			std::string type;
@@ -357,7 +360,26 @@ void QtGuiApplication::on_toSpv_clicked()
 			int index;
 			int binding;
 		};
-		std::vector<Reflection> reflections;
+		struct ReflectionManager
+		{
+			std::vector<Reflection> rs;
+			void add(Reflection &_r)
+			{
+				if (_r.reflectionType == eUniformBlock && _r.binding != -1)
+				{
+					for (auto &r : rs)
+					{
+						if (r.binding == _r.binding)
+						{
+							r.COUNT++;
+							return;
+						}
+					}
+				}
+				rs.push_back(_r);
+			}
+		};
+		ReflectionManager reflections;
 		Reflection currentReflection;
 
 		yylex_destroy();
@@ -372,7 +394,8 @@ void QtGuiApplication::on_toSpv_clicked()
 			case COLON:
 				if (currentReflectionType != eNull)
 				{
-					if (currentReflection.name != "") reflections.push_back(currentReflection);
+					if (currentReflection.name != "") reflections.add(currentReflection);
+					currentReflection.reflectionType = currentReflectionType;
 					currentReflection.name = last_string;
 					last_string = "";
 				}
@@ -418,9 +441,45 @@ void QtGuiApplication::on_toSpv_clicked()
 			}
 			if (token) token = yylex();
 		}
-		if (currentReflection.name != "") reflections.push_back(currentReflection);
+		if (currentReflection.name != "") reflections.add(currentReflection);
 		fclose(yyin);
 		yyin = NULL;
+
+		s->descriptors.clear();
+		s->pushConstantRanges.clear();
+		for (auto r : reflections.rs)
+		{
+			switch (r.reflectionType)
+			{
+			case eUniform:
+				if (r.binding != -1 && r.type == "8b5e") // SAMPLER
+				{
+					tke::Descriptor d;
+					d.type = tke::DescriptorType::sampler;
+					d.binding = r.binding;
+					d.count = r.size;
+					s->descriptors.push_back(d);
+				}
+				break;
+			case eUniformBlock:
+				if (r.binding != -1) // UBO
+				{
+					tke::Descriptor d;
+					d.type = tke::DescriptorType::uniform_buffer;
+					d.binding = r.binding;
+					d.count = r.COUNT;
+					s->descriptors.push_back(d);
+				}
+				else // PC
+				{
+					tke::PushConstantRange p;
+					p.offset = 0; // 0 always
+					p.size = r.size;
+					s->pushConstantRanges.push_back(p);
+				}
+				break;
+			}
+		}
 	}
 
 	DeleteFileA("output.txt");

@@ -1,7 +1,8 @@
 layout(push_constant) uniform PushConstant
 {
 	uint passIndex;
-}p_index;
+	vec4 color;
+}pc;
 
 layout(binding = 0) uniform MATRIX
 {
@@ -22,5 +23,5 @@ layout(location = 0) in vec3 inVertex;
 
 void main()
 {
-	gl_Position = u_matrix.matrixProjView * u_instance[p_index.passIndex].matrix[gl_InstanceIndex] * vec4(inVertex, 1);
+	gl_Position = u_matrix.matrixProjView * u_instance[pc.passIndex].matrix[gl_InstanceIndex] * vec4(inVertex, 1);
 }

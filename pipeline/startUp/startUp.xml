@@ -2,9 +2,9 @@
 	<link type="sampler" binding="0" array_element="0" name="StartUp.Texture" sampler="plain"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="StartUp.UniformBuffer" sampler="none"/>
 	<stage filename="../fullscreenUv.vert"/>
-  <stage filename="startUp.frag">
-    <descriptor type="sampler" binding="0" count="1"/>
-	  <descriptor type="uniform_buffer" binding="1" count="1"/>
-  </stage>
+	<stage filename="startUp.frag">
+		<descriptor type="sampler" binding="0" count="1"/>
+		<descriptor type="uniform_buffer" binding="1" count="1"/>
+	</stage>
 </pipeline>
 

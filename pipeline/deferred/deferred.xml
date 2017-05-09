@@ -6,16 +6,14 @@
 	<link type="sampler" binding="4" array_element="0" name="AlbedoSpec.Texture" sampler="plain_unnormalized"/>
 	<link type="sampler" binding="5" array_element="0" name="NormalRoughness.Texture" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreenView.vert"/>
-  <stage filename="deferred.frag">
-    <descriptor type="uniform_buffer" binding="0" count="1"/>
-    <descriptor type="uniform_buffer" binding="1" count="1"/>
-    <descriptor type="uniform_buffer" binding="2" count="1"/>
-    <descriptor type="sampler" binding="3" count="1"/>
-    <descriptor type="sampler" binding="4" count="1"/>
-    <descriptor type="sampler" binding="5" count="1"/>
-    <descriptor type="sampler" binding="6" count="1"/>
-    <descriptor type="sampler" binding="7" count="1"/>
-    <descriptor type="sampler" binding="8" count="1"/>
-  </stage>
+	<stage filename="deferred.frag">
+		<descriptor type="sampler" binding="3" count="1"/>
+		<descriptor type="sampler" binding="4" count="1"/>
+		<descriptor type="sampler" binding="5" count="1"/>
+		<descriptor type="sampler" binding="7" count="1"/>
+		<descriptor type="uniform_buffer" binding="2" count="1"/>
+		<descriptor type="uniform_buffer" binding="0" count="1"/>
+		<descriptor type="uniform_buffer" binding="1" count="1"/>
+	</stage>
 </pipeline>
 

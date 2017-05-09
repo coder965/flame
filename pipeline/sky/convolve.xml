@@ -1,8 +1,8 @@
 <pipeline name="" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
 	<stage filename="../fullscreenUv.vert"/>
-  <stage filename="convolve.frag">
-    <descriptor type="sampler" binding="0" count="1"/>
-    <push_constant offset="0" size="4"/>
-  </stage>/>
+	<stage filename="convolve.frag">
+		<descriptor type="sampler" binding="0" count="1"/>
+		<push_constant offset="0" size="4"/>
+	</stage>
 </pipeline>
 

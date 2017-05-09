@@ -226,7 +226,19 @@ namespace tke
 
 			for (auto c : at.children)
 			{
-				if (c->name == "stage")
+				if (c->name == "blend_attachment")
+				{
+					BlendAttachment ba;
+					c->obtainFromAttributes(&ba, ba.b);
+					blendAttachments.push_back(ba);
+				}
+				else if (c->name == "link")
+				{
+					LinkResource l;
+					c->obtainFromAttributes(&l, l.b);
+					links.push_back(l);
+				}
+				else if (c->name == "stage")
 				{
 					auto s = new StageType;
 					c->obtainFromAttributes(s, s->b);
@@ -253,44 +265,12 @@ namespace tke
 
 					stages.push_back(s);
 				}
-				else if (c->name == "blend_attachment")
-				{
-					BlendAttachment ba;
-					c->obtainFromAttributes(&ba, ba.b);
-					blendAttachments.push_back(ba);
-				}
-				else if (c->name == "link")
-				{
-					LinkResource l;
-					c->obtainFromAttributes(&l, l.b);
-					links.push_back(l);
-				}
 			}
 		}
 		void saveXML()
 		{
 			AttributeTree at("pipeline");
 			at.addAttributes(this, b);
-
-			for (auto s : stages)
-			{
-				auto n = new AttributeTreeNode("stage");
-				n->addAttributes(s, s->b);
-				at.children.push_back(n);
-
-				for (auto &d : s->descriptors)
-				{
-					auto nn = new AttributeTreeNode("descriptor");
-					nn->addAttributes(&d, d.b);
-					n->children.push_back(n);
-				}
-				for (auto &p : s->pushConstantRanges)
-				{
-					auto nn = new AttributeTreeNode("push_constant");
-					nn->addAttributes(&p, p.b);
-					n->children.push_back(n);
-				}
-			}
 			for (auto &b : blendAttachments)
 			{
 				auto n = new AttributeTreeNode("blend_attachment");
@@ -302,6 +282,25 @@ namespace tke
 				auto n = new AttributeTreeNode("link");
 				n->addAttributes(&l, l.b);
 				at.children.push_back(n);
+			}
+			for (auto s : stages)
+			{
+				auto n = new AttributeTreeNode("stage");
+				n->addAttributes(s, s->b);
+				at.children.push_back(n);
+
+				for (auto &d : s->descriptors)
+				{
+					auto nn = new AttributeTreeNode("descriptor");
+					nn->addAttributes(&d, d.b);
+					n->children.push_back(nn);
+				}
+				for (auto &p : s->pushConstantRanges)
+				{
+					auto nn = new AttributeTreeNode("push_constant");
+					nn->addAttributes(&p, p.b);
+					n->children.push_back(nn);
+				}
 			}
 
 			at.saveXML(filename);
