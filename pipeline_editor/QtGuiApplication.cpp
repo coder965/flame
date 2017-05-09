@@ -153,6 +153,17 @@ void QtGuiApplication::keyPressEvent(QKeyEvent *k)
 	}
 }
 
+void QtGuiApplication::on_pipelineNameEdit_textChanged(const QString &str)
+{
+	if (!currentPipeline) return;
+	if (currentPipeline->name != str.toUtf8().data())
+	{
+		currentPipeline->name = str.toUtf8().data();
+		currentPipeline->changed = true;
+		currentPipeline->setTitle();
+	}
+}
+
 void QtGuiApplication::on_pipelineList_currentItemChanged(QListWidgetItem *curr, QListWidgetItem *)
 {
 	for (auto pipeline : pipelines)
@@ -268,7 +279,8 @@ void QtGuiApplication::on_addStage_clicked()
 	currentPipeline->appear();
 	preparingData = false;
 
-	currentPipeline->saveXML();
+	currentPipeline->changed = true;
+	currentPipeline->setTitle();
 }
 
 void QtGuiApplication::on_removeStage_clicked()
@@ -277,7 +289,9 @@ void QtGuiApplication::on_removeStage_clicked()
 	if (!s) return;
 
 	currentPipeline->removeStage(s);
-	currentPipeline->saveXML();
+
+	currentPipeline->changed = true;
+	currentPipeline->setTitle();
 }
 
 void QtGuiApplication::on_saveStage_clicked()
@@ -291,22 +305,7 @@ void QtGuiApplication::on_saveStage_clicked()
 	file.write(s->text.c_str(), s->text.size());
 
 	s->wrap.changed = false;
-
-	const int types[] = {
-		(int)tke::StageFlags::vert,
-		(int)tke::StageFlags::tesc,
-		(int)tke::StageFlags::tese,
-		(int)tke::StageFlags::geom,
-		(int)tke::StageFlags::frag
-	};
-	for (int i = 0; i < 5; i++)
-	{
-		if (types[i] == (int)s->type)
-		{
-			stageTab->setTabText(s->wrap.tabIndex, QString(stageNames[i].c_str()));
-			break;
-		}
-	}
+	s->wrap.setTitle();
 }
 
 void QtGuiApplication::on_toSpv_clicked()
@@ -497,6 +496,8 @@ void QtGuiApplication::on_toSpv_clicked()
 		CloseHandle(hPipe);
 	}
 
+	currentPipeline->changed = true;
+	currentPipeline->setTitle();
 }
 
 void QtGuiApplication::on_stageTab_currentChanged(int index)
@@ -528,7 +529,6 @@ void QtGuiApplication::on_explorerStage_clicked()
 void QtGuiApplication::on_savePipeline_clicked()
 {
 	if (!currentPipeline) return;
-	currentPipeline->name = ui.pipelineNameEdit->text().toUtf8().data();
 
 	currentPipeline->saveXML();
 }

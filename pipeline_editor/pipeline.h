@@ -8,6 +8,14 @@ const std::string stageNames[] = {
 	"frag"
 };
 
+const int stageTypes[] = {
+	(int)tke::StageFlags::vert,
+	(int)tke::StageFlags::tesc,
+	(int)tke::StageFlags::tese,
+	(int)tke::StageFlags::geom,
+	(int)tke::StageFlags::frag
+};
+
 struct Stage : tke::StageAbstract
 {
 	std::string text;
@@ -28,27 +36,25 @@ struct Stage : tke::StageAbstract
 			edit->setLineWrapMode(QPlainTextEdit::NoWrap);
 			connect(edit, &QPlainTextEdit::textChanged, this, &Wrap::on_text_changed);
 		}
-
+		void setTitle()
+		{
+			for (int i = 0; i < 5; i++)
+			{
+				if (stageTypes[i] == type)
+				{
+					QString title = stageNames[(int)i].c_str();
+					if (changed) title += "*";
+					stageTab->setTabText(tabIndex, title);
+					return;
+				}
+			}
+		}
 		void on_text_changed()
 		{
 			if (preparingData) return;
 
 			changed = true;
-			const int types[] = {
-				(int)tke::StageFlags::vert,
-				(int)tke::StageFlags::tesc,
-				(int)tke::StageFlags::tese,
-				(int)tke::StageFlags::geom,
-				(int)tke::StageFlags::frag
-			};
-			for (int i = 0; i < 5; i++)
-			{
-				if (types[i] == type)
-				{
-					stageTab->setTabText(tabIndex, QString(stageNames[i].c_str()) + "*");
-					break;
-				}
-			}
+			setTitle();
 		}
 	}wrap;
 
@@ -93,6 +99,8 @@ struct Stage : tke::StageAbstract
 
 struct Pipeline : tke::PipelineAbstract<Stage>
 {
+	bool changed = false;
+
     QListWidgetItem *item;
 
     ~Pipeline()
@@ -100,18 +108,23 @@ struct Pipeline : tke::PipelineAbstract<Stage>
         delete item;
     }
 
+	void setTitle()
+	{
+		QString title;
+		{
+			if (filename.compare(0, shaderPath.size(), shaderPath) == 0)
+				title = filename.c_str() + shaderPath.size();
+			else
+				title = filename.c_str();
+		}
+		if (changed) title += "*";
+		item->setText(title);
+	}
+
     void addToTree()
     {
-        QString _filename;
-        {
-            if (filename.compare(0, shaderPath.size(), shaderPath) == 0)
-                _filename = filename.c_str() + shaderPath.size();
-            else
-                _filename = filename.c_str();
-        }
-
         item = new QListWidgetItem;
-		item->setText(_filename);
+		setTitle();
 		pipelineList->addItem(item);
     }
 
@@ -176,23 +189,14 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 		attributeTree->clear();
 
         stageTab->clear();
-		int i = 0;
 		for (int type = 0; type < 5; type++)
 		{
-			const int types[] = {
-				(int)tke::StageFlags::vert,
-				(int)tke::StageFlags::tesc,
-				(int)tke::StageFlags::tese,
-				(int)tke::StageFlags::geom,
-				(int)tke::StageFlags::frag
-			};
-			auto s = stageByType(types[type]);
+			auto s = stageByType(stageTypes[type]);
 			if (s)
 			{
 				s->appear();
-				QString title = stageNames[(int)type].c_str();
-				if (s->wrap.changed) title += "*";
-				s->wrap.tabIndex = stageTab->addTab(s->wrap.edit, title);
+				s->wrap.tabIndex = stageTab->addTab(s->wrap.edit, "");
+				s->wrap.setTitle();
 			}
 		}
 

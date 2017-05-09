@@ -29,6 +29,8 @@ public:
 	QtGuiApplication(QWidget *parent = Q_NULLPTR);
 
 private slots:
+	void on_pipelineNameEdit_textChanged(const QString &);
+
 	void on_pipelineList_currentItemChanged(QListWidgetItem *_curr, QListWidgetItem *_prev);
 
 	void on_addPipeline_clicked();

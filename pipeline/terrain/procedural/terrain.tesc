@@ -75,7 +75,6 @@ void main()
 		}
 		else
 		{
-			
 			if (0.75 > 0.0)
 			{
 				gl_TessLevelOuter[0] = screenSpaceTessFactor(gl_in[3].gl_Position, gl_in[0].gl_Position);
