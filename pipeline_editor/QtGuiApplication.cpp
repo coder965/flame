@@ -447,7 +447,7 @@ void QtGuiApplication::on_toSpv_clicked()
 
 		s->descriptors.clear();
 		s->pushConstantRanges.clear();
-		for (auto r : reflections.rs)
+		for (auto &r : reflections.rs)
 		{
 			switch (r.reflectionType)
 			{
