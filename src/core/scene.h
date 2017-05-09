@@ -18,6 +18,35 @@
 
 namespace tke
 {
+	struct GuiWindow;
+	struct MasterRenderer
+	{
+		Image originalImage;
+		Image albedoSpecImage;
+		Image normalRoughnessImage;
+		Image miscImage;
+		Image uiImage;
+
+		Pipeline panoramaPipeline;
+		Pipeline heightMapTerrainPipeline;
+		Pipeline proceduralTerrainPipeline;
+		Pipeline mrtPipeline;
+		Pipeline deferredPipeline;
+		Pipeline combinePipeline;
+
+		Drawcall *mrtObjectDrawcall;
+
+		DrawAction *skyAction;
+		DrawAction *mrtHeightMapTerrainAction;
+
+		RenderPass *miscPass;
+		RenderPass *uiPass;
+
+		Renderer *renderer;
+
+		MasterRenderer(int _cx, int _cy, GuiWindow *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer);
+	};
+
 	struct AnimationTemplate;
 	struct CollisionGroup;
 	enum class SkyType

@@ -138,8 +138,8 @@ namespace tke
 		globalResource.setImage(&_depthImage, "Depth.Image");
 
 
-		UI::init();
-		UI::setupIcons(vk::colorSampler);
+		initGui();
+		guiSetupIcons(vk::colorSampler);
 
 		controllingObject = nullptr;
 

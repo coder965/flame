@@ -20,7 +20,7 @@ namespace tke
 		glm::vec2 progress;
 		char text[2][200];
 
-		UI::EngineGuiWindow *pWindow;
+		GuiWindow *pWindow;
 
 		Renderer *renderer;
 
@@ -45,9 +45,9 @@ namespace tke
 		VkCommandBuffer cmd[2];
 		VkSemaphore renderFinishedSemaphore;
 
-		struct MainWindow : UI::EngineGuiWindow
+		struct MainWindow : GuiWindow
 		{
-			using UI::EngineGuiWindow::EngineGuiWindow;
+			using GuiWindow::GuiWindow;
 
 			virtual void deadEvent() override
 			{
@@ -63,12 +63,12 @@ namespace tke
 				pWindow->perpareFrame();
 
 				pWindow->m_uiFramebuffer = renderer->vkFramebuffer[pWindow->m_imageIndex];
-				UI::lock(pWindow);
+				lockUi();
 				ImGui::Begin("StartUp", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 				ImGui::TextUnformatted(text[0]);
 				ImGui::TextUnformatted(text[1]);
 				ImGui::End();
-				UI::unlock();
+				unlockUi();
 
 				vk::queueSubmit(pWindow->m_imageAvailable, renderFinishedSemaphore, cmd[pWindow->m_imageIndex]);
 

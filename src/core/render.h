@@ -305,38 +305,6 @@ namespace tke
 		void execute(VkCommandBuffer cmd, int index = 0);
 		void setup();
 	};
-
-	namespace UI
-	{
-		struct EngineGuiWindow;
-	}
-	struct MasterRenderer
-	{
-		Image originalImage;
-		Image albedoSpecImage;
-		Image normalRoughnessImage;
-		Image miscImage;
-		Image uiImage;
-
-		Pipeline panoramaPipeline;
-		Pipeline heightMapTerrainPipeline;
-		Pipeline proceduralTerrainPipeline;
-		Pipeline mrtPipeline;
-		Pipeline deferredPipeline;
-		Pipeline combinePipeline;
-
-		Drawcall *mrtObjectDrawcall;
-
-		DrawAction *skyAction;
-		DrawAction *mrtHeightMapTerrainAction;
-
-		RenderPass *miscPass;
-		RenderPass *uiPass;
-
-		Renderer *renderer;
-
-		MasterRenderer(int _cx, int _cy, UI::EngineGuiWindow *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer);
-	};
 }
 
 #endif

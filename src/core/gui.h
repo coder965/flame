@@ -9,135 +9,130 @@
 
 namespace tke
 {
-	namespace UI
+	struct DialogT
 	{
-		struct DialogT
+		enum class State
 		{
-			enum class State
-			{
-				eClosed,
-				eNeedOpen,
-				eOpened
-			};
-			State state;
-			std::string name;
-
-			void begin();
-			void end();
+			eClosed,
+			eNeedOpen,
+			eOpened
 		};
+		State state;
+		std::string name;
 
-		struct YesNoDialog : DialogT
-		{
-			std::string m_text;
-			void(*m_callback)(bool);
+		void begin();
+		void end();
+	};
 
-			YesNoDialog();
-			void start(const std::string &text, void(callback)(bool));
-			void show();
-		};
+	struct YesNoDialog : DialogT
+	{
+		std::string m_text;
+		void(*m_callback)(bool);
 
-		struct MessageDialog : DialogT
-		{
-			std::vector<std::string> texts;
+		YesNoDialog();
+		void start(const std::string &text, void(*callback)(bool));
+		void show();
+	};
 
-			MessageDialog();
-			void add(const std::string &text);
-			void show();
-		};
+	struct MessageDialog : DialogT
+	{
+		std::vector<std::string> texts;
 
-		struct InputDialog : DialogT
-		{
-			char m_buf[MAX_PATH];
-			void(*m_callback)(const std::string &);
+		MessageDialog();
+		void add(const std::string &text);
+		void show();
+	};
 
-			InputDialog();
-			void start(void(*callback)(const std::string &));
-			void show();
-		};
+	struct InputDialog : DialogT
+	{
+		char m_buf[MAX_PATH];
+		void(*m_callback)(const std::string &);
 
-		struct FileDialogT : DialogT
-		{
-			std::string m_path;
-			std::vector<std::string> m_dirs;
-			std::vector<std::string> m_files;
+		InputDialog();
+		void start(void(*callback)(const std::string &));
+		void show();
+	};
 
-			void search();
-		};
+	struct FileDialogT : DialogT
+	{
+		std::string m_path;
+		std::vector<std::string> m_dirs;
+		std::vector<std::string> m_files;
 
-		struct DirectoryDialog : DialogT
-		{
-			std::string m_path;
-			std::vector<std::string> m_dirs;
-			std::string m_currentPath;
-			void(*m_callback)(const std::string &);
+		void search();
+	};
 
-			DirectoryDialog();
-			void start(void(*callback)(const std::string &));
-			void search();
-			void show();
-		};
+	struct DirectoryDialog : DialogT
+	{
+		std::string m_path;
+		std::vector<std::string> m_dirs;
+		std::string m_currentPath;
+		void(*m_callback)(const std::string &);
 
-		struct OpenFileDialog : FileDialogT
-		{
-			void(*m_callback)(const std::string &);
+		DirectoryDialog();
+		void start(void(*callback)(const std::string &));
+		void search();
+		void show();
+	};
 
-			OpenFileDialog();
-			void start(void(*callback)(const std::string &));
-			void show();
-		};
+	struct OpenFileDialog : FileDialogT
+	{
+		void(*m_callback)(const std::string &);
 
-		struct SaveFileDialog : FileDialogT
-		{
-			char filename[MAX_PATH];
-			void(*m_callback)(const std::string &);
+		OpenFileDialog();
+		void start(void(*callback)(const std::string &));
+		void show();
+	};
 
-			SaveFileDialog();
-			void start(void(*callback)(const std::string &));
-			void show();
-		};
+	struct SaveFileDialog : FileDialogT
+	{
+		char filename[MAX_PATH];
+		void(*m_callback)(const std::string &);
 
-		struct Dialogs
-		{
-			YesNoDialog yesNoDialog;
-			MessageDialog messageDialog;
-			InputDialog inputDialog;
-			DirectoryDialog directoryDialog;
-			OpenFileDialog openFileDialog;
-			SaveFileDialog saveFileDialog;
+		SaveFileDialog();
+		void start(void(*callback)(const std::string &));
+		void show();
+	};
 
-			void show();
-		};
+	struct Dialogs
+	{
+		YesNoDialog yesNoDialog;
+		MessageDialog messageDialog;
+		InputDialog inputDialog;
+		DirectoryDialog directoryDialog;
+		OpenFileDialog openFileDialog;
+		SaveFileDialog saveFileDialog;
 
-		struct EngineGuiWindow : Window
-		{
-			void *m_uiContext = nullptr;
-			VkRenderPass m_uiRenderPass = VK_NULL_HANDLE;
-			uint32_t m_uiSubpassIndex = -1;
-			VkPipeline m_uiPipeline;
-			VkFramebuffer m_uiFramebuffer = VK_NULL_HANDLE;
-			VkCommandBuffer m_uiCommandBuffer = VK_NULL_HANDLE;
-			bool m_uiAcceptedMouse = false;
-			bool m_uiAcceptedKey = false;
-			Dialogs *m_uiDialogs = nullptr;
+		void show();
+	};
 
-			virtual void keyDownEvent(int) override;
-			virtual void keyUpEvent(int) override;
-			virtual void charEvent(int) override;
+	struct GuiWindow : Window
+	{
+		void *m_uiContext = nullptr;
+		VkRenderPass m_uiRenderPass = VK_NULL_HANDLE;
+		uint32_t m_uiSubpassIndex = -1;
+		VkPipeline m_uiPipeline;
+		VkFramebuffer m_uiFramebuffer = VK_NULL_HANDLE;
+		VkCommandBuffer m_uiCommandBuffer = VK_NULL_HANDLE;
+		bool m_uiAcceptedMouse = false;
+		bool m_uiAcceptedKey = false;
+		Dialogs *m_uiDialogs = nullptr;
 
-			EngineGuiWindow(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
-			void initUi(VkRenderPass uiRenderPass, uint32_t uiSubpassIndex);
-		};
+		virtual void keyDownEvent(int) override;
+		virtual void keyUpEvent(int) override;
+		virtual void charEvent(int) override;
 
-		void keyCallback(int key, bool DownUp);
-		void charCallback(unsigned int c);
-		void lock(EngineGuiWindow *pWindow);
-		void unlock();
-		EngineGuiWindow *getCurrentWindow();
-		void pushIcon(Image *image);
-		void setupIcons(VkSampler sampler);
-		void initWindow(EngineGuiWindow *pWindow);
-		void init();
-	}
+		GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
+		void initUi(VkRenderPass uiRenderPass, uint32_t uiSubpassIndex);
+		void lockUi();
+		void unlockUi();
+	};
+
+	extern GuiWindow *guiCurrentWindow;
+
+	void guiPushIcon(Image *image);
+	void guiSetupIcons(VkSampler sampler);
+	void initGui();
 }
 
 #endif

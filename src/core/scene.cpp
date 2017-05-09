@@ -1,8 +1,89 @@
 #include "core.h"
 #include "scene.h"
+#include "gui.h"
 
 namespace tke
 {
+	MasterRenderer::MasterRenderer(int _cx, int _cy, GuiWindow *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
+	{
+		static ResourceBank _resources;
+
+		originalImage.create(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoSpecImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalRoughnessImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		miscImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		uiImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		renderer = new Renderer();
+		renderer->cx = _cx;
+		renderer->cy = _cy;
+		auto res = renderer->pResource;
+
+		res->setImage(&originalImage, "Original.Texture");
+		res->setImage(&albedoSpecImage, "AlbedoSpec.Texture");
+		res->setImage(&normalRoughnessImage, "NormalRoughness.Texture");
+		res->setImage(&miscImage, "Misc.Texture");
+		res->setImage(&uiImage, "Ui.Texture");
+
+		res->setPipeline(&panoramaPipeline, "Panorama.Pipeline");
+		res->setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
+		res->setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
+		res->setPipeline(&mrtPipeline, "Mrt.Pipeline");
+		res->setPipeline(&deferredPipeline, "Deferred.Pipeline");
+		res->setPipeline(&combinePipeline, "Combine.Pipeline");
+
+		auto skyPass = renderer->addPass();
+		skyPass->addColorAttachment(&originalImage);
+		skyAction = skyPass->addAction(&panoramaPipeline);
+
+		auto mrtPass = renderer->addPass();
+		mrtPass->addColorAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		mrtPass->addColorAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		mrtPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
+		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
+		mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
+		auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
+		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
+
+		auto deferredPass = renderer->addPass();
+		deferredPass->addColorAttachment(&originalImage);
+		deferredPass->addDependency(skyPass);
+		deferredPass->addDependency(mrtPass);
+		auto deferredAction = deferredPass->addAction(&deferredPipeline);
+		deferredAction->addDrawcall(3, 0, 1, 0);
+
+		miscPass = renderer->addPass();
+		miscPass->addColorAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		miscPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		miscPass->addDependency(mrtPass);
+
+		uiPass = renderer->addPass(pWindow->m_uiCommandBuffer);
+		uiPass->addColorAttachment(&uiImage, VkClearValue{ 0.f, 0.f, 0.f, 1.f });
+
+		auto combinePass = renderer->addPass();
+		combinePass->addColorAttachment(pWindow->m_image);
+		combinePass->addDependency(deferredPass);
+		combinePass->addDependency(miscPass);
+		combinePass->addDependency(uiPass);
+		auto combineAction = combinePass->addAction(&combinePipeline);
+		combineAction->addDrawcall(3, 0, 1, 0);
+
+		renderer->initVertexBuffer = vertexBuffer;
+		renderer->initIndexBuffer = indexBuffer;
+
+		renderer->setup();
+
+		panoramaPipeline.create("../pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
+		heightMapTerrainPipeline.create("../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		proceduralTerrainPipeline.create("../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		mrtPipeline.create("../pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
+		deferredPipeline.create("../pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
+		combinePipeline.create("../pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
+
+		renderer->getDescriptorSets();
+	}
+
 	void Atmosphere::set()
 	{
 		float fScaleDepth = 0.25;// The scale depth (i.e. the altitude at which the atmosphere's average density is found)

@@ -2,10 +2,7 @@
 
 #include <iostream>
 #include <memory>
-#include <future>
 
-#include "..\src\core\math.h"
-#include "..\src\core\light.h"
 #include "..\src\core\scene.h"
 #include "..\src\core\window.h"
 #include "..\src\core\gui.h"
@@ -74,7 +71,7 @@ int funGetModelID(tke::Model *pModel)
 	return -1;
 }
 
-tke::UI::EngineGuiWindow *pMainWindow = nullptr;
+tke::GuiWindow *pMainWindow = nullptr;
 
 #include "dialogs\lightAttribute.h"
 #include "dialogs\objectAttribute.h"
@@ -92,9 +89,9 @@ static bool sayError(tke::Err err)
 	return true;
 }
 
-struct MainWindow : tke::UI::EngineGuiWindow
+struct MainWindow : tke::GuiWindow
 {
-	using tke::UI::EngineGuiWindow::EngineGuiWindow;
+	using tke::GuiWindow::GuiWindow;
 	tke::Pipeline lightFramePipeline;
 	tke::Pipeline wireFramePipeline;
 
@@ -756,7 +753,7 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 	virtual void renderEvent() override
 	{
-		tke::UI::lock(this);
+		lockUi();
 
 		main_menu_show();
 		dialog_debug::show();
@@ -792,7 +789,7 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 		tke::scene->resetChange();
 
-		tke::UI::unlock();
+		unlockUi();
 
 		if (needRedraw)
 		{
@@ -827,16 +824,8 @@ struct MainWindow : tke::UI::EngineGuiWindow
 
 bool MainWindow::needRedraw = true;
 
-int fuck;
-struct A 
-{
-	int *p = &fuck;
-};
-
 int main()
 {
-	A a;
-
 	auto resCx = 1600, resCy = 900;
 	if (sayError(tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw)))
 		return 0;
