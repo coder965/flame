@@ -7,13 +7,13 @@
 	<link type="sampler" binding="5" array_element="0" name="NormalRoughness.Texture" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreenView.vert"/>
 	<stage filename="deferred.frag">
-		<descriptor type="sampler" binding="3" count="1"/>
-		<descriptor type="sampler" binding="4" count="1"/>
-		<descriptor type="sampler" binding="5" count="1"/>
-		<descriptor type="sampler" binding="7" count="1"/>
-		<descriptor type="uniform_buffer" binding="2" count="1"/>
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="depthSampler" type="sampler" binding="3" count="1"/>
+		<descriptor name="albedoSpecSampler" type="sampler" binding="4" count="1"/>
+		<descriptor name="normalRoughnessSampler" type="sampler" binding="5" count="1"/>
+		<descriptor name="envrSampler" type="sampler" binding="7" count="1"/>
+		<descriptor name="LIGHT" type="uniform_buffer" binding="2" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="AMBIENT" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 </pipeline>
 

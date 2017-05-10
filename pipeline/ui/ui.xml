@@ -4,7 +4,7 @@
 		<push_constant offset="0" size="16"/>
 	</stage>
 	<stage filename="ui.frag">
-		<descriptor type="sampler" binding="0" count="512"/>
+		<descriptor name="sTexture" type="sampler" binding="0" count="512"/>
 	</stage>
 </pipeline>
 

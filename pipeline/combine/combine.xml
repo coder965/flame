@@ -4,9 +4,9 @@
 	<link type="sampler" binding="2" array_element="0" name="Ui.Texture" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreen.vert"/>
 	<stage filename="combine.frag">
-		<descriptor type="sampler" binding="1" count="1"/>
-		<descriptor type="sampler" binding="2" count="1"/>
-		<descriptor type="sampler" binding="0" count="1"/>
+		<descriptor name="miscSampler" type="sampler" binding="1" count="1"/>
+		<descriptor name="uiSampler" type="sampler" binding="2" count="1"/>
+		<descriptor name="originalSampler" type="sampler" binding="0" count="1"/>
 	</stage>
 </pipeline>
 

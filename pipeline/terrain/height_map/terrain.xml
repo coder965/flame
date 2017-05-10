@@ -4,22 +4,22 @@
 	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="HeightMapTerrain.UniformBuffer" sampler="none"/>
 	<stage filename="terrain.vert">
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 	<stage filename="terrain.tesc">
-		<descriptor type="sampler" binding="2" count="8"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="samplerHeight" type="sampler" binding="2" count="8"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
 	</stage>
 	<stage filename="terrain.tese">
-		<descriptor type="sampler" binding="2" count="8"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="displacementMap" type="sampler" binding="2" count="8"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
 	</stage>
 	<stage filename="terrain.frag">
-		<descriptor type="sampler" binding="2" count="8"/>
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="displacementMap" type="sampler" binding="2" count="8"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 </pipeline>
 

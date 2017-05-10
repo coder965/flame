@@ -3,8 +3,8 @@
 	<link type="uniform_buffer" binding="1" array_element="0" name="StartUp.UniformBuffer" sampler="none"/>
 	<stage filename="../fullscreenUv.vert"/>
 	<stage filename="startUp.frag">
-		<descriptor type="sampler" binding="0" count="1"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="tex" type="sampler" binding="0" count="1"/>
+		<descriptor name="PROGRESS" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 </pipeline>
 

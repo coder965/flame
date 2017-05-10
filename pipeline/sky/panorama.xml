@@ -1,10 +1,10 @@
 <pipeline name="Panorama.Pipeline" cx="1600" cy="900" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
 	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
 	<stage filename="panorama.vert">
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
 	</stage>
 	<stage filename="panorama.frag">
-		<descriptor type="sampler" binding="1" count="1"/>
+		<descriptor name="tex" type="sampler" binding="1" count="1"/>
 	</stage>
 </pipeline>
 

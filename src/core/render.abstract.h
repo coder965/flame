@@ -133,6 +133,7 @@ namespace tke
 	{
 		REFL_BANK;
 
+		REFLv std::string name;
 		REFLe DescriptorType type = DescriptorType::uniform_buffer;
 		REFLv int binding = 0;
 		REFLv int count = 0;

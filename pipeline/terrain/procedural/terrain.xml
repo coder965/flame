@@ -4,19 +4,19 @@
 	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="ProceduralTerrain.UniformBuffer" sampler="none"/>
 	<stage filename="terrain.vert">
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 	<stage filename="terrain.tesc">
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 	<stage filename="terrain.tese">
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
 	</stage>
 	<stage filename="terrain.frag">
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="TERRAIN" type="uniform_buffer" binding="1" count="1"/>
 	</stage>
 </pipeline>
 

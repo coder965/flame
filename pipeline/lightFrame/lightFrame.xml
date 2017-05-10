@@ -2,8 +2,8 @@
 	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
 	<link type="uniform_buffer" binding="1" array_element="0" name="LightMatrix.UniformBuffer" sampler="none"/>
 	<stage filename="lightFrame.vert">
-		<descriptor type="uniform_buffer" binding="1" count="1"/>
-		<descriptor type="uniform_buffer" binding="0" count="1"/>
+		<descriptor name="LIGHT" type="uniform_buffer" binding="1" count="1"/>
+		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
 	</stage>
 	<stage filename="lightFrame.frag"/>
 </pipeline>

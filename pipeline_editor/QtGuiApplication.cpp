@@ -457,6 +457,7 @@ void QtGuiApplication::on_toSpv_clicked()
 				{
 					tke::Descriptor d;
 					d.type = tke::DescriptorType::sampler;
+					d.name = r.name;
 					d.binding = r.binding;
 					d.count = r.size;
 					s->descriptors.push_back(d);
@@ -467,6 +468,7 @@ void QtGuiApplication::on_toSpv_clicked()
 				{
 					tke::Descriptor d;
 					d.type = tke::DescriptorType::uniform_buffer;
+					d.name = r.name;
 					d.binding = r.binding;
 					d.count = r.COUNT;
 					s->descriptors.push_back(d);

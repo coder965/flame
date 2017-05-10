@@ -74,6 +74,7 @@ currentEnum->items.emplace_back("storage_image", (int)DescriptorType::storage_im
 currentEnum->items.emplace_back("sampler", (int)DescriptorType::sampler);
 currentEnum->items.emplace_back("input_attachment", (int)DescriptorType::input_attachment);
 currentBank = Descriptor::b;
+currentBank->addV<std::string>("name", offsetof(Descriptor, name));
 currentBank->addE("DescriptorType", "type", offsetof(Descriptor, type));
 currentBank->addV<int>("binding", offsetof(Descriptor, binding));
 currentBank->addV<int>("count", offsetof(Descriptor, count));
