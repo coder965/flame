@@ -679,7 +679,7 @@ namespace tke
 	void guiSetupIcons(VkSampler sampler)
 	{
 		static int position = -1;
-		if (position == -1) position = g_Pipeline.descriptorPosition(StageFlags::frag, "sTexture");
+		if (position == -1) position = g_Pipeline.descriptorPosition("sTexture");
 
 		std::vector<VkWriteDescriptorSet> writes;
 		writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, g_FontImage.getInfo(sampler), 0));

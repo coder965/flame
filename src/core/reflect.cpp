@@ -99,6 +99,7 @@ currentEnum->items.emplace_back("color", (int)SamplerType::color);
 currentEnum->items.emplace_back("color_border", (int)SamplerType::color_border);
 currentBank = LinkResource::b;
 currentBank->addE("DescriptorType", "type", offsetof(LinkResource, type));
+currentBank->addV<std::string>("descriptor_name", offsetof(LinkResource, descriptor_name));
 currentBank->addV<int>("binding", offsetof(LinkResource, binding));
 currentBank->addV<int>("array_element", offsetof(LinkResource, array_element));
 currentBank->addV<std::string>("name", offsetof(LinkResource, name));
