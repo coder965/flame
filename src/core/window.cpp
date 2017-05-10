@@ -56,14 +56,14 @@ namespace tke
 		pWindows.push_back(this);
 
 		VkImage images[2];
-		auto format = vk::createSwapchain(hWnd, m_cx, m_cy, m_surface, m_swapchain, images);
+		vk::createSwapchain(hWnd, m_cx, m_cy, m_surface, m_swapchain, images);
 		for (int i = 0; i < 2; i++)
 		{
 			m_image[i].type = Image::eSwapchain;
 			m_image[i].m_width = cx;
 			m_image[i].m_height = cy;
 			m_image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
-			m_image[i].m_format = format;
+			m_image[i].m_format = vk::swapchainFormat;
 			m_image[i].m_image = images[i];
 		}
 

@@ -77,7 +77,7 @@ namespace tke
 		VkFramebuffer createFramebuffer(std::uint32_t cx, std::uint32_t cy, VkRenderPass renderPass, std::uint32_t attachmentCount, VkImageView *pViews);
 		void destroyFramebuffer(VkFramebuffer fb);
 
-		VkFormat createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages);
+		void createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages);
 
 		VkSemaphore createSemaphore();
 
@@ -85,7 +85,7 @@ namespace tke
 
 		void queuePresent(VkPresentInfoKHR *pInfo);
 
-		Err init(const char *appName, bool debug = false);
+		Err init(const char *appName, bool debug);
 	}
 }
 

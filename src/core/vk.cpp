@@ -5,33 +5,70 @@ namespace tke
 {
 	namespace vk
 	{
-		CRITICAL_SECTION cs;
-
-		VkInstance inst;
-		VkPhysicalDevice physicalDevice;
-		VkDevice device;
-		std::vector<VkQueueFamilyProperties> queueFamilyProps;
 		uint32_t graphicsQueueIndex;
 		uint32_t presentQueueIndex;
 		uint32_t transferQueueIndex;
-		VkQueue graphicsQueue;
-		VkPhysicalDeviceMemoryProperties memProperties;
-		VkCommandPool commandPool;
-		VkDescriptorPool descriptorPool;
+
 		VkFormat swapchainFormat;
+
+		struct Instance
+		{
+			VkInstance v;
+			CRITICAL_SECTION cs;
+			Instance()
+			{
+				InitializeCriticalSection(&cs);
+			}
+		}inst;
+		struct Device
+		{
+			VkDevice v;
+			CRITICAL_SECTION cs;
+			Device()
+			{
+				InitializeCriticalSection(&cs);
+			}
+		}device;
+		struct Queue
+		{
+			VkQueue v;
+			CRITICAL_SECTION cs;
+			Queue()
+			{
+				InitializeCriticalSection(&cs);
+			}
+		}graphicsQueue;
+		struct CommandPool
+		{
+			VkCommandPool v;
+			CRITICAL_SECTION cs;
+			CommandPool()
+			{
+				InitializeCriticalSection(&cs);
+			}
+		}commandPool;
+		struct DescriptorPool
+		{
+			VkDescriptorPool v;
+			CRITICAL_SECTION cs;
+			DescriptorPool()
+			{
+				InitializeCriticalSection(&cs);
+			}
+		}descriptorPool;
 
 		void queueWaitIdle()
 		{
-			EnterCriticalSection(&cs);
-			vkQueueWaitIdle(graphicsQueue);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&graphicsQueue.cs);
+			vkQueueWaitIdle(graphicsQueue.v);
+			LeaveCriticalSection(&graphicsQueue.cs);
 		}
 
 		void deviceWaitIdle()
 		{
-			EnterCriticalSection(&cs);
-			vkDeviceWaitIdle(device);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDeviceWaitIdle(device.v);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkCommandBuffer allocateCommandBuffer()
@@ -39,14 +76,16 @@ namespace tke
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = commandPool;
+			allocInfo.commandPool = commandPool.v;
 			allocInfo.commandBufferCount = 1;
 
 			VkCommandBuffer cmd;
-			EnterCriticalSection(&cs);
-			auto res = vkAllocateCommandBuffers(device, &allocInfo, &cmd);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&commandPool.cs);
+			auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&commandPool.cs);
+			LeaveCriticalSection(&device.cs);
 
 			return cmd;
 		}
@@ -56,23 +95,27 @@ namespace tke
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-			allocInfo.commandPool = commandPool;
+			allocInfo.commandPool = commandPool.v;
 			allocInfo.commandBufferCount = 1;
 
 			VkCommandBuffer cmd;
-			EnterCriticalSection(&cs);
-			auto res = vkAllocateCommandBuffers(device, &allocInfo, &cmd);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&commandPool.cs);
+			auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&commandPool.cs);
+			LeaveCriticalSection(&device.cs);
 
 			return cmd;
 		}
 
 		void freeCommandBuffer(VkCommandBuffer cmd)
 		{
-			EnterCriticalSection(&cs);
-			vkFreeCommandBuffers(device, commandPool, 1, &cmd);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&commandPool.cs);
+			vkFreeCommandBuffers(device.v, commandPool.v, 1, &cmd);
+			LeaveCriticalSection(&commandPool.cs);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkCommandBuffer cmd)
@@ -88,10 +131,12 @@ namespace tke
 			info.signalSemaphoreCount = 1;
 			info.pSignalSemaphores = &signalSemaphore;
 
-			EnterCriticalSection(&cs);
-			auto res = vkQueueSubmit(graphicsQueue, 1, &info, VK_NULL_HANDLE);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&graphicsQueue.cs);
+			auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, VK_NULL_HANDLE);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&graphicsQueue.cs);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
@@ -125,12 +170,14 @@ namespace tke
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &cmd;
 
-			EnterCriticalSection(&cs);
-			res = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&graphicsQueue.cs);
+			res = vkQueueSubmit(graphicsQueue.v, 1, &submitInfo, VK_NULL_HANDLE);
 			assert(res == VK_SUCCESS);
-			res = vkQueueWaitIdle(graphicsQueue);
+			res = vkQueueWaitIdle(graphicsQueue.v);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&graphicsQueue.cs);
+			LeaveCriticalSection(&device.cs);
 
 			freeCommandBuffer(cmd);
 		}
@@ -138,20 +185,21 @@ namespace tke
 		void *mapMemory(VkDeviceMemory memory, size_t offset, size_t size)
 		{
 			void *map;
-			EnterCriticalSection(&cs);
-			auto res = vkMapMemory(device, memory, offset, size, 0, &map);
+			EnterCriticalSection(&device.cs);
+			auto res = vkMapMemory(device.v, memory, offset, size, 0, &map);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 			return map;
 		}
 
 		void unmapMemory(VkDeviceMemory memory)
 		{
-			EnterCriticalSection(&cs);
-			vkUnmapMemory(device, memory);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkUnmapMemory(device.v, memory);
+			LeaveCriticalSection(&device.cs);
 		}
 
+		static VkPhysicalDeviceMemoryProperties memProperties;
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 		{
 			for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
@@ -172,13 +220,13 @@ namespace tke
 			bufferInfo.usage = usage;
 			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			EnterCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
 
-			res = vkCreateBuffer(device, &bufferInfo, nullptr, &buffer);
+			res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &buffer);
 			assert (res == VK_SUCCESS);
 
 			VkMemoryRequirements memRequirements;
-			vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+			vkGetBufferMemoryRequirements(device.v, buffer, &memRequirements);
 
 			assert(size <= memRequirements.size);
 
@@ -187,21 +235,21 @@ namespace tke
 			allocInfo.allocationSize = memRequirements.size;
 			allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-			res = vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory);
+			res = vkAllocateMemory(device.v, &allocInfo, nullptr, &bufferMemory);
 			assert(res == VK_SUCCESS);
 
-			res = vkBindBufferMemory(device, buffer, bufferMemory, 0);
+			res = vkBindBufferMemory(device.v, buffer, bufferMemory, 0);
 			assert(res == VK_SUCCESS);
 
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		void destroyBuffer(VkBuffer buffer, VkDeviceMemory memory)
 		{
-			EnterCriticalSection(&cs);
-			vkFreeMemory(device, memory, nullptr);
-			vkDestroyBuffer(device, buffer, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkFreeMemory(device.v, memory, nullptr);
+			vkDestroyBuffer(device.v, buffer, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
@@ -228,13 +276,13 @@ namespace tke
 
 		void updateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &Buffer)
 		{
-			EnterCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
 			void* map;
-			auto res = vkMapMemory(device, stagingMemory, 0, size, 0, &map);
+			auto res = vkMapMemory(device.v, stagingMemory, 0, size, 0, &map);
 			assert(res == VK_SUCCESS);
 			memcpy(map, data, size);
-			vkUnmapMemory(device, stagingMemory);
-			LeaveCriticalSection(&cs);
+			vkUnmapMemory(device.v, stagingMemory);
+			LeaveCriticalSection(&device.cs);
 
 			copyBuffer(stagingBuffer, Buffer, size);
 		}
@@ -258,34 +306,36 @@ namespace tke
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			EnterCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
 
-			res = vkCreateImage(device, &imageInfo, nullptr, &image);
+			res = vkCreateImage(device.v, &imageInfo, nullptr, &image);
 			assert(res == VK_SUCCESS);
 
 			VkMemoryRequirements memRequirements;
-			vkGetImageMemoryRequirements(device, image, &memRequirements);
+			vkGetImageMemoryRequirements(device.v, image, &memRequirements);
 
 			VkMemoryAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			allocInfo.allocationSize = memRequirements.size;
 			allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			res = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
+			res = vkAllocateMemory(device.v, &allocInfo, nullptr, &memory);
 			assert(res == VK_SUCCESS);
 
-			res = vkBindImageMemory(device, image, memory, 0);
+			res = vkBindImageMemory(device.v, image, memory, 0);
 			assert(res == VK_SUCCESS);
 
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return memRequirements.size;
 		}
 
 		void destroyImage(VkImage image, VkDeviceMemory memory)
 		{
-			vkFreeMemory(device, memory, nullptr);
-			vkDestroyImage(device, image, nullptr);
+			EnterCriticalSection(&device.cs);
+			vkFreeMemory(device.v, memory, nullptr);
+			vkDestroyImage(device.v, image, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
@@ -325,11 +375,11 @@ namespace tke
 			viewInfo.subresourceRange.baseArrayLayer = baseLayer;
 			viewInfo.subresourceRange.layerCount = layerCount;
 
-			EnterCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
 			VkImageView view;
-			auto res = vkCreateImageView(device, &viewInfo, nullptr, &view);
+			auto res = vkCreateImageView(device.v, &viewInfo, nullptr, &view);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 			return view;
 		}
 
@@ -386,25 +436,29 @@ namespace tke
 		{
 			VkDescriptorSetAllocateInfo descriptorSetInfo = {};
 			descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descriptorSetInfo.descriptorPool = descriptorPool;
+			descriptorSetInfo.descriptorPool = descriptorPool.v;
 			descriptorSetInfo.descriptorSetCount = 1;
 			descriptorSetInfo.pSetLayouts = pLayout;
 
 			VkDescriptorSet descriptorSet;
-			EnterCriticalSection(&cs);
-			auto res = vkAllocateDescriptorSets(device, &descriptorSetInfo, &descriptorSet);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&descriptorPool.cs);
+			auto res = vkAllocateDescriptorSets(device.v, &descriptorSetInfo, &descriptorSet);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&descriptorPool.cs);
+			LeaveCriticalSection(&device.cs);
 
 			return descriptorSet;
 		}
 
 		void freeDescriptorSet(VkDescriptorSet set)
 		{
-			EnterCriticalSection(&cs);
-			auto res = vkFreeDescriptorSets(device, descriptorPool, 1, &set);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&descriptorPool.cs);
+			auto res = vkFreeDescriptorSets(device.v, descriptorPool.v, 1, &set);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&descriptorPool.cs);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkWriteDescriptorSet writeDescriptorSet(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement)
@@ -439,26 +493,28 @@ namespace tke
 
 		void updataDescriptorSet(size_t count, VkWriteDescriptorSet *pWrites)
 		{
-			vkUpdateDescriptorSets(device, count, pWrites, 0, nullptr);
+			EnterCriticalSection(&device.cs);
+			vkUpdateDescriptorSets(device.v, count, pWrites, 0, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkDescriptorSetLayout createDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo *pInfo)
 		{
 			VkDescriptorSetLayout layout;
 
-			EnterCriticalSection(&cs);
-			auto res = vkCreateDescriptorSetLayout(device, pInfo, nullptr, &layout);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreateDescriptorSetLayout(device.v, pInfo, nullptr, &layout);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return layout;
 		}
 
 		void destroyDescriptorLayout(VkDescriptorSetLayout layout)
 		{
-			EnterCriticalSection(&cs);
-			vkDestroyDescriptorSetLayout(device, layout, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDestroyDescriptorSetLayout(device.v, layout, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkShaderModule loadShaderModule(const std::string &filename)
@@ -469,56 +525,56 @@ namespace tke
 			shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 			shaderModuleCreateInfo.codeSize = file.length;
 			shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
-			EnterCriticalSection(&cs);
-			auto res = vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shader);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &shader);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 			return shader;
 		}
 
 		void destroyShaderModule(VkShaderModule shaderModule)
 		{
-			EnterCriticalSection(&cs);
-			vkDestroyShaderModule(device, shaderModule, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDestroyShaderModule(device.v, shaderModule, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkPipelineLayout createPipelineLayout(VkPipelineLayoutCreateInfo *pInfo)
 		{
 			VkPipelineLayout layout;
 
-			EnterCriticalSection(&cs);
-			auto res = vkCreatePipelineLayout(device, pInfo, nullptr, &layout);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreatePipelineLayout(device.v, pInfo, nullptr, &layout);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return layout;
 		}
 
 		void destroyPipelineLayout(VkPipelineLayout layout)
 		{
-			EnterCriticalSection(&cs);
-			vkDestroyPipelineLayout(device, layout, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDestroyPipelineLayout(device.v, layout, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkPipeline createPipeline(VkGraphicsPipelineCreateInfo *pInfo)
 		{
 			VkPipeline pipeline;
 
-			EnterCriticalSection(&cs);
-			auto res = vkCreateGraphicsPipelines(device, 0, 1, pInfo, nullptr, &pipeline);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreateGraphicsPipelines(device.v, 0, 1, pInfo, nullptr, &pipeline);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return pipeline;
 		}
 
 		void destroyPipeline(VkPipeline pipeline)
 		{
-			EnterCriticalSection(&cs);
-			vkDestroyPipeline(device, pipeline, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDestroyPipeline(device.v, pipeline, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkAttachmentDescription colorAttachment(VkFormat format, VkAttachmentLoadOp loadOp)
@@ -601,19 +657,19 @@ namespace tke
 			info.dependencyCount = dependencyCount;
 			info.pDependencies = pDependencies;
 
-			EnterCriticalSection(&cs);
-			auto res = vkCreateRenderPass(device, &info, nullptr, &renderPass);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreateRenderPass(device.v, &info, nullptr, &renderPass);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return renderPass;
 		}
 
 		void destroyRenderPass(VkRenderPass rp)
 		{
-			EnterCriticalSection(&cs);
-			vkDestroyRenderPass(device, rp, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDestroyRenderPass(device.v, rp, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues)
@@ -643,32 +699,34 @@ namespace tke
 			info.attachmentCount = attachmentCount;
 			info.pAttachments = pViews;
 
-			EnterCriticalSection(&cs);
-			auto res = vkCreateFramebuffer(device, &info, nullptr, &framebuffer);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreateFramebuffer(device.v, &info, nullptr, &framebuffer);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return framebuffer;
 		}
 
 		void destroyFramebuffer(VkFramebuffer fb)
 		{
-			EnterCriticalSection(&cs);
-			vkDestroyFramebuffer(device, fb, nullptr);
-			LeaveCriticalSection(&cs);
+			EnterCriticalSection(&device.cs);
+			vkDestroyFramebuffer(device.v, fb, nullptr);
+			LeaveCriticalSection(&device.cs);
 		}
 
-		VkFormat createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages)
+		static VkPhysicalDevice physicalDevice;
+		void createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages)
 		{
 			VkResult res;
 
-			EnterCriticalSection(&cs);
+			EnterCriticalSection(&inst.cs);
+			EnterCriticalSection(&device.cs);
 
 			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
 			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			surfaceInfo.hinstance = hInst;
 			surfaceInfo.hwnd = hWnd;
-			res = vkCreateWin32SurfaceKHR(inst, &surfaceInfo, nullptr, &surface);
+			res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
 			assert(res == VK_SUCCESS);
 
 			VkSurfaceCapabilitiesKHR surfaceCapabilities;
@@ -703,16 +761,15 @@ namespace tke
 			swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 			swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
 			swapchainInfo.clipped = true;
-			res = vkCreateSwapchainKHR(device, &swapchainInfo, nullptr, &swapchain);
+			res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
 			assert(res == VK_SUCCESS);
 
 			uint32_t swapchainImageCount = 0;
-			vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr);
-			vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, pImages);
+			vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, nullptr);
+			vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, pImages);
 
-			LeaveCriticalSection(&cs);
-
-			return swapchainFormat;
+			LeaveCriticalSection(&device.cs);
+			LeaveCriticalSection(&inst.cs);
 		}
 
 		VkSemaphore createSemaphore()
@@ -722,10 +779,10 @@ namespace tke
 			VkSemaphoreCreateInfo semaphoreInfo = {};
 			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-			EnterCriticalSection(&cs);
-			auto res = vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore);
+			EnterCriticalSection(&device.cs);
+			auto res = vkCreateSemaphore(device.v, &semaphoreInfo, nullptr, &semaphore);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return semaphore;
 		}
@@ -734,20 +791,22 @@ namespace tke
 		{
 			std::uint32_t index;
 
-			EnterCriticalSection(&cs);
-			auto res = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore, VK_NULL_HANDLE, &index);
+			EnterCriticalSection(&device.cs);
+			auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, semaphore, VK_NULL_HANDLE, &index);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&device.cs);
 
 			return index;
 		}
 
 		void queuePresent(VkPresentInfoKHR *pInfo)
 		{
-			EnterCriticalSection(&cs);
-			auto res = vkQueuePresentKHR(graphicsQueue, pInfo);
+			EnterCriticalSection(&device.cs);
+			EnterCriticalSection(&graphicsQueue.cs);
+			auto res = vkQueuePresentKHR(graphicsQueue.v, pInfo);
 			assert(res == VK_SUCCESS);
-			LeaveCriticalSection(&cs);
+			LeaveCriticalSection(&graphicsQueue.cs);
+			LeaveCriticalSection(&device.cs);
 		}
 
 		static PFN_vkCreateDebugReportCallbackEXT  _my_vkCreateDebugReportCallbackEXT;
@@ -783,8 +842,6 @@ namespace tke
 			if (!first) return Err::eNoErr;
 			first = false;
 
-			InitializeCriticalSection(&cs);
-
 			VkResult res;
 
 			VkApplicationInfo appInfo = {};
@@ -809,14 +866,14 @@ namespace tke
 			instInfo.ppEnabledExtensionNames = instExtensions.data();
 			instInfo.enabledLayerCount = instLayers.size();
 			instInfo.ppEnabledLayerNames = instLayers.data();
-			res = vkCreateInstance(&instInfo, nullptr, &inst);
+			res = vkCreateInstance(&instInfo, nullptr, &inst.v);
 			if (res != VkResult::VK_SUCCESS) { return Err::eContextLost; }
 
 			if (debug)
 			{
-				_my_vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst, "vkCreateDebugReportCallbackEXT"));
-				_my_vkDebugReportMessageEXT = reinterpret_cast<PFN_vkDebugReportMessageEXT>(vkGetInstanceProcAddr(inst, "vkDebugReportMessageEXT"));
-				_my_vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst, "vkDestroyDebugReportCallbackEXT"));
+				_my_vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst.v, "vkCreateDebugReportCallbackEXT"));
+				_my_vkDebugReportMessageEXT = reinterpret_cast<PFN_vkDebugReportMessageEXT>(vkGetInstanceProcAddr(inst.v, "vkDebugReportMessageEXT"));
+				_my_vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst.v, "vkDestroyDebugReportCallbackEXT"));
 
 				VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
 				callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
@@ -828,20 +885,22 @@ namespace tke
 				callbackCreateInfo.pUserData = nullptr;
 
 				VkDebugReportCallbackEXT callback;
-				res = _my_vkCreateDebugReportCallbackEXT(inst, &callbackCreateInfo, nullptr, &callback);
+				res = _my_vkCreateDebugReportCallbackEXT(inst.v, &callbackCreateInfo, nullptr, &callback);
 				assert(res == VK_SUCCESS);
 			}
 
 			uint32_t gpuCount = 1;
-			res = vkEnumeratePhysicalDevices(inst, &gpuCount, &physicalDevice);
+			res = vkEnumeratePhysicalDevices(inst.v, &gpuCount, &physicalDevice);
 			if (res != VkResult::VK_SUCCESS) { return Err::eContextLost; }
 
 			VkPhysicalDeviceProperties prop;
 			vkGetPhysicalDeviceProperties(physicalDevice, &prop);
 
+
 			uint32_t queueFamilyCount;
 			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
 			if (queueFamilyCount < 1) { return Err::eContextLost; }
+			std::vector<VkQueueFamilyProperties> queueFamilyProps;
 			queueFamilyProps.resize(queueFamilyCount);
 			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProps.data());
 
@@ -849,7 +908,7 @@ namespace tke
 			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
 			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			surfaceInfo.hinstance = hInst;
-			res = vkCreateWin32SurfaceKHR(inst, &surfaceInfo, nullptr, &surface);
+			res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
 			if (res != VkResult::VK_SUCCESS) { return Err::eContextLost; }
 
 			graphicsQueueIndex = UINT32_MAX;
@@ -863,7 +922,7 @@ namespace tke
 				assert(res == VK_SUCCESS);
 			}
 
-			vkDestroySurfaceKHR(inst, surface, nullptr);
+			vkDestroySurfaceKHR(inst.v, surface, nullptr);
 
 			for (uint32_t i = 0; i < queueFamilyCount; ++i)
 			{
@@ -931,10 +990,10 @@ namespace tke
 			deviceInfo.queueCreateInfoCount = queueInfos.size();
 			deviceInfo.enabledExtensionCount = deviceExtensions.size();
 			deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
-			res = vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &device);
+			res = vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &device.v);
 			assert(res == VK_SUCCESS);
 
-			vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
+			vkGetDeviceQueue(device.v, graphicsQueueIndex, 0, &graphicsQueue.v);
 			//vkGetDeviceQueue(device, presentQueueIndex, 0, &presentQueue);
 			//vkGetDeviceQueue(device, transferQueueIndex, 0, &transferQueue);
 
@@ -944,7 +1003,7 @@ namespace tke
 			cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			cmdPoolInfo.queueFamilyIndex = 0;
-			res = vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &commandPool);
+			res = vkCreateCommandPool(device.v, &cmdPoolInfo, nullptr, &commandPool.v);
 			assert(res == VK_SUCCESS);
 
 			VkDescriptorPoolSize descriptorPoolSizes[4];
@@ -963,7 +1022,7 @@ namespace tke
 			descriptorPoolInfo.poolSizeCount = 4;
 			descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
 			descriptorPoolInfo.maxSets = 256;
-			res = vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool);
+			res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &descriptorPool.v);
 			assert(res == VK_SUCCESS);
 
 			swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
@@ -987,10 +1046,8 @@ namespace tke
 				samplerInfo.minLod = 0.0f;
 				samplerInfo.maxLod = 0.0f;
 
-				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &samplerInfo, nullptr, &plainSampler);
+				auto res = vkCreateSampler(device.v, &samplerInfo, nullptr, &plainSampler);
 				assert(res == VK_SUCCESS);
-				LeaveCriticalSection(&cs);
 			}
 
 			{
@@ -1011,11 +1068,9 @@ namespace tke
 				info.mipLodBias = 0.0f;
 				info.minLod = 0.0f;
 				info.maxLod = 0.0f;
-
-				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &plainUnnormalizedSampler);
+				
+				auto res = vkCreateSampler(device.v, &info, nullptr, &plainUnnormalizedSampler);
 				assert(res == VK_SUCCESS);
-				LeaveCriticalSection(&cs);
 			}
 
 			{
@@ -1037,10 +1092,8 @@ namespace tke
 				info.minLod = 0.f;
 				info.maxLod = 128.f;
 
-				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &colorSampler);
+				auto res = vkCreateSampler(device.v, &info, nullptr, &colorSampler);
 				assert(res == VK_SUCCESS);
-				LeaveCriticalSection(&cs);
 			}
 
 			{
@@ -1062,10 +1115,8 @@ namespace tke
 				info.minLod = 0.f;
 				info.maxLod = 128.f;
 
-				EnterCriticalSection(&cs);
-				auto res = vkCreateSampler(device, &info, nullptr, &colorBorderSampler);
+				auto res = vkCreateSampler(device.v, &info, nullptr, &colorBorderSampler);
 				assert(res == VK_SUCCESS);
-				LeaveCriticalSection(&cs);
 			}
 
 			return Err::eNoErr;

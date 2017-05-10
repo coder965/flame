@@ -678,15 +678,15 @@ namespace tke
 
 	void guiSetupIcons(VkSampler sampler)
 	{
-		static int position = -1;
-		if (position == -1) position = g_Pipeline.descriptorPosition("sTexture");
+		static int texture_position = -1;
+		if (texture_position == -1) texture_position = g_Pipeline.descriptorPosition("sTexture");
 
 		std::vector<VkWriteDescriptorSet> writes;
-		writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, g_FontImage.getInfo(sampler), 0));
+		writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, g_FontImage.getInfo(sampler), 0));
 		auto imageID = 1;
 		for (auto image : _icons)
 		{
-			writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, image->getInfo(sampler), imageID));
+			writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(sampler), imageID));
 			imageID++;
 		}
 		vk::updataDescriptorSet(writes.size(), writes.data());

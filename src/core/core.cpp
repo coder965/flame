@@ -83,7 +83,13 @@ namespace tke
 		if (!first) return Err::eNoErr;
 		first = false;
 
-		vk::init(appName, true);
+		vk::init(appName, 
+#ifdef _DEBUG
+			true
+#else
+			false
+#endif
+		);
 
 		resCx = rcx;
 		resCy = rcy;
