@@ -174,7 +174,8 @@ namespace tke
 		REFL_BANK;
 
 		REFLe DescriptorType type = DescriptorType::uniform_buffer;
-		REFLv int binding = 0;
+		REFLv std::string descriptor_name;
+		REFLv int binding = -1;
 		REFLv int array_element = 0;
 		REFLv std::string name;
 		REFLe SamplerType sampler = SamplerType::none;

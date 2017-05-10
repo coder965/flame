@@ -410,6 +410,20 @@ namespace tke
 		if ((int)f & (int)StageFlags::frag) v |= VK_SHADER_STAGE_FRAGMENT_BIT;
 		return v;
 	}
+
+	int Pipeline::descriptorPosition(const std::string &name)
+	{
+		for (auto s : stages)
+		{
+			for (auto &d : s->descriptors)
+			{
+				if (d.name == name)
+					return d.binding;
+			}
+		}
+		assert(false);
+		return -1;
+	}
 	void Pipeline::loadXML()
 	{
 		PipelineAbstract::loadXML();
@@ -654,6 +668,8 @@ namespace tke
 		std::vector<VkWriteDescriptorSet> writes;
 		for (auto &link : links)
 		{
+			if (link.binding == -1) link.binding = descriptorPosition(link.descriptor_name);
+
 			switch (link.type)
 			{
 			case DescriptorType::uniform_buffer:

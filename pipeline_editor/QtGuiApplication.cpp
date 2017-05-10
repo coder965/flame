@@ -4,6 +4,8 @@
 #include <sstream>
 #include <regex>
 #include <experimental/filesystem>
+#include <chrono>
+#include <iomanip>
 
 #include "d:/TK_Engine/src/core/utils.h"
 #include "d:/TK_Engine/src/core/render.abstract.h"
@@ -19,6 +21,14 @@ MyEdit *outputText;
 QTextBrowser *compileText;
 QTreeWidget *attributeTree;
 QTabWidget *stageTab;
+
+#include "def.h"
+extern "C" {
+	extern FILE *yyin;
+	extern int yylex();
+	int yylex_destroy();
+	extern char *yytext;
+}
 
 bool preparingData = false;
 
@@ -68,14 +78,6 @@ void saveDataXml()
 	}
 
 	at.saveXML("data.xml");
-}
-
-#include "def.h"
-extern "C" {
-	extern FILE *yyin;
-	extern int yylex();
-	int yylex_destroy();
-	extern char *yytext;
 }
 
 QtGuiApplication::QtGuiApplication(QWidget *parent) :
@@ -241,7 +243,8 @@ void QtGuiApplication::on_explorerPipeline_clicked()
 	}
 	else
 	{
-		std::string cmd("explorer /select," + currentPipeline->filename);
+		std::experimental::filesystem::path p(currentPipeline->filename);
+		std::string cmd("explorer /select," + std::experimental::filesystem::absolute(p).string());
 		WinExec(cmd.c_str(), SW_SHOWNORMAL);
 	}
 }
@@ -298,207 +301,57 @@ void QtGuiApplication::on_removeStage_clicked()
 
 void QtGuiApplication::on_saveStage_clicked()
 {
-	auto s = currentTabStage();
-	if (!s || !s->wrap.changed) return;
+	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
+	{
+		if (!currentPipeline) return;
 
-	s->text = s->wrap.edit->toPlainText().toUtf8().data();
+		for (auto s : currentPipeline->stages)
+			s->on_save();
+	}
+	else
+	{
+		auto s = currentTabStage();
+		if (!s || !s->wrap.changed) return;
 
-	std::ofstream file(currentPipeline->filepath + "/" + s->filename);
-	file.write(s->text.c_str(), s->text.size());
-
-	s->wrap.changed = false;
-	s->wrap.setTitle();
+		s->on_save();
+	}
 }
 
 void QtGuiApplication::on_toSpv_clicked()
 {
-	auto s = currentTabStage();
-	if (!s) return;
-
-	on_saveStage_clicked();
-
-	outputText->clear();
-	compileText->clear();
-
-	auto string = s->getFullText(currentPipeline->filepath);
-	outputText->setPlainText(string.c_str());
-	s->output = string;
-
-	std::ofstream file("temp.glsl");
-	file.write(string.c_str(), string.size());
-	file.close();
-
-	std::experimental::filesystem::path spv(currentPipeline->filepath + "/" + s->filename + ".spv");
-
-	tke::exec("cmd", "/C glslangValidator my.conf -V temp.glsl -S " + stageNames[(int)log2((int)s->type)] + " -q -o " + spv.string() + " > output.txt");
-
-	tke::OnceFileBuffer output("output.txt");
-	s->compileOutput = output.data;
-	compileText->setText(("Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n" + s->compileOutput).c_str());
-
+	Stage *s = nullptr;
+	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
 	{
-		// analyzing the reflection
+		if (!currentPipeline) return;
 
-		enum ReflectionType
-		{
-			eNull = -1,
-			eUniform = 0,
-			eUniformBlock = 1,
-			eVertexAttribute = 2
-		};
+		for (auto s : currentPipeline->stages)
+			s->on_spv();
 
-		ReflectionType currentReflectionType = eNull;
-
-		struct Reflection
-		{
-			int COUNT = 1; // special for UBO
-
-			ReflectionType reflectionType;
-			std::string name;
-			int offset;
-			std::string type;
-			int size;
-			int index;
-			int binding;
-		};
-		struct ReflectionManager
-		{
-			std::vector<Reflection> rs;
-			void add(Reflection &_r)
-			{
-				if (_r.reflectionType == eUniformBlock && _r.binding != -1)
-				{
-					for (auto &r : rs)
-					{
-						if (r.binding == _r.binding)
-						{
-							r.COUNT++;
-							return;
-						}
-					}
-				}
-				rs.push_back(_r);
-			}
-		};
-		ReflectionManager reflections;
-		Reflection currentReflection;
-
-		yylex_destroy();
-
-		yyin = fopen("output.txt", "rb");
-		int token = yylex();
-		std::string last_string;
-		while (token)
-		{
-			switch (token)
-			{
-			case COLON:
-				if (currentReflectionType != eNull)
-				{
-					if (currentReflection.name != "") reflections.add(currentReflection);
-					currentReflection.reflectionType = currentReflectionType;
-					currentReflection.name = last_string;
-					last_string = "";
-				}
-				break;
-			case IDENTIFIER:
-			{
-				std::string string(yytext);
-				if (string == "ERROR")
-				{
-					QMessageBox::information(this, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
-					token = 0;
-				}
-				last_string = string;
-			}
-				break;
-			case VALUE:
-			{
-				std::string string(yytext);
-				if (currentReflectionType != eNull)
-				{
-					if (last_string == "offset")
-						currentReflection.offset = std::stoi(string);
-					else if (last_string == "type")
-						currentReflection.type = string;
-					else if (last_string == "size")
-						currentReflection.size = std::stoi(string);
-					else if (last_string == "index")
-						currentReflection.index = std::stoi(string);
-					else if (last_string == "binding")
-						currentReflection.binding = std::stoi(string);
-				}
-			}
-				break;
-			case UR_MK:
-				currentReflectionType = eUniform;
-				break;
-			case UBR_MK:
-				currentReflectionType = eUniformBlock;
-				break;
-			case VAR_MK:
-				currentReflectionType = eVertexAttribute;
-				break;
-			}
-			if (token) token = yylex();
-		}
-		if (currentReflection.name != "") reflections.add(currentReflection);
-		fclose(yyin);
-		yyin = NULL;
-
-		s->descriptors.clear();
-		s->pushConstantRanges.clear();
-		for (auto &r : reflections.rs)
-		{
-			switch (r.reflectionType)
-			{
-			case eUniform:
-				if (r.binding != -1 && r.type == "8b5e") // SAMPLER
-				{
-					tke::Descriptor d;
-					d.type = tke::DescriptorType::sampler;
-					d.name = r.name;
-					d.binding = r.binding;
-					d.count = r.size;
-					s->descriptors.push_back(d);
-				}
-				break;
-			case eUniformBlock:
-				if (r.binding != -1) // UBO
-				{
-					tke::Descriptor d;
-					d.type = tke::DescriptorType::uniform_buffer;
-					d.name = r.name;
-					d.binding = r.binding;
-					d.count = r.COUNT;
-					s->descriptors.push_back(d);
-				}
-				else // PC
-				{
-					tke::PushConstantRange p;
-					p.offset = 0; // 0 always
-					p.size = r.size;
-					s->pushConstantRanges.push_back(p);
-				}
-				break;
-			}
-		}
+		s = currentTabStage();
+		if (!s) return;
 	}
-
-	DeleteFileA("output.txt");
-	DeleteFileA("temp.glsl");
-
-	auto pipeName = R"(\\.\pipe\tke)";
-
-	if (WaitNamedPipeA(pipeName, NMPWAIT_WAIT_FOREVER))
+	else
 	{
-		auto hPipe = CreateFileA(pipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
-			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		DWORD length = 0;
-		std::string cmd = "reload " + currentPipeline->name;
-		WriteFile(hPipe, cmd.data(), cmd.size() + 1, &length, NULL);
-		CloseHandle(hPipe);
+		s = currentTabStage();
+		if (!s) return;
+
+		s->on_spv();
 	}
+	outputText->setPlainText(s->output.c_str());
+	compileText->setText(s->compileOutput.c_str());
+
+	// TODO: CHANGE RELOAD PIPELINE TO RELOAD SHADER STAGE FILE
+
+	//auto pipeName = R"(\\.\pipe\tke)";
+	//if (WaitNamedPipeA(pipeName, NMPWAIT_WAIT_FOREVER))
+	//{
+	//	auto hPipe = CreateFileA(pipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+	//		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	//	DWORD length = 0;
+	//	std::string cmd = "reload " + currentPipeline->name;
+	//	WriteFile(hPipe, cmd.data(), cmd.size() + 1, &length, NULL);
+	//	CloseHandle(hPipe);
+	//}
 
 	currentPipeline->changed = true;
 	currentPipeline->setTitle();
@@ -532,12 +385,16 @@ void QtGuiApplication::on_explorerStage_clicked()
 
 void QtGuiApplication::on_savePipeline_clicked()
 {
-	if (!currentPipeline) return;
-
-	currentPipeline->saveXML();
-
-	currentPipeline->changed = false;
-	currentPipeline->setTitle();
+	if (QApplication::keyboardModifiers() == Qt::ShiftModifier)
+	{
+		for (auto p : pipelines)
+			p->on_save();
+	}
+	else
+	{
+		if (!currentPipeline) return;
+		currentPipeline->on_save();
+	}
 }
 
 void QtGuiApplication::on_find()

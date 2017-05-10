@@ -95,6 +95,9 @@ struct Stage : tke::StageAbstract
 		}
 		return strOut;
 	}
+
+	void on_save();
+	void on_spv();
 };
 
 struct Pipeline : tke::PipelineAbstract<Stage>
@@ -202,6 +205,15 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 
 		setTabData(0);
     }
+	void on_save()
+	{
+		if (!changed) return;
+
+		saveXML();
+
+		changed = false;
+		setTitle();
+	}
 };
 
 std::vector<Pipeline*> pipelines;
@@ -211,4 +223,192 @@ Stage *currentTabStage()
 {
 	if (!currentPipeline) return nullptr;
 	return currentPipeline->stageByTabIndex(stageTab->currentIndex());
+}
+
+void Stage::on_save()
+{
+	if (!wrap.changed) return;
+
+	text = wrap.edit->toPlainText().toUtf8().data();
+
+	std::ofstream file(currentPipeline->filepath + "/" + filename);
+	file.write(text.c_str(), text.size());
+
+	wrap.changed = false;
+	wrap.setTitle();
+}
+
+void Stage::on_spv()
+{
+	on_save();
+
+	output = getFullText(currentPipeline->filepath);
+
+	std::ofstream file("temp.glsl");
+	file.write(output.c_str(), output.size());
+	file.close();
+
+	std::experimental::filesystem::path spv(currentPipeline->filepath + "/" + filename + ".spv");
+
+	tke::exec("cmd", "/C glslangValidator my.conf -V temp.glsl -S " + stageNames[(int)log2((int)type)] + " -q -o " + spv.string() + " > output.txt");
+
+	tke::OnceFileBuffer output("output.txt");
+	{
+		auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		std::stringstream ss;
+		ss << std::put_time(std::localtime(&t), "%Y-%m-%d %H:%M:%S");
+		compileOutput = ss.str() + "\n" + "Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n" + std::string(output.data);
+	}
+
+	{
+		// analyzing the reflection
+
+		enum ReflectionType
+		{
+			eNull = -1,
+			eUniform = 0,
+			eUniformBlock = 1,
+			eVertexAttribute = 2
+		};
+
+		ReflectionType currentReflectionType = eNull;
+
+		struct Reflection
+		{
+			int COUNT = 1; // special for UBO
+
+			ReflectionType reflectionType;
+			std::string name;
+			int offset;
+			std::string type;
+			int size;
+			int index;
+			int binding;
+		};
+		struct ReflectionManager
+		{
+			std::vector<Reflection> rs;
+			void add(Reflection &_r)
+			{
+				if (_r.reflectionType == eUniformBlock && _r.binding != -1)
+				{
+					for (auto &r : rs)
+					{
+						if (r.binding == _r.binding)
+						{
+							r.COUNT++;
+							return;
+						}
+					}
+				}
+				rs.push_back(_r);
+			}
+		};
+		ReflectionManager reflections;
+		Reflection currentReflection;
+
+		yylex_destroy();
+
+		yyin = fopen("output.txt", "rb");
+		int token = yylex();
+		std::string last_string;
+		while (token)
+		{
+			switch (token)
+			{
+			case COLON:
+				if (currentReflectionType != eNull)
+				{
+					if (currentReflection.name != "") reflections.add(currentReflection);
+					currentReflection.reflectionType = currentReflectionType;
+					currentReflection.name = last_string;
+					last_string = "";
+				}
+				break;
+			case IDENTIFIER:
+			{
+				std::string string(yytext);
+				if (string == "ERROR")
+				{
+					QMessageBox::information(0, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
+					token = 0;
+				}
+				last_string = string;
+			}
+			break;
+			case VALUE:
+			{
+				std::string string(yytext);
+				if (currentReflectionType != eNull)
+				{
+					if (last_string == "offset")
+						currentReflection.offset = std::stoi(string);
+					else if (last_string == "type")
+						currentReflection.type = string;
+					else if (last_string == "size")
+						currentReflection.size = std::stoi(string);
+					else if (last_string == "index")
+						currentReflection.index = std::stoi(string);
+					else if (last_string == "binding")
+						currentReflection.binding = std::stoi(string);
+				}
+			}
+			break;
+			case UR_MK:
+				currentReflectionType = eUniform;
+				break;
+			case UBR_MK:
+				currentReflectionType = eUniformBlock;
+				break;
+			case VAR_MK:
+				currentReflectionType = eVertexAttribute;
+				break;
+			}
+			if (token) token = yylex();
+		}
+		if (currentReflection.name != "") reflections.add(currentReflection);
+		fclose(yyin);
+		yyin = NULL;
+
+		descriptors.clear();
+		pushConstantRanges.clear();
+		for (auto &r : reflections.rs)
+		{
+			switch (r.reflectionType)
+			{
+			case eUniform:
+				if (r.binding != -1 && r.type == "8b5e") // SAMPLER
+				{
+					tke::Descriptor d;
+					d.type = tke::DescriptorType::sampler;
+					d.name = r.name;
+					d.binding = r.binding;
+					d.count = r.size;
+					descriptors.push_back(d);
+				}
+				break;
+			case eUniformBlock:
+				if (r.binding != -1) // UBO
+				{
+					tke::Descriptor d;
+					d.type = tke::DescriptorType::uniform_buffer;
+					d.name = r.name;
+					d.binding = r.binding;
+					d.count = r.COUNT;
+					descriptors.push_back(d);
+				}
+				else // PC
+				{
+					tke::PushConstantRange p;
+					p.offset = 0; // 0 always
+					p.size = r.size;
+					pushConstantRanges.push_back(p);
+				}
+				break;
+			}
+		}
+	}
+
+	DeleteFileA("output.txt");
+	DeleteFileA("temp.glsl");
 }

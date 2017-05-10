@@ -138,6 +138,7 @@ namespace tke
 		VkPipeline m_pipeline = 0;
 		VkDescriptorSet m_descriptorSet = 0;
 
+		int descriptorPosition(const std::string &name);
 		void loadXML();
 		void getLayout();
 		void reallocateDescriptorSet();

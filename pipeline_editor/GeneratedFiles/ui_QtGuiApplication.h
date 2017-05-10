@@ -42,10 +42,8 @@ public:
     QToolButton *addPipeline;
     QToolButton *removePipeline;
     QToolButton *explorerPipeline;
-    QGroupBox *groupBox_5;
-    QHBoxLayout *horizontalLayout_2;
-    QLineEdit *pipelineNameEdit;
     QToolButton *savePipeline;
+    QLineEdit *pipelineNameEdit;
     QListWidget *pipelineList;
     QTabWidget *tabWidget;
     QWidget *tab1;
@@ -115,40 +113,23 @@ public:
         removePipeline->setIcon(icon1);
         explorerPipeline = new QToolButton(groupBox);
         explorerPipeline->setObjectName(QStringLiteral("explorerPipeline"));
-        explorerPipeline->setGeometry(QRect(60, 0, 21, 21));
+        explorerPipeline->setGeometry(QRect(90, 0, 21, 21));
         QIcon icon2;
         icon2.addFile(QStringLiteral(":/image/misc/open.png"), QSize(), QIcon::Normal, QIcon::Off);
         explorerPipeline->setIcon(icon2);
-
-        verticalLayout_2->addWidget(groupBox);
-
-        groupBox_5 = new QGroupBox(groupBox_2);
-        groupBox_5->setObjectName(QStringLiteral("groupBox_5"));
-        sizePolicy1.setHeightForWidth(groupBox_5->sizePolicy().hasHeightForWidth());
-        groupBox_5->setSizePolicy(sizePolicy1);
-        groupBox_5->setMinimumSize(QSize(0, 0));
-        groupBox_5->setMaximumSize(QSize(16777215, 30));
-        groupBox_5->setAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop);
-        horizontalLayout_2 = new QHBoxLayout(groupBox_5);
-        horizontalLayout_2->setSpacing(6);
-        horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
-        horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
-        horizontalLayout_2->setContentsMargins(0, 0, 0, 0);
-        pipelineNameEdit = new QLineEdit(groupBox_5);
-        pipelineNameEdit->setObjectName(QStringLiteral("pipelineNameEdit"));
-
-        horizontalLayout_2->addWidget(pipelineNameEdit);
-
-        savePipeline = new QToolButton(groupBox_5);
+        savePipeline = new QToolButton(groupBox);
         savePipeline->setObjectName(QStringLiteral("savePipeline"));
+        savePipeline->setGeometry(QRect(60, 0, 21, 21));
         QIcon icon3;
         icon3.addFile(QStringLiteral(":/image/misc/save.png"), QSize(), QIcon::Normal, QIcon::Off);
         savePipeline->setIcon(icon3);
 
-        horizontalLayout_2->addWidget(savePipeline);
+        verticalLayout_2->addWidget(groupBox);
 
+        pipelineNameEdit = new QLineEdit(groupBox_2);
+        pipelineNameEdit->setObjectName(QStringLiteral("pipelineNameEdit"));
 
-        verticalLayout_2->addWidget(groupBox_5);
+        verticalLayout_2->addWidget(pipelineNameEdit);
 
         pipelineList = new QListWidget(groupBox_2);
         pipelineList->setObjectName(QStringLiteral("pipelineList"));
@@ -280,7 +261,6 @@ public:
         addPipeline->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
         removePipeline->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
         explorerPipeline->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
-        groupBox_5->setTitle(QString());
         savePipeline->setText(QApplication::translate("QtGuiApplicationClass", "...", Q_NULLPTR));
         tabWidget->setTabText(tabWidget->indexOf(tab1), QApplication::translate("QtGuiApplicationClass", "Attribute", Q_NULLPTR));
         groupBox_3->setTitle(QString());
