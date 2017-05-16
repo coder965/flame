@@ -3,6 +3,7 @@
 #include "../src/core/scene.h"
 #include "../src/core/core.h"
 #include "select.h"
+#include "history.h"
 #include "tool.h"
 
 void Tool::attach() {}
@@ -243,7 +244,7 @@ bool TransformTool::mouseDown(int x, int y)
 	if (!m_pTransformer)
 		return false;
 
-	auto index = pickUp(x, y, 1, 1, [](VkCommandBuffer cmd, void *userData) {
+	auto index = tke::pickUp(x, y, 1, 1, [](VkCommandBuffer cmd, void *userData) {
 		auto pTool = (TransformTool*)userData;
 
 		VkDeviceSize offsets[] = { 0 };
@@ -298,7 +299,7 @@ bool TransformTool::mouseDown(int x, int y)
 		break;
 	}
 
-	tke::beginRecordTransformHistory();
+	beginRecordTransformHistory();
 	return true;
 }
 
@@ -306,7 +307,7 @@ void TransformTool::mouseUp()
 {
 	m_scaleNow = 1.0f;
 
-	tke::endRecordTransformHistory();
+	endRecordTransformHistory();
 
 	TransformToolData::needUpdataUniformBuffer = true;
 }
@@ -331,19 +332,19 @@ void TransformTool::mouseMove()
 		}
 		moveTransformer(selectType, m_pTransformer, coord);
 	}
-	break;
-	case Transformer::Type::eAsixRotate:
+		break;
+	case tke::Transformer::Type::eAsixRotate:
 	{
 		float rotate_ang = rotate(result - m_pTransformer->getCoord(), (int)m_axis);
 		auto ang = rotate_ang - m_rotateOffset;
 		for (int i = 0; i < 3; i++)
 		{
 			if (m_flag[1][i] & AXIS_FLAG[(int)m_axis])
-				rotateTransformerAxis(selectType, m_pTransformer, Transformer::Axis(i), ang);
+				rotateTransformerAxis(selectType, m_pTransformer, tke::Transformer::Axis(i), ang);
 		}
 	}
-	break;
-	case Transformer::Type::eScale:
+		break;
+	case tke::Transformer::Type::eScale:
 	{
 		m_scaleNow = glm::dot(result - m_pTransformer->getCoord(), m_pTransformer->getAxis()[(int)m_axis]) / m_scaleLength; // MAYBE BUG !!!!
 		float value = m_scaleOriginal * m_scaleNow;
@@ -355,7 +356,7 @@ void TransformTool::mouseMove()
 		}
 		scaleTransformer(selectType, m_pTransformer, scale);
 	}
-	break;
+		break;
 	}
 }
 
@@ -364,11 +365,11 @@ glm::vec4 TransformTool::getColor(int which)
 	glm::vec3 color = glm::vec3(0);
 	if ((int)m_axis == which)
 		color = glm::vec3(1, 1, 0);
-	else if (which == (int)Transformer::Axis::eX)
+	else if (which == (int)tke::Transformer::Axis::eX)
 		color = glm::vec3(1, 0, 0);
-	else if (which == (int)Transformer::Axis::eY)
+	else if (which == (int)tke::Transformer::Axis::eY)
 		color = glm::vec3(0, 1, 0);
-	else if (which == (int)Transformer::Axis::eZ)
+	else if (which == (int)tke::Transformer::Axis::eZ)
 		color = glm::vec3(0, 0, 1);
 	int v = (int)m_type;
 	if (v == 3) v = 1;
@@ -383,13 +384,13 @@ float TransformTool::rotate(glm::vec3 r, int iAxis)
 	return -glm::mod((float)(glm::degrees(atan2(r.z, r.x))), 360.0f);
 }
 
-void TransformTool::setType(Transformer::Type type)
+void TransformTool::setType(tke::Transformer::Type type)
 {
 	if (type == m_type) return;
 	m_type = type;
-	if (type == Transformer::Type::eScale) m_scaleNow = 1.f;
+	if (type == tke::Transformer::Type::eScale) m_scaleNow = 1.f;
 	TransformToolData::needUpdataUniformBuffer = true;
-	postRedrawRequest();
+	tke::postRedrawRequest();
 }
 
 void TransformTool::render(VkCommandBuffer cmd)
@@ -403,26 +404,26 @@ void TransformTool::render(VkCommandBuffer cmd)
 	VkClearRect clearRect = {};
 	clearRect.baseArrayLayer = 0;
 	clearRect.layerCount = 1;
-	clearRect.rect.extent.width = resCx;
-	clearRect.rect.extent.height = resCy;
+	clearRect.rect.extent.width = tke::resCx;
+	clearRect.rect.extent.height = tke::resCy;
 	vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &clearRect);
 
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TransformToolData::pipeline.m_pipeline);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TransformToolData::pipeline.m_pipelineLayout, 0, 1, &TransformToolData::pipeline.m_descriptorSet, 0, nullptr);
 
-	if (m_type == Transformer::Type::eMove)
+	if (m_type == tke::Transformer::Type::eMove)
 	{
-		auto pModel = arrowModel;
+		auto pModel = tke::arrowModel;
 		vkCmdDrawIndexed(cmd, pModel->indices.size(), 3, pModel->indiceBase, pModel->vertexBase, 0);
 	}
-	else if (m_type == Transformer::Type::eAsixRotate)
+	else if (m_type == tke::Transformer::Type::eAsixRotate)
 	{
-		auto pModel = torusModel;
+		auto pModel = tke::torusModel;
 		vkCmdDrawIndexed(cmd, pModel->indices.size(), 3, pModel->indiceBase, pModel->vertexBase, 0);
 	}
-	else if (m_type == Transformer::Type::eScale)
+	else if (m_type == tke::Transformer::Type::eScale)
 	{
-		auto pModel = hamerModel;
+		auto pModel = tke::hamerModel;
 		for (int i = 0; i < 3; i++)
 		{
 			vkCmdDrawIndexed(cmd, pModel->renderGroups[0].indiceCount, 1, pModel->indiceBase + pModel->renderGroups[0].indiceBase, pModel->vertexBase, i);
@@ -438,4 +439,15 @@ void TransformTool::render(VkCommandBuffer cmd)
 void initTransformTool(VkRenderPass renderPass, int subpassIndex)
 {
 	TransformToolData::init(renderPass, subpassIndex);
+}
+
+Tool *currentTool;
+TransformTool transformTool;
+
+void setTool(Tool *pTool)
+{
+	if (pTool == currentTool) return;
+	if (currentTool) currentTool->release();
+	currentTool = pTool;
+	if (pTool) pTool->attach();
 }

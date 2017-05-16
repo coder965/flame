@@ -1,4 +1,5 @@
 #include "history.h"
+#include "..\src\core\core.h"
 #include "..\src\core\scene.h"
 
 SelectionHistory::SelectionHistory()
@@ -100,4 +101,167 @@ void ObjectCreationHistory::operate(Operate op)
 		auto pObject = (tke::Object*)getSelectPtr(SelectType::eObject, id);
 		if (pObject) tke::scene->deleteObject(pObject);
 	}
+}
+
+std::vector<History*> histories;
+int currentHistory;
+
+void addHistory(History *history)
+{
+	for (int i = currentHistory; i < histories.size(); i++)
+		delete histories[i];
+	histories.resize(currentHistory);
+	histories.push_back(history);
+	currentHistory++;
+}
+
+void undo()
+{
+	if (currentHistory > 0)
+	{
+		auto pHistory = histories[(currentHistory - 1)];
+		pHistory->operate(History::Operate::eUndo);
+		currentHistory--;
+	}
+}
+
+void redo()
+{
+	if (currentHistory < histories.size())
+	{
+		auto pHistory = histories[currentHistory];
+		pHistory->operate(History::Operate::eRedo);
+		currentHistory++;
+	}
+}
+
+void select()
+{
+	if (SelectType::eNull == selectType)
+		return;
+
+	addHistory(new SelectionHistory);
+	selectType = SelectType::eNull;
+
+	tke::postRedrawRequest();
+}
+
+void select(SelectType type, void *ptr)
+{
+	if (type == selectType && ptr == selecting)
+		return;
+
+	if (!ptr)
+	{
+		select();
+		return;
+	}
+	addHistory(new SelectionHistory);
+	selectType = type;
+	selecting = ptr;
+
+	tke::postRedrawRequest();
+}
+
+void beginRecordTransformHistory()
+{
+	leftTransformerHistory = true;
+	leftTransformerHistoryFirstHistory = true;
+}
+
+void endRecordTransformHistory()
+{
+	if (leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(leftTransformerHistorySelectType, leftTransformerHistorySelectID, leftTransformerHistoryType, leftTransformerHistoryValue - leftTransformerHistoryOriginalValue));
+		leftTransformerHistory = false;
+	}
+}
+
+void moveTransformer(SelectType selectType, tke::Transformer *pTrans, glm::vec3 coord)
+{
+	auto originalCoord = pTrans->getCoord();
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, tke::Transformer::Type::eMove, coord - originalCoord));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = originalCoord;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = tke::Transformer::Type::eMove;
+		leftTransformerHistoryValue = coord;
+	}
+	pTrans->setCoord(coord);
+}
+
+void setTransformerEuler(SelectType selectType, tke::Transformer *pTrans, glm::vec3 euler)
+{
+	auto originalEuler = pTrans->getEuler();
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, tke::Transformer::Type::eEulerSet, euler - originalEuler));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = originalEuler;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = tke::Transformer::Type::eEulerSet;
+		leftTransformerHistoryValue = euler;
+	}
+	pTrans->setEuler(euler);
+}
+
+void scaleTransformer(SelectType selectType, tke::Transformer *pTrans, glm::vec3 scale)
+{
+	auto originalScale = pTrans->getScale();
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, tke::Transformer::Type::eScale, scale - originalScale));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = originalScale;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = tke::Transformer::Type::eScale;
+		leftTransformerHistoryValue = scale;
+	}
+	pTrans->setScale(scale);
+}
+
+void rotateTransformerAxis(SelectType selectType, tke::Transformer *pTrans, tke::Transformer::Axis which, float ang)
+{
+	glm::vec3 v = glm::vec3((float)which, ang, 0.f);
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, tke::Transformer::Type::eAsixRotate, v));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = v;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = tke::Transformer::Type::eAsixRotate;
+		leftTransformerHistoryValue = v;
+	}
+	pTrans->axisRotate(which, ang);
 }

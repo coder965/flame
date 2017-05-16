@@ -32,10 +32,10 @@ namespace dialog_lightAttribute
 
 			auto coord = pLight->getCoord();
 			if (ImGui::DragFloat3("Coord", &coord[0], 0.1f))
-				tke::moveTransformer(pLight, coord);
+				moveTransformer(pLight, coord);
 			auto euler = pLight->getEuler();
 			if (ImGui::DragFloat3("Rotate", &euler[0], 0.1f))
-				tke::setTransformerEuler(pLight, euler);
+				setTransformerEuler(pLight, euler);
 			ImGui::ColorEdit3("Color", &pLight->color[0]);
 			if (pLight->type == tke::Light::Type::ePoint)
 				ImGui::DragFloat3("Decay Factor", &pLight->decayFactor[0], 0.1f, 0.f, 10000.f);

@@ -32,13 +32,13 @@ namespace dialog_terrainAttribute
 
 			auto coord = pTerrain->getCoord();
 			if (ImGui::DragFloat3("Coord", &coord[0], 0.1f))
-				tke::moveTransformer(pTerrain, coord);
+				moveTransformer(pTerrain, coord);
 			auto euler = pTerrain->getEuler();
 			if (ImGui::DragFloat3("Rotate", &euler[0], 0.1f))
-				tke::setTransformerEuler(pTerrain, euler);
+				setTransformerEuler(pTerrain, euler);
 			auto scale = pTerrain->getScale();
 			if (ImGui::DragFloat3("Scale", &scale[0], 0.1f))
-				tke::scaleTransformer(pTerrain, scale);
+				scaleTransformer(pTerrain, scale);
 
 			ImGui::DragFloat("Ext", &pTerrain->ext, 1.f, 0.f, 500.f);
 			ImGui::DragFloat("Height", &pTerrain->height, 1.f, 0.f, 500.f);

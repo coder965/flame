@@ -52,4 +52,9 @@ struct TransformTool : Tool
 
 void initTransformTool(VkRenderPass renderPass, int subpassIndex);
 
+extern Tool *currentTool;
+extern TransformTool transformTool;
+
+void setTool(Tool *pTool);
+
 #endif

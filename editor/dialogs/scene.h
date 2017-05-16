@@ -197,8 +197,8 @@ namespace dialog_scene
 			for (int i = 0; i < tke::scene->pLights.size(); i++)
 			{
 				auto p = tke::scene->pLights[i];
-				if (ImGui::Selectable((std::to_string(i) + " " + p->getTypeName()).c_str(), tke::selectType == tke::SelectType::eLight && p == tke::selectLight()))
-					tke::select(p);
+				if (ImGui::Selectable((std::to_string(i) + " " + p->getTypeName()).c_str(), selectType == SelectType::eLight && p == selectLight()))
+					select(p);
 			}
 		}
 
@@ -207,8 +207,8 @@ namespace dialog_scene
 			for (int i = 0; i < tke::scene->pObjects.size(); i++)
 			{
 				auto p = tke::scene->pObjects[i];
-				if (ImGui::Selectable((std::to_string(i) + " " + p->pModel->name).c_str(), tke::selectType == tke::SelectType::eObject && p == tke::selectObject()))
-					tke::select(p);
+				if (ImGui::Selectable((std::to_string(i) + " " + p->pModel->name).c_str(), selectType == SelectType::eObject && p == selectObject()))
+					select(p);
 			}
 		}
 
@@ -217,8 +217,8 @@ namespace dialog_scene
 			for (int i = 0; i < tke::scene->pTerrains.size(); i++)
 			{
 				auto p = tke::scene->pTerrains[i];
-				if (ImGui::Selectable(std::to_string(i).c_str(), tke::selectType == tke::SelectType::eTerrain && p == tke::selectTerrain()))
-					tke::select(p);
+				if (ImGui::Selectable(std::to_string(i).c_str(), selectType == SelectType::eTerrain && p == selectTerrain()))
+					select(p);
 			}
 		}
 

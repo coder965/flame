@@ -190,7 +190,7 @@ namespace dialog_model_editor
 					if (ImGui::Selectable((std::to_string(i) + " " + p->name).c_str(), p == selectingRigidbody))
 					{
 						selectingRigidbody = p;
-						tke::select(selectingRigidbody);
+						select(selectingRigidbody);
 					}
 				}
 
@@ -220,8 +220,8 @@ namespace dialog_model_editor
 					if (selectingRigidbody)
 					{
 						selectingRigidbody = selectingModel->deleteRigidbody(selectingRigidbody);
-						if (tke::selectType == tke::SelectType::eRigidbody)
-							tke::select(selectingRigidbody);
+						if (selectType == SelectType::eRigidbody)
+							select(selectingRigidbody);
 					}
 				}
 				ImGui::SameLine();
@@ -253,10 +253,10 @@ namespace dialog_model_editor
 				{
 					auto coord = selectingRigidbody->getCoord();
 					if (ImGui::DragFloat3("Coord", &coord[0], 0.1f))
-						tke::moveTransformer(tke::SelectType::eRigidbody, selectingRigidbody, coord);
+						moveTransformer(SelectType::eRigidbody, selectingRigidbody, coord);
 					auto euler = selectingRigidbody->getEuler();
 					if (ImGui::DragFloat3("Rotate", &euler[0], 0.1f))
-						tke::setTransformerEuler(tke::SelectType::eRigidbody, selectingRigidbody, euler);
+						setTransformerEuler(SelectType::eRigidbody, selectingRigidbody, euler);
 
 					int boneID = selectingRigidbody->boneID + 1;
 					if (ImGui::Combo("Bone ID", &boneID, [](void *data, int index, const char **out_text) {
@@ -275,43 +275,43 @@ namespace dialog_model_editor
 						for (int i = 0; i < selectingRigidbody->shapes.size(); i++)
 						{
 							auto p = selectingRigidbody->shapes[i];
-							if (ImGui::Selectable((std::to_string(i) + " " + p->getTypeName()).c_str(), tke::selectType == tke::SelectType::eShape && p == tke::selectShape()))
-								tke::select(p);
+							if (ImGui::Selectable((std::to_string(i) + " " + p->getTypeName()).c_str(), selectType == SelectType::eShape && p == selectShape()))
+								select(p);
 						}
 						if (ImGui::Button("Add"))
 						{
 							auto p = new tke::Shape;
 							p->type = tke::Shape::Type::eBox;
 							selectingRigidbody->addShape(p);
-							tke::select(p);
+							select(p);
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Duplicate"))
 						{
-							if (tke::selectType == tke::SelectType::eShape)
+							if (selectType == SelectType::eShape)
 							{
-								auto p = new tke::Shape(*tke::selectShape());
+								auto p = new tke::Shape(*selectShape());
 								selectingRigidbody->addShape(p);
-								tke::select(p);
+								select(p);
 							}
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Delete"))
 						{
-							if (tke::selectType == tke::SelectType::eShape)
+							if (selectType == SelectType::eShape)
 							{
-								auto p = selectingRigidbody->deleteShape(tke::selectShape());
-								tke::select(p);
+								auto p = selectingRigidbody->deleteShape(selectShape());
+								select(p);
 							}
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Up"))
 						{
-							if (tke::selectType == tke::SelectType::eShape)
+							if (selectType == SelectType::eShape)
 							{
 								for (int i = 0; i < selectingRigidbody->shapes.size(); i++)
 								{
-									if (selectingRigidbody->shapes[i] == tke::selectShape() && i > 0)
+									if (selectingRigidbody->shapes[i] == selectShape() && i > 0)
 										std::swap(selectingRigidbody->shapes[i - 1], selectingRigidbody->shapes[i]);
 								}
 							}
@@ -319,31 +319,31 @@ namespace dialog_model_editor
 						ImGui::SameLine();
 						if (ImGui::Button("Down"))
 						{
-							if (tke::selectType == tke::SelectType::eShape)
+							if (selectType == SelectType::eShape)
 							{
 								for (int i = 0; i < selectingRigidbody->shapes.size(); i++)
 								{
-									if (selectingRigidbody->shapes[i] == tke::selectShape() && i < selectingRigidbody->shapes.size() - 1)
+									if (selectingRigidbody->shapes[i] == selectShape() && i < selectingRigidbody->shapes.size() - 1)
 										std::swap(selectingRigidbody->shapes[i - 1], selectingRigidbody->shapes[i]);
 								}
 							}
 						}
 
-						if (tke::selectType == tke::SelectType::eShape)
+						if (selectType == SelectType::eShape)
 						{
-							ImGui::Combo("Shape", (int*)&tke::selectShape()->type, [](void *data, int index, const char **out_text) {
+							ImGui::Combo("Shape", (int*)&selectShape()->type, [](void *data, int index, const char **out_text) {
 								*out_text = tke::Shape::getTypeName(tke::Shape::Type(index));
 								return true;
 							}, nullptr, (int)tke::Shape::Type::eLast);
-							auto coord = tke::selectShape()->getCoord();
+							auto coord = selectShape()->getCoord();
 							if (ImGui::DragFloat3("Coord", &coord[0], 0.1f))
-								tke::moveTransformer(tke::SelectType::eShape, tke::selectShape(), coord);
-							auto euler = tke::selectShape()->getEuler();
+								moveTransformer(SelectType::eShape, selectShape(), coord);
+							auto euler = selectShape()->getEuler();
 							if (ImGui::DragFloat3("Rotate", &euler[0], 0.1f))
-								tke::setTransformerEuler(tke::SelectType::eShape, tke::selectShape(), euler);
-							auto scale = tke::selectShape()->getScale();
+								setTransformerEuler(SelectType::eShape, selectShape(), euler);
+							auto scale = selectShape()->getScale();
 							if (ImGui::DragFloat3("Scale", &scale[0], 0.1f))
-								tke::scaleTransformer(tke::SelectType::eShape, tke::selectShape(), scale);
+								scaleTransformer(SelectType::eShape, selectShape(), scale);
 						}
 
 						ImGui::TreePop();
@@ -357,18 +357,18 @@ namespace dialog_model_editor
 				for (int i = 0; i < selectingModel->joints.size(); i++)
 				{
 					auto p = selectingModel->joints[i];
-					if (ImGui::Selectable(std::to_string(i).c_str(), p == tke::selectJoint()))
-						tke::select(p);
+					if (ImGui::Selectable(std::to_string(i).c_str(), p == selectJoint()))
+						select(p);
 				}
 
-				if (tke::selectType == tke::SelectType::eJoint)
+				if (selectType == SelectType::eJoint)
 				{
-					auto coord = tke::selectJoint()->getCoord();
+					auto coord = selectJoint()->getCoord();
 					if (ImGui::DragFloat3("Coord", &coord[0], 0.1f))
-						tke::moveTransformer(tke::SelectType::eJoint, tke::selectJoint(), coord);
-					auto euler = tke::selectJoint()->getEuler();
+						moveTransformer(SelectType::eJoint, selectJoint(), coord);
+					auto euler = selectJoint()->getEuler();
 					if (ImGui::DragFloat3("Rotate", &euler[0], 0.1f))
-						tke::setTransformerEuler(tke::SelectType::eJoint, tke::selectJoint(), euler);
+						setTransformerEuler(SelectType::eJoint, selectJoint(), euler);
 
 					auto funGetRigid = [](void *pModel, int index, const char **out_text) {
 						if (index == 0)
@@ -381,12 +381,12 @@ namespace dialog_model_editor
 					};
 					int rigidID;
 
-					rigidID = tke::selectJoint()->rigid0ID + 1;
+					rigidID = selectJoint()->rigid0ID + 1;
 					if (ImGui::Combo("Rigid 0", &rigidID, funGetRigid, selectingModel, selectingModel->joints.size() + 1))
-						tke::selectJoint()->rigid0ID = rigidID - 1;
-					rigidID = tke::selectJoint()->rigid1ID + 1;
+						selectJoint()->rigid0ID = rigidID - 1;
+					rigidID = selectJoint()->rigid1ID + 1;
 					if (ImGui::Combo("Rigid 0", &rigidID, funGetRigid, selectingModel, selectingModel->joints.size() + 1))
-						tke::selectJoint()->rigid1ID = rigidID - 1;
+						selectJoint()->rigid1ID = rigidID - 1;
 				}
 			}
 

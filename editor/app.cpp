@@ -18,310 +18,6 @@
 #include "history.h"
 #include "tool.h"
 
-std::vector<History*> histories;
-int currentHistory;
-
-Tool *currentTool;
-TransformTool transformTool;
-
-void addHistory(History *history)
-{
-	for (int i = currentHistory; i < histories.size(); i++)
-		delete histories[i];
-	histories.resize(currentHistory);
-	histories.push_back(history);
-	currentHistory++;
-}
-
-void undo()
-{
-	if (currentHistory > 0)
-	{
-		auto pHistory = histories[(currentHistory - 1)];
-		pHistory->operate(History::Operate::eUndo);
-		currentHistory--;
-	}
-}
-
-void redo()
-{
-	if (currentHistory < histories.size())
-	{
-		auto pHistory = histories[currentHistory];
-		pHistory->operate(History::Operate::eRedo);
-		currentHistory++;
-	}
-}
-
-void setTool(Tool *pTool)
-{
-	if (pTool == currentTool) return;
-	if (currentTool) currentTool->release();
-	currentTool = pTool;
-	if (pTool) pTool->attach();
-}
-
-void select()
-{
-	if (SelectType::eNull == selectType)
-		return;
-
-	addHistory(new SelectionHistory);
-	selectType = SelectType::eNull;
-
-	tke::postRedrawRequest();
-}
-
-void select(SelectType type, void *ptr)
-{
-	if (type == selectType && ptr == selecting)
-		return;
-
-	if (!ptr)
-	{
-		select();
-		return;
-	}
-	addHistory(new SelectionHistory);
-	selectType = type;
-	selecting = ptr;
-
-	tke::postRedrawRequest();
-}
-
-inline void select(tke::Light *pLight)
-{
-	select(SelectType::eLight, pLight);
-}
-
-inline void select(tke::Object *pObject)
-{
-	select(SelectType::eObject, pObject);
-}
-
-inline void select(tke::Rigidbody *pRigidbody)
-{
-	select(SelectType::eRigidbody, pRigidbody);
-}
-
-inline void select(tke::Shape *pShape)
-{
-	select(SelectType::eShape, pShape);
-}
-
-inline void select(tke::Joint *pJoint)
-{
-	select(SelectType::eJoint, pJoint);
-}
-
-inline void select(tke::Terrain *pTerrain)
-{
-	select(SelectType::eTerrain, pTerrain);
-}
-
-void beginRecordTransformHistory()
-{
-	leftTransformerHistory = true;
-	leftTransformerHistoryFirstHistory = true;
-}
-
-void endRecordTransformHistory()
-{
-	if (leftTransformerHistory)
-	{
-		addHistory(new TransformHistory(leftTransformerHistorySelectType, leftTransformerHistorySelectID, leftTransformerHistoryType, leftTransformerHistoryValue - leftTransformerHistoryOriginalValue));
-		leftTransformerHistory = false;
-	}
-}
-
-void moveTransformer(SelectType selectType, Transformer *pTrans, glm::vec3 coord)
-{
-	auto originalCoord = pTrans->getCoord();
-	if (!leftTransformerHistory)
-	{
-		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eMove, coord - originalCoord));
-	}
-	else
-	{
-		if (leftTransformerHistoryFirstHistory)
-		{
-			leftTransformerHistoryOriginalValue = originalCoord;
-			leftTransformerHistoryFirstHistory = false;
-		}
-		leftTransformerHistorySelectType = selectType;
-		leftTransformerHistorySelectID = pTrans->m_id;
-		leftTransformerHistoryType = Transformer::Type::eMove;
-		leftTransformerHistoryValue = coord;
-	}
-	pTrans->setCoord(coord);
-}
-
-inline void moveTransformer(Light *pLight, glm::vec3 coord)
-{
-	moveTransformer(SelectType::eLight, pLight, coord);
-}
-inline void moveTransformer(Object *pObject, glm::vec3 coord)
-{
-	moveTransformer(SelectType::eObject, pObject, coord);
-}
-inline void moveTransformer(Terrain *pTerrain, glm::vec3 coord)
-{
-	moveTransformer(SelectType::eTerrain, pTerrain, coord);
-}
-inline void moveTransformer(Rigidbody *pRigidbody, glm::vec3 coord)
-{
-	moveTransformer(SelectType::eRigidbody, pRigidbody, coord);
-}
-inline void moveTransformer(Shape *pShape, glm::vec3 coord)
-{
-	moveTransformer(SelectType::eShape, pShape, coord);
-}
-inline void moveTransformer(Joint *pJoint, glm::vec3 coord)
-{
-	moveTransformer(SelectType::eJoint, pJoint, coord);
-}
-
-void setTransformerEuler(SelectType selectType, Transformer *pTrans, glm::vec3 euler)
-{
-	auto originalEuler = pTrans->getEuler();
-	if (!leftTransformerHistory)
-	{
-		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eEulerSet, euler - originalEuler));
-	}
-	else
-	{
-		if (leftTransformerHistoryFirstHistory)
-		{
-			leftTransformerHistoryOriginalValue = originalEuler;
-			leftTransformerHistoryFirstHistory = false;
-		}
-		leftTransformerHistorySelectType = selectType;
-		leftTransformerHistorySelectID = pTrans->m_id;
-		leftTransformerHistoryType = Transformer::Type::eEulerSet;
-		leftTransformerHistoryValue = euler;
-	}
-	pTrans->setEuler(euler);
-}
-
-inline void setTransformerEuler(Light *pLight, glm::vec3 euler)
-{
-	setTransformerEuler(SelectType::eLight, pLight, euler);
-}
-inline void setTransformerEuler(Object *pObject, glm::vec3 euler)
-{
-	setTransformerEuler(SelectType::eObject, pObject, euler);
-}
-inline void setTransformerEuler(Terrain *pTerrain, glm::vec3 euler)
-{
-	setTransformerEuler(SelectType::eTerrain, pTerrain, euler);
-}
-inline void setTransformerEuler(Rigidbody *pRigidbody, glm::vec3 euler)
-{
-	setTransformerEuler(SelectType::eRigidbody, pRigidbody, euler);
-}
-inline void setTransformerEuler(Shape *pShape, glm::vec3 euler)
-{
-	setTransformerEuler(SelectType::eShape, pShape, euler);
-}
-inline void setTransformerEuler(Joint *pJoint, glm::vec3 euler)
-{
-	setTransformerEuler(SelectType::eJoint, pJoint, euler);
-}
-
-void scaleTransformer(SelectType selectType, Transformer *pTrans, glm::vec3 scale)
-{
-	auto originalScale = pTrans->getScale();
-	if (!leftTransformerHistory)
-	{
-		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eScale, scale - originalScale));
-	}
-	else
-	{
-		if (leftTransformerHistoryFirstHistory)
-		{
-			leftTransformerHistoryOriginalValue = originalScale;
-			leftTransformerHistoryFirstHistory = false;
-		}
-		leftTransformerHistorySelectType = selectType;
-		leftTransformerHistorySelectID = pTrans->m_id;
-		leftTransformerHistoryType = Transformer::Type::eScale;
-		leftTransformerHistoryValue = scale;
-	}
-	pTrans->setScale(scale);
-}
-
-inline void scaleTransformer(Light *pLight, glm::vec3 scale)
-{
-	scaleTransformer(SelectType::eLight, pLight, scale);
-}
-inline void scaleTransformer(Object *pObject, glm::vec3 scale)
-{
-	scaleTransformer(SelectType::eObject, pObject, scale);
-}
-inline void scaleTransformer(Terrain *pTerrain, glm::vec3 scale)
-{
-	scaleTransformer(SelectType::eTerrain, pTerrain, scale);
-}
-inline void scaleTransformer(Rigidbody *pRigidbody, glm::vec3 scale)
-{
-	scaleTransformer(SelectType::eRigidbody, pRigidbody, scale);
-}
-inline void scaleTransformer(Shape *pShape, glm::vec3 scale)
-{
-	scaleTransformer(SelectType::eShape, pShape, scale);
-}
-inline void scaleTransformer(Joint *pJoint, glm::vec3 scale)
-{
-	scaleTransformer(SelectType::eJoint, pJoint, scale);
-}
-
-void rotateTransformerAxis(SelectType selectType, Transformer *pTrans, Transformer::Axis which, float ang)
-{
-	glm::vec3 v = glm::vec3((float)which, ang, 0.f);
-	if (!leftTransformerHistory)
-	{
-		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eAsixRotate, v));
-	}
-	else
-	{
-		if (leftTransformerHistoryFirstHistory)
-		{
-			leftTransformerHistoryOriginalValue = v;
-			leftTransformerHistoryFirstHistory = false;
-		}
-		leftTransformerHistorySelectType = selectType;
-		leftTransformerHistorySelectID = pTrans->m_id;
-		leftTransformerHistoryType = Transformer::Type::eAsixRotate;
-		leftTransformerHistoryValue = v;
-	}
-	pTrans->axisRotate(which, ang);
-}
-
-inline void rotateTransformerAxis(Light *pLight, Transformer::Axis which, float ang)
-{
-	rotateTransformerAxis(SelectType::eLight, pLight, which, ang);
-}
-inline void rotateTransformerAxis(Object *pObject, Transformer::Axis which, float ang)
-{
-	rotateTransformerAxis(SelectType::eObject, pObject, which, ang);
-}
-inline void rotateTransformerAxis(Terrain *pTerrain, Transformer::Axis which, float ang)
-{
-	rotateTransformerAxis(SelectType::eTerrain, pTerrain, which, ang);
-}
-inline void rotateTransformerAxis(Rigidbody *pRigidbody, Transformer::Axis which, float ang)
-{
-	rotateTransformerAxis(SelectType::eRigidbody, pRigidbody, which, ang);
-}
-inline void rotateTransformerAxis(Shape *pShape, Transformer::Axis which, float ang)
-{
-	rotateTransformerAxis(SelectType::eShape, pShape, which, ang);
-}
-inline void rotateTransformerAxis(Joint *pJoint, Transformer::Axis which, float ang)
-{
-	rotateTransformerAxis(SelectType::eJoint, pJoint, which, ang);
-}
-
 int funGetAnimID(tke::Model *pModel, tke::Animation *pAnim)
 {
 	if (pAnim == nullptr)
@@ -458,7 +154,7 @@ struct MainWindow : tke::GuiWindow
 
 		renderFinishedSemaphore = tke::vk::createSemaphore();
 
-		tke::initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
+		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 	}
 
 	void makeCmd()
@@ -501,7 +197,7 @@ struct MainWindow : tke::GuiWindow
 				{
 					miscWireFrameLightAction->show = true;
 					miscWireFrameLightAction->drawcalls.resize(2);
-					auto pLight = tke::selectLight();
+					auto pLight = selectLight();
 					if (pLight->type == tke::Light::Type::eParallax)
 						miscWireFrameLightAction->addDrawcall(tke::arrowModel);
 					else if (pLight->type == tke::Light::Type::ePoint)
@@ -511,12 +207,12 @@ struct MainWindow : tke::GuiWindow
 				{
 					miscWireFrameObjectAction->show = true;
 					miscWireFrameObjectAction->drawcalls.clear();
-					auto pObject = tke::selectObject();
+					auto pObject = selectObject();
 					auto pModel = pObject->pModel;
 					miscWireFrameObjectAction->addDrawcall(pModel, 1, pObject->sceneIndex);
 				}
 			}
-			miscToolAction->m_pRenderable = tke::currentTool;
+			miscToolAction->m_pRenderable = currentTool;
 
 			masterRenderer->renderer->execute(cmd[i], i);
 
@@ -550,30 +246,30 @@ struct MainWindow : tke::GuiWindow
 
 	void menu_tool_select()
 	{
-		tke::setTool(nullptr);
+		setTool(nullptr);
 	}
 
 	void menu_tool_move()
 	{
-		tke::transformTool.setType(tke::Transformer::Type::eMove);
-		tke::setTool(&tke::transformTool);
+		transformTool.setType(tke::Transformer::Type::eMove);
+		setTool(&transformTool);
 	}
 
 	void menu_tool_rotate()
 	{
-		tke::transformTool.setType(tke::Transformer::Type::eAsixRotate);
-		tke::setTool(&tke::transformTool);
+		transformTool.setType(tke::Transformer::Type::eAsixRotate);
+		setTool(&transformTool);
 	}
 
 	void menu_tool_scale()
 	{
-		tke::transformTool.setType(tke::Transformer::Type::eScale);
-		tke::setTool(&tke::transformTool);
+		transformTool.setType(tke::Transformer::Type::eScale);
+		setTool(&transformTool);
 	}
 
 	void menu_edit_move_to_target()
 	{
-		auto transformer = tke::selectTransformer();
+		auto transformer = selectTransformer();
 		if (!transformer)
 		{
 			tke::scene->camera.setCoord(glm::vec3(0.f));
@@ -587,7 +283,7 @@ struct MainWindow : tke::GuiWindow
 		auto pLight = new tke::Light;
 		pLight->type = type;
 		tke::scene->addLight(pLight);
-		tke::select(pLight);
+		select(pLight);
 	}
 
 	void menu_edit_create_object(tke::Model *pModel)
@@ -595,34 +291,34 @@ struct MainWindow : tke::GuiWindow
 		auto pObject = new tke::Object;
 		pObject->pModel = pModel;
 		tke::scene->addObject(pObject);
-		tke::addHistory(new tke::ObjectCreationHistory(pObject, tke::ObjectCreationHistory::CreationType::eCreate));
-		tke::select(pObject);
+		addHistory(new ObjectCreationHistory(pObject, ObjectCreationHistory::CreationType::eCreate));
+		select(pObject);
 	}
 
 	void menu_edit_duplicate()
 	{
-		if (tke::selectType == tke::SelectType::eNull)
+		if (selectType == SelectType::eNull)
 		{
 			//tke3_notiBoard.add("You need to select a target.");
 			return;
 		}
-		if (tke::selectType == tke::SelectType::eLight)
+		if (selectType == SelectType::eLight)
 		{
-			auto pLight = new tke::Light(*tke::selectLight());
+			auto pLight = new tke::Light(*selectLight());
 			tke::scene->addLight(pLight);
-			tke::select(pLight);
+			select(pLight);
 		}
-		else if (tke::selectType == tke::SelectType::eObject)
+		else if (selectType == SelectType::eObject)
 		{
-			auto pObject = new tke::Object(*tke::selectObject());
+			auto pObject = new tke::Object(*selectObject());
 			tke::scene->addObject(pObject);
-			tke::select(pObject);
+			select(pObject);
 		}
-		else if (tke::selectType == tke::SelectType::eTerrain)
+		else if (selectType == SelectType::eTerrain)
 		{
-			auto pTerrain = new tke::Terrain(*tke::selectTerrain());
+			auto pTerrain = new tke::Terrain(*selectTerrain());
 			tke::scene->addTerrain(pTerrain);
-			tke::select(pTerrain);
+			select(pTerrain);
 		}
 
 		//tke3_notiBoard.add("The target has been copied.");
@@ -630,37 +326,37 @@ struct MainWindow : tke::GuiWindow
 
 	void menu_edit_delete()
 	{
-		if (tke::selectType == tke::SelectType::eNull)
+		if (selectType == SelectType::eNull)
 		{
 			//tke3_notiBoard.add("You need to select a target.");
 			return;
 		}
-		if (tke::selectType == tke::SelectType::eLight)
+		if (selectType ==SelectType::eLight)
 		{
-			tke::select(tke::scene->deleteLight(tke::selectLight()));
+			select(tke::scene->deleteLight(selectLight()));
 		}
-		else if (tke::selectType == tke::SelectType::eObject)
+		else if (selectType == SelectType::eObject)
 		{
-			tke::addHistory(new tke::ObjectCreationHistory(tke::selectObject(), tke::ObjectCreationHistory::CreationType::eDelete));
-			tke::select(tke::scene->deleteObject(tke::selectObject()));
+			addHistory(new ObjectCreationHistory(selectObject(), ObjectCreationHistory::CreationType::eDelete));
+			select(tke::scene->deleteObject(selectObject()));
 		}
-		else if (tke::selectType == tke::SelectType::eTerrain)
+		else if (selectType == SelectType::eTerrain)
 		{
-			tke::select(tke::scene->deleteTerrain(tke::selectTerrain()));
+			select(tke::scene->deleteTerrain(selectTerrain()));
 		}
 	}
 
 	void menu_edit_undo()
 	{
 		EnterCriticalSection(&tke::scene->cs);
-		tke::undo();
+		undo();
 		LeaveCriticalSection(&tke::scene->cs);
 	}
 
 	void menu_edit_redo()
 	{
 		EnterCriticalSection(&tke::scene->cs);
-		tke::redo();
+		redo();
 		LeaveCriticalSection(&tke::scene->cs);
 	}
 
@@ -710,7 +406,7 @@ struct MainWindow : tke::GuiWindow
 				if (ImGui::MenuItem("Delete", ""))
 					menu_edit_delete();
 				if (ImGui::MenuItem("Cancel Select", ""))
-					tke::select();
+					select();
 				if (ImGui::MenuItem("Undo", ""))
 					menu_edit_undo();
 				if (ImGui::MenuItem("Redo", ""))
@@ -718,8 +414,8 @@ struct MainWindow : tke::GuiWindow
 				ImGui::Separator();
 				if (ImGui::MenuItem("Control this object", ""))
 				{
-					if (tke::selectType == tke::SelectType::eObject)
-						tke::controllingObject = tke::selectObject();
+					if (selectType == SelectType::eObject)
+						tke::controllingObject = selectObject();
 				}
 				if (ImGui::MenuItem("Release control object", ""))
 					tke::controllingObject = nullptr;
@@ -751,7 +447,7 @@ struct MainWindow : tke::GuiWindow
 				{
 					auto pTerrain = new tke::Terrain;
 					tke::scene->addTerrain(pTerrain);
-					tke::select(pTerrain);
+					select(pTerrain);
 				}
 
 				ImGui::EndMenu();
@@ -825,7 +521,7 @@ struct MainWindow : tke::GuiWindow
 		switch (key)
 		{
 		case VK_ESCAPE:
-			tke::select();
+			select();
 			return;
 		case VK_RETURN:
 			menu_edit_move_to_target();
@@ -906,7 +602,7 @@ struct MainWindow : tke::GuiWindow
 		{
 			if (!(GetAsyncKeyState(VK_MENU) & 0x8000))
 			{
-				if (!(tke::currentTool && tke::currentTool->mouseDown(mouseX, mouseY)))
+				if (!(currentTool && currentTool->mouseDown(mouseX, mouseY)))
 				{
 					auto index = tke::pickUp(mouseX, mouseY, 1, 1, [](VkCommandBuffer cmd, void*) {
 						if (tke::scene->pStaticObjects.size() > 0 || tke::scene->pLights.size() > 0)
@@ -950,32 +646,32 @@ struct MainWindow : tke::GuiWindow
 
 					if (index == 0)
 					{
-						tke::select();
-						tke::transformTool.m_pTransformer = nullptr;
+						select();
+						transformTool.m_pTransformer = nullptr;
 					}
 					else
 					{
 						index -= 1;
 						if (index < tke::scene->pLights.size())
-							tke::select(tke::scene->pLights[index]);
+							select(tke::scene->pLights[index]);
 						else if ((index -= tke::scene->pLights.size()) < tke::scene->pStaticObjects.size())
-							tke::select(tke::scene->pStaticObjects[index]);
+							select(tke::scene->pStaticObjects[index]);
 						else if ((index -= tke::scene->pStaticObjects.size()) < tke::scene->pAnimatedObjects.size())
-							tke::select(tke::scene->pAnimatedObjects[index]);
+							select(tke::scene->pAnimatedObjects[index]);
 						else if ((index -= tke::scene->pAnimatedObjects.size()) < tke::scene->pTerrains.size())
-							tke::select(tke::scene->pTerrains[index]);
+							select(tke::scene->pTerrains[index]);
 						if (doubleClick)
 						{
-							switch (tke::selectType)
+							switch (selectType)
 							{
-							case tke::SelectType::eLight:
-								dialog_lightAttribute::addWindow(tke::selectLight());
+							case SelectType::eLight:
+								dialog_lightAttribute::addWindow(selectLight());
 								break;
-							case tke::SelectType::eObject:
-								dialog_objectAttribute::addWindow(tke::selectObject());
+							case SelectType::eObject:
+								dialog_objectAttribute::addWindow(selectObject());
 								break;
-							case tke::SelectType::eTerrain:
-								dialog_terrainAttribute::addWindow(tke::selectTerrain());
+							case SelectType::eTerrain:
+								dialog_terrainAttribute::addWindow(selectTerrain());
 								break;
 							}
 						}
@@ -986,8 +682,8 @@ struct MainWindow : tke::GuiWindow
 
 		if (leftUp)
 		{
-			if (tke::currentTool)
-				tke::currentTool->mouseUp();
+			if (currentTool)
+				currentTool->mouseUp();
 		}
 
 		if (mouseScroll != 0)
@@ -1009,10 +705,10 @@ struct MainWindow : tke::GuiWindow
 				{
 					tke::scene->camera.addAngAccrodingToScreen(distX, distY);
 				}
-				else if (tke::currentTool)
+				else if (currentTool)
 				{
 					EnterCriticalSection(&tke::scene->cs);
-					tke::currentTool->mouseMove();
+					currentTool->mouseMove();
 					LeaveCriticalSection(&tke::scene->cs);
 				}
 			}
@@ -1068,7 +764,7 @@ struct MainWindow : tke::GuiWindow
 		m_uiDialogs->show();
 
 		tke::scene->update(masterRenderer);
-		if (tke::currentTool) tke::currentTool->update();
+		if (currentTool) currentTool->update();
 
 		tke::scene->resetChange();
 

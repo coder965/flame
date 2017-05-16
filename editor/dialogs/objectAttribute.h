@@ -35,13 +35,13 @@ namespace dialog_objectAttribute
 
 			auto coord = pObject->getCoord();
 			if (ImGui::DragFloat3("Coord", &coord[0], 0.1f))
-				tke::moveTransformer(pObject, coord);
+				moveTransformer(pObject, coord);
 			auto euler = pObject->getEuler();
 			if (ImGui::DragFloat3("Rotate", &euler[0], 0.1f))
-				tke::setTransformerEuler(pObject, euler);
+				setTransformerEuler(pObject, euler);
 			auto scale = pObject->getScale();
 			if (ImGui::DragFloat3("Scale", &scale[0], 0.1f))
-				tke::scaleTransformer(pObject, scale);
+				scaleTransformer(pObject, scale);
 
 			if (pModel->animated)
 			{
