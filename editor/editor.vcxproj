@@ -182,10 +182,6 @@
     <ClInclude Include="..\src\core\utils.h" />
     <ClInclude Include="..\src\core\vk.h" />
     <ClInclude Include="..\src\core\window.h" />
-    <ClInclude Include="..\src\extension\editor\editor.h" />
-    <ClInclude Include="..\src\extension\editor\history.h" />
-    <ClInclude Include="..\src\extension\editor\select.h" />
-    <ClInclude Include="..\src\extension\editor\tool.h" />
     <ClInclude Include="..\src\extension\image.file.h" />
     <ClInclude Include="..\src\extension\model.file.h" />
     <ClInclude Include="..\src\extension\model.general.h" />
@@ -199,7 +195,10 @@
     <ClInclude Include="dialogs\objectAttribute.h" />
     <ClInclude Include="dialogs\scene.h" />
     <ClInclude Include="dialogs\terrainAttribute.h" />
+    <ClInclude Include="history.h" />
+    <ClInclude Include="select.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="tool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\imgui-master\imgui.cpp" />
@@ -223,9 +222,6 @@
     <ClCompile Include="..\src\core\terrain.cpp" />
     <ClCompile Include="..\src\core\transformer.cpp" />
     <ClCompile Include="..\src\core\window.cpp" />
-    <ClCompile Include="..\src\extension\editor\editor.cpp" />
-    <ClCompile Include="..\src\extension\editor\editor.history.cpp" />
-    <ClCompile Include="..\src\extension\editor\editor.tool.cpp" />
     <ClCompile Include="..\src\extension\image.file.cpp" />
     <ClCompile Include="..\src\extension\model.file.cpp" />
     <ClCompile Include="..\src\extension\model.general.cpp" />
@@ -233,12 +229,15 @@
     <ClCompile Include="..\src\extension\script.cpp" />
     <ClCompile Include="..\src\extension\startUpBoard.cpp" />
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="history.cpp" />
+    <ClCompile Include="select.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="tool.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

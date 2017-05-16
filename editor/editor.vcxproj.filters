@@ -24,17 +24,11 @@
     <Filter Include="头文件\engine\extension">
       <UniqueIdentifier>{a48a03c9-8a67-47ea-bb0c-3f6248dc6506}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\engine\extension\editor">
-      <UniqueIdentifier>{b79ed709-9fa8-47b1-af2a-f1b0d0a78aff}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\engine\core">
       <UniqueIdentifier>{4e6eb208-c375-42bb-8ae7-d88857a07259}</UniqueIdentifier>
     </Filter>
     <Filter Include="源文件\engine\extension">
       <UniqueIdentifier>{8287f273-8a2a-43ef-9983-94510d00ebbf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="源文件\engine\extension\editor">
-      <UniqueIdentifier>{dfce71cb-1f22-4fd3-a203-add19dd9889b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -119,18 +113,6 @@
     <ClInclude Include="..\src\extension\startUpBoard.h">
       <Filter>头文件\engine\extension</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\extension\editor\editor.h">
-      <Filter>头文件\engine\extension\editor</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\extension\editor\history.h">
-      <Filter>头文件\engine\extension\editor</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\extension\editor\select.h">
-      <Filter>头文件\engine\extension\editor</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\extension\editor\tool.h">
-      <Filter>头文件\engine\extension\editor</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\extension\model.file.h">
       <Filter>头文件\engine\extension</Filter>
     </ClInclude>
@@ -148,6 +130,15 @@
     </ClInclude>
     <ClInclude Include="..\src\core\render.h">
       <Filter>头文件\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="history.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="select.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -217,15 +208,6 @@
     <ClCompile Include="..\src\core\window.cpp">
       <Filter>源文件\engine\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\extension\editor\editor.cpp">
-      <Filter>源文件\engine\extension\editor</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\extension\editor\editor.history.cpp">
-      <Filter>源文件\engine\extension\editor</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\extension\editor\editor.tool.cpp">
-      <Filter>源文件\engine\extension\editor</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\extension\model.file.cpp">
       <Filter>源文件\engine\extension</Filter>
     </ClCompile>
@@ -246,6 +228,15 @@
     </ClCompile>
     <ClCompile Include="..\src\core\render.cpp">
       <Filter>源文件\engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="history.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="tool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="select.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

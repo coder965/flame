@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 
+#include "..\src\core\core.h"
 #include "..\src\core\scene.h"
 #include "..\src\core\window.h"
 #include "..\src\core\gui.h"
@@ -11,18 +12,315 @@
 #include "..\src\extension\script.h"
 #include "..\src\extension\model.file.h"
 #include "..\src\extension\model.general.h"
-#include "..\src\extension\editor\editor.h"
 #include "..\src\extension\startUpBoard.h"
 
-bool showWorldAxis = false;
-bool showSelectLine = true;
-bool showRotateAxis = false;
-bool showSky = true;
-bool showLight = true;
-bool showObject = true;
-bool showRigidBody = false;
-bool showShadow = true;
-bool showFriend = true;
+#include "select.h"
+#include "history.h"
+#include "tool.h"
+
+std::vector<History*> histories;
+int currentHistory;
+
+Tool *currentTool;
+TransformTool transformTool;
+
+void addHistory(History *history)
+{
+	for (int i = currentHistory; i < histories.size(); i++)
+		delete histories[i];
+	histories.resize(currentHistory);
+	histories.push_back(history);
+	currentHistory++;
+}
+
+void undo()
+{
+	if (currentHistory > 0)
+	{
+		auto pHistory = histories[(currentHistory - 1)];
+		pHistory->operate(History::Operate::eUndo);
+		currentHistory--;
+	}
+}
+
+void redo()
+{
+	if (currentHistory < histories.size())
+	{
+		auto pHistory = histories[currentHistory];
+		pHistory->operate(History::Operate::eRedo);
+		currentHistory++;
+	}
+}
+
+void setTool(Tool *pTool)
+{
+	if (pTool == currentTool) return;
+	if (currentTool) currentTool->release();
+	currentTool = pTool;
+	if (pTool) pTool->attach();
+}
+
+void select()
+{
+	if (SelectType::eNull == selectType)
+		return;
+
+	addHistory(new SelectionHistory);
+	selectType = SelectType::eNull;
+
+	tke::postRedrawRequest();
+}
+
+void select(SelectType type, void *ptr)
+{
+	if (type == selectType && ptr == selecting)
+		return;
+
+	if (!ptr)
+	{
+		select();
+		return;
+	}
+	addHistory(new SelectionHistory);
+	selectType = type;
+	selecting = ptr;
+
+	tke::postRedrawRequest();
+}
+
+inline void select(tke::Light *pLight)
+{
+	select(SelectType::eLight, pLight);
+}
+
+inline void select(tke::Object *pObject)
+{
+	select(SelectType::eObject, pObject);
+}
+
+inline void select(tke::Rigidbody *pRigidbody)
+{
+	select(SelectType::eRigidbody, pRigidbody);
+}
+
+inline void select(tke::Shape *pShape)
+{
+	select(SelectType::eShape, pShape);
+}
+
+inline void select(tke::Joint *pJoint)
+{
+	select(SelectType::eJoint, pJoint);
+}
+
+inline void select(tke::Terrain *pTerrain)
+{
+	select(SelectType::eTerrain, pTerrain);
+}
+
+void beginRecordTransformHistory()
+{
+	leftTransformerHistory = true;
+	leftTransformerHistoryFirstHistory = true;
+}
+
+void endRecordTransformHistory()
+{
+	if (leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(leftTransformerHistorySelectType, leftTransformerHistorySelectID, leftTransformerHistoryType, leftTransformerHistoryValue - leftTransformerHistoryOriginalValue));
+		leftTransformerHistory = false;
+	}
+}
+
+void moveTransformer(SelectType selectType, Transformer *pTrans, glm::vec3 coord)
+{
+	auto originalCoord = pTrans->getCoord();
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eMove, coord - originalCoord));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = originalCoord;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = Transformer::Type::eMove;
+		leftTransformerHistoryValue = coord;
+	}
+	pTrans->setCoord(coord);
+}
+
+inline void moveTransformer(Light *pLight, glm::vec3 coord)
+{
+	moveTransformer(SelectType::eLight, pLight, coord);
+}
+inline void moveTransformer(Object *pObject, glm::vec3 coord)
+{
+	moveTransformer(SelectType::eObject, pObject, coord);
+}
+inline void moveTransformer(Terrain *pTerrain, glm::vec3 coord)
+{
+	moveTransformer(SelectType::eTerrain, pTerrain, coord);
+}
+inline void moveTransformer(Rigidbody *pRigidbody, glm::vec3 coord)
+{
+	moveTransformer(SelectType::eRigidbody, pRigidbody, coord);
+}
+inline void moveTransformer(Shape *pShape, glm::vec3 coord)
+{
+	moveTransformer(SelectType::eShape, pShape, coord);
+}
+inline void moveTransformer(Joint *pJoint, glm::vec3 coord)
+{
+	moveTransformer(SelectType::eJoint, pJoint, coord);
+}
+
+void setTransformerEuler(SelectType selectType, Transformer *pTrans, glm::vec3 euler)
+{
+	auto originalEuler = pTrans->getEuler();
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eEulerSet, euler - originalEuler));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = originalEuler;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = Transformer::Type::eEulerSet;
+		leftTransformerHistoryValue = euler;
+	}
+	pTrans->setEuler(euler);
+}
+
+inline void setTransformerEuler(Light *pLight, glm::vec3 euler)
+{
+	setTransformerEuler(SelectType::eLight, pLight, euler);
+}
+inline void setTransformerEuler(Object *pObject, glm::vec3 euler)
+{
+	setTransformerEuler(SelectType::eObject, pObject, euler);
+}
+inline void setTransformerEuler(Terrain *pTerrain, glm::vec3 euler)
+{
+	setTransformerEuler(SelectType::eTerrain, pTerrain, euler);
+}
+inline void setTransformerEuler(Rigidbody *pRigidbody, glm::vec3 euler)
+{
+	setTransformerEuler(SelectType::eRigidbody, pRigidbody, euler);
+}
+inline void setTransformerEuler(Shape *pShape, glm::vec3 euler)
+{
+	setTransformerEuler(SelectType::eShape, pShape, euler);
+}
+inline void setTransformerEuler(Joint *pJoint, glm::vec3 euler)
+{
+	setTransformerEuler(SelectType::eJoint, pJoint, euler);
+}
+
+void scaleTransformer(SelectType selectType, Transformer *pTrans, glm::vec3 scale)
+{
+	auto originalScale = pTrans->getScale();
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eScale, scale - originalScale));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = originalScale;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = Transformer::Type::eScale;
+		leftTransformerHistoryValue = scale;
+	}
+	pTrans->setScale(scale);
+}
+
+inline void scaleTransformer(Light *pLight, glm::vec3 scale)
+{
+	scaleTransformer(SelectType::eLight, pLight, scale);
+}
+inline void scaleTransformer(Object *pObject, glm::vec3 scale)
+{
+	scaleTransformer(SelectType::eObject, pObject, scale);
+}
+inline void scaleTransformer(Terrain *pTerrain, glm::vec3 scale)
+{
+	scaleTransformer(SelectType::eTerrain, pTerrain, scale);
+}
+inline void scaleTransformer(Rigidbody *pRigidbody, glm::vec3 scale)
+{
+	scaleTransformer(SelectType::eRigidbody, pRigidbody, scale);
+}
+inline void scaleTransformer(Shape *pShape, glm::vec3 scale)
+{
+	scaleTransformer(SelectType::eShape, pShape, scale);
+}
+inline void scaleTransformer(Joint *pJoint, glm::vec3 scale)
+{
+	scaleTransformer(SelectType::eJoint, pJoint, scale);
+}
+
+void rotateTransformerAxis(SelectType selectType, Transformer *pTrans, Transformer::Axis which, float ang)
+{
+	glm::vec3 v = glm::vec3((float)which, ang, 0.f);
+	if (!leftTransformerHistory)
+	{
+		addHistory(new TransformHistory(selectType, pTrans->m_id, Transformer::Type::eAsixRotate, v));
+	}
+	else
+	{
+		if (leftTransformerHistoryFirstHistory)
+		{
+			leftTransformerHistoryOriginalValue = v;
+			leftTransformerHistoryFirstHistory = false;
+		}
+		leftTransformerHistorySelectType = selectType;
+		leftTransformerHistorySelectID = pTrans->m_id;
+		leftTransformerHistoryType = Transformer::Type::eAsixRotate;
+		leftTransformerHistoryValue = v;
+	}
+	pTrans->axisRotate(which, ang);
+}
+
+inline void rotateTransformerAxis(Light *pLight, Transformer::Axis which, float ang)
+{
+	rotateTransformerAxis(SelectType::eLight, pLight, which, ang);
+}
+inline void rotateTransformerAxis(Object *pObject, Transformer::Axis which, float ang)
+{
+	rotateTransformerAxis(SelectType::eObject, pObject, which, ang);
+}
+inline void rotateTransformerAxis(Terrain *pTerrain, Transformer::Axis which, float ang)
+{
+	rotateTransformerAxis(SelectType::eTerrain, pTerrain, which, ang);
+}
+inline void rotateTransformerAxis(Rigidbody *pRigidbody, Transformer::Axis which, float ang)
+{
+	rotateTransformerAxis(SelectType::eRigidbody, pRigidbody, which, ang);
+}
+inline void rotateTransformerAxis(Shape *pShape, Transformer::Axis which, float ang)
+{
+	rotateTransformerAxis(SelectType::eShape, pShape, which, ang);
+}
+inline void rotateTransformerAxis(Joint *pJoint, Transformer::Axis which, float ang)
+{
+	rotateTransformerAxis(SelectType::eJoint, pJoint, which, ang);
+}
 
 int funGetAnimID(tke::Model *pModel, tke::Animation *pAnim)
 {
@@ -57,20 +355,6 @@ tke::Animation *funGetAnim(tke::Model *pModel, int ID)
 	return pModel->animations[ID - 1];
 }
 
-int funGetModelID(tke::Model *pModel)
-{
-	if (pModel == nullptr)
-		return -1;
-	int ID = 1;
-	for (auto m : tke::scene->pModels)
-	{
-		if (m == pModel)
-			return ID;
-		ID++;
-	}
-	return -1;
-}
-
 tke::GuiWindow *pMainWindow = nullptr;
 
 #include "dialogs\lightAttribute.h"
@@ -79,15 +363,7 @@ tke::GuiWindow *pMainWindow = nullptr;
 #include "dialogs\scene.h"
 #include "dialogs\modelEditor.h"
 #include "dialogs\debug.h"
-//#include "..\dialogs\image.h"
-
-static bool sayError(tke::Err err)
-{
-	if (err == tke::Err::eNoErr)
-		return false;
-	MessageBox(NULL, tke::getErrorString(err), "Error", MB_ICONWARNING);
-	return true;
-}
+//#include "dialogs\image.h"
 
 struct MainWindow : tke::GuiWindow
 {
@@ -108,9 +384,18 @@ struct MainWindow : tke::GuiWindow
 
 	static bool needRedraw;
 
+	bool showWorldAxis = false;
+	bool showSelectLine = true;
+	bool showRotateAxis = false;
+	bool showSky = true;
+	bool showLight = true;
+	bool showObject = true;
+	bool showRigidBody = false;
+	bool showShadow = true;
+	bool showFriend = true;
+
 	void init()
 	{
-
 		//tke::Texture *heightMap = nullptr;
 
 		//auto TERRAIN_HEIGHT_SIZE = 1024;
@@ -201,20 +486,18 @@ struct MainWindow : tke::GuiWindow
 			}
 
 			miscLightFrameAction->drawcalls.clear();
-			auto lightIndex = 0;
 			for (auto pLight : tke::scene->pLights)
 			{
 				if (pLight->type == tke::Light::Type::eParallax)
 					miscLightFrameAction->addDrawcall(tke::arrowModel);
 				else if (pLight->type == tke::Light::Type::ePoint)
 					miscLightFrameAction->addDrawcall(tke::sphereModel);
-				lightIndex++;
 			}
 			miscWireFrameLightAction->show = false;
 			miscWireFrameObjectAction->show = false;
 			if (showSelectLine)
 			{
-				if (tke::selectType == tke::SelectType::eLight)
+				if (selectType == SelectType::eLight)
 				{
 					miscWireFrameLightAction->show = true;
 					miscWireFrameLightAction->drawcalls.resize(2);
@@ -224,7 +507,7 @@ struct MainWindow : tke::GuiWindow
 					else if (pLight->type == tke::Light::Type::ePoint)
 						miscWireFrameLightAction->addDrawcall(tke::sphereModel);
 				}
-				else if (tke::selectType == tke::SelectType::eObject)
+				else if (selectType == SelectType::eObject)
 				{
 					miscWireFrameObjectAction->show = true;
 					miscWireFrameObjectAction->drawcalls.clear();
@@ -827,8 +1110,12 @@ bool MainWindow::needRedraw = true;
 int main()
 {
 	auto resCx = 1600, resCy = 900;
-	if (sayError(tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw)))
+	auto err = tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw);
+	if (err != tke::Err::eNoErr)
+	{
+		MessageBox(NULL, tke::getErrorString(err), "Error", MB_ICONWARNING);
 		return 0;
+	}
 	tke::initPickUp();
 	tke::initGeneralModels();
 
@@ -867,11 +1154,11 @@ int main()
 
 		while (ConnectNamedPipe(hPipe, NULL))
 		{
-			char buf[MAX_PATH];
+			char cmd[1024];
 			DWORD length;
-			ReadFile(hPipe, buf, MAX_PATH, &length, NULL);
-			printf("%s\n", buf);
-			tke::processCmdLine(buf);
+			ReadFile(hPipe, cmd, 1024, &length, NULL);
+			printf("%s\n", cmd);
+			tke::processCmdLine(cmd);
 
 			DisconnectNamedPipe(hPipe);
 		}
@@ -880,8 +1167,8 @@ int main()
 	_beginthread([](void*) {
 		for (;;)
 		{
-			char cmd[1024];
-			std::cin.getline(cmd, sizeof(cmd));
+			std::string cmd;
+			std::getline(std::cin, cmd);
 			tke::processCmdLine(cmd);
 		}
 	}, 0, nullptr);

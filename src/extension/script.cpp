@@ -7,7 +7,7 @@
 
 namespace tke
 {
-	void processCmdLine(const char *str, bool record)
+	void processCmdLine(const std::string &str, bool record)
 	{
 		static std::string last_cmd;
 
