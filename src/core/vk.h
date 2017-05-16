@@ -1,5 +1,5 @@
-#ifndef __TK_VK__
-#define __TK_VK__
+#ifndef __TKE_VK__
+#define __TKE_VK__
 
 #include <vector>
 #include <string>

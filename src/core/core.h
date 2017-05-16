@@ -4,7 +4,6 @@
 #include "vk.h"
 #include "math.h"
 #include "render.h"
-#include "resource.h"
 
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)

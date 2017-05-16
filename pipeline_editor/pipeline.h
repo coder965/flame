@@ -335,7 +335,7 @@ void Stage::on_spv()
 				}
 				last_string = string;
 			}
-			break;
+				break;
 			case VALUE:
 			{
 				std::string string(yytext);
@@ -353,7 +353,7 @@ void Stage::on_spv()
 						currentReflection.binding = std::stoi(string);
 				}
 			}
-			break;
+				break;
 			case UR_MK:
 				currentReflectionType = eUniform;
 				break;
