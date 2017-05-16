@@ -1,7 +1,7 @@
 #include "select.h"
 #include "../src/core/scene.h"
 
-SelectType selectType;
+SelectType selectType = SelectType::eNull;
 void *selecting;
 
 tke::Transformer *selectTransformer()

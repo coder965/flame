@@ -7,48 +7,47 @@ namespace tke
 		front = back = left = right = up = down = turnLeft = turnRight = false;
 	}
 
-	glm::vec3 Controller::move(float &eulerX)
+	bool Controller::move(float inEulerX, glm::vec3 &outCoord, float &outEuler)
 	{
-		eulerX += baseForwardAng;
-		eulerX = glm::radians(eulerX);
-		glm::vec3 coord;
-		if (front)
+		outCoord = glm::vec3();
+		outEuler = 0.f;
+
+		inEulerX = glm::radians(inEulerX + baseForwardAng);
+
+		if (front && frontSpeed > 0.f)
 		{
-			coord.x += cos(eulerX) * frontSpeed;
-			coord.z -= sin(eulerX) * frontSpeed;
+			outCoord.x += cos(inEulerX) * frontSpeed;
+			outCoord.z -= sin(inEulerX) * frontSpeed;
 		}
-		if (back)
+		if (back && backSpeed > 0.f)
 		{
-			coord.x -= cos(eulerX) * backSpeed;
-			coord.z += sin(eulerX) * backSpeed;
+			outCoord.x -= cos(inEulerX) * backSpeed;
+			outCoord.z += sin(inEulerX) * backSpeed;
 		}
-		if (left)
+		if (left && leftSpeed > 0.f)
 		{
-			coord.x -= sin(eulerX) * leftSpeed;
-			coord.z -= cos(eulerX) * leftSpeed;
+			outCoord.x -= sin(inEulerX) * leftSpeed;
+			outCoord.z -= cos(inEulerX) * leftSpeed;
 		}
-		if (right)
+		if (right && rightSpeed > 0.f)
 		{
-			coord.x += sin(eulerX) * rightSpeed;
-			coord.z += cos(eulerX) * rightSpeed;
+			outCoord.x += sin(inEulerX) * rightSpeed;
+			outCoord.z += cos(inEulerX) * rightSpeed;
 		}
 		if (up)
 		{
-			coord.y += upSpeed;
+			outCoord.y += upSpeed;
 		}
 		if (down)
 		{
-			coord.y -= downSpeed;
+			outCoord.y -= downSpeed;
 		}
-		eulerX = 0.f;
+
 		if (turnLeft)
-		{
-			eulerX = turnSpeed[0];
-		}
+			outEuler = turnSpeed[0];
 		if (turnRight)
-		{
-			eulerX = -turnSpeed[1];
-		}
-		return coord;
+			outEuler = -turnSpeed[1];
+
+		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler != 0.f);
 	}
 }
