@@ -45,8 +45,8 @@ namespace tke
 
 		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
-			guiCurrentWindow->m_uiAcceptedMouse = true;
-			guiCurrentWindow->m_uiAcceptedKey = true;
+			guiCurrentWindow->uiAcceptedMouse = true;
+			guiCurrentWindow->uiAcceptedKey = true;
 
 			ImGui::Text(m_text.c_str());
 			if (ImGui::Button("Yes", ImVec2(120, 0)))
@@ -85,8 +85,8 @@ namespace tke
 
 		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
-			guiCurrentWindow->m_uiAcceptedMouse = true;
-			guiCurrentWindow->m_uiAcceptedKey = true;
+			guiCurrentWindow->uiAcceptedMouse = true;
+			guiCurrentWindow->uiAcceptedKey = true;
 
 			auto ok = false;
 			if (ImGui::Button("Ok##0", ImVec2(120, 0)))
@@ -124,8 +124,8 @@ namespace tke
 
 		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
-			guiCurrentWindow->m_uiAcceptedMouse = true;
-			guiCurrentWindow->m_uiAcceptedKey = true;
+			guiCurrentWindow->uiAcceptedMouse = true;
+			guiCurrentWindow->uiAcceptedKey = true;
 
 			ImGui::InputText("Input:", m_buf, MAX_PATH);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
@@ -208,8 +208,8 @@ namespace tke
 		bool changeDir = false;
 		if (ImGui::BeginPopupModal("DirectoryDialog", nullptr, 0))
 		{
-			guiCurrentWindow->m_uiAcceptedMouse = true;
-			guiCurrentWindow->m_uiAcceptedKey = true;
+			guiCurrentWindow->uiAcceptedMouse = true;
+			guiCurrentWindow->uiAcceptedKey = true;
 
 			ImGui::Text("Path:%s*.*", m_path.c_str());
 			ImGui::SameLine();
@@ -274,8 +274,8 @@ namespace tke
 		bool changeDir = false;
 		if (ImGui::BeginPopupModal("OpenFileDialog", NULL, 0))
 		{
-			guiCurrentWindow->m_uiAcceptedMouse = true;
-			guiCurrentWindow->m_uiAcceptedKey = true;
+			guiCurrentWindow->uiAcceptedMouse = true;
+			guiCurrentWindow->uiAcceptedKey = true;
 
 			ImGui::Text("Path:%s*.*", m_path.c_str());
 			ImGui::SameLine();
@@ -337,8 +337,8 @@ namespace tke
 		bool changeDir = false;
 		if (ImGui::BeginPopupModal("SaveFileDialog", nullptr, 0))
 		{
-			guiCurrentWindow->m_uiAcceptedMouse = true;
-			guiCurrentWindow->m_uiAcceptedKey = true;
+			guiCurrentWindow->uiAcceptedMouse = true;
+			guiCurrentWindow->uiAcceptedKey = true;
 
 			ImGui::Text("Path:%s*.*", m_path.c_str());
 			ImGui::SameLine();
@@ -415,45 +415,35 @@ namespace tke
 			return;
 		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-		vkResetCommandBuffer(guiCurrentWindow->m_uiCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-
-		VkCommandBufferInheritanceInfo inheritanceInfo = {};
-		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritanceInfo.renderPass = guiCurrentWindow->m_uiRenderPass;
-		inheritanceInfo.subpass = guiCurrentWindow->m_uiSubpassIndex;
-		inheritanceInfo.framebuffer = guiCurrentWindow->m_uiFramebuffer;
-
-		vk::beginCommandBuffer(guiCurrentWindow->m_uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
-
 		// Create the Vertex Buffer:
-		static VertexBuffer	g_VertexBuffer;
+		static VertexBuffer	vertexBuffer;
 		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
-		if (!g_VertexBuffer.m_buffer || g_VertexBuffer.m_size < vertex_size)
+		if (!vertexBuffer.m_buffer || vertexBuffer.m_size < vertex_size)
 		{
-			g_VertexBuffer.destory();
-			g_VertexBuffer.create(vertex_size);
+			vertexBuffer.destory();
+			vertexBuffer.create(vertex_size);
 		}
 
 		// Create the Index Buffer:
-		static IndexBuffer g_IndexBuffer;
+		static IndexBuffer indexBuffer;
 		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-		if (!g_IndexBuffer.m_buffer || g_IndexBuffer.m_size < index_size)
+		if (!indexBuffer.m_buffer || indexBuffer.m_size < index_size)
 		{
-			g_IndexBuffer.destory();
-			g_IndexBuffer.create(index_size);
+			indexBuffer.destory();
+			indexBuffer.create(index_size);
 		}
 
-		static StagingBuffer g_StagingBuffer;
+		static StagingBuffer stagingBuffer;
 		auto totalSize = vertex_size + index_size;
-		if (g_StagingBuffer.m_size < totalSize)
+		if (stagingBuffer.m_size < totalSize)
 		{
-			g_StagingBuffer.destory();
-			g_StagingBuffer.create(totalSize);
+			stagingBuffer.destory();
+			stagingBuffer.create(totalSize);
 		}
 
 		// Upload Vertex and index Data:
 		{
-			auto map = vk::mapMemory(g_StagingBuffer.m_memory, 0, totalSize);
+			auto map = vk::mapMemory(stagingBuffer.m_memory, 0, totalSize);
 			auto vtx_dst = (ImDrawVert*)map;
 			auto idx_dst = (ImDrawIdx*)((char*)map + vertex_size);
 			for (int n = 0; n < draw_data->CmdListsCount; n++)
@@ -464,30 +454,39 @@ namespace tke
 				vtx_dst += cmd_list->VtxBuffer.Size;
 				idx_dst += cmd_list->IdxBuffer.Size;
 			}
-			vk::unmapMemory(g_StagingBuffer.m_memory);
+			vk::unmapMemory(stagingBuffer.m_memory);
 
-			vk::copyBuffer(g_StagingBuffer.m_buffer, g_VertexBuffer.m_buffer, vertex_size, 0, 0);
-			vk::copyBuffer(g_StagingBuffer.m_buffer, g_IndexBuffer.m_buffer, index_size, vertex_size, 0);
+			vk::copyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
+			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
 		}
+
+		vkResetCommandBuffer(guiCurrentWindow->uiCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
+		VkCommandBufferInheritanceInfo inheritanceInfo = {};
+		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+		inheritanceInfo.renderPass = guiCurrentWindow->uiRenderPass;
+		inheritanceInfo.subpass = guiCurrentWindow->uiSubpassIndex;
+		inheritanceInfo.framebuffer = guiCurrentWindow->uiFramebuffer;
+
+		vk::beginCommandBuffer(guiCurrentWindow->uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
 
 		// Bind Vertex And Index Buffer:
 		{
-			VkBuffer vertex_buffers[1] = { g_VertexBuffer.m_buffer };
 			VkDeviceSize vertex_offset[1] = { 0 };
-			vkCmdBindVertexBuffers(guiCurrentWindow->m_uiCommandBuffer, 0, 1, vertex_buffers, vertex_offset);
-			vkCmdBindIndexBuffer(guiCurrentWindow->m_uiCommandBuffer, g_IndexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindVertexBuffers(guiCurrentWindow->uiCommandBuffer, 0, 1, &vertexBuffer.m_buffer, vertex_offset);
+			vkCmdBindIndexBuffer(guiCurrentWindow->uiCommandBuffer, indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
 		}
 
 		// Setup scale and translation:
 		{
 			auto v = glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f);
-			vkCmdPushConstants(guiCurrentWindow->m_uiCommandBuffer, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
+			vkCmdPushConstants(guiCurrentWindow->uiCommandBuffer, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
 		}
 
 		// Bind pipeline and descriptor sets:
 		{
-			vkCmdBindPipeline(guiCurrentWindow->m_uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, guiCurrentWindow->m_uiPipeline);
-			vkCmdBindDescriptorSets(guiCurrentWindow->m_uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
+			vkCmdBindPipeline(guiCurrentWindow->uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, guiCurrentWindow->uiPipeline);
+			vkCmdBindDescriptorSets(guiCurrentWindow->uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
 		}
 
 		// Render the command lists:
@@ -512,22 +511,22 @@ namespace tke
 					scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
 					scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
 					scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
-					vkCmdSetScissor(guiCurrentWindow->m_uiCommandBuffer, 0, 1, &scissor);
-					vkCmdDrawIndexed(guiCurrentWindow->m_uiCommandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
+					vkCmdSetScissor(guiCurrentWindow->uiCommandBuffer, 0, 1, &scissor);
+					vkCmdDrawIndexed(guiCurrentWindow->uiCommandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
 				}
 				idx_offset += pcmd->ElemCount;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
 
-		vkEndCommandBuffer(guiCurrentWindow->m_uiCommandBuffer);
+		vkEndCommandBuffer(guiCurrentWindow->uiCommandBuffer);
 	}
 
 	GuiWindow::GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
 		: Window(cx, cy, title, windowStyle, windowStyleEx, hasFrame)
 	{
 		ready = false;
-		m_uiCommandBuffer = vk::allocateSecondaryCommandBuffer();
+		uiCommandBuffer = vk::allocateSecondaryCommandBuffer();
 	}
 
 	void GuiWindow::keyDownEvent(int wParam)
@@ -564,18 +563,18 @@ namespace tke
 	void GuiWindow::initUi(VkRenderPass uiRenderPass, uint32_t uiSubpassIndex)
 	{
 		assert(!ready);
-		m_uiRenderPass = uiRenderPass;
-		m_uiSubpassIndex = uiSubpassIndex;
+		uiRenderPass = uiRenderPass;
+		uiSubpassIndex = uiSubpassIndex;
 		VkCommandBufferInheritanceInfo inheritanceInfo = {};
 		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritanceInfo.renderPass = m_uiRenderPass;
-		inheritanceInfo.subpass = m_uiSubpassIndex;
-		vk::beginCommandBuffer(m_uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
-		vkEndCommandBuffer(m_uiCommandBuffer);
+		inheritanceInfo.renderPass = uiRenderPass;
+		inheritanceInfo.subpass = uiSubpassIndex;
+		vk::beginCommandBuffer(uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
+		vkEndCommandBuffer(uiCommandBuffer);
 		{
 			guiCurrentWindow = this;
-			m_uiPipeline = g_Pipeline.getPipeline(m_cx, m_cy, m_uiRenderPass, m_uiSubpassIndex);
-			m_uiDialogs = new Dialogs;
+			uiPipeline = g_Pipeline.getPipeline(cx, cy, uiRenderPass, uiSubpassIndex);
+			uiDialogs = new Dialogs;
 
 			static bool first = true;
 
@@ -612,7 +611,7 @@ namespace tke
 			io.SetClipboardTextFn = _SetClipboardCallback;
 			io.GetClipboardTextFn = _GetClipboardCallback;
 
-			m_uiContext = ImGui::GetCurrentContext();
+			uiContext = ImGui::GetCurrentContext();
 			if (!lastContext) ImGui::SetCurrentContext(lastContext);
 		}
 		ready = true;
@@ -624,14 +623,14 @@ namespace tke
 
 		guiCurrentWindow = this;
 
-		m_uiAcceptedMouse = false;
-		m_uiAcceptedKey = false;
+		uiAcceptedMouse = false;
+		uiAcceptedKey = false;
 
-		ImGui::SetCurrentContext((ImGuiContext*)m_uiContext);
+		ImGui::SetCurrentContext((ImGuiContext*)uiContext);
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		io.DisplaySize = ImVec2((float)m_cx, (float)m_cy);
+		io.DisplaySize = ImVec2((float)cx, (float)cy);
 		io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
 		static double g_Time = 0.0;
@@ -657,8 +656,8 @@ namespace tke
 	{
 		ImGui::Render();
 
-		m_uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
-		m_uiAcceptedKey = ImGui::IsAnyItemActive();
+		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
+		uiAcceptedKey = ImGui::IsAnyItemActive();
 
 		cs.unlock();
 	}

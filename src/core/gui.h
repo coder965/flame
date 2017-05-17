@@ -108,15 +108,15 @@ namespace tke
 
 	struct GuiWindow : Window
 	{
-		void *m_uiContext = nullptr;
-		VkRenderPass m_uiRenderPass = VK_NULL_HANDLE;
-		uint32_t m_uiSubpassIndex = -1;
-		VkPipeline m_uiPipeline;
-		VkFramebuffer m_uiFramebuffer = VK_NULL_HANDLE;
-		VkCommandBuffer m_uiCommandBuffer = VK_NULL_HANDLE;
-		bool m_uiAcceptedMouse = false;
-		bool m_uiAcceptedKey = false;
-		Dialogs *m_uiDialogs = nullptr;
+		void *uiContext = nullptr;
+		VkRenderPass uiRenderPass = VK_NULL_HANDLE;
+		uint32_t uiSubpassIndex = -1;
+		VkPipeline uiPipeline;
+		VkFramebuffer uiFramebuffer = VK_NULL_HANDLE;
+		VkCommandBuffer uiCommandBuffer = VK_NULL_HANDLE;
+		bool uiAcceptedMouse = false;
+		bool uiAcceptedKey = false;
+		Dialogs *uiDialogs = nullptr;
 
 		virtual void keyDownEvent(int) override;
 		virtual void keyUpEvent(int) override;

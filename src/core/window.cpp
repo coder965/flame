@@ -6,41 +6,36 @@ namespace tke
 {
 	Window *currentWindow = nullptr;
 
-	Window::Window(int cx, int cy, const char *title,
-		unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
+	Window::Window(int _cx, int _cy, const std::string &_title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
 	{
-		m_cx = cx;
-		m_cy = cy;
-		m_title = title;
+		cx = _cx;
+		cy = _cy;
+		title = _title;
 
 		if (hasFrame)
 		{
-			RECT rect;
-			rect.left = 0;
-			rect.top = 0;
-			rect.right = cx;
-			rect.bottom = cy;
+			RECT rect = { 0, 0, _cx, _cy };
 			AdjustWindowRect(&rect, WS_CAPTION, false);
-			cx = rect.right - rect.left;
-			cy = rect.bottom - rect.top;
+			_cx = rect.right - rect.left;
+			_cy = rect.bottom - rect.top;
 		}
-		hWnd = CreateWindowExA(windowStyleEx, "wndClass", title, windowStyle, (screenCx - cx) / 2, (screenCy - cy) / 2, cx, cy, NULL, NULL, hInst, NULL);
+		hWnd = CreateWindowExA(windowStyleEx, "wndClass", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
 
 		assert(hWnd);
 
 		VkImage images[2];
-		vk::createSwapchain(hWnd, m_cx, m_cy, m_surface, m_swapchain, images);
+		vk::createSwapchain(hWnd, cx, cy, surface, swapchain, images);
 		for (int i = 0; i < 2; i++)
 		{
-			m_image[i].type = Image::eSwapchain;
-			m_image[i].m_width = cx;
-			m_image[i].m_height = cy;
-			m_image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
-			m_image[i].m_format = vk::swapchainFormat;
-			m_image[i].m_image = images[i];
+			image[i].type = Image::eSwapchain;
+			image[i].m_width = cx;
+			image[i].m_height = cy;
+			image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
+			image[i].m_format = vk::swapchainFormat;
+			image[i].m_image = images[i];
 		}
 
-		m_imageAvailable = vk::createSemaphore();
+		imageAvailable = vk::createSemaphore();
 	}
 
 	Window::~Window()
@@ -50,7 +45,7 @@ namespace tke
 
 	void Window::perpareFrame()
 	{
-		m_imageIndex = vk::acquireNextImage(m_swapchain, m_imageAvailable);
+		imageIndex = vk::acquireNextImage(swapchain, imageAvailable);
 	}
 
 	void Window::endFrame(VkSemaphore waitSemaphore)
@@ -60,8 +55,8 @@ namespace tke
 		info.waitSemaphoreCount = 1;
 		info.pWaitSemaphores = &waitSemaphore;
 		info.swapchainCount = 1;
-		info.pSwapchains = &m_swapchain;
-		info.pImageIndices = &m_imageIndex;
+		info.pSwapchains = &swapchain;
+		info.pImageIndices = &imageIndex;
 		vk::queuePresent(&info);
 	}
 
@@ -222,8 +217,8 @@ namespace tke
 		auto _t = GetTickCount();
 		if (_t - lastTime >= 1000)
 		{
-			FPS = m_frameCount - lastFrame;
-			lastFrame = m_frameCount;
+			FPS = frameCount - lastFrame;
+			lastFrame = frameCount;
 			lastTime = _t;
 		}
 		return FPS;
@@ -246,7 +241,7 @@ namespace tke
 			else if (currentWindow->focus)
 			{
 				currentWindow->mouseEvent();
-				currentWindow->m_frameCount++;
+				currentWindow->frameCount++;
 				currentWindow->renderEvent();
 				currentWindow->clearInput();
 			}

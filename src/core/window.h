@@ -14,27 +14,27 @@ namespace tke
 	{
 		bool ready = true;
 
-		std::string m_title;
-		int m_cx, m_cy;
+		std::string title;
+		int cx = 0, cy = 0;
 
 		bool doubleClick = false;
 		bool leftDown = false, leftUp = false;
 		bool leftPressing = false, middlePressing = false, rightPressing = false;
-		int mouseX, mouseY;
-		int mousePrevX, mousePrevY;
-		int mouseScroll;
+		int mouseX = 0, mouseY = 0;
+		int mousePrevX = 0, mousePrevY = 0;
+		int mouseScroll = 0;
 		bool focus = false;
 		std::vector<std::string> dropFiles;
 
 		HWND hWnd = nullptr;
 
-		std::uint32_t m_frameCount = 0;
+		std::uint32_t frameCount = 0;
 
-		VkSurfaceKHR m_surface;
-		VkSwapchainKHR m_swapchain;
-		Image m_image[2];
-		uint32_t m_imageIndex;
-		VkSemaphore m_imageAvailable;
+		VkSurfaceKHR surface;
+		VkSwapchainKHR swapchain;
+		Image image[2];
+		uint32_t imageIndex;
+		VkSemaphore imageAvailable;
 
 		virtual void keyDownEvent(int);
 		virtual void keyUpEvent(int);
@@ -43,7 +43,7 @@ namespace tke
 		virtual void renderEvent();
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-		Window(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
+		Window(int _cx, int _cy, const std::string &_title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
 		~Window();
 		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 		void clearInput();

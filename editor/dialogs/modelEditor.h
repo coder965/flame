@@ -31,7 +31,7 @@ namespace dialog_model_editor
 				{
 					if (selectingModel)
 					{
-						pMainWindow->m_uiDialogs->yesNoDialog.start("Need Copy Texture?", [](bool opt) {
+						pMainWindow->uiDialogs->yesNoDialog.start("Need Copy Texture?", [](bool opt) {
 							tke::TKM::save(selectingModel, selectingModel->filepath + selectingModel->name + ".tkm", opt);
 						});
 					}
@@ -45,9 +45,9 @@ namespace dialog_model_editor
 					if (selectingModel)
 					{
 						static std::string filename;
-						pMainWindow->m_uiDialogs->saveFileDialog.start([](const std::string &str) {
+						pMainWindow->uiDialogs->saveFileDialog.start([](const std::string &str) {
 							filename = str;
-							pMainWindow->m_uiDialogs->yesNoDialog.start("Need Copy Texture?", [](bool opt) {
+							pMainWindow->uiDialogs->yesNoDialog.start("Need Copy Texture?", [](bool opt) {
 								tke::TKM::save(selectingModel, filename, opt);
 							});
 						});
@@ -61,7 +61,7 @@ namespace dialog_model_editor
 				{
 					if (selectingModel)
 					{
-						pMainWindow->m_uiDialogs->openFileDialog.start([](const std::string &str) {
+						pMainWindow->uiDialogs->openFileDialog.start([](const std::string &str) {
 							selectingModel->loadDat(str);
 						});
 					}
@@ -74,7 +74,7 @@ namespace dialog_model_editor
 				{
 					if (selectingModel)
 					{
-						pMainWindow->m_uiDialogs->saveFileDialog.start([](const std::string &str) {
+						pMainWindow->uiDialogs->saveFileDialog.start([](const std::string &str) {
 							selectingModel->saveDat(str);
 						});
 					}
@@ -168,8 +168,8 @@ namespace dialog_model_editor
 
 					if (ImGui::BeginPopupModal("Select Material", nullptr, 0))
 					{
-						tke::guiCurrentWindow->m_uiAcceptedMouse = true;
-						tke::guiCurrentWindow->m_uiAcceptedKey = true;
+						tke::guiCurrentWindow->uiAcceptedMouse = true;
+						tke::guiCurrentWindow->uiAcceptedKey = true;
 
 						if (ImGui::Button("Cancel", ImVec2(120, 0))) 
 						{ 

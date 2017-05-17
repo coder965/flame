@@ -180,8 +180,8 @@ struct MainWindow : tke::GuiWindow
 			progressCmd[0] = tke::vk::allocateCommandBuffer();
 			progressCmd[1] = tke::vk::allocateCommandBuffer();
 
-			_resources.setImage(m_image, "Window.Image");
-			_resources.setCmd(m_uiCommandBuffer, "Ui.Cmd");
+			_resources.setImage(image, "Window.Image");
+			_resources.setCmd(uiCommandBuffer, "Ui.Cmd");
 
 			progressRenderer->setup();
 
@@ -555,7 +555,7 @@ struct MainWindow : tke::GuiWindow
 	virtual void keyDownEvent(int key) override
 	{
 		tke::Window::keyDownEvent(key);
-		if (pMainWindow->m_uiAcceptedKey)
+		if (pMainWindow->uiAcceptedKey)
 			return;
 
 		if (controllerKeyDown(&tke::scene->camera, key))
@@ -638,7 +638,7 @@ struct MainWindow : tke::GuiWindow
 
 	virtual void mouseEvent() override
 	{
-		if (m_uiAcceptedMouse)
+		if (uiAcceptedMouse)
 			return;
 
 		if (leftDown)
@@ -777,7 +777,7 @@ struct MainWindow : tke::GuiWindow
 	{
 		perpareFrame();
 
-		m_uiFramebuffer = progressRenderer->vkFramebuffer[m_imageIndex];
+		uiFramebuffer = progressRenderer->vkFramebuffer[imageIndex];
 		lockUi();
 		ImGui::Begin("StartUp", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::TextUnformatted(tke::majorProgressText().c_str());
@@ -785,7 +785,7 @@ struct MainWindow : tke::GuiWindow
 		ImGui::End();
 		unlockUi();
 
-		tke::vk::queueSubmit(m_imageAvailable, renderFinishedSemaphore, progressCmd[m_imageIndex]);
+		tke::vk::queueSubmit(imageAvailable, renderFinishedSemaphore, progressCmd[imageIndex]);
 
 		endFrame(renderFinishedSemaphore);
 
@@ -823,7 +823,7 @@ struct MainWindow : tke::GuiWindow
 			ImGui::End();
 		}
 
-		m_uiDialogs->show();
+		uiDialogs->show();
 
 		tke::scene->update(masterRenderer);
 		if (currentTool) currentTool->update();
@@ -840,7 +840,7 @@ struct MainWindow : tke::GuiWindow
 
 		perpareFrame();
 
-		tke::vk::queueSubmit(m_imageAvailable, renderFinishedSemaphore, mainCmd[m_imageIndex]);
+		tke::vk::queueSubmit(imageAvailable, renderFinishedSemaphore, mainCmd[imageIndex]);
 
 		endFrame(renderFinishedSemaphore);
 
@@ -879,7 +879,7 @@ int main()
 	tke::initPickUp();
 	tke::initGeneralModels();
 
-	tke::setReporter([](const std::string &str) { pMainWindow->m_uiDialogs->messageDialog.add(str); });
+	tke::setReporter([](const std::string &str) { pMainWindow->uiDialogs->messageDialog.add(str); });
 
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();

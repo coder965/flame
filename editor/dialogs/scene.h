@@ -146,7 +146,7 @@ namespace dialog_scene
 
 			if (ImGui::Button("Open"))
 			{
-				pMainWindow->m_uiDialogs->openFileDialog.start([](const std::string &str) {
+				pMainWindow->uiDialogs->openFileDialog.start([](const std::string &str) {
 					auto pModel = tke::createModel(str);
 					if (pModel) tke::scene->pModels.push_back(pModel);
 				});
@@ -162,7 +162,7 @@ namespace dialog_scene
 			}
 			if (ImGui::Button("Load"))
 			{
-				pMainWindow->m_uiDialogs->openFileDialog.start([](const std::string &str) {
+				pMainWindow->uiDialogs->openFileDialog.start([](const std::string &str) {
 					auto pAnimTemp = tke::createAnimation(str);
 					if (pAnimTemp) tke::scene->pAnimTemps.push_back(pAnimTemp);
 				});
@@ -172,7 +172,7 @@ namespace dialog_scene
 			{
 				if (selectAnimTemp)
 				{
-					pMainWindow->m_uiDialogs->saveFileDialog.start([](const std::string &str) {
+					pMainWindow->uiDialogs->saveFileDialog.start([](const std::string &str) {
 						tke::TKA::save(selectAnimTemp, str);
 					});
 				}

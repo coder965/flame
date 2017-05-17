@@ -58,11 +58,11 @@ namespace tke
 		miscPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
 		miscPass->addDependency(mrtPass);
 
-		uiPass = renderer->addPass(pWindow->m_uiCommandBuffer);
+		uiPass = renderer->addPass(pWindow->uiCommandBuffer);
 		uiPass->addColorAttachment(&uiImage, VkClearValue{ 0.f, 0.f, 0.f, 1.f });
 
 		auto combinePass = renderer->addPass();
-		combinePass->addColorAttachment(pWindow->m_image);
+		combinePass->addColorAttachment(pWindow->image);
 		combinePass->addDependency(deferredPass);
 		combinePass->addDependency(miscPass);
 		combinePass->addDependency(uiPass);
