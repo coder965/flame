@@ -1,0 +1,21 @@
+<renderer name="" cx="1600" cy="800">
+	<passes>
+		<pass type="" name="pass1" secondary_cmd_name="">
+			<attachments>
+				<color>
+					<attachment name="1" image_name="Window.Image" level="0" layer="0" aspect="" clear="false" clear_r="0.000000" clear_g="0.000000" clear_b="0.000000" clear_a="0.000000" clear_depth="1.000000" clear_stencil="0"/>
+				</color>
+				<depth_stencil/>
+			</attachments>
+		</pass>
+		<pass type="" name="ui" secondary_cmd_name="Ui.Cmd">
+			<attachments>
+				<color>
+					<attachment name="1" image_name="Window.Image" level="0" layer="0" aspect="" clear="false" clear_r="0.000000" clear_g="0.000000" clear_b="0.000000" clear_a="0.000000" clear_depth="1.000000" clear_stencil="0"/>
+				</color>
+				<depth_stencil/>
+			</attachments>
+		</pass>
+	</passes>
+</renderer>
+

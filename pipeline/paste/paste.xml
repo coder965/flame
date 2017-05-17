@@ -1,10 +1,10 @@
-<pipeline name="" cx="800" cy="300" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
+<pipeline name="" cx="1600" cy="800" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
 	<link binding="-1" array_element="0" descriptor_name="tex" resource_name="StartUp.Texture" sampler="plain"/>
 	<link binding="-1" array_element="0" descriptor_name="PROGRESS" resource_name="StartUp.UniformBuffer" sampler="none"/>
 	<stage filename="../fullscreenUv.vert"/>
 	<stage filename="paste.frag">
 		<descriptor type="image_n_sampler" binding="0" count="1" name="tex"/>
-		<descriptor type="uniform_buffer" binding="1" count="1" name="PROGRESS"/>
+		<descriptor type="uniform_buffer" binding="1" count="1" name="ALPHA"/>
 	</stage>
 </pipeline>
 
