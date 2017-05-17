@@ -5,12 +5,12 @@
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
 	<stage filename="mrt.vert">
-		<descriptor name="OBJECT" type="uniform_buffer" binding="1" count="1"/>
-		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
+		<descriptor type="uniform_buffer" binding="1" count="1" name="OBJECT"/>
+		<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
 	</stage>
 	<stage filename="mrt.frag">
-		<descriptor name="mapSamplers" type="image_n_sampler" binding="3" count="1024"/>
-		<descriptor name="MATERIAL" type="uniform_buffer" binding="2" count="1"/>
+		<descriptor type="image_n_sampler" binding="3" count="1024" name="mapSamplers"/>
+		<descriptor type="uniform_buffer" binding="2" count="1" name="MATERIAL"/>
 	</stage>
 </pipeline>
 

@@ -3,8 +3,8 @@
 	<link binding="-1" array_element="0" descriptor_name="INSTANCE" resource_name="LightMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="1" descriptor_name="INSTANCE" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
 	<stage filename="wireFrame.vert">
-		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
-		<descriptor name="INSTANCE" type="uniform_buffer" binding="1" count="2"/>
+		<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
+		<descriptor type="uniform_buffer" binding="1" count="2" name="INSTANCE"/>
 		<push_constant offset="0" size="32"/>
 	</stage>
 	<stage filename="wireFrame.frag">

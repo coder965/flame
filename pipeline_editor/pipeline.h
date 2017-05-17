@@ -380,7 +380,7 @@ void Stage::on_spv()
 				if (r.binding != -1 && r.type == "8b5e") // SAMPLER
 				{
 					tke::Descriptor d;
-					d.type = tke::DescriptorType::sampler;
+					d.type = tke::DescriptorType::image_n_sampler;
 					d.name = r.name;
 					d.binding = r.binding;
 					d.count = r.size;

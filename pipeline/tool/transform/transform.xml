@@ -2,10 +2,10 @@
 	<link binding="-1" array_element="0" descriptor_name="VERT_DATA" resource_name="Editor.Tool.Transform.Vert.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="FRAG_DATA" resource_name="Editor.Tool.Transform.Frag.UniformBuffer" sampler="none"/>
 	<stage filename="transform.vert">
-		<descriptor name="VERT_DATA" type="uniform_buffer" binding="0" count="1"/>
+		<descriptor type="uniform_buffer" binding="0" count="1" name="VERT_DATA"/>
 	</stage>
 	<stage filename="transform.frag">
-		<descriptor name="FRAG_DATA" type="uniform_buffer" binding="1" count="1"/>
+		<descriptor type="uniform_buffer" binding="1" count="1" name="FRAG_DATA"/>
 	</stage>
 </pipeline>
 
