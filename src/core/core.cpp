@@ -46,77 +46,69 @@ namespace tke
 	float _minorProgress;
 	std::string _majorProgressText;
 	std::string _minorProgressText;
-	CRITICAL_SECTION progress_cs;
-	struct Init
-	{
-		Init()
-		{
-			InitializeCriticalSection(&progress_cs);
-		}
-	};
-	static Init _init;
+	CriticalSection progress_cs;
 
 	void reportMajorProgress(float progress)
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		printf("major progress:%f\n", progress);
 		_majorProgress = progress;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 	}
 
 	void reportMinorProgress(float progress)
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		printf("minor progress:%f\n", progress);
 		_minorProgress = progress;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 	}
 
 	void setMajorProgressText(const std::string &str)
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		printf("%s\n", str.c_str());
 		_majorProgressText = str;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 	}
 
 	void setMinorProgressText(const std::string &str)
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		printf("%s\n", str.c_str());
 		_minorProgressText = str;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 	}
 
 	float majorProgress()
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		auto progress = _majorProgress;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 		return progress;
 	}
 
 	float minorProgress()
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		auto progress = _minorProgress;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 		return progress;
 	}
 
 	std::string majorProgressText()
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		auto text = _majorProgressText;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 		return text;
 	}
 
 	std::string minorProgressText()
 	{
-		EnterCriticalSection(&progress_cs);
+		progress_cs.lock();
 		auto text = _minorProgressText;
-		LeaveCriticalSection(&progress_cs);
+		progress_cs.unlock();
 		return text;
 	}
 

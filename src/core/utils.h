@@ -51,6 +51,23 @@ struct EnsureConst
 
 namespace tke
 {
+	struct CriticalSection
+	{
+		CRITICAL_SECTION v;
+		inline CriticalSection() 
+		{
+			InitializeCriticalSection(&v);
+		}
+		inline void lock()
+		{
+			EnterCriticalSection(&v);
+		}
+		inline void unlock()
+		{
+			LeaveCriticalSection(&v);
+		}
+	};
+
 	enum class Err
 	{
 		eNoErr,

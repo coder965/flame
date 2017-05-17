@@ -392,7 +392,7 @@ namespace tke
 		saveFileDialog.show();
 	}
 
-	static CRITICAL_SECTION cs;
+	static CriticalSection cs;
 
 	static Image g_FontImage;
 
@@ -620,7 +620,7 @@ namespace tke
 
 	void GuiWindow::lockUi()
 	{
-		EnterCriticalSection(&cs);
+		cs.lock();
 
 		guiCurrentWindow = this;
 
@@ -660,7 +660,7 @@ namespace tke
 		m_uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
 		m_uiAcceptedKey = ImGui::IsAnyItemActive();
 
-		LeaveCriticalSection(&cs);
+		cs.unlock();
 	}
 
 	std::vector<Image*> _icons;
@@ -694,8 +694,6 @@ namespace tke
 		static bool first = true;
 		if (!first) return;
 		first = false;
-
-		InitializeCriticalSection(&cs);
 
 		ImGuiIO& io = ImGui::GetIO();
 		unsigned char* pixels;
