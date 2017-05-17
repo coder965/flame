@@ -67,8 +67,14 @@ namespace tke
 
 	void setReporter(void(*_reporter)(const std::string &));
 	void report(const std::string &str);
-	void setProgressReporter(void(*_reporter)(int, float));
-	void reportProgress(int which, float progress);
+	void reportMajorProgress(float progress);
+	void reportMinorProgress(float progress);
+	void setMajorProgressText(const std::string &str);
+	void setMinorProgressText(const std::string &str);
+	float majorProgress();
+	float minorProgress();
+	std::string majorProgressText();
+	std::string minorProgressText();
 
 	void postRedrawRequest();
 

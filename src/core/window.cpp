@@ -4,41 +4,7 @@
 
 namespace tke
 {
-	void createClass(LRESULT CALLBACK dialogProc(HWND, UINT, WPARAM, LPARAM), char *className, int extraWindowSize)
-	{
-		WNDCLASSEXA wcex = {};
-		wcex.cbSize = sizeof(WNDCLASSEXA);
-		wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wcex.lpfnWndProc = dialogProc;
-		wcex.cbWndExtra = extraWindowSize;
-		wcex.hInstance = hInst;
-		wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wcex.lpszClassName = className;
-		RegisterClassExA(&wcex);
-	}
-
-	HWND createWindow(int x, int y, int cx, int cy, const char *className, const char *title, bool bFrame, bool bCenter, unsigned int style, unsigned int exStyle, HWND parent, HMENU hMenu)
-	{
-		if (bFrame)
-		{
-			RECT rect;
-			rect.left = 0;
-			rect.top = 0;
-			rect.right = cx;
-			rect.bottom = cy;
-			AdjustWindowRect(&rect, WS_CAPTION, hMenu != NULL);
-			cx = rect.right - rect.left;
-			cy = rect.bottom - rect.top;
-		}
-		if (bCenter)
-		{
-			x = (screenCx - cx) / 2;
-			y = (screenCy - cy) / 2;
-		}
-		return CreateWindowExA(exStyle, className, title, style, x, y, cx, cy, parent, hMenu, hInst, NULL);
-	}
-
-	std::vector<Window *> pWindows;
+	Window *currentWindow = nullptr;
 
 	Window::Window(int cx, int cy, const char *title,
 		unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
@@ -47,13 +13,20 @@ namespace tke
 		m_cy = cy;
 		m_title = title;
 
-		hWnd = createWindow(0, 0, m_cx, m_cy, "wndClass", m_title.c_str(),
-			hasFrame, true, windowStyle, windowStyleEx, NULL, NULL);
+		if (hasFrame)
+		{
+			RECT rect;
+			rect.left = 0;
+			rect.top = 0;
+			rect.right = cx;
+			rect.bottom = cy;
+			AdjustWindowRect(&rect, WS_CAPTION, false);
+			cx = rect.right - rect.left;
+			cy = rect.bottom - rect.top;
+		}
+		hWnd = CreateWindowExA(windowStyleEx, "wndClass", title, windowStyle, (screenCx - cx) / 2, (screenCy - cy) / 2, cx, cy, NULL, NULL, hInst, NULL);
 
-		if (!hWnd) return;
-
-		SetWindowLongPtr(hWnd, 0, (LONG_PTR)this);
-		pWindows.push_back(this);
+		assert(hWnd);
 
 		VkImage images[2];
 		vk::createSwapchain(hWnd, m_cx, m_cy, m_surface, m_swapchain, images);
@@ -68,6 +41,11 @@ namespace tke
 		}
 
 		m_imageAvailable = vk::createSemaphore();
+	}
+
+	Window::~Window()
+	{
+		DestroyWindow(hWnd);
 	}
 
 	void Window::perpareFrame()
@@ -179,29 +157,26 @@ namespace tke
 
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		auto pWindow = (Window*)GetWindowLongPtr(hWnd, 0);
-		if (!pWindow) return DefWindowProc(hWnd, message, wParam, lParam);
+		if (!currentWindow) return DefWindowProc(hWnd, message, wParam, lParam);
 
-		pWindow->receiveInput(hWnd, message, wParam, lParam);
-
-		pWindow->extraMsgEvent(hWnd, message, wParam, lParam);
+		currentWindow->receiveInput(hWnd, message, wParam, lParam);
+		currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
 
 		LRESULT res = 0;
 
 		switch (message)
 		{
 		case WM_KEYDOWN:
-			pWindow->keyDownEvent(wParam);
+			currentWindow->keyDownEvent(wParam);
 			break;
 		case WM_KEYUP:
-			pWindow->keyUpEvent(wParam);
+			currentWindow->keyUpEvent(wParam);
 			break;
 		case WM_CHAR:
-			pWindow->charEvent(wParam);
+			currentWindow->charEvent(wParam);
 			break;
 		case WM_DESTROY:
-			pWindow->deadCode = 1;
-			pWindow->deadEvent();
+			currentWindow->deadEvent();
 			break;
 		default:
 			res = DefWindowProc(hWnd, message, wParam, lParam);
@@ -214,7 +189,14 @@ namespace tke
 	{
 		_WindowInit()
 		{
-			createClass(wndProc, "wndClass", sizeof(LONG_PTR));
+			WNDCLASSEXA wcex = {};
+			wcex.cbSize = sizeof(WNDCLASSEXA);
+			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+			wcex.lpfnWndProc = wndProc;
+			wcex.hInstance = hInst;
+			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcex.lpszClassName = "wndClass";
+			RegisterClassExA(&wcex);
 		}
 	};
 	static _WindowInit _windowInit;
@@ -231,6 +213,7 @@ namespace tke
 	void Window::show()
 	{
 		assert(ready);
+		currentWindow = this;
 		ShowWindow(hWnd, SW_SHOWNORMAL);
 		SetForegroundWindow(hWnd);
 	}
@@ -265,27 +248,13 @@ namespace tke
 			}
 			else
 			{
-				for (auto it = pWindows.begin(); it != pWindows.end(); )
+				if (currentWindow && currentWindow->focus)
 				{
-					if ((*it)->deadCode)
-					{
-						delete (*it);
-						it = pWindows.erase(it);
-					}
-					else
-					{
-						it++;
-					}
-				}
-
-				for (auto pWindow : pWindows)
-				{
-					if (!pWindow->focus) continue;
-					pWindow->initEvent();
-					pWindow->mouseEvent();
-					pWindow->m_frameCount++;
-					pWindow->renderEvent();
-					pWindow->clearInput();
+					currentWindow->initEvent();
+					currentWindow->mouseEvent();
+					currentWindow->m_frameCount++;
+					currentWindow->renderEvent();
+					currentWindow->clearInput();
 				}
 			}
 		}

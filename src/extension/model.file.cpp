@@ -29,11 +29,12 @@ namespace tke
 				std::locale x(std::locale::classic(), new obj_ctype);
 				obj_line_ss.imbue(x);
 			}
-		}init;
+		};
+		static Init _init;
 
 		void load(Model *m, std::ifstream &file)
 		{
-			reportProgress(1, 0.f);
+			reportMinorProgress(0.f);
 
 			int currentIndex = 0;
 			int currentRenderGroupID = -1;
@@ -44,7 +45,7 @@ namespace tke
 			std::vector<glm::vec3> rawNormals;
 			std::vector<glm::ivec3> rawIndexs;
 
-			reportProgress(1, 0.1f);
+			reportMinorProgress(0.1f);
 
 			while (!file.eof())
 			{
@@ -181,11 +182,11 @@ namespace tke
 				}
 			}
 
-			reportProgress(1, 0.5f);
+			reportMinorProgress(0.5f);
 
 			m->createTangent();
 
-			reportProgress(1, 1.f);
+			reportMinorProgress(1.f);
 		}
 	}
 
@@ -300,7 +301,7 @@ namespace tke
 			static_assert(sizeof(RigidData) == 83, "");
 			static_assert(sizeof(JointData) == 124, "");
 
-			reportProgress(1, 0.f);
+			reportMinorProgress(0.f);
 
 			m->animated = true;
 
@@ -560,7 +561,7 @@ namespace tke
 				m->addJoint(p);
 			}
 
-			reportProgress(1, 1.f);
+			reportMinorProgress(1.f);
 		}
 	}
 
@@ -627,7 +628,7 @@ namespace tke
 
 		void load(Model *m, std::ifstream &file)
 		{
-			reportProgress(1, 0.f);
+			reportMinorProgress(0.f);
 
 			int textureCount = 0;
 			file >> textureCount;
@@ -643,7 +644,7 @@ namespace tke
 
 			file >> m->animated;
 
-			reportProgress(1, 0.3f);
+			reportMinorProgress(0.3f);
 
 			int vertexCount;
 			int indiceCount;
@@ -676,7 +677,7 @@ namespace tke
 				file.read((char*)m->indices.data(), indiceCount * sizeof(int));
 			}
 
-			reportProgress(1, 0.5f);
+			reportMinorProgress(0.5f);
 
 			int renderGroupCount;
 			file >> renderGroupCount;
@@ -709,7 +710,7 @@ namespace tke
 				m->renderGroups.push_back(rg);
 			}
 
-			reportProgress(1, 0.8f);
+			reportMinorProgress(0.8f);
 
 			int boneCount;
 			file >> boneCount;
@@ -834,7 +835,7 @@ namespace tke
 			file >> m->eyePosition;
 			file >> m->mainWeaponPosition;
 
-			reportProgress(1, 1.f);
+			reportMinorProgress(1.f);
 		}
 
 		static void _saveAnimation(std::ofstream &file, Model *pModel, Animation *pAnim)

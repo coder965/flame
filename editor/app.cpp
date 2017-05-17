@@ -803,39 +803,73 @@ struct MainWindow : tke::GuiWindow
 
 bool MainWindow::needRedraw = true;
 
+template<int id>
+struct D
+{
+	void operator=(tke::Image *p)
+	{
+
+	}
+
+
+};
+
+constexpr static const unsigned int names[] = {
+	CHASH("abc"),
+	CHASH("fuck")
+};
+
+constexpr int _C(int i, const unsigned int hash)
+{
+	if (i == 0) return -1;
+	if (names[i - 1] == hash) return i - 1;
+	return _C(i - 1, hash);
+}
+
+constexpr int C(const unsigned int hash)
+{
+	return _C(ARRAYSIZE(names), hash);
+}
+
+template <int n>
+struct Shit
+{
+	void fun()
+	{
+		printf("%d\n", n);
+	}
+};
+
+
 int main()
 {
+	Shit<C(CHASH("fuck"))> aaa;
+
 	auto resCx = 1600, resCy = 900;
-	auto err = tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw);
-	if (err != tke::Err::eNoErr)
-	{
-		MessageBox(NULL, tke::getErrorString(err), "Error", MB_ICONWARNING);
-		return 0;
-	}
+	tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw);
 	tke::initPickUp();
 	tke::initGeneralModels();
 
-	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, WS_EX_ACCEPTFILES, true);
-
 	tke::setReporter([](const std::string &str) { pMainWindow->m_uiDialogs->messageDialog.add(str); });
-	tke::setProgressReporter([](int which, float v) { tke::StartUpBoard::setProgress(which, v); });
 
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();
 
 	tke::StartUpBoard::run();
 
-	_beginthread([](void*) {
-		tke::StartUpBoard::setProgress(0, 0.1f);
+	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, WS_EX_ACCEPTFILES, true);
 
-		tke::StartUpBoard::setText(0, "Init");
-		tke::StartUpBoard::setText(1, "");
+	_beginthread([](void*) {
+		tke::reportMajorProgress(0.1f);
+
+		tke::setMajorProgressText("Init");
+		tke::setMinorProgressText("");
 
 		((MainWindow*)pMainWindow)->init();
 
-		tke::StartUpBoard::setProgress(0, 0.9f);
+		tke::reportMajorProgress(0.9f);
 
-		tke::StartUpBoard::setText(0, "Finish");
+		tke::setMajorProgressText("Finish");
 		tke::StartUpBoard::complete();
 
 		pMainWindow->show();

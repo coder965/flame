@@ -664,7 +664,6 @@ namespace tke
 		}
 		if (needUpdataSky)
 		{
-			std::vector<VkWriteDescriptorSet> writes;
 
 			if (skyType == SkyType::ePanorama)
 			{
@@ -698,6 +697,8 @@ namespace tke
 				if (first)
 				{
 					first = false;
+
+					std::vector<VkWriteDescriptorSet> writes;
 
 					{ // post render pass
 
@@ -768,6 +769,8 @@ namespace tke
 						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(vk::plainSampler)));
 						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[2].getInfo(vk::plainSampler)));
 					}
+
+					if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
 				}
 
 				{
@@ -783,6 +786,8 @@ namespace tke
 
 					vk::endOnceCommandBuffer(cmd);
 				}
+
+				std::vector<VkWriteDescriptorSet> writes;
 
 				for (int i = 0; i < 3; i++)
 				{
@@ -866,9 +871,9 @@ namespace tke
 					auto data = glm::vec4(1.f, 1.f, 1.f, 3);
 					ambientBuffer.update(&data, &stagingBuffer);
 				}
-			}
 
-			if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
+				if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
+			}
 
 			needUpdataSky = false;
 		}

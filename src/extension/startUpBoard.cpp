@@ -4,8 +4,6 @@
 #include "..\core\render.h"
 #include "image.file.h"
 
-#define WM_STARTUP_SETTEST (WM_USER + 100)
-
 namespace tke
 {
 	namespace StartUpBoard
@@ -16,28 +14,9 @@ namespace tke
 			eRunning
 		}state;
 
-		CRITICAL_SECTION cs;
-		glm::vec2 progress;
-		char text[2][200];
-
 		GuiWindow *pWindow;
 
 		Renderer *renderer;
-
-		void setProgress(int which, float v)
-		{
-			if (state != State::eRunning) return;
-			EnterCriticalSection(&cs);
-			progress[which] = v;
-			LeaveCriticalSection(&cs);
-		}
-
-		void setText(char which, const char *s)
-		{
-			if (state != State::eRunning) return;
-			SendMessage(pWindow->hWnd, WM_STARTUP_SETTEST, (WPARAM)s, (LPARAM)which);
-		}
-		static bool first = true;
 
 		Image *pImage;
 		UniformBuffer uniformBuffer;
@@ -49,15 +28,11 @@ namespace tke
 		{
 			using GuiWindow::GuiWindow;
 
-			virtual void deadEvent() override
-			{
-				state = State::eReady;
-			}
-
 			virtual void renderEvent() override
 			{
-				EnterCriticalSection(&cs);
-
+				glm::vec2 progress;
+				progress.x = majorProgress();
+				progress.y = minorProgress();
 				uniformBuffer.update(&progress, &stagingBuffer);
 
 				pWindow->perpareFrame();
@@ -65,8 +40,8 @@ namespace tke
 				pWindow->m_uiFramebuffer = renderer->vkFramebuffer[pWindow->m_imageIndex];
 				lockUi();
 				ImGui::Begin("StartUp", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-				ImGui::TextUnformatted(text[0]);
-				ImGui::TextUnformatted(text[1]);
+				ImGui::TextUnformatted(majorProgressText().c_str());
+				ImGui::TextUnformatted(minorProgressText().c_str());
 				ImGui::End();
 				unlockUi();
 
@@ -75,21 +50,6 @@ namespace tke
 				pWindow->endFrame(renderFinishedSemaphore);
 
 				Sleep(10);
-
-				LeaveCriticalSection(&cs);
-			}
-
-			virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) override
-			{
-				switch (message)
-				{
-				case WM_STARTUP_SETTEST:
-					EnterCriticalSection(&cs);
-					strcpy(text[lParam], (const char *)wParam);
-					LeaveCriticalSection(&cs);
-					break;
-				}
-				return 0;
 			}
 		};
 
@@ -102,8 +62,6 @@ namespace tke
 			static bool first = true;
 			if (first)
 			{
-
-				InitializeCriticalSection(&cs);
 				renderFinishedSemaphore = vk::createSemaphore();
 
 				pImage = createImage("../misc/start_up.jpg", true, false);
@@ -149,7 +107,8 @@ namespace tke
 				vkEndCommandBuffer(cmd[i]);
 			}
 
-			progress = glm::vec2(0.f);
+			reportMajorProgress(0.f);
+			reportMinorProgress(0.f);
 			state = State::eRunning;
 			pWindow->show();
 		}
@@ -157,11 +116,11 @@ namespace tke
 		void complete()
 		{
 			if (state != State::eRunning) return;
-			EnterCriticalSection(&cs);
-			progress.x = 1.f;
-			progress.y = 1.f;
-			LeaveCriticalSection(&cs);
-			SendMessage(pWindow->hWnd, WM_CLOSE, 0, 0);
+			reportMajorProgress(1.f);
+			reportMinorProgress(1.f);
+			delete pWindow;
+			tke::currentWindow = nullptr;
+			state = State::eReady;
 		}
 	}
 }

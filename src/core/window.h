@@ -28,8 +28,6 @@ namespace tke
 
 		HWND hWnd = nullptr;
 
-		int deadCode = 0;
-
 		std::uint32_t m_frameCount = 0;
 
 		VkSurfaceKHR m_surface;
@@ -48,6 +46,7 @@ namespace tke
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 		Window(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
+		~Window();
 		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 		void clearInput();
 		void show();
@@ -55,6 +54,8 @@ namespace tke
 		void perpareFrame();
 		void endFrame(VkSemaphore waitSemaphore);
 	};
+
+	extern Window *currentWindow;
 
 	void mainLoop();
 }

@@ -42,16 +42,82 @@ namespace tke
 		if (reporter) reporter(str);
 	}
 
-	void(*progressReporter)(int, float) = nullptr;
-	void setProgressReporter(void(*_reporter)(int, float))
+	float _majorProgress;
+	float _minorProgress;
+	std::string _majorProgressText;
+	std::string _minorProgressText;
+	CRITICAL_SECTION progress_cs;
+	struct Init
 	{
-		progressReporter = _reporter;
+		Init()
+		{
+			InitializeCriticalSection(&progress_cs);
+		}
+	};
+	static Init _init;
+
+	void reportMajorProgress(float progress)
+	{
+		EnterCriticalSection(&progress_cs);
+		printf("major progress:%f\n", progress);
+		_majorProgress = progress;
+		LeaveCriticalSection(&progress_cs);
 	}
 
-	void reportProgress(int which, float progress)
+	void reportMinorProgress(float progress)
 	{
-		printf("%d %f", which, progress);
-		if (progressReporter) progressReporter(which, progress);
+		EnterCriticalSection(&progress_cs);
+		printf("minor progress:%f\n", progress);
+		_minorProgress = progress;
+		LeaveCriticalSection(&progress_cs);
+	}
+
+	void setMajorProgressText(const std::string &str)
+	{
+		EnterCriticalSection(&progress_cs);
+		printf("%s\n", str.c_str());
+		_majorProgressText = str;
+		LeaveCriticalSection(&progress_cs);
+	}
+
+	void setMinorProgressText(const std::string &str)
+	{
+		EnterCriticalSection(&progress_cs);
+		printf("%s\n", str.c_str());
+		_minorProgressText = str;
+		LeaveCriticalSection(&progress_cs);
+	}
+
+	float majorProgress()
+	{
+		EnterCriticalSection(&progress_cs);
+		auto progress = _majorProgress;
+		LeaveCriticalSection(&progress_cs);
+		return progress;
+	}
+
+	float minorProgress()
+	{
+		EnterCriticalSection(&progress_cs);
+		auto progress = _minorProgress;
+		LeaveCriticalSection(&progress_cs);
+		return progress;
+	}
+
+	std::string majorProgressText()
+	{
+		EnterCriticalSection(&progress_cs);
+		auto text = _majorProgressText;
+		LeaveCriticalSection(&progress_cs);
+		return text;
+	}
+
+	std::string minorProgressText()
+	{
+		EnterCriticalSection(&progress_cs);
+		auto text = _minorProgressText;
+		LeaveCriticalSection(&progress_cs);
+		return text;
 	}
 
 	bool *_pNeedRedraw = nullptr;
