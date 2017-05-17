@@ -173,6 +173,7 @@
     <Xml Include="..\pipeline\lightFrame\lightFrame.xml">
       <SubType>Designer</SubType>
     </Xml>
+    <Xml Include="..\pipeline\paste\paste.xml" />
     <Xml Include="..\pipeline\pickUp\pickUp.xml">
       <SubType>Designer</SubType>
     </Xml>
@@ -186,9 +187,6 @@
       <SubType>Designer</SubType>
     </Xml>
     <Xml Include="..\pipeline\sky\scattering.xml">
-      <SubType>Designer</SubType>
-    </Xml>
-    <Xml Include="..\pipeline\startUp\startUp.xml">
       <SubType>Designer</SubType>
     </Xml>
     <Xml Include="..\pipeline\terrain\height_map\terrain.xml">

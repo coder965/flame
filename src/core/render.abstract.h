@@ -125,7 +125,7 @@ namespace tke
 		REFLe uniform_buffer = 1 << 0,
 		REFLe storage_buffer = 1 << 1,
 		REFLe storage_image = 1 << 2,
-		REFLe sampler = 1 << 3,
+		REFLe image_n_sampler = 1 << 3,
 		REFLe input_attachment = 1 << 4
 	};
 
@@ -177,7 +177,7 @@ namespace tke
 		REFLv std::string descriptor_name;
 		REFLv int binding = -1;
 		REFLv int array_element = 0;
-		REFLv std::string name;
+		REFLv std::string resource_name;
 		REFLe SamplerType sampler = SamplerType::none;
 	};
 

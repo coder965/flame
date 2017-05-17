@@ -1,10 +1,10 @@
 <pipeline name="Deferred.Pipeline" cx="1600" cy="900" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<link type="uniform_buffer" binding="0" array_element="0" name="Matrix.UniformBuffer" sampler="none"/>
-	<link type="uniform_buffer" binding="1" array_element="0" name="Ambient.UniformBuffer" sampler="none"/>
-	<link type="uniform_buffer" binding="2" array_element="0" name="Light.UniformBuffer" sampler="none"/>
-	<link type="sampler" binding="3" array_element="0" name="Depth.Image" sampler="plain_unnormalized"/>
-	<link type="sampler" binding="4" array_element="0" name="AlbedoSpec.Texture" sampler="plain_unnormalized"/>
-	<link type="sampler" binding="5" array_element="0" name="NormalRoughness.Texture" sampler="plain_unnormalized"/>
+	<link type="uniform_buffer" binding="0" array_element="0" resource_name="Matrix.UniformBuffer" sampler="none"/>
+	<link type="uniform_buffer" binding="1" array_element="0" resource_name="Ambient.UniformBuffer" sampler="none"/>
+	<link type="uniform_buffer" binding="2" array_element="0" resource_name="Light.UniformBuffer" sampler="none"/>
+	<link type="sampler" binding="3" array_element="0" resource_name="Depth.Image" sampler="plain_unnormalized"/>
+	<link type="sampler" binding="4" array_element="0" resource_name="AlbedoSpec.Texture" sampler="plain_unnormalized"/>
+	<link type="sampler" binding="5" array_element="0" resource_name="NormalRoughness.Texture" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreenView.vert"/>
 	<stage filename="deferred.frag">
 		<descriptor name="depthSampler" type="sampler" binding="3" count="1"/>

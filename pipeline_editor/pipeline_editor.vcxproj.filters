@@ -141,9 +141,6 @@
     <Xml Include="..\pipeline\terrain\procedural\terrain.xml">
       <Filter>Pipelines</Filter>
     </Xml>
-    <Xml Include="..\pipeline\startUp\startUp.xml">
-      <Filter>Pipelines</Filter>
-    </Xml>
     <Xml Include="..\pipeline\sky\convolve.xml">
       <Filter>Pipelines</Filter>
     </Xml>
@@ -154,6 +151,9 @@
       <Filter>Pipelines</Filter>
     </Xml>
     <Xml Include="..\pipeline\sky\scattering.xml">
+      <Filter>Pipelines</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\paste\paste.xml">
       <Filter>Pipelines</Filter>
     </Xml>
   </ItemGroup>

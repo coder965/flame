@@ -8,7 +8,7 @@
 	<pipeline filename="D:/TK_Engine/pipeline/sky/downsample.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/sky/panorama.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/sky/scattering.xml"/>
-	<pipeline filename="D:/TK_Engine/pipeline/startUp/startUp.xml"/>
+	<pipeline filename="D:/TK_Engine/pipeline/paste/paste.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/terrain/height_map/terrain.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/terrain/procedural/terrain.xml"/>
 	<pipeline filename="D:/TK_Engine/pipeline/tool/transform/pickUp.xml"/>

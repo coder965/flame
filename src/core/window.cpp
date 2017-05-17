@@ -212,7 +212,7 @@ namespace tke
 
 	void Window::show()
 	{
-		assert(ready);
+		assert(ready); // must init ui
 		currentWindow = this;
 		ShowWindow(hWnd, SW_SHOWNORMAL);
 		SetForegroundWindow(hWnd);
@@ -236,6 +236,8 @@ namespace tke
 
 	void mainLoop()
 	{
+		assert(currentWindow);
+
 		for (;;)
 		{
 			MSG msg;
@@ -246,16 +248,13 @@ namespace tke
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else
+			else if (currentWindow->focus)
 			{
-				if (currentWindow && currentWindow->focus)
-				{
-					currentWindow->initEvent();
-					currentWindow->mouseEvent();
-					currentWindow->m_frameCount++;
-					currentWindow->renderEvent();
-					currentWindow->clearInput();
-				}
+				currentWindow->initEvent();
+				currentWindow->mouseEvent();
+				currentWindow->m_frameCount++;
+				currentWindow->renderEvent();
+				currentWindow->clearInput();
 			}
 		}
 	}

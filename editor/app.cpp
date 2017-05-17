@@ -74,7 +74,8 @@ struct MainWindow : tke::GuiWindow
 	tke::DrawAction *miscWireFrameObjectAction;
 	tke::DrawAction *miscToolAction;
 
-	VkCommandBuffer cmd[2];
+	VkCommandBuffer progressCmd[2];
+	VkCommandBuffer mainCmd[2];
 
 	VkSemaphore renderFinishedSemaphore;
 
@@ -147,17 +148,20 @@ struct MainWindow : tke::GuiWindow
 
 		masterRenderer->renderer->getDescriptorSets();
 
-		cmd[0] = tke::vk::allocateCommandBuffer();
-		cmd[1] = tke::vk::allocateCommandBuffer();
+		mainCmd[0] = tke::vk::allocateCommandBuffer();
+		mainCmd[1] = tke::vk::allocateCommandBuffer();
 
 		initUi(masterRenderer->renderer->vkRenderPass, masterRenderer->uiPass->index);
 
 		renderFinishedSemaphore = tke::vk::createSemaphore();
 
 		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
+
+		progressCmd[0] = tke::vk::allocateCommandBuffer();
+		progressCmd[1] = tke::vk::allocateCommandBuffer();
 	}
 
-	void makeCmd()
+	void makeMainCmd()
 	{
 		tke::vk::queueWaitIdle();
 
@@ -165,9 +169,9 @@ struct MainWindow : tke::GuiWindow
 
 		for (int i = 0; i < 2; i++)
 		{
-			if (!first) vkResetCommandBuffer(cmd[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+			if (!first) vkResetCommandBuffer(mainCmd[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
-			tke::vk::beginCommandBuffer(cmd[i]);
+			tke::vk::beginCommandBuffer(mainCmd[i]);
 
 			masterRenderer->skyAction->addDrawcall(tke::sphereModel);
 
@@ -214,9 +218,9 @@ struct MainWindow : tke::GuiWindow
 			}
 			miscToolAction->m_pRenderable = currentTool;
 
-			masterRenderer->renderer->execute(cmd[i], i);
+			masterRenderer->renderer->execute(mainCmd[i], i);
 
-			vkEndCommandBuffer(cmd[i]);
+			vkEndCommandBuffer(mainCmd[i]);
 		}
 
 		first = false;
@@ -730,7 +734,12 @@ struct MainWindow : tke::GuiWindow
 		}
 	}
 
-	virtual void renderEvent() override
+	void renderProgress()
+	{
+
+	}
+
+	void renderMain()
 	{
 		lockUi();
 
@@ -772,13 +781,13 @@ struct MainWindow : tke::GuiWindow
 
 		if (needRedraw)
 		{
-			makeCmd();
+			makeMainCmd();
 			needRedraw = false;
 		}
 
 		perpareFrame();
 
-		tke::vk::queueSubmit(m_imageAvailable, renderFinishedSemaphore, cmd[m_imageIndex]);
+		tke::vk::queueSubmit(m_imageAvailable, renderFinishedSemaphore, mainCmd[m_imageIndex]);
 
 		endFrame(renderFinishedSemaphore);
 
@@ -799,52 +808,19 @@ struct MainWindow : tke::GuiWindow
 		//	lastItemActive = false;
 		//}
 	}
+
+	void (MainWindow::*pRender)() = &renderProgress;
+
+	virtual void renderEvent() override
+	{
+		(this->*pRender)();
+	}
 };
 
 bool MainWindow::needRedraw = true;
 
-template<int id>
-struct D
-{
-	void operator=(tke::Image *p)
-	{
-
-	}
-
-
-};
-
-constexpr static const unsigned int names[] = {
-	CHASH("abc"),
-	CHASH("fuck")
-};
-
-constexpr int _C(int i, const unsigned int hash)
-{
-	if (i == 0) return -1;
-	if (names[i - 1] == hash) return i - 1;
-	return _C(i - 1, hash);
-}
-
-constexpr int C(const unsigned int hash)
-{
-	return _C(ARRAYSIZE(names), hash);
-}
-
-template <int n>
-struct Shit
-{
-	void fun()
-	{
-		printf("%d\n", n);
-	}
-};
-
-
 int main()
 {
-	Shit<C(CHASH("fuck"))> aaa;
-
 	auto resCx = 1600, resCy = 900;
 	tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw);
 	tke::initPickUp();

@@ -1,7 +1,7 @@
 <pipeline name="Combine.Pipeline" cx="1600" cy="900" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<link type="sampler" binding="0" array_element="0" name="Original.Texture" sampler="plain_unnormalized"/>
-	<link type="sampler" binding="1" array_element="0" name="Misc.Texture" sampler="plain_unnormalized"/>
-	<link type="sampler" binding="2" array_element="0" name="Ui.Texture" sampler="plain_unnormalized"/>
+	<link type="sampler" binding="0" array_element="0" resource_name="Original.Texture" sampler="plain_unnormalized"/>
+	<link type="sampler" binding="1" array_element="0" resource_name="Misc.Texture" sampler="plain_unnormalized"/>
+	<link type="sampler" binding="2" array_element="0" resource_name="Ui.Texture" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreen.vert"/>
 	<stage filename="combine.frag">
 		<descriptor name="miscSampler" type="sampler" binding="1" count="1"/>
