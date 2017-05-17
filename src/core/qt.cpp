@@ -37,7 +37,7 @@ namespace tke
 
 	void QIntDropCombo::set(int index)
 	{
-		*p = index;
+		*p = 1 << index;
 	}
 
 	QStringCombo::QStringCombo(std::string *_p)

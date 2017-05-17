@@ -187,7 +187,6 @@
     <ClInclude Include="..\src\extension\model.general.h" />
     <ClInclude Include="..\src\extension\pickUp.h" />
     <ClInclude Include="..\src\extension\script.h" />
-    <ClInclude Include="..\src\extension\startUpBoard.h" />
     <ClInclude Include="dialogs\debug.h" />
     <ClInclude Include="dialogs\image.h" />
     <ClInclude Include="dialogs\lightAttribute.h" />
@@ -227,7 +226,6 @@
     <ClCompile Include="..\src\extension\model.general.cpp" />
     <ClCompile Include="..\src\extension\pickUp.cpp" />
     <ClCompile Include="..\src\extension\script.cpp" />
-    <ClCompile Include="..\src\extension\startUpBoard.cpp" />
     <ClCompile Include="app.cpp" />
     <ClCompile Include="history.cpp" />
     <ClCompile Include="select.cpp" />

@@ -110,9 +110,6 @@
     <ClInclude Include="..\src\extension\script.h">
       <Filter>头文件\engine\extension</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\extension\startUpBoard.h">
-      <Filter>头文件\engine\extension</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\extension\model.file.h">
       <Filter>头文件\engine\extension</Filter>
     </ClInclude>
@@ -218,9 +215,6 @@
       <Filter>源文件\engine\extension</Filter>
     </ClCompile>
     <ClCompile Include="..\src\extension\script.cpp">
-      <Filter>源文件\engine\extension</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\extension\startUpBoard.cpp">
       <Filter>源文件\engine\extension</Filter>
     </ClCompile>
     <ClCompile Include="..\src\extension\image.file.cpp">

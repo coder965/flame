@@ -36,8 +36,6 @@ namespace tke
 		uint32_t m_imageIndex;
 		VkSemaphore m_imageAvailable;
 
-		virtual void initEvent();
-		virtual void deadEvent();
 		virtual void keyDownEvent(int);
 		virtual void keyUpEvent(int);
 		virtual void charEvent(int);

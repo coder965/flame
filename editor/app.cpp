@@ -10,9 +10,9 @@
 #include "..\src\core\render.h"
 #include "..\src\extension\pickUp.h"
 #include "..\src\extension\script.h"
+#include "..\src\extension\image.file.h"
 #include "..\src\extension\model.file.h"
 #include "..\src\extension\model.general.h"
-#include "..\src\extension\startUpBoard.h"
 
 #include "select.h"
 #include "history.h"
@@ -64,10 +64,15 @@ tke::GuiWindow *pMainWindow = nullptr;
 struct MainWindow : tke::GuiWindow
 {
 	using tke::GuiWindow::GuiWindow;
+
 	tke::Pipeline lightFramePipeline;
 	tke::Pipeline wireFramePipeline;
+	tke::Pipeline pastePipeline;
+
+	tke::Image *titleImage;
 
 	tke::MasterRenderer *masterRenderer;
+	tke::Renderer *progressRenderer;
 
 	tke::DrawAction *miscLightFrameAction;
 	tke::DrawAction *miscWireFrameLightAction;
@@ -157,8 +162,42 @@ struct MainWindow : tke::GuiWindow
 
 		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
-		progressCmd[0] = tke::vk::allocateCommandBuffer();
-		progressCmd[1] = tke::vk::allocateCommandBuffer();
+		{
+			static tke::ResourceBank _resources;
+
+			titleImage = tke::createImage("../misc/title.jpg", true, false);
+
+			_resources.setImage(titleImage, "Paste.Texture");
+			_resources.setPipeline(&pastePipeline, "Paste.Pipeline");
+
+			progressRenderer = new tke::Renderer();
+			progressRenderer->filename = "../renderer/progress.xml";
+			progressRenderer->loadXML();
+			progressRenderer->pResource = &_resources;
+
+			pastePipeline.pResource = &_resources;
+
+			progressCmd[0] = tke::vk::allocateCommandBuffer();
+			progressCmd[1] = tke::vk::allocateCommandBuffer();
+
+			_resources.setImage(m_image, "Window.Image");
+			_resources.setCmd(m_uiCommandBuffer, "Ui.Cmd");
+
+			progressRenderer->setup();
+
+			pastePipeline.create("../pipeline/paste/paste.xml", &tke::zeroVertexInputState, progressRenderer->vkRenderPass, 0);
+
+			progressRenderer->getDescriptorSets();
+
+			//pWindow->initUi(renderer->vkRenderPass, 1);
+
+			for (int i = 0; i < 2; i++)
+			{
+				tke::vk::beginCommandBuffer(progressCmd[i]);
+				progressRenderer->execute(progressCmd[i], i);
+				vkEndCommandBuffer(progressCmd[i]);
+			}
+		}
 	}
 
 	void makeMainCmd()
@@ -736,7 +775,21 @@ struct MainWindow : tke::GuiWindow
 
 	void renderProgress()
 	{
+		perpareFrame();
 
+		m_uiFramebuffer = progressRenderer->vkFramebuffer[m_imageIndex];
+		lockUi();
+		ImGui::Begin("StartUp", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::TextUnformatted(tke::majorProgressText().c_str());
+		ImGui::TextUnformatted(tke::minorProgressText().c_str());
+		ImGui::End();
+		unlockUi();
+
+		tke::vk::queueSubmit(m_imageAvailable, renderFinishedSemaphore, progressCmd[m_imageIndex]);
+
+		endFrame(renderFinishedSemaphore);
+
+		Sleep(10);
 	}
 
 	void renderMain()
@@ -809,7 +862,7 @@ struct MainWindow : tke::GuiWindow
 		//}
 	}
 
-	void (MainWindow::*pRender)() = &MainWindow::renderProgress;
+	void (MainWindow::*pRender)() = &MainWindow::renderMain;
 
 	virtual void renderEvent() override
 	{
@@ -831,9 +884,9 @@ int main()
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();
 
-	tke::StartUpBoard::run();
-
 	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, WS_EX_ACCEPTFILES, true);
+	((MainWindow*)pMainWindow)->init();
+	pMainWindow->show();
 
 	_beginthread([](void*) {
 		tke::reportMajorProgress(0.1f);
@@ -841,14 +894,12 @@ int main()
 		tke::setMajorProgressText("Init");
 		tke::setMinorProgressText("");
 
-		((MainWindow*)pMainWindow)->init();
 
 		tke::reportMajorProgress(0.9f);
 
 		tke::setMajorProgressText("Finish");
-		tke::StartUpBoard::complete();
+		tke::reportMajorProgress(1.f);
 
-		pMainWindow->show();
 	}, 0, nullptr);
 
 	_beginthread([](void*) {

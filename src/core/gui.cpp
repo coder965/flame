@@ -575,14 +575,16 @@ namespace tke
 		vk::beginCommandBuffer(m_uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
 		vkEndCommandBuffer(m_uiCommandBuffer);
 		{
-			static bool first = true;
-
 			guiCurrentWindow = this;
 			m_uiPipeline = g_Pipeline.getPipeline(m_cx, m_cy, m_uiRenderPass, m_uiSubpassIndex);
+			m_uiDialogs = new Dialogs;
+
+			static bool first = true;
 
 			ImGuiContext *lastContext = nullptr;
 			if (!first)
 			{
+				first = false;
 				auto context = ImGui::CreateContext();
 				lastContext = ImGui::GetCurrentContext();
 				ImGui::SetCurrentContext(context);
@@ -608,16 +610,12 @@ namespace tke
 			io.KeyMap[ImGuiKey_X] = 'X';
 			io.KeyMap[ImGuiKey_Y] = 'Y';
 			io.KeyMap[ImGuiKey_Z] = 'Z';
-
 			io.RenderDrawListsFn = _guiRenderer;
 			io.SetClipboardTextFn = _SetClipboardCallback;
 			io.GetClipboardTextFn = _GetClipboardCallback;
 
-			m_uiDialogs = new Dialogs;
-
 			m_uiContext = ImGui::GetCurrentContext();
-			if (!first) ImGui::SetCurrentContext(lastContext);
-			first = false;
+			if (!lastContext) ImGui::SetCurrentContext(lastContext);
 		}
 		ready = true;
 	}

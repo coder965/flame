@@ -607,6 +607,7 @@ namespace tke
 				depthStencilAttachment->saveToAt(n);
 			}
 			auto dependenciesNode = new AttributeTreeNode("dependencies");
+			n->children.push_back(dependenciesNode);
 			for (auto &d : dependencies)
 			{
 				auto n = new AttributeTreeNode("dependency");
@@ -614,6 +615,7 @@ namespace tke
 				d.saveToAt(n);
 			}
 			auto actionsNode = new AttributeTreeNode("actions");
+			n->children.push_back(actionsNode);
 			for (auto &a : actions)
 			{
 				auto n = new AttributeTreeNode("action");

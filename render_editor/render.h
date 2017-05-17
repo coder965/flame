@@ -91,7 +91,7 @@ struct DrawAction : tke::DrawActionAbstract<Drawcall>
 		{
 			auto drawcall = p->addDrawcall();
 			std::stringstream name;
-			name << p->drawcalls.size() + 1;
+			name << p->drawcalls.size();
 			drawcall->name = name.str();
 			drawcall->appear(drawcallsItem.item);
 		}
@@ -262,7 +262,7 @@ struct RenderPass : tke::RenderPassAbstract<Attachment, Dependency, DrawAction>
 		{
 			auto attachment = p->addColorAttachment();
 			std::stringstream name;
-			name << p->colorAttachments.size() + 1;
+			name << p->colorAttachments.size();
 			attachment->name = name.str();
 			attachment->appear(colorsItem.item, 0);
 		}
@@ -287,7 +287,7 @@ struct RenderPass : tke::RenderPassAbstract<Attachment, Dependency, DrawAction>
 			auto action = p->addAction();
 			std::stringstream name;
 			name << "Action";
-			name << p->actions.size() + 1;
+			name << p->actions.size();
 			action->name = name.str();
 			action->appear(actionsItem.item);
 		}
@@ -312,7 +312,7 @@ struct Renderer : tke::RendererAbstract<RenderPass>
 			auto pass = p->addPass();
 			std::stringstream name;
 			name << "Render Pass";
-			name << p->passes.size() + 1;
+			name << p->passes.size();
 			pass->name = name.str();
 			pass->appear(passesItem.item);
 		}

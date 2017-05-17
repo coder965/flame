@@ -175,9 +175,6 @@ namespace tke
 		case WM_CHAR:
 			currentWindow->charEvent(wParam);
 			break;
-		case WM_DESTROY:
-			currentWindow->deadEvent();
-			break;
 		default:
 			res = DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -201,8 +198,6 @@ namespace tke
 	};
 	static _WindowInit _windowInit;
 
-	void Window::initEvent() {}
-	void Window::deadEvent() {}
 	void Window::keyDownEvent(int wParam) {}
 	void Window::keyUpEvent(int wParam) {}
 	void Window::charEvent(int wParam) {}
@@ -250,7 +245,6 @@ namespace tke
 			}
 			else if (currentWindow->focus)
 			{
-				currentWindow->initEvent();
 				currentWindow->mouseEvent();
 				currentWindow->m_frameCount++;
 				currentWindow->renderEvent();
