@@ -31,7 +31,7 @@ namespace dialog_model_editor
 				{
 					if (selectingModel)
 					{
-						pMainWindow->uiDialogs->yesNoDialog.start("Need Copy Texture?", [](bool opt) {
+						tke::yesNoDialog.start("Need Copy Texture?", [](bool opt) {
 							tke::TKM::save(selectingModel, selectingModel->filepath + selectingModel->name + ".tkm", opt);
 						});
 					}
@@ -45,9 +45,9 @@ namespace dialog_model_editor
 					if (selectingModel)
 					{
 						static std::string filename;
-						pMainWindow->uiDialogs->saveFileDialog.start([](const std::string &str) {
+						tke::saveFileDialog.start([](const std::string &str) {
 							filename = str;
-							pMainWindow->uiDialogs->yesNoDialog.start("Need Copy Texture?", [](bool opt) {
+							tke::yesNoDialog.start("Need Copy Texture?", [](bool opt) {
 								tke::TKM::save(selectingModel, filename, opt);
 							});
 						});
@@ -61,7 +61,7 @@ namespace dialog_model_editor
 				{
 					if (selectingModel)
 					{
-						pMainWindow->uiDialogs->openFileDialog.start([](const std::string &str) {
+						tke::openFileDialog.start([](const std::string &str) {
 							selectingModel->loadDat(str);
 						});
 					}
@@ -74,7 +74,7 @@ namespace dialog_model_editor
 				{
 					if (selectingModel)
 					{
-						pMainWindow->uiDialogs->saveFileDialog.start([](const std::string &str) {
+						tke::saveFileDialog.start([](const std::string &str) {
 							selectingModel->saveDat(str);
 						});
 					}

@@ -823,7 +823,7 @@ struct MainWindow : tke::GuiWindow
 			ImGui::End();
 		}
 
-		uiDialogs->show();
+		tke::showDialogs();
 
 		tke::scene->update(masterRenderer);
 		if (currentTool) currentTool->update();
@@ -879,7 +879,7 @@ int main()
 	tke::initPickUp();
 	tke::initGeneralModels();
 
-	tke::setReporter([](const std::string &str) { pMainWindow->uiDialogs->messageDialog.add(str); });
+	tke::setReporter([](const std::string &str) { tke::messageDialog.add(str); });
 
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();

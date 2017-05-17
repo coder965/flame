@@ -381,8 +381,14 @@ namespace tke
 			search();
 	}
 
+	YesNoDialog yesNoDialog;
+	MessageDialog messageDialog;
+	InputDialog inputDialog;
+	DirectoryDialog directoryDialog;
+	OpenFileDialog openFileDialog;
+	SaveFileDialog saveFileDialog;
 
-	void Dialogs::show()
+	void showDialogs()
 	{
 		yesNoDialog.show();
 		messageDialog.show();
@@ -574,7 +580,6 @@ namespace tke
 		{
 			guiCurrentWindow = this;
 			uiPipeline = g_Pipeline.getPipeline(cx, cy, uiRenderPass, uiSubpassIndex);
-			uiDialogs = new Dialogs;
 
 			static bool first = true;
 

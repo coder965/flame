@@ -94,17 +94,14 @@ namespace tke
 		void show();
 	};
 
-	struct Dialogs
-	{
-		YesNoDialog yesNoDialog;
-		MessageDialog messageDialog;
-		InputDialog inputDialog;
-		DirectoryDialog directoryDialog;
-		OpenFileDialog openFileDialog;
-		SaveFileDialog saveFileDialog;
+	extern YesNoDialog yesNoDialog;
+	extern MessageDialog messageDialog;
+	extern InputDialog inputDialog;
+	extern DirectoryDialog directoryDialog;
+	extern OpenFileDialog openFileDialog;
+	extern SaveFileDialog saveFileDialog;
 
-		void show();
-	};
+	void showDialogs();
 
 	struct GuiWindow : Window
 	{
@@ -116,7 +113,6 @@ namespace tke
 		VkCommandBuffer uiCommandBuffer = VK_NULL_HANDLE;
 		bool uiAcceptedMouse = false;
 		bool uiAcceptedKey = false;
-		Dialogs *uiDialogs = nullptr;
 
 		virtual void keyDownEvent(int) override;
 		virtual void keyUpEvent(int) override;
