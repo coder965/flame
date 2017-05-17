@@ -137,10 +137,6 @@ namespace tke
 
 	Err init(const char *appName, int rcx, int rcy, bool *pNeedRedraw)
 	{
-		static bool first = true;
-		if (!first) return Err::eNoErr;
-		first = false;
-
 		vk::init(appName, 
 #ifdef _DEBUG
 			true
@@ -203,7 +199,7 @@ namespace tke
 
 
 		initGui();
-		guiSetupIcons(vk::colorSampler);
+		guiSetupIcons();
 
 		controllingObject = nullptr;
 

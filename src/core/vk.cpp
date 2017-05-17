@@ -819,10 +819,6 @@ namespace tke
 
 		Err init(const char *appName, bool debug)
 		{
-			static bool first = true;
-			if (!first) return Err::eNoErr;
-			first = false;
-
 			VkResult res;
 
 			VkApplicationInfo appInfo = {};

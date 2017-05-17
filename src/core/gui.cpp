@@ -400,9 +400,8 @@ namespace tke
 
 	static CriticalSection cs;
 
-	static Image g_FontImage;
-
 	static Pipeline g_Pipeline;
+	static VkRenderPass g_RenderPass;
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
 	{
@@ -581,9 +580,8 @@ namespace tke
 			guiCurrentWindow = this;
 			uiPipeline = g_Pipeline.getPipeline(cx, cy, uiRenderPass, uiSubpassIndex);
 
-			static bool first = true;
-
 			ImGuiContext *lastContext = nullptr;
+			static bool first = true;
 			if (!first)
 			{
 				first = false;
@@ -673,38 +671,36 @@ namespace tke
 		_icons.push_back(image);
 	}
 
-	void guiSetupIcons(VkSampler sampler)
+	void guiSetupIcons()
 	{
+		ImGuiIO& io = ImGui::GetIO();
+		unsigned char* pixels;
+		int width, height;
+		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+		static Image fontImage;
+		fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
+		io.Fonts->TexID = (void*)0;
+
 		static int texture_position = -1;
 		if (texture_position == -1) texture_position = g_Pipeline.descriptorPosition("sTexture");
 
 		std::vector<VkWriteDescriptorSet> writes;
-		writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, g_FontImage.getInfo(sampler), 0));
+		writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(vk::colorSampler), 0));
 		auto imageID = 1;
 		for (auto image : _icons)
 		{
-			writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(sampler), imageID));
+			writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(vk::colorSampler), imageID));
 			imageID++;
 		}
 		vk::updataDescriptorSet(writes.size(), writes.data());
 	}
 
-	VkVertexInputBindingDescription binding_desc[1] = {};
-	VkVertexInputAttributeDescription attribute_desc[3] = {};
-	VkPipelineVertexInputStateCreateInfo vertex_info = {};
+	static VkVertexInputBindingDescription binding_desc[1] = {};
+	static VkVertexInputAttributeDescription attribute_desc[3] = {};
+	static VkPipelineVertexInputStateCreateInfo vertex_info = {};
 
 	void initGui()
 	{
-		static bool first = true;
-		if (!first) return;
-		first = false;
-
-		ImGuiIO& io = ImGui::GetIO();
-		unsigned char* pixels;
-		int width, height;
-		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-		g_FontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
-		io.Fonts->TexID = (void*)0;
 
 		binding_desc[0].stride = sizeof(ImDrawVert);
 		binding_desc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;

@@ -127,7 +127,7 @@ namespace tke
 	extern GuiWindow *guiCurrentWindow;
 
 	void guiPushIcon(Image *image);
-	void guiSetupIcons(VkSampler sampler);
+	void guiSetupIcons();
 	void initGui();
 }
 
