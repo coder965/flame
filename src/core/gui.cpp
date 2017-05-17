@@ -394,14 +394,9 @@ namespace tke
 
 	static CRITICAL_SECTION cs;
 
-	static VertexBuffer			  g_VertexBuffer;
-	static IndexBuffer			  g_IndexBuffer;
-	static StagingBuffer		  g_StagingBuffer;
-	static Image				  g_FontImage;
+	static Image g_FontImage;
 
-	static VkCommandBuffer        g_CommandBuffer = VK_NULL_HANDLE;
-	static Pipeline				  g_Pipeline;
-	static VkPipeline			  g_vkPipeline = VK_NULL_HANDLE;
+	static Pipeline g_Pipeline;
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
 	{
@@ -420,7 +415,7 @@ namespace tke
 			return;
 		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-		vkResetCommandBuffer(g_CommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+		vkResetCommandBuffer(guiCurrentWindow->m_uiCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
 		VkCommandBufferInheritanceInfo inheritanceInfo = {};
 		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
@@ -428,9 +423,10 @@ namespace tke
 		inheritanceInfo.subpass = guiCurrentWindow->m_uiSubpassIndex;
 		inheritanceInfo.framebuffer = guiCurrentWindow->m_uiFramebuffer;
 
-		vk::beginCommandBuffer(g_CommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
+		vk::beginCommandBuffer(guiCurrentWindow->m_uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
 
 		// Create the Vertex Buffer:
+		static VertexBuffer	g_VertexBuffer;
 		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 		if (!g_VertexBuffer.m_buffer || g_VertexBuffer.m_size < vertex_size)
 		{
@@ -439,6 +435,7 @@ namespace tke
 		}
 
 		// Create the Index Buffer:
+		static IndexBuffer g_IndexBuffer;
 		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 		if (!g_IndexBuffer.m_buffer || g_IndexBuffer.m_size < index_size)
 		{
@@ -446,6 +443,7 @@ namespace tke
 			g_IndexBuffer.create(index_size);
 		}
 
+		static StagingBuffer g_StagingBuffer;
 		auto totalSize = vertex_size + index_size;
 		if (g_StagingBuffer.m_size < totalSize)
 		{
@@ -476,20 +474,20 @@ namespace tke
 		{
 			VkBuffer vertex_buffers[1] = { g_VertexBuffer.m_buffer };
 			VkDeviceSize vertex_offset[1] = { 0 };
-			vkCmdBindVertexBuffers(g_CommandBuffer, 0, 1, vertex_buffers, vertex_offset);
-			vkCmdBindIndexBuffer(g_CommandBuffer, g_IndexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindVertexBuffers(guiCurrentWindow->m_uiCommandBuffer, 0, 1, vertex_buffers, vertex_offset);
+			vkCmdBindIndexBuffer(guiCurrentWindow->m_uiCommandBuffer, g_IndexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
 		}
 
 		// Setup scale and translation:
 		{
 			auto v = glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f);
-			vkCmdPushConstants(g_CommandBuffer, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
+			vkCmdPushConstants(guiCurrentWindow->m_uiCommandBuffer, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
 		}
 
 		// Bind pipeline and descriptor sets:
 		{
-			vkCmdBindPipeline(g_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_vkPipeline);
-			vkCmdBindDescriptorSets(g_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
+			vkCmdBindPipeline(guiCurrentWindow->m_uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, guiCurrentWindow->m_uiPipeline);
+			vkCmdBindDescriptorSets(guiCurrentWindow->m_uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
 		}
 
 		// Render the command lists:
@@ -514,15 +512,15 @@ namespace tke
 					scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
 					scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
 					scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
-					vkCmdSetScissor(g_CommandBuffer, 0, 1, &scissor);
-					vkCmdDrawIndexed(g_CommandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
+					vkCmdSetScissor(guiCurrentWindow->m_uiCommandBuffer, 0, 1, &scissor);
+					vkCmdDrawIndexed(guiCurrentWindow->m_uiCommandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
 				}
 				idx_offset += pcmd->ElemCount;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
 
-		vkEndCommandBuffer(g_CommandBuffer);
+		vkEndCommandBuffer(guiCurrentWindow->m_uiCommandBuffer);
 	}
 
 	GuiWindow::GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
@@ -625,9 +623,6 @@ namespace tke
 		EnterCriticalSection(&cs);
 
 		guiCurrentWindow = this;
-
-		g_CommandBuffer = m_uiCommandBuffer;
-		g_vkPipeline = m_uiPipeline;
 
 		m_uiAcceptedMouse = false;
 		m_uiAcceptedKey = false;

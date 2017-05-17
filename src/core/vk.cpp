@@ -821,6 +821,7 @@ namespace tke
 		{
 			if (messageCode == 1) return VK_FALSE; // THREADING ERROR, 0.0 what is this
 			if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
+			if (messageCode == 5) return VK_FALSE; // SPIR-V module not valid: Operand 4 of MemberDecorate requires one of these capabilities: MultiViewport 
 			if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
 			if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
 			if (messageCode == 13) return VK_FALSE; // Shader expects at least n descriptors but only less provided, never mind

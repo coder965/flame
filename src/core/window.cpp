@@ -55,14 +55,14 @@ namespace tke
 
 	void Window::endFrame(VkSemaphore waitSemaphore)
 	{
-		VkPresentInfoKHR presentInfo = {};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &waitSemaphore;
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = &m_swapchain;
-		presentInfo.pImageIndices = &m_imageIndex;
-		vk::queuePresent(&presentInfo);
+		VkPresentInfoKHR info = {};
+		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		info.waitSemaphoreCount = 1;
+		info.pWaitSemaphores = &waitSemaphore;
+		info.swapchainCount = 1;
+		info.pSwapchains = &m_swapchain;
+		info.pImageIndices = &m_imageIndex;
+		vk::queuePresent(&info);
 	}
 
 	void Window::clearInput()

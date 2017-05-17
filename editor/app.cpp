@@ -189,7 +189,7 @@ struct MainWindow : tke::GuiWindow
 
 			progressRenderer->getDescriptorSets();
 
-			//pWindow->initUi(renderer->vkRenderPass, 1);
+			//initUi(progressRenderer->vkRenderPass, 1);
 
 			for (int i = 0; i < 2; i++)
 			{
@@ -862,7 +862,7 @@ struct MainWindow : tke::GuiWindow
 		//}
 	}
 
-	void (MainWindow::*pRender)() = &MainWindow::renderMain;
+	void (MainWindow::*pRender)() = &MainWindow::renderProgress;
 
 	virtual void renderEvent() override
 	{
