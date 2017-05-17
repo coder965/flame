@@ -1,7 +1,7 @@
 <pipeline name="" cx="1600" cy="900" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="line" cull_mode="back">
-	<link type="uniform_buffer" descriptor_name="MATRIX" binding="-1" array_element="0" resource_name="Matrix.UniformBuffer" sampler="none"/>
-	<link type="uniform_buffer" binding="1" array_element="0" resource_name="LightMatrix.UniformBuffer" sampler="none"/>
-	<link type="uniform_buffer" binding="1" array_element="1" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
+	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
+	<link binding="-1" array_element="0" descriptor_name="INSTANCE" resource_name="LightMatrix.UniformBuffer" sampler="none"/>
+	<link binding="-1" array_element="1" descriptor_name="INSTANCE" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
 	<stage filename="wireFrame.vert">
 		<descriptor name="MATRIX" type="uniform_buffer" binding="0" count="1"/>
 		<descriptor name="INSTANCE" type="uniform_buffer" binding="1" count="2"/>

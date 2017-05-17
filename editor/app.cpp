@@ -809,7 +809,7 @@ struct MainWindow : tke::GuiWindow
 		//}
 	}
 
-	void (MainWindow::*pRender)() = &renderProgress;
+	void (MainWindow::*pRender)() = &MainWindow::renderProgress;
 
 	virtual void renderEvent() override
 	{

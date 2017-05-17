@@ -394,7 +394,7 @@ namespace tke
 			return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		case DescriptorType::storage_image:
 			return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		case DescriptorType::sampler:
+		case DescriptorType::image_n_sampler:
 			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		case DescriptorType::input_attachment:
 			return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
@@ -668,40 +668,78 @@ namespace tke
 		std::vector<VkWriteDescriptorSet> writes;
 		for (auto &link : links)
 		{
-			if (link.binding == -1) link.binding = descriptorPosition(link.descriptor_name);
+			DescriptorType type;
 
-			switch (link.type)
+			if (link.binding == -1)
+			{
+				bool found = false;
+				for (auto s : stages)
+				{
+					if (found) break;
+					for (auto &d : s->descriptors)
+					{
+						if (d.name == link.descriptor_name)
+						{
+							link.binding = d.binding;
+							type = d.type;
+							found = true;
+							break;
+						}
+					}
+				}
+				assert(found);
+			}
+			else
+			{
+				bool found = false;
+				for (auto s : stages)
+				{
+					if (found) break;
+					for (auto &d : s->descriptors)
+					{
+						if (d.binding == link.binding)
+						{
+							type = d.type;
+							found = true;
+							break;
+						}
+					}
+				}
+				assert(found);
+			}
+
+			switch (type)
 			{
 			case DescriptorType::uniform_buffer:
 			{
-				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.name);
+				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pUniformBuffer)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, &pUniformBuffer->m_info, link.array_element));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element));
 				else
-					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.name.c_str(), link.binding);
+					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
 				break;
 			case DescriptorType::storage_buffer:
 			{
-				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.name);
+				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pStorageBuffer)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, &pStorageBuffer->m_info, link.array_element));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element));
 				else
-					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.name.c_str(), link.binding);
+					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
 				break;
 			case DescriptorType::storage_image:
 			{
-				auto pStorageImage = pResource->getImage(link.name);
+				auto pStorageImage = pResource->getImage(link.resource_name);
 				if (pStorageImage)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, pStorageImage->getInfo(0), link.array_element));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element));
 				else
-					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.name.c_str(), link.binding);
+					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
 				break;
-			case DescriptorType::sampler:
+			case DescriptorType::image_n_sampler:
 			{
-				auto pTexture = pResource->getImage(link.name);
+				auto pTexture = pResource->getImage(link.resource_name);
 				if (pTexture)
 				{
 					VkSampler sampler = 0;
@@ -722,10 +760,10 @@ namespace tke
 						sampler = vk::colorBorderSampler;
 						break;
 					}
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(link.type), link.binding, pTexture->getInfo(sampler), link.array_element));
+					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element));
 				}
 				else
-					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.name.c_str(), link.binding);
+					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
 				break;
 			}

@@ -133,10 +133,10 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLv std::string name;
 		REFLe DescriptorType type = DescriptorType::uniform_buffer;
 		REFLv int binding = 0;
 		REFLv int count = 0;
+		REFLv std::string name;
 	};
 
 	REFLECTABLE struct PushConstantRange
@@ -173,10 +173,9 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLe DescriptorType type = DescriptorType::uniform_buffer;
-		REFLv std::string descriptor_name;
 		REFLv int binding = -1;
 		REFLv int array_element = 0;
+		REFLv std::string descriptor_name;
 		REFLv std::string resource_name;
 		REFLe SamplerType sampler = SamplerType::none;
 	};
