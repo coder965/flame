@@ -25,7 +25,6 @@ namespace tke
 		Image albedoSpecImage;
 		Image normalRoughnessImage;
 		Image miscImage;
-		Image uiImage;
 
 		Pipeline panoramaPipeline;
 		Pipeline heightMapTerrainPipeline;
@@ -40,7 +39,6 @@ namespace tke
 		DrawAction *mrtHeightMapTerrainAction;
 
 		RenderPass *miscPass;
-		RenderPass *uiPass;
 
 		Renderer *renderer;
 

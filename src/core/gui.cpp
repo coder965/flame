@@ -407,7 +407,8 @@ namespace tke
 	}
 
 	static Pipeline g_Pipeline;
-	static VkRenderPass g_RenderPass;
+	VkCommandBuffer uiCmd;
+	VkSemaphore uiRenderFinished;
 
 	static void _guiRenderer(ImDrawData* draw_data)
 	{
@@ -457,37 +458,33 @@ namespace tke
 			}
 			vk::unmapMemory(stagingBuffer.m_memory);
 
-			vk::copyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0);
-			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size);
+			vk::copyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
+			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
 		}
 
-		vkResetCommandBuffer(guiCurrentWindow->uiCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+		vkResetCommandBuffer(uiCmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
-		VkCommandBufferInheritanceInfo inheritanceInfo = {};
-		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritanceInfo.renderPass = guiCurrentWindow->uiRenderPass;
-		inheritanceInfo.subpass = guiCurrentWindow->uiSubpassIndex;
-		inheritanceInfo.framebuffer = guiCurrentWindow->uiFramebuffer;
+		vk::beginCommandBuffer(uiCmd);
 
-		vk::beginCommandBuffer(guiCurrentWindow->uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
+		vkCmdBeginRenderPass(uiCmd, &vk::renderPassBeginInfo(windowRenderPass, guiCurrentWindow->framebuffer[guiCurrentWindow->imageIndex], guiCurrentWindow->cx, guiCurrentWindow->cy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		// Bind Vertex And Index Buffer:
 		{
 			VkDeviceSize vertex_offset[1] = { 0 };
-			vkCmdBindVertexBuffers(guiCurrentWindow->uiCommandBuffer, 0, 1, &vertexBuffer.m_buffer, vertex_offset);
-			vkCmdBindIndexBuffer(guiCurrentWindow->uiCommandBuffer, indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindVertexBuffers(uiCmd, 0, 1, &vertexBuffer.m_buffer, vertex_offset);
+			vkCmdBindIndexBuffer(uiCmd, indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
 		}
 
 		// Setup scale and translation:
 		{
 			auto v = glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f);
-			vkCmdPushConstants(guiCurrentWindow->uiCommandBuffer, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
+			vkCmdPushConstants(uiCmd, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
 		}
 
 		// Bind pipeline and descriptor sets:
 		{
-			vkCmdBindPipeline(guiCurrentWindow->uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, guiCurrentWindow->uiPipeline);
-			vkCmdBindDescriptorSets(guiCurrentWindow->uiCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
+			vkCmdBindPipeline(uiCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipeline);
+			vkCmdBindDescriptorSets(uiCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
 		}
 
 		// Render the command lists:
@@ -512,22 +509,23 @@ namespace tke
 					scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
 					scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
 					scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
-					vkCmdSetScissor(guiCurrentWindow->uiCommandBuffer, 0, 1, &scissor);
-					vkCmdDrawIndexed(guiCurrentWindow->uiCommandBuffer, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
+					vkCmdSetScissor(uiCmd, 0, 1, &scissor);
+					vkCmdDrawIndexed(uiCmd, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
 				}
 				idx_offset += pcmd->ElemCount;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
 
-		vkEndCommandBuffer(guiCurrentWindow->uiCommandBuffer);
+		vkCmdEndRenderPass(uiCmd);
+
+		vkEndCommandBuffer(uiCmd);
 	}
 
 	GuiWindow::GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
 		: Window(cx, cy, title, windowStyle, windowStyleEx, hasFrame)
 	{
 		ready = false;
-		uiCommandBuffer = vk::allocateSecondaryCommandBuffer();
 	}
 
 	void GuiWindow::keyDownEvent(int wParam)
@@ -561,20 +559,11 @@ namespace tke
 			io.AddInputCharacter((unsigned short)wParam);
 	}
 
-	void GuiWindow::initUi(VkRenderPass _uiRenderPass, uint32_t _uiSubpassIndex)
+	void GuiWindow::initUi()
 	{
 		assert(!ready);
-		uiRenderPass = _uiRenderPass;
-		uiSubpassIndex = _uiSubpassIndex;
-		VkCommandBufferInheritanceInfo inheritanceInfo = {};
-		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritanceInfo.renderPass = uiRenderPass;
-		inheritanceInfo.subpass = uiSubpassIndex;
-		vk::beginCommandBuffer(uiCommandBuffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &inheritanceInfo);
-		vkEndCommandBuffer(uiCommandBuffer);
 		{
 			guiCurrentWindow = this;
-			uiPipeline = g_Pipeline.getPipeline(cx, cy, uiRenderPass, uiSubpassIndex);
 
 			ImGuiContext *lastContext = nullptr;
 			static bool first = true;
@@ -708,10 +697,10 @@ namespace tke
 		};
 
 		g_Pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-		g_Pipeline.m_pVertexInputState = &vertex_info;
-		g_Pipeline.setFilename("../pipeline/ui/ui.xml");
-		g_Pipeline.loadXML();
-		g_Pipeline.getLayout();
-		g_Pipeline.reallocateDescriptorSet();
+		g_Pipeline.create("../pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
+
+		uiCmd = vk::allocateCommandBuffer();
+
+		uiRenderFinished = vk::createSemaphore();
 	}
 }

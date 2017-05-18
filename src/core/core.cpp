@@ -1,6 +1,7 @@
 #include <map>
 #include "scene.h"
 #include "gui.h"
+#include "window.h"
 #include "core.h"
 #include "physics.h"
 
@@ -197,12 +198,12 @@ namespace tke
 		_depthImage.create(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(&_depthImage, "Depth.Image");
 
+		initWindow();
 
 		initGui();
 		guiSetupIcons();
 
 		controllingObject = nullptr;
-
 		iniPhysics();
 
 		return Err::eNoErr;

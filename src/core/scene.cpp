@@ -12,7 +12,6 @@ namespace tke
 		albedoSpecImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		normalRoughnessImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		miscImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		uiImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		renderer = new Renderer();
 		renderer->cx = _cx;
@@ -23,7 +22,6 @@ namespace tke
 		res->setImage(&albedoSpecImage, "AlbedoSpec.Texture");
 		res->setImage(&normalRoughnessImage, "NormalRoughness.Texture");
 		res->setImage(&miscImage, "Misc.Texture");
-		res->setImage(&uiImage, "Ui.Texture");
 
 		res->setPipeline(&panoramaPipeline, "Panorama.Pipeline");
 		res->setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
@@ -58,14 +56,10 @@ namespace tke
 		miscPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
 		miscPass->addDependency(mrtPass);
 
-		uiPass = renderer->addPass(pWindow->uiCommandBuffer);
-		uiPass->addColorAttachment(&uiImage, VkClearValue{ 0.f, 0.f, 0.f, 1.f });
-
 		auto combinePass = renderer->addPass();
 		combinePass->addColorAttachment(pWindow->image);
 		combinePass->addDependency(deferredPass);
 		combinePass->addDependency(miscPass);
-		combinePass->addDependency(uiPass);
 		auto combineAction = combinePass->addAction(&combinePipeline);
 		combineAction->addDrawcall(3, 0, 1, 0);
 

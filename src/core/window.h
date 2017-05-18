@@ -10,6 +10,8 @@
 
 namespace tke
 {
+	extern VkRenderPass windowRenderPass;
+
 	struct Window
 	{
 		bool ready = true;
@@ -33,6 +35,7 @@ namespace tke
 		VkSurfaceKHR surface;
 		VkSwapchainKHR swapchain;
 		Image image[2];
+		VkFramebuffer framebuffer[2];
 		uint32_t imageIndex;
 		VkSemaphore imageAvailable;
 
@@ -56,6 +59,8 @@ namespace tke
 	extern Window *currentWindow;
 
 	void mainLoop();
+
+	void initWindow();
 }
 
 #endif

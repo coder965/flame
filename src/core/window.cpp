@@ -4,7 +4,7 @@
 
 namespace tke
 {
-	Window *currentWindow = nullptr;
+	VkRenderPass windowRenderPass;
 
 	Window::Window(int _cx, int _cy, const std::string &_title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
 	{
@@ -33,6 +33,10 @@ namespace tke
 			image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
 			image[i].m_format = vk::swapchainFormat;
 			image[i].m_image = images[i];
+
+			std::vector<VkImageView> views;
+			views.push_back(image[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
+			framebuffer[i] = getFramebuffer(cx, cy, windowRenderPass, views);
 		}
 
 		imageAvailable = vk::createSemaphore();
@@ -150,6 +154,8 @@ namespace tke
 		}
 	}
 
+	Window *currentWindow = nullptr;
+
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (!currentWindow) return DefWindowProc(hWnd, message, wParam, lParam);
@@ -246,5 +252,20 @@ namespace tke
 				currentWindow->clearInput();
 			}
 		}
+	}
+
+	void initWindow()
+	{
+		auto attachment = vk::swapchainAttachment(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		VkAttachmentReference ref = {};
+		ref.attachment = 0;
+		ref.layout = VK_IMAGE_LAYOUT_GENERAL;
+		subpass.pColorAttachments = &ref;
+
+		windowRenderPass = vk::createRenderPass(1, &attachment, 1, &subpass, 0, nullptr);
 	}
 }

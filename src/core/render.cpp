@@ -327,7 +327,7 @@ namespace tke
 	}
 
 	std::vector<Framebuffer> framebuffers;
-	VkFramebuffer getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> views)
+	VkFramebuffer getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
 	{
 		for (auto &framebuffer : framebuffers)
 		{
@@ -424,8 +424,16 @@ namespace tke
 		assert(false);
 		return -1;
 	}
-	void Pipeline::loadXML()
+
+	void Pipeline::create(const char *_f, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
+		setFilename(_f);
+
+		m_pVertexInputState = pVertexInputState;
+
+		m_renderPass = renderPass;
+		m_subpassIndex = subpassIndex;
+
 		PipelineAbstract::loadXML();
 
 		if (cx == 0 && cy == 0)
@@ -547,22 +555,10 @@ namespace tke
 				vkPushConstantRanges.push_back(r);
 			}
 		}
-	}
 
-	void Pipeline::getLayout()
-	{
 		m_descriptorSetLayout = getDescriptorSetLayout(vkDescriptors);
 		m_pipelineLayout = getPipelineLayout(m_descriptorSetLayout, vkPushConstantRanges);
-	}
 
-	void Pipeline::reallocateDescriptorSet()
-	{
-		if (m_descriptorSet) vk::freeDescriptorSet(m_descriptorSet);
-		m_descriptorSet = vk::allocateDescriptorSet(&m_descriptorSetLayout);
-	}
-
-	VkPipeline Pipeline::getPipeline(int cx, int cy, VkRenderPass renderPass, std::uint32_t subpassIndex)
-	{
 		if (m_pipeline) vk::destroyPipeline(m_pipeline);
 
 		VkPipelineInputAssemblyStateCreateInfo assemblyState = {};
@@ -652,18 +648,10 @@ namespace tke
 		pipelineInfo.subpass = subpassIndex;
 		pipelineInfo.pMultisampleState = &multisampleState;
 		pipelineInfo.pDynamicState = m_dynamics.size() ? &dynamicState : nullptr;
-		return vk::createPipeline(&pipelineInfo);
-	}
+		m_pipeline = vk::createPipeline(&pipelineInfo);
 
-	void Pipeline::make()
-	{
-		loadXML();
-
-		getLayout();
-
-		m_pipeline = getPipeline(cx, cy, m_renderPass, m_subpassIndex);
-
-		reallocateDescriptorSet();
+		if (m_descriptorSet) vk::freeDescriptorSet(m_descriptorSet);
+		m_descriptorSet = vk::allocateDescriptorSet(&m_descriptorSetLayout);
 
 		std::vector<VkWriteDescriptorSet> writes;
 		for (auto &link : links)
@@ -771,18 +759,6 @@ namespace tke
 
 		if (links.size() > 0)
 			vk::updataDescriptorSet(writes.size(), writes.data());
-	}
-
-	void Pipeline::create(const char *_f, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
-	{
-		setFilename(_f);
-
-		m_pVertexInputState = pVertexInputState;
-
-		m_renderPass = renderPass;
-		m_subpassIndex = subpassIndex;
-
-		make();
 	}
 
 	Drawcall::Drawcall() {}

@@ -16,18 +16,6 @@
 				</action>
 			</actions>
 		</pass>
-		<pass type="call_secondary_cmd" name="ui" secondary_cmd_name="Ui.Cmd">
-			<attachments>
-				<color>
-					<attachment name="1" image_name="Window.Image" level="0" layer="0" aspect="depth" clear="false" clear_r="0.000000" clear_g="0.000000" clear_b="0.000000" clear_a="0.000000" clear_depth="1.000000" clear_stencil="0"/>
-				</color>
-				<depth_stencil/>
-			</attachments>
-			<dependencies>
-				<dependency pass_name="pass1"/>
-			</dependencies>
-			<actions/>
-		</pass>
 	</passes>
 </renderer>
 

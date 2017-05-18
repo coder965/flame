@@ -139,11 +139,6 @@ namespace tke
 		VkDescriptorSet m_descriptorSet = 0;
 
 		int descriptorPosition(const std::string &name);
-		void loadXML();
-		void getLayout();
-		void reallocateDescriptorSet();
-		VkPipeline getPipeline(int cx, int cy, VkRenderPass renderPass, std::uint32_t subpassIndex);
-		void make();
 		void create(const char *filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 	};
 
@@ -170,7 +165,7 @@ namespace tke
 		VkFramebuffer framebuffer;
 	};
 
-	VkFramebuffer getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> views);
+	VkFramebuffer getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
 
 	struct ShaderModule
 	{

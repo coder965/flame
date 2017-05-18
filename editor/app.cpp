@@ -82,7 +82,7 @@ struct MainWindow : tke::GuiWindow
 	VkCommandBuffer progressCmd[2];
 	VkCommandBuffer mainCmd[2];
 
-	VkSemaphore renderFinishedSemaphore;
+	VkSemaphore renderFinished;
 
 	static bool needRedraw;
 
@@ -156,9 +156,9 @@ struct MainWindow : tke::GuiWindow
 		mainCmd[0] = tke::vk::allocateCommandBuffer();
 		mainCmd[1] = tke::vk::allocateCommandBuffer();
 
-		initUi(masterRenderer->renderer->vkRenderPass, masterRenderer->uiPass->index);
+		initUi();
 
-		renderFinishedSemaphore = tke::vk::createSemaphore();
+		renderFinished = tke::vk::createSemaphore();
 
 		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
@@ -181,7 +181,6 @@ struct MainWindow : tke::GuiWindow
 			progressCmd[1] = tke::vk::allocateCommandBuffer();
 
 			_resources.setImage(image, "Window.Image");
-			_resources.setCmd(uiCommandBuffer, "Ui.Cmd");
 
 			progressRenderer->setup();
 
@@ -777,23 +776,25 @@ struct MainWindow : tke::GuiWindow
 	{
 		perpareFrame();
 
-		uiFramebuffer = progressRenderer->vkFramebuffer[imageIndex];
 		beginUi();
-		ImGui::Begin("StartUp", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::TextUnformatted(tke::majorProgressText().c_str());
 		ImGui::TextUnformatted(tke::minorProgressText().c_str());
 		ImGui::End();
 		endUi();
 
-		tke::vk::queueSubmit(imageAvailable, renderFinishedSemaphore, progressCmd[imageIndex]);
+		tke::vk::queueSubmit(imageAvailable, renderFinished, progressCmd[imageIndex]);
+		tke::vk::queueSubmit(renderFinished, tke::uiRenderFinished, tke::uiCmd);
 
-		endFrame(renderFinishedSemaphore);
+		endFrame(tke::uiRenderFinished);
 
 		Sleep(10);
 	}
 
 	void renderMain()
 	{
+		perpareFrame();
+
 		beginUi();
 
 		main_menu_show();
@@ -838,11 +839,9 @@ struct MainWindow : tke::GuiWindow
 			needRedraw = false;
 		}
 
-		perpareFrame();
+		tke::vk::queueSubmit(imageAvailable, renderFinished, mainCmd[imageIndex]);
 
-		tke::vk::queueSubmit(imageAvailable, renderFinishedSemaphore, mainCmd[imageIndex]);
-
-		endFrame(renderFinishedSemaphore);
+		endFrame(renderFinished);
 
 		Sleep(10);
 
@@ -879,7 +878,9 @@ int main()
 	tke::initPickUp();
 	tke::initGeneralModels();
 
-	tke::setReporter([](const std::string &str) { tke::messageDialog.add(str); });
+	tke::setReporter([](const std::string &str) { 
+		tke::messageDialog.add(str); 
+	});
 
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();

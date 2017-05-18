@@ -106,11 +106,6 @@ namespace tke
 	struct GuiWindow : Window
 	{
 		void *uiContext = nullptr;
-		VkRenderPass uiRenderPass = VK_NULL_HANDLE;
-		uint32_t uiSubpassIndex = -1;
-		VkPipeline uiPipeline;
-		VkFramebuffer uiFramebuffer = VK_NULL_HANDLE;
-		VkCommandBuffer uiCommandBuffer = VK_NULL_HANDLE;
 		bool uiAcceptedMouse = false;
 		bool uiAcceptedKey = false;
 
@@ -119,7 +114,7 @@ namespace tke
 		virtual void charEvent(int) override;
 
 		GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
-		void initUi(VkRenderPass _uiRenderPass, uint32_t _uiSubpassIndex);
+		void initUi();
 		void beginUi();
 		void endUi();
 	};
@@ -129,6 +124,9 @@ namespace tke
 	void guiPushIcon(Image *image);
 	void guiSetupIcons();
 	void initGui();
+
+	extern VkCommandBuffer uiCmd;
+	extern VkSemaphore uiRenderFinished;
 }
 
 #endif
