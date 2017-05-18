@@ -1,6 +1,4 @@
 #include "gui.h"
-#include "window.h"
-#include "render.h"
 #include "core.h"
 
 namespace tke
@@ -398,11 +396,6 @@ namespace tke
 		saveFileDialog.show();
 	}
 
-	static CriticalSection cs;
-
-	static Pipeline g_Pipeline;
-	static VkRenderPass g_RenderPass;
-
 	static void _SetClipboardCallback(void *user_data, const char *s)
 	{
 		setClipBoard(s);
@@ -412,6 +405,9 @@ namespace tke
 	{
 		return getClipBoard();
 	}
+
+	static Pipeline g_Pipeline;
+	static VkRenderPass g_RenderPass;
 
 	static void _guiRenderer(ImDrawData* draw_data)
 	{
@@ -461,8 +457,8 @@ namespace tke
 			}
 			vk::unmapMemory(stagingBuffer.m_memory);
 
-			vk::copyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
-			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
+			vk::copyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0);
+			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size);
 		}
 
 		vkResetCommandBuffer(guiCurrentWindow->uiCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
@@ -565,11 +561,11 @@ namespace tke
 			io.AddInputCharacter((unsigned short)wParam);
 	}
 
-	void GuiWindow::initUi(VkRenderPass uiRenderPass, uint32_t uiSubpassIndex)
+	void GuiWindow::initUi(VkRenderPass _uiRenderPass, uint32_t _uiSubpassIndex)
 	{
 		assert(!ready);
-		uiRenderPass = uiRenderPass;
-		uiSubpassIndex = uiSubpassIndex;
+		uiRenderPass = _uiRenderPass;
+		uiSubpassIndex = _uiSubpassIndex;
 		VkCommandBufferInheritanceInfo inheritanceInfo = {};
 		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 		inheritanceInfo.renderPass = uiRenderPass;
@@ -620,10 +616,8 @@ namespace tke
 		ready = true;
 	}
 
-	void GuiWindow::lockUi()
+	void GuiWindow::beginUi()
 	{
-		cs.lock();
-
 		guiCurrentWindow = this;
 
 		uiAcceptedMouse = false;
@@ -655,14 +649,12 @@ namespace tke
 		ImGui::NewFrame();
 	}
 
-	void GuiWindow::unlockUi()
+	void GuiWindow::endUi()
 	{
 		ImGui::Render();
 
 		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
 		uiAcceptedKey = ImGui::IsAnyItemActive();
-
-		cs.unlock();
 	}
 
 	std::vector<Image*> _icons;
@@ -679,7 +671,7 @@ namespace tke
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 		static Image fontImage;
 		fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
-		io.Fonts->TexID = (void*)0;
+		io.Fonts->TexID = (void*)0; // image index
 
 		static int texture_position = -1;
 		if (texture_position == -1) texture_position = g_Pipeline.descriptorPosition("sTexture");
@@ -695,34 +687,25 @@ namespace tke
 		vk::updataDescriptorSet(writes.size(), writes.data());
 	}
 
-	static VkVertexInputBindingDescription binding_desc[1] = {};
-	static VkVertexInputAttributeDescription attribute_desc[3] = {};
-	static VkPipelineVertexInputStateCreateInfo vertex_info = {};
-
 	void initGui()
 	{
-
-		binding_desc[0].stride = sizeof(ImDrawVert);
-		binding_desc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		attribute_desc[0].location = 0;
-		attribute_desc[0].binding = binding_desc[0].binding;
-		attribute_desc[0].format = VK_FORMAT_R32G32_SFLOAT;
-		attribute_desc[0].offset = (size_t)(&((ImDrawVert*)0)->pos);
-		attribute_desc[1].location = 1;
-		attribute_desc[1].binding = binding_desc[0].binding;
-		attribute_desc[1].format = VK_FORMAT_R32G32_SFLOAT;
-		attribute_desc[1].offset = (size_t)(&((ImDrawVert*)0)->uv);
-		attribute_desc[2].location = 2;
-		attribute_desc[2].binding = binding_desc[0].binding;
-		attribute_desc[2].format = VK_FORMAT_R8G8B8A8_UNORM;
-		attribute_desc[2].offset = (size_t)(&((ImDrawVert*)0)->col);
-
-		vertex_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertex_info.vertexBindingDescriptionCount = 1;
-		vertex_info.pVertexBindingDescriptions = binding_desc;
-		vertex_info.vertexAttributeDescriptionCount = 3;
-		vertex_info.pVertexAttributeDescriptions = attribute_desc;
+		static VkVertexInputBindingDescription binding_desc[] = {
+			{ 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX }
+		};
+		static VkVertexInputAttributeDescription attribute_desc[3] = {
+			{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
+			{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
+			{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
+		};
+		static VkPipelineVertexInputStateCreateInfo vertex_info = {
+			VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			nullptr,
+			0,
+			ARRAYSIZE(binding_desc),
+			binding_desc,
+			ARRAYSIZE(attribute_desc),
+			attribute_desc
+		};
 
 		g_Pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 		g_Pipeline.m_pVertexInputState = &vertex_info;

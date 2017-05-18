@@ -119,9 +119,9 @@ namespace tke
 		virtual void charEvent(int) override;
 
 		GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
-		void initUi(VkRenderPass uiRenderPass, uint32_t uiSubpassIndex);
-		void lockUi();
-		void unlockUi();
+		void initUi(VkRenderPass _uiRenderPass, uint32_t _uiSubpassIndex);
+		void beginUi();
+		void endUi();
 	};
 
 	extern GuiWindow *guiCurrentWindow;

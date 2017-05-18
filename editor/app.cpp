@@ -778,12 +778,12 @@ struct MainWindow : tke::GuiWindow
 		perpareFrame();
 
 		uiFramebuffer = progressRenderer->vkFramebuffer[imageIndex];
-		lockUi();
+		beginUi();
 		ImGui::Begin("StartUp", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::TextUnformatted(tke::majorProgressText().c_str());
 		ImGui::TextUnformatted(tke::minorProgressText().c_str());
 		ImGui::End();
-		unlockUi();
+		endUi();
 
 		tke::vk::queueSubmit(imageAvailable, renderFinishedSemaphore, progressCmd[imageIndex]);
 
@@ -794,7 +794,7 @@ struct MainWindow : tke::GuiWindow
 
 	void renderMain()
 	{
-		lockUi();
+		beginUi();
 
 		main_menu_show();
 		dialog_debug::show();
@@ -830,7 +830,7 @@ struct MainWindow : tke::GuiWindow
 
 		tke::scene->resetChange();
 
-		unlockUi();
+		endUi();
 
 		if (needRedraw)
 		{

@@ -1,4 +1,4 @@
-<renderer name="" cx="1600" cy="800">
+<renderer name="" cx="1600" cy="900">
 	<passes>
 		<pass type="draw_action" name="pass1" secondary_cmd_name="">
 			<attachments>

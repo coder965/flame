@@ -789,10 +789,6 @@ namespace tke
 			device.cs.unlock();
 		}
 
-		static PFN_vkCreateDebugReportCallbackEXT  _my_vkCreateDebugReportCallbackEXT;
-		static PFN_vkDebugReportMessageEXT         _my_vkDebugReportMessageEXT;
-		static PFN_vkDestroyDebugReportCallbackEXT _my_vkDestroyDebugReportCallbackEXT;
-
 		static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, 
 			int32_t messageCode, 
 			const char* pLayerPrefix,
@@ -808,6 +804,8 @@ namespace tke
 			if (messageCode == 15) return VK_FALSE; // Shader requires VkPhysicalDeviceFeatures::tessellationShader but is not enabled on the device, never mind
 			if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
 			if (messageCode == 61) return VK_FALSE; // Some descriptor maybe used before any update, never mind
+
+			// ignore above
 
 			if (messageCode == 24) return VK_FALSE; // Vertex buffers are bound to command buffer but no vertex buffers are attached to this Pipeline State Object.
 			if (messageCode == 59) return VK_FALSE; // Descriptor set encountered the following validation error at vkCmdDrawIndexed() time: Descriptor is being used in draw but has not been updated.
@@ -848,9 +846,7 @@ namespace tke
 
 			if (debug)
 			{
-				_my_vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst.v, "vkCreateDebugReportCallbackEXT"));
-				_my_vkDebugReportMessageEXT = reinterpret_cast<PFN_vkDebugReportMessageEXT>(vkGetInstanceProcAddr(inst.v, "vkDebugReportMessageEXT"));
-				_my_vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst.v, "vkDestroyDebugReportCallbackEXT"));
+				static auto _vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst.v, "vkCreateDebugReportCallbackEXT"));
 
 				VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
 				callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
@@ -862,7 +858,7 @@ namespace tke
 				callbackCreateInfo.pUserData = nullptr;
 
 				VkDebugReportCallbackEXT callback;
-				res = _my_vkCreateDebugReportCallbackEXT(inst.v, &callbackCreateInfo, nullptr, &callback);
+				res = _vkCreateDebugReportCallbackEXT(inst.v, &callbackCreateInfo, nullptr, &callback);
 				assert(res == VK_SUCCESS);
 			}
 
