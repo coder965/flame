@@ -86,9 +86,6 @@
     <ClInclude Include="..\src\core\scene.h">
       <Filter>头文件\engine\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\core\spirit.h">
-      <Filter>头文件\engine\core</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\core\terrain.h">
       <Filter>头文件\engine\core</Filter>
     </ClInclude>
@@ -191,9 +188,6 @@
       <Filter>源文件\engine\core</Filter>
     </ClCompile>
     <ClCompile Include="..\src\core\scene.cpp">
-      <Filter>源文件\engine\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\core\spirit.cpp">
       <Filter>源文件\engine\core</Filter>
     </ClCompile>
     <ClCompile Include="..\src\core\terrain.cpp">

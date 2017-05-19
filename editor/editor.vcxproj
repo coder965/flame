@@ -176,7 +176,6 @@
     <ClInclude Include="..\src\core\render.abstract.h" />
     <ClInclude Include="..\src\core\resource.h" />
     <ClInclude Include="..\src\core\scene.h" />
-    <ClInclude Include="..\src\core\spirit.h" />
     <ClInclude Include="..\src\core\terrain.h" />
     <ClInclude Include="..\src\core\transformer.h" />
     <ClInclude Include="..\src\core\utils.h" />
@@ -217,7 +216,6 @@
     <ClCompile Include="..\src\core\render.cpp" />
     <ClCompile Include="..\src\core\resource.cpp" />
     <ClCompile Include="..\src\core\scene.cpp" />
-    <ClCompile Include="..\src\core\spirit.cpp" />
     <ClCompile Include="..\src\core\terrain.cpp" />
     <ClCompile Include="..\src\core\transformer.cpp" />
     <ClCompile Include="..\src\core\window.cpp" />
