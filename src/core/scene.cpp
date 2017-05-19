@@ -31,13 +31,13 @@ namespace tke
 		res->setPipeline(&combinePipeline, "Combine.Pipeline");
 
 		auto skyPass = renderer->addPass();
-		skyPass->addColorAttachment(&originalImage);
+		skyPass->addAttachment(&originalImage);
 		skyAction = skyPass->addAction(&panoramaPipeline);
 
 		auto mrtPass = renderer->addPass();
-		mrtPass->addColorAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		mrtPass->addColorAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		mrtPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		mrtPass->addAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		mrtPass->addAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		mrtPass->addAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
 		auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
 		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
 		mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
@@ -45,19 +45,19 @@ namespace tke
 		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
 
 		auto deferredPass = renderer->addPass();
-		deferredPass->addColorAttachment(&originalImage);
+		deferredPass->addAttachment(&originalImage);
 		deferredPass->addDependency(skyPass);
 		deferredPass->addDependency(mrtPass);
 		auto deferredAction = deferredPass->addAction(&deferredPipeline);
 		deferredAction->addDrawcall(3, 0, 1, 0);
 
 		miscPass = renderer->addPass();
-		miscPass->addColorAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		miscPass->addDepthStencilAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+		miscPass->addAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+		miscPass->addAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
 		miscPass->addDependency(mrtPass);
 
 		auto combinePass = renderer->addPass();
-		combinePass->addColorAttachment(pWindow->image);
+		combinePass->addAttachment(pWindow->image);
 		combinePass->addDependency(deferredPass);
 		combinePass->addDependency(miscPass);
 		auto combineAction = combinePass->addAction(&combinePipeline);

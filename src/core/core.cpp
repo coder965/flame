@@ -43,24 +43,24 @@ namespace tke
 		if (reporter) reporter(str);
 	}
 
-	float _majorProgress;
-	float _minorProgress;
+	int _majorProgress;
+	int _minorProgress;
 	std::string _majorProgressText;
 	std::string _minorProgressText;
 	CriticalSection progress_cs;
 
-	void reportMajorProgress(float progress)
+	void reportMajorProgress(int progress)
 	{
 		progress_cs.lock();
-		printf("major progress:%f\n", progress);
+		printf("major progress:%d\n", progress);
 		_majorProgress = progress;
 		progress_cs.unlock();
 	}
 
-	void reportMinorProgress(float progress)
+	void reportMinorProgress(int progress)
 	{
 		progress_cs.lock();
-		printf("minor progress:%f\n", progress);
+		printf("minor progress:%d\n", progress);
 		_minorProgress = progress;
 		progress_cs.unlock();
 	}
@@ -81,7 +81,7 @@ namespace tke
 		progress_cs.unlock();
 	}
 
-	float majorProgress()
+	int majorProgress()
 	{
 		progress_cs.lock();
 		auto progress = _majorProgress;
@@ -89,7 +89,7 @@ namespace tke
 		return progress;
 	}
 
-	float minorProgress()
+	int minorProgress()
 	{
 		progress_cs.lock();
 		auto progress = _minorProgress;

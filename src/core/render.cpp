@@ -656,7 +656,7 @@ namespace tke
 		std::vector<VkWriteDescriptorSet> writes;
 		for (auto &link : links)
 		{
-			DescriptorType type;
+			DescriptorType type = DescriptorType::null;
 
 			if (link.binding == -1)
 			{
@@ -675,7 +675,7 @@ namespace tke
 						}
 					}
 				}
-				assert(found);
+				//assert(found);
 			}
 			else
 			{
@@ -693,7 +693,8 @@ namespace tke
 						}
 					}
 				}
-				assert(found);
+				if (!found) continue;
+				//assert(found);
 			}
 
 			switch (type)
@@ -880,9 +881,16 @@ namespace tke
 		cy = _cy;
 	}
 
+
+	void Renderer::loadXML()
+	{
+		RendererAbstract::loadXML();
+
+	}
+
 	void Renderer::pushImage(Attachment *ai)
 	{
-		auto view = ai->image->getView(ai->aspect, ai->level, 1, ai->layer, 1);
+		auto view = ai->image->getView(VkImageAspectFlags(ai->aspect), ai->level, 1, ai->layer, 1);
 
 		auto index = 0;
 		for (; index < vkViews[0].size(); index++)
@@ -915,7 +923,7 @@ namespace tke
 		if (containSwapchain)
 		{
 			if (ai->image->type == Image::eSwapchain)
-				view = ai->image[1].getView(ai->aspect, ai->layer, 1, ai->layer, 1);
+				view = ai->image[1].getView(VkImageAspectFlags(ai->aspect), ai->layer, 1, ai->layer, 1);
 			vkViews[1].push_back(view);
 		}
 		vkClearValues.push_back(ai->clearValue);
@@ -1050,71 +1058,71 @@ namespace tke
 
 	void Renderer::setup()
 	{
-		vkAttachments.clear();
-		vkViews[0].clear();
-		vkViews[1].clear();
-		std::vector<VkAttachmentReference*> vkReferenceGroups;
-		std::vector<VkSubpassDescription> vkSubpasses;
-		std::vector<VkSubpassDependency> vkDependencies;
-
 		for (auto &p : passes)
 		{
-			for (auto &a : p.colorAttachments)
+			for (auto &a : p.attachments)
 			{
 				if (a.image_name != "")
 					a.image = pResource->getImage(a.image_name);
-			}
-		}
-
-		for (auto &p : passes)
-		{
-			for (auto &a : p.colorAttachments)
-			{
 				if (a.image->type == Image::eSwapchain)
-				{
 					containSwapchain = true;
-					break;
+				if (a.clear)
+				{
+					a.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+					if (a.image->isColorType())
+					{
+						a.clearValue.color.float32[0] = a.clear_r;
+						a.clearValue.color.float32[1] = a.clear_g;
+						a.clearValue.color.float32[2] = a.clear_b;
+						a.clearValue.color.float32[3] = a.clear_a;
+					}
+					else
+					{
+						a.clearValue.depthStencil.depth = a.clear_depth;
+						a.clearValue.depthStencil.stencil = a.clear_stencil;
+					}
 				}
 			}
 		}
+
+		vkAttachments.clear();
+		vkViews[0].clear();
+		vkViews[1].clear();
+		std::vector<VkSubpassDescription> vkSubpasses;
+		std::vector<VkSubpassDependency> vkDependencies;
+
+		std::vector<std::vector<VkAttachmentReference>> vkRefLists(passes.size());
 
 		int subpassIndex = 0;
 		for (auto &pass : passes)
 		{
 			pass.index = subpassIndex;
 
-			for (auto &color : pass.colorAttachments)
-				pushImage(&color);
-
-			if (pass.depthStencilAttachment)
-				pushImage(pass.depthStencilAttachment);
+			for (auto &a : pass.attachments)
+				pushImage(&a);
 
 			VkSubpassDescription desc = {};
 			desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-			if (pass.colorAttachments.size() > 0)
+			bool hasDepthStencil = false;
+			for (auto &a : pass.attachments)
 			{
-				auto refs = new VkAttachmentReference[pass.colorAttachments.size()];
-				int i = 0;
-				for (auto &c : pass.colorAttachments)
+				if (a.image->isColorType())
 				{
-					refs[i].attachment = c.index;
-					refs[i].layout = VK_IMAGE_LAYOUT_GENERAL;
-					i++;
+					vkRefLists[subpassIndex].push_back({ (unsigned int)a.index, VK_IMAGE_LAYOUT_GENERAL });
+					desc.colorAttachmentCount++;
 				}
-				desc.colorAttachmentCount = pass.colorAttachments.size();
-				desc.pColorAttachments = refs;
-				vkReferenceGroups.push_back(refs);
+				else
+				{
+					vkRefLists[subpassIndex].insert(vkRefLists[subpassIndex].begin(), { (unsigned int)a.index, VK_IMAGE_LAYOUT_GENERAL });
+					hasDepthStencil = true;
+				}
 			}
 
-			if (pass.depthStencilAttachment)
-			{
-				auto refs = new VkAttachmentReference[1];
-				refs[0].attachment = pass.depthStencilAttachment->index;
-				refs[0].layout = VK_IMAGE_LAYOUT_GENERAL;
-				desc.pDepthStencilAttachment = refs;
-				vkReferenceGroups.push_back(refs);
-			}
+			if (desc.colorAttachmentCount > 0)
+				desc.pColorAttachments = hasDepthStencil ? &vkRefLists[subpassIndex][1] : vkRefLists[subpassIndex].data();
+			if (hasDepthStencil)
+				desc.pDepthStencilAttachment = vkRefLists[subpassIndex].data();
 
 			vkSubpasses.push_back(desc);
 
@@ -1160,7 +1168,5 @@ namespace tke
 			if (vkFramebuffer[1]) vk::destroyFramebuffer(vkFramebuffer[1]);
 			vkFramebuffer[1] = getFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 		}
-
-		for (auto refs : vkReferenceGroups) delete[]refs;
 	}
 }

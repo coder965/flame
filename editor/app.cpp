@@ -71,6 +71,8 @@ struct MainWindow : tke::GuiWindow
 
 	tke::Image *titleImage;
 
+	tke::UniformBuffer pasteBuffer;
+
 	tke::MasterRenderer *masterRenderer;
 	tke::Renderer *progressRenderer;
 
@@ -167,7 +169,10 @@ struct MainWindow : tke::GuiWindow
 
 			titleImage = tke::createImage("../misc/title.jpg", true, false);
 
+			pasteBuffer.create(sizeof(float));
+
 			_resources.setImage(titleImage, "Paste.Texture");
+			_resources.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
 			_resources.setPipeline(&pastePipeline, "Paste.Pipeline");
 
 			progressRenderer = new tke::Renderer();
@@ -774,6 +779,16 @@ struct MainWindow : tke::GuiWindow
 
 	void renderProgress()
 	{
+		float alpha;
+		if (nowTime < 5000)
+			alpha = nowTime / 5000.f;
+		else
+			alpha = 1.f;
+		pasteBuffer.update(&alpha, &tke::stagingBuffer);
+
+		if (nowTime > 3000)
+			int cut = 1;
+
 		perpareFrame();
 
 		beginUi();
@@ -785,6 +800,7 @@ struct MainWindow : tke::GuiWindow
 		endUi();
 
 		tke::vk::queueSubmit(imageAvailable, renderFinished, progressCmd[imageIndex]);
+		tke::vk::queueWaitIdle();
 		tke::vk::queueSubmit(renderFinished, tke::uiRenderFinished, tke::uiCmd);
 
 		endFrame(tke::uiRenderFinished);
@@ -891,16 +907,16 @@ int main()
 	pMainWindow->show();
 
 	_beginthread([](void*) {
-		tke::reportMajorProgress(0.1f);
+		tke::reportMajorProgress(10);
 
 		tke::setMajorProgressText("Init");
 		tke::setMinorProgressText("");
 
 
-		tke::reportMajorProgress(0.9f);
+		tke::reportMajorProgress(90);
 
 		tke::setMajorProgressText("Finish");
-		tke::reportMajorProgress(1.f);
+		tke::reportMajorProgress(100);
 
 	}, 0, nullptr);
 

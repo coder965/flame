@@ -73,6 +73,8 @@ namespace tke
 			eDepthStencil
 		};
 		Type type = eColor;
+		inline bool isColorType() { return type == eColor || type == eSwapchain; }
+		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 
 		struct View
 		{
@@ -242,7 +244,6 @@ namespace tke
 	struct Attachment : AttachmentAbstract
 	{
 		Image *image = nullptr;
-		VkImageAspectFlags aspect = 0;
 
 		VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		VkClearValue clearValue = {};
@@ -296,6 +297,7 @@ namespace tke
 
 		Renderer();
 		Renderer(int _cx, int _cy);
+		void loadXML();
 		void pushImage(Attachment *ai);
 		void getDescriptorSets();
 		void execute(VkCommandBuffer cmd, int index = 0);

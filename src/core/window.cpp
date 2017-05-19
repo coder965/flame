@@ -209,6 +209,7 @@ namespace tke
 	void Window::show()
 	{
 		assert(ready); // must init ui
+		startUpTime = GetTickCount();
 		currentWindow = this;
 		ShowWindow(hWnd, SW_SHOWNORMAL);
 		SetForegroundWindow(hWnd);
@@ -220,12 +221,11 @@ namespace tke
 		static auto lastTime = 0;
 		static auto lastFrame = 0;
 
-		auto _t = GetTickCount();
-		if (_t - lastTime >= 1000)
+		if (nowTime - lastTime >= 1000)
 		{
 			FPS = frameCount - lastFrame;
 			lastFrame = frameCount;
-			lastTime = _t;
+			lastTime = nowTime;
 		}
 		return FPS;
 	}
@@ -247,8 +247,9 @@ namespace tke
 			else if (currentWindow->focus)
 			{
 				currentWindow->mouseEvent();
-				currentWindow->frameCount++;
+				currentWindow->nowTime = GetTickCount() - currentWindow->startUpTime;
 				currentWindow->renderEvent();
+				currentWindow->frameCount++;
 				currentWindow->clearInput();
 			}
 		}

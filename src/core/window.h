@@ -30,7 +30,9 @@ namespace tke
 
 		HWND hWnd = nullptr;
 
-		std::uint32_t frameCount = 0;
+		int startUpTime = 0;
+		int nowTime = 0;
+		int frameCount = 0;
 
 		VkSurfaceKHR surface;
 		VkSwapchainKHR swapchain;

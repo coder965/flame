@@ -12,5 +12,4 @@ layout(location = 0) out vec4 outColor;
 void main()
 {
 	outColor = vec4(texture(tex, inTexcoord).rgb, u_alpha.v);
-	outColor = vec4(texture(tex, inTexcoord).rgb, 1.0);
 }

@@ -34,7 +34,7 @@ namespace tke
 
 		void load(Model *m, std::ifstream &file)
 		{
-			reportMinorProgress(0.f);
+			reportMinorProgress(0);
 
 			int currentIndex = 0;
 			int currentRenderGroupID = -1;
@@ -45,7 +45,7 @@ namespace tke
 			std::vector<glm::vec3> rawNormals;
 			std::vector<glm::ivec3> rawIndexs;
 
-			reportMinorProgress(0.1f);
+			reportMinorProgress(10);
 
 			while (!file.eof())
 			{
@@ -182,11 +182,11 @@ namespace tke
 				}
 			}
 
-			reportMinorProgress(0.5f);
+			reportMinorProgress(50);
 
 			m->createTangent();
 
-			reportMinorProgress(1.f);
+			reportMinorProgress(100);
 		}
 	}
 
@@ -301,7 +301,7 @@ namespace tke
 			static_assert(sizeof(RigidData) == 83, "");
 			static_assert(sizeof(JointData) == 124, "");
 
-			reportMinorProgress(0.f);
+			reportMinorProgress(0);
 
 			m->animated = true;
 
@@ -561,7 +561,7 @@ namespace tke
 				m->addJoint(p);
 			}
 
-			reportMinorProgress(1.f);
+			reportMinorProgress(100);
 		}
 	}
 
@@ -628,7 +628,7 @@ namespace tke
 
 		void load(Model *m, std::ifstream &file)
 		{
-			reportMinorProgress(0.f);
+			reportMinorProgress(0);
 
 			int textureCount = 0;
 			file >> textureCount;
@@ -644,7 +644,7 @@ namespace tke
 
 			file >> m->animated;
 
-			reportMinorProgress(0.3f);
+			reportMinorProgress(30);
 
 			int vertexCount;
 			int indiceCount;
@@ -677,7 +677,7 @@ namespace tke
 				file.read((char*)m->indices.data(), indiceCount * sizeof(int));
 			}
 
-			reportMinorProgress(0.5f);
+			reportMinorProgress(50);
 
 			int renderGroupCount;
 			file >> renderGroupCount;
@@ -710,7 +710,7 @@ namespace tke
 				m->renderGroups.push_back(rg);
 			}
 
-			reportMinorProgress(0.8f);
+			reportMinorProgress(80);
 
 			int boneCount;
 			file >> boneCount;
@@ -835,7 +835,7 @@ namespace tke
 			file >> m->eyePosition;
 			file >> m->mainWeaponPosition;
 
-			reportMinorProgress(1.f);
+			reportMinorProgress(100);
 		}
 
 		static void _saveAnimation(std::ofstream &file, Model *pModel, Animation *pAnim)

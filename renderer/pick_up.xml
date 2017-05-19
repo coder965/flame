@@ -2,12 +2,8 @@
 	<passes>
 		<pass type="" name="Render Pass1" secondary_cmd_name="">
 			<attachments>
-				<color>
-					<attachment name="1" image_name="PickUp.Image" level="0" layer="0" aspect="" clear="false" clear_r="0." clear_g="0." clear_b="0." clear_a="0." clear_depth="1." clear_stencil="0"/>
-				</color>
-				<depth_stencil>
-					<attachment name="1" image_name="Depth.Image" level="0" layer="0" aspect="" clear="false" clear_r="0." clear_g="0." clear_b="0." clear_a="0." clear_depth="1." clear_stencil="0"/>
-				</depth_stencil>
+        <attachment name="1" image_name="PickUp.Image" level="0" layer="0" aspect="color" clear="false" clear_r="0." clear_g="0." clear_b="0." clear_a="0." clear_depth="1." clear_stencil="0"/>
+        <attachment name="1" image_name="Depth.Image" level="0" layer="0" aspect="depth" clear="false" clear_r="0." clear_g="0." clear_b="0." clear_a="0." clear_depth="1." clear_stencil="0"/>
 			</attachments>
 			<dependencies/>
 			<actions/>

@@ -37,7 +37,6 @@ namespace tke
 		REFLe color = 1 << 0,
 		REFLe depth = 1 << 1,
 		REFLe stencil = 1 << 2,
-		REFLe depth_stencil = 1 << 3
 	};
 
 	REFLECTABLE enum class RenderPassType : int
@@ -471,8 +470,7 @@ namespace tke
 	enum class RenderPassElement
 	{
 		eAction,
-		eColorAttachment,
-		eDepthStencilAttachment,
+		eAttachment,
 		eDependency
 	};
 
@@ -481,8 +479,7 @@ namespace tke
 	{
 		Container *parent;
 
-		std::list<AttachmentType> colorAttachments;
-		AttachmentType *depthStencilAttachment = nullptr;
+		std::list<AttachmentType> attachments;
 
 		std::list<DependencyType> dependencies;
 
@@ -496,21 +493,12 @@ namespace tke
 
 		REFLv std::string secondary_cmd_name;
 
-		~RenderPassAbstract() { delete depthStencilAttachment; }
 		template <class... _Valty>
-		AttachmentType *addColorAttachment(_Valty&&... _Val)
+		AttachmentType *addAttachment(_Valty&&... _Val)
 		{
-			colorAttachments.emplace_back(_Val...);
-			auto p = &colorAttachments.back();
+			attachments.emplace_back(_Val...);
+			auto p = &attachments.back();
 			p->parent = this;
-			return p;
-		}
-		template <class... _Valty>
-		AttachmentType *addDepthStencilAttachment(_Valty&&... _Val)
-		{
-			auto p = new AttachmentType(_Val...);
-			p->parent = this;
-			depthStencilAttachment = p;
 			return p;
 		}
 		template <class... _Valty>
@@ -536,26 +524,12 @@ namespace tke
 			auto attachmentNode = n->firstNode("attachments");
 			if (attachmentNode)
 			{
-				auto colorNode = attachmentNode->firstNode("color");
-				if (colorNode)
+				for (auto n : attachmentNode->children)
 				{
-					for (auto n : colorNode->children)
+					if (n->name == "attachment")
 					{
-						if (n->name == "attachment")
-						{
-							auto attachment = addColorAttachment();
-							attachment->loadFromAt(n);
-						}
-					}
-				}
-				auto depthStencilNode = attachmentNode->firstNode("depth_stencil");
-				if (depthStencilNode)
-				{
-					auto attachmentNode = depthStencilNode->firstNode("attachment");
-					if (attachmentNode)
-					{
-						depthStencilAttachment = addDepthStencilAttachment();
-						depthStencilAttachment->loadFromAt(attachmentNode);
+						auto attachment = addAttachment();
+						attachment->loadFromAt(n);
 					}
 				}
 			}
@@ -590,21 +564,11 @@ namespace tke
 
 			auto attachmentNode = new AttributeTreeNode("attachments");
 			n->children.push_back(attachmentNode);
-			auto colorNode = new AttributeTreeNode("color");
-			attachmentNode->children.push_back(colorNode);
-			for (auto &c : colorAttachments)
+			for (auto &a : attachments)
 			{
 				auto n = new AttributeTreeNode("attachment");
-				colorNode->children.push_back(n);
+				attachmentNode->children.push_back(n);
 				c.saveToAt(n);
-			}
-			auto depthStencilNode = new AttributeTreeNode("depth_stencil");
-			attachmentNode->children.push_back(depthStencilNode);
-			if (depthStencilAttachment)
-			{
-				auto n = new AttributeTreeNode("attachment");
-				depthStencilNode->children.push_back(n);
-				depthStencilAttachment->saveToAt(n);
 			}
 			auto dependenciesNode = new AttributeTreeNode("dependencies");
 			n->children.push_back(dependenciesNode);
@@ -630,18 +594,8 @@ namespace tke
 			case RenderPassElement::eAction:
 				maintainList(actions);
 				break;
-			case RenderPassElement::eColorAttachment:
-				maintainList(colorAttachments);
-				break;
-			case RenderPassElement::eDepthStencilAttachment:
-				if (depthStencilAttachment)
-				{
-					if (depthStencilAttachment->mark == Element::eMarkClear)
-					{
-						delete depthStencilAttachment;
-						depthStencilAttachment = nullptr;
-					}
-				}
+			case RenderPassElement::eAttachment:
+				maintainList(attachments);
 				break;
 			case RenderPassElement::eDependency:
 				maintainList(dependencies);

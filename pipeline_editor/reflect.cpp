@@ -24,7 +24,6 @@ currentEnum = tke::addReflectEnum("AspectFlags");
 currentEnum->items.emplace_back("color", (int)AspectFlags::color);
 currentEnum->items.emplace_back("depth", (int)AspectFlags::depth);
 currentEnum->items.emplace_back("stencil", (int)AspectFlags::stencil);
-currentEnum->items.emplace_back("depth_stencil", (int)AspectFlags::depth_stencil);
 currentEnum = tke::addReflectEnum("RenderPassType");
 currentEnum->items.emplace_back("draw_action", (int)RenderPassType::draw_action);
 currentEnum->items.emplace_back("call_secondary_cmd", (int)RenderPassType::call_secondary_cmd);

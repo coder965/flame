@@ -12,77 +12,53 @@
 
 bool inline operator < (glm::vec3 &a, glm::vec3 &b)
 {
-	if (a.x < b.x && a.y < b.y && a.z < b.z)
-		return true;
-	return false;
+	return a.x < b.x && a.y < b.y && a.z < b.z;
 }
 bool inline operator > (glm::vec3 &a, glm::vec3 &b)
 {
-	if (a.x > b.x && a.y > b.y && a.z > b.z)
-		return true;
-	return false;
+	return a.x > b.x && a.y > b.y && a.z > b.z;
 }
 bool inline operator <= (glm::vec3 &a, glm::vec3 &b)
 {
-	if (a.x <= b.x && a.y <= b.y && a.z <= b.z)
-		return true;
-	return false;
+	return a.x <= b.x && a.y <= b.y && a.z <= b.z;
 }
 bool inline operator >= (glm::vec3 &a, glm::vec3 &b)
 {
-	if (a.x >= b.x && a.y >= b.y && a.z >= b.z)
-		return true;
-	return false;
+	return a.x >= b.x && a.y >= b.y && a.z >= b.z;
 }
 
 bool inline operator < (float a, glm::vec3 &b)
 {
-	if (a < b.x && a < b.y && a < b.z)
-		return true;
-	return false;
+	return a < b.x && a < b.y && a < b.z;
 }
 bool inline operator > (float a, glm::vec3 &b)
 {
-	if (a > b.x && a > b.y && a > b.z)
-		return true;
-	return false;
+	return a > b.x && a > b.y && a > b.z;
 }
 bool inline operator <= (float a, glm::vec3 &b)
 {
-	if (a <= b.x && a <= b.y && a <= b.z)
-		return true;
-	return false;
+	return a <= b.x && a <= b.y && a <= b.z;
 }
 bool inline operator >= (float a, glm::vec3 &b)
 {
-	if (a >= b.x && a >= b.y && a >= b.z)
-		return true;
-	return false;
+	return a >= b.x && a >= b.y && a >= b.z;
 }
 
 bool inline operator < (glm::vec3 a, float b)
 {
-	if (a.x < b && a.y < b && a.z < b)
-		return true;
-	return false;
+	return a.x < b && a.y < b && a.z < b;
 }
 bool inline operator > (glm::vec3 a, float b)
 {
-	if (a.x > b && a.y > b && a.z > b)
-		return true;
-	return false;
+	return a.x > b && a.y > b && a.z > b;
 }
 bool inline operator <= (glm::vec3 a, float b)
 {
-	if (a.x <= b && a.y <= b && a.z <= b)
-		return true;
-	return false;
+	return a.x <= b && a.y <= b && a.z <= b;
 }
 bool inline operator >= (glm::vec3 a, float b)
 {
-	if (a.x >= b && a.y >= b && a.z >= b)
-		return true;
-	return false;
+	return a.x >= b && a.y >= b && a.z >= b;
 }
 
 inline std::ifstream& operator>>(std::ifstream &file, glm::vec2 &v)
