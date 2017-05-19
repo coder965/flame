@@ -102,8 +102,8 @@ namespace tke
 		{
 			VkSubmitInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-			info.pWaitDstStageMask = waitStages;
+			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			info.pWaitDstStageMask = &waitStage;
 			info.waitSemaphoreCount = 1;
 			info.pWaitSemaphores = &waitSemaphore;
 			info.commandBufferCount = 1;

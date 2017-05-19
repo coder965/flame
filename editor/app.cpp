@@ -778,8 +778,9 @@ struct MainWindow : tke::GuiWindow
 
 		beginUi();
 		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-		ImGui::TextUnformatted(tke::majorProgressText().c_str());
-		ImGui::TextUnformatted(tke::minorProgressText().c_str());
+		//ImGui::TextUnformatted(tke::majorProgressText().c_str());
+		//ImGui::TextUnformatted(tke::minorProgressText().c_str());
+		ImGui::TextUnformatted("123");
 		ImGui::End();
 		endUi();
 

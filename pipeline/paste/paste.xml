@@ -3,7 +3,7 @@
 	<stage filename="../fullscreenUv.vert"/>
 	<stage filename="paste.frag">
 		<descriptor type="image_n_sampler" binding="0" count="1" name="tex"/>
-		<push_constant offset="0" size="4"/>
+		<descriptor type="uniform_buffer" binding="1" count="1" name="ALPHA"/>
 	</stage>
 </pipeline>
 
