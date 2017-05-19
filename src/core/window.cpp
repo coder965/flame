@@ -6,20 +6,27 @@ namespace tke
 {
 	VkRenderPass windowRenderPass;
 
-	Window::Window(int _cx, int _cy, const std::string &_title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
+	Window::Window(int _cx, int _cy, const std::string &_title, bool hasFrame)
 	{
 		cx = _cx;
 		cy = _cy;
 		title = _title;
 
+		unsigned int windowStyle;
 		if (hasFrame)
 		{
 			RECT rect = { 0, 0, _cx, _cy };
 			AdjustWindowRect(&rect, WS_CAPTION, false);
 			_cx = rect.right - rect.left;
 			_cy = rect.bottom - rect.top;
+
+			windowStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 		}
-		hWnd = CreateWindowExA(windowStyleEx, "wndClass", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
+		else
+		{
+			windowStyle = WS_POPUP;
+		}
+		hWnd = CreateWindowA("wndClass", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
 
 		assert(hWnd);
 
@@ -70,7 +77,6 @@ namespace tke
 		mousePrevX = mouseX;
 		mousePrevY = mouseY;
 		mouseScroll = 0;
-		dropFiles.clear();
 	}
 
 	void Window::receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -128,6 +134,15 @@ namespace tke
 		case WM_MOUSEWHEEL:
 			mouseScroll += (short)HIWORD(wParam);
 			break;
+		case WM_KEYDOWN:
+			keyDownEvent(wParam);
+			break;
+		case WM_KEYUP:
+			keyUpEvent(wParam);
+			break;
+		case WM_CHAR:
+			charEvent(wParam);
+			break;
 		case WM_ACTIVATE:
 			switch (LOWORD(wParam))
 			{
@@ -139,18 +154,6 @@ namespace tke
 				break;
 			}
 			break;
-		case WM_DROPFILES:
-		{
-			auto hDrop = (HDROP)wParam;
-			auto n = DragQueryFileA(hDrop, (UINT)-1, nullptr, 0);
-			for (int i = 0; i < n; i++)
-			{
-				char buf[MAX_PATH];
-				DragQueryFileA(hDrop, i, buf, MAX_PATH);
-				dropFiles.push_back(buf);
-			}
-		}
-			break;
 		}
 	}
 
@@ -158,29 +161,13 @@ namespace tke
 
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		if (!currentWindow) return DefWindowProc(hWnd, message, wParam, lParam);
-
-		currentWindow->receiveInput(hWnd, message, wParam, lParam);
-		currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
-
-		LRESULT res = 0;
-
-		switch (message)
+		if (currentWindow)
 		{
-		case WM_KEYDOWN:
-			currentWindow->keyDownEvent(wParam);
-			break;
-		case WM_KEYUP:
-			currentWindow->keyUpEvent(wParam);
-			break;
-		case WM_CHAR:
-			currentWindow->charEvent(wParam);
-			break;
-		default:
-			res = DefWindowProc(hWnd, message, wParam, lParam);
+			currentWindow->receiveInput(hWnd, message, wParam, lParam);
+			currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
 		}
 
-		return res;
+		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
 	struct _WindowInit
@@ -244,7 +231,7 @@ namespace tke
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else if (currentWindow->focus)
+			else if (currentWindow)
 			{
 				currentWindow->mouseEvent();
 				currentWindow->nowTime = GetTickCount() - currentWindow->startUpTime;
@@ -258,15 +245,11 @@ namespace tke
 	void initWindow()
 	{
 		auto attachment = vk::swapchainAttachment(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
-		VkAttachmentReference ref = {};
-		ref.attachment = 0;
-		ref.layout = VK_IMAGE_LAYOUT_GENERAL;
+		VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
 		subpass.pColorAttachments = &ref;
-
 		windowRenderPass = vk::createRenderPass(1, &attachment, 1, &subpass, 0, nullptr);
 	}
 }

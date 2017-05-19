@@ -86,8 +86,6 @@ struct MainWindow : tke::GuiWindow
 
 	VkSemaphore renderFinished;
 
-	static bool needRedraw;
-
 	bool showWorldAxis = false;
 	bool showSelectLine = true;
 	bool showRotateAxis = false;
@@ -765,16 +763,6 @@ struct MainWindow : tke::GuiWindow
 					tke::scene->camera.moveAccrodingToScreen(tke::aspect, distX, distY);
 			}
 		}
-
-		for (auto &dropFile : dropFiles)
-		{
-			auto attribute = GetFileAttributes(dropFile.c_str());
-			if (!(attribute & FILE_ATTRIBUTE_DIRECTORY))
-			{
-				auto pModel = tke::createModel(dropFile.c_str());
-				if (pModel) tke::scene->pModels.push_back(pModel);
-			}
-		}
 	}
 
 	void renderProgress()
@@ -849,10 +837,10 @@ struct MainWindow : tke::GuiWindow
 
 		endUi();
 
-		if (needRedraw)
+		if (tke::needRedraw)
 		{
 			makeMainCmd();
-			needRedraw = false;
+			tke::needRedraw = false;
 		}
 
 		tke::vk::queueSubmit(imageAvailable, renderFinished, mainCmd[imageIndex]);
@@ -885,12 +873,10 @@ struct MainWindow : tke::GuiWindow
 	}
 };
 
-bool MainWindow::needRedraw = true;
-
 int main()
 {
 	auto resCx = 1600, resCy = 900;
-	tke::init("TK Engine Editor", resCx, resCy, &MainWindow::needRedraw);
+	tke::init("TK Engine Editor", resCx, resCy);
 	tke::initPickUp();
 	tke::initGeneralModels();
 
@@ -901,7 +887,7 @@ int main()
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();
 
-	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, WS_EX_ACCEPTFILES, true);
+	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", true);
 	((MainWindow*)pMainWindow)->init();
 	pMainWindow->show();
 
@@ -910,7 +896,6 @@ int main()
 
 		tke::setMajorProgressText("Init");
 		tke::setMinorProgressText("");
-
 
 		tke::reportMajorProgress(90);
 

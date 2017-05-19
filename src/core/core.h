@@ -76,9 +76,9 @@ namespace tke
 	std::string majorProgressText();
 	std::string minorProgressText();
 
-	void postRedrawRequest();
+	extern bool needRedraw;
 
-	Err init(const char *appName, int rcx, int rcy, bool *pNeedRedraw);
+	Err init(const char *appName, int rcx, int rcy);
 }
 
 #endif

@@ -26,7 +26,6 @@ namespace tke
 		int mousePrevX = 0, mousePrevY = 0;
 		int mouseScroll = 0;
 		bool focus = false;
-		std::vector<std::string> dropFiles;
 
 		HWND hWnd = nullptr;
 
@@ -48,7 +47,7 @@ namespace tke
 		virtual void renderEvent();
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-		Window(int _cx, int _cy, const std::string &_title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
+		Window(int _cx, int _cy, const std::string &_title, bool hasFrame = true);
 		~Window();
 		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 		void clearInput();

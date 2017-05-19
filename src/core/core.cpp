@@ -113,11 +113,7 @@ namespace tke
 		return text;
 	}
 
-	bool *_pNeedRedraw = nullptr;
-	void postRedrawRequest()
-	{
-		if (_pNeedRedraw) *_pNeedRedraw = true;
-	}
+	bool needRedraw;
 
 	void changeProjMat(int what)
 	{
@@ -136,7 +132,7 @@ namespace tke
 	
 	static Image _depthImage;
 
-	Err init(const char *appName, int rcx, int rcy, bool *pNeedRedraw)
+	Err init(const char *appName, int rcx, int rcy)
 	{
 		vk::init(appName, 
 #ifdef _DEBUG
@@ -148,7 +144,6 @@ namespace tke
 
 		resCx = rcx;
 		resCy = rcy;
-		_pNeedRedraw = pNeedRedraw;
 
 		matOrtho = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR * 2);
 		matOrthoInv = glm::inverse(matOrtho);

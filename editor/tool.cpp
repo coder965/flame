@@ -64,12 +64,12 @@ TransformTool::TransformTool()
 
 void TransformTool::attach()
 {
-	tke::postRedrawRequest();
+	tke::needRedraw = true;
 }
 
 void TransformTool::release()
 {
-	tke::postRedrawRequest();
+	tke::needRedraw = true;
 }
 
 void TransformTool::update()
@@ -158,7 +158,7 @@ void TransformTool::update()
 			}
 			break;
 		}
-		tke::postRedrawRequest();
+		tke::needRedraw = true;
 		TransformToolData::needUpdataUniformBuffer = true;
 	}
 	if (m_pTransformer)
@@ -279,7 +279,7 @@ bool TransformTool::mouseDown(int x, int y)
 
 	if (index != 3 && m_axis != tke::Transformer::Axis(index))
 	{
-		tke::postRedrawRequest();
+		tke::needRedraw = true;
 		TransformToolData::needUpdataUniformBuffer = true;
 		m_axis = tke::Transformer::Axis(index);
 	}
@@ -390,7 +390,7 @@ void TransformTool::setType(tke::Transformer::Type type)
 	m_type = type;
 	if (type == tke::Transformer::Type::eScale) m_scaleNow = 1.f;
 	TransformToolData::needUpdataUniformBuffer = true;
-	tke::postRedrawRequest();
+	tke::needRedraw = true;
 }
 
 void TransformTool::render(VkCommandBuffer cmd)

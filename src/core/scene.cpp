@@ -384,7 +384,7 @@ namespace tke
 			pParallaxLights.push_back(pLight);
 		else
 			pPointLights.push_back(pLight);
-		postRedrawRequest();
+		tke::needRedraw = true;
 		lightCountChanged = true;
 		LeaveCriticalSection(&cs);
 	}
@@ -446,7 +446,7 @@ namespace tke
 				break;
 			}
 		}
-		postRedrawRequest();
+		tke::needRedraw = true;
 		lightCountChanged = true;
 		LeaveCriticalSection(&cs);
 		return pLight;
@@ -471,7 +471,7 @@ namespace tke
 		if (pModel->rigidbodies.size() > 0)
 			pObject->rigidDatas = new RigidData[pModel->rigidbodies.size()];
 
-		postRedrawRequest();
+		tke::needRedraw = true;
 		needUpdateIndirectBuffer = true;
 		LeaveCriticalSection(&cs);
 	}
@@ -530,7 +530,7 @@ namespace tke
 				break;
 			}
 		}
-		postRedrawRequest();
+		tke::needRedraw = true;
 		needUpdateIndirectBuffer = true;
 		LeaveCriticalSection(&cs);
 		return pObject;
@@ -565,7 +565,7 @@ namespace tke
 		pTerrain->getRefrence();
 		pTerrains.push_back(pTerrain);
 
-		postRedrawRequest();
+		tke::needRedraw = true;
 
 		LeaveCriticalSection(&cs);
 	}
@@ -947,7 +947,7 @@ namespace tke
 			vertexBuffer.create(sizeof(Vertex) * vertexs.size(), vertexs.data());
 			indexBuffer.create(sizeof(int) * indices.size(), indices.data());
 
-			postRedrawRequest();
+			tke::needRedraw = true;
 			needUpdateVertexBuffer = false;
 		}
 		if (needUpdateMaterialBuffer)

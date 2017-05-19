@@ -143,7 +143,7 @@ void select()
 	addHistory(new SelectionHistory);
 	selectType = SelectType::eNull;
 
-	tke::postRedrawRequest();
+	tke::needRedraw = true;
 }
 
 void select(SelectType type, void *ptr)
@@ -160,7 +160,7 @@ void select(SelectType type, void *ptr)
 	selectType = type;
 	selecting = ptr;
 
-	tke::postRedrawRequest();
+	tke::needRedraw = true;
 }
 
 void beginRecordTransformHistory()

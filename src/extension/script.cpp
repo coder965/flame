@@ -22,17 +22,6 @@ namespace tke
 			{
 				processCmdLine(last_cmd.c_str(), false);
 			}
-			else if (sm[0].str() == "reload")
-			{
-				if (record) last_cmd = string;
-				string = sm.suffix();
-				if (std::regex_search(string, sm, pat))
-				{
-					//tk::Vk::deviceWaitIdle();
-					scene->needUpdataSky = true;
-					postRedrawRequest();
-				}
-			}
 		}
 	}
 }
