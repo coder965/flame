@@ -800,7 +800,6 @@ struct MainWindow : tke::GuiWindow
 		endUi();
 
 		tke::vk::queueSubmit(imageAvailable, renderFinished, progressCmd[imageIndex]);
-		tke::vk::queueWaitIdle();
 		tke::vk::queueSubmit(renderFinished, tke::uiRenderFinished, tke::uiCmd);
 
 		endFrame(tke::uiRenderFinished);
