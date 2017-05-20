@@ -430,7 +430,7 @@ namespace tke
 		REFLv int level = 0;
 		REFLv int layer = 0;
 
-		REFLe AspectFlags aspect = AspectFlags::color;
+		REFLe AspectFlags aspect = AspectFlags::null;
 
 		REFLv bool clear = false;
 		REFLv float clear_r = 0.f;

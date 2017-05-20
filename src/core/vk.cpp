@@ -119,6 +119,27 @@ namespace tke
 			device.cs.unlock();
 		}
 
+		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, int count, VkCommandBuffer *cmds)
+		{
+			VkSubmitInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			info.pWaitDstStageMask = &waitStage;
+			info.waitSemaphoreCount = 1;
+			info.pWaitSemaphores = &waitSemaphore;
+			info.commandBufferCount = count;
+			info.pCommandBuffers = cmds;
+			info.signalSemaphoreCount = 1;
+			info.pSignalSemaphores = &signalSemaphore;
+
+			device.cs.lock();
+			graphicsQueue.cs.lock();
+			auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, VK_NULL_HANDLE);
+			assert(res == VK_SUCCESS);
+			graphicsQueue.cs.unlock();
+			device.cs.unlock();
+		}
+
 		void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
 		{
 			VkCommandBufferBeginInfo info = {};
@@ -752,15 +773,30 @@ namespace tke
 			inst.cs.unlock();
 		}
 
+		VkEvent createEvent()
+		{
+			VkEvent event;
+
+			VkEventCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
+
+			device.cs.lock();
+			auto res = vkCreateEvent(device.v, &info, nullptr, &event);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
+
+			return event;
+		}
+
 		VkSemaphore createSemaphore()
 		{
 			VkSemaphore semaphore;
 
-			VkSemaphoreCreateInfo semaphoreInfo = {};
-			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			VkSemaphoreCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 			device.cs.lock();
-			auto res = vkCreateSemaphore(device.v, &semaphoreInfo, nullptr, &semaphore);
+			auto res = vkCreateSemaphore(device.v, &info, nullptr, &semaphore);
 			assert(res == VK_SUCCESS);
 			device.cs.unlock();
 

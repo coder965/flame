@@ -3,12 +3,12 @@
 
 #include <fstream>
 
-#include "D:\glm\glm.hpp"
-#include "D:\glm\gtc\matrix_transform.hpp"
-#include "D:\glm\gtx\transform2.hpp"
+#include "../../../glm/glm.hpp"
+#include "../../../glm/gtc/matrix_transform.hpp"
+#include "../../../glm/gtx/transform2.hpp"
 
-#define EPS (0.000001f)
-#define PI (3.141592653f)
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 bool inline operator < (glm::vec3 &a, glm::vec3 &b)
 {

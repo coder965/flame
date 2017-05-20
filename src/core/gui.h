@@ -103,30 +103,28 @@ namespace tke
 
 	void showDialogs();
 
+	extern bool uiAcceptedMouse;
+	extern bool uiAcceptedKey;
+
 	struct GuiWindow : Window
 	{
 		void *uiContext = nullptr;
-		bool uiAcceptedMouse = false;
-		bool uiAcceptedKey = false;
 
 		virtual void keyDownEvent(int) override;
 		virtual void keyUpEvent(int) override;
 		virtual void charEvent(int) override;
 
-		GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle = 0, unsigned int windowStyleEx = 0, bool hasFrame = true);
+		GuiWindow(int cx, int cy, const char *title, bool hasFrame = true);
 		void initUi();
 		void beginUi();
 		void endUi();
 	};
-
-	extern GuiWindow *guiCurrentWindow;
 
 	void guiPushIcon(Image *image);
 	void guiSetupIcons();
 	void initGui();
 
 	extern VkCommandBuffer uiCmd;
-	extern VkSemaphore uiRenderFinished;
 }
 
 #endif

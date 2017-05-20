@@ -39,14 +39,14 @@ namespace tke
 		if (test > 0.499f * unit)
 		{ // singularity at north pole
 			heading = 2.f * atan2(m_quat.x, m_quat.w);
-			attitude = PI / 2.f;
+			attitude = M_PI / 2.f;
 			bank = 0;
 			return;
 		}
 		if (test < -0.499f * unit)
 		{ // singularity at south pole
 			heading = -2.f * atan2(m_quat.x, m_quat.w);
-			attitude = -PI / 2.f;
+			attitude = -M_PI / 2.f;
 			bank = 0;
 			return;
 		}

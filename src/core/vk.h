@@ -22,6 +22,7 @@ namespace tke
 		VkCommandBuffer allocateSecondaryCommandBuffer();
 		void freeCommandBuffer(VkCommandBuffer cmd);
 		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkCommandBuffer cmd);
+		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, int count, VkCommandBuffer *cmds);
 		void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
 		VkCommandBuffer begineOnceCommandBuffer();
 		void endOnceCommandBuffer(VkCommandBuffer cmd);
@@ -79,6 +80,7 @@ namespace tke
 
 		void createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages);
 
+		VkEvent createEvent();
 		VkSemaphore createSemaphore();
 
 		std::uint32_t acquireNextImage(VkSwapchainKHR swapchain, VkSemaphore semaphore);

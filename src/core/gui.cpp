@@ -3,7 +3,8 @@
 
 namespace tke
 {
-	GuiWindow *guiCurrentWindow;
+	bool uiAcceptedMouse = false;
+	bool uiAcceptedKey = false;
 
 	void DialogT::begin()
 	{
@@ -43,8 +44,8 @@ namespace tke
 
 		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
-			guiCurrentWindow->uiAcceptedMouse = true;
-			guiCurrentWindow->uiAcceptedKey = true;
+			uiAcceptedMouse = true;
+			uiAcceptedKey = true;
 
 			ImGui::Text(m_text.c_str());
 			if (ImGui::Button("Yes", ImVec2(120, 0)))
@@ -83,8 +84,8 @@ namespace tke
 
 		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
-			guiCurrentWindow->uiAcceptedMouse = true;
-			guiCurrentWindow->uiAcceptedKey = true;
+			uiAcceptedMouse = true;
+			uiAcceptedKey = true;
 
 			auto ok = false;
 			if (ImGui::Button("Ok##0", ImVec2(120, 0)))
@@ -122,8 +123,8 @@ namespace tke
 
 		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
-			guiCurrentWindow->uiAcceptedMouse = true;
-			guiCurrentWindow->uiAcceptedKey = true;
+			uiAcceptedMouse = true;
+			uiAcceptedKey = true;
 
 			ImGui::InputText("Input:", m_buf, MAX_PATH);
 			if (ImGui::Button("OK", ImVec2(120, 0)))
@@ -206,8 +207,8 @@ namespace tke
 		bool changeDir = false;
 		if (ImGui::BeginPopupModal("DirectoryDialog", nullptr, 0))
 		{
-			guiCurrentWindow->uiAcceptedMouse = true;
-			guiCurrentWindow->uiAcceptedKey = true;
+			uiAcceptedMouse = true;
+			uiAcceptedKey = true;
 
 			ImGui::Text("Path:%s*.*", m_path.c_str());
 			ImGui::SameLine();
@@ -272,8 +273,8 @@ namespace tke
 		bool changeDir = false;
 		if (ImGui::BeginPopupModal("OpenFileDialog", NULL, 0))
 		{
-			guiCurrentWindow->uiAcceptedMouse = true;
-			guiCurrentWindow->uiAcceptedKey = true;
+			uiAcceptedMouse = true;
+			uiAcceptedKey = true;
 
 			ImGui::Text("Path:%s*.*", m_path.c_str());
 			ImGui::SameLine();
@@ -335,8 +336,8 @@ namespace tke
 		bool changeDir = false;
 		if (ImGui::BeginPopupModal("SaveFileDialog", nullptr, 0))
 		{
-			guiCurrentWindow->uiAcceptedMouse = true;
-			guiCurrentWindow->uiAcceptedKey = true;
+			uiAcceptedMouse = true;
+			uiAcceptedKey = true;
 
 			ImGui::Text("Path:%s*.*", m_path.c_str());
 			ImGui::SameLine();
@@ -408,7 +409,6 @@ namespace tke
 
 	static Pipeline g_Pipeline;
 	VkCommandBuffer uiCmd;
-	VkSemaphore uiRenderFinished;
 
 	static void _guiRenderer(ImDrawData* draw_data)
 	{
@@ -466,7 +466,10 @@ namespace tke
 
 		vk::beginCommandBuffer(uiCmd);
 
-		vkCmdBeginRenderPass(uiCmd, &vk::renderPassBeginInfo(windowRenderPass, guiCurrentWindow->framebuffer[guiCurrentWindow->imageIndex], guiCurrentWindow->cx, guiCurrentWindow->cy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdWaitEvents(uiCmd, 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+
+		auto pWindow = (GuiWindow*)currentWindow;
+		vkCmdBeginRenderPass(uiCmd, &vk::renderPassBeginInfo(windowRenderPass, pWindow->framebuffer[imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		// Bind Vertex And Index Buffer:
 		{
@@ -522,8 +525,8 @@ namespace tke
 		vkEndCommandBuffer(uiCmd);
 	}
 
-	GuiWindow::GuiWindow(int cx, int cy, const char *title, unsigned int windowStyle, unsigned int windowStyleEx, bool hasFrame)
-		: Window(cx, cy, title, windowStyle, windowStyleEx, hasFrame)
+	GuiWindow::GuiWindow(int cx, int cy, const char *title, bool hasFrame)
+		: Window(cx, cy, title, hasFrame)
 	{
 		ready = false;
 	}
@@ -603,8 +606,6 @@ namespace tke
 
 	void GuiWindow::beginUi()
 	{
-		guiCurrentWindow = this;
-
 		uiAcceptedMouse = false;
 		uiAcceptedKey = false;
 
@@ -696,7 +697,5 @@ namespace tke
 		g_Pipeline.create("../pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
 
 		uiCmd = vk::allocateCommandBuffer();
-
-		uiRenderFinished = vk::createSemaphore();
 	}
 }

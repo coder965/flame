@@ -55,9 +55,9 @@ namespace tke
 		case Type::eBox:
 			return size.x * size.y * size.z * 8.f;
 		case Type::eSphere:
-			return 4.f * size.x * size.x * size.x * PI / 3.f;
+			return 4.f * size.x * size.x * size.x * M_PI / 3.f;
 		case Type::eCapsule:
-			return 4.f * size.x * size.x * size.x * PI / 3.f + PI * size.x * size.x * size.y;
+			return 4.f * size.x * size.x * size.x * M_PI / 3.f + M_PI * size.x * size.x * size.y;
 		}
 		return 0.f;
 	}

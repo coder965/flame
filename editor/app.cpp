@@ -84,8 +84,6 @@ struct MainWindow : tke::GuiWindow
 	VkCommandBuffer progressCmd[2];
 	VkCommandBuffer mainCmd[2];
 
-	VkSemaphore renderFinished;
-
 	bool showWorldAxis = false;
 	bool showSelectLine = true;
 	bool showRotateAxis = false;
@@ -158,8 +156,6 @@ struct MainWindow : tke::GuiWindow
 
 		initUi();
 
-		renderFinished = tke::vk::createSemaphore();
-
 		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
 		{
@@ -197,6 +193,7 @@ struct MainWindow : tke::GuiWindow
 			{
 				tke::vk::beginCommandBuffer(progressCmd[i]);
 				progressRenderer->execute(progressCmd[i], i);
+				vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 				vkEndCommandBuffer(progressCmd[i]);
 			}
 		}
@@ -557,7 +554,7 @@ struct MainWindow : tke::GuiWindow
 	virtual void keyDownEvent(int key) override
 	{
 		tke::Window::keyDownEvent(key);
-		if (pMainWindow->uiAcceptedKey)
+		if (tke::uiAcceptedKey)
 			return;
 
 		if (controllerKeyDown(&tke::scene->camera, key))
@@ -640,7 +637,7 @@ struct MainWindow : tke::GuiWindow
 
 	virtual void mouseEvent() override
 	{
-		if (uiAcceptedMouse)
+		if (tke::uiAcceptedMouse)
 			return;
 
 		if (leftDown)
@@ -768,16 +765,16 @@ struct MainWindow : tke::GuiWindow
 	void renderProgress()
 	{
 		float alpha;
-		if (nowTime < 5000)
-			alpha = nowTime / 5000.f;
+		if (tke::nowTime < 5000)
+			alpha = tke::nowTime / 5000.f;
 		else
 			alpha = 1.f;
 		pasteBuffer.update(&alpha, &tke::stagingBuffer);
 
-		if (nowTime > 3000)
+		if (tke::nowTime > 3000)
 			int cut = 1;
 
-		perpareFrame();
+		tke::beginFrame();
 
 		beginUi();
 		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
@@ -787,17 +784,19 @@ struct MainWindow : tke::GuiWindow
 		ImGui::End();
 		endUi();
 
-		tke::vk::queueSubmit(imageAvailable, renderFinished, progressCmd[imageIndex]);
-		tke::vk::queueSubmit(renderFinished, tke::uiRenderFinished, tke::uiCmd);
+		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd };
+		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, 2, cmds);
+		//tke::vk::queueSubmit(imageAvailable, renderFinished, progressCmd[imageIndex]);
+		//tke::vk::queueSubmit(renderFinished, tke::uiRenderFinished, tke::uiCmd);
 
-		endFrame(tke::uiRenderFinished);
+		tke::endFrame();
 
 		Sleep(10);
 	}
 
 	void renderMain()
 	{
-		perpareFrame();
+		tke::beginFrame();
 
 		beginUi();
 
@@ -843,9 +842,9 @@ struct MainWindow : tke::GuiWindow
 			tke::needRedraw = false;
 		}
 
-		tke::vk::queueSubmit(imageAvailable, renderFinished, mainCmd[imageIndex]);
+		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, mainCmd[tke::imageIndex]);
 
-		endFrame(renderFinished);
+		tke::endFrame();
 
 		Sleep(10);
 

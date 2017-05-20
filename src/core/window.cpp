@@ -1,16 +1,18 @@
 #include <assert.h>
 
 #include "window.h"
+#include "core.h"
 
 namespace tke
 {
 	VkRenderPass windowRenderPass;
 
-	Window::Window(int _cx, int _cy, const std::string &_title, bool hasFrame)
+	Window *currentWindow = nullptr;
+
+	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame)
 	{
 		cx = _cx;
 		cy = _cy;
-		title = _title;
 
 		unsigned int windowStyle;
 		if (hasFrame)
@@ -45,30 +47,11 @@ namespace tke
 			views.push_back(image[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
 			framebuffer[i] = getFramebuffer(cx, cy, windowRenderPass, views);
 		}
-
-		imageAvailable = vk::createSemaphore();
 	}
 
 	Window::~Window()
 	{
 		DestroyWindow(hWnd);
-	}
-
-	void Window::perpareFrame()
-	{
-		imageIndex = vk::acquireNextImage(swapchain, imageAvailable);
-	}
-
-	void Window::endFrame(VkSemaphore waitSemaphore)
-	{
-		VkPresentInfoKHR info = {};
-		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &waitSemaphore;
-		info.swapchainCount = 1;
-		info.pSwapchains = &swapchain;
-		info.pImageIndices = &imageIndex;
-		vk::queuePresent(&info);
 	}
 
 	void Window::clearInput()
@@ -87,7 +70,6 @@ namespace tke
 		{
 		case WM_LBUTTONDOWN:
 		{
-			auto nowTime = GetTickCount();
 			if (nowTime - lastClickTime < 300)
 				doubleClick = true;
 			else
@@ -157,8 +139,6 @@ namespace tke
 		}
 	}
 
-	Window *currentWindow = nullptr;
-
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (currentWindow)
@@ -196,7 +176,6 @@ namespace tke
 	void Window::show()
 	{
 		assert(ready); // must init ui
-		startUpTime = GetTickCount();
 		currentWindow = this;
 		ShowWindow(hWnd, SW_SHOWNORMAL);
 		SetForegroundWindow(hWnd);
@@ -215,41 +194,5 @@ namespace tke
 			lastTime = nowTime;
 		}
 		return FPS;
-	}
-
-	void mainLoop()
-	{
-		assert(currentWindow);
-
-		for (;;)
-		{
-			MSG msg;
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				if (msg.message == WM_QUIT)
-					return;
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			else if (currentWindow)
-			{
-				currentWindow->mouseEvent();
-				currentWindow->nowTime = GetTickCount() - currentWindow->startUpTime;
-				currentWindow->renderEvent();
-				currentWindow->frameCount++;
-				currentWindow->clearInput();
-			}
-		}
-	}
-
-	void initWindow()
-	{
-		auto attachment = vk::swapchainAttachment(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-		subpass.pColorAttachments = &ref;
-		windowRenderPass = vk::createRenderPass(1, &attachment, 1, &subpass, 0, nullptr);
 	}
 }

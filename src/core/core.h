@@ -79,6 +79,19 @@ namespace tke
 	extern bool needRedraw;
 
 	Err init(const char *appName, int rcx, int rcy);
+
+	extern VkSemaphore imageAvailable;
+	extern unsigned int imageIndex;
+	extern VkEvent renderFinished;
+	extern VkSemaphore frameDone;
+
+	extern int startUpTime;
+	extern int nowTime;
+
+	void beginFrame();
+	void endFrame();
+
+	void mainLoop();
 }
 
 #endif

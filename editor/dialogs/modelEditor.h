@@ -168,8 +168,8 @@ namespace dialog_model_editor
 
 					if (ImGui::BeginPopupModal("Select Material", nullptr, 0))
 					{
-						tke::guiCurrentWindow->uiAcceptedMouse = true;
-						tke::guiCurrentWindow->uiAcceptedKey = true;
+						tke::uiAcceptedMouse = true;
+						tke::uiAcceptedKey = true;
 
 						if (ImGui::Button("Cancel", ImVec2(120, 0))) 
 						{ 

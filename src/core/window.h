@@ -16,7 +16,6 @@ namespace tke
 	{
 		bool ready = true;
 
-		std::string title;
 		int cx = 0, cy = 0;
 
 		bool doubleClick = false;
@@ -29,16 +28,12 @@ namespace tke
 
 		HWND hWnd = nullptr;
 
-		int startUpTime = 0;
-		int nowTime = 0;
 		int frameCount = 0;
 
 		VkSurfaceKHR surface;
 		VkSwapchainKHR swapchain;
 		Image image[2];
 		VkFramebuffer framebuffer[2];
-		uint32_t imageIndex;
-		VkSemaphore imageAvailable;
 
 		virtual void keyDownEvent(int);
 		virtual void keyUpEvent(int);
@@ -47,21 +42,15 @@ namespace tke
 		virtual void renderEvent();
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-		Window(int _cx, int _cy, const std::string &_title, bool hasFrame = true);
+		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true);
 		~Window();
 		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 		void clearInput();
 		void show();
 		int getFPS();
-		void perpareFrame();
-		void endFrame(VkSemaphore waitSemaphore);
 	};
 
 	extern Window *currentWindow;
-
-	void mainLoop();
-
-	void initWindow();
 }
 
 #endif

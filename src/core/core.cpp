@@ -129,6 +129,14 @@ namespace tke
 		}
 		needUpdateProjMatrix;
 	}
+
+	VkSemaphore imageAvailable;
+	unsigned int imageIndex = 0;
+	VkEvent renderFinished;
+	VkSemaphore frameDone;
+
+	int startUpTime = 0;
+	int nowTime = 0;
 	
 	static Image _depthImage;
 
@@ -193,7 +201,19 @@ namespace tke
 		_depthImage.create(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(&_depthImage, "Depth.Image");
 
-		initWindow();
+		{
+			auto attachment = vk::swapchainAttachment(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+			VkSubpassDescription subpass = {};
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			subpass.pColorAttachments = &ref;
+			windowRenderPass = vk::createRenderPass(1, &attachment, 1, &subpass, 0, nullptr);
+		}
+
+		imageAvailable = vk::createSemaphore();
+		renderFinished = vk::createEvent();
+		frameDone = vk::createSemaphore();
 
 		initGui();
 		guiSetupIcons();
@@ -202,5 +222,49 @@ namespace tke
 		iniPhysics();
 
 		return Err::eNoErr;
+	}
+
+	void beginFrame()
+	{
+		imageIndex = vk::acquireNextImage(currentWindow->swapchain, imageAvailable);
+	}
+
+	void endFrame()
+	{
+		VkPresentInfoKHR info = {};
+		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		info.waitSemaphoreCount = 1;
+		info.pWaitSemaphores = &frameDone;
+		info.swapchainCount = 1;
+		info.pSwapchains = &currentWindow->swapchain;
+		info.pImageIndices = &imageIndex;
+		vk::queuePresent(&info);
+	}
+
+	void mainLoop()
+	{
+		assert(currentWindow);
+
+		startUpTime = GetTickCount();
+
+		for (;;)
+		{
+			MSG msg;
+			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				if (msg.message == WM_QUIT)
+					return;
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			else if (currentWindow)
+			{
+				currentWindow->mouseEvent();
+				nowTime = GetTickCount() - startUpTime;
+				currentWindow->renderEvent();
+				currentWindow->frameCount++;
+				currentWindow->clearInput();
+			}
+		}
 	}
 }

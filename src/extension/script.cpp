@@ -1,8 +1,5 @@
 #include <regex>
 
-#include "../core/scene.h"
-#include "../core/core.h"
-#include "model.file.h"
 #include "script.h"
 
 namespace tke

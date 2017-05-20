@@ -166,6 +166,7 @@
     <ClInclude Include="..\src\core\camera.h" />
     <ClInclude Include="..\src\core\controler.h" />
     <ClInclude Include="..\src\core\core.h" />
+    <ClInclude Include="..\src\core\event.h" />
     <ClInclude Include="..\src\core\gui.h" />
     <ClInclude Include="..\src\core\light.h" />
     <ClInclude Include="..\src\core\math.h" />
@@ -201,6 +202,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\imgui-master\imgui.cpp" />
     <ClCompile Include="..\..\..\..\imgui-master\imgui_draw.cpp" />
+    <ClCompile Include="..\src\core\event.cpp" />
     <ClCompile Include="..\src\core\reflect.cpp" />
     <ClCompile Include="..\src\core\math.cpp" />
     <ClCompile Include="..\src\core\utils.cpp" />
