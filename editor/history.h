@@ -1,7 +1,7 @@
 #ifndef __HISTORY__
 #define __HISTORY__
 
-#include "..\src\core\object.h"
+#include "..\src\object.h"
 #include "select.h"
 
 struct History

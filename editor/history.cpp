@@ -1,6 +1,6 @@
 #include "history.h"
-#include "..\src\core\core.h"
-#include "..\src\core\scene.h"
+#include "..\src\core.h"
+#include "..\src\scene.h"
 
 SelectionHistory::SelectionHistory()
 {

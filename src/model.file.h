@@ -3,7 +3,7 @@
 
 #include <fstream>
 
-#include "../core/model.h"
+#include "model.h"
 
 namespace tke
 {

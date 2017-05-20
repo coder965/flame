@@ -1,8 +1,8 @@
 #ifndef __TOOL__
 #define __TOOL__
 
-#include "..\src\core\transformer.h"
-#include "..\src\core\render.h"
+#include "../src/transformer.h"
+#include "../src/render.h"
 
 struct Tool : tke::Renderable
 {

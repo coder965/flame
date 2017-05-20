@@ -1,5 +1,5 @@
 #include "select.h"
-#include "../src/core/scene.h"
+#include "../src/scene.h"
 
 SelectType selectType = SelectType::eNull;
 void *selecting;

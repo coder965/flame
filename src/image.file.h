@@ -1,7 +1,7 @@
 #ifndef __TKE_IMAGE_FILE__
 #define __TKE_IMAGE_FILE__
 
-#include "../core/render.h"
+#include "render.h"
 
 namespace tke
 {

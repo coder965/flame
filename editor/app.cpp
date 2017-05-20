@@ -3,16 +3,16 @@
 #include <iostream>
 #include <memory>
 
-#include "..\src\core\core.h"
-#include "..\src\core\scene.h"
-#include "..\src\core\window.h"
-#include "..\src\core\gui.h"
-#include "..\src\core\render.h"
-#include "..\src\extension\pickUp.h"
-#include "..\src\extension\script.h"
-#include "..\src\extension\image.file.h"
-#include "..\src\extension\model.file.h"
-#include "..\src\extension\model.general.h"
+#include "../src/core.h"
+#include "../src/scene.h"
+#include "../src/window.h"
+#include "../src/gui.h"
+#include "../src/render.h"
+#include "../src/pickUp.h"
+#include "../src/script.h"
+#include "../src/image.file.h"
+#include "../src/model.file.h"
+#include "../src/model.general.h"
 
 #include "select.h"
 #include "history.h"
@@ -646,7 +646,7 @@ struct MainWindow : tke::GuiWindow
 			{
 				if (!(currentTool && currentTool->mouseDown(mouseX, mouseY)))
 				{
-					auto index = tke::pickUp(mouseX, mouseY, 1, 1, [](VkCommandBuffer cmd, void*) {
+					auto index = tke::pickUp(mouseX, mouseY, 1, 1, [](VkCommandBuffer cmd) {
 						if (tke::scene->pStaticObjects.size() > 0 || tke::scene->pLights.size() > 0)
 						{
 							uint32_t pass;
@@ -684,7 +684,7 @@ struct MainWindow : tke::GuiWindow
 								index++;
 							}
 						}
-					}, nullptr);
+					});
 
 					if (index == 0)
 					{

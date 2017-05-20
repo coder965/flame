@@ -1,5 +1,5 @@
 #include "model.general.h"
-#include "../core/scene.h"
+#include "scene.h"
 
 namespace tke
 {

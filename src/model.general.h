@@ -1,7 +1,7 @@
 #ifndef __TKE_MODEL_GENERAL__
 #define __TKE_MODEL_GENERAL__
 
-#include "../core/model.h"
+#include "model.h"
 
 namespace tke
 {

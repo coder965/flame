@@ -1,7 +1,7 @@
-#include "../src/extension/pickUp.h"
-#include "../src/extension/model.general.h"
-#include "../src/core/scene.h"
-#include "../src/core/core.h"
+#include "../src/pickUp.h"
+#include "../src/model.general.h"
+#include "../src/scene.h"
+#include "../src/core.h"
 #include "select.h"
 #include "history.h"
 #include "tool.h"
@@ -244,35 +244,39 @@ bool TransformTool::mouseDown(int x, int y)
 	if (!m_pTransformer)
 		return false;
 
-	auto index = tke::pickUp(x, y, 1, 1, [](VkCommandBuffer cmd, void *userData) {
-		auto pTool = (TransformTool*)userData;
-
+	auto index = tke::pickUp(x, y, 1, 1, [](VkCommandBuffer cmd) {
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(cmd, 0, 1, &tke::scene->vertexBuffer.m_buffer, offsets);
 		vkCmdBindIndexBuffer(cmd, tke::scene->indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT32);
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TransformToolData::pickUpPipeline.m_pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TransformToolData::pickUpPipeline.m_pipelineLayout, 0, 1, &TransformToolData::pickUpPipeline.m_descriptorSet, 0, nullptr);
 
-		if (pTool->m_type == tke::Transformer::Type::eMove)
+		switch (transformTool.m_type)
+		{
+		case tke::Transformer::Type::eMove:
 		{
 			auto pModel = tke::arrowModel;
 			vkCmdDrawIndexed(cmd, pModel->indices.size(), 3, pModel->indiceBase, pModel->vertexBase, 0);
 		}
-		else if (pTool->m_type == tke::Transformer::Type::eAsixRotate)
+			break;
+		case tke::Transformer::Type::eAsixRotate:
 		{
 			auto pModel = tke::torusModel;
 			vkCmdDrawIndexed(cmd, pModel->indices.size(), 3, pModel->indiceBase, pModel->vertexBase, 0);
 		}
-		else if (pTool->m_type == tke::Transformer::Type::eScale)
+			break;
+		case tke::Transformer::Type::eScale:
 		{
 			auto pModel = tke::hamerModel;
 			for (int i = 0; i < 3; i++)
 			{
 				vkCmdDrawIndexed(cmd, pModel->renderGroups[0].indiceCount, 1, pModel->indiceBase + pModel->renderGroups[0].indiceBase, tke::hamerModel->vertexBase, i);
-				vkCmdDrawIndexed(cmd, pModel->renderGroups[1].indiceCount, 1, pModel->indiceBase + pModel->renderGroups[1].indiceBase, tke::hamerModel->vertexBase, pTool->m_flag[2][i] & pTool->AXIS_FLAG[(int)pTool->m_axis] ? 3 : i);
+				vkCmdDrawIndexed(cmd, pModel->renderGroups[1].indiceCount, 1, pModel->indiceBase + pModel->renderGroups[1].indiceBase, tke::hamerModel->vertexBase, transformTool.m_flag[2][i] & transformTool.AXIS_FLAG[(int)transformTool.m_axis] ? 3 : i);
 			}
 		}
-	}, this);
+			break;
+		}
+	});
 
 	if (index == 0) return false;
 	index--;

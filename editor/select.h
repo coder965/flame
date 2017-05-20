@@ -1,10 +1,10 @@
 #ifndef __SELECT__
 #define __SELECT__
 
-#include "../src/core/light.h"
-#include "../src/core/object.h"
-#include "../src/core/model.h"
-#include "../src/core/terrain.h"
+#include "../src/light.h"
+#include "../src/object.h"
+#include "../src/model.h"
+#include "../src/terrain.h"
 
 enum class SelectType
 {

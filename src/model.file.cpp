@@ -2,8 +2,8 @@
 #include <sstream>
 #include <memory>
 
-#include "../core/core.h"
-#include "../core/scene.h"
+#include "core.h"
+#include "scene.h"
 #include "model.file.h"
 #include "image.file.h"
 
