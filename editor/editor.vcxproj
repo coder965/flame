@@ -177,7 +177,6 @@
     <ClInclude Include="..\src\object.h" />
     <ClInclude Include="..\src\physics.h" />
     <ClInclude Include="..\src\pickUp.h" />
-    <ClInclude Include="..\src\qt.h" />
     <ClInclude Include="..\src\render.abstract.h" />
     <ClInclude Include="..\src\render.h" />
     <ClInclude Include="..\src\resource.h" />

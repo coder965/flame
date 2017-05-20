@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "../src/core.h"
+#include "../src/event.h"
 #include "../src/scene.h"
 #include "../src/window.h"
 #include "../src/gui.h"
@@ -61,6 +62,9 @@ tke::GuiWindow *pMainWindow = nullptr;
 #include "dialogs\debug.h"
 //#include "dialogs\image.h"
 
+int state = 0;
+tke::UniformBuffer pasteBuffer;
+
 struct MainWindow : tke::GuiWindow
 {
 	using tke::GuiWindow::GuiWindow;
@@ -70,8 +74,6 @@ struct MainWindow : tke::GuiWindow
 	tke::Pipeline pastePipeline;
 
 	tke::Image *titleImage;
-
-	tke::UniformBuffer pasteBuffer;
 
 	tke::MasterRenderer *masterRenderer;
 	tke::Renderer *progressRenderer;
@@ -196,6 +198,29 @@ struct MainWindow : tke::GuiWindow
 				vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 				vkEndCommandBuffer(progressCmd[i]);
 			}
+
+			auto list = new tke::EventList;
+			list->events.push_back({
+				[](int _t) {
+					if (_t < 500)
+					{
+						float alpha = _t / 500.f;
+						pasteBuffer.update(&alpha, &tke::stagingBuffer);
+					}
+				},
+				1500
+			});
+			list->events.push_back({
+				[](int _t) {
+					float alpha = 1.f - _t / 500.f;
+					pasteBuffer.update(&alpha, &tke::stagingBuffer);
+				},
+				500,
+				[]() {
+					state = 1;
+				},
+			});
+			tke::addEventList(list);
 		}
 	}
 
@@ -510,54 +535,13 @@ struct MainWindow : tke::GuiWindow
 		}
 	}
 
-
-	bool controllerKeyDown(tke::Controller *pController, int key)
-	{
-		switch (key)
-		{
-		case 'W':
-			pController->front = true;
-			return true;
-		case 'S':
-			pController->back = true;
-			return true;
-		case 'A':
-			pController->left = true;
-			return true;
-		case 'D':
-			pController->right = true;
-			return true;
-		}
-		return false;
-	}
-
-	bool controllerKeyUp(tke::Controller *pController, int key)
-	{
-		switch (key)
-		{
-		case 'W':
-			pController->front = false;
-			return true;
-		case 'S':
-			pController->back = false;
-			return true;
-		case 'A':
-			pController->left = false;
-			return true;
-		case 'D':
-			pController->right = false;
-			return true;
-		}
-		return false;
-	}
-
 	virtual void keyDownEvent(int key) override
 	{
 		tke::Window::keyDownEvent(key);
 		if (tke::uiAcceptedKey)
 			return;
 
-		if (controllerKeyDown(&tke::scene->camera, key))
+		if (tke::scene->camera.keyDown(key))
 			return;
 
 		switch (key)
@@ -631,7 +615,7 @@ struct MainWindow : tke::GuiWindow
 	virtual void keyUpEvent(int key) override
 	{
 		tke::Window::keyUpEvent(key);
-		if (controllerKeyUp(&tke::scene->camera, key))
+		if (tke::scene->camera.keyUp(key))
 			return;
 	}
 
@@ -764,30 +748,23 @@ struct MainWindow : tke::GuiWindow
 
 	void renderProgress()
 	{
-		float alpha;
-		if (tke::nowTime < 5000)
-			alpha = tke::nowTime / 5000.f;
-		else
-			alpha = 1.f;
-		pasteBuffer.update(&alpha, &tke::stagingBuffer);
-
-		if (tke::nowTime > 3000)
-			int cut = 1;
+		if (state == 1 && tke::majorProgress() == 100)
+		{
+			pRender = &MainWindow::renderMain;
+			return;
+		}
 
 		tke::beginFrame();
 
 		beginUi();
 		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-		//ImGui::TextUnformatted(tke::majorProgressText().c_str());
-		//ImGui::TextUnformatted(tke::minorProgressText().c_str());
-		ImGui::TextUnformatted("123");
+		ImGui::TextUnformatted(tke::majorProgressText().c_str());
+		ImGui::TextUnformatted(tke::minorProgressText().c_str());
 		ImGui::End();
 		endUi();
 
 		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd };
 		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, 2, cmds);
-		//tke::vk::queueSubmit(imageAvailable, renderFinished, progressCmd[imageIndex]);
-		//tke::vk::queueSubmit(renderFinished, tke::uiRenderFinished, tke::uiCmd);
 
 		tke::endFrame();
 
@@ -842,7 +819,8 @@ struct MainWindow : tke::GuiWindow
 			tke::needRedraw = false;
 		}
 
-		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, mainCmd[tke::imageIndex]);
+		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd };
+		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, 2, cmds);
 
 		tke::endFrame();
 

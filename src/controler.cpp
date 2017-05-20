@@ -50,4 +50,44 @@ namespace tke
 
 		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler != 0.f);
 	}
+
+	bool Controller::keyDown(int key)
+	{
+		switch (key)
+		{
+		case 'W':
+			front = true;
+			return true;
+		case 'S':
+			back = true;
+			return true;
+		case 'A':
+			left = true;
+			return true;
+		case 'D':
+			right = true;
+			return true;
+		}
+		return false;
+	}
+
+	bool Controller::keyUp(int key)
+	{
+		switch (key)
+		{
+		case 'W':
+			front = false;
+			return true;
+		case 'S':
+			back = false;
+			return true;
+		case 'A':
+			left = false;
+			return true;
+		case 'D':
+			right = false;
+			return true;
+		}
+		return false;
+	}
 }

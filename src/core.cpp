@@ -1,8 +1,11 @@
 #include <map>
+
+#include "core.h"
+#include "event.h"
+#include "render.h"
 #include "scene.h"
 #include "gui.h"
 #include "window.h"
-#include "core.h"
 #include "physics.h"
 
 namespace tke
@@ -249,6 +252,9 @@ namespace tke
 
 		for (;;)
 		{
+			nowTime = GetTickCount() - startUpTime;
+			processEvents();
+
 			MSG msg;
 			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -260,7 +266,6 @@ namespace tke
 			else if (currentWindow)
 			{
 				currentWindow->mouseEvent();
-				nowTime = GetTickCount() - startUpTime;
 				currentWindow->renderEvent();
 				currentWindow->frameCount++;
 				currentWindow->clearInput();

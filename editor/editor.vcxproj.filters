@@ -95,9 +95,6 @@
     <ClInclude Include="..\src\pickUp.h">
       <Filter>头文件\engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\qt.h">
-      <Filter>头文件\engine</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\render.abstract.h">
       <Filter>头文件\engine</Filter>
     </ClInclude>
