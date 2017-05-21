@@ -223,7 +223,7 @@ namespace tke
 		guiSetupIcons();
 
 		controllingObject = nullptr;
-		iniPhysics();
+		initPhysics();
 
 		return Err::eNoErr;
 	}

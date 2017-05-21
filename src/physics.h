@@ -3,11 +3,10 @@
 
 namespace tke
 {
-	void iniPhysics();
+	void initPhysics();
 	void createPhysicsScene();
 	void destoryPhysicsScene();
 	void syncPhysics();
-	void viewPhysicsDebug();
 }
 
 #endif

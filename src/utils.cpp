@@ -48,25 +48,21 @@ namespace tke
 
 	const char *getClipBoard()
 	{
-		static char *str = nullptr;
-		delete[]str;
+		static std::string str;
 		OpenClipboard(NULL);
 		auto hClipMemory = ::GetClipboardData(CF_TEXT);
 		auto dwLength = GlobalSize(hClipMemory);
 		auto lpClipMemory = (LPBYTE)GlobalLock(hClipMemory);
-		str = new char[dwLength + 1];
-		strcpy(str, (char*)lpClipMemory);
+		str =  (char*)lpClipMemory;
 		GlobalUnlock(hClipMemory);
 		CloseClipboard();
-		return str;
+		return str.c_str();
 	}
 
-	void setClipBoard(const char *s)
+	void setClipBoard(const std::string &s)
 	{
-		auto dwLength = strlen(s);
-		auto hGlobalMemory = GlobalAlloc(GHND, dwLength + 1);
-		auto lpGlobalMemory = (LPBYTE)GlobalLock(hGlobalMemory);
-		strcpy((char*)lpGlobalMemory, s);
+		auto hGlobalMemory = GlobalAlloc(GHND, s.size() + 1);
+		strcpy((char*)GlobalLock(hGlobalMemory), s.c_str());
 		GlobalUnlock(hGlobalMemory);
 		OpenClipboard(NULL);
 		EmptyClipboard();

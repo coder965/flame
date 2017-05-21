@@ -87,9 +87,11 @@ namespace tke
 	extern std::string exePath;
 
 	const char *getClipBoard();
-	void setClipBoard(const char *s);
+	void setClipBoard(const std::string &);
+
 	void saveBitmap24(const std::string &filename, int width, int height, void *data);
 	void saveBitmap32(const std::string &filename, int width, int height, void *data);
+
 	void exec(const std::string &filename, const std::string &parameters);
 
 	struct OnceFileBuffer

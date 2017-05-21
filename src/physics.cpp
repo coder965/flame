@@ -1,8 +1,8 @@
-#include "core.h"
+#include "physics.h"
 
 namespace tke
 {
-	void iniPhysics()
+	void initPhysics()
 	{
 		//static auto allocator = PxDefaultAllocator();
 		//static auto errorCallBack = PxDefaultErrorCallback();

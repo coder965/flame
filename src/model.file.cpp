@@ -138,12 +138,17 @@ namespace tke
 
 					if (mtlName != "")
 					{
-						std::stringstream ss(sprintf("%s/%s", m->filepath.c_str(), mtlName.c_str()));
+						std::ifstream file(m->filepath + "/" + mtlName);
 
-						while (!ss.eof())
+						while (!file.eof())
 						{
+							std::string line;
+							std::getline(file, line);
+
+							std::stringstream ss(line);
 							std::string token;
 							ss >> token;
+
 							if (token == "newmtl")
 							{
 								m->renderGroups.emplace_back();
