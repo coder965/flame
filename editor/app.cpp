@@ -185,8 +185,6 @@ struct MainWindow : tke::GuiWindow
 
 			progressRenderer->getDescriptorSets();
 
-			//initUi(progressRenderer->vkRenderPass, 1);
-
 			for (int i = 0; i < 2; i++)
 			{
 				tke::vk::beginCommandBuffer(progressCmd[i]);

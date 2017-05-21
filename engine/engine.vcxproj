@@ -84,6 +84,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\imgui-master\imgui.cpp" />
+    <ClCompile Include="..\..\imgui-master\imgui_draw.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\controler.cpp" />
     <ClCompile Include="..\src\core.cpp" />
