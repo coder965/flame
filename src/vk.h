@@ -18,14 +18,24 @@ namespace tke
 		void queueWaitIdle();
 		void deviceWaitIdle();
 
-		VkCommandBuffer allocateCommandBuffer();
-		VkCommandBuffer allocateSecondaryCommandBuffer();
-		void freeCommandBuffer(VkCommandBuffer cmd);
-		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkCommandBuffer cmd);
-		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, int count, VkCommandBuffer *cmds);
+		void queueSubmit(VkSemaphore waitSemaphore, VkCommandBuffer cmd, VkSemaphore signalSemaphore);
+		void queueSubmit(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkSemaphore signalSemaphore);
+		void queueSubmitFence(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkFence fence);
 		void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
-		VkCommandBuffer begineOnceCommandBuffer();
-		void endOnceCommandBuffer(VkCommandBuffer cmd);
+
+		struct CommandPool
+		{
+			VkCommandPool pool;
+
+			void create();
+			VkCommandBuffer allocate();
+			VkCommandBuffer allocateSecondary();
+			void free(VkCommandBuffer cmd);
+
+			VkCommandBuffer begineOnce();
+			void endOnce(VkCommandBuffer cmd);
+		};
+		extern CommandPool commandPool;
 
 		void *mapMemory(VkDeviceMemory memory, size_t offset, size_t size);
 		void unmapMemory(VkDeviceMemory memory);
@@ -50,13 +60,22 @@ namespace tke
 
 		VkPipelineVertexInputStateCreateInfo vertexState(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes);
 
-		VkDescriptorSet allocateDescriptorSet(VkDescriptorSetLayout *pLayout);
-		void freeDescriptorSet(VkDescriptorSet set);
-		VkWriteDescriptorSet writeDescriptorSet(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement = 0);
-		VkWriteDescriptorSet writeDescriptorSet(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement = 0);
-		void updataDescriptorSet(size_t count, VkWriteDescriptorSet *pWrites);
 		VkDescriptorSetLayout createDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo *pInfo);
 		void destroyDescriptorLayout(VkDescriptorSetLayout layout);
+
+		struct DescriptrPool
+		{
+			VkDescriptorPool pool;
+			std::vector<VkWriteDescriptorSet> writes;
+
+			void create();
+			VkDescriptorSet allocate(VkDescriptorSetLayout *pLayout);
+			void free(VkDescriptorSet set);
+			void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement = 0);
+			void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement = 0);
+			void update();
+		};
+		extern DescriptrPool descriptorPool;
 
 		VkShaderModule loadShaderModule(const std::string &filename);
 		void destroyShaderModule(VkShaderModule shaderModule);
@@ -80,8 +99,11 @@ namespace tke
 
 		void createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages);
 
+		VkFence createFence();
 		VkEvent createEvent();
 		VkSemaphore createSemaphore();
+
+		void waitFence(VkFence);
 
 		std::uint32_t acquireNextImage(VkSwapchainKHR swapchain, VkSemaphore semaphore);
 

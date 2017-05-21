@@ -16,7 +16,7 @@ namespace tke
 
 		vk::queueWaitIdle();
 
-		auto cmd = vk::begineOnceCommandBuffer();
+		auto cmd = vk::commandPool.begineOnce();
 
 		VkClearValue clearValue[2] = {
 			{ 0.f, 0.f, 0.f, 0.f },
@@ -28,9 +28,9 @@ namespace tke
 
 		vkCmdEndRenderPass(cmd);
 
-		vk::endOnceCommandBuffer(cmd);
+		vk::commandPool.endOnce(cmd);
 
-		cmd = vk::begineOnceCommandBuffer();
+		cmd = vk::commandPool.begineOnce();
 
 		VkBufferImageCopy range = {};
 		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -43,7 +43,7 @@ namespace tke
 
 		vkCmdCopyImageToBuffer(cmd, image.m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer.m_buffer, 1, &range);
 
-		vk::endOnceCommandBuffer(cmd);
+		vk::commandPool.endOnce(cmd);
 
 		auto pixel = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, cx * cy * 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);

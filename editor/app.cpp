@@ -67,8 +67,6 @@ tke::UniformBuffer pasteBuffer;
 
 struct MainWindow : tke::GuiWindow
 {
-	using tke::GuiWindow::GuiWindow;
-
 	tke::Pipeline lightFramePipeline;
 	tke::Pipeline wireFramePipeline;
 	tke::Pipeline pastePipeline;
@@ -153,10 +151,8 @@ struct MainWindow : tke::GuiWindow
 
 		masterRenderer->renderer->getDescriptorSets();
 
-		mainCmd[0] = tke::vk::allocateCommandBuffer();
-		mainCmd[1] = tke::vk::allocateCommandBuffer();
-
-		initUi();
+		mainCmd[0] = tke::vk::commandPool.allocate();
+		mainCmd[1] = tke::vk::commandPool.allocate();
 
 		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
@@ -178,8 +174,8 @@ struct MainWindow : tke::GuiWindow
 
 			pastePipeline.pResource = &_resources;
 
-			progressCmd[0] = tke::vk::allocateCommandBuffer();
-			progressCmd[1] = tke::vk::allocateCommandBuffer();
+			progressCmd[0] = tke::vk::commandPool.allocate();
+			progressCmd[1] = tke::vk::commandPool.allocate();
 
 			_resources.setImage(image, "Window.Image");
 
@@ -282,6 +278,8 @@ struct MainWindow : tke::GuiWindow
 			miscToolAction->m_pRenderable = currentTool;
 
 			masterRenderer->renderer->execute(mainCmd[i], i);
+
+			vkCmdSetEvent(mainCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 			vkEndCommandBuffer(mainCmd[i]);
 		}
@@ -746,37 +744,16 @@ struct MainWindow : tke::GuiWindow
 		}
 	}
 
-	void renderProgress()
+	void drawUiProgress()
 	{
-		if (state == 1 && tke::majorProgress() == 100)
-		{
-			pRender = &MainWindow::renderMain;
-			return;
-		}
-
-		tke::beginFrame();
-
-		beginUi();
 		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::TextUnformatted(tke::majorProgressText().c_str());
 		ImGui::TextUnformatted(tke::minorProgressText().c_str());
 		ImGui::End();
-		endUi();
-
-		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd };
-		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, 2, cmds);
-
-		tke::endFrame();
-
-		Sleep(10);
 	}
 
-	void renderMain()
+	void drawUiMain()
 	{
-		tke::beginFrame();
-
-		beginUi();
-
 		main_menu_show();
 		dialog_debug::show();
 		//dialog_image::show();
@@ -805,13 +782,40 @@ struct MainWindow : tke::GuiWindow
 		}
 
 		tke::showDialogs();
+	}
 
+	void (MainWindow::*pDrawUi)() = &MainWindow::drawUiProgress;
+
+	virtual void drawUi() override
+	{
+		(this->*pDrawUi)();
+	}
+
+	void renderProgress()
+	{
+		if (state == 1 && tke::majorProgress() == 100)
+		{
+			pRender = &MainWindow::renderMain;
+			pDrawUi = &MainWindow::drawUiMain;
+			return;
+		}
+
+		tke::beginFrame();
+
+		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd[tke::imageIndex] };
+		tke::vk::queueSubmitFence(tke::imageAvailable, 2, cmds, tke::frameDone);
+
+		tke::endFrame();
+
+		Sleep(10);
+	}
+
+	void renderMain()
+	{
 		tke::scene->update(masterRenderer);
 		if (currentTool) currentTool->update();
 
 		tke::scene->resetChange();
-
-		endUi();
 
 		if (tke::needRedraw)
 		{
@@ -819,12 +823,12 @@ struct MainWindow : tke::GuiWindow
 			tke::needRedraw = false;
 		}
 
-		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd };
-		tke::vk::queueSubmit(tke::imageAvailable, tke::frameDone, 2, cmds);
+		tke::beginFrame();
+
+		VkCommandBuffer cmds[2] = { mainCmd[tke::imageIndex], tke::uiCmd[tke::imageIndex] };
+		tke::vk::queueSubmitFence(tke::imageAvailable, 2, cmds, tke::frameDone);
 
 		tke::endFrame();
-
-		Sleep(10);
 
 		//static auto lastItemActive = false;
 
@@ -864,7 +868,8 @@ int main()
 	tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
 	tke::scene->camera.lookAtTarget();
 
-	pMainWindow = new MainWindow(resCx, resCy, "TK Engine Editor", true);
+	pMainWindow = new MainWindow();
+	pMainWindow->create(resCx, resCy, "TK Engine Editor", true);
 	((MainWindow*)pMainWindow)->init();
 	pMainWindow->show();
 

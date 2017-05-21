@@ -80,10 +80,11 @@ namespace tke
 
 	Err init(const char *appName, int rcx, int rcy);
 
+	extern CriticalSection renderCs;
 	extern VkSemaphore imageAvailable;
 	extern unsigned int imageIndex;
 	extern VkEvent renderFinished;
-	extern VkSemaphore frameDone;
+	extern VkFence frameDone;
 
 	extern int startUpTime;
 	extern int nowTime;

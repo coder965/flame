@@ -14,8 +14,6 @@ namespace tke
 
 	struct Window
 	{
-		bool ready = true;
-
 		int cx = 0, cy = 0;
 
 		bool doubleClick = false;
@@ -42,8 +40,8 @@ namespace tke
 		virtual void renderEvent();
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true);
 		~Window();
+		void create(int _cx, int _cy, const std::string &title, bool hasFrame = true);
 		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 		void clearInput();
 		void show();

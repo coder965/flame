@@ -133,10 +133,11 @@ namespace tke
 		needUpdateProjMatrix;
 	}
 
+	CriticalSection renderCs;
 	VkSemaphore imageAvailable;
 	unsigned int imageIndex = 0;
 	VkEvent renderFinished;
-	VkSemaphore frameDone;
+	VkFence frameDone;
 
 	int startUpTime = 0;
 	int nowTime = 0;
@@ -216,7 +217,7 @@ namespace tke
 
 		imageAvailable = vk::createSemaphore();
 		renderFinished = vk::createEvent();
-		frameDone = vk::createSemaphore();
+		frameDone = vk::createFence();
 
 		initGui();
 		guiSetupIcons();
@@ -229,19 +230,23 @@ namespace tke
 
 	void beginFrame()
 	{
+		renderCs.lock();
+
 		imageIndex = vk::acquireNextImage(currentWindow->swapchain, imageAvailable);
 	}
 
 	void endFrame()
 	{
+		vk::waitFence(frameDone);
+
 		VkPresentInfoKHR info = {};
 		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &frameDone;
 		info.swapchainCount = 1;
 		info.pSwapchains = &currentWindow->swapchain;
 		info.pImageIndices = &imageIndex;
 		vk::queuePresent(&info);
+
+		renderCs.unlock();
 	}
 
 	void mainLoop()

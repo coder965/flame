@@ -1,3 +1,5 @@
+#include <process.h>
+
 #include "gui.h"
 #include "core.h"
 
@@ -407,8 +409,11 @@ namespace tke
 		return getClipBoard();
 	}
 
+	static vk::CommandPool commandPool;
 	static Pipeline g_Pipeline;
-	VkCommandBuffer uiCmd;
+	VkCommandBuffer *uiCmd;
+	static VkCommandBuffer cmd[2][2];
+	static int cmdIndex = 1;
 
 	static void _guiRenderer(ImDrawData* draw_data)
 	{
@@ -462,74 +467,127 @@ namespace tke
 			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
 		}
 
-		vkResetCommandBuffer(uiCmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-
-		vk::beginCommandBuffer(uiCmd);
-
-		vkCmdWaitEvents(uiCmd, 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-
-		auto pWindow = (GuiWindow*)currentWindow;
-		vkCmdBeginRenderPass(uiCmd, &vk::renderPassBeginInfo(windowRenderPass, pWindow->framebuffer[imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
-
-		// Bind Vertex And Index Buffer:
+		for (int f = 0; f < 2; f++)
 		{
-			VkDeviceSize vertex_offset[1] = { 0 };
-			vkCmdBindVertexBuffers(uiCmd, 0, 1, &vertexBuffer.m_buffer, vertex_offset);
-			vkCmdBindIndexBuffer(uiCmd, indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
-		}
+			vkResetCommandBuffer(cmd[cmdIndex][f], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
-		// Setup scale and translation:
-		{
-			auto v = glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f);
-			vkCmdPushConstants(uiCmd, g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
-		}
+			vk::beginCommandBuffer(cmd[cmdIndex][f]);
 
-		// Bind pipeline and descriptor sets:
-		{
-			vkCmdBindPipeline(uiCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipeline);
-			vkCmdBindDescriptorSets(uiCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
-		}
+			vkCmdWaitEvents(cmd[cmdIndex][f], 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
-		// Render the command lists:
+			auto pWindow = (GuiWindow*)currentWindow;
+			vkCmdBeginRenderPass(cmd[cmdIndex][f], &vk::renderPassBeginInfo(windowRenderPass, pWindow->framebuffer[f], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
-		int vtx_offset = 0;
-		int idx_offset = 0;
-		for (int n = 0; n < draw_data->CmdListsCount; n++)
-		{
-			const ImDrawList* cmd_list = draw_data->CmdLists[n];
-			for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+			// Bind Vertex And Index Buffer:
 			{
-				const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-				if (pcmd->UserCallback)
-				{
-					pcmd->UserCallback(cmd_list, pcmd);
-					pcmd->TextureId;
-				}
-				else
-				{
-					VkRect2D scissor;
-					scissor.offset.x = (int32_t)(pcmd->ClipRect.x);
-					scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
-					scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
-					scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
-					vkCmdSetScissor(uiCmd, 0, 1, &scissor);
-					vkCmdDrawIndexed(uiCmd, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
-				}
-				idx_offset += pcmd->ElemCount;
+				VkDeviceSize vertex_offset[1] = { 0 };
+				vkCmdBindVertexBuffers(cmd[cmdIndex][f], 0, 1, &vertexBuffer.m_buffer, vertex_offset);
+				vkCmdBindIndexBuffer(cmd[cmdIndex][f], indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
 			}
-			vtx_offset += cmd_list->VtxBuffer.Size;
+
+			// Setup scale and translation:
+			{
+				auto v = glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f);
+				vkCmdPushConstants(cmd[cmdIndex][f], g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
+			}
+
+			// Bind pipeline and descriptor sets:
+			{
+				vkCmdBindPipeline(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipeline);
+				vkCmdBindDescriptorSets(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
+			}
+
+			// Render the command lists:
+
+			int vtx_offset = 0;
+			int idx_offset = 0;
+			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			{
+				const ImDrawList* cmd_list = draw_data->CmdLists[n];
+				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+				{
+					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+					if (pcmd->UserCallback)
+					{
+						pcmd->UserCallback(cmd_list, pcmd);
+						pcmd->TextureId;
+					}
+					else
+					{
+						VkRect2D scissor;
+						scissor.offset.x = (int32_t)(pcmd->ClipRect.x);
+						scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
+						scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
+						scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
+						vkCmdSetScissor(cmd[cmdIndex][f], 0, 1, &scissor);
+						vkCmdDrawIndexed(cmd[cmdIndex][f], pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
+					}
+					idx_offset += pcmd->ElemCount;
+				}
+				vtx_offset += cmd_list->VtxBuffer.Size;
+			}
+
+			vkCmdEndRenderPass(cmd[cmdIndex][f]);
+
+			vkEndCommandBuffer(cmd[cmdIndex][f]);
 		}
-
-		vkCmdEndRenderPass(uiCmd);
-
-		vkEndCommandBuffer(uiCmd);
 	}
 
-	GuiWindow::GuiWindow(int cx, int cy, const char *title, bool hasFrame)
-		: Window(cx, cy, title, hasFrame)
+	void _thread(void*)
 	{
-		ready = false;
+		for (;;)
+		{
+			Sleep(100);
+
+			auto pWindow = (GuiWindow*)currentWindow;
+
+			uiAcceptedMouse = false;
+			uiAcceptedKey = false;
+
+			ImGuiIO& io = ImGui::GetIO();
+
+			io.DisplaySize = ImVec2((float)pWindow->cx, (float)pWindow->cy);
+			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
+
+			static double g_Time = 0.0;
+			double current_time = 0.0;
+			io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
+			g_Time = current_time;
+
+			if (pWindow->focus)
+				io.MousePos = ImVec2((float)mouseX, (float)mouseY);
+			else
+				io.MousePos = ImVec2(-1, -1);
+
+			io.MouseDown[0] = pWindow->leftPressing;
+			io.MouseDown[1] = pWindow->rightPressing;
+			io.MouseDown[2] = pWindow->middlePressing;
+
+			io.MouseWheel = pWindow->mouseScroll / 120;
+
+			ImGui::NewFrame();
+
+			pWindow->drawUi();
+
+			ImGui::Render();
+
+			uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
+			uiAcceptedKey = ImGui::IsAnyItemActive();
+
+			renderCs.lock();
+			uiCmd = cmd[cmdIndex];
+			cmdIndex = 1 - cmdIndex;
+			renderCs.unlock();
+		}
 	}
+
+	void GuiWindow::show()
+	{
+		Window::show();
+		_beginthread(_thread, 0, nullptr);
+	}
+
+	void GuiWindow::drawUi() {}
 
 	void GuiWindow::keyDownEvent(int wParam)
 	{
@@ -562,19 +620,37 @@ namespace tke
 			io.AddInputCharacter((unsigned short)wParam);
 	}
 
-	void GuiWindow::initUi()
+	std::vector<Image*> _icons;
+	void guiPushIcon(Image *image)
 	{
-		assert(!ready);
-		ImGuiContext *lastContext = nullptr;
-		static bool first = true;
-		if (!first)
-		{
-			first = false;
-			auto context = ImGui::CreateContext();
-			lastContext = ImGui::GetCurrentContext();
-			ImGui::SetCurrentContext(context);
-		}
+		_icons.push_back(image);
+	}
 
+	void guiSetupIcons()
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		unsigned char* pixels;
+		int width, height;
+		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+		static Image fontImage;
+		fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
+		io.Fonts->TexID = (void*)0; // image index
+
+		static int texture_position = -1;
+		if (texture_position == -1) texture_position = g_Pipeline.descriptorPosition("sTexture");
+
+		vk::descriptorPool.addWrite(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(vk::colorSampler), 0);
+		auto imageID = 1;
+		for (auto image : _icons)
+		{
+			vk::descriptorPool.addWrite(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(vk::colorSampler), imageID);
+			imageID++;
+		}
+		vk::descriptorPool.update();
+	}
+
+	void initGui()
+	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 		io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
@@ -599,82 +675,6 @@ namespace tke
 		io.SetClipboardTextFn = _SetClipboardCallback;
 		io.GetClipboardTextFn = _GetClipboardCallback;
 
-		uiContext = ImGui::GetCurrentContext();
-		if (!lastContext) ImGui::SetCurrentContext(lastContext);
-		ready = true;
-	}
-
-	void GuiWindow::beginUi()
-	{
-		uiAcceptedMouse = false;
-		uiAcceptedKey = false;
-
-		ImGui::SetCurrentContext((ImGuiContext*)uiContext);
-
-		ImGuiIO& io = ImGui::GetIO();
-
-		io.DisplaySize = ImVec2((float)cx, (float)cy);
-		io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
-
-		static double g_Time = 0.0;
-		double current_time = 0.0;
-		io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
-		g_Time = current_time;
-
-		if (focus)
-			io.MousePos = ImVec2((float)mouseX, (float)mouseY);
-		else
-			io.MousePos = ImVec2(-1, -1);
-
-		io.MouseDown[0] = leftPressing;
-		io.MouseDown[1] = rightPressing;
-		io.MouseDown[2] = middlePressing;
-
-		io.MouseWheel = mouseScroll / 120;
-
-		ImGui::NewFrame();
-	}
-
-	void GuiWindow::endUi()
-	{
-		ImGui::Render();
-
-		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
-		uiAcceptedKey = ImGui::IsAnyItemActive();
-	}
-
-	std::vector<Image*> _icons;
-	void guiPushIcon(Image *image)
-	{
-		_icons.push_back(image);
-	}
-
-	void guiSetupIcons()
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		unsigned char* pixels;
-		int width, height;
-		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-		static Image fontImage;
-		fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
-		io.Fonts->TexID = (void*)0; // image index
-
-		static int texture_position = -1;
-		if (texture_position == -1) texture_position = g_Pipeline.descriptorPosition("sTexture");
-
-		std::vector<VkWriteDescriptorSet> writes;
-		writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(vk::colorSampler), 0));
-		auto imageID = 1;
-		for (auto image : _icons)
-		{
-			writes.push_back(vk::writeDescriptorSet(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(vk::colorSampler), imageID));
-			imageID++;
-		}
-		vk::updataDescriptorSet(writes.size(), writes.data());
-	}
-
-	void initGui()
-	{
 		static VkVertexInputBindingDescription binding_desc[] = {
 			{ 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX }
 		};
@@ -696,6 +696,18 @@ namespace tke
 		g_Pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 		g_Pipeline.create("../pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
 
-		uiCmd = vk::allocateCommandBuffer();
+		commandPool.create();
+
+		for (int i = 0; i < 2; i++)
+		{
+			for (int f = 0; f < 2; f++)
+			{
+				cmd[i][f] = commandPool.allocate();
+				vk::beginCommandBuffer(cmd[i][f]);
+				vkCmdWaitEvents(cmd[i][f], 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+				vkEndCommandBuffer(cmd[i][f]);
+			}
+		}
+		uiCmd = cmd[0];
 	}
 }

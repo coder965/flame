@@ -137,9 +137,9 @@ namespace tke
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
-		auto cmd = vk::begineOnceCommandBuffer();
+		auto cmd = vk::commandPool.begineOnce();
 		vkCmdCopyBufferToImage(cmd, stagingBuffer, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		vk::endOnceCommandBuffer(cmd);
+		vk::commandPool.endOnce(cmd);
 
 		vk::destroyBuffer(stagingBuffer, stagingMemory);
 	}
@@ -650,10 +650,9 @@ namespace tke
 		pipelineInfo.pDynamicState = m_dynamics.size() ? &dynamicState : nullptr;
 		m_pipeline = vk::createPipeline(&pipelineInfo);
 
-		if (m_descriptorSet) vk::freeDescriptorSet(m_descriptorSet);
-		m_descriptorSet = vk::allocateDescriptorSet(&m_descriptorSetLayout);
+		if (m_descriptorSet) vk::descriptorPool.free(m_descriptorSet);
+		m_descriptorSet = vk::descriptorPool.allocate(&m_descriptorSetLayout);
 
-		std::vector<VkWriteDescriptorSet> writes;
 		for (auto &link : links)
 		{
 			DescriptorType type = DescriptorType::null;
@@ -703,7 +702,7 @@ namespace tke
 			{
 				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pUniformBuffer)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element));
+					vk::descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -712,7 +711,7 @@ namespace tke
 			{
 				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pStorageBuffer)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element));
+					vk::descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -721,7 +720,7 @@ namespace tke
 			{
 				auto pStorageImage = pResource->getImage(link.resource_name);
 				if (pStorageImage)
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element));
+					vk::descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -749,7 +748,7 @@ namespace tke
 						sampler = vk::colorBorderSampler;
 						break;
 					}
-					writes.push_back(vk::writeDescriptorSet(m_descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element));
+					vk::descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
@@ -758,8 +757,7 @@ namespace tke
 			}
 		}
 
-		if (links.size() > 0)
-			vk::updataDescriptorSet(writes.size(), writes.data());
+		vk::descriptorPool.update();
 	}
 
 	Drawcall::Drawcall() {}
@@ -835,7 +833,7 @@ namespace tke
 				if (m_pipeline->m_descriptorSet)
 					m_descriptorSet = m_pipeline->m_descriptorSet;
 				else if (m_imageResourceLinks.size() > 0)
-					m_descriptorSet = vk::allocateDescriptorSet(&m_pipeline->m_descriptorSetLayout);
+					m_descriptorSet = vk::descriptorPool.allocate(&m_pipeline->m_descriptorSetLayout);
 			}
 		}
 

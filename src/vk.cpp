@@ -26,16 +26,6 @@ namespace tke
 			VkQueue v;
 			CriticalSection cs;
 		}graphicsQueue;
-		struct CommandPool
-		{
-			VkCommandPool v;
-			CriticalSection cs;
-		}commandPool;
-		struct DescriptorPool
-		{
-			VkDescriptorPool v;
-			CriticalSection cs;
-		}descriptorPool;
 
 		void queueWaitIdle()
 		{
@@ -51,54 +41,7 @@ namespace tke
 			device.cs.unlock();
 		}
 
-		VkCommandBuffer allocateCommandBuffer()
-		{
-			VkCommandBufferAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = commandPool.v;
-			allocInfo.commandBufferCount = 1;
-
-			VkCommandBuffer cmd;
-			device.cs.lock();
-			commandPool.cs.lock();
-			auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
-			assert(res == VK_SUCCESS);
-			commandPool.cs.unlock();
-			device.cs.unlock();
-
-			return cmd;
-		}
-
-		VkCommandBuffer allocateSecondaryCommandBuffer()
-		{
-			VkCommandBufferAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-			allocInfo.commandPool = commandPool.v;
-			allocInfo.commandBufferCount = 1;
-
-			VkCommandBuffer cmd;
-			device.cs.lock();
-			commandPool.cs.lock();
-			auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
-			assert(res == VK_SUCCESS);
-			commandPool.cs.unlock();
-			device.cs.unlock();
-
-			return cmd;
-		}
-
-		void freeCommandBuffer(VkCommandBuffer cmd)
-		{
-			device.cs.lock();
-			commandPool.cs.lock();
-			vkFreeCommandBuffers(device.v, commandPool.v, 1, &cmd);
-			commandPool.cs.unlock();
-			device.cs.unlock();
-		}
-
-		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkCommandBuffer cmd)
+		void queueSubmit(VkSemaphore waitSemaphore, VkCommandBuffer cmd, VkSemaphore signalSemaphore)
 		{
 			VkSubmitInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -119,7 +62,7 @@ namespace tke
 			device.cs.unlock();
 		}
 
-		void queueSubmit(VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, int count, VkCommandBuffer *cmds)
+		void queueSubmit(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkSemaphore signalSemaphore)
 		{
 			VkSubmitInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -140,6 +83,25 @@ namespace tke
 			device.cs.unlock();
 		}
 
+		void queueSubmitFence(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkFence fence)
+		{
+			VkSubmitInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			info.pWaitDstStageMask = &waitStage;
+			info.waitSemaphoreCount = 1;
+			info.pWaitSemaphores = &waitSemaphore;
+			info.commandBufferCount = count;
+			info.pCommandBuffers = cmds;
+
+			device.cs.lock();
+			graphicsQueue.cs.lock();
+			auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, fence);
+			assert(res == VK_SUCCESS);
+			graphicsQueue.cs.unlock();
+			device.cs.unlock();
+		}
+
 		void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
 		{
 			VkCommandBufferBeginInfo info = {};
@@ -150,16 +112,69 @@ namespace tke
 			assert(res == VK_SUCCESS);
 		}
 
-		VkCommandBuffer begineOnceCommandBuffer()
+		void CommandPool::create()
 		{
-			auto cmd = allocateCommandBuffer();
+			VkCommandPoolCreateInfo cmdPoolInfo = {};
+			cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+			cmdPoolInfo.queueFamilyIndex = 0;
+			device.cs.lock();
+			auto res = vkCreateCommandPool(device.v, &cmdPoolInfo, nullptr, &pool);
+			device.cs.unlock();
+			assert(res == VK_SUCCESS);
+		}
+
+		VkCommandBuffer CommandPool::allocate()
+		{
+			VkCommandBufferAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			allocInfo.commandPool = pool;
+			allocInfo.commandBufferCount = 1;
+
+			VkCommandBuffer cmd;
+			device.cs.lock();
+			auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
+
+			return cmd;
+		}
+
+		VkCommandBuffer CommandPool::allocateSecondary()
+		{
+			VkCommandBufferAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+			allocInfo.commandPool = pool;
+			allocInfo.commandBufferCount = 1;
+
+			VkCommandBuffer cmd;
+			device.cs.lock();
+			auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
+
+			return cmd;
+		}
+
+		void CommandPool::free(VkCommandBuffer cmd)
+		{
+			device.cs.lock();
+			vkFreeCommandBuffers(device.v, pool, 1, &cmd);
+			device.cs.unlock();
+		}
+
+		VkCommandBuffer CommandPool::begineOnce()
+		{
+			auto cmd = allocate();
 
 			beginCommandBuffer(cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 			return cmd;
 		}
 
-		void endOnceCommandBuffer(VkCommandBuffer cmd)
+		void CommandPool::endOnce(VkCommandBuffer cmd)
 		{
 			VkResult res;
 
@@ -180,8 +195,10 @@ namespace tke
 			graphicsQueue.cs.unlock();
 			device.cs.unlock();
 
-			freeCommandBuffer(cmd);
+			free(cmd);
 		}
+
+		CommandPool commandPool;
 
 		void *mapMemory(VkDeviceMemory memory, size_t offset, size_t size)
 		{
@@ -255,7 +272,7 @@ namespace tke
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
 		{
-			auto commandBuffer = begineOnceCommandBuffer();
+			auto commandBuffer = commandPool.begineOnce();
 
 			VkBufferCopy region = {};
 			region.size = size;
@@ -263,16 +280,16 @@ namespace tke
 			region.dstOffset = dstOffset;
 			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &region);
 
-			endOnceCommandBuffer(commandBuffer);
+			commandPool.endOnce(commandBuffer);
 		}
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
 		{
-			auto commandBuffer = begineOnceCommandBuffer();
+			auto commandBuffer = commandPool.begineOnce();
 
 			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, count, ranges);
 
-			endOnceCommandBuffer(commandBuffer);
+			commandPool.endOnce(commandBuffer);
 		}
 
 		void updateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &Buffer)
@@ -341,7 +358,7 @@ namespace tke
 
 		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
 		{
-			auto commandBuffer = begineOnceCommandBuffer();
+			auto commandBuffer = commandPool.begineOnce();
 
 			VkImageSubresourceLayers subResource = {};
 			subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -360,7 +377,7 @@ namespace tke
 
 			vkCmdCopyImage(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-			endOnceCommandBuffer(commandBuffer);
+			commandPool.endOnce(commandBuffer);
 		}
 
 		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -386,7 +403,7 @@ namespace tke
 
 		void transitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level)
 		{
-			auto commandBuffer = begineOnceCommandBuffer();
+			auto commandBuffer = commandPool.begineOnce();
 
 			VkImageMemoryBarrier barrier = {};
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -413,7 +430,7 @@ namespace tke
 
 			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-			endOnceCommandBuffer(commandBuffer);
+			commandPool.endOnce(commandBuffer);
 		}
 
 		VkSampler plainSampler; 
@@ -431,72 +448,6 @@ namespace tke
 			state.pVertexAttributeDescriptions = pAttributes;
 
 			return state;
-		}
-
-		VkDescriptorSet allocateDescriptorSet(VkDescriptorSetLayout *pLayout)
-		{
-			VkDescriptorSetAllocateInfo descriptorSetInfo = {};
-			descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descriptorSetInfo.descriptorPool = descriptorPool.v;
-			descriptorSetInfo.descriptorSetCount = 1;
-			descriptorSetInfo.pSetLayouts = pLayout;
-
-			VkDescriptorSet descriptorSet;
-			device.cs.lock();
-			descriptorPool.cs.lock();
-			auto res = vkAllocateDescriptorSets(device.v, &descriptorSetInfo, &descriptorSet);
-			assert(res == VK_SUCCESS);
-			descriptorPool.cs.unlock();
-			device.cs.unlock();
-
-			return descriptorSet;
-		}
-
-		void freeDescriptorSet(VkDescriptorSet set)
-		{
-			device.cs.lock();
-			descriptorPool.cs.lock();
-			auto res = vkFreeDescriptorSets(device.v, descriptorPool.v, 1, &set);
-			assert(res == VK_SUCCESS);
-			descriptorPool.cs.unlock();
-			device.cs.unlock();
-		}
-
-		VkWriteDescriptorSet writeDescriptorSet(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement)
-		{
-			VkWriteDescriptorSet write;
-			write = {};
-			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write.dstSet = descriptorSet;
-			write.dstBinding = binding;
-			write.dstArrayElement = dstArrayElement;
-			write.descriptorType = type;
-			write.descriptorCount = 1;
-			write.pImageInfo = pImageInfo;
-
-			return write;
-		}
-
-		VkWriteDescriptorSet writeDescriptorSet(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement)
-		{
-			VkWriteDescriptorSet write;
-			write = {};
-			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write.dstSet = descriptorSet;
-			write.dstBinding = binding;
-			write.dstArrayElement = dstArrayElement;
-			write.descriptorType = type;
-			write.descriptorCount = 1;
-			write.pBufferInfo = pBufferInfo;
-
-			return write;
-		}
-
-		void updataDescriptorSet(size_t count, VkWriteDescriptorSet *pWrites)
-		{
-			device.cs.lock();
-			vkUpdateDescriptorSets(device.v, count, pWrites, 0, nullptr);
-			device.cs.unlock();
 		}
 
 		VkDescriptorSetLayout createDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo *pInfo)
@@ -517,6 +468,94 @@ namespace tke
 			vkDestroyDescriptorSetLayout(device.v, layout, nullptr);
 			device.cs.unlock();
 		}
+
+		void DescriptrPool::create()
+		{
+			VkDescriptorPoolSize descriptorPoolSizes[] = {
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10000 },
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10000 },
+			};
+
+			VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
+			descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			descriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+			descriptorPoolInfo.poolSizeCount = ARRAYSIZE(descriptorPoolSizes);
+			descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
+			descriptorPoolInfo.maxSets = 256;
+			device.cs.lock();
+			auto res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &pool);
+			device.cs.unlock();
+			assert(res == VK_SUCCESS);
+		}
+
+		VkDescriptorSet DescriptrPool::allocate(VkDescriptorSetLayout *pLayout)
+		{
+			VkDescriptorSetAllocateInfo descriptorSetInfo = {};
+			descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descriptorSetInfo.descriptorPool = pool;
+			descriptorSetInfo.descriptorSetCount = 1;
+			descriptorSetInfo.pSetLayouts = pLayout;
+
+			VkDescriptorSet descriptorSet;
+			device.cs.lock();
+			auto res = vkAllocateDescriptorSets(device.v, &descriptorSetInfo, &descriptorSet);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
+
+			return descriptorSet;
+		}
+
+		void DescriptrPool::free(VkDescriptorSet set)
+		{
+			device.cs.lock();
+			auto res = vkFreeDescriptorSets(device.v, pool, 1, &set);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
+		}
+
+		void DescriptrPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement)
+		{
+			VkWriteDescriptorSet write;
+			write = {};
+			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write.dstSet = descriptorSet;
+			write.dstBinding = binding;
+			write.dstArrayElement = dstArrayElement;
+			write.descriptorType = type;
+			write.descriptorCount = 1;
+			write.pImageInfo = pImageInfo;
+
+			writes.push_back(write);
+		}
+
+		void DescriptrPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement)
+		{
+			VkWriteDescriptorSet write;
+			write = {};
+			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write.dstSet = descriptorSet;
+			write.dstBinding = binding;
+			write.dstArrayElement = dstArrayElement;
+			write.descriptorType = type;
+			write.descriptorCount = 1;
+			write.pBufferInfo = pBufferInfo;
+
+			writes.push_back(write);
+		}
+
+		void DescriptrPool::update()
+		{
+			if (writes.size() == 0) return;
+
+			device.cs.lock();
+			vkUpdateDescriptorSets(device.v, writes.size(), writes.data(), 0, nullptr);
+			writes.clear();
+			device.cs.unlock();
+		}
+
+		DescriptrPool descriptorPool;
 
 		VkShaderModule loadShaderModule(const std::string &filename)
 		{
@@ -773,6 +812,22 @@ namespace tke
 			inst.cs.unlock();
 		}
 
+
+		VkFence createFence()
+		{
+			VkFence fence;
+
+			VkFenceCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+			device.cs.lock();
+			auto res = vkCreateFence(device.v, &info, nullptr, &fence);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
+
+			return fence;
+		}
+
 		VkEvent createEvent()
 		{
 			VkEvent event;
@@ -801,6 +856,17 @@ namespace tke
 			device.cs.unlock();
 
 			return semaphore;
+		}
+
+		void waitFence(VkFence fence)
+		{
+			device.cs.lock();
+			VkResult res;
+			res = vkWaitForFences(device.v, 1, &fence, true, UINT64_MAX);
+			assert(res == VK_SUCCESS);
+			res = vkResetFences(device.v, 1, &fence);
+			assert(res == VK_SUCCESS);
+			device.cs.unlock();
 		}
 
 		std::uint32_t acquireNextImage(VkSwapchainKHR swapchain, VkSemaphore semaphore)
@@ -1008,31 +1074,9 @@ namespace tke
 
 			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
-			VkCommandPoolCreateInfo cmdPoolInfo = {};
-			cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			cmdPoolInfo.queueFamilyIndex = 0;
-			res = vkCreateCommandPool(device.v, &cmdPoolInfo, nullptr, &commandPool.v);
-			assert(res == VK_SUCCESS);
+			commandPool.create();
 
-			VkDescriptorPoolSize descriptorPoolSizes[4];
-			descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorPoolSizes[0].descriptorCount = 10000;
-			descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-			descriptorPoolSizes[1].descriptorCount = 10000;
-			descriptorPoolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-			descriptorPoolSizes[2].descriptorCount = 10000;
-			descriptorPoolSizes[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorPoolSizes[3].descriptorCount = 10000;
-
-			VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
-			descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			descriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			descriptorPoolInfo.poolSizeCount = 4;
-			descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
-			descriptorPoolInfo.maxSets = 256;
-			res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &descriptorPool.v);
-			assert(res == VK_SUCCESS);
+			descriptorPool.create();
 
 			swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
 

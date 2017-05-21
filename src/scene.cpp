@@ -692,8 +692,6 @@ namespace tke
 				{
 					first = false;
 
-					std::vector<VkWriteDescriptorSet> writes;
-
 					{ // post render pass
 
 						VkAttachmentDescription attachments[] = {
@@ -745,30 +743,30 @@ namespace tke
 						}
 
 						convolveDescriptorSetLevel[0] = convolvePipeline.m_descriptorSet;
-						convolveDescriptorSetLevel[1] = vk::allocateDescriptorSet(&convolvePipeline.m_descriptorSetLayout);
-						convolveDescriptorSetLevel[2] = vk::allocateDescriptorSet(&convolvePipeline.m_descriptorSetLayout);
+						convolveDescriptorSetLevel[1] = vk::descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout);
+						convolveDescriptorSetLevel[2] = vk::descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout);
 
 						downsampleDescriptorSetLevel[0] = downsamplePipeline.m_descriptorSet;
-						downsampleDescriptorSetLevel[1] = vk::allocateDescriptorSet(&downsamplePipeline.m_descriptorSetLayout);
-						downsampleDescriptorSetLevel[2] = vk::allocateDescriptorSet(&downsamplePipeline.m_descriptorSetLayout);
+						downsampleDescriptorSetLevel[1] = vk::descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout);
+						downsampleDescriptorSetLevel[2] = vk::descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout);
 
 						static int source_position = -1;
 						if (source_position == -1) source_position = downsamplePipeline.descriptorPosition("source");
 
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImage.getInfo(vk::plainSampler)));
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0].getInfo(vk::plainSampler)));
-						writes.push_back(vk::writeDescriptorSet(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(vk::plainSampler)));
+						vk::descriptorPool.addWrite(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImage.getInfo(vk::plainSampler));
+						vk::descriptorPool.addWrite(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0].getInfo(vk::plainSampler));
+						vk::descriptorPool.addWrite(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(vk::plainSampler));
 
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0].getInfo(vk::plainSampler)));
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(vk::plainSampler)));
-						writes.push_back(vk::writeDescriptorSet(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[2].getInfo(vk::plainSampler)));
+						vk::descriptorPool.addWrite(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0].getInfo(vk::plainSampler));
+						vk::descriptorPool.addWrite(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(vk::plainSampler));
+						vk::descriptorPool.addWrite(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[2].getInfo(vk::plainSampler));
+
+						vk::descriptorPool.update();
 					}
-
-					if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
 				}
 
 				{
-					auto cmd = vk::begineOnceCommandBuffer();
+					auto cmd = vk::commandPool.begineOnce();
 
 					vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(postRenderPass, envrFramebuffer[0],
 						TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
@@ -778,14 +776,12 @@ namespace tke
 
 					vkCmdEndRenderPass(cmd);
 
-					vk::endOnceCommandBuffer(cmd);
+					vk::commandPool.endOnce(cmd);
 				}
-
-				std::vector<VkWriteDescriptorSet> writes;
 
 				for (int i = 0; i < 3; i++)
 				{
-					auto cmd = vk::begineOnceCommandBuffer();
+					auto cmd = vk::commandPool.begineOnce();
 
 					vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(postRenderPass, envrDownsampleFramebuffer[i],
 						TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
@@ -816,12 +812,12 @@ namespace tke
 
 					vkCmdEndRenderPass(cmd);
 
-					vk::endOnceCommandBuffer(cmd);
+					vk::commandPool.endOnce(cmd);
 				}
 
 				for (int i = 1; i < envrImage.m_mipmapLevels; i++)
 				{
-					auto cmd = vk::begineOnceCommandBuffer();
+					auto cmd = vk::commandPool.begineOnce();
 
 					vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(postRenderPass, envrFramebuffer[i],
 						TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
@@ -852,21 +848,21 @@ namespace tke
 
 					vkCmdEndRenderPass(cmd);
 
-					vk::endOnceCommandBuffer(cmd);
+					vk::commandPool.endOnce(cmd);
 				}
 
 				static int pano_tex_position = -1, defe_envr_position = -1;
 				if (pano_tex_position == -1) pano_tex_position = masterRenderer->panoramaPipeline.descriptorPosition("tex");
 				if (defe_envr_position == -1) defe_envr_position = masterRenderer->deferredPipeline.descriptorPosition("envrSampler");
-				writes.push_back(vk::writeDescriptorSet(masterRenderer->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage.getInfo(vk::colorSampler)));
-				writes.push_back(vk::writeDescriptorSet(masterRenderer->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels)));
+				vk::descriptorPool.addWrite(masterRenderer->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage.getInfo(vk::colorSampler));
+				vk::descriptorPool.addWrite(masterRenderer->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels));
 
 				{
 					auto data = glm::vec4(1.f, 1.f, 1.f, 3);
 					ambientBuffer.update(&data, &stagingBuffer);
 				}
 
-				if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
+				vk::descriptorPool.update();
 			}
 
 			needUpdataSky = false;
@@ -874,7 +870,6 @@ namespace tke
 		if (pTerrains.size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			std::vector<VkWriteDescriptorSet> writes;
 
 			auto map = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, sizeof(HeightMapTerrainBufferStruct) * pTerrains.size());
 
@@ -900,7 +895,7 @@ namespace tke
 
 					static int position = -1;
 					if (position == -1) position = masterRenderer->heightMapTerrainPipeline.descriptorPosition("samplerHeight");
-					writes.push_back(vk::writeDescriptorSet(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex));
+					vk::descriptorPool.addWrite(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex);
 				}
 
 				terrainIndex++;
@@ -909,7 +904,7 @@ namespace tke
 			vk::unmapMemory(stagingBuffer.m_memory);
 			if (ranges.size() > 0) vk::copyBuffer(stagingBuffer.m_buffer, heightMapTerrainBuffer.m_buffer, ranges.size(), ranges.data());
 
-			if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
+			vk::descriptorPool.update();
 		}
 		if (needUpdateVertexBuffer)
 		{
@@ -958,13 +953,16 @@ namespace tke
 		}
 		if (needUpdateSampler)
 		{
-			std::vector<VkWriteDescriptorSet> writes;
 			static int map_position = -1;
 			if (map_position == -1) map_position = masterRenderer->mrtPipeline.descriptorPosition("mapSamplers");
+			int index = 0;
 			for (auto storeImage : storeImages)
-				writes.push_back(vk::writeDescriptorSet(masterRenderer->mrtPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position, storeImage->getInfo(vk::colorSampler), writes.size()));
+			{
+				vk::descriptorPool.addWrite(masterRenderer->mrtPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position, storeImage->getInfo(vk::colorSampler), index);
+				index++;
+			}
 
-			if (writes.size() > 0) vk::updataDescriptorSet(writes.size(), writes.data());
+			vk::descriptorPool.update();
 			needUpdateSampler = false;
 		}
 		if (pStaticObjects.size() > 0)
@@ -1077,7 +1075,6 @@ namespace tke
 		if (pLights.size() > 0)
 		{ // shadow
 			shadowCount = 0;
-			std::vector<VkWriteDescriptorSet> writes;
 
 			for (auto pLight : pLights)
 			{
@@ -1130,8 +1127,6 @@ namespace tke
 					}
 				}
 			}
-
-			if (writes.size()) vk::updataDescriptorSet(writes.size(), writes.data());
 		}
 		if (lightCountChanged)
 		{ // light count in light attribute

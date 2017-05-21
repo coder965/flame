@@ -108,23 +108,19 @@ namespace tke
 
 	struct GuiWindow : Window
 	{
-		void *uiContext = nullptr;
-
 		virtual void keyDownEvent(int) override;
 		virtual void keyUpEvent(int) override;
 		virtual void charEvent(int) override;
 
-		GuiWindow(int cx, int cy, const char *title, bool hasFrame = true);
-		void initUi();
-		void beginUi();
-		void endUi();
+		void show();
+		virtual void drawUi();
 	};
 
 	void guiPushIcon(Image *image);
 	void guiSetupIcons();
 	void initGui();
 
-	extern VkCommandBuffer uiCmd;
+	extern VkCommandBuffer *uiCmd;
 }
 
 #endif

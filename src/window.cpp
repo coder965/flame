@@ -9,7 +9,7 @@ namespace tke
 
 	Window *currentWindow = nullptr;
 
-	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame)
+	void Window::create(int _cx, int _cy, const std::string &title, bool hasFrame)
 	{
 		cx = _cx;
 		cy = _cy;
@@ -175,7 +175,6 @@ namespace tke
 
 	void Window::show()
 	{
-		assert(ready); // must init ui
 		currentWindow = this;
 		ShowWindow(hWnd, SW_SHOWNORMAL);
 		SetForegroundWindow(hWnd);
