@@ -422,7 +422,8 @@ namespace tke
 			return;
 		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-		// Create the Vertex Buffer:
+		renderCs.lock();
+
 		static VertexBuffer	vertexBuffer;
 		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 		if (!vertexBuffer.m_buffer || vertexBuffer.m_size < vertex_size)
@@ -431,7 +432,6 @@ namespace tke
 			vertexBuffer.create(vertex_size);
 		}
 
-		// Create the Index Buffer:
 		static IndexBuffer indexBuffer;
 		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 		if (!indexBuffer.m_buffer || indexBuffer.m_size < index_size)
@@ -448,7 +448,6 @@ namespace tke
 			stagingBuffer.create(totalSize);
 		}
 
-		// Upload Vertex and index Data:
 		{
 			auto map = vk::mapMemory(stagingBuffer.m_memory, 0, totalSize);
 			auto vtx_dst = (ImDrawVert*)map;
@@ -463,41 +462,29 @@ namespace tke
 			}
 			vk::unmapMemory(stagingBuffer.m_memory);
 
-			vk::copyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
-			vk::copyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
+			commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
+			commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
 		}
+
+		auto pWindow = (GuiWindow*)currentWindow;
 
 		for (int f = 0; f < 2; f++)
 		{
 			vkResetCommandBuffer(cmd[cmdIndex][f], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-
 			vk::beginCommandBuffer(cmd[cmdIndex][f]);
 
 			vkCmdWaitEvents(cmd[cmdIndex][f], 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
-			auto pWindow = (GuiWindow*)currentWindow;
 			vkCmdBeginRenderPass(cmd[cmdIndex][f], &vk::renderPassBeginInfo(windowRenderPass, pWindow->framebuffer[f], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
-			// Bind Vertex And Index Buffer:
-			{
-				VkDeviceSize vertex_offset[1] = { 0 };
-				vkCmdBindVertexBuffers(cmd[cmdIndex][f], 0, 1, &vertexBuffer.m_buffer, vertex_offset);
-				vkCmdBindIndexBuffer(cmd[cmdIndex][f], indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
-			}
+			VkDeviceSize vertex_offset[1] = { 0 };
+			vkCmdBindVertexBuffers(cmd[cmdIndex][f], 0, 1, &vertexBuffer.m_buffer, vertex_offset);
+			vkCmdBindIndexBuffer(cmd[cmdIndex][f], indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
 
-			// Setup scale and translation:
-			{
-				auto v = glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f);
-				vkCmdPushConstants(cmd[cmdIndex][f], g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &v);
-			}
+			vkCmdPushConstants(cmd[cmdIndex][f], g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
-			// Bind pipeline and descriptor sets:
-			{
-				vkCmdBindPipeline(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipeline);
-				vkCmdBindDescriptorSets(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
-			}
-
-			// Render the command lists:
+			vkCmdBindPipeline(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipeline);
+			vkCmdBindDescriptorSets(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
 
 			int vtx_offset = 0;
 			int idx_offset = 0;
@@ -549,13 +536,10 @@ namespace tke
 			io.DisplaySize = ImVec2((float)pWindow->cx, (float)pWindow->cy);
 			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
-			static double g_Time = 0.0;
-			double current_time = 0.0;
-			io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
-			g_Time = current_time;
+			io.DeltaTime = (float)(1.0f / 60.0f);
 
 			if (pWindow->focus)
-				io.MousePos = ImVec2((float)mouseX, (float)mouseY);
+				io.MousePos = ImVec2((float)pWindow->mouseX, (float)pWindow->mouseY);
 			else
 				io.MousePos = ImVec2(-1, -1);
 
@@ -574,7 +558,6 @@ namespace tke
 			uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
 			uiAcceptedKey = ImGui::IsAnyItemActive();
 
-			renderCs.lock();
 			uiCmd = cmd[cmdIndex];
 			cmdIndex = 1 - cmdIndex;
 			renderCs.unlock();

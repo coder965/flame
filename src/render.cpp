@@ -36,7 +36,7 @@ namespace tke
 			void* map = vk::mapMemory(stagingBuffer.m_memory, 0, size);
 			memcpy(map, data, size);
 			vk::unmapMemory(stagingBuffer.m_memory);
-			vk::copyBuffer(stagingBuffer.m_buffer, m_buffer, size);
+			vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, m_buffer, size);
 
 			stagingBuffer.destory();
 		}
@@ -45,7 +45,7 @@ namespace tke
 	void NonStagingBufferAbstract::update(void *data, StagingBuffer *pStagingBuffer, size_t size)
 	{
 		if (size == 0) size = m_size;
-		vk::updateBuffer(data, size, pStagingBuffer->m_buffer, pStagingBuffer->m_memory, m_buffer);
+		vk::commandPool.cmdUpdateBuffer(data, size, pStagingBuffer->m_buffer, pStagingBuffer->m_memory, m_buffer);
 	}
 
 	void ShaderManipulatableBufferAbstract::create(size_t size, VkBufferUsageFlags usage)
@@ -110,7 +110,7 @@ namespace tke
 
 	void Image::transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout)
 	{
-		vk::transitionImageLayout(m_image, aspect, m_layout, layout, level);
+		vk::commandPool.cmdTransitionImageLayout(m_image, aspect, m_layout, layout, level);
 		m_layout = layout;
 	}
 

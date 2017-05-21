@@ -902,7 +902,7 @@ namespace tke
 			}
 
 			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::copyBuffer(stagingBuffer.m_buffer, heightMapTerrainBuffer.m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, heightMapTerrainBuffer.m_buffer, ranges.size(), ranges.data());
 
 			vk::descriptorPool.update();
 		}
@@ -986,7 +986,7 @@ namespace tke
 				objectIndex++;
 			}
 			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::copyBuffer(stagingBuffer.m_buffer, objectMatrixBuffer.m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, objectMatrixBuffer.m_buffer, ranges.size(), ranges.data());
 		}
 		if (pLights.size() > 0)
 		{ // light in editor
@@ -1009,7 +1009,7 @@ namespace tke
 				lightIndex++;
 			}
 			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::copyBuffer(stagingBuffer.m_buffer, lightMatrixBuffer.m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, lightMatrixBuffer.m_buffer, ranges.size(), ranges.data());
 		}
 		if (needUpdateIndirectBuffer)
 		{
@@ -1070,7 +1070,7 @@ namespace tke
 				lightIndex++;
 			}
 			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::copyBuffer(stagingBuffer.m_buffer, lightBuffer.m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, lightBuffer.m_buffer, ranges.size(), ranges.data());
 		}
 		if (pLights.size() > 0)
 		{ // shadow

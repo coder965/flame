@@ -34,6 +34,13 @@ namespace tke
 
 			VkCommandBuffer begineOnce();
 			void endOnce(VkCommandBuffer cmd);
+
+			void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
+			void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
+			void cmdUpdateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &uniformBuffer);
+
+			void cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+			void cmdTransitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level);
 		};
 		extern CommandPool commandPool;
 
@@ -43,15 +50,10 @@ namespace tke
 
 		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 		void destroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
-		void updateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &uniformBuffer);
 
 		size_t createImage(std::uint32_t w, std::uint32_t h, std::uint32_t mipmapLevels, std::uint32_t arrayLayers, VkFormat format, VkImageUsageFlags usage, VkImage &image, VkDeviceMemory &memory);
 		void destroyImage(VkImage image, VkDeviceMemory memory);
-		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount);
-		void transitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level);
 
 		extern VkSampler plainSampler;
 		extern VkSampler plainUnnormalizedSampler;

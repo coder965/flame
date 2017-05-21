@@ -806,8 +806,6 @@ struct MainWindow : tke::GuiWindow
 		tke::vk::queueSubmitFence(tke::imageAvailable, 2, cmds, tke::frameDone);
 
 		tke::endFrame();
-
-		Sleep(10);
 	}
 
 	void renderMain()

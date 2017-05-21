@@ -198,6 +198,97 @@ namespace tke
 			free(cmd);
 		}
 
+		void CommandPool::cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
+		{
+			auto commandBuffer = begineOnce();
+
+			VkBufferCopy region = {};
+			region.size = size;
+			region.srcOffset = srcOffset;
+			region.dstOffset = dstOffset;
+			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &region);
+
+			endOnce(commandBuffer);
+		}
+
+		void CommandPool::cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
+		{
+			auto commandBuffer = begineOnce();
+
+			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, count, ranges);
+
+			endOnce(commandBuffer);
+		}
+
+		void CommandPool::cmdUpdateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &Buffer)
+		{
+			device.cs.lock();
+			void* map;
+			auto res = vkMapMemory(device.v, stagingMemory, 0, size, 0, &map);
+			assert(res == VK_SUCCESS);
+			memcpy(map, data, size);
+			vkUnmapMemory(device.v, stagingMemory);
+			device.cs.unlock();
+
+			cmdCopyBuffer(stagingBuffer, Buffer, size);
+		}
+
+		void CommandPool::cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
+		{
+			auto commandBuffer = begineOnce();
+
+			VkImageSubresourceLayers subResource = {};
+			subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			subResource.baseArrayLayer = 0;
+			subResource.mipLevel = 0;
+			subResource.layerCount = 1;
+
+			VkImageCopy region = {};
+			region.srcSubresource = subResource;
+			region.dstSubresource = subResource;
+			region.srcOffset = { 0, 0, 0 };
+			region.dstOffset = { 0, 0, 0 };
+			region.extent.width = width;
+			region.extent.height = height;
+			region.extent.depth = 1;
+
+			vkCmdCopyImage(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+			endOnce(commandBuffer);
+		}
+
+		void CommandPool::cmdTransitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level)
+		{
+			auto commandBuffer = begineOnce();
+
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = oldLayout;
+			barrier.newLayout = newLayout;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = image;
+			barrier.subresourceRange.aspectMask = aspect;
+			barrier.subresourceRange.baseMipLevel = level;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+
+			if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED) barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			else if (oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+			if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			else if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			else if (newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			else if (newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+			endOnce(commandBuffer);
+		}
+
 		CommandPool commandPool;
 
 		void *mapMemory(VkDeviceMemory memory, size_t offset, size_t size)
@@ -270,41 +361,6 @@ namespace tke
 			device.cs.unlock();
 		}
 
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
-		{
-			auto commandBuffer = commandPool.begineOnce();
-
-			VkBufferCopy region = {};
-			region.size = size;
-			region.srcOffset = srcOffset;
-			region.dstOffset = dstOffset;
-			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &region);
-
-			commandPool.endOnce(commandBuffer);
-		}
-
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
-		{
-			auto commandBuffer = commandPool.begineOnce();
-
-			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, count, ranges);
-
-			commandPool.endOnce(commandBuffer);
-		}
-
-		void updateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &Buffer)
-		{
-			device.cs.lock();
-			void* map;
-			auto res = vkMapMemory(device.v, stagingMemory, 0, size, 0, &map);
-			assert(res == VK_SUCCESS);
-			memcpy(map, data, size);
-			vkUnmapMemory(device.v, stagingMemory);
-			device.cs.unlock();
-
-			copyBuffer(stagingBuffer, Buffer, size);
-		}
-
 		size_t createImage(std::uint32_t w, std::uint32_t h, std::uint32_t mipmapLevels, std::uint32_t arrayLayers, VkFormat format, VkImageUsageFlags usage, VkImage &image, VkDeviceMemory &memory)
 		{
 			VkResult res;
@@ -356,30 +412,6 @@ namespace tke
 			device.cs.unlock();
 		}
 
-		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
-		{
-			auto commandBuffer = commandPool.begineOnce();
-
-			VkImageSubresourceLayers subResource = {};
-			subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			subResource.baseArrayLayer = 0;
-			subResource.mipLevel = 0;
-			subResource.layerCount = 1;
-
-			VkImageCopy region = {};
-			region.srcSubresource = subResource;
-			region.dstSubresource = subResource;
-			region.srcOffset = { 0, 0, 0 };
-			region.dstOffset = { 0, 0, 0 };
-			region.extent.width = width;
-			region.extent.height = height;
-			region.extent.depth = 1;
-
-			vkCmdCopyImage(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-			commandPool.endOnce(commandBuffer);
-		}
-
 		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount)
 		{
 			VkImageViewCreateInfo viewInfo = {};
@@ -399,38 +431,6 @@ namespace tke
 			assert(res == VK_SUCCESS);
 			device.cs.unlock();
 			return view;
-		}
-
-		void transitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level)
-		{
-			auto commandBuffer = commandPool.begineOnce();
-
-			VkImageMemoryBarrier barrier = {};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.oldLayout = oldLayout;
-			barrier.newLayout = newLayout;
-			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.image = image;
-			barrier.subresourceRange.aspectMask = aspect;
-			barrier.subresourceRange.baseMipLevel = level;
-			barrier.subresourceRange.levelCount = 1;
-			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = 1;
-
-			if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED) barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-			else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-			else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			else if (oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-			if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-			else if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			else if (newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			else if (newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-			commandPool.endOnce(commandBuffer);
 		}
 
 		VkSampler plainSampler; 
