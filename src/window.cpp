@@ -173,13 +173,6 @@ namespace tke
 	void Window::renderEvent() {}
 	LRESULT Window::extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) { return 0; }
 
-	void Window::show()
-	{
-		currentWindow = this;
-		ShowWindow(hWnd, SW_SHOWNORMAL);
-		SetForegroundWindow(hWnd);
-	}
-
 	int Window::getFPS()
 	{
 		static auto FPS = 0;

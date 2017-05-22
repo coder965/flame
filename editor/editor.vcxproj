@@ -163,13 +163,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="dialogs\debug.h" />
-    <ClInclude Include="dialogs\image.h" />
-    <ClInclude Include="dialogs\lightAttribute.h" />
-    <ClInclude Include="dialogs\modelEditor.h" />
-    <ClInclude Include="dialogs\objectAttribute.h" />
-    <ClInclude Include="dialogs\scene.h" />
-    <ClInclude Include="dialogs\terrainAttribute.h" />
     <ClInclude Include="history.h" />
     <ClInclude Include="select.h" />
     <ClInclude Include="stdafx.h" />

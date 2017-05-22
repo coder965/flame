@@ -9,34 +9,10 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="头文件\dialogs">
-      <UniqueIdentifier>{507bba92-abe6-40a6-9e31-6fdae0b27f14}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\debug.h">
-      <Filter>头文件\dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\terrainAttribute.h">
-      <Filter>头文件\dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\scene.h">
-      <Filter>头文件\dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\objectAttribute.h">
-      <Filter>头文件\dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\modelEditor.h">
-      <Filter>头文件\dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\lightAttribute.h">
-      <Filter>头文件\dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="dialogs\image.h">
-      <Filter>头文件\dialogs</Filter>
     </ClInclude>
     <ClInclude Include="history.h">
       <Filter>头文件</Filter>

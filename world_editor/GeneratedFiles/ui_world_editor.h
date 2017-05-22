@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'WorldEditor.ui'
+** Form generated from reading UI file 'world_editor.ui'
 **
 ** Created by: Qt User Interface Compiler version 5.8.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UI_WORLDEDITOR_H
-#define UI_WORLDEDITOR_H
+#ifndef UI_WORLD_EDITOR_H
+#define UI_WORLD_EDITOR_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
@@ -16,10 +16,10 @@
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
-#include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -27,11 +27,12 @@ QT_BEGIN_NAMESPACE
 class Ui_WorldEditorClass
 {
 public:
+    QAction *actionLoad;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QTabWidget *tabWidget;
     QMenuBar *menuBar;
-    QToolBar *mainToolBar;
+    QMenu *menuScene;
     QStatusBar *statusBar;
 
     void setupUi(QMainWindow *WorldEditorClass)
@@ -39,6 +40,8 @@ public:
         if (WorldEditorClass->objectName().isEmpty())
             WorldEditorClass->setObjectName(QStringLiteral("WorldEditorClass"));
         WorldEditorClass->resize(909, 675);
+        actionLoad = new QAction(WorldEditorClass);
+        actionLoad->setObjectName(QStringLiteral("actionLoad"));
         centralWidget = new QWidget(WorldEditorClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         horizontalLayout = new QHBoxLayout(centralWidget);
@@ -54,13 +57,15 @@ public:
         menuBar = new QMenuBar(WorldEditorClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
         menuBar->setGeometry(QRect(0, 0, 909, 26));
+        menuScene = new QMenu(menuBar);
+        menuScene->setObjectName(QStringLiteral("menuScene"));
         WorldEditorClass->setMenuBar(menuBar);
-        mainToolBar = new QToolBar(WorldEditorClass);
-        mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
-        WorldEditorClass->addToolBar(Qt::TopToolBarArea, mainToolBar);
         statusBar = new QStatusBar(WorldEditorClass);
         statusBar->setObjectName(QStringLiteral("statusBar"));
         WorldEditorClass->setStatusBar(statusBar);
+
+        menuBar->addAction(menuScene->menuAction());
+        menuScene->addAction(actionLoad);
 
         retranslateUi(WorldEditorClass);
 
@@ -73,6 +78,8 @@ public:
     void retranslateUi(QMainWindow *WorldEditorClass)
     {
         WorldEditorClass->setWindowTitle(QApplication::translate("WorldEditorClass", "WorldEditor", Q_NULLPTR));
+        actionLoad->setText(QApplication::translate("WorldEditorClass", "Load", Q_NULLPTR));
+        menuScene->setTitle(QApplication::translate("WorldEditorClass", "Scene", Q_NULLPTR));
     } // retranslateUi
 
 };
@@ -83,4 +90,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // UI_WORLDEDITOR_H
+#endif // UI_WORLD_EDITOR_H

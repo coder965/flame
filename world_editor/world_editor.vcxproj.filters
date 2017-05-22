@@ -33,32 +33,29 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WorldEditor.cpp">
+    <ClCompile Include="world_editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_WorldEditor.cpp">
+    <ClCompile Include="GeneratedFiles\qrc_world_editor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_WorldEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_WorldEditor.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_world_editor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="WorldEditor.h">
+    <CustomBuild Include="world_editor.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="WorldEditor.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="WorldEditor.qrc">
+    <CustomBuild Include="world_editor.qrc">
       <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="world_editor.ui">
+      <Filter>Form Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_WorldEditor.h">
+    <ClInclude Include="GeneratedFiles\ui_world_editor.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

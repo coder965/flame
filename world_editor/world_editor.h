@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
-#include "ui_WorldEditor.h"
+#include "ui_world_editor.h"
 
 class WorldEditor : public QMainWindow
 {

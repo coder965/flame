@@ -1,4 +1,4 @@
-#include "WorldEditor.h"
+#include "world_editor.h"
 #include <QtWidgets/QApplication>
 
 #include "../src/core.h"
@@ -23,12 +23,11 @@ struct MainWindow : tke::GuiWindow
 	void init()
 	{
 		{
-			static tke::ResourceBank _resources;
-
 			titleImage = tke::createImage("../misc/title.jpg", true, false);
 
 			pasteBuffer.create(sizeof(float));
 
+			static tke::ResourceBank _resources;
 			_resources.setImage(titleImage, "Paste.Texture");
 			_resources.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
 			_resources.setPipeline(&pastePipeline, "Paste.Pipeline");
@@ -40,9 +39,6 @@ struct MainWindow : tke::GuiWindow
 
 			pastePipeline.pResource = &_resources;
 
-			progressCmd[0] = tke::vk::commandPool.allocate();
-			progressCmd[1] = tke::vk::commandPool.allocate();
-
 			_resources.setImage(image, "Window.Image");
 
 			progressRenderer->setup();
@@ -53,6 +49,7 @@ struct MainWindow : tke::GuiWindow
 
 			for (int i = 0; i < 2; i++)
 			{
+				progressCmd[i] = tke::vk::commandPool.allocate();
 				tke::vk::beginCommandBuffer(progressCmd[i]);
 				progressRenderer->execute(progressCmd[i], i);
 				vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -109,7 +106,7 @@ void _thread(void*)
 	pMainWindow = new MainWindow;
 	pMainWindow->create(resCx, resCy, "TK Engine World Editor", false);
 	pMainWindow->init();
-	pMainWindow->show();
+	tke::currentWindow = pMainWindow;
 
 	tke::mainLoop();
 }
@@ -117,8 +114,6 @@ void _thread(void*)
 int main(int argc, char *argv[])
 {
 	_beginthread(_thread, 0, nullptr);
-
-	Sleep(3300);
 
 	QApplication a(argc, argv);
 	WorldEditor w;
