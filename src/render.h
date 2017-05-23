@@ -1,5 +1,5 @@
-#ifndef __TKE_RENDER_EXEC__
-#define __TKE_RENDER_EXEC__
+#ifndef __TKE_RENDER__
+#define __TKE_RENDER__
 
 #include "vk.h"
 #include "render.abstract.h"

@@ -18,8 +18,8 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QStatusBar>
-#include <QtWidgets/QTabWidget>
 #include <QtWidgets/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -28,9 +28,11 @@ class Ui_WorldEditorClass
 {
 public:
     QAction *actionLoad;
+    QAction *actionSave;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
-    QTabWidget *tabWidget;
+    QScrollArea *scrollArea;
+    QWidget *scrollAreaWidgetContents;
     QMenuBar *menuBar;
     QMenu *menuScene;
     QStatusBar *statusBar;
@@ -42,16 +44,23 @@ public:
         WorldEditorClass->resize(909, 675);
         actionLoad = new QAction(WorldEditorClass);
         actionLoad->setObjectName(QStringLiteral("actionLoad"));
+        actionSave = new QAction(WorldEditorClass);
+        actionSave->setObjectName(QStringLiteral("actionSave"));
         centralWidget = new QWidget(WorldEditorClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         horizontalLayout = new QHBoxLayout(centralWidget);
         horizontalLayout->setSpacing(6);
         horizontalLayout->setContentsMargins(11, 11, 11, 11);
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        tabWidget = new QTabWidget(centralWidget);
-        tabWidget->setObjectName(QStringLiteral("tabWidget"));
+        scrollArea = new QScrollArea(centralWidget);
+        scrollArea->setObjectName(QStringLiteral("scrollArea"));
+        scrollArea->setWidgetResizable(true);
+        scrollAreaWidgetContents = new QWidget();
+        scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 885, 600));
+        scrollArea->setWidget(scrollAreaWidgetContents);
 
-        horizontalLayout->addWidget(tabWidget);
+        horizontalLayout->addWidget(scrollArea);
 
         WorldEditorClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(WorldEditorClass);
@@ -66,11 +75,9 @@ public:
 
         menuBar->addAction(menuScene->menuAction());
         menuScene->addAction(actionLoad);
+        menuScene->addAction(actionSave);
 
         retranslateUi(WorldEditorClass);
-
-        tabWidget->setCurrentIndex(-1);
-
 
         QMetaObject::connectSlotsByName(WorldEditorClass);
     } // setupUi
@@ -79,6 +86,7 @@ public:
     {
         WorldEditorClass->setWindowTitle(QApplication::translate("WorldEditorClass", "WorldEditor", Q_NULLPTR));
         actionLoad->setText(QApplication::translate("WorldEditorClass", "Load", Q_NULLPTR));
+        actionSave->setText(QApplication::translate("WorldEditorClass", "Save", Q_NULLPTR));
         menuScene->setTitle(QApplication::translate("WorldEditorClass", "Scene", Q_NULLPTR));
     } // retranslateUi
 

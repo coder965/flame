@@ -17,8 +17,11 @@ WorldEditor::WorldEditor(QWidget *parent)
 	window->setFlags(Qt::FramelessWindowHint);
 
 	QWidget *widget = QWidget::createWindowContainer(window);
+	widget->setFixedWidth(1600);
+	widget->setFixedHeight(900);
 	//QScrollArea *scrollArea = new QScrollArea;
 	//scrollArea->setWidget(widget);
 
-	ui.tabWidget->addTab(widget, "1");
+	ui.scrollArea->setWidget(widget);
+	//ui.tabWidget->addTab(widget, "1");
 }
