@@ -10,6 +10,12 @@ class WorldEditor : public QMainWindow
 public:
 	WorldEditor(QWidget *parent = Q_NULLPTR);
 
+private slots:
+	void on_pipelineList_currentItemChanged(QListWidgetItem *_curr, QListWidgetItem *_prev);
+
 private:
 	Ui::WorldEditorClass ui;
+
+protected:
+	void keyPressEvent(QKeyEvent *k) override;
 };

@@ -1,21 +1,5 @@
 struct Pipeline;
 
-const std::string stageNames[] = {
-	"vert",
-	"tesc",
-	"tese",
-	"geom",
-	"frag"
-};
-
-const int stageTypes[] = {
-	(int)tke::StageFlags::vert,
-	(int)tke::StageFlags::tesc,
-	(int)tke::StageFlags::tese,
-	(int)tke::StageFlags::geom,
-	(int)tke::StageFlags::frag
-};
-
 struct Stage : tke::StageAbstract
 {
 	std::string text;
@@ -104,12 +88,6 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 {
 	bool changed = false;
 
-    QListWidgetItem *item;
-
-    ~Pipeline()
-    {
-        delete item;
-    }
 
 	void setTitle()
 	{
@@ -164,20 +142,6 @@ struct Pipeline : tke::PipelineAbstract<Stage>
 			}
 		}
 	}
-
-    void load(const std::string &_filename)
-    {
-		setFilename(_filename);
-		loadXML();
-
-		for (auto &s : stages)
-		{
-			tke::OnceFileBuffer file(filepath + "/" + s->filename);
-			s->text = file.data;
-		}
-
-        addToTree();
-    }
 
     void setTabData(int index)
     {

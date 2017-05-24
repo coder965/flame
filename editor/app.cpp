@@ -446,6 +446,7 @@ struct MainWindow : tke::GuiWindow
 int main()
 {
 	auto resCx = 1600, resCy = 900;
+	tke::enginePath = "../";
 	tke::init("TK Engine Editor", resCx, resCy);
 	tke::initPickUp();
 	tke::initGeneralModels();

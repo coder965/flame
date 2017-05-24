@@ -413,7 +413,7 @@ namespace tke
 
 	Pipeline::~Pipeline()
 	{
-		for (auto s : stages) delete s;
+		for (int i = 0; i < 5; i++) delete stages[i];
 	}
 
 	void Pipeline::setFilename(const std::string &_filename)
@@ -425,10 +425,6 @@ namespace tke
 
 	void Pipeline::loadXML()
 	{
-		blendAttachments.clear();
-		stages.clear();
-		links.clear();
-
 		AttributeTree at("pipeline");
 		at.loadXML(filename);
 		at.obtainFromAttributes(this, b);
@@ -472,7 +468,14 @@ namespace tke
 					}
 				}
 
-				stages.push_back(s);
+				for (int i = 0; i < 5; i++)
+				{
+					if (StageTypes[i] == (int)s->type)
+					{
+						stages[i] = s;
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -495,6 +498,8 @@ namespace tke
 		}
 		for (auto s : stages)
 		{
+			if (!s) continue;
+
 			auto n = new AttributeTreeNode("stage");
 			n->addAttributes(s, s->b);
 			at.children.push_back(n);
@@ -520,6 +525,8 @@ namespace tke
 	{
 		for (auto s : stages)
 		{
+			if (!s) continue;
+
 			for (auto &d : s->descriptors)
 			{
 				if (d.name == name)
@@ -604,6 +611,8 @@ namespace tke
 		}
 		for (auto s : stages)
 		{
+			if (!s) continue;
+
 			VkPipelineShaderStageCreateInfo i = {};
 			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			i.pName = "main";
@@ -767,6 +776,8 @@ namespace tke
 				bool found = false;
 				for (auto s : stages)
 				{
+					if (!s) continue;
+
 					if (found) break;
 					for (auto &d : s->descriptors)
 					{
@@ -786,6 +797,8 @@ namespace tke
 				bool found = false;
 				for (auto s : stages)
 				{
+					if (!s) continue;
+
 					if (found) break;
 					for (auto &d : s->descriptors)
 					{

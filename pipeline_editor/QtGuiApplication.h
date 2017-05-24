@@ -29,9 +29,6 @@ public:
 	QtGuiApplication(QWidget *parent = Q_NULLPTR);
 
 private slots:
-	void on_pipelineNameEdit_textChanged(const QString &);
-
-	void on_pipelineList_currentItemChanged(QListWidgetItem *_curr, QListWidgetItem *_prev);
 
 	void on_addPipeline_clicked();
 
@@ -52,14 +49,6 @@ private slots:
 	void on_explorerStage_clicked();
 
 	void on_savePipeline_clicked();
-
-	void on_find();
-
-	void on_find_enter();
-
-	void on_find_previous();
-
-	void on_find_next();
 
 protected:
 	void keyPressEvent(QKeyEvent *k) override;

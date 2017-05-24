@@ -113,6 +113,7 @@ namespace tke
 		virtual void charEvent(int) override;
 
 		void show();
+		void startUiThread();
 		virtual void drawUi();
 	};
 

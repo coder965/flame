@@ -101,6 +101,7 @@ MainWindow *pMainWindow;
 void _thread(void*)
 {
 	auto resCx = 1600, resCy = 900;
+	tke::enginePath = "../";
 	tke::init("TK Engine World Editor", resCx, resCy);
 
 	pMainWindow = new MainWindow;

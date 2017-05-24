@@ -1,29 +1,32 @@
-class LineNumberArea;
+#ifndef __QLINENUMBEREDIT__
+#define __QLINENUMBEREDIT__
 
-class MyEdit : public QPlainTextEdit
+class QLineNumberArea;
+
+class QLineNumberEdit : public QPlainTextEdit
 {
-    LineNumberArea *lineNumberArea;
+	QLineNumberArea *lineNumberArea;
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void updateLineNumberArea(const QRect &, int);
 protected:
     void resizeEvent(QResizeEvent *e) override;
 public:
-    MyEdit();
+	QLineNumberEdit();
     void drawLineNumberArea(QPaintEvent *e);
     int lineNumberAreaWidth();
 };
 
-class LineNumberArea : public QWidget
+class QLineNumberArea : public QWidget
 {
-    MyEdit *pEdit;
+	QLineNumberEdit *pEdit;
 protected:
     void paintEvent(QPaintEvent *e) override
     {
         pEdit->drawLineNumberArea(e);
     }
 public:
-    LineNumberArea(MyEdit *_pEdit)
+	QLineNumberArea(QLineNumberEdit *_pEdit)
         : QWidget(_pEdit)
     {
         pEdit = _pEdit;
@@ -35,20 +38,20 @@ public:
 
 };
 
-MyEdit::MyEdit()
+QLineNumberEdit::QLineNumberEdit()
 {
     QFontMetrics metrics(font());
     setTabStopWidth(4 * metrics.width(' '));
 
-    lineNumberArea = new LineNumberArea(this);
+    lineNumberArea = new QLineNumberArea(this);
 
-    connect(this, &QPlainTextEdit::blockCountChanged, this, &MyEdit::updateLineNumberAreaWidth);
-    connect(this, &QPlainTextEdit::updateRequest, this, &MyEdit::updateLineNumberArea);
+    connect(this, &QPlainTextEdit::blockCountChanged, this, &QLineNumberEdit::updateLineNumberAreaWidth);
+    connect(this, &QPlainTextEdit::updateRequest, this, &QLineNumberEdit::updateLineNumberArea);
 
     updateLineNumberAreaWidth(0);
 }
 
-int MyEdit::lineNumberAreaWidth()
+int QLineNumberEdit::lineNumberAreaWidth()
 {
     int digits = 1;
     int max = qMax(1, blockCount());
@@ -64,12 +67,12 @@ int MyEdit::lineNumberAreaWidth()
     return space;
 }
 
-void MyEdit::updateLineNumberAreaWidth(int /* newBlockCount */)
+void QLineNumberEdit::updateLineNumberAreaWidth(int /* newBlockCount */)
 {
     setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 }
 
-void MyEdit::updateLineNumberArea(const QRect &rect, int dy)
+void QLineNumberEdit::updateLineNumberArea(const QRect &rect, int dy)
 {
     if (dy)
         lineNumberArea->scroll(0, dy);
@@ -80,7 +83,7 @@ void MyEdit::updateLineNumberArea(const QRect &rect, int dy)
         updateLineNumberAreaWidth(0);
 }
 
-void MyEdit::resizeEvent(QResizeEvent *e)
+void QLineNumberEdit::resizeEvent(QResizeEvent *e)
 {
     QPlainTextEdit::resizeEvent(e);
 
@@ -88,7 +91,7 @@ void MyEdit::resizeEvent(QResizeEvent *e)
     lineNumberArea->setGeometry(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height());
 }
 
-void MyEdit::drawLineNumberArea(QPaintEvent *e)
+void QLineNumberEdit::drawLineNumberArea(QPaintEvent *e)
 {
     QPainter painter(lineNumberArea);
     painter.fillRect(e->rect(), Qt::lightGray);
@@ -114,3 +117,5 @@ void MyEdit::drawLineNumberArea(QPaintEvent *e)
         blockNumber++;
     }
 }
+
+#endif

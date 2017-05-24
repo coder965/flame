@@ -68,12 +68,12 @@ namespace tke
 
 		renderer->setup();
 
-		panoramaPipeline.create(enginePath + "../pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
-		heightMapTerrainPipeline.create(enginePath + "../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-		proceduralTerrainPipeline.create(enginePath + "../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-		mrtPipeline.create(enginePath + "../pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
-		deferredPipeline.create(enginePath + "../pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
-		combinePipeline.create(enginePath + "../pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
+		panoramaPipeline.create(enginePath + "pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
+		heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		mrtPipeline.create(enginePath + "pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
+		deferredPipeline.create(enginePath + "pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
+		combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
 
 		renderer->getDescriptorSets();
 	}
@@ -711,17 +711,17 @@ namespace tke
 					}
 
 					{
-						scatteringPipeline.create("../pipeline/sky/scattering.xml", &zeroVertexInputState, postRenderPass, 0);
+						scatteringPipeline.create(enginePath + "pipeline/sky/scattering.xml", &zeroVertexInputState, postRenderPass, 0);
 						globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
 
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-						downsamplePipeline.create("../pipeline/sky/downsample.xml", &zeroVertexInputState, postRenderPass, 0);
+						downsamplePipeline.create(enginePath + "pipeline/sky/downsample.xml", &zeroVertexInputState, postRenderPass, 0);
 						globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
 
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 						convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-						convolvePipeline.create("../pipeline/sky/convolve.xml", &zeroVertexInputState, postRenderPass, 0);
+						convolvePipeline.create(enginePath + "pipeline/sky/convolve.xml", &zeroVertexInputState, postRenderPass, 0);
 						globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 
 						envrImage.m_mipmapLevels = 4;

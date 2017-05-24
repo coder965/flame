@@ -14,21 +14,306 @@
    <string>WorldEditor</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <widget class="QScrollArea" name="scrollArea">
-      <property name="widgetResizable">
-       <bool>true</bool>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <widget class="QWidget" name="scrollAreaWidgetContents">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>885</width>
-         <height>600</height>
-        </rect>
-       </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Scene</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>857</width>
+             <height>550</height>
+            </rect>
+           </property>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Pipeline Editor</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string/>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="QGroupBox" name="groupBox_3">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>21</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>21</height>
+               </size>
+              </property>
+              <property name="title">
+               <string/>
+              </property>
+              <widget class="QToolButton" name="addPipeline">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/add.png</normaloff>:/WorldEditor/misc/add.png</iconset>
+               </property>
+              </widget>
+              <widget class="QToolButton" name="removePipeline">
+               <property name="geometry">
+                <rect>
+                 <x>30</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/delete.png</normaloff>:/WorldEditor/misc/delete.png</iconset>
+               </property>
+              </widget>
+              <widget class="QToolButton" name="savePipeline">
+               <property name="geometry">
+                <rect>
+                 <x>60</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/save.png</normaloff>:/WorldEditor/misc/save.png</iconset>
+               </property>
+              </widget>
+              <widget class="QToolButton" name="explorerPipeline">
+               <property name="geometry">
+                <rect>
+                 <x>90</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/open.png</normaloff>:/WorldEditor/misc/open.png</iconset>
+               </property>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="pipelineList"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string/>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QTabWidget" name="tabWidget_2">
+              <property name="tabPosition">
+               <enum>QTabWidget::East</enum>
+              </property>
+              <property name="currentIndex">
+               <number>1</number>
+              </property>
+              <widget class="QWidget" name="tab_3">
+               <attribute name="title">
+                <string>Attribute</string>
+               </attribute>
+              </widget>
+              <widget class="QWidget" name="tab_4">
+               <attribute name="title">
+                <string>Shader</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QGroupBox" name="groupBox_4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>21</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>21</height>
+                   </size>
+                  </property>
+                  <property name="title">
+                   <string/>
+                  </property>
+                  <widget class="QToolButton" name="addStage">
+                   <property name="geometry">
+                    <rect>
+                     <x>0</x>
+                     <y>0</y>
+                     <width>21</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>...</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="world_editor.qrc">
+                     <normaloff>:/WorldEditor/misc/add.png</normaloff>:/WorldEditor/misc/add.png</iconset>
+                   </property>
+                  </widget>
+                  <widget class="QToolButton" name="removeStage">
+                   <property name="geometry">
+                    <rect>
+                     <x>30</x>
+                     <y>0</y>
+                     <width>21</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>...</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="world_editor.qrc">
+                     <normaloff>:/WorldEditor/misc/delete.png</normaloff>:/WorldEditor/misc/delete.png</iconset>
+                   </property>
+                  </widget>
+                  <widget class="QToolButton" name="saveStage">
+                   <property name="geometry">
+                    <rect>
+                     <x>60</x>
+                     <y>0</y>
+                     <width>21</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>...</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="world_editor.qrc">
+                     <normaloff>:/WorldEditor/misc/save.png</normaloff>:/WorldEditor/misc/save.png</iconset>
+                   </property>
+                  </widget>
+                  <widget class="QToolButton" name="toSpv">
+                   <property name="geometry">
+                    <rect>
+                     <x>90</x>
+                     <y>0</y>
+                     <width>21</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>...</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="world_editor.qrc">
+                     <normaloff>:/WorldEditor/misc/spv.png</normaloff>:/WorldEditor/misc/spv.png</iconset>
+                   </property>
+                  </widget>
+                  <widget class="QToolButton" name="explorerStage">
+                   <property name="geometry">
+                    <rect>
+                     <x>120</x>
+                     <y>0</y>
+                     <width>21</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>...</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="world_editor.qrc">
+                     <normaloff>:/WorldEditor/misc/open.png</normaloff>:/WorldEditor/misc/open.png</iconset>
+                   </property>
+                  </widget>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTabWidget" name="stageTab"/>
+                </item>
+                <item>
+                 <widget class="QTabWidget" name="bottomTab">
+                  <property name="currentIndex">
+                   <number>-1</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <attribute name="title">
+        <string>Renderer Editor</string>
+       </attribute>
       </widget>
      </widget>
     </item>

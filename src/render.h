@@ -134,6 +134,22 @@ namespace tke
 		REFLe frag = 1 << 4
 	};
 
+	const int StageTypes[] = {
+		(int)StageFlags::vert,
+		(int)StageFlags::tesc,
+		(int)StageFlags::tese,
+		(int)StageFlags::geom,
+		(int)StageFlags::frag
+	};
+
+	const std::string StageNames[] = {
+		"vert",
+		"tesc",
+		"tese",
+		"geom",
+		"frag"
+	};
+
 	inline StageFlags StageFlagByExt(const std::string &ext)
 	{
 		if (ext == ".vert") return StageFlags::vert;
@@ -269,6 +285,8 @@ namespace tke
 
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
+
+		ExtType *ext = nullptr;
 	};
 
 	REFLECTABLE enum class SamplerType : int
@@ -313,7 +331,7 @@ namespace tke
 		REFLe CullMode cull_mode = CullMode::back;
 
 		std::vector<BlendAttachment> blendAttachments;
-		std::vector<Stage*> stages;
+		Stage *stages[5] = {};
 		std::vector<LinkResource> links;
 
 		ResourceBank *pResource = &globalResource;
@@ -335,6 +353,8 @@ namespace tke
 		VkPipelineLayout m_pipelineLayout = 0;
 		VkPipeline m_pipeline = 0;
 		VkDescriptorSet m_descriptorSet = 0;
+
+		ExtType *ext = nullptr;
 
 		~Pipeline();
 		void setFilename(const std::string &_filename);
