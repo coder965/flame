@@ -10,16 +10,6 @@
 
 tke::UniformBuffer pasteBuffer;
 
-struct Person
-{
-	
-};
-
-struct Street
-{
-	std::vector<Person> persons;
-};
-
 struct MainWindow : tke::GuiWindow
 {
 	VkCommandBuffer progressCmd[2];

@@ -1,6 +1,6 @@
 #define EXTRA \
-"#include \"../src/core/render.abstract.h\"\n \
-#include \"../src/core/utils.h\"\n \
+"#include \"../src/render.abstract.h\"\n \
+#include \"../src/utils.h\"\n \
 #include \"../render_editor/render.h\"\n \
 #define PipelineAbstract PipelineAbstract<StageAbstract>\n \
 #define DrawActionAbstract DrawActionAbstract<Drawcall>\n \

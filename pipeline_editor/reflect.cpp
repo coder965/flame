@@ -1,5 +1,5 @@
-#include "../src/core/render.abstract.h"
- #include "../src/core/utils.h"
+#include "../src/render.abstract.h"
+ #include "../src/utils.h"
  struct Stage;
  struct Pipeline;
  #define PipelineAbstract PipelineAbstract<Stage>

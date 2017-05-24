@@ -55,39 +55,14 @@ struct MainWindow : tke::GuiWindow
 
 	void init()
 	{
-		//tke::Texture *heightMap = nullptr;
-
-		//auto TERRAIN_HEIGHT_SIZE = 1024;
-
-		//{
-		//	auto data = new unsigned short[TERRAIN_HEIGHT_SIZE * TERRAIN_HEIGHT_SIZE];
-
-		//	for (int i = 0; i < TERRAIN_HEIGHT_SIZE; i++)
-		//	{
-		//		for (int j = 0; j < TERRAIN_HEIGHT_SIZE; j++)
-		//		{
-		//			data[i * TERRAIN_HEIGHT_SIZE + j] = tk::engine->fbm2d(glm::vec2(i, j)) * 0xffff;
-		//		}
-		//	}
-
-		//	heightMap = new tke::Texture;
-		//	heightMap->create(TERRAIN_HEIGHT_SIZE, TERRAIN_HEIGHT_SIZE, VK_FORMAT_R16_UNORM, (unsigned char*)data, TERRAIN_HEIGHT_SIZE * TERRAIN_HEIGHT_SIZE * 2);
-
-		//	delete[] data;
-		//}
-
 		//auto terrain = new tke::Terrain;
-		//terrain->heightMap = heightMap;
+		//terrain->heightMap = tke::createTexture("d:\\tk-sdk\\engine\\misc\\output.png", false, false);
 		//terrain->patchSize = 32;
 		//terrain->ext = 10.f;
 		//terrain->height = 200.f;
 		//terrain->tessFactor = 0.75;
 
 		//tke::scene->addTerrain(terrain);
-
-		//terrain->heightMap = tke::createTexture("d:\\tk-sdk\\engine\\misc\\output.png", false, false);
-		//tke::createTexture("d:\\tk-sdk\\engine\\misc\\1.bmp", false, false);
-		//tke::createTexture("d:\\tk-sdk\\engine\\misc\\start_up.jpg", false, false);
 
 		masterRenderer = new tke::MasterRenderer(1600, 900, this, &tke::scene->vertexBuffer, &tke::scene->indexBuffer, &tke::scene->objectIndirectBuffer);
 
@@ -181,11 +156,9 @@ struct MainWindow : tke::GuiWindow
 	{
 		tke::vk::queueWaitIdle();
 
-		static bool first = true;
-
 		for (int i = 0; i < 2; i++)
 		{
-			if (!first) vkResetCommandBuffer(mainCmd[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+			vkResetCommandBuffer(mainCmd[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
 			tke::vk::beginCommandBuffer(mainCmd[i]);
 
@@ -240,8 +213,6 @@ struct MainWindow : tke::GuiWindow
 
 			vkEndCommandBuffer(mainCmd[i]);
 		}
-
-		first = false;
 
 		tke::vk::queueWaitIdle();
 	}

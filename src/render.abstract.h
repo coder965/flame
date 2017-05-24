@@ -1,5 +1,5 @@
-#ifndef __TKE_RENDER__
-#define __TKE_RENDER__
+#ifndef __TKE_RENDER_ABSTRACT__
+#define __TKE_RENDER_ABSTRACT__
 
 #include <vector>
 #include <list>

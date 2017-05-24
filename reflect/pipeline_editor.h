@@ -1,6 +1,6 @@
 #define EXTRA \
-"#include \"../src/core/render.abstract.h\"\n \
-#include \"../src/core/utils.h\"\n \
+"#include \"../src/render.abstract.h\"\n \
+#include \"../src/utils.h\"\n \
 struct Stage;\n \
 struct Pipeline;\n \
 #define PipelineAbstract PipelineAbstract<Stage>\n"

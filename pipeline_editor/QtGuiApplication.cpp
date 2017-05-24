@@ -7,8 +7,8 @@
 #include <chrono>
 #include <iomanip>
 
-#include "d:/TK_Engine/src/core/utils.h"
-#include "d:/TK_Engine/src/core/render.abstract.h"
+#include "d:/TK_Engine/src/utils.h"
+#include "d:/TK_Engine/src/render.abstract.h"
 
 const std::string shaderPath("D:/TK_Engine/pipeline");
 
