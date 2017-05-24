@@ -34,6 +34,8 @@ namespace tke
 
 	StagingBuffer stagingBuffer;
 
+	std::string enginePath;
+
 	void(*reporter)(const std::string &) = nullptr;
 	void setReporter(void(*_reporter)(const std::string &))
 	{

@@ -187,4 +187,9 @@ namespace tke
 		}
 		return FPS;
 	}
+
+	void Window::show()
+	{
+		ShowWindow(hWnd, SW_NORMAL);
+	}
 }

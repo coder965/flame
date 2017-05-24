@@ -140,9 +140,6 @@
     <ClInclude Include="..\src\pickUp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\render.abstract.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\render.h">
       <Filter>头文件</Filter>
     </ClInclude>

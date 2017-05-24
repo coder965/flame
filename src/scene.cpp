@@ -68,12 +68,12 @@ namespace tke
 
 		renderer->setup();
 
-		panoramaPipeline.create("../pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
-		heightMapTerrainPipeline.create("../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-		proceduralTerrainPipeline.create("../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-		mrtPipeline.create("../pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
-		deferredPipeline.create("../pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
-		combinePipeline.create("../pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
+		panoramaPipeline.create(enginePath + "../pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
+		heightMapTerrainPipeline.create(enginePath + "../pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		proceduralTerrainPipeline.create(enginePath + "../pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+		mrtPipeline.create(enginePath + "../pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
+		deferredPipeline.create(enginePath + "../pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
+		combinePipeline.create(enginePath + "../pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
 
 		renderer->getDescriptorSets();
 	}

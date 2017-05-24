@@ -677,7 +677,7 @@ namespace tke
 		};
 
 		g_Pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-		g_Pipeline.create("../pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
+		g_Pipeline.create(enginePath + "../pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
 
 		commandPool.create();
 

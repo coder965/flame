@@ -65,6 +65,8 @@ namespace tke
 
 	void changeProjMat(int what);
 
+	extern std::string enginePath;
+
 	void setReporter(void(*_reporter)(const std::string &));
 	void report(const std::string &str);
 	void reportMajorProgress(int progress);

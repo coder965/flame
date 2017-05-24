@@ -45,6 +45,7 @@ namespace tke
 		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 		void clearInput();
 		int getFPS();
+		void show();
 	};
 
 	extern Window *currentWindow;

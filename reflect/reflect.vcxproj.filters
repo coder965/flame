@@ -21,24 +21,15 @@
     <ClCompile Include="lex.yy.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\core\utils.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="..\src\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="def.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="core.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="render_editor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="pipeline_editor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -411,6 +411,111 @@ namespace tke
 		return v;
 	}
 
+	Pipeline::~Pipeline()
+	{
+		for (auto s : stages) delete s;
+	}
+
+	void Pipeline::setFilename(const std::string &_filename)
+	{
+		filename = _filename;
+		std::experimental::filesystem::path p(filename);
+		filepath = p.parent_path().string();
+	}
+
+	void Pipeline::loadXML()
+	{
+		blendAttachments.clear();
+		stages.clear();
+		links.clear();
+
+		AttributeTree at("pipeline");
+		at.loadXML(filename);
+		at.obtainFromAttributes(this, b);
+
+		for (auto c : at.children)
+		{
+			if (c->name == "blend_attachment")
+			{
+				BlendAttachment ba;
+				c->obtainFromAttributes(&ba, ba.b);
+				blendAttachments.push_back(ba);
+			}
+			else if (c->name == "link")
+			{
+				LinkResource l;
+				c->obtainFromAttributes(&l, l.b);
+				links.push_back(l);
+			}
+			else if (c->name == "stage")
+			{
+				auto s = new Stage;
+				c->obtainFromAttributes(s, s->b);
+				std::experimental::filesystem::path p(s->filename);
+				s->filepath = p.parent_path().string();
+				auto ext = p.extension().string();
+				s->type = StageFlagByExt(ext);
+
+				for (auto c : c->children)
+				{
+					if (c->name == "descriptor")
+					{
+						Descriptor d;
+						c->obtainFromAttributes(&d, d.b);
+						s->descriptors.push_back(d);
+					}
+					else if (c->name == "push_constant")
+					{
+						PushConstantRange pc;
+						c->obtainFromAttributes(&pc, pc.b);
+						s->pushConstantRanges.push_back(pc);
+					}
+				}
+
+				stages.push_back(s);
+			}
+		}
+	}
+
+	void Pipeline::saveXML()
+	{
+		AttributeTree at("pipeline");
+		at.addAttributes(this, b);
+		for (auto &b : blendAttachments)
+		{
+			auto n = new AttributeTreeNode("blend_attachment");
+			n->addAttributes(&b, b.b);
+			at.children.push_back(n);
+		}
+		for (auto &l : links)
+		{
+			auto n = new AttributeTreeNode("link");
+			n->addAttributes(&l, l.b);
+			at.children.push_back(n);
+		}
+		for (auto s : stages)
+		{
+			auto n = new AttributeTreeNode("stage");
+			n->addAttributes(s, s->b);
+			at.children.push_back(n);
+
+			for (auto &d : s->descriptors)
+			{
+				auto nn = new AttributeTreeNode("descriptor");
+				nn->addAttributes(&d, d.b);
+				n->children.push_back(nn);
+			}
+			for (auto &p : s->pushConstantRanges)
+			{
+				auto nn = new AttributeTreeNode("push_constant");
+				nn->addAttributes(&p, p.b);
+				n->children.push_back(nn);
+			}
+		}
+
+		at.saveXML(filename);
+	}
+
 	int Pipeline::descriptorPosition(const std::string &name)
 	{
 		for (auto s : stages)
@@ -425,7 +530,7 @@ namespace tke
 		return -1;
 	}
 
-	void Pipeline::create(const char *_f, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::create(const std::string &_f, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
 		setFilename(_f);
 
@@ -434,7 +539,7 @@ namespace tke
 		m_renderPass = renderPass;
 		m_subpassIndex = subpassIndex;
 
-		PipelineAbstract::loadXML();
+		loadXML();
 
 		if (cx == 0 && cy == 0)
 		{
@@ -807,8 +912,30 @@ namespace tke
 		type = DrawcallType::indirect_index;
 	}
 
-	ImageResourceLink::ImageResourceLink(Image *image)
-		: m_image(image) {}
+	Drawcall::Drawcall(VkShaderStageFlags stage, void *data, size_t size, size_t offset)
+	{
+		m_pushConstantStage = stage;
+		push_constant_offset = offset;
+		m_pushConstantSize = size;
+		push_constant_value = malloc(size);
+		memcpy(push_constant_value, data, size);
+		type = DrawcallType::push_constant;
+	}
+
+	Drawcall::~Drawcall()
+	{
+		delete push_constant_value;
+	}
+
+	void Drawcall::loadFromAt(AttributeTreeNode *n)
+	{
+		n->obtainFromAttributes(this, b);
+	}
+
+	void Drawcall::saveToAt(AttributeTreeNode *n)
+	{
+		n->addAttributes(this, b);
+	}
 
 	DrawAction::DrawAction() {}
 
@@ -824,6 +951,43 @@ namespace tke
 		type = DrawActionType::call_fuction;
 	}
 
+	void DrawAction::loadFromAt(AttributeTreeNode *n)
+	{
+		n->obtainFromAttributes(this, b);
+
+		auto drawcallsNode = n->firstNode("drawcalls");
+		if (drawcallsNode)
+		{
+			for (auto nn : drawcallsNode->children)
+			{
+				if (nn->name == "drawcall")
+				{
+					auto d = addDrawcall();
+					d->loadFromAt(nn);
+				}
+			}
+		}
+	}
+
+	void DrawAction::saveToAt(AttributeTreeNode *n)
+	{
+		n->addAttributes(this, b);
+
+		auto drawcallsNode = new AttributeTreeNode("drawcalls");
+		n->children.push_back(drawcallsNode);
+		for (auto &d : drawcalls)
+		{
+			auto n = new AttributeTreeNode("drawcall");
+			drawcallsNode->children.push_back(n);
+			d.saveToAt(n);
+		}
+	}
+
+	void DrawAction::maintain(int row)
+	{
+		maintainList(drawcalls);
+	}
+
 	void DrawAction::preprocess(Pipeline* &currentPipeline)
 	{
 		if (m_pipeline)
@@ -832,8 +996,6 @@ namespace tke
 			{
 				if (m_pipeline->m_descriptorSet)
 					m_descriptorSet = m_pipeline->m_descriptorSet;
-				else if (m_imageResourceLinks.size() > 0)
-					m_descriptorSet = vk::descriptorPool.allocate(&m_pipeline->m_descriptorSetLayout);
 			}
 		}
 
@@ -851,6 +1013,16 @@ namespace tke
 		clearValue = _clearValue;
 	}
 
+	void Attachment::loadFromAt(AttributeTreeNode *n)
+	{
+		n->obtainFromAttributes(this, b);
+	}
+
+	void Attachment::saveToAt(AttributeTreeNode *n)
+	{
+		n->addAttributes(this, b);
+	}
+
 	Dependency::Dependency() {}
 
 	Dependency::Dependency(void *_target)
@@ -863,12 +1035,110 @@ namespace tke
 		pass_name = _pass_name;
 	}
 
+	void Dependency::loadFromAt(AttributeTreeNode *n)
+	{
+		n->obtainFromAttributes(this, b);
+	}
+
+	void Dependency::saveToAt(AttributeTreeNode *n)
+	{
+		n->addAttributes(this, b);
+	}
+
 	RenderPass::RenderPass() {}
 
 	RenderPass::RenderPass(VkCommandBuffer cmd)
 	{
 		type = RenderPassType::call_secondary_cmd;
 		secondaryCmd = cmd;
+	}
+
+	void RenderPass::loadFromAt(AttributeTreeNode *n)
+	{
+		n->obtainFromAttributes(this, b);
+
+		auto attachmentNode = n->firstNode("attachments");
+		if (attachmentNode)
+		{
+			for (auto n : attachmentNode->children)
+			{
+				if (n->name == "attachment")
+				{
+					auto attachment = addAttachment();
+					attachment->loadFromAt(n);
+				}
+			}
+		}
+		auto dependenciesNode = n->firstNode("dependencies");
+		if (dependenciesNode)
+		{
+			for (auto n : dependenciesNode->children)
+			{
+				if (n->name == "dependency")
+				{
+					auto dependency = addDependency();
+					dependency->loadFromAt(n);
+				}
+			}
+		}
+		auto actionsNode = n->firstNode("actions");
+		if (actionsNode)
+		{
+			for (auto n : actionsNode->children)
+			{
+				if (n->name == "action")
+				{
+					auto action = addAction();
+					action->loadFromAt(n);
+				}
+			}
+		}
+	}
+
+	void RenderPass::saveToAt(AttributeTreeNode *n)
+	{
+		n->addAttributes(this, b);
+
+		auto attachmentNode = new AttributeTreeNode("attachments");
+		n->children.push_back(attachmentNode);
+		for (auto &a : attachments)
+		{
+			auto n = new AttributeTreeNode("attachment");
+			attachmentNode->children.push_back(n);
+			a.saveToAt(n);
+		}
+		auto dependenciesNode = new AttributeTreeNode("dependencies");
+		n->children.push_back(dependenciesNode);
+		for (auto &d : dependencies)
+		{
+			auto n = new AttributeTreeNode("dependency");
+			dependenciesNode->children.push_back(n);
+			d.saveToAt(n);
+		}
+		auto actionsNode = new AttributeTreeNode("actions");
+		n->children.push_back(actionsNode);
+		for (auto &a : actions)
+		{
+			auto n = new AttributeTreeNode("action");
+			actionsNode->children.push_back(n);
+			a.saveToAt(n);
+		}
+	}
+
+	void RenderPass::maintain(int row)
+	{
+		switch (row)
+		{
+		case (int)RenderPassElement::eAction:
+			maintainList(actions);
+			break;
+		case (int)RenderPassElement::eAttachment:
+			maintainList(attachments);
+			break;
+		case (int)RenderPassElement::eDependency:
+			maintainList(dependencies);
+			break;
+		}
 	}
 
 	Renderer::Renderer() {}
@@ -879,11 +1149,75 @@ namespace tke
 		cy = _cy;
 	}
 
-
 	void Renderer::loadXML()
 	{
-		RendererAbstract::loadXML();
+		AttributeTree at("renderer");
+		at.loadXML(filename);
 
+		at.obtainFromAttributes(this, b);
+
+		auto passesNode = at.firstNode("passes");
+		if (passesNode)
+		{
+			for (auto c : passesNode->children)
+			{
+				if (c->name == "pass")
+				{
+					auto pass = addPass();
+					pass->loadFromAt(c);
+				}
+			}
+		}
+
+		for (auto &p : passes)
+		{
+			for (auto &d : p.dependencies)
+			{
+				for (auto &pp : passes)
+				{
+					if (d.pass_name == pp.name)
+					{
+						d.target = &pp;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	void Renderer::saveXML()
+	{
+		for (auto &p : passes)
+		{
+			for (auto &d : p.dependencies)
+			{
+				if (d.target)
+				{
+					auto pp = (RenderPass*)d.target;
+					d.pass_name = pp->name;
+				}
+			}
+		}
+
+		AttributeTree at("renderer");
+
+		at.addAttributes(this, b);
+
+		auto passesNode = new AttributeTreeNode("passes");
+		at.children.push_back(passesNode);
+		for (auto &p : passes)
+		{
+			auto n = new AttributeTreeNode("pass");
+			passesNode->children.push_back(n);
+			p.saveToAt(n);
+		}
+
+		at.saveXML(filename);
+	}
+
+	void Renderer::maintain(int row)
+	{
+		maintainList(passes);
 	}
 
 	void Renderer::pushImage(Attachment *ai)

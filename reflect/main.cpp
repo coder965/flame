@@ -5,9 +5,13 @@
 
 #include "def.h"
 
-//#include "core.h"
-#include "pipeline_editor.h"
-//#include "render_editor.h"
+#define EXTRA \
+"#include \"utils.h\"\n \
+#include \"render.h\"\n"
+
+#define INPUT "../src/render.h"
+
+#define OUTPUT "../src/reflect.cpp"
 
 #ifndef EXTRA
 #define EXTRA "\n"
