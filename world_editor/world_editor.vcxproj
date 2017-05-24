@@ -69,6 +69,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\qFindWidget.cpp" />
+    <ClCompile Include="..\src\qLineNumberEdit.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_world_editor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -78,6 +80,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="lex.pipeline_editor_yy.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="world_editor.cpp" />
   </ItemGroup>

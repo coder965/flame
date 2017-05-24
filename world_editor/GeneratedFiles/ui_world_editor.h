@@ -9,6 +9,7 @@
 #ifndef UI_WORLD_EDITOR_H
 #define UI_WORLD_EDITOR_H
 
+#include <../src/qLineNumberEdit.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
@@ -24,6 +25,7 @@
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
+#include <QtWidgets/QTextBrowser>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -66,7 +68,28 @@ public:
     QToolButton *toSpv;
     QToolButton *explorerStage;
     QTabWidget *stageTab;
+    QWidget *tab_8;
+    QHBoxLayout *horizontalLayout_7;
+    QLineNumberEdit *vertEdit;
+    QWidget *tab_9;
+    QHBoxLayout *horizontalLayout_8;
+    QLineNumberEdit *tescEdit;
+    QWidget *tab_10;
+    QHBoxLayout *horizontalLayout_9;
+    QLineNumberEdit *teseEdit;
+    QWidget *tab_11;
+    QHBoxLayout *horizontalLayout_10;
+    QLineNumberEdit *geomEdit;
+    QWidget *tab_12;
+    QHBoxLayout *horizontalLayout_11;
+    QLineNumberEdit *fragEdit;
     QTabWidget *bottomTab;
+    QWidget *tab_6;
+    QHBoxLayout *horizontalLayout_6;
+    QLineNumberEdit *outputText;
+    QWidget *tab_7;
+    QHBoxLayout *horizontalLayout_5;
+    QTextBrowser *compileText;
     QWidget *tab_5;
     QMenuBar *menuBar;
     QMenu *menuScene;
@@ -76,7 +99,7 @@ public:
     {
         if (WorldEditorClass->objectName().isEmpty())
             WorldEditorClass->setObjectName(QStringLiteral("WorldEditorClass"));
-        WorldEditorClass->resize(909, 675);
+        WorldEditorClass->resize(1032, 800);
         actionLoad = new QAction(WorldEditorClass);
         actionLoad->setObjectName(QStringLiteral("actionLoad"));
         actionSave = new QAction(WorldEditorClass);
@@ -100,7 +123,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 857, 550));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 980, 675));
         scrollArea->setWidget(scrollAreaWidgetContents);
 
         horizontalLayout->addWidget(scrollArea);
@@ -214,11 +237,107 @@ public:
 
         stageTab = new QTabWidget(tab_4);
         stageTab->setObjectName(QStringLiteral("stageTab"));
+        tab_8 = new QWidget();
+        tab_8->setObjectName(QStringLiteral("tab_8"));
+        horizontalLayout_7 = new QHBoxLayout(tab_8);
+        horizontalLayout_7->setSpacing(6);
+        horizontalLayout_7->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_7->setObjectName(QStringLiteral("horizontalLayout_7"));
+        vertEdit = new QLineNumberEdit(tab_8);
+        vertEdit->setObjectName(QStringLiteral("vertEdit"));
+        vertEdit->setEnabled(false);
+        vertEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+        horizontalLayout_7->addWidget(vertEdit);
+
+        stageTab->addTab(tab_8, QString());
+        tab_9 = new QWidget();
+        tab_9->setObjectName(QStringLiteral("tab_9"));
+        horizontalLayout_8 = new QHBoxLayout(tab_9);
+        horizontalLayout_8->setSpacing(6);
+        horizontalLayout_8->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
+        tescEdit = new QLineNumberEdit(tab_9);
+        tescEdit->setObjectName(QStringLiteral("tescEdit"));
+        tescEdit->setEnabled(false);
+        tescEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+        horizontalLayout_8->addWidget(tescEdit);
+
+        stageTab->addTab(tab_9, QString());
+        tab_10 = new QWidget();
+        tab_10->setObjectName(QStringLiteral("tab_10"));
+        horizontalLayout_9 = new QHBoxLayout(tab_10);
+        horizontalLayout_9->setSpacing(6);
+        horizontalLayout_9->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_9->setObjectName(QStringLiteral("horizontalLayout_9"));
+        teseEdit = new QLineNumberEdit(tab_10);
+        teseEdit->setObjectName(QStringLiteral("teseEdit"));
+        teseEdit->setEnabled(false);
+        teseEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+        horizontalLayout_9->addWidget(teseEdit);
+
+        stageTab->addTab(tab_10, QString());
+        tab_11 = new QWidget();
+        tab_11->setObjectName(QStringLiteral("tab_11"));
+        horizontalLayout_10 = new QHBoxLayout(tab_11);
+        horizontalLayout_10->setSpacing(6);
+        horizontalLayout_10->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_10->setObjectName(QStringLiteral("horizontalLayout_10"));
+        geomEdit = new QLineNumberEdit(tab_11);
+        geomEdit->setObjectName(QStringLiteral("geomEdit"));
+        geomEdit->setEnabled(false);
+        geomEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+        horizontalLayout_10->addWidget(geomEdit);
+
+        stageTab->addTab(tab_11, QString());
+        tab_12 = new QWidget();
+        tab_12->setObjectName(QStringLiteral("tab_12"));
+        horizontalLayout_11 = new QHBoxLayout(tab_12);
+        horizontalLayout_11->setSpacing(6);
+        horizontalLayout_11->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_11->setObjectName(QStringLiteral("horizontalLayout_11"));
+        fragEdit = new QLineNumberEdit(tab_12);
+        fragEdit->setObjectName(QStringLiteral("fragEdit"));
+        fragEdit->setEnabled(false);
+        fragEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+        horizontalLayout_11->addWidget(fragEdit);
+
+        stageTab->addTab(tab_12, QString());
 
         verticalLayout_2->addWidget(stageTab);
 
         bottomTab = new QTabWidget(tab_4);
         bottomTab->setObjectName(QStringLiteral("bottomTab"));
+        tab_6 = new QWidget();
+        tab_6->setObjectName(QStringLiteral("tab_6"));
+        horizontalLayout_6 = new QHBoxLayout(tab_6);
+        horizontalLayout_6->setSpacing(6);
+        horizontalLayout_6->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_6->setObjectName(QStringLiteral("horizontalLayout_6"));
+        outputText = new QLineNumberEdit(tab_6);
+        outputText->setObjectName(QStringLiteral("outputText"));
+        outputText->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+        horizontalLayout_6->addWidget(outputText);
+
+        bottomTab->addTab(tab_6, QString());
+        tab_7 = new QWidget();
+        tab_7->setObjectName(QStringLiteral("tab_7"));
+        horizontalLayout_5 = new QHBoxLayout(tab_7);
+        horizontalLayout_5->setSpacing(6);
+        horizontalLayout_5->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_5"));
+        compileText = new QTextBrowser(tab_7);
+        compileText->setObjectName(QStringLiteral("compileText"));
+        compileText->setLineWrapMode(QTextEdit::NoWrap);
+
+        horizontalLayout_5->addWidget(compileText);
+
+        bottomTab->addTab(tab_7, QString());
 
         verticalLayout_2->addWidget(bottomTab);
 
@@ -240,7 +359,7 @@ public:
         WorldEditorClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(WorldEditorClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 909, 26));
+        menuBar->setGeometry(QRect(0, 0, 1032, 26));
         menuScene = new QMenu(menuBar);
         menuScene->setObjectName(QStringLiteral("menuScene"));
         WorldEditorClass->setMenuBar(menuBar);
@@ -256,7 +375,8 @@ public:
 
         tabWidget->setCurrentIndex(1);
         tabWidget_2->setCurrentIndex(1);
-        bottomTab->setCurrentIndex(-1);
+        stageTab->setCurrentIndex(0);
+        bottomTab->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(WorldEditorClass);
@@ -282,6 +402,13 @@ public:
         saveStage->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
         toSpv->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
         explorerStage->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
+        stageTab->setTabText(stageTab->indexOf(tab_8), QApplication::translate("WorldEditorClass", "vert", Q_NULLPTR));
+        stageTab->setTabText(stageTab->indexOf(tab_9), QApplication::translate("WorldEditorClass", "tesc", Q_NULLPTR));
+        stageTab->setTabText(stageTab->indexOf(tab_10), QApplication::translate("WorldEditorClass", "tese", Q_NULLPTR));
+        stageTab->setTabText(stageTab->indexOf(tab_11), QApplication::translate("WorldEditorClass", "geom", Q_NULLPTR));
+        stageTab->setTabText(stageTab->indexOf(tab_12), QApplication::translate("WorldEditorClass", "frag", Q_NULLPTR));
+        bottomTab->setTabText(bottomTab->indexOf(tab_6), QApplication::translate("WorldEditorClass", "Output", Q_NULLPTR));
+        bottomTab->setTabText(bottomTab->indexOf(tab_7), QApplication::translate("WorldEditorClass", "Compile", Q_NULLPTR));
         tabWidget_2->setTabText(tabWidget_2->indexOf(tab_4), QApplication::translate("WorldEditorClass", "Shader", Q_NULLPTR));
         tabWidget->setTabText(tabWidget->indexOf(tab_2), QApplication::translate("WorldEditorClass", "Pipeline Editor", Q_NULLPTR));
         tabWidget->setTabText(tabWidget->indexOf(tab_5), QApplication::translate("WorldEditorClass", "Renderer Editor", Q_NULLPTR));

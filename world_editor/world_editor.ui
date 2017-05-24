@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>909</width>
-    <height>675</height>
+    <width>1032</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,8 +35,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>857</width>
-             <height>550</height>
+             <width>980</width>
+             <height>675</height>
             </rect>
            </property>
           </widget>
@@ -291,13 +291,130 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QTabWidget" name="stageTab"/>
+                 <widget class="QTabWidget" name="stageTab">
+                  <property name="currentIndex">
+                   <number>0</number>
+                  </property>
+                  <widget class="QWidget" name="tab_8">
+                   <attribute name="title">
+                    <string>vert</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_7">
+                    <item>
+                     <widget class="QLineNumberEdit" name="vertEdit">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="lineWrapMode">
+                       <enum>QPlainTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_9">
+                   <attribute name="title">
+                    <string>tesc</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_8">
+                    <item>
+                     <widget class="QLineNumberEdit" name="tescEdit">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="lineWrapMode">
+                       <enum>QPlainTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_10">
+                   <attribute name="title">
+                    <string>tese</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_9">
+                    <item>
+                     <widget class="QLineNumberEdit" name="teseEdit">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="lineWrapMode">
+                       <enum>QPlainTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_11">
+                   <attribute name="title">
+                    <string>geom</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_10">
+                    <item>
+                     <widget class="QLineNumberEdit" name="geomEdit">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="lineWrapMode">
+                       <enum>QPlainTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_12">
+                   <attribute name="title">
+                    <string>frag</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_11">
+                    <item>
+                     <widget class="QLineNumberEdit" name="fragEdit">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="lineWrapMode">
+                       <enum>QPlainTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QTabWidget" name="bottomTab">
                   <property name="currentIndex">
-                   <number>-1</number>
+                   <number>0</number>
                   </property>
+                  <widget class="QWidget" name="tab_6">
+                   <attribute name="title">
+                    <string>Output</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <item>
+                     <widget class="QLineNumberEdit" name="outputText">
+                      <property name="lineWrapMode">
+                       <enum>QPlainTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_7">
+                   <attribute name="title">
+                    <string>Compile</string>
+                   </attribute>
+                   <layout class="QHBoxLayout" name="horizontalLayout_5">
+                    <item>
+                     <widget class="QTextBrowser" name="compileText">
+                      <property name="lineWrapMode">
+                       <enum>QTextEdit::NoWrap</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
                  </widget>
                 </item>
                </layout>
@@ -324,7 +441,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>909</width>
+     <width>1032</width>
      <height>26</height>
     </rect>
    </property>
@@ -350,6 +467,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QLineNumberEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header location="global">../src/qLineNumberEdit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="world_editor.qrc"/>
  </resources>

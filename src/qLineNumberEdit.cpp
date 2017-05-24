@@ -1,54 +1,17 @@
-#ifndef __QLINENUMBEREDIT__
-#define __QLINENUMBEREDIT__
+#include"qLineNumberEdit.h"
 
-class QLineNumberArea;
-
-class QLineNumberEdit : public QPlainTextEdit
+QLineNumberEdit::QLineNumberEdit(QWidget *p)
+	: QPlainTextEdit(p)
 {
-	QLineNumberArea *lineNumberArea;
-private slots:
-    void updateLineNumberAreaWidth(int newBlockCount);
-    void updateLineNumberArea(const QRect &, int);
-protected:
-    void resizeEvent(QResizeEvent *e) override;
-public:
-	QLineNumberEdit();
-    void drawLineNumberArea(QPaintEvent *e);
-    int lineNumberAreaWidth();
-};
+	QFontMetrics metrics(font());
+	setTabStopWidth(4 * metrics.width(' '));
 
-class QLineNumberArea : public QWidget
-{
-	QLineNumberEdit *pEdit;
-protected:
-    void paintEvent(QPaintEvent *e) override
-    {
-        pEdit->drawLineNumberArea(e);
-    }
-public:
-	QLineNumberArea(QLineNumberEdit *_pEdit)
-        : QWidget(_pEdit)
-    {
-        pEdit = _pEdit;
-    }
-    QSize sizeHint() const override
-    {
-        return QSize(pEdit->lineNumberAreaWidth(), 0);
-    }
+	lineNumberArea = new QLineNumberArea(this);
 
-};
+	connect(this, &QPlainTextEdit::blockCountChanged, this, &QLineNumberEdit::updateLineNumberAreaWidth);
+	connect(this, &QPlainTextEdit::updateRequest, this, &QLineNumberEdit::updateLineNumberArea);
 
-QLineNumberEdit::QLineNumberEdit()
-{
-    QFontMetrics metrics(font());
-    setTabStopWidth(4 * metrics.width(' '));
-
-    lineNumberArea = new QLineNumberArea(this);
-
-    connect(this, &QPlainTextEdit::blockCountChanged, this, &QLineNumberEdit::updateLineNumberAreaWidth);
-    connect(this, &QPlainTextEdit::updateRequest, this, &QLineNumberEdit::updateLineNumberArea);
-
-    updateLineNumberAreaWidth(0);
+	updateLineNumberAreaWidth(0);
 }
 
 int QLineNumberEdit::lineNumberAreaWidth()
@@ -118,4 +81,18 @@ void QLineNumberEdit::drawLineNumberArea(QPaintEvent *e)
     }
 }
 
-#endif
+void QLineNumberArea::paintEvent(QPaintEvent *e)
+{
+	pEdit->drawLineNumberArea(e);
+}
+
+QLineNumberArea::QLineNumberArea(QLineNumberEdit *_pEdit)
+	: QWidget(_pEdit)
+{
+	pEdit = _pEdit;
+}
+
+QSize QLineNumberArea::sizeHint() const
+{
+	return QSize(pEdit->lineNumberAreaWidth(), 0);
+}
