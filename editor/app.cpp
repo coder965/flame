@@ -22,17 +22,16 @@
 tke::GuiWindow *pMainWindow = nullptr;
 
 int state = 0;
-tke::UniformBuffer pasteBuffer;
+tke::UniformBuffer *pasteBuffer = nullptr;
 
 struct MainWindow : tke::GuiWindow
 {
 	tke::Pipeline lightFramePipeline;
 	tke::Pipeline wireFramePipeline;
-	tke::Pipeline pastePipeline;
 
 	tke::Image *titleImage;
 
-	tke::MasterRenderer *masterRenderer;
+	tke::Renderer *masterRenderer;
 	tke::Renderer *progressRenderer;
 
 	tke::DrawAction *miscLightFrameAction;
@@ -68,42 +67,36 @@ struct MainWindow : tke::GuiWindow
 		object->pModel = tke::cubeModel;
 		tke::scene->addObject(object);
 
-		masterRenderer = new tke::MasterRenderer(1600, 900, this);
+		masterRenderer = new tke::Renderer();		
+		masterRenderer->filename = "../renderer/master.xml";
+		masterRenderer->loadXML();
+
+		masterRenderer->resource.setImage(image, "Window.Image");
+
+		masterRenderer->setup();
+
+		tke::scene->setResources(masterRenderer->resource.getPipeline("Panorama.Pipeline"), masterRenderer->resource.getPipeline("Deferred.Pipeline"), masterRenderer->resource.getPipeline("Mrt.Pipeline"));
 
 		mainCmd[0] = tke::vk::commandPool.allocate();
 		mainCmd[1] = tke::vk::commandPool.allocate();
 
 		{
-			static tke::ResourceBank _resources;
-
-			titleImage = tke::createImage("../misc/title.jpg", true, false);
-
-			pasteBuffer.create(sizeof(float));
-
-			_resources.setImage(titleImage, "Paste.Texture");
-			_resources.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
-			_resources.setPipeline(&pastePipeline, "Paste.Pipeline");
-
 			progressRenderer = new tke::Renderer();
 			progressRenderer->filename = "../renderer/progress.xml";
 			progressRenderer->loadXML();
-			progressRenderer->pResource = &_resources;
 
-			pastePipeline.pResource = &_resources;
+			titleImage = tke::createImage("../misc/title.jpg", true, false);
+			progressRenderer->resource.setImage(titleImage, "Paste.Texture");
 
-			progressCmd[0] = tke::vk::commandPool.allocate();
-			progressCmd[1] = tke::vk::commandPool.allocate();
-
-			_resources.setImage(image, "Window.Image");
+			progressRenderer->resource.setImage(image, "Window.Image");
 
 			progressRenderer->setup();
 
-			pastePipeline.create("../pipeline/paste/paste.xml", &tke::zeroVertexInputState, progressRenderer->vkRenderPass, 0);
-
-			progressRenderer->getDescriptorSets();
+			pasteBuffer = (tke::UniformBuffer*)progressRenderer->resource.getBuffer("Paste.UniformBuffer");
 
 			for (int i = 0; i < 2; i++)
 			{
+				progressCmd[i] = tke::vk::commandPool.allocate();
 				tke::vk::beginCommandBuffer(progressCmd[i]);
 				progressRenderer->execute(progressCmd[i], i);
 				vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -116,7 +109,7 @@ struct MainWindow : tke::GuiWindow
 					if (_t < 500)
 					{
 						float alpha = _t / 500.f;
-						pasteBuffer.update(&alpha, &tke::stagingBuffer);
+						pasteBuffer->update(&alpha, &tke::stagingBuffer);
 					}
 				},
 				1500
@@ -124,7 +117,7 @@ struct MainWindow : tke::GuiWindow
 			list->events.push_back({
 				[](int _t) {
 					float alpha = 1.f - _t / 500.f;
-					pasteBuffer.update(&alpha, &tke::stagingBuffer);
+					pasteBuffer->update(&alpha, &tke::stagingBuffer);
 				},
 				500,
 				[]() {
@@ -145,14 +138,14 @@ struct MainWindow : tke::GuiWindow
 
 			tke::vk::beginCommandBuffer(mainCmd[i]);
 
-			auto objectDrawcall = masterRenderer->renderer->findRenderPass("mrt")->findAction("1")->findDrawcall("1");
+			auto objectDrawcall = masterRenderer->findRenderPass("mrt")->findAction("1")->findDrawcall("1");
 			objectDrawcall->indirect_count = tke::scene->drawCallCount;
 
 			// TODO : FIX TERRAIN
 
 			// TODO : FIX MISC
 
-			masterRenderer->renderer->execute(mainCmd[i], i);
+			masterRenderer->execute(mainCmd[i], i);
 
 			vkCmdSetEvent(mainCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
@@ -347,8 +340,9 @@ struct MainWindow : tke::GuiWindow
 
 	void renderMain()
 	{
-		tke::scene->update(masterRenderer);
-		if (currentTool) currentTool->update();
+		tke::scene->update();
+		// TODO : FIX TOOL
+		//if (currentTool) currentTool->update();
 
 		tke::scene->resetChange();
 

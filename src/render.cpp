@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "render.h"
 #include "model.h"
+#include "image.file.h"
 
 namespace tke
 {
@@ -1193,6 +1194,48 @@ namespace tke
 
 		at.obtainFromAttributes(this, b);
 
+		auto buffersNode = at.firstNode("buffers");
+		if (buffersNode)
+		{
+			for (auto c : buffersNode->children)
+			{
+				if (c->name == "buffer")
+				{
+					BufferResource b;
+					c->obtainFromAttributes(&b, b.b);
+					bufferResources.push_back(b);
+				}
+			}
+		}
+
+		auto imagesNode = at.firstNode("images");
+		if (imagesNode)
+		{
+			for (auto c : imagesNode->children)
+			{
+				if (c->name == "image")
+				{
+					ImageResource i;
+					c->obtainFromAttributes(&i, i.b);
+					imageResources.push_back(i);
+				}
+			}
+		}
+
+		auto pipelinesNode = at.firstNode("pipelines");
+		if (pipelinesNode)
+		{
+			for (auto c : pipelinesNode->children)
+			{
+				if (c->name == "pipeline")
+				{
+					PipelineResource p;
+					c->obtainFromAttributes(&p, p.b);
+					pipelineResources.push_back(p);
+				}
+			}
+		}
+
 		auto passesNode = at.firstNode("passes");
 		if (passesNode)
 		{
@@ -1427,17 +1470,45 @@ namespace tke
 
 	void Renderer::setup()
 	{
+		for (auto &b : bufferResources)
+		{
+			b.p = new UniformBuffer;
+			b.p->create(b.size);
+			resource.setBuffer(b.p, b.name);
+		}
+
+		for (auto &i : imageResources)
+		{
+			if (i.file_name != "")
+			{
+				i.p = createImage(enginePath + i.file_name, i.sRGB);
+			}
+			else
+			{
+				i.p = new Image;
+				i.p->create(i.cx, i.cy, toVkFormat(i.format), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			}
+			resource.setImage(i.p, i.name);
+		}
+
+		for (auto &p : pipelineResources)
+		{
+			p.p = new Pipeline;
+			p.p->pResource = &resource;
+			resource.setPipeline(p.p, p.name);
+		}
+
 		if (vertex_buffer_name!= "")
-			initVertexBuffer = (VertexBuffer*)pResource->getBuffer(vertex_buffer_name);
+			initVertexBuffer = (VertexBuffer*)resource.getBuffer(vertex_buffer_name);
 		if (index_buffer_name != "")
-			initIndexBuffer = (IndexBuffer*)pResource->getBuffer(index_buffer_name);
+			initIndexBuffer = (IndexBuffer*)resource.getBuffer(index_buffer_name);
 
 		for (auto &p : passes)
 		{
 			for (auto &a : p.attachments)
 			{
 				if (a.image_name != "")
-					a.image = pResource->getImage(a.image_name);
+					a.image = resource.getImage(a.image_name);
 				if (a.image->type == Image::eSwapchain)
 					containSwapchain = true;
 				if (a.clear)
@@ -1515,16 +1586,26 @@ namespace tke
 					{
 					case DrawActionType::draw_action:
 						if (action.pipeline_name != "")
-							action.m_pipeline = pResource->getPipeline(action.pipeline_name.c_str());
+						{
+							action.m_pipeline = resource.getPipeline(action.pipeline_name.c_str());
+							if (action.m_pipeline)
+							{
+								for (auto &p : pipelineResources)
+								{
+									if (p.name == action.pipeline_name)
+										p.subpassIndex = subpassIndex;
+								}
+							}
+						}
 						for (auto &drawcall : action.drawcalls)
 						{
 							if (drawcall.indirect_vertex_buffer_name != "")
-								drawcall.m_vertexIndirectBuffer = (VertexIndirectBuffer*)pResource->getBuffer(drawcall.indirect_vertex_buffer_name);
+								drawcall.m_vertexIndirectBuffer = (VertexIndirectBuffer*)resource.getBuffer(drawcall.indirect_vertex_buffer_name);
 							if (drawcall.indirect_index_buffer_name != "")
-								drawcall.m_indexedIndirectBuffer = (IndexedIndirectBuffer*)pResource->getBuffer(drawcall.indirect_index_buffer_name);
+								drawcall.m_indexedIndirectBuffer = (IndexedIndirectBuffer*)resource.getBuffer(drawcall.indirect_index_buffer_name);
 							if (drawcall.model_name != "")
 							{
-								auto p = pResource->getModel(drawcall.model_name);
+								auto p = resource.getModel(drawcall.model_name);
 								if (p)
 								{
 									drawcall.index_count = p->indices.size();
@@ -1541,7 +1622,7 @@ namespace tke
 				break;
 			case RenderPassType::call_secondary_cmd:
 				if (pass.secondary_cmd_name != "")
-					pass.secondaryCmd = pResource->getCmd(pass.secondary_cmd_name.c_str());
+					pass.secondaryCmd = resource.getCmd(pass.secondary_cmd_name.c_str());
 				break;
 			}
 
@@ -1559,5 +1640,10 @@ namespace tke
 			if (vkFramebuffer[1]) vk::destroyFramebuffer(vkFramebuffer[1]);
 			vkFramebuffer[1] = getFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 		}
+
+		for (auto &p : pipelineResources)
+			p.p->create(enginePath + p.file_name, p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
+
+		getDescriptorSets();
 	}
 }

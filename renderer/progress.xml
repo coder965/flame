@@ -1,5 +1,13 @@
 <renderer name="" cx="1600" cy="900">
-	<passes>
+  <buffers>
+    <buffer name="Paste.UniformBuffer" size="4"/>
+  </buffers>
+  
+  <pipelines>
+    <pipeline name="Paste.Pipeline" file_name="pipeline/paste/paste.xml" vertex_input_type="zero"/>
+  </pipelines>
+    
+  <passes>
 		<pass type="draw_action" name="pass1" secondary_cmd_name="">
 			<attachments>
         <attachment name="1" image_name="Window.Image" level="0" layer="0" aspect="color" clear="true" clear_r="0.000000" clear_g="0.000000" clear_b="0.000000" clear_a="0.000000" clear_depth="1.000000" clear_stencil="0"/>

@@ -68,6 +68,26 @@ namespace tke
 		void create(size_t size);
 	};
 
+
+	REFLECTABLE enum class ImageFormat : int
+	{
+		null,
+		REFLe R8G8B8A8 = 1 << 0,
+		REFLe R16G16B16A16 = 1 << 1
+	};
+
+	inline VkFormat toVkFormat(ImageFormat f)
+	{
+		switch (f)
+		{
+		case ImageFormat::R8G8B8A8:
+			return VK_FORMAT_R8G8B8A8_UNORM;
+		case ImageFormat::R16G16B16A16:
+			return VK_FORMAT_R16G16B16A16_SFLOAT;
+		}
+		return VK_FORMAT_UNDEFINED;
+	}
+
 	struct Image
 	{
 		enum Type
@@ -307,6 +327,13 @@ namespace tke
 		REFLv std::string descriptor_name;
 		REFLv std::string resource_name;
 		REFLe SamplerType sampler = SamplerType::none;
+	};
+
+	REFLECTABLE enum class VertexInputType : int
+	{
+		null,
+		REFLe zero = 1 << 0,
+		REFLe normal = 1 << 1
 	};
 
 	REFLECTABLE struct Pipeline
@@ -612,6 +639,42 @@ namespace tke
 		void maintain(int row) override;
 	};
 
+	REFLECTABLE struct BufferResource
+	{
+		REFL_BANK;
+
+		REFLv std::string name;
+		REFLv int size = 0;
+
+		UniformBuffer *p = nullptr;
+	};
+
+	REFLECTABLE struct ImageResource
+	{
+		REFL_BANK;
+
+		REFLv std::string name;
+		REFLv std::string file_name;
+		REFLv bool sRGB = true;
+		REFLv int cx = 0;
+		REFLv int cy = 0;
+		REFLe ImageFormat format = ImageFormat::null;
+
+		Image *p = nullptr;
+	};
+
+	REFLECTABLE struct PipelineResource
+	{
+		REFL_BANK;
+
+		REFLv std::string name;
+		REFLv std::string file_name;
+		REFLe VertexInputType vertex_input_type = VertexInputType::zero;
+
+		Pipeline *p = nullptr;
+		int subpassIndex = -1;
+	};
+
 	REFLECTABLE struct Renderer : Container
 	{
 		REFL_BANK;
@@ -627,9 +690,13 @@ namespace tke
 
 		std::list<RenderPass> passes;
 
+		std::vector<BufferResource> bufferResources;
+		std::vector<ImageResource> imageResources;
+		std::vector<PipelineResource> pipelineResources;
+
 		bool containSwapchain = false;
 
-		ResourceBank *pResource = &globalResource;
+		ResourceBank resource;
 
 		VertexBuffer *initVertexBuffer = nullptr;
 		IndexBuffer *initIndexBuffer = nullptr;

@@ -1,4 +1,17 @@
 <renderer name="" cx="1600" cy="900" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" >
+  <images>
+    <image name="Original.Image" cx="1600" cy="900" format="R16G16B16A16"/>
+    <image name="AlbedoSpec.Image" cx="1600" cy="900" format="R8G8B8A8"/>
+    <image name="NormalRoughness.Image" cx="1600" cy="900" format="R8G8B8A8"/>
+  </images>
+  
+  <pipelines>
+    <pipeline name="Panorama.Pipeline" file_name="pipeline/sky/panorama.xml" vertex_input_type="normal"/>
+    <pipeline name="Mrt.Pipeline" file_name="pipeline/deferred/mrt.xml" vertex_input_type="normal"/>
+    <pipeline name="Deferred.Pipeline" file_name="pipeline/deferred/deferred.xml" vertex_input_type="zero"/>
+    <pipeline name="Combine.Pipeline" file_name="pipeline/combine/combine.xml" vertex_input_type="zero"/>
+  </pipelines>
+  
 	<passes>
 		<pass type="draw_action" name="sky">
 			<attachments>

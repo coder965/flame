@@ -77,45 +77,7 @@ namespace tke
 	//	combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
 
 	//	renderer->getDescriptorSets();
-	//}	
-	MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow)
-	{
-		static ResourceBank _resources;
-
-		originalImage.create(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoSpecImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalRoughnessImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-
-		renderer = new Renderer();
-		renderer->filename = enginePath + "renderer/master.xml";
-		renderer->loadXML();
-		renderer->cx = _cx;
-		renderer->cy = _cy;
-		renderer->pResource = &_resources;
-
-		_resources.setImage(&originalImage, "Original.Image");
-		_resources.setImage(&albedoSpecImage, "AlbedoSpec.Image");
-		_resources.setImage(&normalRoughnessImage, "NormalRoughness.Image");
-		_resources.setImage(pWindow->image, "Window.Image");
-
-		_resources.setPipeline(&panoramaPipeline, "Panorama.Pipeline");
-		_resources.setPipeline(&mrtPipeline, "Mrt.Pipeline");
-		_resources.setPipeline(&deferredPipeline, "Deferred.Pipeline");
-		_resources.setPipeline(&combinePipeline, "Combine.Pipeline");
-
-		renderer->setup();
-
-		panoramaPipeline.pResource = &_resources;
-		mrtPipeline.pResource = &_resources;
-		deferredPipeline.pResource = &_resources;
-		combinePipeline.pResource = &_resources;
-		panoramaPipeline.create(enginePath + "pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, renderer->findRenderPass("sky")->index);
-		mrtPipeline.create(enginePath + "pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, renderer->findRenderPass("mrt")->index);
-		deferredPipeline.create(enginePath + "pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, renderer->findRenderPass("deferred")->index);
-		combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, renderer->findRenderPass("combine")->index);
-
-		renderer->getDescriptorSets();
-	}
+	//}
 
 	void Atmosphere::set()
 	{
@@ -668,7 +630,18 @@ namespace tke
 		LeaveCriticalSection(&cs);
 	}
 
-	void Scene::update(MasterRenderer *masterRenderer)
+	static Pipeline *panoramaPipeline = nullptr;
+	static Pipeline *deferredPipeline = nullptr;
+	static Pipeline *mrtPipeline = nullptr;
+
+	void Scene::setResources(Pipeline *_panoramaPipeline, Pipeline *_deferredPipeline, Pipeline *_mrtPipeline)
+	{
+		panoramaPipeline = _panoramaPipeline;
+		deferredPipeline = _deferredPipeline;
+		mrtPipeline = _mrtPipeline;
+	}
+
+	void Scene::update()
 	{
 		camera.move();
 		if (camera.m_changed)
@@ -895,10 +868,10 @@ namespace tke
 				}
 
 				static int pano_tex_position = -1, defe_envr_position = -1;
-				if (pano_tex_position == -1) pano_tex_position = masterRenderer->panoramaPipeline.descriptorPosition("tex");
-				if (defe_envr_position == -1) defe_envr_position = masterRenderer->deferredPipeline.descriptorPosition("envrSampler");
-				vk::descriptorPool.addWrite(masterRenderer->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage.getInfo(vk::colorSampler));
-				vk::descriptorPool.addWrite(masterRenderer->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels));
+				if (pano_tex_position == -1) pano_tex_position = panoramaPipeline->descriptorPosition("tex");
+				if (defe_envr_position == -1) defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
+				vk::descriptorPool.addWrite(panoramaPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage.getInfo(vk::colorSampler));
+				vk::descriptorPool.addWrite(deferredPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels));
 
 				{
 					auto data = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -998,11 +971,11 @@ namespace tke
 		if (needUpdateSampler)
 		{
 			static int map_position = -1;
-			if (map_position == -1) map_position = masterRenderer->mrtPipeline.descriptorPosition("mapSamplers");
+			if (map_position == -1) map_position = mrtPipeline->descriptorPosition("mapSamplers");
 			int index = 0;
 			for (auto storeImage : storeImages)
 			{
-				vk::descriptorPool.addWrite(masterRenderer->mrtPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position, storeImage->getInfo(vk::colorSampler), index);
+				vk::descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position, storeImage->getInfo(vk::colorSampler), index);
 				index++;
 			}
 

@@ -43,22 +43,7 @@ namespace tke
 	//	Renderer *renderer;
 
 	//	MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer);
-	//};	
-	struct MasterRenderer
-	{
-		Image originalImage;
-		Image albedoSpecImage;
-		Image normalRoughnessImage;
-
-		Pipeline panoramaPipeline;
-		Pipeline mrtPipeline;
-		Pipeline deferredPipeline;
-		Pipeline combinePipeline;
-
-		Renderer *renderer;
-
-		MasterRenderer(int _cx, int _cy, Window *pWindow);
-	};
+	//};
 
 	struct AnimationTemplate;
 	struct CollisionGroup;
@@ -251,7 +236,8 @@ namespace tke
 
 		void clearActors();
 
-		void update(MasterRenderer *masterRenderer);
+		void setResources(Pipeline *_panoramaPipeline, Pipeline *_deferredPipeline, Pipeline *_mrtPipeline);
+		void update();
 
 		void resetChange();
 
