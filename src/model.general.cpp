@@ -1,5 +1,6 @@
 #include "model.general.h"
 #include "scene.h"
+#include "resource.h"
 
 namespace tke
 {
@@ -318,6 +319,8 @@ namespace tke
 			triangleModel->renderGroups[0].indiceCount = triangleModel->indices.size();
 
 			scene->addModel(triangleModel);
+
+			globalResource.setModel(triangleModel, "Triangle.Model");
 		}
 
 		{
@@ -338,6 +341,8 @@ namespace tke
 			pShape->setScale(glm::vec3(0.5f));
 
 			scene->addModel(cubeModel);
+
+			globalResource.setModel(cubeModel, "Cube.Model");
 		}
 
 		{
@@ -361,6 +366,8 @@ namespace tke
 			pShape->setScale(glm::vec3(0.5f));
 
 			scene->addModel(sphereModel);
+
+			globalResource.setModel(sphereModel, "Sphere.Model");
 		}
 
 		{
@@ -381,6 +388,8 @@ namespace tke
 			pShape->setScale(glm::vec3(0.5f));
 
 			scene->addModel(cylinderModel);
+
+			globalResource.setModel(cylinderModel, "Cylinder.Model");
 		}
 
 		{
@@ -393,6 +402,8 @@ namespace tke
 			coneModel->renderGroups[0].indiceCount = coneModel->indices.size();
 
 			scene->addModel(coneModel);
+
+			globalResource.setModel(coneModel, "Cone.Model");
 		}
 
 		{
@@ -408,6 +419,8 @@ namespace tke
 			arrowModel->renderGroups[0].indiceCount = arrowModel->indices.size();
 
 			scene->addModel(arrowModel);
+
+			globalResource.setModel(arrowModel, "Arrow.Model");
 		}
 
 		{
@@ -422,6 +435,8 @@ namespace tke
 			torusModel->renderGroups[0].indiceCount = torusModel->indices.size();
 
 			scene->addModel(torusModel);
+
+			globalResource.setModel(torusModel, "Torus.Model");
 		}
 
 		{
@@ -441,6 +456,8 @@ namespace tke
 			hamerModel->renderGroups[1].indiceCount = ic1 - ic0;
 
 			scene->addModel(hamerModel);
+
+			globalResource.setModel(hamerModel, "Hamer.Model");
 		}
 	}
 }

@@ -112,7 +112,6 @@ namespace tke
 		virtual void keyUpEvent(int) override;
 		virtual void charEvent(int) override;
 
-		void show();
 		void startUiThread();
 		virtual void drawUi();
 	};

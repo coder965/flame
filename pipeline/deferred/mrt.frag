@@ -4,8 +4,8 @@
 
 struct Material
 {
-	uint albedoAlphaCompress;
-	uint specRoughnessCompress;
+	uint albedoSpecCompress;
+	uint roughnessAlphaCompress;
 
 	uint mapIndex;
 	
@@ -29,25 +29,40 @@ layout(location = 1) out vec4 outNormalRoughness;
 		
 void main()
 {
+	uint mapIndex;
+
 	vec3 albedo;
-	uint albedoAlphaMapIndex = u_material.material[inMaterialID].mapIndex & 0x7ff;
-	if (albedoAlphaMapIndex == 0)
+	float spec, roughness;
+	
+	mapIndex = u_material.material[inMaterialID].mapIndex & 0x7ff;
+	if (mapIndex == 0)
 	{
-		uint albedoAlphaCompress = u_material.material[inMaterialID].albedoAlphaCompress;
-		albedo = vec3((albedoAlphaCompress & 0xff) / 255.0, ((albedoAlphaCompress >> 8) & 0xff) / 255.0, ((albedoAlphaCompress >> 16) & 0xff) / 255.0);
+		uint albedoSpecCompress = u_material.material[inMaterialID].albedoSpecCompress;
+		albedo = vec3((albedoSpecCompress & 0xff) / 255.0, ((albedoSpecCompress >> 8) & 0xff) / 255.0, ((albedoSpecCompress >> 16) & 0xff) / 255.0);
+		spec = ((albedoSpecCompress >> 24) & 0xff) / 255.0;
 	}
 	else
 	{
-		albedo = texture(mapSamplers[albedoAlphaMapIndex - 1], inTexcoord).rgb;
+		vec4 albedoSpec = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		albedo = albedoSpec.rgb;
+		spec = albedoSpec.a;
 	}
+	
 	vec3 normal = inNormal;
-	uint normalHeightMapIndex = (u_material.material[inMaterialID].mapIndex >> 10) & 0x7ff;
-	if (normalHeightMapIndex != 0)
+	mapIndex = (u_material.material[inMaterialID].mapIndex >> 10) & 0x7ff;
+	if (mapIndex == 0)
 	{
-		vec3 tn = normalize(texture(mapSamplers[normalHeightMapIndex - 1], inTexcoord).xyz * 2.0 - 1.0);
-		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
-		//albedo = normal;
+		uint roughnessAlpha = u_material.material[inMaterialID].roughnessAlphaCompress;
+		roughness = (roughnessAlpha & 0xff) / 255.0;
 	}
-	outAlbedoSpec = vec4(albedo, 0.5);
-	outNormalRoughness = vec4(normal * 0.5 + 0.5, 0.5);
+	else
+	{
+		vec4 normalRoughness = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		vec3 tn = normalize(normalRoughness.xyz * 2.0 - 1.0);
+		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
+		roughness = normalRoughness.a;
+	}
+	
+	outAlbedoSpec = vec4(albedo, spec);
+	outNormalRoughness = vec4(normal * 0.5 + 0.5, roughness);
 }

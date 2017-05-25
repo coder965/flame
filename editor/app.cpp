@@ -64,31 +64,14 @@ struct MainWindow : tke::GuiWindow
 
 		//tke::scene->addTerrain(terrain);
 
-		masterRenderer = new tke::MasterRenderer(1600, 900, this, &tke::scene->vertexBuffer, &tke::scene->indexBuffer, &tke::scene->objectIndirectBuffer);
+		auto object = new tke::Object;
+		object->pModel = tke::cubeModel;
+		tke::scene->addObject(object);
 
-		miscLightFrameAction = masterRenderer->miscPass->addAction(&lightFramePipeline);
-		miscWireFrameLightAction = masterRenderer->miscPass->addAction(&wireFramePipeline);
-		miscWireFrameObjectAction = masterRenderer->miscPass->addAction(&wireFramePipeline);
-		int index;
-		index = 0;
-		miscWireFrameLightAction->addDrawcall(VK_SHADER_STAGE_VERTEX_BIT, &index);
-		miscWireFrameLightAction->addDrawcall(VK_SHADER_STAGE_FRAGMENT_BIT, &glm::vec4(0.f, 1.f, 0.f, 1.f), 16);
-		index = 1;
-		miscWireFrameObjectAction->addDrawcall(VK_SHADER_STAGE_VERTEX_BIT, &index);
-		miscWireFrameObjectAction->addDrawcall(VK_SHADER_STAGE_FRAGMENT_BIT, &glm::vec4(0.f, 1.f, 0.f, 1.f), 16);
-		miscToolAction = masterRenderer->miscPass->addAction();
-		miscToolAction->type = tke::DrawActionType::call_fuction;
-
-		lightFramePipeline.create("../pipeline/lightFrame/lightFrame.xml", &tke::vertexInputState, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
-
-		wireFramePipeline.create("../pipeline/wireFrame/wireFrame.xml", &tke::vertexInputState, masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
-
-		masterRenderer->renderer->getDescriptorSets();
+		masterRenderer = new tke::MasterRenderer(1600, 900, this);
 
 		mainCmd[0] = tke::vk::commandPool.allocate();
 		mainCmd[1] = tke::vk::commandPool.allocate();
-
-		initTransformTool(masterRenderer->renderer->vkRenderPass, masterRenderer->miscPass->index);
 
 		{
 			static tke::ResourceBank _resources;
@@ -162,50 +145,12 @@ struct MainWindow : tke::GuiWindow
 
 			tke::vk::beginCommandBuffer(mainCmd[i]);
 
-			masterRenderer->skyAction->addDrawcall(tke::sphereModel);
+			auto objectDrawcall = masterRenderer->renderer->findRenderPass("mrt")->findAction("1")->findDrawcall("1");
+			objectDrawcall->indirect_count = tke::scene->drawCallCount;
 
-			masterRenderer->mrtObjectDrawcall->indirect_count = tke::scene->drawCallCount;
+			// TODO : FIX TERRAIN
 
-			masterRenderer->mrtHeightMapTerrainAction->drawcalls.clear();
-			auto terrainIndex = 0;
-			for (auto pTerrain : tke::scene->pTerrains)
-			{
-				masterRenderer->mrtHeightMapTerrainAction->addDrawcall(4, 0, pTerrain->patchSize * pTerrain->patchSize, terrainIndex * 0xffff);
-				terrainIndex++;
-			}
-
-			miscLightFrameAction->drawcalls.clear();
-			for (auto pLight : tke::scene->pLights)
-			{
-				if (pLight->type == tke::Light::Type::eParallax)
-					miscLightFrameAction->addDrawcall(tke::arrowModel);
-				else if (pLight->type == tke::Light::Type::ePoint)
-					miscLightFrameAction->addDrawcall(tke::sphereModel);
-			}
-			miscWireFrameLightAction->show = false;
-			miscWireFrameObjectAction->show = false;
-			if (showSelectLine)
-			{
-				if (selectType == SelectType::eLight)
-				{
-					miscWireFrameLightAction->show = true;
-					miscWireFrameLightAction->drawcalls.resize(2);
-					auto pLight = selectLight();
-					if (pLight->type == tke::Light::Type::eParallax)
-						miscWireFrameLightAction->addDrawcall(tke::arrowModel);
-					else if (pLight->type == tke::Light::Type::ePoint)
-						miscWireFrameLightAction->addDrawcall(tke::sphereModel);
-				}
-				else if (selectType == SelectType::eObject)
-				{
-					miscWireFrameObjectAction->show = true;
-					miscWireFrameObjectAction->drawcalls.clear();
-					auto pObject = selectObject();
-					auto pModel = pObject->pModel;
-					miscWireFrameObjectAction->addDrawcall(pModel, 1, pObject->sceneIndex);
-				}
-			}
-			miscToolAction->m_pRenderable = currentTool;
+			// TODO : FIX MISC
 
 			masterRenderer->renderer->execute(mainCmd[i], i);
 
@@ -243,66 +188,67 @@ struct MainWindow : tke::GuiWindow
 		{
 			if (!(GetAsyncKeyState(VK_MENU) & 0x8000))
 			{
-				if (!(currentTool && currentTool->mouseDown(mouseX, mouseY)))
-				{
-					auto index = tke::pickUp(mouseX, mouseY, 1, 1, [](VkCommandBuffer cmd) {
-						if (tke::scene->pStaticObjects.size() > 0 || tke::scene->pLights.size() > 0)
-						{
-							uint32_t pass;
-							uint32_t index = 0;
+				// TODO : FIX MOUSE EVENT
+				//if (!(currentTool && currentTool->mouseDown(mouseX, mouseY)))
+				//{
+				//	auto index = tke::pickUp(mouseX, mouseY, 1, 1, [](VkCommandBuffer cmd) {
+				//		if (tke::scene->pStaticObjects.size() > 0 || tke::scene->pLights.size() > 0)
+				//		{
+				//			uint32_t pass;
+				//			uint32_t index = 0;
 
-							VkDeviceSize offsets[] = { 0 };
-							vkCmdBindVertexBuffers(cmd, 0, 1, &tke::scene->vertexBuffer.m_buffer, offsets);
-							vkCmdBindIndexBuffer(cmd, tke::scene->indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT32);
-							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, tke::plainPickUpPipeline.m_pipeline);
-							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, tke::plainPickUpPipeline.m_pipelineLayout, 0, 1, &tke::plainPickUpPipeline.m_descriptorSet, 0, nullptr);
+				//			VkDeviceSize offsets[] = { 0 };
+				//			vkCmdBindVertexBuffers(cmd, 0, 1, &tke::scene->vertexBuffer.m_buffer, offsets);
+				//			vkCmdBindIndexBuffer(cmd, tke::scene->indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT32);
+				//			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, tke::plainPickUpPipeline.m_pipeline);
+				//			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, tke::plainPickUpPipeline.m_pipelineLayout, 0, 1, &tke::plainPickUpPipeline.m_descriptorSet, 0, nullptr);
 
-							pass = 0;
-							vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pass);
-							auto lightIndex = 0;
-							for (auto pLight : tke::scene->pLights)
-							{
-								vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(uint32_t), sizeof(uint32_t), &index);
-								if (pLight->type == tke::Light::Type::eParallax)
-									vkCmdDrawIndexed(cmd, tke::arrowModel->indices.size(), 1, tke::arrowModel->indiceBase, tke::arrowModel->vertexBase, lightIndex);
-								else if (pLight->type == tke::Light::Type::ePoint)
-									vkCmdDrawIndexed(cmd, tke::sphereModel->indices.size(), 1, tke::sphereModel->indiceBase, tke::sphereModel->vertexBase, lightIndex);
-								lightIndex++;
-								index++;
-							}
+				//			pass = 0;
+				//			vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pass);
+				//			auto lightIndex = 0;
+				//			for (auto pLight : tke::scene->pLights)
+				//			{
+				//				vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(uint32_t), sizeof(uint32_t), &index);
+				//				if (pLight->type == tke::Light::Type::eParallax)
+				//					vkCmdDrawIndexed(cmd, tke::arrowModel->indices.size(), 1, tke::arrowModel->indiceBase, tke::arrowModel->vertexBase, lightIndex);
+				//				else if (pLight->type == tke::Light::Type::ePoint)
+				//					vkCmdDrawIndexed(cmd, tke::sphereModel->indices.size(), 1, tke::sphereModel->indiceBase, tke::sphereModel->vertexBase, lightIndex);
+				//				lightIndex++;
+				//				index++;
+				//			}
 
-							pass = 1;
-							vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pass);
-							auto objectIndex = 0;
-							for (auto pObject : tke::scene->pStaticObjects)
-							{
-								vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(uint32_t), sizeof(uint32_t), &index);
-								auto pModel = pObject->pModel;
-								vkCmdDrawIndexed(cmd, pModel->indices.size(), 1, pModel->indiceBase, pModel->vertexBase, objectIndex);
-								objectIndex++;
-								index++;
-							}
-						}
-					});
+				//			pass = 1;
+				//			vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pass);
+				//			auto objectIndex = 0;
+				//			for (auto pObject : tke::scene->pStaticObjects)
+				//			{
+				//				vkCmdPushConstants(cmd, tke::plainPickUpPipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(uint32_t), sizeof(uint32_t), &index);
+				//				auto pModel = pObject->pModel;
+				//				vkCmdDrawIndexed(cmd, pModel->indices.size(), 1, pModel->indiceBase, pModel->vertexBase, objectIndex);
+				//				objectIndex++;
+				//				index++;
+				//			}
+				//		}
+				//	});
 
-					if (index == 0)
-					{
-						select();
-						transformTool.m_pTransformer = nullptr;
-					}
-					else
-					{
-						index -= 1;
-						if (index < tke::scene->pLights.size())
-							select(tke::scene->pLights[index]);
-						else if ((index -= tke::scene->pLights.size()) < tke::scene->pStaticObjects.size())
-							select(tke::scene->pStaticObjects[index]);
-						else if ((index -= tke::scene->pStaticObjects.size()) < tke::scene->pAnimatedObjects.size())
-							select(tke::scene->pAnimatedObjects[index]);
-						else if ((index -= tke::scene->pAnimatedObjects.size()) < tke::scene->pTerrains.size())
-							select(tke::scene->pTerrains[index]);
-					}
-				}
+				//	if (index == 0)
+				//	{
+				//		select();
+				//		transformTool.m_pTransformer = nullptr;
+				//	}
+				//	else
+				//	{
+				//		index -= 1;
+				//		if (index < tke::scene->pLights.size())
+				//			select(tke::scene->pLights[index]);
+				//		else if ((index -= tke::scene->pLights.size()) < tke::scene->pStaticObjects.size())
+				//			select(tke::scene->pStaticObjects[index]);
+				//		else if ((index -= tke::scene->pStaticObjects.size()) < tke::scene->pAnimatedObjects.size())
+				//			select(tke::scene->pAnimatedObjects[index]);
+				//		else if ((index -= tke::scene->pAnimatedObjects.size()) < tke::scene->pTerrains.size())
+				//			select(tke::scene->pTerrains[index]);
+				//	}
+				//}
 			}
 		}
 
@@ -461,7 +407,9 @@ int main()
 	pMainWindow = new MainWindow();
 	pMainWindow->create(resCx, resCy, "TK Engine Editor", true);
 	((MainWindow*)pMainWindow)->init();
+	tke::currentWindow = pMainWindow;
 	pMainWindow->show();
+	pMainWindow->startUiThread();
 
 	_beginthread([](void*) {
 		tke::reportMajorProgress(10);

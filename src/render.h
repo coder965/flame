@@ -8,7 +8,6 @@
 #include <experimental/filesystem>
 
 #include "vk.h"
-#include "render.abstract.h"
 #include "resource.h"
 
 namespace tke
@@ -397,10 +396,7 @@ namespace tke
 
 	VkShaderModule getShaderModule(const std::string &filename);
 
-	struct Renderable
-	{
-		virtual void render(VkCommandBuffer) = 0;
-	};
+	typedef void (*PF_RenderFunc)(VkCommandBuffer);
 
 	struct Model;
 	REFLECTABLE struct Drawcall : Element
@@ -428,6 +424,8 @@ namespace tke
 
 		REFLv int first_indirect = 0;
 		REFLv int indirect_count = 0;
+
+		REFLv std::string model_name;
 
 		REFLv StageFlags push_constant_stage = StageFlags::vert;
 		REFLv int push_constant_offset = 0;
@@ -465,7 +463,7 @@ namespace tke
 		REFLv std::string index_buffer_name;
 		REFLv std::string pipeline_name;
 
-		REFLv std::string renderable_name;
+		REFLv std::string render_func_name;
 
 		REFLv int cx = 0;
 		REFLv int cy = 0;
@@ -478,13 +476,15 @@ namespace tke
 
 		VkDescriptorSet m_descriptorSet = 0;
 
-		Renderable *m_pRenderable = nullptr;
+		PF_RenderFunc m_pRenderFunc = nullptr;
 
 		bool show = true;
 
+		Drawcall *findDrawcall(const std::string &n);
+
 		DrawAction();
 		DrawAction(Pipeline *pipeline);
-		DrawAction(Renderable *pRenderable);
+		DrawAction(PF_RenderFunc pRenderFunc);
 		template <class... _Valty>
 		Drawcall *addDrawcall(_Valty&&... _Val)
 		{
@@ -579,6 +579,8 @@ namespace tke
 
 		int index = 0;
 
+		DrawAction *findAction(const std::string &n);
+
 		RenderPass();
 		RenderPass(VkCommandBuffer cmd);
 		template <class... _Valty>
@@ -620,6 +622,9 @@ namespace tke
 		REFLv int cx = 0;
 		REFLv int cy = 0;
 
+		REFLv std::string vertex_buffer_name;
+		REFLv std::string index_buffer_name;
+
 		std::list<RenderPass> passes;
 
 		bool containSwapchain = false;
@@ -643,6 +648,8 @@ namespace tke
 		VkRenderPass vkRenderPass = 0;
 
 		VkFramebuffer vkFramebuffer[2] = {};
+
+		RenderPass *findRenderPass(const std::string &n);
 
 		Renderer();
 		Renderer(int _cx, int _cy);

@@ -34,6 +34,8 @@ namespace TransformToolData
 	tke::Pipeline pickUpPipeline;
 	tke::Pipeline rectPipeline;
 
+	VkCommandBuffer cmd[2][2];
+
 	bool needUpdataUniformBuffer = true;
 
 	void init(VkRenderPass renderPass, int subpassIndex)

@@ -1,13 +1,13 @@
 <renderer cx="1600" cy="900" name="" >
 	<passes>
-		<pass type="" name="Render Pass1" secondary_cmd_name="">
+		<pass type="draw_action" name="Render Pass1">
 			<attachments>
-        <attachment name="1" image_name="PickUp.Image" level="0" layer="0" aspect="color" clear="false" clear_r="0." clear_g="0." clear_b="0." clear_a="0." clear_depth="1." clear_stencil="0"/>
-        <attachment name="1" image_name="Depth.Image" level="0" layer="0" aspect="depth" clear="false" clear_r="0." clear_g="0." clear_b="0." clear_a="0." clear_depth="1." clear_stencil="0"/>
+        <attachment name="1" image_name="PickUp.Image" aspect="color"/>
+        <attachment name="2" image_name="Depth.Image" aspect="depth"/>
 			</attachments>
-			<dependencies/>
-			<actions/>
-			<secondary_cmd name=""/>
+      <actions>
+        <action name="Action1" type="call_fuction" />
+      </actions>
 		</pass>
 	</passes>
 </renderer>

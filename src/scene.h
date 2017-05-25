@@ -18,31 +18,46 @@
 
 namespace tke
 {
-	struct GuiWindow;
+	struct Window;
+	//struct MasterRenderer
+	//{
+	//	Image originalImage;
+	//	Image albedoSpecImage;
+	//	Image normalRoughnessImage;
+	//	Image miscImage;
+
+	//	Pipeline panoramaPipeline;
+	//	Pipeline heightMapTerrainPipeline;
+	//	Pipeline proceduralTerrainPipeline;
+	//	Pipeline mrtPipeline;
+	//	Pipeline deferredPipeline;
+	//	Pipeline combinePipeline;
+
+	//	Drawcall *mrtObjectDrawcall;
+
+	//	DrawAction *skyAction;
+	//	DrawAction *mrtHeightMapTerrainAction;
+
+	//	RenderPass *miscPass;
+
+	//	Renderer *renderer;
+
+	//	MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer);
+	//};	
 	struct MasterRenderer
 	{
 		Image originalImage;
 		Image albedoSpecImage;
 		Image normalRoughnessImage;
-		Image miscImage;
 
 		Pipeline panoramaPipeline;
-		Pipeline heightMapTerrainPipeline;
-		Pipeline proceduralTerrainPipeline;
 		Pipeline mrtPipeline;
 		Pipeline deferredPipeline;
 		Pipeline combinePipeline;
 
-		Drawcall *mrtObjectDrawcall;
-
-		DrawAction *skyAction;
-		DrawAction *mrtHeightMapTerrainAction;
-
-		RenderPass *miscPass;
-
 		Renderer *renderer;
 
-		MasterRenderer(int _cx, int _cy, GuiWindow *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer);
+		MasterRenderer(int _cx, int _cy, Window *pWindow);
 	};
 
 	struct AnimationTemplate;
@@ -99,8 +114,8 @@ namespace tke
 
 	struct MaterialUniformBufferStruct
 	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
+		unsigned int albedoSpecCompress;
+		unsigned int roughnessAlphaCompress;
 
 		unsigned int mapIndex;
 

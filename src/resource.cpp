@@ -14,6 +14,11 @@ namespace tke
 		imageResources[str] = p;
 	}
 
+	void ResourceBank::setModel(Model *p, const std::string &str)
+	{
+		modelResources[str] = p;
+	}
+
 	void ResourceBank::setPipeline(Pipeline *p, const std::string &str)
 	{
 		pipelineResources[str] = p;
@@ -43,6 +48,18 @@ namespace tke
 		{
 			it = globalResource.imageResources.find(str);
 			if (it == globalResource.imageResources.end())
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	Model *ResourceBank::getModel(const std::string &str)
+	{
+		auto it = modelResources.find(str);
+		if (it == modelResources.end())
+		{
+			it = globalResource.modelResources.find(str);
+			if (it == globalResource.modelResources.end())
 				return nullptr;
 		}
 		return it->second;

@@ -1,0 +1,62 @@
+<renderer name="" cx="1600" cy="900" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" >
+	<passes>
+		<pass type="draw_action" name="sky">
+			<attachments>
+        <attachment name="1" image_name="Original.Image" aspect="color" />
+			</attachments>
+			<actions>
+				<action name="1" type="draw_action" pipeline_name="Panorama.Pipeline">
+					<drawcalls>
+						<drawcall name="1" instance_count="1" first_instance="0" type="index" model_name="Sphere.Model"/>
+					</drawcalls>
+				</action>
+			</actions>
+		</pass>
+    <pass type="draw_action" name="mrt">
+      <attachments>
+        <attachment name="1" image_name="AlbedoSpec.Image" aspect="color" clear="true"/>
+        <attachment name="2" image_name="NormalRoughness.Image" aspect="color" clear="true"/>
+        <attachment name="3" image_name="Depth.Image" aspect="depth" clear="true"/>
+      </attachments>
+      <actions>
+        <action name="1" type="draw_action" pipeline_name="Mrt.Pipeline">
+          <drawcalls>
+            <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.IndirectBuffer"/>
+          </drawcalls>
+        </action>
+      </actions>
+    </pass>
+    <pass type="draw_action" name="deferred">
+      <attachments>
+        <attachment name="1" image_name="Original.Image" aspect="color" />
+      </attachments>
+      <dependencies>
+        <dependency pass_name="sky"/>
+        <dependency pass_name="mrt"/>
+      </dependencies>
+      <actions>
+        <action name="1" type="draw_action" pipeline_name="Deferred.Pipeline">
+          <drawcalls>
+            <drawcall name="1" instance_count="1" first_instance="0" type="vertex" vertex_count="3"/>
+          </drawcalls>
+        </action>
+      </actions>
+    </pass>
+    <pass type="draw_action" name="combine">
+      <attachments>
+        <attachment name="1" image_name="Window.Image" aspect="color" />
+      </attachments>
+      <dependencies>
+        <dependency pass_name="deferred"/>
+      </dependencies>
+      <actions>
+        <action name="1" type="draw_action" pipeline_name="Combine.Pipeline">
+          <drawcalls>
+            <drawcall name="1" instance_count="1" first_instance="0" type="vertex" vertex_count="3"/>
+          </drawcalls>
+        </action>
+      </actions>
+    </pass>
+	</passes>
+</renderer>
+

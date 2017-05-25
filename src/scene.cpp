@@ -4,76 +4,115 @@
 
 namespace tke
 {
-	MasterRenderer::MasterRenderer(int _cx, int _cy, GuiWindow *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
+	//MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
+	//{
+	//	static ResourceBank _resources;
+
+	//	originalImage.create(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	//	albedoSpecImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	//	normalRoughnessImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	//	miscImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+	//	renderer = new Renderer();
+	//	renderer->cx = _cx;
+	//	renderer->cy = _cy;
+	//	renderer->pResource = &_resources;
+
+	//	_resources.setImage(&originalImage, "Original.Texture");
+	//	_resources.setImage(&albedoSpecImage, "AlbedoSpec.Texture");
+	//	_resources.setImage(&normalRoughnessImage, "NormalRoughness.Texture");
+	//	_resources.setImage(&miscImage, "Misc.Texture");
+
+	//	_resources.setPipeline(&panoramaPipeline, "Panorama.Pipeline");
+	//	_resources.setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
+	//	_resources.setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
+	//	_resources.setPipeline(&mrtPipeline, "Mrt.Pipeline");
+	//	_resources.setPipeline(&deferredPipeline, "Deferred.Pipeline");
+	//	_resources.setPipeline(&combinePipeline, "Combine.Pipeline");
+
+	//	auto skyPass = renderer->addPass();
+	//	skyPass->addAttachment(&originalImage);
+	//	skyAction = skyPass->addAction(&panoramaPipeline);
+
+	//	auto mrtPass = renderer->addPass();
+	//	mrtPass->addAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+	//	mrtPass->addAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+	//	mrtPass->addAttachment(_resources.getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+	//	auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
+	//	mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
+	//	mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
+	//	// TODO : FIX PROCEDURAL TERRAIN
+	//	//auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
+	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
+
+	//	auto deferredPass = renderer->addPass();
+	//	deferredPass->addAttachment(&originalImage);
+	//	deferredPass->addDependency(skyPass);
+	//	deferredPass->addDependency(mrtPass);
+	//	auto deferredAction = deferredPass->addAction(&deferredPipeline);
+	//	deferredAction->addDrawcall(3, 0, 1, 0);
+
+	//	miscPass = renderer->addPass();
+	//	miscPass->addAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
+	//	miscPass->addAttachment(_resources.getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
+	//	miscPass->addDependency(mrtPass);
+
+	//	auto combinePass = renderer->addPass();
+	//	combinePass->addAttachment(pWindow->image);
+	//	combinePass->addDependency(deferredPass);
+	//	combinePass->addDependency(miscPass);
+	//	auto combineAction = combinePass->addAction(&combinePipeline);
+	//	combineAction->addDrawcall(3, 0, 1, 0);
+
+	//	renderer->initVertexBuffer = vertexBuffer;
+	//	renderer->initIndexBuffer = indexBuffer;
+
+	//	renderer->setup();
+
+	//	panoramaPipeline.create(enginePath + "pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
+	//	heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+	//	proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+	//	mrtPipeline.create(enginePath + "pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
+	//	deferredPipeline.create(enginePath + "pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
+	//	combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
+
+	//	renderer->getDescriptorSets();
+	//}	
+	MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow)
 	{
 		static ResourceBank _resources;
 
 		originalImage.create(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		albedoSpecImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		normalRoughnessImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		miscImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		renderer = new Renderer();
+		renderer->filename = enginePath + "renderer/master.xml";
+		renderer->loadXML();
 		renderer->cx = _cx;
 		renderer->cy = _cy;
-		auto res = renderer->pResource;
+		renderer->pResource = &_resources;
 
-		res->setImage(&originalImage, "Original.Texture");
-		res->setImage(&albedoSpecImage, "AlbedoSpec.Texture");
-		res->setImage(&normalRoughnessImage, "NormalRoughness.Texture");
-		res->setImage(&miscImage, "Misc.Texture");
+		_resources.setImage(&originalImage, "Original.Image");
+		_resources.setImage(&albedoSpecImage, "AlbedoSpec.Image");
+		_resources.setImage(&normalRoughnessImage, "NormalRoughness.Image");
+		_resources.setImage(pWindow->image, "Window.Image");
 
-		res->setPipeline(&panoramaPipeline, "Panorama.Pipeline");
-		res->setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
-		res->setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
-		res->setPipeline(&mrtPipeline, "Mrt.Pipeline");
-		res->setPipeline(&deferredPipeline, "Deferred.Pipeline");
-		res->setPipeline(&combinePipeline, "Combine.Pipeline");
-
-		auto skyPass = renderer->addPass();
-		skyPass->addAttachment(&originalImage);
-		skyAction = skyPass->addAction(&panoramaPipeline);
-
-		auto mrtPass = renderer->addPass();
-		mrtPass->addAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		mrtPass->addAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		mrtPass->addAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
-		auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
-		mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
-		mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
-		auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
-		mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
-
-		auto deferredPass = renderer->addPass();
-		deferredPass->addAttachment(&originalImage);
-		deferredPass->addDependency(skyPass);
-		deferredPass->addDependency(mrtPass);
-		auto deferredAction = deferredPass->addAction(&deferredPipeline);
-		deferredAction->addDrawcall(3, 0, 1, 0);
-
-		miscPass = renderer->addPass();
-		miscPass->addAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-		miscPass->addAttachment(res->getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
-		miscPass->addDependency(mrtPass);
-
-		auto combinePass = renderer->addPass();
-		combinePass->addAttachment(pWindow->image);
-		combinePass->addDependency(deferredPass);
-		combinePass->addDependency(miscPass);
-		auto combineAction = combinePass->addAction(&combinePipeline);
-		combineAction->addDrawcall(3, 0, 1, 0);
-
-		renderer->initVertexBuffer = vertexBuffer;
-		renderer->initIndexBuffer = indexBuffer;
+		_resources.setPipeline(&panoramaPipeline, "Panorama.Pipeline");
+		_resources.setPipeline(&mrtPipeline, "Mrt.Pipeline");
+		_resources.setPipeline(&deferredPipeline, "Deferred.Pipeline");
+		_resources.setPipeline(&combinePipeline, "Combine.Pipeline");
 
 		renderer->setup();
 
-		panoramaPipeline.create(enginePath + "pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
-		heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-		proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-		mrtPipeline.create(enginePath + "pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
-		deferredPipeline.create(enginePath + "pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
-		combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
+		panoramaPipeline.pResource = &_resources;
+		mrtPipeline.pResource = &_resources;
+		deferredPipeline.pResource = &_resources;
+		combinePipeline.pResource = &_resources;
+		panoramaPipeline.create(enginePath + "pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, renderer->findRenderPass("sky")->index);
+		mrtPipeline.create(enginePath + "pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, renderer->findRenderPass("mrt")->index);
+		deferredPipeline.create(enginePath + "pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, renderer->findRenderPass("deferred")->index);
+		combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, renderer->findRenderPass("combine")->index);
 
 		renderer->getDescriptorSets();
 	}
@@ -122,6 +161,10 @@ namespace tke
 		globalResource.setBuffer(&proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
 		globalResource.setBuffer(&lightBuffer, "Light.UniformBuffer");
 		globalResource.setBuffer(&ambientBuffer, "Ambient.UniformBuffer");
+
+		globalResource.setBuffer(&vertexBuffer, "Scene.VertexBuffer");
+		globalResource.setBuffer(&indexBuffer, "Scene.IndexBuffer");
+		globalResource.setBuffer(&objectIndirectBuffer, "Scene.IndirectBuffer");
 	}
 
 	Scene::~Scene()
@@ -227,8 +270,8 @@ namespace tke
 			auto pSrcMaterial = &rg.material;
 
 			MaterialUniformBufferStruct material;
-			material.albedoAlphaCompress = pSrcMaterial->albedoR + (pSrcMaterial->albedoG << 8) + (pSrcMaterial->albedoB << 16) + (pSrcMaterial->alpha << 24);
-			material.specRoughnessCompress = pSrcMaterial->spec + (pSrcMaterial->roughness << 8);
+			material.albedoSpecCompress = pSrcMaterial->albedoR + (pSrcMaterial->albedoG << 8) + (pSrcMaterial->albedoB << 16) + (pSrcMaterial->spec << 24);
+			material.roughnessAlphaCompress = pSrcMaterial->roughness + (pSrcMaterial->alpha << 8);
 
 			auto albedoAlphaMapIndex = getStoreImageIndex(pSrcMaterial->albedoAlphaMap) + 1;
 			auto normalHeightMapIndex = getStoreImageIndex(pSrcMaterial->normalHeightMap) + 1;
@@ -249,14 +292,14 @@ namespace tke
 				if (albedoAlphaMapIndex != 0 && albedoAlphaMapIndex == storeAlbedoAlphaMapIndex)
 					theSameAlbedoAlpha = true;
 				else if (albedoAlphaMapIndex == 0 && storeAlbedoAlphaMapIndex == 0 &&
-					material.albedoAlphaCompress == storeMaterial.albedoAlphaCompress)
+					material.albedoSpecCompress == storeMaterial.albedoSpecCompress)
 					theSameAlbedoAlpha = true;
 				if (normalHeightMapIndex == storeNormalHeightMapIndex)
 					theSameNormalHeight = true;
 				if (specRoughnessMapIndex != 0 && specRoughnessMapIndex == storeSpecRoughnessMapIndex)
 					theSameSpecRoughness = true;
 				else if (specRoughnessMapIndex == 0 && storeSpecRoughnessMapIndex == 0 &&
-					material.specRoughnessCompress == storeMaterial.specRoughnessCompress)
+					material.roughnessAlphaCompress == storeMaterial.roughnessAlphaCompress)
 					theSameSpecRoughness = true;
 
 				if (theSameAlbedoAlpha && theSameNormalHeight && theSameSpecRoughness)
@@ -894,8 +937,9 @@ namespace tke
 					ranges.push_back(range);
 
 					static int position = -1;
-					if (position == -1) position = masterRenderer->heightMapTerrainPipeline.descriptorPosition("samplerHeight");
-					vk::descriptorPool.addWrite(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex);
+					// TODO : FIX TERRAIN
+					//if (position == -1) position = masterRenderer->heightMapTerrainPipeline.descriptorPosition("samplerHeight");
+					//vk::descriptorPool.addWrite(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex);
 				}
 
 				terrainIndex++;

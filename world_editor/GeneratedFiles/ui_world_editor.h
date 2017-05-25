@@ -27,6 +27,7 @@
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextBrowser>
 #include <QtWidgets/QToolButton>
+#include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
@@ -60,6 +61,9 @@ public:
     QTabWidget *tabWidget_2;
     QWidget *tab_3;
     QWidget *tab_4;
+    QVBoxLayout *verticalLayout_4;
+    QSplitter *splitter_3;
+    QGroupBox *groupBox_8;
     QVBoxLayout *verticalLayout_2;
     QGroupBox *groupBox_4;
     QToolButton *addStage;
@@ -91,6 +95,18 @@ public:
     QHBoxLayout *horizontalLayout_5;
     QTextBrowser *compileText;
     QWidget *tab_5;
+    QHBoxLayout *horizontalLayout_12;
+    QSplitter *splitter_2;
+    QGroupBox *groupBox_5;
+    QVBoxLayout *verticalLayout_3;
+    QGroupBox *groupBox_7;
+    QToolButton *toolButton;
+    QToolButton *toolButton_2;
+    QToolButton *toolButton_3;
+    QListWidget *rendererList;
+    QGroupBox *groupBox_6;
+    QHBoxLayout *horizontalLayout_13;
+    QTreeWidget *rendererAttributeTree;
     QMenuBar *menuBar;
     QMenu *menuScene;
     QStatusBar *statusBar;
@@ -200,11 +216,20 @@ public:
         tabWidget_2->addTab(tab_3, QString());
         tab_4 = new QWidget();
         tab_4->setObjectName(QStringLiteral("tab_4"));
-        verticalLayout_2 = new QVBoxLayout(tab_4);
+        verticalLayout_4 = new QVBoxLayout(tab_4);
+        verticalLayout_4->setSpacing(6);
+        verticalLayout_4->setContentsMargins(11, 11, 11, 11);
+        verticalLayout_4->setObjectName(QStringLiteral("verticalLayout_4"));
+        splitter_3 = new QSplitter(tab_4);
+        splitter_3->setObjectName(QStringLiteral("splitter_3"));
+        splitter_3->setOrientation(Qt::Vertical);
+        groupBox_8 = new QGroupBox(splitter_3);
+        groupBox_8->setObjectName(QStringLiteral("groupBox_8"));
+        verticalLayout_2 = new QVBoxLayout(groupBox_8);
         verticalLayout_2->setSpacing(6);
         verticalLayout_2->setContentsMargins(11, 11, 11, 11);
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        groupBox_4 = new QGroupBox(tab_4);
+        groupBox_4 = new QGroupBox(groupBox_8);
         groupBox_4->setObjectName(QStringLiteral("groupBox_4"));
         sizePolicy.setHeightForWidth(groupBox_4->sizePolicy().hasHeightForWidth());
         groupBox_4->setSizePolicy(sizePolicy);
@@ -235,7 +260,7 @@ public:
 
         verticalLayout_2->addWidget(groupBox_4);
 
-        stageTab = new QTabWidget(tab_4);
+        stageTab = new QTabWidget(groupBox_8);
         stageTab->setObjectName(QStringLiteral("stageTab"));
         tab_8 = new QWidget();
         tab_8->setObjectName(QStringLiteral("tab_8"));
@@ -310,7 +335,8 @@ public:
 
         verticalLayout_2->addWidget(stageTab);
 
-        bottomTab = new QTabWidget(tab_4);
+        splitter_3->addWidget(groupBox_8);
+        bottomTab = new QTabWidget(splitter_3);
         bottomTab->setObjectName(QStringLiteral("bottomTab"));
         tab_6 = new QWidget();
         tab_6->setObjectName(QStringLiteral("tab_6"));
@@ -338,8 +364,9 @@ public:
         horizontalLayout_5->addWidget(compileText);
 
         bottomTab->addTab(tab_7, QString());
+        splitter_3->addWidget(bottomTab);
 
-        verticalLayout_2->addWidget(bottomTab);
+        verticalLayout_4->addWidget(splitter_3);
 
         tabWidget_2->addTab(tab_4, QString());
 
@@ -352,6 +379,60 @@ public:
         tabWidget->addTab(tab_2, QString());
         tab_5 = new QWidget();
         tab_5->setObjectName(QStringLiteral("tab_5"));
+        horizontalLayout_12 = new QHBoxLayout(tab_5);
+        horizontalLayout_12->setSpacing(6);
+        horizontalLayout_12->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_12->setObjectName(QStringLiteral("horizontalLayout_12"));
+        splitter_2 = new QSplitter(tab_5);
+        splitter_2->setObjectName(QStringLiteral("splitter_2"));
+        splitter_2->setOrientation(Qt::Horizontal);
+        groupBox_5 = new QGroupBox(splitter_2);
+        groupBox_5->setObjectName(QStringLiteral("groupBox_5"));
+        verticalLayout_3 = new QVBoxLayout(groupBox_5);
+        verticalLayout_3->setSpacing(6);
+        verticalLayout_3->setContentsMargins(11, 11, 11, 11);
+        verticalLayout_3->setObjectName(QStringLiteral("verticalLayout_3"));
+        groupBox_7 = new QGroupBox(groupBox_5);
+        groupBox_7->setObjectName(QStringLiteral("groupBox_7"));
+        sizePolicy.setHeightForWidth(groupBox_7->sizePolicy().hasHeightForWidth());
+        groupBox_7->setSizePolicy(sizePolicy);
+        groupBox_7->setMinimumSize(QSize(0, 21));
+        toolButton = new QToolButton(groupBox_7);
+        toolButton->setObjectName(QStringLiteral("toolButton"));
+        toolButton->setGeometry(QRect(0, 0, 21, 21));
+        toolButton->setIcon(icon);
+        toolButton_2 = new QToolButton(groupBox_7);
+        toolButton_2->setObjectName(QStringLiteral("toolButton_2"));
+        toolButton_2->setGeometry(QRect(30, 0, 21, 21));
+        toolButton_2->setIcon(icon1);
+        toolButton_3 = new QToolButton(groupBox_7);
+        toolButton_3->setObjectName(QStringLiteral("toolButton_3"));
+        toolButton_3->setGeometry(QRect(60, 0, 21, 21));
+        toolButton_3->setIcon(icon2);
+
+        verticalLayout_3->addWidget(groupBox_7);
+
+        rendererList = new QListWidget(groupBox_5);
+        rendererList->setObjectName(QStringLiteral("rendererList"));
+
+        verticalLayout_3->addWidget(rendererList);
+
+        splitter_2->addWidget(groupBox_5);
+        groupBox_6 = new QGroupBox(splitter_2);
+        groupBox_6->setObjectName(QStringLiteral("groupBox_6"));
+        horizontalLayout_13 = new QHBoxLayout(groupBox_6);
+        horizontalLayout_13->setSpacing(6);
+        horizontalLayout_13->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout_13->setObjectName(QStringLiteral("horizontalLayout_13"));
+        rendererAttributeTree = new QTreeWidget(groupBox_6);
+        rendererAttributeTree->setObjectName(QStringLiteral("rendererAttributeTree"));
+
+        horizontalLayout_13->addWidget(rendererAttributeTree);
+
+        splitter_2->addWidget(groupBox_6);
+
+        horizontalLayout_12->addWidget(splitter_2);
+
         tabWidget->addTab(tab_5, QString());
 
         horizontalLayout_2->addWidget(tabWidget);
@@ -396,6 +477,7 @@ public:
         explorerPipeline->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
         groupBox_2->setTitle(QString());
         tabWidget_2->setTabText(tabWidget_2->indexOf(tab_3), QApplication::translate("WorldEditorClass", "Attribute", Q_NULLPTR));
+        groupBox_8->setTitle(QString());
         groupBox_4->setTitle(QString());
         addStage->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
         removeStage->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
@@ -411,6 +493,15 @@ public:
         bottomTab->setTabText(bottomTab->indexOf(tab_7), QApplication::translate("WorldEditorClass", "Compile", Q_NULLPTR));
         tabWidget_2->setTabText(tabWidget_2->indexOf(tab_4), QApplication::translate("WorldEditorClass", "Shader", Q_NULLPTR));
         tabWidget->setTabText(tabWidget->indexOf(tab_2), QApplication::translate("WorldEditorClass", "Pipeline Editor", Q_NULLPTR));
+        groupBox_5->setTitle(QString());
+        groupBox_7->setTitle(QString());
+        toolButton->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
+        toolButton_2->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
+        toolButton_3->setText(QApplication::translate("WorldEditorClass", "...", Q_NULLPTR));
+        groupBox_6->setTitle(QString());
+        QTreeWidgetItem *___qtreewidgetitem = rendererAttributeTree->headerItem();
+        ___qtreewidgetitem->setText(1, QApplication::translate("WorldEditorClass", "Value", Q_NULLPTR));
+        ___qtreewidgetitem->setText(0, QApplication::translate("WorldEditorClass", "Name", Q_NULLPTR));
         tabWidget->setTabText(tabWidget->indexOf(tab_5), QApplication::translate("WorldEditorClass", "Renderer Editor", Q_NULLPTR));
         menuScene->setTitle(QApplication::translate("WorldEditorClass", "Scene", Q_NULLPTR));
     } // retranslateUi

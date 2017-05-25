@@ -179,241 +179,253 @@
                <attribute name="title">
                 <string>Shader</string>
                </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_2">
+               <layout class="QVBoxLayout" name="verticalLayout_4">
                 <item>
-                 <widget class="QGroupBox" name="groupBox_4">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
+                 <widget class="QSplitter" name="splitter_3">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
                   </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>21</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>21</height>
-                   </size>
-                  </property>
-                  <property name="title">
-                   <string/>
-                  </property>
-                  <widget class="QToolButton" name="addStage">
-                   <property name="geometry">
-                    <rect>
-                     <x>0</x>
-                     <y>0</y>
-                     <width>21</width>
-                     <height>21</height>
-                    </rect>
+                  <widget class="QGroupBox" name="groupBox_8">
+                   <property name="title">
+                    <string/>
                    </property>
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                   <property name="icon">
-                    <iconset resource="world_editor.qrc">
-                     <normaloff>:/WorldEditor/misc/add.png</normaloff>:/WorldEditor/misc/add.png</iconset>
-                   </property>
-                  </widget>
-                  <widget class="QToolButton" name="removeStage">
-                   <property name="geometry">
-                    <rect>
-                     <x>30</x>
-                     <y>0</y>
-                     <width>21</width>
-                     <height>21</height>
-                    </rect>
-                   </property>
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                   <property name="icon">
-                    <iconset resource="world_editor.qrc">
-                     <normaloff>:/WorldEditor/misc/delete.png</normaloff>:/WorldEditor/misc/delete.png</iconset>
-                   </property>
-                  </widget>
-                  <widget class="QToolButton" name="saveStage">
-                   <property name="geometry">
-                    <rect>
-                     <x>60</x>
-                     <y>0</y>
-                     <width>21</width>
-                     <height>21</height>
-                    </rect>
-                   </property>
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                   <property name="icon">
-                    <iconset resource="world_editor.qrc">
-                     <normaloff>:/WorldEditor/misc/save.png</normaloff>:/WorldEditor/misc/save.png</iconset>
-                   </property>
-                  </widget>
-                  <widget class="QToolButton" name="toSpv">
-                   <property name="geometry">
-                    <rect>
-                     <x>90</x>
-                     <y>0</y>
-                     <width>21</width>
-                     <height>21</height>
-                    </rect>
-                   </property>
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                   <property name="icon">
-                    <iconset resource="world_editor.qrc">
-                     <normaloff>:/WorldEditor/misc/spv.png</normaloff>:/WorldEditor/misc/spv.png</iconset>
-                   </property>
-                  </widget>
-                  <widget class="QToolButton" name="explorerStage">
-                   <property name="geometry">
-                    <rect>
-                     <x>120</x>
-                     <y>0</y>
-                     <width>21</width>
-                     <height>21</height>
-                    </rect>
-                   </property>
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                   <property name="icon">
-                    <iconset resource="world_editor.qrc">
-                     <normaloff>:/WorldEditor/misc/open.png</normaloff>:/WorldEditor/misc/open.png</iconset>
-                   </property>
-                  </widget>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QTabWidget" name="stageTab">
-                  <property name="currentIndex">
-                   <number>0</number>
-                  </property>
-                  <widget class="QWidget" name="tab_8">
-                   <attribute name="title">
-                    <string>vert</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_7">
+                   <layout class="QVBoxLayout" name="verticalLayout_2">
                     <item>
-                     <widget class="QLineNumberEdit" name="vertEdit">
-                      <property name="enabled">
-                       <bool>false</bool>
+                     <widget class="QGroupBox" name="groupBox_4">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
                       </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::NoWrap</enum>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>21</height>
+                       </size>
                       </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>21</height>
+                       </size>
+                      </property>
+                      <property name="title">
+                       <string/>
+                      </property>
+                      <widget class="QToolButton" name="addStage">
+                       <property name="geometry">
+                        <rect>
+                         <x>0</x>
+                         <y>0</y>
+                         <width>21</width>
+                         <height>21</height>
+                        </rect>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="world_editor.qrc">
+                         <normaloff>:/WorldEditor/misc/add.png</normaloff>:/WorldEditor/misc/add.png</iconset>
+                       </property>
+                      </widget>
+                      <widget class="QToolButton" name="removeStage">
+                       <property name="geometry">
+                        <rect>
+                         <x>30</x>
+                         <y>0</y>
+                         <width>21</width>
+                         <height>21</height>
+                        </rect>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="world_editor.qrc">
+                         <normaloff>:/WorldEditor/misc/delete.png</normaloff>:/WorldEditor/misc/delete.png</iconset>
+                       </property>
+                      </widget>
+                      <widget class="QToolButton" name="saveStage">
+                       <property name="geometry">
+                        <rect>
+                         <x>60</x>
+                         <y>0</y>
+                         <width>21</width>
+                         <height>21</height>
+                        </rect>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="world_editor.qrc">
+                         <normaloff>:/WorldEditor/misc/save.png</normaloff>:/WorldEditor/misc/save.png</iconset>
+                       </property>
+                      </widget>
+                      <widget class="QToolButton" name="toSpv">
+                       <property name="geometry">
+                        <rect>
+                         <x>90</x>
+                         <y>0</y>
+                         <width>21</width>
+                         <height>21</height>
+                        </rect>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="world_editor.qrc">
+                         <normaloff>:/WorldEditor/misc/spv.png</normaloff>:/WorldEditor/misc/spv.png</iconset>
+                       </property>
+                      </widget>
+                      <widget class="QToolButton" name="explorerStage">
+                       <property name="geometry">
+                        <rect>
+                         <x>120</x>
+                         <y>0</y>
+                         <width>21</width>
+                         <height>21</height>
+                        </rect>
+                       </property>
+                       <property name="text">
+                        <string>...</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="world_editor.qrc">
+                         <normaloff>:/WorldEditor/misc/open.png</normaloff>:/WorldEditor/misc/open.png</iconset>
+                       </property>
+                      </widget>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QTabWidget" name="stageTab">
+                      <property name="currentIndex">
+                       <number>0</number>
+                      </property>
+                      <widget class="QWidget" name="tab_8">
+                       <attribute name="title">
+                        <string>vert</string>
+                       </attribute>
+                       <layout class="QHBoxLayout" name="horizontalLayout_7">
+                        <item>
+                         <widget class="QLineNumberEdit" name="vertEdit">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="lineWrapMode">
+                           <enum>QPlainTextEdit::NoWrap</enum>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                      <widget class="QWidget" name="tab_9">
+                       <attribute name="title">
+                        <string>tesc</string>
+                       </attribute>
+                       <layout class="QHBoxLayout" name="horizontalLayout_8">
+                        <item>
+                         <widget class="QLineNumberEdit" name="tescEdit">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="lineWrapMode">
+                           <enum>QPlainTextEdit::NoWrap</enum>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                      <widget class="QWidget" name="tab_10">
+                       <attribute name="title">
+                        <string>tese</string>
+                       </attribute>
+                       <layout class="QHBoxLayout" name="horizontalLayout_9">
+                        <item>
+                         <widget class="QLineNumberEdit" name="teseEdit">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="lineWrapMode">
+                           <enum>QPlainTextEdit::NoWrap</enum>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                      <widget class="QWidget" name="tab_11">
+                       <attribute name="title">
+                        <string>geom</string>
+                       </attribute>
+                       <layout class="QHBoxLayout" name="horizontalLayout_10">
+                        <item>
+                         <widget class="QLineNumberEdit" name="geomEdit">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="lineWrapMode">
+                           <enum>QPlainTextEdit::NoWrap</enum>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                      <widget class="QWidget" name="tab_12">
+                       <attribute name="title">
+                        <string>frag</string>
+                       </attribute>
+                       <layout class="QHBoxLayout" name="horizontalLayout_11">
+                        <item>
+                         <widget class="QLineNumberEdit" name="fragEdit">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="lineWrapMode">
+                           <enum>QPlainTextEdit::NoWrap</enum>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
                      </widget>
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="tab_9">
-                   <attribute name="title">
-                    <string>tesc</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_8">
-                    <item>
-                     <widget class="QLineNumberEdit" name="tescEdit">
-                      <property name="enabled">
-                       <bool>false</bool>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::NoWrap</enum>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                  <widget class="QWidget" name="tab_10">
-                   <attribute name="title">
-                    <string>tese</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_9">
-                    <item>
-                     <widget class="QLineNumberEdit" name="teseEdit">
-                      <property name="enabled">
-                       <bool>false</bool>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::NoWrap</enum>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                  <widget class="QWidget" name="tab_11">
-                   <attribute name="title">
-                    <string>geom</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_10">
-                    <item>
-                     <widget class="QLineNumberEdit" name="geomEdit">
-                      <property name="enabled">
-                       <bool>false</bool>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::NoWrap</enum>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                  <widget class="QWidget" name="tab_12">
-                   <attribute name="title">
-                    <string>frag</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_11">
-                    <item>
-                     <widget class="QLineNumberEdit" name="fragEdit">
-                      <property name="enabled">
-                       <bool>false</bool>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::NoWrap</enum>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QTabWidget" name="bottomTab">
-                  <property name="currentIndex">
-                   <number>0</number>
-                  </property>
-                  <widget class="QWidget" name="tab_6">
-                   <attribute name="title">
-                    <string>Output</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_6">
-                    <item>
-                     <widget class="QLineNumberEdit" name="outputText">
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::NoWrap</enum>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                  <widget class="QWidget" name="tab_7">
-                   <attribute name="title">
-                    <string>Compile</string>
-                   </attribute>
-                   <layout class="QHBoxLayout" name="horizontalLayout_5">
-                    <item>
-                     <widget class="QTextBrowser" name="compileText">
-                      <property name="lineWrapMode">
-                       <enum>QTextEdit::NoWrap</enum>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
+                  <widget class="QTabWidget" name="bottomTab">
+                   <property name="currentIndex">
+                    <number>0</number>
+                   </property>
+                   <widget class="QWidget" name="tab_6">
+                    <attribute name="title">
+                     <string>Output</string>
+                    </attribute>
+                    <layout class="QHBoxLayout" name="horizontalLayout_6">
+                     <item>
+                      <widget class="QLineNumberEdit" name="outputText">
+                       <property name="lineWrapMode">
+                        <enum>QPlainTextEdit::NoWrap</enum>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                   <widget class="QWidget" name="tab_7">
+                    <attribute name="title">
+                     <string>Compile</string>
+                    </attribute>
+                    <layout class="QHBoxLayout" name="horizontalLayout_5">
+                     <item>
+                      <widget class="QTextBrowser" name="compileText">
+                       <property name="lineWrapMode">
+                        <enum>QTextEdit::NoWrap</enum>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
                   </widget>
                  </widget>
                 </item>
@@ -431,6 +443,116 @@
        <attribute name="title">
         <string>Renderer Editor</string>
        </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_12">
+        <item>
+         <widget class="QSplitter" name="splitter_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="title">
+            <string/>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QGroupBox" name="groupBox_7">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>21</height>
+               </size>
+              </property>
+              <property name="title">
+               <string/>
+              </property>
+              <widget class="QToolButton" name="toolButton">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/add.png</normaloff>:/WorldEditor/misc/add.png</iconset>
+               </property>
+              </widget>
+              <widget class="QToolButton" name="toolButton_2">
+               <property name="geometry">
+                <rect>
+                 <x>30</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/delete.png</normaloff>:/WorldEditor/misc/delete.png</iconset>
+               </property>
+              </widget>
+              <widget class="QToolButton" name="toolButton_3">
+               <property name="geometry">
+                <rect>
+                 <x>60</x>
+                 <y>0</y>
+                 <width>21</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="world_editor.qrc">
+                 <normaloff>:/WorldEditor/misc/save.png</normaloff>:/WorldEditor/misc/save.png</iconset>
+               </property>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="rendererList"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QGroupBox" name="groupBox_6">
+           <property name="title">
+            <string/>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_13">
+            <item>
+             <widget class="QTreeWidget" name="rendererAttributeTree">
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>

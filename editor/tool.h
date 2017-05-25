@@ -4,7 +4,7 @@
 #include "../src/transformer.h"
 #include "../src/render.h"
 
-struct Tool : tke::Renderable
+struct Tool
 {
 	int cx = 0;
 	int cy = 0;
@@ -44,7 +44,7 @@ struct TransformTool : Tool
 	virtual bool mouseDown(int x, int y) override;
 	virtual void mouseUp() override;
 	virtual void mouseMove() override;
-	virtual void render(VkCommandBuffer) override;
+	void render(VkCommandBuffer);
 	glm::vec4 getColor(int which);
 	float rotate(glm::vec3 r, int axis);
 	void setType(tke::Transformer::Type type);

@@ -11,9 +11,7 @@
 #include <fstream>
 #include <sstream> 
 
-#include "d:/TK_Engine/src/core/utils.h"
 #include "d:/TK_Engine/src/core/qt.h"
-#include "d:/TK_Engine/src/core/render.abstract.h"
 
 const std::string rendererPath = "D:/TK_Engine/renderer";
 

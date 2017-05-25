@@ -81,6 +81,11 @@ namespace PipelineEditor
 	}
 }
 
+namespace RendererEditor
+{
+
+}
+
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)
 {
@@ -147,14 +152,18 @@ WorldEditor::WorldEditor(QWidget *parent)
 
 void WorldEditor::keyPressEvent(QKeyEvent *k)
 {
-	if (k->key() == Qt::Key_S)
+	if (ui.tabWidget->currentIndex() == 1)
 	{
-		if (k->modifiers() == Qt::ControlModifier)
-			/*on_saveStage_clicked()*/;
-	}
-	else if (k->key() == Qt::Key_F5)
-	{
-		/*on_toSpv_clicked()*/;
+		// pipeline editor
+		if (k->key() == Qt::Key_S)
+		{
+			if (k->modifiers() == Qt::ControlModifier)
+				on_saveStage_clicked();
+		}
+		else if (k->key() == Qt::Key_F5)
+		{
+			on_toSpv_clicked();
+		}
 	}
 }
 

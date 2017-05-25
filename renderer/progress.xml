@@ -6,7 +6,7 @@
 			</attachments>
 			<dependencies/>
 			<actions>
-				<action name="Action1" type="draw_action" vertex_buffer_name="" index_buffer_name="" pipeline_name="Paste.Pipeline" renderable_name="" cx="0" cy="0">
+				<action name="Action1" type="draw_action" vertex_buffer_name="" index_buffer_name="" pipeline_name="Paste.Pipeline" render_func_name="" cx="0" cy="0">
 					<drawcalls>
 						<drawcall name="1" instance_count="1" first_instance="0" type="vertex" vertex_count="3" first_vertex="0" index_count="0" first_index="0" vertex_offset="0" indirect_vertex_buffer_name="" indirect_index_buffer_name="" first_indirect="0" indirect_count="0"/>
 					</drawcalls>

@@ -950,6 +950,14 @@ namespace tke
 		n->addAttributes(this, b);
 	}
 
+	Drawcall *DrawAction::findDrawcall(const std::string &n)
+	{
+		for (auto &c : drawcalls)
+			if (c.name == n)
+				return &c;
+		return nullptr;
+	}
+
 	DrawAction::DrawAction() {}
 
 	DrawAction::DrawAction(Pipeline *pipeline)
@@ -958,9 +966,9 @@ namespace tke
 		type = DrawActionType::draw_action;
 	}
 
-	DrawAction::DrawAction(Renderable *pRenderable)
+	DrawAction::DrawAction(PF_RenderFunc pRenderFunc)
 	{
-		m_pRenderable = pRenderable;
+		m_pRenderFunc = pRenderFunc;
 		type = DrawActionType::call_fuction;
 	}
 
@@ -1058,6 +1066,14 @@ namespace tke
 		n->addAttributes(this, b);
 	}
 
+	DrawAction *RenderPass::findAction(const std::string &n)
+	{
+		for (auto &a : actions)
+			if (a.name == n)
+				return &a;
+		return nullptr;
+	}
+
 	RenderPass::RenderPass() {}
 
 	RenderPass::RenderPass(VkCommandBuffer cmd)
@@ -1152,6 +1168,14 @@ namespace tke
 			maintainList(dependencies);
 			break;
 		}
+	}
+
+	RenderPass *Renderer::findRenderPass(const std::string &n)
+	{
+		for (auto &p : passes)
+			if (p.name == n)
+				return &p;
+		return nullptr;
 	}
 
 	Renderer::Renderer() {}
@@ -1379,8 +1403,8 @@ namespace tke
 						}
 						break;
 					case DrawActionType::call_fuction:
-						if (action.m_pRenderable)
-							action.m_pRenderable->render(cmd);
+						if (action.m_pRenderFunc)
+							action.m_pRenderFunc(cmd);
 						break;
 					}
 				}
@@ -1403,6 +1427,11 @@ namespace tke
 
 	void Renderer::setup()
 	{
+		if (vertex_buffer_name!= "")
+			initVertexBuffer = (VertexBuffer*)pResource->getBuffer(vertex_buffer_name);
+		if (index_buffer_name != "")
+			initIndexBuffer = (IndexBuffer*)pResource->getBuffer(index_buffer_name);
+
 		for (auto &p : passes)
 		{
 			for (auto &a : p.attachments)
@@ -1487,6 +1516,23 @@ namespace tke
 					case DrawActionType::draw_action:
 						if (action.pipeline_name != "")
 							action.m_pipeline = pResource->getPipeline(action.pipeline_name.c_str());
+						for (auto &drawcall : action.drawcalls)
+						{
+							if (drawcall.indirect_vertex_buffer_name != "")
+								drawcall.m_vertexIndirectBuffer = (VertexIndirectBuffer*)pResource->getBuffer(drawcall.indirect_vertex_buffer_name);
+							if (drawcall.indirect_index_buffer_name != "")
+								drawcall.m_indexedIndirectBuffer = (IndexedIndirectBuffer*)pResource->getBuffer(drawcall.indirect_index_buffer_name);
+							if (drawcall.model_name != "")
+							{
+								auto p = pResource->getModel(drawcall.model_name);
+								if (p)
+								{
+									drawcall.index_count = p->indices.size();
+									drawcall.first_index = p->indiceBase;
+									drawcall.vertex_offset = p->vertexBase;
+								}
+							}
+						}
 						break;
 					case DrawActionType::call_fuction:
 						break;

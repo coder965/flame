@@ -122,6 +122,7 @@ currentBank->addV<std::string>("indirect_vertex_buffer_name", offsetof(Drawcall,
 currentBank->addV<std::string>("indirect_index_buffer_name", offsetof(Drawcall, indirect_index_buffer_name));
 currentBank->addV<int>("first_indirect", offsetof(Drawcall, first_indirect));
 currentBank->addV<int>("indirect_count", offsetof(Drawcall, indirect_count));
+currentBank->addV<std::string>("model_name", offsetof(Drawcall, model_name));
 currentBank->addV<StageFlags>("push_constant_stage", offsetof(Drawcall, push_constant_stage));
 currentBank->addV<int>("push_constant_offset", offsetof(Drawcall, push_constant_offset));
 currentBank->addE("PushConstantType", "push_constant_type", offsetof(Drawcall, push_constant_type));
@@ -131,7 +132,7 @@ currentBank->addE("DrawActionType", "type", offsetof(DrawAction, type));
 currentBank->addV<std::string>("vertex_buffer_name", offsetof(DrawAction, vertex_buffer_name));
 currentBank->addV<std::string>("index_buffer_name", offsetof(DrawAction, index_buffer_name));
 currentBank->addV<std::string>("pipeline_name", offsetof(DrawAction, pipeline_name));
-currentBank->addV<std::string>("renderable_name", offsetof(DrawAction, renderable_name));
+currentBank->addV<std::string>("render_func_name", offsetof(DrawAction, render_func_name));
 currentBank->addV<int>("cx", offsetof(DrawAction, cx));
 currentBank->addV<int>("cy", offsetof(DrawAction, cy));
 currentBank = Attachment::b;
@@ -157,5 +158,7 @@ currentBank = Renderer::b;
 currentBank->addV<std::string>("name", offsetof(Renderer, name));
 currentBank->addV<int>("cx", offsetof(Renderer, cx));
 currentBank->addV<int>("cy", offsetof(Renderer, cy));
+currentBank->addV<std::string>("vertex_buffer_name", offsetof(Renderer, vertex_buffer_name));
+currentBank->addV<std::string>("index_buffer_name", offsetof(Renderer, index_buffer_name));
 }};static ReflectInit init;
 }

@@ -68,13 +68,13 @@ QFindWidget::QFindWidget()
 	btnUp->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	btnUp->setGeometry(0, 0, 21, 21);
 	btnUp->setMaximumSize(21, 21);
-	btnUp->setIcon(QIcon(":/image/misc/up.png"));
+	btnUp->setIcon(QIcon(":/WorldEditor/misc/up.png"));
 	connect(btnUp, &QToolButton::clicked, this, &QFindWidget::on_find_previous);
 	auto btnDown = new QToolButton();
 	btnDown->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	btnDown->setGeometry(0, 0, 21, 21);
 	btnDown->setMaximumSize(21, 21);
-	btnDown->setIcon(QIcon(":/image/misc/down.png"));
+	btnDown->setIcon(QIcon(":/WorldEditor/misc/down.png"));
 	connect(btnDown, &QToolButton::clicked, this, &QFindWidget::on_find_next);
 
 	auto layout = new QHBoxLayout;
