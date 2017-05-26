@@ -35,7 +35,7 @@ void main()
 	outTexcoord = inTexcoord;
 	mat4 modelMatrix = u_object.matrix[gl_InstanceIndex >> 16];
 	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view * modelMatrix)));
-	outNormal = normalMatrix * inNormal;
-	outTangent = normalMatrix * inTangent;
+	outNormal = normalize(normalMatrix * inNormal);
+	outTangent = normalize(normalMatrix * inTangent);
 	gl_Position = u_matrix.projView * modelMatrix * vec4(inVertex, 1);
 }

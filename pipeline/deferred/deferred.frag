@@ -106,6 +106,8 @@ void main()
 	albedo *= 1.0 - spec;
 	
 	vec3 normal = normalize(inNormalRoughness.xyz * 2.0 - 1.0);
+	//outColor = vec4(inNormalRoughness.xyz, 1.0);
+	//return;
 	float roughness = inNormalRoughness.a;
 	
 	//outColor = vec4(inNormalRoughness.xyz * 2.0 - 1.0, 1);
