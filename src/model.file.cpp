@@ -88,7 +88,10 @@ namespace tke
 						obj_line_ss << token;
 						glm::ivec3 ids;
 						for (int j = 0; j < 3; j++)
+						{
 							obj_line_ss >> ids[j];
+							ids[j]--;
+						}
 
 						int index = -1;
 						for (int i = 0; i < rawIndexs.size(); i++)
@@ -110,6 +113,8 @@ namespace tke
 							else m->uvs.push_back(glm::vec2(0.f));
 							if (ids[2] != -1 && ids[2] < rawNormals.size()) m->normals.push_back(rawNormals[ids[2]]);
 							else m->normals.push_back(glm::vec3(0.f));
+
+							rawIndexs.push_back(ids);
 
 						}
 						m->indices.push_back(index);

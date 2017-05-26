@@ -166,10 +166,6 @@ namespace tke
 
 		scene = new Scene;
 		strcpy(scene->name, "default");
-		scene->pSunLight = nullptr;
-		scene->pSunLight = new Light;
-		scene->pSunLight->type = Light::Type::eParallax;
-		scene->addLight(scene->pSunLight);
 		scene->setUp();
 
 		stagingBuffer.create(65536);

@@ -113,7 +113,7 @@ namespace tke
 		heightMapTerrainBuffer.create(sizeof(HeightMapTerrainBufferStruct) * 8);
 		proceduralTerrainBuffer.create(sizeof(glm::vec2));
 		lightBuffer.create(sizeof(LightBufferStruct));
-		ambientBuffer.create(sizeof glm::vec4);
+		ambientBuffer.create(sizeof AmbientStruct);
 
 		globalResource.setBuffer(&matrixBuffer, "Matrix.UniformBuffer");
 		globalResource.setBuffer(&objectMatrixBuffer, "ObjectMatrix.UniformBuffer");
@@ -674,15 +674,24 @@ namespace tke
 		}
 		if (needUpdataSky)
 		{
-			if (skyType == SkyType::ePanorama)
+			if (skyType == SkyType::eNull)
+			{
+				AmbientStruct stru;
+				stru.v = glm::vec4(ambient.color, 0);
+				stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+				ambientBuffer.update(&stru, &stagingBuffer);
+			}
+			else if (skyType == SkyType::ePanorama)
 			{
 				if (skyImage)
 				{
 					//writes.push_back(vk->writeDescriptorSet(engine->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(engine->colorSampler), 0));
 					//writes.push_back(vk->writeDescriptorSet(engine->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(engine->colorSampler), 0));
 
-					auto data = glm::vec4(1.f, 1.f, 1.f, skyImage->m_mipmapLevels - 1);
-					ambientBuffer.update(&data, &stagingBuffer);
+					AmbientStruct stru;
+					stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->m_mipmapLevels - 1);
+					stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+					ambientBuffer.update(&stru, &stagingBuffer);
 				}
 			}
 			else if (skyType == SkyType::eAtmosphereScattering)
@@ -881,7 +890,10 @@ namespace tke
 
 								vk::descriptorPool.addWrite(deferredPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels));
 
-								ambientBuffer.update(&glm::vec4(1.f, 1.f, 1.f, 3), &stagingBuffer);
+								AmbientStruct stru;
+								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
+								stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+								ambientBuffer.update(&stru, &stagingBuffer);
 							}
 						}
 					}

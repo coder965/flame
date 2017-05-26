@@ -6,10 +6,11 @@
 	<link binding="-1" array_element="0" descriptor_name="albedoSpecSampler" resource_name="AlbedoSpec.Image" sampler="plain_unnormalized"/>
 	<link binding="-1" array_element="0" descriptor_name="normalRoughnessSampler" resource_name="NormalRoughness.Image" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreenView.vert"/>
-	<stage filename="deferred.frag">
+	<stage filename="deferred_ibl.frag">
 		<descriptor type="image_n_sampler" binding="3" count="1" name="depthSampler"/>
 		<descriptor type="image_n_sampler" binding="4" count="1" name="albedoSpecSampler"/>
 		<descriptor type="image_n_sampler" binding="5" count="1" name="normalRoughnessSampler"/>
+		<descriptor type="image_n_sampler" binding="7" count="1" name="envrSampler"/>
 		<descriptor type="uniform_buffer" binding="2" count="1" name="LIGHT"/>
 		<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
 		<descriptor type="uniform_buffer" binding="1" count="1" name="AMBIENT"/>

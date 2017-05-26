@@ -606,6 +606,7 @@ namespace tke
 
 		int index = 0;
 
+		Attachment *findAttachment(const std::string &n);
 		DrawAction *findAction(const std::string &n);
 
 		RenderPass();

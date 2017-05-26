@@ -134,6 +134,12 @@ namespace tke
 		float mapDim;
 	};
 
+	struct AmbientStruct
+	{
+		glm::vec4 v;
+		glm::vec4 fogcolor;
+	};
+
 	struct Scene
 	{
 		CRITICAL_SECTION cs;

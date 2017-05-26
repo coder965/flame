@@ -21,7 +21,6 @@ layout(binding = 0) uniform MATRIX
 layout(binding = 1) uniform AMBIENT
 {
 	vec4 v; // (R,G,B) - ambient color, (A) - EnvrMipmaps
-	vec4 fogColor;
 }u_ambient;
 
 struct Light
@@ -86,6 +85,9 @@ float specularOcclusion(float dotNV, float ao, float smothness)
 
 void main()
 {
+	//outColor = textureLod(envrSampler, gl_FragCoord.xy / vec2(1600.0, 900.0), 3.0);
+	//return;
+	
 	float inDepth = texture(depthSampler, gl_FragCoord.xy).r * 2.0 - 1.0;
 	float linerDepth = LinearDepthPerspective(inDepth);
 	if (linerDepth > 999.0)
@@ -98,15 +100,23 @@ void main()
 	vec4 inNormalRoughness = texture(normalRoughnessSampler, gl_FragCoord.xy);
 	
 	vec3 albedo = inAlbedoSpec.rgb;
+	//outColor = vec4(albedo, 1.0);
+	//return;
 	float spec = inAlbedoSpec.a;
 	albedo *= 1.0 - spec;
 	
 	vec3 normal = normalize(inNormalRoughness.xyz * 2.0 - 1.0);
+	//outColor = vec4(inNormalRoughness.xyz, 1.0);
+	//return;
 	float roughness = inNormalRoughness.a;
+	
+	//outColor = vec4(inNormalRoughness.xyz * 2.0 - 1.0, 1);
+	//return;
 	
 	float dotNV = dot(normal, -viewDir);
 	float smothness = 1.0 - roughness;
 	
+	//float ao = texture(aoSampler, gl_FragCoord.xy).r;
 	float ao = 1.0;
 	float specAo = specularOcclusion(dotNV, ao, smothness);
 	
@@ -121,18 +131,22 @@ void main()
 		{
 			float dist = length(lightDir);
 			lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
+			lightDir = normalize(lightDir);
 		}
-		lightDir = normalize(lightDir);
 		float nl = dot(normal, lightDir);
-		//litColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
-		litColor += vec3(nl) * albedo * lightColor;
+		litColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
 	}
 	
-	//vec3 color = vec3(litColor + u_ambient.v.rgb * albedo);
-	vec3 color = vec3(litColor);
+	float envrMipmaps = u_ambient.v.a;
+	
+	mat3 matrixViewInv3 = mat3(u_matrix.viewInv);
+	vec3 irradiance = albedo * textureLod(envrSampler, panorama(matrixViewInv3 * normal), envrMipmaps).rgb;
+	vec3 radiance = smothness * F_schlick(spec, dotNV) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * envrMipmaps).rgb;
+	
+	vec3 color = vec3(litColor + u_ambient.v.rgb * (irradiance + radiance));
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
-	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
+	outColor = vec4(mix(vec3(0.5, 0.5, 0.57), color, fog), 1.0);
 	//outColor = vec4(1.0);
 }

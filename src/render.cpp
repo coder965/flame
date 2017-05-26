@@ -1067,6 +1067,14 @@ namespace tke
 		n->addAttributes(this, b);
 	}
 
+	Attachment *RenderPass::findAttachment(const std::string &n)
+	{
+		for (auto &a : attachments)
+			if (a.name == n)
+				return &a;
+		return nullptr;
+	}
+
 	DrawAction *RenderPass::findAction(const std::string &n)
 	{
 		for (auto &a : actions)

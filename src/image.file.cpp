@@ -42,7 +42,8 @@ namespace tke
 		if (fif == FIF_UNKNOWN) return nullptr;
 		auto dib = FreeImage_Load(fif, filename.c_str());
 		if (!dib) return nullptr;
-		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA) FreeImage_FlipVertical(dib);
+		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG) 
+			FreeImage_FlipVertical(dib);
 		auto pData = new _Data;
 		auto colorType = FreeImage_GetColorType(dib);
 		pData->fif = fif;
@@ -58,7 +59,7 @@ namespace tke
 			dib = newDib;
 			pData->m_channel = 4;
 		}
-		break;
+			break;
 		case FIC_RGBALPHA:
 			pData->m_channel = 4;
 			break;
