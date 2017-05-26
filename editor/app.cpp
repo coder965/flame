@@ -6,7 +6,6 @@
 #include "../src/core.h"
 #include "../src/event.h"
 #include "../src/scene.h"
-#include "../src/window.h"
 #include "../src/gui.h"
 #include "../src/render.h"
 #include "../src/pickUp.h"
@@ -63,9 +62,43 @@ struct MainWindow : tke::GuiWindow
 
 		//tke::scene->addTerrain(terrain);
 
-		auto object = new tke::Object;
-		object->pModel = tke::cubeModel;
-		tke::scene->addObject(object);
+		int map[12][12] = {
+			{ 1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1 },
+			{ 0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 1 },
+			{ 1, 0, 0, 1,  0, 0, 0, 0,  0, 0, 0, 1 },
+			{ 1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1 },
+
+			{ 1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 1 },
+			{ 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 0, 1 },
+			{ 1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1 },
+			{ 1, 0, 0, 0,  0, 0, 0, 1,  0, 0, 0, 1 },
+
+			{ 1, 0, 1, 0,  0, 0, 0, 0,  0, 0, 0, 1 },
+			{ 1, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 1 },
+			{ 1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1 },
+			{ 1, 1, 1, 0,  1, 1, 1, 1,  1, 1, 1, 1 },
+		};
+
+		for (int i = 0; i < 12; i++)
+		{
+			for (int j = 0; j < 12; j++)
+			{
+				if (map[i][j])
+				{
+					auto o = new tke::Object();
+					o->pModel = tke::cubeModel;
+					o->setCoord(glm::vec3(i, -4, j));
+					tke::scene->addObject(o);
+				}
+
+				{
+					auto o = new tke::Object();
+					o->pModel = tke::cubeModel;
+					o->setCoord(glm::vec3(i, -5, j));
+					tke::scene->addObject(o);
+				}
+			}
+		}
 
 		masterRenderer = new tke::Renderer();		
 		masterRenderer->filename = "../renderer/master.xml";
@@ -75,7 +108,7 @@ struct MainWindow : tke::GuiWindow
 
 		masterRenderer->setup();
 
-		tke::scene->setResources(masterRenderer->resource.getPipeline("Panorama.Pipeline"), masterRenderer->resource.getPipeline("Deferred.Pipeline"), masterRenderer->resource.getPipeline("Mrt.Pipeline"));
+		tke::scene->setResources(masterRenderer);
 
 		mainCmd[0] = tke::vk::commandPool.allocate();
 		mainCmd[1] = tke::vk::commandPool.allocate();
@@ -85,14 +118,12 @@ struct MainWindow : tke::GuiWindow
 			progressRenderer->filename = "../renderer/progress.xml";
 			progressRenderer->loadXML();
 
-			titleImage = tke::createImage("../misc/title.jpg", true, false);
+			titleImage = tke::createImage("../misc/title.jpg", true);
 			progressRenderer->resource.setImage(titleImage, "Paste.Texture");
 
 			progressRenderer->resource.setImage(image, "Window.Image");
 
 			progressRenderer->setup();
-
-			pasteBuffer = (tke::UniformBuffer*)progressRenderer->resource.getBuffer("Paste.UniformBuffer");
 
 			for (int i = 0; i < 2; i++)
 			{
@@ -102,6 +133,8 @@ struct MainWindow : tke::GuiWindow
 				vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 				vkEndCommandBuffer(progressCmd[i]);
 			}
+
+			pasteBuffer = (tke::UniformBuffer*)progressRenderer->resource.getBuffer("Paste.UniformBuffer");
 
 			auto list = new tke::EventList;
 			list->events.push_back({
@@ -154,20 +187,23 @@ struct MainWindow : tke::GuiWindow
 
 		tke::vk::queueWaitIdle();
 	}
+
 	virtual void keyDownEvent(int key) override
 	{
-		tke::Window::keyDownEvent(key);
 		if (tke::uiAcceptedKey)
 			return;
+		tke::Window::keyDownEvent(key);
 
 		if (tke::scene->camera.keyDown(key))
 			return;
-
 	}
 
 	virtual void keyUpEvent(int key) override
 	{
+		if (tke::uiAcceptedKey)
+			return;
 		tke::Window::keyUpEvent(key);
+
 		if (tke::scene->camera.keyUp(key))
 			return;
 	}
@@ -344,8 +380,6 @@ struct MainWindow : tke::GuiWindow
 		// TODO : FIX TOOL
 		//if (currentTool) currentTool->update();
 
-		tke::scene->resetChange();
-
 		if (tke::needRedraw)
 		{
 			makeMainCmd();
@@ -401,7 +435,6 @@ int main()
 	pMainWindow = new MainWindow();
 	pMainWindow->create(resCx, resCy, "TK Engine Editor", true);
 	((MainWindow*)pMainWindow)->init();
-	tke::currentWindow = pMainWindow;
 	pMainWindow->show();
 	pMainWindow->startUiThread();
 
@@ -446,7 +479,7 @@ int main()
 		}
 	}, 0, nullptr);
 
-	tke::mainLoop();
+	tke::mainLoop(pMainWindow);
 
 	return 0;
 }

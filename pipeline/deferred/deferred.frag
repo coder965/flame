@@ -8,12 +8,12 @@
 
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
@@ -123,7 +123,7 @@ void main()
 	{
 		Light light = u_light.lights[i];
 		vec3 lightColor = light.color.rgb;
-		vec4 lightCoord = u_matrix.matrixView * light.coord;
+		vec4 lightCoord = u_matrix.view * light.coord;
 		vec3 lightDir = lightCoord.xyz - coordView * lightCoord.w;
 		if (light.coord.w == 1.0)
 		{
@@ -137,7 +137,7 @@ void main()
 	
 	float envrMipmaps = u_ambient.v.a;
 	
-	mat3 matrixViewInv3 = mat3(u_matrix.matrixViewInv);
+	mat3 matrixViewInv3 = mat3(u_matrix.viewInv);
 	vec3 irradiance = albedo * textureLod(envrSampler, panorama(matrixViewInv3 * normal), envrMipmaps).rgb;
 	vec3 radiance = smothness * F_schlick(spec, dotNV) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * envrMipmaps).rgb;
 	

@@ -49,6 +49,7 @@ namespace tke
 	struct CollisionGroup;
 	enum class SkyType
 	{
+		eNull,
 		eAtmosphereScattering,
 		ePanorama
 	};
@@ -87,12 +88,12 @@ namespace tke
 
 	struct MatrixUniformBufferStruct
 	{
-		glm::mat4 matrixProj;
-		glm::mat4 matrixProjInv;
-		glm::mat4 matrixView;
-		glm::mat4 matrixViewInv;
-		glm::mat4 matrixProjView;
-		glm::mat4 matrixProjViewRotate;
+		glm::mat4 proj;
+		glm::mat4 projInv;
+		glm::mat4 view;
+		glm::mat4 viewInv;
+		glm::mat4 projView;
+		glm::mat4 projViewRotate;
 		glm::vec4 frustumPlanes[6];
 		glm::vec2 viewportDim;
 	};
@@ -236,10 +237,8 @@ namespace tke
 
 		void clearActors();
 
-		void setResources(Pipeline *_panoramaPipeline, Pipeline *_deferredPipeline, Pipeline *_mrtPipeline);
+		void setResources(Renderer *r);
 		void update();
-
-		void resetChange();
 
 		void showWater();
 		void updateAnimation();

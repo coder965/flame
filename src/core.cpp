@@ -15,9 +15,6 @@ namespace tke
 
 	float aspect;
 
-	float mouseX;
-	float mouseY;
-
 	glm::mat4 matOrtho;
 	glm::mat4 matOrthoInv;
 	glm::mat4 matPerspective;
@@ -251,9 +248,9 @@ namespace tke
 		renderCs.unlock();
 	}
 
-	void mainLoop()
+	void mainLoop(Window *p)
 	{
-		assert(currentWindow);
+		currentWindow = p;
 
 		startUpTime = GetTickCount();
 
@@ -275,7 +272,11 @@ namespace tke
 				currentWindow->mouseEvent();
 				currentWindow->renderEvent();
 				currentWindow->frameCount++;
-				currentWindow->clearInput();
+				currentWindow->leftDown = false; 
+				currentWindow->leftUp = false;
+				currentWindow->mousePrevX = currentWindow->mouseX;
+				currentWindow->mousePrevY = currentWindow->mouseY;
+				currentWindow->mouseScroll = 0;
 			}
 		}
 	}

@@ -733,8 +733,8 @@ namespace tke
 		void maintain(int row) override;
 		void pushImage(Attachment *ai);
 		void getDescriptorSets();
-		void execute(VkCommandBuffer cmd, int index = 0);
 		void setup();
+		void execute(VkCommandBuffer cmd, int index = 0);
 	};
 }
 

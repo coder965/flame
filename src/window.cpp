@@ -54,96 +54,82 @@ namespace tke
 		DestroyWindow(hWnd);
 	}
 
-	void Window::clearInput()
-	{
-		leftDown = false; leftUp = false;
-		mousePrevX = mouseX;
-		mousePrevY = mouseY;
-		mouseScroll = 0;
-	}
-
-	void Window::receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-	{
-		static DWORD lastClickTime = 0;
-
-		switch (message)
-		{
-		case WM_LBUTTONDOWN:
-		{
-			if (nowTime - lastClickTime < 300)
-				doubleClick = true;
-			else
-				doubleClick = false;
-			lastClickTime = nowTime;
-			leftPressing = true;
-			leftDown = true;
-			leftUp = false;
-			mouseX = LOWORD(lParam);
-			mouseY = HIWORD(lParam);
-			SetCapture(hWnd);
-		}
-			break;
-		case WM_LBUTTONUP:
-			leftPressing = false;
-			leftDown = false;
-			leftUp = true;
-			ReleaseCapture();
-			break;
-		case WM_MBUTTONDOWN:
-			middlePressing = true;
-			mouseX = LOWORD(lParam);
-			mouseY = HIWORD(lParam);
-			SetCapture(hWnd);
-			break;
-		case WM_MBUTTONUP:
-			middlePressing = false;
-			ReleaseCapture();
-			break;
-		case WM_RBUTTONDOWN:
-			rightPressing = true;
-			mouseX = LOWORD(lParam);
-			mouseY = HIWORD(lParam);
-			SetCapture(hWnd);
-			break;
-		case WM_RBUTTONUP:
-			rightPressing = false;
-			ReleaseCapture();
-			break;
-		case WM_MOUSEMOVE:
-			mouseX = (short)LOWORD(lParam);
-			mouseY = (short)HIWORD(lParam);
-			break;
-		case WM_MOUSEWHEEL:
-			mouseScroll += (short)HIWORD(wParam);
-			break;
-		case WM_KEYDOWN:
-			keyDownEvent(wParam);
-			break;
-		case WM_KEYUP:
-			keyUpEvent(wParam);
-			break;
-		case WM_CHAR:
-			charEvent(wParam);
-			break;
-		case WM_ACTIVATE:
-			switch (LOWORD(wParam))
-			{
-			case WA_ACTIVE: case WA_CLICKACTIVE:
-				focus = true;
-				break;
-			case WA_INACTIVE:
-				focus = false;
-				break;
-			}
-			break;
-		}
-	}
-
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (currentWindow)
 		{
-			currentWindow->receiveInput(hWnd, message, wParam, lParam);
+			switch (message)
+			{
+			case WM_LBUTTONDOWN:
+			{
+				static int lastClickTime = 0;
+				if (nowTime - lastClickTime < 300)
+					currentWindow->doubleClick = true;
+				else
+					currentWindow->doubleClick = false;
+				lastClickTime = nowTime;
+				currentWindow->leftPressing = true;
+				currentWindow->leftDown = true;
+				currentWindow->leftUp = false;
+				currentWindow->mouseX = LOWORD(lParam);
+				currentWindow->mouseY = HIWORD(lParam);
+				SetCapture(hWnd);
+			}
+				break;
+			case WM_LBUTTONUP:
+				currentWindow->leftPressing = false;
+				currentWindow->leftDown = false;
+				currentWindow->leftUp = true;
+				ReleaseCapture();
+				break;
+			case WM_MBUTTONDOWN:
+				currentWindow->middlePressing = true;
+				currentWindow->mouseX = LOWORD(lParam);
+				currentWindow->mouseY = HIWORD(lParam);
+				SetCapture(hWnd);
+				break;
+			case WM_MBUTTONUP:
+				currentWindow->middlePressing = false;
+				ReleaseCapture();
+				break;
+			case WM_RBUTTONDOWN:
+				currentWindow->rightPressing = true;
+				currentWindow->mouseX = LOWORD(lParam);
+				currentWindow->mouseY = HIWORD(lParam);
+				SetCapture(hWnd);
+				break;
+			case WM_RBUTTONUP:
+				currentWindow->rightPressing = false;
+				ReleaseCapture();
+				break;
+			case WM_MOUSEMOVE:
+				currentWindow->mouseX = (short)LOWORD(lParam);
+				currentWindow->mouseY = (short)HIWORD(lParam);
+				break;
+			case WM_MOUSEWHEEL:
+				currentWindow->mouseScroll += (short)HIWORD(wParam);
+				break;
+			case WM_KEYDOWN:
+				currentWindow->keyDownEvent(wParam);
+				break;
+			case WM_KEYUP:
+				currentWindow->keyUpEvent(wParam);
+				break;
+			case WM_CHAR:
+				currentWindow->charEvent(wParam);
+				break;
+			case WM_ACTIVATE:
+				switch (LOWORD(wParam))
+				{
+				case WA_ACTIVE: case WA_CLICKACTIVE:
+					currentWindow->focus = true;
+					break;
+				case WA_INACTIVE:
+					currentWindow->focus = false;
+					break;
+				}
+				break;
+			}
 			currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
 		}
 

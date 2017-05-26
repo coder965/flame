@@ -4,12 +4,12 @@
 
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
@@ -34,8 +34,8 @@ void main()
 	outMaterialID = gl_InstanceIndex & 0xffff;
 	outTexcoord = inTexcoord;
 	mat4 modelMatrix = u_object.matrix[gl_InstanceIndex >> 16];
-	mat3 normalMatrix = mat3(u_matrix.matrixView * modelMatrix);
+	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view * modelMatrix)));
 	outNormal = normalMatrix * inNormal;
 	outTangent = normalMatrix * inTangent;
-	gl_Position = u_matrix.matrixProjView * modelMatrix * vec4(inVertex, 1);
+	gl_Position = u_matrix.projView * modelMatrix * vec4(inVertex, 1);
 }

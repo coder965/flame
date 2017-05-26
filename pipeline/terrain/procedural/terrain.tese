@@ -6,12 +6,12 @@
 
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
@@ -37,5 +37,5 @@ void main()
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
 	pos.y -= fbm2d((outUV + u_terrain.seed.xy) * 1000.0) * 300.0;
-	gl_Position = u_matrix.matrixProjView * pos;
+	gl_Position = u_matrix.projView * pos;
 }

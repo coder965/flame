@@ -4,12 +4,12 @@
 
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
@@ -45,10 +45,10 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 	vec4 midPoint = 0.5 * (p0 + p1);
 	float radius = distance(p0, p1) / 2.0;
 
-	vec4 v0 = u_matrix.matrixView * midPoint;
+	vec4 v0 = u_matrix.view * midPoint;
 
-	vec4 clip0 = (u_matrix.matrixProj * (v0 - vec4(radius, vec3(0.0))));
-	vec4 clip1 = (u_matrix.matrixProj * (v0 + vec4(radius, vec3(0.0))));
+	vec4 clip0 = (u_matrix.proj * (v0 - vec4(radius, vec3(0.0))));
+	vec4 clip1 = (u_matrix.proj * (v0 + vec4(radius, vec3(0.0))));
 
 	clip0 /= clip0.w;
 	clip1 /= clip1.w;
@@ -67,7 +67,7 @@ bool frustumCheck()
 	const float radius = max(u_terrain.data[index].ext, u_terrain.data[index].height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
 	pos.y -= texture(samplerHeight[index], uv).r * u_terrain.data[index].height;
-	pos = u_matrix.matrixProjView * pos;
+	pos = u_matrix.projView * pos;
 	pos = pos / pos.w;
 
 	for (int i = 0; i < 6; i++) 

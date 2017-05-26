@@ -4,6 +4,7 @@
 #include "vk.h"
 #include "math.h"
 #include "render.h"
+#include "window.h"
 
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)
@@ -42,9 +43,6 @@ namespace tke
 	extern int resCy;
 
 	extern float aspect;
-
-	extern float mouseX;
-	extern float mouseY;
 
 	extern glm::mat4 matOrtho;
 	extern glm::mat4 matOrthoInv;
@@ -94,7 +92,7 @@ namespace tke
 	void beginFrame();
 	void endFrame();
 
-	void mainLoop();
+	void mainLoop(Window *);
 }
 
 #endif

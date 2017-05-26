@@ -7,15 +7,16 @@ layout(push_constant) uniform PushConstant
 	uint passIndex;
 	vec4 color;
 }pc;
-
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
+	vec4 frustumPlanes[6];
+	vec2 viewportDim;
 }u_matrix;
 
 layout(binding = 1) uniform INSTANCE
@@ -27,5 +28,5 @@ layout(location = 0) in vec3 inVertex;
 
 void main()
 {
-	gl_Position = u_matrix.matrixProjView * u_instance[pc.passIndex].matrix[gl_InstanceIndex] * vec4(inVertex, 1);
+	gl_Position = u_matrix.projView * u_instance[pc.passIndex].matrix[gl_InstanceIndex] * vec4(inVertex, 1);
 }

@@ -6,12 +6,12 @@
 
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
@@ -28,7 +28,7 @@ layout(location = 1) out vec4 outNormalRoughness;
 
 void main()
 {
-	mat3 normalMatrix = mat3(u_matrix.matrixView);
+	mat3 normalMatrix = mat3(u_matrix.view);
 	
 	vec2 eps = vec2(0.02, 0.0);
 	vec2 uv = (inUV + vec2(u_terrain.seed.xy)) * 1000.0;

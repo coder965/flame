@@ -151,14 +151,19 @@ namespace tke
 	void Camera::move()
 	{
 		glm::vec3 coord;
-		float euler;
+		glm::vec3 euler;
 		if (!Controller::move(getEuler().x, coord, euler))
 			return;
-		if (m_mode == Mode::eFree)
+		switch (m_mode)
+		{
+		case Mode::eFree:
 			addCoord(coord);
-		else if (m_mode == Mode::eTargeting)
+			break;
+		case Mode::eTargeting:
 			setTarget(m_target + coord);
-		addEuler(glm::vec3(euler, 0.f, 0.f));
+			break;
+		}
+		addEuler(euler);
 	}
 
 	void Camera::load(std::ifstream &file)

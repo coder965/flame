@@ -42,8 +42,6 @@ namespace tke
 
 		~Window();
 		void create(int _cx, int _cy, const std::string &title, bool hasFrame = true);
-		void receiveInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-		void clearInput();
 		int getFPS();
 		void show();
 	};

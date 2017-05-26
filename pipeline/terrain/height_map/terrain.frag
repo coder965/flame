@@ -4,12 +4,12 @@
 
 layout(binding = 0) uniform MATRIX
 {
-	mat4 matrixProj;
-	mat4 matrixProjInv;
-	mat4 matrixView;
-	mat4 matrixViewInv;
-	mat4 matrixProjView;
-	mat4 matrixProjViewRotate;
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
@@ -43,7 +43,7 @@ float getHeight(vec2 UV)
 
 void main()
 {
-	mat3 normalMatrix = mat3(u_matrix.matrixView);
+	mat3 normalMatrix = mat3(u_matrix.view);
 	
 	vec2 step = vec2(1.0 / u_terrain.data[inIndex].mapDim, 0);
 	float eps = (u_terrain.data[inIndex].patchSize * u_terrain.data[inIndex].ext) * step.x;

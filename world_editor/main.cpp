@@ -27,19 +27,17 @@ struct MainWindow : tke::GuiWindow
 
 			pasteBuffer.create(sizeof(float));
 
-			static tke::ResourceBank _resources;
-			_resources.setImage(titleImage, "Paste.Texture");
-			_resources.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
-			_resources.setPipeline(&pastePipeline, "Paste.Pipeline");
-
 			progressRenderer = new tke::Renderer();
 			progressRenderer->filename = "../renderer/progress.xml";
 			progressRenderer->loadXML();
-			progressRenderer->pResource = &_resources;
 
-			pastePipeline.pResource = &_resources;
+			progressRenderer->resource.setImage(titleImage, "Paste.Texture");
+			progressRenderer->resource.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
+			progressRenderer->resource.setPipeline(&pastePipeline, "Paste.Pipeline");
 
-			_resources.setImage(image, "Window.Image");
+			pastePipeline.pResource = &progressRenderer->resource;
+
+			progressRenderer->resource.setImage(image, "Window.Image");
 
 			progressRenderer->setup();
 
@@ -107,9 +105,8 @@ void _thread(void*)
 	pMainWindow = new MainWindow;
 	pMainWindow->create(resCx, resCy, "TK Engine World Editor", false);
 	pMainWindow->init();
-	tke::currentWindow = pMainWindow;
 
-	tke::mainLoop();
+	tke::mainLoop(pMainWindow);
 }
 
 int main(int argc, char *argv[])
