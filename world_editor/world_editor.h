@@ -41,6 +41,7 @@ private slots:
 	void on_open_in_file_explorer();
 	void on_remove();
 	void on_view_game_explorer();
+	void on_view_output_widget();
 	void on_compile();
 private:
 	Ui::WorldEditorClass ui;
@@ -55,14 +56,16 @@ protected:
 
 struct GameExplorer;
 struct StageEditor;
-struct Monitor;
+struct MonitorWidget;
+struct OutputWidget;
 
 enum WindowType
 {
 	WindowTypeNull = -1,
 	WindowTypeGameExplorer = 0,
 	WindowTypeStageEditor = 1,
-	WindowTypeMonitor = 2
+	WindowTypeMonitorWidget = 2,
+	WindowTypeOutputWidget = 3
 };
 
 struct PipelineExt : tke::ExtType
@@ -83,8 +86,6 @@ struct StageExt : tke::ExtType
 	QTreeWidgetItem *item = nullptr;
 	StageEditor *editor = nullptr;
 	std::string text;
-	std::string outputText;
-	std::string compileText;
 	void setItemText();
 	void setChanged(bool _changed);
 	StageExt(tke::Stage *_p);
@@ -106,7 +107,6 @@ struct GameExplorer : QDockWidget
 	QTreeWidgetItem *pipelinesItem;
 	QTreeWidgetItem *renderersItem;
 	QTreeWidgetItem *scenesItem;
-	using QDockWidget::QDockWidget;
 
 	enum ItemType
 	{
@@ -122,6 +122,7 @@ struct GameExplorer : QDockWidget
 	tke::Stage *currentStage = nullptr;
 	tke::Renderer *currentRenderer = nullptr;
 
+	using QDockWidget::QDockWidget;
 	void on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev);
 	void on_item_dbClicked(QTreeWidgetItem *item, int column);
 	void setup();
@@ -135,10 +136,17 @@ struct StageEditor : QDockWidget
 
 	QLineNumberEdit *edit;
 	QFindWidget *findWidget;
-	QLineNumberEdit *outputText;
-	QTextBrowser *compileText;
 
 	void edit_changed();
+	void setup();
+	void closeEvent(QCloseEvent *event) override;
+};
+
+struct OutputWidget : QDockWidget
+{
+	QTextBrowser *text;
+
+	using QDockWidget::QDockWidget;
 	void setup();
 	void closeEvent(QCloseEvent *event) override;
 };

@@ -58,8 +58,8 @@
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="action_view_Game_Explorer"/>
-    <addaction name="actionOutput"/>
+    <addaction name="action_view_game_explorer"/>
+    <addaction name="action_view_output_widget"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -153,7 +153,7 @@
     <string>Remove</string>
    </property>
   </action>
-  <action name="action_view_Game_Explorer">
+  <action name="action_view_game_explorer">
    <property name="text">
     <string>Game Explorer</string>
    </property>
@@ -218,7 +218,7 @@
     <string>Compile</string>
    </property>
   </action>
-  <action name="actionOutput">
+  <action name="action_view_output_widget">
    <property name="text">
     <string>Output</string>
    </property>

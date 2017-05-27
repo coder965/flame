@@ -4,19 +4,21 @@ static WorldEditor *worldEditor = nullptr;
 
 static GameExplorer *gameExplorer = nullptr;
 static StageEditor *currentStageEditor = nullptr;
-static Monitor *currentMonitor = nullptr;
+static MonitorWidget *currentMonitorWidget = nullptr;
+static OutputWidget *outputWidget = nullptr;
 
-struct UserData : QObjectUserData
+struct QMyUserData : QObjectUserData
 {
 	int v;
-	UserData(int _v)
+	QMyUserData(int _v)
 	{
 		v = _v;
 	}
 };
-UserData *gameExplorerData = new UserData(WindowTypeGameExplorer);
-UserData *stageEditorData = new UserData(WindowTypeStageEditor);
-UserData *MonitorData = new UserData(WindowTypeMonitor);
+QMyUserData *qGameExplorerUserData = new QMyUserData(WindowTypeGameExplorer);
+QMyUserData *qStageEditorUserData = new QMyUserData(WindowTypeStageEditor);
+QMyUserData *qMonitorWidgetUserData = new QMyUserData(WindowTypeMonitorWidget);
+QMyUserData *qOutputWidgetUserData = new QMyUserData(WindowTypeOutputWidget);
 
 static WindowType getCurrentWindowType()
 {
@@ -31,7 +33,7 @@ static WindowType getCurrentWindowType()
 	}
 	if (dock)
 	{
-		auto data = (UserData*)dock->userData(0);
+		auto data = (QMyUserData*)dock->userData(0);
 		switch (data->v)
 		{
 		case WindowTypeStageEditor:
@@ -203,7 +205,7 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 
 void GameExplorer::setup()
 {
-	setUserData(0, gameExplorerData);
+	setUserData(0, qGameExplorerUserData);
 
 	setWindowTitle("Game Explorer");
 
@@ -266,7 +268,7 @@ void StageEditor::edit_changed()
 
 void StageEditor::setup()
 {
-	setUserData(0, stageEditorData);
+	setUserData(0, qStageEditorUserData);
 
 	auto _ext = (StageExt*)stage->ext;
 
@@ -279,22 +281,7 @@ void StageEditor::setup()
 	//ext->editor->findWidget = new QFindWidget;
 	//ext->editor->stageTab->setCornerWidget(ext->editor->findWidget->group);
 
-	auto bottomTab = new QTabWidget;
-	outputText = new QLineNumberEdit;
-	outputText->setLineWrapMode(QPlainTextEdit::LineWrapMode::NoWrap);
-	outputText->setPlainText(_ext->outputText.c_str());
-	bottomTab->addTab(outputText, "Output");
-	compileText = new QTextBrowser;
-	compileText->setLineWrapMode(QTextBrowser::LineWrapMode::NoWrap);
-	compileText->setPlainText(_ext->compileText.c_str());
-	bottomTab->addTab(compileText, "Compile");
-
-	auto splitter = new QSplitter;
-	splitter->setOrientation(Qt::Orientation::Vertical);
-	splitter->addWidget(edit);
-	splitter->addWidget(bottomTab);
-
-	setWidget(splitter);
+	setWidget(edit);
 }
 
 void StageEditor::closeEvent(QCloseEvent *event)
@@ -304,12 +291,28 @@ void StageEditor::closeEvent(QCloseEvent *event)
 	ext->editor = nullptr;
 }
 
-#include "pipeline_editor_yy_def.h"
+void OutputWidget::setup()
+{
+	setWindowTitle("Output");
+
+	text = new QTextBrowser;
+	text->setLineWrapMode(QTextBrowser::LineWrapMode::NoWrap);
+
+	setWidget(text);
+}
+
+void OutputWidget::closeEvent(QCloseEvent *event)
+{
+	delete outputWidget;
+	outputWidget = nullptr;
+}
+
+#include "stage_editor_yy_def.h"
 extern "C" {
-	extern FILE *pipeline_editor_yyin;
-	extern int pipeline_editor_yylex();
-	int pipeline_editor_yylex_destroy();
-	extern char *pipeline_editor_yytext;
+	extern FILE *stage_editor_yyin;
+	extern int stage_editor_yylex();
+	int stage_editor_yylex_destroy();
+	extern char *stage_editor_yytext;
 }
 
 WorldEditor::WorldEditor(QWidget *parent)
@@ -329,7 +332,8 @@ WorldEditor::WorldEditor(QWidget *parent)
 		connect(ui.action_save_all, &QAction::triggered, this, &WorldEditor::on_save_all);
 		connect(ui.action_open_in_file_explorer, &QAction::triggered, this, &WorldEditor::on_open_in_file_explorer);
 		connect(ui.action_remove, &QAction::triggered, this, &WorldEditor::on_remove);
-		connect(ui.action_view_Game_Explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
+		connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
+		connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
 		connect(ui.action_compile, &QAction::triggered, this, &WorldEditor::on_compile);
 	}
 
@@ -613,6 +617,14 @@ void WorldEditor::on_view_game_explorer()
 	addDockWidget(Qt::TopDockWidgetArea, gameExplorer);
 }
 
+void WorldEditor::on_view_output_widget()
+{
+	if (outputWidget) return;
+	outputWidget = new OutputWidget(this);
+	outputWidget->setup();
+	addDockWidget(Qt::BottomDockWidgetArea, outputWidget);
+}
+
 void WorldEditor::on_compile()
 {
 	auto currentWindowType = getCurrentWindowType();
@@ -681,7 +693,7 @@ void WorldEditor::compile_stage(tke::Stage *s)
 	save_stage(s);
 
 	std::stringstream ss(ext->text);
-	ext->outputText = "";
+	std::string stageText = "";
 
 	std::string line;
 	while (!ss.eof())
@@ -694,29 +706,30 @@ void WorldEditor::compile_stage(tke::Stage *s)
 		{
 			auto include = sm[1].str();
 			tke::OnceFileBuffer file(s->parent->filepath + "/" + s->filepath + "/" + include);
-			ext->outputText += file.data;
-			ext->outputText += "\n";
+			stageText += file.data;
+			stageText += "\n";
 		}
 		else
 		{
-			ext->outputText += line + "\n";
+			stageText += line + "\n";
 		}
 	}
 
 	std::ofstream file("temp.glsl");
-	file.write(ext->outputText.c_str(), ext->outputText.size());
+	file.write(stageText.c_str(), stageText.size());
 	file.close();
 
 	std::experimental::filesystem::path spv(s->parent->filepath + "/" + s->filename + ".spv");
 
 	tke::exec("cmd", "/C glslangValidator my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(s->type) + " -q -o " + spv.string() + " > output.txt");
 
-	tke::OnceFileBuffer output("output.txt");
+	tke::OnceFileBuffer validatorOutput("output.txt");
+	if (outputWidget)
 	{
 		auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 		std::stringstream ss;
 		ss << std::put_time(std::localtime(&t), "%Y-%m-%d %H:%M:%S");
-		ext->compileText = ss.str() + "\n" + "Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n" + std::string(output.data);
+		outputWidget->text->setPlainText((ss.str() + "\n" + "Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n" + std::string(validatorOutput.data)).c_str());
 	}
 
 	{
@@ -766,16 +779,26 @@ void WorldEditor::compile_stage(tke::Stage *s)
 		ReflectionManager reflections;
 		Reflection currentReflection;
 
-		pipeline_editor_yylex_destroy();
+		stage_editor_yylex_destroy();
 
-		pipeline_editor_yyin = fopen("output.txt", "rb");
-		int token = pipeline_editor_yylex();
+		stage_editor_yyin = fopen("output.txt", "rb");
+		int token = stage_editor_yylex();
 		std::string last_string;
 		while (token)
 		{
 			switch (token)
 			{
-			case PIPELINE_EDITOR_YY_COLON:
+			case STAGE_EDITOR_YY_ERROR:
+			{
+				QMessageBox::information(0, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
+				token = stage_editor_yylex();
+				int line;
+				if (token == STAGE_EDITOR_YY_VALUE)
+					line = std::stoi(stage_editor_yytext);
+				int v = line;
+			}
+				break;
+			case STAGE_EDITOR_YY_COLON:
 				if (currentReflectionType != eNull)
 				{
 					if (currentReflection.name != "") reflections.add(currentReflection);
@@ -784,20 +807,15 @@ void WorldEditor::compile_stage(tke::Stage *s)
 					last_string = "";
 				}
 				break;
-			case PIPELINE_EDITOR_YY_IDENTIFIER:
+			case STAGE_EDITOR_YY_IDENTIFIER:
 			{
-				std::string string(pipeline_editor_yytext);
-				if (string == "ERROR")
-				{
-					QMessageBox::information(0, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
-					token = 0;
-				}
+				std::string string(stage_editor_yytext);
 				last_string = string;
 			}
 				break;
-			case PIPELINE_EDITOR_YY_VALUE:
+			case STAGE_EDITOR_YY_VALUE:
 			{
-				std::string string(pipeline_editor_yytext);
+				std::string string(stage_editor_yytext);
 				if (currentReflectionType != eNull)
 				{
 					if (last_string == "offset")
@@ -813,21 +831,21 @@ void WorldEditor::compile_stage(tke::Stage *s)
 				}
 			}
 				break;
-			case PIPELINE_EDITOR_YY_UR_MK:
+			case STAGE_EDITOR_YY_UR_MK:
 				currentReflectionType = eUniform;
 				break;
-			case PIPELINE_EDITOR_YY_UBR_MK:
+			case STAGE_EDITOR_YY_UBR_MK:
 				currentReflectionType = eUniformBlock;
 				break;
-			case PIPELINE_EDITOR_YY_VAR_MK:
+			case STAGE_EDITOR_YY_VAR_MK:
 				currentReflectionType = eVertexAttribute;
 				break;
 			}
-			if (token) token = pipeline_editor_yylex();
+			token = stage_editor_yylex();
 		}
 		if (currentReflection.name != "") reflections.add(currentReflection);
-		fclose(pipeline_editor_yyin);
-		pipeline_editor_yyin = NULL;
+		fclose(stage_editor_yyin);
+		stage_editor_yyin = NULL;
 
 		s->descriptors.clear();
 		s->pushConstantRanges.clear();

@@ -35,7 +35,7 @@ public:
     QAction *actionCopy;
     QAction *actionPaste;
     QAction *action_remove;
-    QAction *action_view_Game_Explorer;
+    QAction *action_view_game_explorer;
     QAction *actionUpdate_Changes;
     QAction *actionGame;
     QAction *actionGame_2;
@@ -48,7 +48,7 @@ public:
     QAction *action_open_in_file_explorer;
     QAction *action_new_stage;
     QAction *action_compile;
-    QAction *actionOutput;
+    QAction *action_view_output_widget;
     QAction *actionBuild;
     QWidget *centralWidget;
     QMenuBar *menuBar;
@@ -90,8 +90,8 @@ public:
         actionPaste->setObjectName(QStringLiteral("actionPaste"));
         action_remove = new QAction(WorldEditorClass);
         action_remove->setObjectName(QStringLiteral("action_remove"));
-        action_view_Game_Explorer = new QAction(WorldEditorClass);
-        action_view_Game_Explorer->setObjectName(QStringLiteral("action_view_Game_Explorer"));
+        action_view_game_explorer = new QAction(WorldEditorClass);
+        action_view_game_explorer->setObjectName(QStringLiteral("action_view_game_explorer"));
         actionUpdate_Changes = new QAction(WorldEditorClass);
         actionUpdate_Changes->setObjectName(QStringLiteral("actionUpdate_Changes"));
         actionGame = new QAction(WorldEditorClass);
@@ -116,8 +116,8 @@ public:
         action_new_stage->setObjectName(QStringLiteral("action_new_stage"));
         action_compile = new QAction(WorldEditorClass);
         action_compile->setObjectName(QStringLiteral("action_compile"));
-        actionOutput = new QAction(WorldEditorClass);
-        actionOutput->setObjectName(QStringLiteral("actionOutput"));
+        action_view_output_widget = new QAction(WorldEditorClass);
+        action_view_output_widget->setObjectName(QStringLiteral("action_view_output_widget"));
         actionBuild = new QAction(WorldEditorClass);
         actionBuild->setObjectName(QStringLiteral("actionBuild"));
         centralWidget = new QWidget(WorldEditorClass);
@@ -168,8 +168,8 @@ public:
         menuEdit->addAction(actionCopy);
         menuEdit->addAction(actionPaste);
         menuEdit->addAction(action_remove);
-        menuView->addAction(action_view_Game_Explorer);
-        menuView->addAction(actionOutput);
+        menuView->addAction(action_view_game_explorer);
+        menuView->addAction(action_view_output_widget);
         menuDebug->addAction(actionUpdate_Changes);
         menuShader->addAction(action_compile);
         menuShader->addAction(actionBuild);
@@ -193,7 +193,7 @@ public:
         actionCopy->setText(QApplication::translate("WorldEditorClass", "Copy", Q_NULLPTR));
         actionPaste->setText(QApplication::translate("WorldEditorClass", "Paste", Q_NULLPTR));
         action_remove->setText(QApplication::translate("WorldEditorClass", "Remove", Q_NULLPTR));
-        action_view_Game_Explorer->setText(QApplication::translate("WorldEditorClass", "Game Explorer", Q_NULLPTR));
+        action_view_game_explorer->setText(QApplication::translate("WorldEditorClass", "Game Explorer", Q_NULLPTR));
         actionUpdate_Changes->setText(QApplication::translate("WorldEditorClass", "Update Changes", Q_NULLPTR));
         actionGame->setText(QApplication::translate("WorldEditorClass", "Game", Q_NULLPTR));
         actionGame_2->setText(QApplication::translate("WorldEditorClass", "Game", Q_NULLPTR));
@@ -206,7 +206,7 @@ public:
         action_open_in_file_explorer->setText(QApplication::translate("WorldEditorClass", "Open In Explorer", Q_NULLPTR));
         action_new_stage->setText(QApplication::translate("WorldEditorClass", "Stage", Q_NULLPTR));
         action_compile->setText(QApplication::translate("WorldEditorClass", "Compile", Q_NULLPTR));
-        actionOutput->setText(QApplication::translate("WorldEditorClass", "Output", Q_NULLPTR));
+        action_view_output_widget->setText(QApplication::translate("WorldEditorClass", "Output", Q_NULLPTR));
         actionBuild->setText(QApplication::translate("WorldEditorClass", "Build", Q_NULLPTR));
         menuFile->setTitle(QApplication::translate("WorldEditorClass", "File", Q_NULLPTR));
         menuNew->setTitle(QApplication::translate("WorldEditorClass", "New", Q_NULLPTR));
