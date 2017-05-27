@@ -28,8 +28,7 @@ struct MainWindow : tke::GuiWindow
 			pasteBuffer.create(sizeof(float));
 
 			progressRenderer = new tke::Renderer();
-			progressRenderer->filename = "../renderer/progress.xml";
-			progressRenderer->loadXML();
+			progressRenderer->loadXML("../renderer/progress.xml");
 
 			progressRenderer->resource.setImage(titleImage, "Paste.Texture");
 			progressRenderer->resource.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
@@ -111,7 +110,7 @@ void _thread(void*)
 
 int main(int argc, char *argv[])
 {
-	_beginthread(_thread, 0, nullptr);
+	//_beginthread(_thread, 0, nullptr);
 
 	QApplication a(argc, argv);
 	WorldEditor w;

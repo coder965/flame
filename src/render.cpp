@@ -401,31 +401,31 @@ namespace tke
 			return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 		}
 	}
-	VkShaderStageFlags _vkStage(StageFlags f)
+
+	Stage::Stage(Pipeline *_parent)
 	{
-		VkShaderStageFlags v = 0;
-		if ((int)f & (int)StageFlags::vert) v |= VK_SHADER_STAGE_VERTEX_BIT;
-		if ((int)f & (int)StageFlags::tesc) v |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-		if ((int)f & (int)StageFlags::tese) v |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-		if ((int)f & (int)StageFlags::geom) v |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		if ((int)f & (int)StageFlags::frag) v |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		return v;
+		parent = _parent;
+	}
+
+	Stage::~Stage()
+	{
+		delete ext;
 	}
 
 	Pipeline::~Pipeline()
 	{
 		for (int i = 0; i < 5; i++) delete stages[i];
+		delete ext;
 	}
 
-	void Pipeline::setFilename(const std::string &_filename)
+	void Pipeline::loadXML(const std::string &_filename)
 	{
 		filename = _filename;
 		std::experimental::filesystem::path p(filename);
 		filepath = p.parent_path().string();
-	}
+		if (filepath == "")
+			filepath = ".";
 
-	void Pipeline::loadXML()
-	{
 		AttributeTree at("pipeline");
 		at.loadXML(filename);
 		at.obtainFromAttributes(this, b);
@@ -446,10 +446,12 @@ namespace tke
 			}
 			else if (c->name == "stage")
 			{
-				auto s = new Stage;
+				auto s = new Stage(this);
 				c->obtainFromAttributes(s, s->b);
 				std::experimental::filesystem::path p(s->filename);
 				s->filepath = p.parent_path().string();
+				if (s->filepath == "")
+					s->filepath = ".";
 				auto ext = p.extension().string();
 				s->type = StageFlagByExt(ext);
 
@@ -538,16 +540,12 @@ namespace tke
 		return -1;
 	}
 
-	void Pipeline::create(const std::string &_f, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::create(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
-		setFilename(_f);
-
 		m_pVertexInputState = pVertexInputState;
 
 		m_renderPass = renderPass;
 		m_subpassIndex = subpassIndex;
-
-		loadXML();
 
 		if (cx == 0 && cy == 0)
 		{
@@ -617,14 +615,7 @@ namespace tke
 			VkPipelineShaderStageCreateInfo i = {};
 			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			i.pName = "main";
-			switch (s->type)
-			{
-			case StageFlags::vert: i.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
-			case StageFlags::tesc: i.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT; break;
-			case StageFlags::tese: i.stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT; break;
-			case StageFlags::geom: i.stage = VK_SHADER_STAGE_GEOMETRY_BIT; break;
-			case StageFlags::frag: i.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
-			}
+			i.stage = (VkShaderStageFlagBits)vkStage(s->type);
 			i.module = getShaderModule(filepath + "/" + s->filename + ".spv");
 			vkStages.push_back(i);
 
@@ -635,7 +626,7 @@ namespace tke
 				{
 					if (b.binding == d.binding)
 					{
-						b.stageFlags |= _vkStage(s->type);
+						b.stageFlags |= vkStage(s->type);
 						found = true;
 						break;
 					}
@@ -646,7 +637,7 @@ namespace tke
 				b.descriptorType = _vkDescriptorType(d.type);
 				b.binding = d.binding;
 				b.descriptorCount = d.count;
-				b.stageFlags = _vkStage(s->type);
+				b.stageFlags = vkStage(s->type);
 				vkDescriptors.push_back(b);
 			}
 			for (auto &p : s->pushConstantRanges)
@@ -656,7 +647,7 @@ namespace tke
 				{
 					if (r.offset == p.offset & r.size == p.size)
 					{
-						r.stageFlags |= _vkStage(s->type);
+						r.stageFlags |= vkStage(s->type);
 						found = true;
 						break;
 					}
@@ -666,7 +657,7 @@ namespace tke
 				VkPushConstantRange r = {};
 				r.offset = p.offset;
 				r.size = p.size;
-				r.stageFlags = _vkStage(s->type);
+				r.stageFlags = vkStage(s->type);
 				vkPushConstantRanges.push_back(r);
 			}
 		}
@@ -877,6 +868,12 @@ namespace tke
 		}
 
 		vk::descriptorPool.update();
+	}
+
+	void Pipeline::create(const std::string &_filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	{
+		loadXML(_filename);
+		create(pVertexInputState, renderPass, subpassIndex);
 	}
 
 	Drawcall::Drawcall() {}
@@ -1195,8 +1192,10 @@ namespace tke
 		cy = _cy;
 	}
 
-	void Renderer::loadXML()
+	void Renderer::loadXML(const std::string &_filename)
 	{
+		filename = _filename;
+
 		AttributeTree at("renderer");
 		at.loadXML(filename);
 

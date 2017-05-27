@@ -861,6 +861,8 @@ namespace tke
 			std::experimental::filesystem::path p(filename);
 
 			std::string dstFilepath = p.parent_path().string();
+			if (dstFilepath == "")
+				dstFilepath = ".";
 
 			std::ofstream file(filename);
 
@@ -1085,6 +1087,8 @@ namespace tke
 		auto pModel = new Model;
 		pModel->name = p.filename().string();
 		pModel->filepath = p.parent_path().string();
+		if (pModel->filepath == "")
+			pModel->filepath = ".";
 		load_func(pModel, file);
 
 		return pModel;
@@ -1114,6 +1118,8 @@ namespace tke
 		auto pAnimation = new AnimationTemplate;
 		pAnimation->name = p.filename().string();
 		pAnimation->filepath = p.parent_path().string();
+		if (pAnimation->filepath == "")
+			pAnimation->filepath = ".";
 		load_func(pAnimation, file);
 
 		return pAnimation;

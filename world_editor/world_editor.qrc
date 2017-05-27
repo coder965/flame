@@ -1,7 +1,8 @@
 <RCC>
   <qresource prefix="WorldEditor">
+    <file>../misc/remove.png</file>
+    <file>../misc/save_all.png</file>
     <file>../misc/add.png</file>
-    <file>../misc/delete.png</file>
     <file>../misc/down.png</file>
     <file>../misc/new.png</file>
     <file>../misc/open.png</file>

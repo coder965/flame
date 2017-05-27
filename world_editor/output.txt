@@ -1,0 +1,14 @@
+temp.glsl
+Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
+ERROR: temp.glsl:8: '' :  syntax error, unexpected INTCONSTANT
+ERROR: 1 compilation errors.  No code generated.
+
+
+Uniform reflection:
+
+Uniform block reflection:
+
+Vertex attribute reflection:
+gl_VertexIndex: offset 0, type 1404, size 0, index 0, binding -1
+
+SPIR-V is not generated for failed compile or link

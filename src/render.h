@@ -143,7 +143,7 @@ namespace tke
 		unsigned char getPixel(int x, int y, int off) const;
 	};
 
-	REFLECTABLE enum class StageFlags : int
+	REFLECTABLE enum class StageType : int
 	{
 		null,
 		REFLe vert = 1 << 0,
@@ -154,11 +154,11 @@ namespace tke
 	};
 
 	const int StageTypes[] = {
-		(int)StageFlags::vert,
-		(int)StageFlags::tesc,
-		(int)StageFlags::tese,
-		(int)StageFlags::geom,
-		(int)StageFlags::frag
+		(int)StageType::vert,
+		(int)StageType::tesc,
+		(int)StageType::tese,
+		(int)StageType::geom,
+		(int)StageType::frag
 	};
 
 	const std::string StageNames[] = {
@@ -169,14 +169,39 @@ namespace tke
 		"frag"
 	};
 
-	inline StageFlags StageFlagByExt(const std::string &ext)
+	inline int StageIndexByType(StageType t)
 	{
-		if (ext == ".vert") return StageFlags::vert;
-		if (ext == ".tesc") return StageFlags::tesc;
-		if (ext == ".tese") return StageFlags::tese;
-		if (ext == ".geom") return StageFlags::geom;
-		if (ext == ".frag") return StageFlags::frag;
-		return StageFlags::vert;
+		for (int i = 0; i < 5; i++)
+		{
+			if (StageTypes[i] == (int)t)
+				return i;
+		}
+	}
+
+	inline const std::string StageNameByType(StageType t)
+	{
+		return StageNames[StageIndexByType(t)];
+	}
+
+	inline StageType StageFlagByExt(const std::string &ext)
+	{
+		if (ext == ".vert") return StageType::vert;
+		if (ext == ".tesc") return StageType::tesc;
+		if (ext == ".tese") return StageType::tese;
+		if (ext == ".geom") return StageType::geom;
+		if (ext == ".frag") return StageType::frag;
+		return StageType::null;
+	}
+
+	inline VkShaderStageFlags vkStage(StageType f)
+	{
+		VkShaderStageFlags v = 0;
+		if ((int)f & (int)StageType::vert) v |= VK_SHADER_STAGE_VERTEX_BIT;
+		if ((int)f & (int)StageType::tesc) v |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+		if ((int)f & (int)StageType::tese) v |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+		if ((int)f & (int)StageType::geom) v |= VK_SHADER_STAGE_GEOMETRY_BIT;
+		if ((int)f & (int)StageType::frag) v |= VK_SHADER_STAGE_FRAGMENT_BIT;
+		return v;
 	}
 
 	REFLECTABLE enum class AspectFlags : int
@@ -294,18 +319,23 @@ namespace tke
 		REFLv std::string name;
 	};
 
+	struct Pipeline;
+
 	REFLECTABLE struct Stage
 	{
 		REFL_BANK;
 
 		REFLv std::string filename;
 		std::string filepath;
-		StageFlags type;
+		StageType type;
 
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
 
+		Pipeline *parent;
 		ExtType *ext = nullptr;
+		Stage(Pipeline *_parent);
+		~Stage();
 	};
 
 	REFLECTABLE enum class SamplerType : int
@@ -382,11 +412,21 @@ namespace tke
 
 		ExtType *ext = nullptr;
 
+		inline bool isFullOfStage()
+		{
+			for (int i = 0; i < 5; i++)
+			{
+				if (stages[i])
+					return false;
+			}
+			return true;
+		}
+
 		~Pipeline();
-		void setFilename(const std::string &_filename);
-		void loadXML();
+		void loadXML(const std::string &_filename);
 		void saveXML();
 		int descriptorPosition(const std::string &name);
+		void create(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 		void create(const std::string &filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 	};
 
@@ -454,7 +494,7 @@ namespace tke
 
 		REFLv std::string model_name;
 
-		REFLv StageFlags push_constant_stage = StageFlags::vert;
+		REFLv StageType push_constant_stage = StageType::null;
 		REFLv int push_constant_offset = 0;
 		REFLe PushConstantType push_constant_type = PushConstantType::int_t;
 		void *push_constant_value = nullptr;
@@ -729,7 +769,7 @@ namespace tke
 			p->parent = this;
 			return p;
 		}
-		void loadXML();
+		void loadXML(const std::string &_filename);
 		void saveXML();
 		void maintain(int row) override;
 		void pushImage(Attachment *ai);
