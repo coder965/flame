@@ -165,10 +165,8 @@ void TransformTool::update()
 	}
 	if (m_pTransformer)
 	{
-		{
-			auto data = glm::vec4(tke::mouseX, tke::mouseY, 5.f / tke::resCx, 5.f / tke::resCy);
-			TransformToolData::rectBuffer.update(&data, &tke::stagingBuffer);
-		}
+		// TODO : USE WINDOW BINDING MOUSE POSITION
+		//TransformToolData::rectBuffer.update(&glm::vec4(tke::mouseX, tke::mouseY, 5.f / tke::resCx, 5.f / tke::resCy), &tke::stagingBuffer);
 
 		if (m_pTransformer->m_changed || tke::scene->camera.m_changed) TransformToolData::needUpdataUniformBuffer = true;
 
@@ -290,7 +288,8 @@ bool TransformTool::mouseDown(int x, int y)
 		m_axis = tke::Transformer::Axis(index);
 	}
 
-	m_prevCoord = glm::unProject(glm::vec3(tke::mouseX, tke::mouseY, (m_projCoord.z + 1.0f) / 2.0f), tke::scene->camera.getMat(), *tke::pMatProj, glm::vec4(-1.f, -1.f, 2.f, 2.f));;
+	// TODO : USE WINDOW BINDING MOUSE POSITION
+	//m_prevCoord = glm::unProject(glm::vec3(tke::mouseX, tke::mouseY, (m_projCoord.z + 1.0f) / 2.0f), tke::scene->camera.getMat(), *tke::pMatProj, glm::vec4(-1.f, -1.f, 2.f, 2.f));
 	m_prevCoord -= m_pTransformer->getCoord();
 
 	switch (m_type)
@@ -323,7 +322,9 @@ void TransformTool::mouseMove()
 	if (!m_pTransformer || m_axis == tke::Transformer::Axis::eNull)
 		return;
 
-	glm::vec3 result = glm::unProject(glm::vec3(tke::mouseX, tke::mouseY, (m_projCoord.z + 1.0f) / 2.0f), tke::scene->camera.getMat(), *tke::pMatProj, glm::vec4(-1.f, -1.f, 2.f, 2.f));
+	// TODO : USE WINDOW BINDING MOUSE POSITION
+	//glm::vec3 result = glm::unProject(glm::vec3(tke::mouseX, tke::mouseY, (m_projCoord.z + 1.0f) / 2.0f), tke::scene->camera.getMat(), *tke::pMatProj, glm::vec4(-1.f, -1.f, 2.f, 2.f));
+	glm::vec3 result;
 
 	switch (m_type)
 	{

@@ -1,10 +1,11 @@
 #ifndef __TKE__
 #define __TKE__
 
+#include <Windows.h>
+
 #include "vk.h"
 #include "math.h"
 #include "render.h"
-#include "window.h"
 
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)
@@ -80,19 +81,54 @@ namespace tke
 
 	Err init(const char *appName, int rcx, int rcy);
 
-	extern CriticalSection renderCs;
-	extern VkSemaphore imageAvailable;
-	extern unsigned int imageIndex;
-	extern VkEvent renderFinished;
-	extern VkFence frameDone;
-
 	extern thread_local int startUpTime;
 	extern thread_local int nowTime;
 
-	void beginFrame();
-	void endFrame();
+	extern VkRenderPass windowRenderPass;
 
-	void mainLoop(Window *);
+	struct Window
+	{
+		int cx = 0, cy = 0;
+
+		bool doubleClick = false;
+		bool leftDown = false, leftUp = false;
+		bool leftPressing = false, middlePressing = false, rightPressing = false;
+		int mouseX = 0, mouseY = 0;
+		int mousePrevX = 0, mousePrevY = 0;
+		int mouseScroll = 0;
+		bool focus = false;
+
+		HWND hWnd = nullptr;
+
+		int frameCount = 0;
+
+		VkSurfaceKHR surface;
+		VkSwapchainKHR swapchain;
+		Image image[2];
+		VkFramebuffer framebuffer[2];
+		vk::CommandPool commandPool;
+
+		VkSemaphore imageAvailable;
+		unsigned int imageIndex = 0;
+		VkEvent renderFinished;
+		VkFence frameDone;
+
+		bool die = false;
+
+		virtual void keyDownEvent(int);
+		virtual void keyUpEvent(int);
+		virtual void charEvent(int);
+		virtual void mouseEvent();
+		virtual void renderEvent();
+		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+		void create(int _cx, int _cy, const std::string &title, bool hasFrame = true);
+		void destroy(bool byCode);
+		int getFPS();
+		void beginFrame();
+		void endFrame();
+		void run();
+	};
 }
 
 #endif

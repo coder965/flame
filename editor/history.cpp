@@ -68,7 +68,8 @@ ObjectCreationHistory::ObjectCreationHistory(tke::Object *pObject, CreationType 
 	rightSpeed = pObject->rightSpeed;
 	upSpeed = pObject->upSpeed;
 	downSpeed = pObject->downSpeed;
-	turnSpeed = pObject->turnSpeed;
+	//turnSpeed = pObject->turnSpeed;
+	// TODO : FIX HISTORY
 
 	type = Type::eObjectCreation;
 }
@@ -93,7 +94,8 @@ void ObjectCreationHistory::operate(Operate op)
 		pObject->rightSpeed = rightSpeed;
 		pObject->upSpeed = upSpeed;
 		pObject->downSpeed = downSpeed;
-		pObject->turnSpeed = turnSpeed;
+		//pObject->turnSpeed = turnSpeed;
+		// TODO : FIX HISTORY
 		tke::scene->addObject(pObject, id);
 	}
 	else

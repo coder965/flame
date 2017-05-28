@@ -68,7 +68,6 @@ namespace tke
 		void create(size_t size);
 	};
 
-
 	REFLECTABLE enum class ImageFormat : int
 	{
 		null,
@@ -122,7 +121,7 @@ namespace tke
 		VkImageViewType m_viewType = VK_IMAGE_VIEW_TYPE_2D;
 
 		std::vector<View> views;
-		std::vector<VkDescriptorImageInfo*> infos;
+		std::list<VkDescriptorImageInfo> infos;
 
 		std::string filename;
 
@@ -132,12 +131,12 @@ namespace tke
 
 		unsigned char *m_data = nullptr;
 
-		~Image();
 		int getWidth(int mipmapLevel = 0) const;
 		int getHeight(int mipmapLevel = 0) const;
 		void transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout);
 		void fillData(int level, std::uint8_t *data, size_t size, VkImageAspectFlags aspect);
 		void create(int w, int h, VkFormat format, VkImageUsageFlags usage, std::uint8_t *data = nullptr, size_t size = 0, VkImageAspectFlags aspect = 0);
+		void destroy();
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		unsigned char getPixel(int x, int y, int off) const;

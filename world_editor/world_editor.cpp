@@ -379,7 +379,7 @@ struct MonitorWindow : tke::GuiWindow
 			progressCmd[i] = tke::vk::commandPool.allocate();
 			tke::vk::beginCommandBuffer(progressCmd[i]);
 			progressRenderer->execute(progressCmd[i], i);
-			vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			vkCmdSetEvent(progressCmd[i], renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 			vkEndCommandBuffer(progressCmd[i]);
 		}
 
@@ -399,27 +399,21 @@ struct MonitorWindow : tke::GuiWindow
 		tke::addEventList(list);
 	}
 
-	virtual void drawUi() override
+	virtual void renderEvent() override
 	{
+		beginFrame();
+
+		beginUi();
 		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::TextUnformatted(tke::majorProgressText().c_str());
 		ImGui::TextUnformatted(tke::minorProgressText().c_str());
+		ImGui::TextUnformatted("123");
 		ImGui::End();
-	}
+		endUi();
 
-	virtual void renderEvent() override
-	{
-		tke::beginFrame();
-
-		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd[tke::imageIndex] };
-		tke::vk::queueSubmitFence(tke::imageAvailable, 2, cmds, tke::frameDone);
-
-		tke::endFrame();
-	}
-
-	~MonitorWindow()
-	{
-
+		VkCommandBuffer cmds[2] = { progressCmd[imageIndex], uiCmd };
+		tke::vk::queueSubmitFence(imageAvailable, 2, cmds, frameDone);
+		endFrame();
 	}
 };
 
@@ -427,11 +421,12 @@ static void _monitor_thread(void *p)
 {
 	auto window = new MonitorWindow;
 	window->create(tke::resCx, tke::resCy, "TK Engine World Editor", false);
+	window->initUi();
 	window->init();
 
 	*(MonitorWindow**)p = window;
 
-	tke::mainLoop(window);
+	window->run();
 }
 
 void MonitorWidget::setup()

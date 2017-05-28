@@ -946,8 +946,8 @@ namespace tke
 		}
 		if (needUpdateVertexBuffer)
 		{
-			vertexBuffer.destory();
-			indexBuffer.destory();
+			if (vertexBuffer.m_buffer) vertexBuffer.destory();
+			if (indexBuffer.m_buffer) indexBuffer.destory();
 
 			std::vector<Vertex> vertexs;
 			std::vector<int> indices;

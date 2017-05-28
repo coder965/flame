@@ -4,8 +4,8 @@
 #include <vector>
 #include "..\..\..\imgui-master\imgui.h"
 
+#include "core.h"
 #include "render.h"
-#include "window.h"
 
 namespace tke
 {
@@ -108,19 +108,19 @@ namespace tke
 
 	struct GuiWindow : Window
 	{
+		ImGuiContext *uiContext = nullptr;
+		VkCommandBuffer uiCmd;
+
 		virtual void keyDownEvent(int) override;
 		virtual void keyUpEvent(int) override;
 		virtual void charEvent(int) override;
 
-		void startUiThread();
-		virtual void drawUi();
+		void initUi();
+		void beginUi();
+		void endUi();
 	};
 
 	void guiPushIcon(Image *image);
-	void guiSetupIcons();
-	void initGui();
-
-	extern VkCommandBuffer *uiCmd;
 }
 
 #endif

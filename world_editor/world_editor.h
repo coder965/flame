@@ -29,7 +29,6 @@
 #include "../src/qLineNumberEdit.h"
 #include "../src/qFindWidget.h"
 #include "../src/core.h"
-#include "../src/window.h"
 #include "../src/gui.h"
 #include "../src/event.h"
 #include "../src/image.file.h"

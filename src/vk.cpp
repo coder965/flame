@@ -124,6 +124,13 @@ namespace tke
 			assert(res == VK_SUCCESS);
 		}
 
+		void CommandPool::destroy()
+		{
+			device.cs.lock();
+			vkDestroyCommandPool(device.v, pool, nullptr);
+			device.cs.unlock();
+		}
+
 		VkCommandBuffer CommandPool::allocate()
 		{
 			VkCommandBufferAllocateInfo allocInfo = {};
@@ -431,6 +438,13 @@ namespace tke
 			assert(res == VK_SUCCESS);
 			device.cs.unlock();
 			return view;
+		}
+
+		void destroyImageView(VkImageView view)
+		{
+			device.cs.lock();
+			vkDestroyImageView(device.v, view, nullptr);
+			device.cs.unlock();
 		}
 
 		VkSampler plainSampler; 
@@ -837,6 +851,13 @@ namespace tke
 			return fence;
 		}
 
+		void destroyFence(VkFence fence)
+		{
+			device.cs.lock();
+			vkDestroyFence(device.v, fence, nullptr);
+			device.cs.unlock();
+		}
+
 		VkEvent createEvent()
 		{
 			VkEvent event;
@@ -852,6 +873,13 @@ namespace tke
 			return event;
 		}
 
+		void destroyEvent(VkEvent event)
+		{
+			device.cs.lock();
+			vkDestroyEvent(device.v, event, nullptr);
+			device.cs.unlock();
+		}
+
 		VkSemaphore createSemaphore()
 		{
 			VkSemaphore semaphore;
@@ -865,6 +893,13 @@ namespace tke
 			device.cs.unlock();
 
 			return semaphore;
+		}
+
+		void destroySemaphore(VkSemaphore semaphore)
+		{
+			device.cs.lock();
+			vkDestroySemaphore(device.v, semaphore, nullptr);
+			device.cs.unlock();
 		}
 
 		void waitFence(VkFence fence)

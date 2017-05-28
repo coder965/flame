@@ -28,6 +28,7 @@ namespace tke
 			VkCommandPool pool;
 
 			void create();
+			void destroy();
 			VkCommandBuffer allocate();
 			VkCommandBuffer allocateSecondary();
 			void free(VkCommandBuffer cmd);
@@ -54,6 +55,7 @@ namespace tke
 		size_t createImage(std::uint32_t w, std::uint32_t h, std::uint32_t mipmapLevels, std::uint32_t arrayLayers, VkFormat format, VkImageUsageFlags usage, VkImage &image, VkDeviceMemory &memory);
 		void destroyImage(VkImage image, VkDeviceMemory memory);
 		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount);
+		void destroyImageView(VkImageView view);
 
 		extern VkSampler plainSampler;
 		extern VkSampler plainUnnormalizedSampler;
@@ -103,8 +105,13 @@ namespace tke
 		void destroySwapchain(VkSurfaceKHR surface, VkSwapchainKHR swapchain);
 
 		VkFence createFence();
+		void destroyFence(VkFence fence);
+
 		VkEvent createEvent();
+		void destroyEvent(VkEvent event);
+
 		VkSemaphore createSemaphore();
+		void destroySemaphore(VkSemaphore semaphore);
 
 		void waitFence(VkFence);
 

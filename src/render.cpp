@@ -17,8 +17,8 @@ namespace tke
 
 	void Buffer::destory()
 	{
-		if (m_buffer && m_memory)
-			vk::destroyBuffer(m_buffer, m_memory);
+		vk::destroyBuffer(m_buffer, m_memory);
+		m_buffer = 0; // this is the mark that if a buffer is valid
 	}
 
 	void StagingBuffer::create(size_t size)
@@ -103,12 +103,6 @@ namespace tke
 		NonStagingBufferAbstract::create(size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT);
 	}
 
-	Image::~Image()
-	{
-		if (m_image && m_memory)
-			vk::destroyImage(m_image, m_memory);
-	}
-
 	void Image::transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout)
 	{
 		vk::commandPool.cmdTransitionImageLayout(m_image, aspect, m_layout, layout, level);
@@ -175,6 +169,17 @@ namespace tke
 		transitionLayout(0, aspect, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
+	void Image::destroy()
+	{
+		infos.clear();
+		for (auto &v : views)
+			vk::destroyImageView(v.view);
+		views.clear();
+		if (type != Type::eSwapchain)
+			vk::destroyImage(m_image, m_memory);
+		m_image = 0; // this is the mark that if a image is valid
+	}
+
 	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		if (aspect == 0)
@@ -205,17 +210,17 @@ namespace tke
 	VkDescriptorImageInfo *Image::getInfo(VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		auto view = getView(aspect, baseLevel, levelCount, baseLayer, layerCount);
-		for (auto info : infos)
+		for (auto &info : infos)
 		{
-			if (info->imageView == view && info->sampler == sampler)
-				return info;
+			if (info.imageView == view && info.sampler == sampler)
+				return &info;
 		}
-		auto info = new VkDescriptorImageInfo;
-		info->imageView = view;
-		info->sampler = sampler;
-		info->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		VkDescriptorImageInfo info;
+		info.imageView = view;
+		info.sampler = sampler;
+		info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		infos.push_back(info);
-		return info;
+		return &infos.back();
 	}
 
 	int Image::getWidth(int mipmapLevel) const

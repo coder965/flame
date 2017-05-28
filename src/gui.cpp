@@ -5,6 +5,8 @@
 
 namespace tke
 {
+	static thread_local GuiWindow *window;
+
 	bool uiAcceptedMouse = false;
 	bool uiAcceptedKey = false;
 
@@ -409,168 +411,6 @@ namespace tke
 		return getClipBoard();
 	}
 
-	static vk::CommandPool commandPool;
-	static Pipeline g_Pipeline;
-	VkCommandBuffer *uiCmd;
-	static VkCommandBuffer cmd[2][2];
-	static int cmdIndex = 1;
-
-	static void _guiRenderer(ImDrawData* draw_data)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		if ((int)(io.DisplaySize.x * io.DisplayFramebufferScale.x) == 0 || (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y) == 0)
-			return;
-		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
-
-		renderCs.lock();
-
-		static VertexBuffer	vertexBuffer;
-		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
-		if (!vertexBuffer.m_buffer || vertexBuffer.m_size < vertex_size)
-		{
-			vertexBuffer.destory();
-			vertexBuffer.create(vertex_size);
-		}
-
-		static IndexBuffer indexBuffer;
-		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-		if (!indexBuffer.m_buffer || indexBuffer.m_size < index_size)
-		{
-			indexBuffer.destory();
-			indexBuffer.create(index_size);
-		}
-
-		static StagingBuffer stagingBuffer;
-		auto totalSize = vertex_size + index_size;
-		if (stagingBuffer.m_size < totalSize)
-		{
-			stagingBuffer.destory();
-			stagingBuffer.create(totalSize);
-		}
-
-		{
-			auto map = vk::mapMemory(stagingBuffer.m_memory, 0, totalSize);
-			auto vtx_dst = (ImDrawVert*)map;
-			auto idx_dst = (ImDrawIdx*)((char*)map + vertex_size);
-			for (int n = 0; n < draw_data->CmdListsCount; n++)
-			{
-				const ImDrawList* cmd_list = draw_data->CmdLists[n];
-				memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-				memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-				vtx_dst += cmd_list->VtxBuffer.Size;
-				idx_dst += cmd_list->IdxBuffer.Size;
-			}
-			vk::unmapMemory(stagingBuffer.m_memory);
-
-			commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
-			commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
-		}
-
-		auto pWindow = (GuiWindow*)currentWindow;
-
-		for (int f = 0; f < 2; f++)
-		{
-			vkResetCommandBuffer(cmd[cmdIndex][f], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-			vk::beginCommandBuffer(cmd[cmdIndex][f]);
-
-			vkCmdWaitEvents(cmd[cmdIndex][f], 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-
-			vkCmdBeginRenderPass(cmd[cmdIndex][f], &vk::renderPassBeginInfo(windowRenderPass, pWindow->framebuffer[f], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
-
-			VkDeviceSize vertex_offset[1] = { 0 };
-			vkCmdBindVertexBuffers(cmd[cmdIndex][f], 0, 1, &vertexBuffer.m_buffer, vertex_offset);
-			vkCmdBindIndexBuffer(cmd[cmdIndex][f], indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
-
-			vkCmdPushConstants(cmd[cmdIndex][f], g_Pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
-
-			vkCmdBindPipeline(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipeline);
-			vkCmdBindDescriptorSets(cmd[cmdIndex][f], VK_PIPELINE_BIND_POINT_GRAPHICS, g_Pipeline.m_pipelineLayout, 0, 1, &g_Pipeline.m_descriptorSet, 0, NULL);
-
-			int vtx_offset = 0;
-			int idx_offset = 0;
-			for (int n = 0; n < draw_data->CmdListsCount; n++)
-			{
-				const ImDrawList* cmd_list = draw_data->CmdLists[n];
-				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-				{
-					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-					if (pcmd->UserCallback)
-					{
-						pcmd->UserCallback(cmd_list, pcmd);
-						pcmd->TextureId;
-					}
-					else
-					{
-						VkRect2D scissor;
-						scissor.offset.x = (int32_t)(pcmd->ClipRect.x);
-						scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
-						scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
-						scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
-						vkCmdSetScissor(cmd[cmdIndex][f], 0, 1, &scissor);
-						vkCmdDrawIndexed(cmd[cmdIndex][f], pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
-					}
-					idx_offset += pcmd->ElemCount;
-				}
-				vtx_offset += cmd_list->VtxBuffer.Size;
-			}
-
-			vkCmdEndRenderPass(cmd[cmdIndex][f]);
-
-			vkEndCommandBuffer(cmd[cmdIndex][f]);
-		}
-	}
-
-	void _thread(void*)
-	{
-		for (;;)
-		{
-			Sleep(100);
-
-			auto pWindow = (GuiWindow*)currentWindow;
-
-			uiAcceptedMouse = false;
-			uiAcceptedKey = false;
-
-			ImGuiIO& io = ImGui::GetIO();
-
-			io.DisplaySize = ImVec2((float)pWindow->cx, (float)pWindow->cy);
-			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
-
-			io.DeltaTime = (float)(1.0f / 60.0f);
-
-			if (pWindow->focus)
-				io.MousePos = ImVec2((float)pWindow->mouseX, (float)pWindow->mouseY);
-			else
-				io.MousePos = ImVec2(-1, -1);
-
-			io.MouseDown[0] = pWindow->leftPressing;
-			io.MouseDown[1] = pWindow->rightPressing;
-			io.MouseDown[2] = pWindow->middlePressing;
-
-			io.MouseWheel = pWindow->mouseScroll / 120;
-
-			ImGui::NewFrame();
-
-			pWindow->drawUi();
-
-			ImGui::Render();
-
-			uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
-			uiAcceptedKey = ImGui::IsAnyItemActive();
-
-			uiCmd = cmd[cmdIndex];
-			cmdIndex = 1 - cmdIndex;
-			renderCs.unlock();
-		}
-	}
-
-	void GuiWindow::startUiThread()
-	{
-		_beginthread(_thread, 0, nullptr);
-	}
-
-	void GuiWindow::drawUi() {}
-
 	void GuiWindow::keyDownEvent(int wParam)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -602,37 +442,176 @@ namespace tke
 			io.AddInputCharacter((unsigned short)wParam);
 	}
 
+	static Pipeline pipeline;
+
+	static void _guiRenderer(ImDrawData* draw_data)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		if ((int)(io.DisplaySize.x * io.DisplayFramebufferScale.x) == 0 || (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y) == 0)
+			return;
+		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+
+		static VertexBuffer	vertexBuffer;
+		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
+		if (!vertexBuffer.m_buffer || vertexBuffer.m_size < vertex_size)
+		{
+			if (vertexBuffer.m_buffer) vertexBuffer.destory();
+			vertexBuffer.create(vertex_size);
+		}
+
+		static IndexBuffer indexBuffer;
+		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
+		if (!indexBuffer.m_buffer || indexBuffer.m_size < index_size)
+		{
+			if (indexBuffer.m_buffer) indexBuffer.destory();
+			indexBuffer.create(index_size);
+		}
+
+		static StagingBuffer stagingBuffer;
+		auto totalSize = vertex_size + index_size;
+		if (stagingBuffer.m_size < totalSize)
+		{
+			if (stagingBuffer.m_buffer) stagingBuffer.destory();
+			stagingBuffer.create(totalSize);
+		}
+
+		{
+			auto map = vk::mapMemory(stagingBuffer.m_memory, 0, totalSize);
+			auto vtx_dst = (ImDrawVert*)map;
+			auto idx_dst = (ImDrawIdx*)((char*)map + vertex_size);
+			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			{
+				const ImDrawList* cmd_list = draw_data->CmdLists[n];
+				memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+				memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+				vtx_dst += cmd_list->VtxBuffer.Size;
+				idx_dst += cmd_list->IdxBuffer.Size;
+			}
+			vk::unmapMemory(stagingBuffer.m_memory);
+
+			window->commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
+			window->commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
+		}
+
+		auto cmd = window->uiCmd;
+
+		vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+		vk::beginCommandBuffer(cmd);
+
+		vkCmdWaitEvents(cmd, 1, &window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+
+		vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(windowRenderPass, window->framebuffer[window->imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
+
+		VkDeviceSize vertex_offset[1] = { 0 };
+		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.m_buffer, vertex_offset);
+		vkCmdBindIndexBuffer(cmd, indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
+
+		vkCmdPushConstants(cmd, pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipelineLayout, 0, 1, &pipeline.m_descriptorSet, 0, NULL);
+
+		int vtx_offset = 0;
+		int idx_offset = 0;
+		for (int n = 0; n < draw_data->CmdListsCount; n++)
+		{
+			const ImDrawList* cmd_list = draw_data->CmdLists[n];
+			for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+			{
+				const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+				if (pcmd->UserCallback)
+				{
+					pcmd->UserCallback(cmd_list, pcmd);
+					pcmd->TextureId;
+				}
+				else
+				{
+					VkRect2D scissor;
+					scissor.offset.x = (int32_t)(pcmd->ClipRect.x);
+					scissor.offset.y = (int32_t)(pcmd->ClipRect.y);
+					scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
+					scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // TODO: + 1??????
+					vkCmdSetScissor(cmd, 0, 1, &scissor);
+					vkCmdDrawIndexed(cmd, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
+				}
+				idx_offset += pcmd->ElemCount;
+			}
+			vtx_offset += cmd_list->VtxBuffer.Size;
+		}
+
+		vkCmdEndRenderPass(cmd);
+
+		vkEndCommandBuffer(cmd);
+	}
+
 	std::vector<Image*> _icons;
 	void guiPushIcon(Image *image)
 	{
 		_icons.push_back(image);
 	}
 
-	void guiSetupIcons()
+	void GuiWindow::initUi()
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		unsigned char* pixels;
-		int width, height;
-		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-		static Image fontImage;
-		fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
-		io.Fonts->TexID = (void*)0; // image index
-
-		static int texture_position = -1;
-		if (texture_position == -1) texture_position = g_Pipeline.descriptorPosition("sTexture");
-
-		vk::descriptorPool.addWrite(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(vk::colorSampler), 0);
-		auto imageID = 1;
-		for (auto image : _icons)
+		static bool first = true;
+		if (first)
 		{
-			vk::descriptorPool.addWrite(g_Pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(vk::colorSampler), imageID);
-			imageID++;
-		}
-		vk::descriptorPool.update();
-	}
+			first = false;
 
-	void initGui()
-	{
+			static VkVertexInputBindingDescription binding_desc[] = {
+				{ 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX }
+			};
+			static VkVertexInputAttributeDescription attribute_desc[3] = {
+				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
+				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
+				{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
+			};
+			static VkPipelineVertexInputStateCreateInfo vertex_info = {
+				VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+				nullptr,
+				0,
+				ARRAYSIZE(binding_desc),
+				binding_desc,
+				ARRAYSIZE(attribute_desc),
+				attribute_desc
+			};
+
+			pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+			pipeline.create(enginePath + "pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
+
+			uiContext = ImGui::GetCurrentContext();
+
+			ImGuiIO& io = ImGui::GetIO();
+			unsigned char* pixels;
+			int width, height;
+			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+			static Image fontImage;
+			fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
+			io.Fonts->TexID = (void*)0; // image index
+
+			static int texture_position = -1;
+			if (texture_position == -1) texture_position = pipeline.descriptorPosition("sTexture");
+
+			vk::descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(vk::colorSampler), 0);
+			auto imageID = 1;
+			for (auto image : _icons)
+			{
+				vk::descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(vk::colorSampler), imageID);
+				imageID++;
+			}
+			vk::descriptorPool.update();
+		}
+		else
+		{
+			uiContext = ImGui::CreateContext();
+		}
+
+		uiCmd = commandPool.allocate();
+		vk::beginCommandBuffer(uiCmd);
+		vkCmdWaitEvents(uiCmd, 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+		vkEndCommandBuffer(uiCmd);
+
+		ImGui::SetCurrentContext(uiContext);
+
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 		io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
@@ -656,40 +635,41 @@ namespace tke
 		io.RenderDrawListsFn = _guiRenderer;
 		io.SetClipboardTextFn = _SetClipboardCallback;
 		io.GetClipboardTextFn = _GetClipboardCallback;
+	}
 
-		static VkVertexInputBindingDescription binding_desc[] = {
-			{ 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX }
-		};
-		static VkVertexInputAttributeDescription attribute_desc[3] = {
-			{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
-			{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
-			{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
-		};
-		static VkPipelineVertexInputStateCreateInfo vertex_info = {
-			VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			nullptr,
-			0,
-			ARRAYSIZE(binding_desc),
-			binding_desc,
-			ARRAYSIZE(attribute_desc),
-			attribute_desc
-		};
+	void GuiWindow::beginUi()
+	{
+		window = this;
 
-		g_Pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-		g_Pipeline.create(enginePath + "pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
+		uiAcceptedMouse = false;
+		uiAcceptedKey = false;
 
-		commandPool.create();
+		ImGuiIO& io = ImGui::GetIO();
 
-		for (int i = 0; i < 2; i++)
-		{
-			for (int f = 0; f < 2; f++)
-			{
-				cmd[i][f] = commandPool.allocate();
-				vk::beginCommandBuffer(cmd[i][f]);
-				vkCmdWaitEvents(cmd[i][f], 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-				vkEndCommandBuffer(cmd[i][f]);
-			}
-		}
-		uiCmd = cmd[0];
+		io.DisplaySize = ImVec2((float)cx, (float)cy);
+		io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
+
+		io.DeltaTime = (float)(1.0f / 60.0f);
+
+		if (focus)
+			io.MousePos = ImVec2((float)mouseX, (float)mouseY);
+		else
+			io.MousePos = ImVec2(-1, -1);
+
+		io.MouseDown[0] = leftPressing;
+		io.MouseDown[1] = rightPressing;
+		io.MouseDown[2] = middlePressing;
+
+		io.MouseWheel = mouseScroll / 120;
+
+		ImGui::NewFrame();
+	}
+
+	void GuiWindow::endUi()
+	{
+		ImGui::Render();
+
+		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
+		uiAcceptedKey = ImGui::IsAnyItemActive();
 	}
 }

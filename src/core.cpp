@@ -5,7 +5,6 @@
 #include "render.h"
 #include "scene.h"
 #include "gui.h"
-#include "window.h"
 #include "physics.h"
 
 namespace tke
@@ -132,12 +131,6 @@ namespace tke
 		needUpdateProjMatrix;
 	}
 
-	CriticalSection renderCs;
-	VkSemaphore imageAvailable;
-	unsigned int imageIndex = 0;
-	VkEvent renderFinished;
-	VkFence frameDone;
-
 	int thread_local startUpTime = 0;
 	int thread_local nowTime = 0;
 	
@@ -210,51 +203,232 @@ namespace tke
 			windowRenderPass = vk::createRenderPass(1, &attachment, 1, &subpass, 0, nullptr);
 		}
 
-		imageAvailable = vk::createSemaphore();
-		renderFinished = vk::createEvent();
-		frameDone = vk::createFence();
-
-		initGui();
-		guiSetupIcons();
-
 		controllingObject = nullptr;
 		initPhysics();
 
 		return Err::eNoErr;
 	}
 
-	void beginFrame()
-	{
-		renderCs.lock();
+	VkRenderPass windowRenderPass;
 
-		imageIndex = vk::acquireNextImage(currentWindow->swapchain, imageAvailable);
+	void Window::create(int _cx, int _cy, const std::string &title, bool hasFrame)
+	{
+		cx = _cx;
+		cy = _cy;
+
+		unsigned int windowStyle;
+		if (hasFrame)
+		{
+			RECT rect = { 0, 0, _cx, _cy };
+			AdjustWindowRect(&rect, WS_CAPTION, false);
+			_cx = rect.right - rect.left;
+			_cy = rect.bottom - rect.top;
+
+			windowStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+		}
+		else
+		{
+			windowStyle = WS_POPUP;
+		}
+		hWnd = CreateWindowA("wndClass", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
+
+		assert(hWnd);
+
+		VkImage vkImages[2];
+		vk::createSwapchain(hWnd, cx, cy, surface, swapchain, vkImages);
+		for (int i = 0; i < 2; i++)
+		{
+			image[i].type = Image::eSwapchain;
+			image[i].m_width = cx;
+			image[i].m_height = cy;
+			image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
+			image[i].m_format = vk::swapchainFormat;
+			image[i].m_image = vkImages[i];
+
+			std::vector<VkImageView> views;
+			views.push_back(image[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
+			framebuffer[i] = getFramebuffer(cx, cy, windowRenderPass, views);
+		}
+
+		commandPool.create();
+
+		imageAvailable = vk::createSemaphore();
+		renderFinished = vk::createEvent();
+		frameDone = vk::createFence();
 	}
 
-	void endFrame()
+	void Window::destroy(bool byCode)
+	{
+		die = false;
+		vk::destroyFence(frameDone);
+		vk::destroyEvent(renderFinished);
+		vk::destroySemaphore(imageAvailable);
+		commandPool.destroy();
+		for (int i = 0; i < 2; i++)
+		{
+			vk::destroyFramebuffer(framebuffer[i]);
+			image[i].destroy();
+		}
+		vk::destroySwapchain(surface, swapchain);
+		if (byCode)
+			DestroyWindow(hWnd); // destroy window if window die cause by code
+		hWnd = 0; // this is the mark that if a window is valid
+	}
+
+	thread_local Window *currentWindow = nullptr;
+	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		if (currentWindow)
+		{
+			switch (message)
+			{
+			case WM_LBUTTONDOWN:
+			{
+				static int lastClickTime = 0;
+				if (nowTime - lastClickTime < 300)
+					currentWindow->doubleClick = true;
+				else
+					currentWindow->doubleClick = false;
+				lastClickTime = nowTime;
+				currentWindow->leftPressing = true;
+				currentWindow->leftDown = true;
+				currentWindow->leftUp = false;
+				currentWindow->mouseX = LOWORD(lParam);
+				currentWindow->mouseY = HIWORD(lParam);
+				SetCapture(hWnd);
+			}
+			break;
+			case WM_LBUTTONUP:
+				currentWindow->leftPressing = false;
+				currentWindow->leftDown = false;
+				currentWindow->leftUp = true;
+				ReleaseCapture();
+				break;
+			case WM_MBUTTONDOWN:
+				currentWindow->middlePressing = true;
+				currentWindow->mouseX = LOWORD(lParam);
+				currentWindow->mouseY = HIWORD(lParam);
+				SetCapture(hWnd);
+				break;
+			case WM_MBUTTONUP:
+				currentWindow->middlePressing = false;
+				ReleaseCapture();
+				break;
+			case WM_RBUTTONDOWN:
+				currentWindow->rightPressing = true;
+				currentWindow->mouseX = LOWORD(lParam);
+				currentWindow->mouseY = HIWORD(lParam);
+				SetCapture(hWnd);
+				break;
+			case WM_RBUTTONUP:
+				currentWindow->rightPressing = false;
+				ReleaseCapture();
+				break;
+			case WM_MOUSEMOVE:
+				currentWindow->mouseX = (short)LOWORD(lParam);
+				currentWindow->mouseY = (short)HIWORD(lParam);
+				break;
+			case WM_MOUSEWHEEL:
+				currentWindow->mouseScroll += (short)HIWORD(wParam);
+				break;
+			case WM_KEYDOWN:
+				currentWindow->keyDownEvent(wParam);
+				break;
+			case WM_KEYUP:
+				currentWindow->keyUpEvent(wParam);
+				break;
+			case WM_CHAR:
+				currentWindow->charEvent(wParam);
+				break;
+			case WM_ACTIVATE:
+				switch (LOWORD(wParam))
+				{
+				case WA_ACTIVE: case WA_CLICKACTIVE:
+					currentWindow->focus = true;
+					break;
+				case WA_INACTIVE:
+					currentWindow->focus = false;
+					break;
+				}
+				break;
+			case WM_DESTROY:
+				PostQuitMessage(0);
+				break;
+			}
+			currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
+		}
+
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+	struct _WindowInit
+	{
+		_WindowInit()
+		{
+			WNDCLASSEXA wcex = {};
+			wcex.cbSize = sizeof(WNDCLASSEXA);
+			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+			wcex.lpfnWndProc = wndProc;
+			wcex.hInstance = hInst;
+			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcex.lpszClassName = "wndClass";
+			RegisterClassExA(&wcex);
+		}
+	};
+	static _WindowInit _windowInit;
+
+	void Window::keyDownEvent(int wParam) {}
+	void Window::keyUpEvent(int wParam) {}
+	void Window::charEvent(int wParam) {}
+	void Window::mouseEvent() {}
+	void Window::renderEvent() {}
+	LRESULT Window::extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) { return 0; }
+
+	int Window::getFPS()
+	{
+		static auto FPS = 0;
+		static auto lastTime = 0;
+		static auto lastFrame = 0;
+
+		if (nowTime - lastTime >= 1000)
+		{
+			FPS = frameCount - lastFrame;
+			lastFrame = frameCount;
+			lastTime = nowTime;
+		}
+		return FPS;
+	}
+
+	void Window::beginFrame()
+	{
+		imageIndex = vk::acquireNextImage(swapchain, imageAvailable);
+	}
+
+	void Window::endFrame()
 	{
 		vk::waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
 		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.swapchainCount = 1;
-		info.pSwapchains = &currentWindow->swapchain;
+		info.pSwapchains = &swapchain;
 		info.pImageIndices = &imageIndex;
 		vk::queuePresent(&info);
-
-		renderCs.unlock();
 	}
 
-	void mainLoop(Window *p)
+	void Window::run()
 	{
-		currentWindow = p;
+		ShowWindow(hWnd, SW_NORMAL);
+
+		currentWindow = this;
 
 		startUpTime = GetTickCount();
 
 		for (;;)
 		{
-			if (currentWindow->die)
+			if (die)
 			{
-				delete currentWindow;
+				delete this;
 				currentWindow = nullptr;
 				return;
 			}
@@ -263,13 +437,10 @@ namespace tke
 			processEvents();
 
 			MSG msg;
-
 			auto hasMsg = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-			if ((hasMsg && msg.message == WM_QUIT) || currentWindow->die)
+			if ((hasMsg && msg.message == WM_QUIT) || die)
 			{
-				vk::destroySwapchain(currentWindow->surface, currentWindow->swapchain);
-				if (msg.message != WM_QUIT)
-					DestroyWindow(currentWindow->hWnd); // destroy window if window die cause by code
+				destroy(!(hasMsg && msg.message == WM_QUIT));
 				return;
 			}
 
@@ -278,16 +449,16 @@ namespace tke
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else if (currentWindow)
+			else
 			{
-				currentWindow->mouseEvent();
-				currentWindow->renderEvent();
-				currentWindow->frameCount++;
-				currentWindow->leftDown = false; 
-				currentWindow->leftUp = false;
-				currentWindow->mousePrevX = currentWindow->mouseX;
-				currentWindow->mousePrevY = currentWindow->mouseY;
-				currentWindow->mouseScroll = 0;
+				mouseEvent();
+				renderEvent();
+				frameCount++;
+				leftDown = false;
+				leftUp = false;
+				mousePrevX = mouseX;
+				mousePrevY = mouseY;
+				mouseScroll = 0;
 			}
 		}
 	}
