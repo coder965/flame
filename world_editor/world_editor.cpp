@@ -353,15 +353,111 @@ void StageEditor::closeEvent(QCloseEvent *event)
 	ext->editor = nullptr;
 }
 
+tke::UniformBuffer *pasteBuffer = nullptr;
+struct MonitorWindow : tke::GuiWindow
+{
+	VkCommandBuffer progressCmd[2];
+
+	tke::Image *titleImage;
+
+	tke::Renderer *progressRenderer;
+
+	void init()
+	{
+		progressRenderer = new tke::Renderer();
+		progressRenderer->loadXML("../renderer/progress.xml");
+
+		titleImage = tke::createImage("../misc/title.jpg", true, false);
+		progressRenderer->resource.setImage(titleImage, "Paste.Texture");
+
+		progressRenderer->resource.setImage(image, "Window.Image");
+
+		progressRenderer->setup();
+
+		for (int i = 0; i < 2; i++)
+		{
+			progressCmd[i] = tke::vk::commandPool.allocate();
+			tke::vk::beginCommandBuffer(progressCmd[i]);
+			progressRenderer->execute(progressCmd[i], i);
+			vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			vkEndCommandBuffer(progressCmd[i]);
+		}
+
+		pasteBuffer = (tke::UniformBuffer*)progressRenderer->resource.getBuffer("Paste.UniformBuffer");
+
+		auto list = new tke::EventList;
+		tke::Event e0;
+		e0.tickFunc = [](int _t) {
+			if (_t < 500)
+			{
+				float alpha = _t / 500.f;
+				pasteBuffer->update(&alpha, &tke::stagingBuffer);
+			}
+		};
+		e0.duration = 1500;
+		list->events.push_back(e0);
+		tke::addEventList(list);
+	}
+
+	virtual void drawUi() override
+	{
+		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::TextUnformatted(tke::majorProgressText().c_str());
+		ImGui::TextUnformatted(tke::minorProgressText().c_str());
+		ImGui::End();
+	}
+
+	virtual void renderEvent() override
+	{
+		tke::beginFrame();
+
+		VkCommandBuffer cmds[2] = { progressCmd[tke::imageIndex], tke::uiCmd[tke::imageIndex] };
+		tke::vk::queueSubmitFence(tke::imageAvailable, 2, cmds, tke::frameDone);
+
+		tke::endFrame();
+	}
+
+	~MonitorWindow()
+	{
+
+	}
+};
+
+static void _monitor_thread(void *p)
+{
+	auto window = new MonitorWindow;
+	window->create(tke::resCx, tke::resCy, "TK Engine World Editor", false);
+	window->init();
+
+	*(MonitorWindow**)p = window;
+
+	tke::mainLoop(window);
+}
+
 void MonitorWidget::setup()
 {
+	_beginthread(_monitor_thread, 0, &monitorWindow);
+	while (!monitorWindow) Sleep(100);
+
+	QWindow *window = QWindow::fromWinId((unsigned int)monitorWindow->hWnd);
+	window->setFlags(Qt::FramelessWindowHint);
+
+	QWidget *widget = QWidget::createWindowContainer(window);
+	//widget->setFixedWidth(1600);
+	//widget->setFixedHeight(900);
+
+	//ui.scrollArea->setWidget(widget);
+
 	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
 
 	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
+	setWidget(widget);
 }
 
 void MonitorWidget::closeEvent(QCloseEvent *event)
 {
+
+
 	auto ext = (RendererExt*)renderer->ext;
 	delete ext->monitor;
 	ext->monitor = nullptr;
@@ -404,30 +500,15 @@ WorldEditor::WorldEditor(QWidget *parent)
 	game.load_pipelines();
 	game.load_renderers();
 
-	{ // setup menus
-		connect(ui.action_new_stage, &QAction::triggered, this, &WorldEditor::on_new_stage);
-		connect(ui.action_new_pipeline, &QAction::triggered, this, &WorldEditor::on_new_pipeline);
-		connect(ui.action_save_selected_item, &QAction::triggered, this, &WorldEditor::on_save_selected_item);
-		connect(ui.action_save_all, &QAction::triggered, this, &WorldEditor::on_save_all);
-		connect(ui.action_open_in_file_explorer, &QAction::triggered, this, &WorldEditor::on_open_in_file_explorer);
-		connect(ui.action_remove, &QAction::triggered, this, &WorldEditor::on_remove);
-		connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
-		connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
-		connect(ui.action_compile, &QAction::triggered, this, &WorldEditor::on_compile);
-	}
-
-	{ // setup scene window
-		//while (!tke::currentWindow) Sleep(100);
-
-		//QWindow *window = QWindow::fromWinId((unsigned int)tke::currentWindow->hWnd);
-		//window->setFlags(Qt::FramelessWindowHint);
-
-		//QWidget *widget = QWidget::createWindowContainer(window);
-		//widget->setFixedWidth(1600);
-		//widget->setFixedHeight(900);
-
-		//ui.scrollArea->setWidget(widget);
-	}
+	connect(ui.action_new_stage, &QAction::triggered, this, &WorldEditor::on_new_stage);
+	connect(ui.action_new_pipeline, &QAction::triggered, this, &WorldEditor::on_new_pipeline);
+	connect(ui.action_save_selected_item, &QAction::triggered, this, &WorldEditor::on_save_selected_item);
+	connect(ui.action_save_all, &QAction::triggered, this, &WorldEditor::on_save_all);
+	connect(ui.action_open_in_file_explorer, &QAction::triggered, this, &WorldEditor::on_open_in_file_explorer);
+	connect(ui.action_remove, &QAction::triggered, this, &WorldEditor::on_remove);
+	connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
+	connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
+	connect(ui.action_compile, &QAction::triggered, this, &WorldEditor::on_compile);
 }
 
 void WorldEditor::keyPressEvent(QKeyEvent *k)

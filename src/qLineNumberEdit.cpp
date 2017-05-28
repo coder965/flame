@@ -81,6 +81,11 @@ void QLineNumberEdit::drawLineNumberArea(QPaintEvent *e)
     }
 }
 
+QSize QLineNumberEdit::sizeHint() const
+{
+	return QSize(1440, 900);
+}
+
 void QLineNumberArea::paintEvent(QPaintEvent *e)
 {
 	pEdit->drawLineNumberArea(e);

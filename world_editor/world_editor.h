@@ -19,6 +19,7 @@
 #include <QMessageBox>
 #include <QDockWidget>
 #include <QSplitter>
+#include <QScrollArea>
 
 #include <Windows.h>
 #include <sstream>
@@ -162,14 +163,11 @@ struct StageEditor : QDockWidget
 	void closeEvent(QCloseEvent *event) override;
 };
 
-struct MonitorWindow
-{
-
-};
-
+struct MonitorWindow;
 struct MonitorWidget : QDockWidget
 {
 	tke::Renderer *renderer;
+	MonitorWindow *monitorWindow = nullptr;
 
 	using QDockWidget::QDockWidget;
 	void setup();

@@ -3,7 +3,7 @@
 
 namespace tke
 {
-	std::vector<EventList*> eventLists;
+	thread_local std::vector<EventList*> eventLists;
 
 	void addEventList(EventList *p)
 	{

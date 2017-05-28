@@ -1498,7 +1498,7 @@ namespace tke
 			else
 			{
 				i.p = new Image;
-				i.p->create(i.cx, i.cy, toVkFormat(i.format), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				i.p->create(i.cx, i.cy, vkFormat(i.format), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			}
 			resource.setImage(i.p, i.name);
 		}

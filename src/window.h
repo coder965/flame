@@ -33,6 +33,8 @@ namespace tke
 		Image image[2];
 		VkFramebuffer framebuffer[2];
 
+		bool die = false;
+
 		virtual void keyDownEvent(int);
 		virtual void keyUpEvent(int);
 		virtual void charEvent(int);
@@ -40,7 +42,6 @@ namespace tke
 		virtual void renderEvent();
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-		~Window();
 		void create(int _cx, int _cy, const std::string &title, bool hasFrame = true);
 		int getFPS();
 		void show();

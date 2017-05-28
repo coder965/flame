@@ -86,8 +86,8 @@ namespace tke
 	extern VkEvent renderFinished;
 	extern VkFence frameDone;
 
-	extern int startUpTime;
-	extern int nowTime;
+	extern thread_local int startUpTime;
+	extern thread_local int nowTime;
 
 	void beginFrame();
 	void endFrame();

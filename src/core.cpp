@@ -138,8 +138,8 @@ namespace tke
 	VkEvent renderFinished;
 	VkFence frameDone;
 
-	int startUpTime = 0;
-	int nowTime = 0;
+	int thread_local startUpTime = 0;
+	int thread_local nowTime = 0;
 	
 	static Image _depthImage;
 
@@ -252,14 +252,29 @@ namespace tke
 
 		for (;;)
 		{
+			if (currentWindow->die)
+			{
+				delete currentWindow;
+				currentWindow = nullptr;
+				return;
+			}
+
 			nowTime = GetTickCount() - startUpTime;
 			processEvents();
 
 			MSG msg;
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+
+			auto hasMsg = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+			if ((hasMsg && msg.message == WM_QUIT) || currentWindow->die)
 			{
-				if (msg.message == WM_QUIT)
-					return;
+				vk::destroySwapchain(currentWindow->surface, currentWindow->swapchain);
+				if (msg.message != WM_QUIT)
+					DestroyWindow(currentWindow->hWnd); // destroy window if window die cause by code
+				return;
+			}
+
+			if (hasMsg)
+			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}

@@ -32,8 +32,8 @@ namespace tke
 
 		assert(hWnd);
 
-		VkImage images[2];
-		vk::createSwapchain(hWnd, cx, cy, surface, swapchain, images);
+		VkImage vkImages[2];
+		vk::createSwapchain(hWnd, cx, cy, surface, swapchain, vkImages);
 		for (int i = 0; i < 2; i++)
 		{
 			image[i].type = Image::eSwapchain;
@@ -41,17 +41,12 @@ namespace tke
 			image[i].m_height = cy;
 			image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
 			image[i].m_format = vk::swapchainFormat;
-			image[i].m_image = images[i];
+			image[i].m_image = vkImages[i];
 
 			std::vector<VkImageView> views;
 			views.push_back(image[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
 			framebuffer[i] = getFramebuffer(cx, cy, windowRenderPass, views);
 		}
-	}
-
-	Window::~Window()
-	{
-		DestroyWindow(hWnd);
 	}
 
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -128,6 +123,9 @@ namespace tke
 					currentWindow->focus = false;
 					break;
 				}
+				break;
+			case WM_DESTROY:
+				PostQuitMessage(0);
 				break;
 			}
 			currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);

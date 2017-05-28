@@ -20,6 +20,7 @@ public:
 	QLineNumberEdit(QWidget *p = nullptr);
     void drawLineNumberArea(QPaintEvent *e);
     int lineNumberAreaWidth();
+	QSize sizeHint() const override;
 };
 
 class QLineNumberArea : public QWidget

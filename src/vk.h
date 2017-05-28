@@ -100,6 +100,7 @@ namespace tke
 		void destroyFramebuffer(VkFramebuffer fb);
 
 		void createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages);
+		void destroySwapchain(VkSurfaceKHR surface, VkSwapchainKHR swapchain);
 
 		VkFence createFence();
 		VkEvent createEvent();

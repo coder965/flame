@@ -812,6 +812,15 @@ namespace tke
 			inst.cs.unlock();
 		}
 
+		void destroySwapchain(VkSurfaceKHR surface, VkSwapchainKHR swapchain)
+		{
+			inst.cs.lock();
+			device.cs.lock();
+			vkDestroySwapchainKHR(device.v, swapchain, nullptr);
+			vkDestroySurfaceKHR(inst.v, surface, nullptr);
+			device.cs.unlock();
+			inst.cs.unlock();
+		}
 
 		VkFence createFence()
 		{

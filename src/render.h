@@ -76,7 +76,7 @@ namespace tke
 		REFLe R16G16B16A16 = 1 << 1
 	};
 
-	inline VkFormat toVkFormat(ImageFormat f)
+	inline VkFormat vkFormat(ImageFormat f)
 	{
 		switch (f)
 		{
@@ -176,6 +176,7 @@ namespace tke
 			if (StageTypes[i] == (int)t)
 				return i;
 		}
+		return -1;
 	}
 
 	inline const std::string StageNameByType(StageType t)
