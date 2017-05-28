@@ -51,6 +51,8 @@ struct EnsureConst
 
 namespace tke
 {
+	int lineNumber(const char *str);
+
 	struct CriticalSection
 	{
 		CRITICAL_SECTION v;

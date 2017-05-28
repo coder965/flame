@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tuple>
+
 #include <QtWidgets/QMainWindow>
 #include "ui_world_editor.h"
 

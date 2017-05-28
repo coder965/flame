@@ -15,10 +15,6 @@ struct QMyUserData : QObjectUserData
 		v = _v;
 	}
 };
-QMyUserData *qGameExplorerUserData = new QMyUserData(WindowTypeGameExplorer);
-QMyUserData *qStageEditorUserData = new QMyUserData(WindowTypeStageEditor);
-QMyUserData *qMonitorWidgetUserData = new QMyUserData(WindowTypeMonitorWidget);
-QMyUserData *qOutputWidgetUserData = new QMyUserData(WindowTypeOutputWidget);
 
 static WindowType getCurrentWindowType()
 {
@@ -42,6 +38,7 @@ static WindowType getCurrentWindowType()
 		}
 		return (WindowType)data->v;
 	}
+	return WindowTypeNull;
 }
 
 void PipelineExt::setItemText()
@@ -196,7 +193,7 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 			ext->editor = new StageEditor(worldEditor);
 			ext->editor->stage = currentStage;
 			ext->editor->setup();
-			worldEditor->addDockWidget(Qt::TopDockWidgetArea, ext->editor);
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, ext->editor);
 		}
 	}
 		break;
@@ -205,7 +202,7 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 
 void GameExplorer::setup()
 {
-	setUserData(0, qGameExplorerUserData);
+	setUserData(0, new QMyUserData(WindowTypeGameExplorer));
 
 	setWindowTitle("Game Explorer");
 
@@ -251,8 +248,11 @@ void GameExplorer::closeEvent(QCloseEvent *event)
 		ext->item = nullptr;
 		for (auto s : p->stages)
 		{
-			auto _ext = (StageExt*)s->ext;
-			_ext->item = nullptr;
+			if (s)
+			{
+				auto _ext = (StageExt*)s->ext;
+				_ext->item = nullptr;
+			}
 		}
 	}
 	delete gameExplorer;
@@ -268,7 +268,7 @@ void StageEditor::edit_changed()
 
 void StageEditor::setup()
 {
-	setUserData(0, qStageEditorUserData);
+	setUserData(0, new QMyUserData(WindowTypeStageEditor));
 
 	auto _ext = (StageExt*)stage->ext;
 
@@ -293,6 +293,8 @@ void StageEditor::closeEvent(QCloseEvent *event)
 
 void OutputWidget::setup()
 {
+	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
+
 	setWindowTitle("Output");
 
 	text = new QTextBrowser;
@@ -389,61 +391,53 @@ void WorldEditor::on_new_stage()
 			std::experimental::filesystem::path p(filename);
 			auto type = tke::StageFlagByExt(p.extension().string());
 
-			for (int i = 0; i < 5; i++)
+			auto i = tke::StageIndexByType(type);
+			if (gameExplorer->currentPipeline->stages[i])
+				return;
+
+			auto s = new tke::Stage(gameExplorer->currentPipeline);
+			s->type = type;
+			s->filename = filename;
+			s->filepath = p.parent_path().string();
+
+			filename = gameExplorer->currentPipeline->filepath + "/" + s->filename;
+			if (!std::experimental::filesystem::exists(filename))
 			{
-				if (tke::StageTypes[i] == (int)type)
+				std::ofstream file(filename);
+				file.close();
+			}
+
+			auto _ext = new StageExt(s);
+			s->ext = _ext;
+			tke::OnceFileBuffer file(filename);
+			_ext->text = file.data;
+
+			auto ext = (PipelineExt*)gameExplorer->currentPipeline->ext;
+			{
+				for (int i = 0; i < 5; i++)
 				{
-					if (gameExplorer->currentPipeline->stages[i])
-						return;
-
-					auto s = new tke::Stage(gameExplorer->currentPipeline);
-					s->type = type;
-					s->filename = filename;
-					s->filepath = p.parent_path().string();
-
-					filename = gameExplorer->currentPipeline->filepath + "/" + s->filename;
-					if (!std::experimental::filesystem::exists(filename))
+					auto s = gameExplorer->currentPipeline->stages[i];
+					if (s)
 					{
-						std::ofstream file(filename);
-						file.close();
+						auto ext = (StageExt*)s->ext;
+						delete ext->item;
 					}
-
-					auto _ext = new StageExt(s);
-					s->ext = _ext;
-					tke::OnceFileBuffer file(filename);
-					_ext->text = file.data;
-
-					auto ext = (PipelineExt*)gameExplorer->currentPipeline->ext;
+				}
+				gameExplorer->currentPipeline->stages[i] = s;
+				for (int i = 0; i < 5; i++)
+				{
+					auto s = gameExplorer->currentPipeline->stages[i];
+					if (s)
 					{
-						for (int i = 0; i < 5; i++)
-						{
-							auto s = gameExplorer->currentPipeline->stages[i];
-							if (s)
-							{
-								auto ext = (StageExt*)s->ext;
-								delete ext->item;
-							}
-						}
-						gameExplorer->currentPipeline->stages[i] = s;
-						for (int i = 0; i < 5; i++)
-						{
-							auto s = gameExplorer->currentPipeline->stages[i];
-							if (s)
-							{
-								auto _ext = (StageExt*)s->ext;
-								_ext->item = new QTreeWidgetItem;
-								_ext->setItemText();
-								ext->item->addChild(_ext->item);
-							}
-						}
+						auto _ext = (StageExt*)s->ext;
+						_ext->item = new QTreeWidgetItem;
+						_ext->setItemText();
+						ext->item->addChild(_ext->item);
 					}
-
-					ext->setChanged(true);
-
-					return;
 				}
 			}
-			break;
+
+			ext->setChanged(true);
 		}
 		break;
 	}
@@ -614,7 +608,7 @@ void WorldEditor::on_view_game_explorer()
 	if (gameExplorer) return;
 	gameExplorer = new GameExplorer(this);
 	gameExplorer->setup();
-	addDockWidget(Qt::TopDockWidgetArea, gameExplorer);
+	addDockWidget(Qt::LeftDockWidgetArea, gameExplorer);
 }
 
 void WorldEditor::on_view_output_widget()
@@ -634,31 +628,19 @@ void WorldEditor::on_compile()
 		switch (gameExplorer->currentItemType)
 		{
 		case GameExplorer::ItemTypePipeline:
-		{
 			for (int i = 0; i < 5; i++)
 			{
 				auto s = gameExplorer->currentPipeline->stages[i];
 				if (s) compile_stage(s);
 			}
-			auto ext = (PipelineExt*)gameExplorer->currentPipeline->ext;
-			ext->setChanged(true);
-		}
 			break;
 		case GameExplorer::ItemTypeStage:
-		{
 			compile_stage(gameExplorer->currentStage);
-			auto ext = (PipelineExt*)gameExplorer->currentStage->parent->ext;
-			ext->setChanged(true);
-		}
 			break;
 		}
 		break;
 	case WindowTypeStageEditor:
-	{
 		compile_stage(currentStageEditor->stage);
-		auto ext = (PipelineExt*)currentStageEditor->stage->parent->ext;
-		ext->setChanged(true);
-	}
 		break;
 	}
 }
@@ -688,14 +670,17 @@ void WorldEditor::save_stage(tke::Stage *stage)
 
 void WorldEditor::compile_stage(tke::Stage *s)
 {
-	auto ext = (StageExt*)s->ext;
+	auto _ext = (StageExt*)s->ext;
 
 	save_stage(s);
 
-	std::stringstream ss(ext->text);
+	std::stringstream ss(_ext->text);
 	std::string stageText = "";
 
+	std::vector<std::tuple<int, int, int>> includeFileDatas;
 	std::string line;
+	int lineNum = 0;
+	int fullLineNum = 0;
 	while (!ss.eof())
 	{
 		std::getline(ss, line);
@@ -704,15 +689,23 @@ void WorldEditor::compile_stage(tke::Stage *s)
 		std::smatch sm;
 		if (std::regex_search(line, sm, pat))
 		{
-			auto include = sm[1].str();
-			tke::OnceFileBuffer file(s->parent->filepath + "/" + s->filepath + "/" + include);
+			tke::OnceFileBuffer file(s->parent->filepath + "/" + s->filepath + "/" + sm[1].str());
 			stageText += file.data;
 			stageText += "\n";
+
+			auto includeFileLineNum = tke::lineNumber(file.data);
+			includeFileDatas.push_back({ lineNum, fullLineNum, includeFileLineNum });
+
+			fullLineNum += includeFileLineNum;
 		}
 		else
 		{
 			stageText += line + "\n";
+
+			fullLineNum += 1;
 		}
+
+		lineNum++;
 	}
 
 	std::ofstream file("temp.glsl");
@@ -723,14 +716,15 @@ void WorldEditor::compile_stage(tke::Stage *s)
 
 	tke::exec("cmd", "/C glslangValidator my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(s->type) + " -q -o " + spv.string() + " > output.txt");
 
-	tke::OnceFileBuffer validatorOutput("output.txt");
-	if (outputWidget)
+	std::string output;
+
 	{
-		auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		std::stringstream ss;
-		ss << std::put_time(std::localtime(&t), "%Y-%m-%d %H:%M:%S");
-		outputWidget->text->setPlainText((ss.str() + "\n" + "Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n" + std::string(validatorOutput.data)).c_str());
+		tke::OnceFileBuffer outputFile("output.txt");
+		output = outputFile.data;
+		output += "\n";
 	}
+
+	bool error = false;
 
 	{
 		// analyzing the reflection
@@ -790,12 +784,28 @@ void WorldEditor::compile_stage(tke::Stage *s)
 			{
 			case STAGE_EDITOR_YY_ERROR:
 			{
-				QMessageBox::information(0, "Oh Shit", "Shader Compile Failed", QMessageBox::Ok);
+				error = true;
 				token = stage_editor_yylex();
-				int line;
 				if (token == STAGE_EDITOR_YY_VALUE)
-					line = std::stoi(stage_editor_yytext);
-				int v = line;
+				{
+					auto n = std::stoi(stage_editor_yytext);
+
+					for (auto it = includeFileDatas.rbegin(); it != includeFileDatas.rend(); it++)
+					{
+						if (n > std::get<1>(*it) + std::get<2>(*it))
+						{
+							n = n - std::get<1>(*it) + std::get<0>(*it) - std::get<2>(*it) - 1;
+							break;
+						}
+						else if (n > std::get<1>(*it))
+						{
+							n = std::get<0>(*it);
+							break;
+						}
+					}
+
+					output += std::string("Error, line num:") + std::to_string(n) + "\n";
+				}
 			}
 				break;
 			case STAGE_EDITOR_YY_COLON:
@@ -888,4 +898,23 @@ void WorldEditor::compile_stage(tke::Stage *s)
 
 	DeleteFileA("output.txt");
 	DeleteFileA("temp.glsl");
+
+	if (!error)
+	{
+		auto ext = (PipelineExt*)s->parent->ext;
+		ext->setChanged(true);
+	}
+
+	if (outputWidget)
+	{
+		auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		std::stringstream ss;
+		ss << std::put_time(std::localtime(&t), "%Y-%m-%d %H:%M:%S");
+
+		output = (ss.str() + "\n" +
+			"Warnning:push constants in different stages must be merged, or else they would not reflect properly.\n\n" +
+			output);
+
+		outputWidget->text->setPlainText(output.c_str());
+	}
 }

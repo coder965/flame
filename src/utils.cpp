@@ -18,6 +18,18 @@ unsigned int _HASH(char const * str, unsigned int seed)
 
 namespace tke
 {
+	int lineNumber(const char *str)
+	{
+		int lineNumber = 0;
+		while (*str)
+		{
+			if (*str == '\n')
+				lineNumber++;
+			str++;
+		}
+		return lineNumber;
+	}
+
 	const char *getErrorString(Err errNum)
 	{
 		switch (errNum)
