@@ -1192,6 +1192,11 @@ namespace tke
 		cy = _cy;
 	}
 
+	Renderer::~Renderer()
+	{
+		delete ext;
+	}
+
 	void Renderer::loadXML(const std::string &_filename)
 	{
 		filename = _filename;

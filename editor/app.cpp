@@ -101,8 +101,7 @@ struct MainWindow : tke::GuiWindow
 		}
 
 		masterRenderer = new tke::Renderer();		
-		masterRenderer->filename = "../renderer/master.xml";
-		masterRenderer->loadXML();
+		masterRenderer->loadXML("../renderer/master.xml");
 
 		masterRenderer->resource.setImage(image, "Window.Image");
 
@@ -115,8 +114,7 @@ struct MainWindow : tke::GuiWindow
 
 		{
 			progressRenderer = new tke::Renderer();
-			progressRenderer->filename = "../renderer/progress.xml";
-			progressRenderer->loadXML();
+			progressRenderer->loadXML("../renderer/progress.xml");
 
 			titleImage = tke::createImage("../misc/title.jpg", true);
 			progressRenderer->resource.setImage(titleImage, "Paste.Texture");
@@ -289,9 +287,6 @@ struct MainWindow : tke::GuiWindow
 
 		if (mouseScroll != 0)
 			tke::scene->camera.scroll(mouseScroll);
-
-		tke::mouseX = ((float)mouseX / tke::resCx) * 2.f - 1.f;
-		tke::mouseY = ((float)mouseY / tke::resCy) * 2.f - 1.f;
 
 		float distX = mouseX - mousePrevX;
 		float distY = mouseY - mousePrevY;

@@ -46,7 +46,7 @@ namespace tke
 		void show();
 	};
 
-	extern Window *currentWindow;
+	extern thread_local Window *currentWindow;
 }
 
 #endif

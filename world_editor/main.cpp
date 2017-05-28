@@ -1,14 +1,7 @@
 #include "world_editor.h"
 #include <QtWidgets/QApplication>
 
-#include "../src/core.h"
-#include "../src/gui.h"
-#include "../src/event.h"
-#include "../src/image.file.h"
-
-#include <process.h>
-
-tke::UniformBuffer pasteBuffer;
+tke::UniformBuffer *pasteBuffer = nullptr;
 
 struct MainWindow : tke::GuiWindow
 {
@@ -16,63 +9,43 @@ struct MainWindow : tke::GuiWindow
 
 	tke::Image *titleImage;
 
-	tke::Pipeline pastePipeline;
-
 	tke::Renderer *progressRenderer;
 
 	void init()
 	{
+		progressRenderer = new tke::Renderer();
+		progressRenderer->loadXML("../renderer/progress.xml");
+
+		titleImage = tke::createImage("../misc/title.jpg", true, false);
+		progressRenderer->resource.setImage(titleImage, "Paste.Texture");
+
+		progressRenderer->resource.setImage(image, "Window.Image");
+
+		progressRenderer->setup();
+
+		for (int i = 0; i < 2; i++)
 		{
-			titleImage = tke::createImage("../misc/title.jpg", true, false);
-
-			pasteBuffer.create(sizeof(float));
-
-			progressRenderer = new tke::Renderer();
-			progressRenderer->loadXML("../renderer/progress.xml");
-
-			progressRenderer->resource.setImage(titleImage, "Paste.Texture");
-			progressRenderer->resource.setBuffer(&pasteBuffer, "Paste.UniformBuffer");
-			progressRenderer->resource.setPipeline(&pastePipeline, "Paste.Pipeline");
-
-			pastePipeline.pResource = &progressRenderer->resource;
-
-			progressRenderer->resource.setImage(image, "Window.Image");
-
-			progressRenderer->setup();
-
-			pastePipeline.create("../pipeline/paste/paste.xml", &tke::zeroVertexInputState, progressRenderer->vkRenderPass, 0);
-
-			progressRenderer->getDescriptorSets();
-
-			for (int i = 0; i < 2; i++)
-			{
-				progressCmd[i] = tke::vk::commandPool.allocate();
-				tke::vk::beginCommandBuffer(progressCmd[i]);
-				progressRenderer->execute(progressCmd[i], i);
-				vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-				vkEndCommandBuffer(progressCmd[i]);
-			}
-
-			auto list = new tke::EventList;
-			tke::Event e0;
-			e0.tickFunc = [](int _t) {
-				if (_t < 500)
-				{
-					float alpha = _t / 500.f;
-					pasteBuffer.update(&alpha, &tke::stagingBuffer);
-				}
-			};
-			e0.duration = 1500;
-			list->events.push_back(e0);
-			//tke::Event e1;
-			//e1.tickFunc = [](int _t) {
-			//	float alpha = 1.f - _t / 500.f;
-			//	pasteBuffer.update(&alpha, &tke::stagingBuffer);
-			//};
-			//e1.duration = 500;
-			//list->events.push_back(e1);
-			tke::addEventList(list);
+			progressCmd[i] = tke::vk::commandPool.allocate();
+			tke::vk::beginCommandBuffer(progressCmd[i]);
+			progressRenderer->execute(progressCmd[i], i);
+			vkCmdSetEvent(progressCmd[i], tke::renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			vkEndCommandBuffer(progressCmd[i]);
 		}
+
+		pasteBuffer = (tke::UniformBuffer*)progressRenderer->resource.getBuffer("Paste.UniformBuffer");
+
+		auto list = new tke::EventList;
+		tke::Event e0;
+		e0.tickFunc = [](int _t) {
+			if (_t < 500)
+			{
+				float alpha = _t / 500.f;
+				pasteBuffer->update(&alpha, &tke::stagingBuffer);
+			}
+		};
+		e0.duration = 1500;
+		list->events.push_back(e0);
+		tke::addEventList(list);
 	}
 
 	virtual void drawUi() override
@@ -93,15 +66,13 @@ struct MainWindow : tke::GuiWindow
 	}
 };
 
-MainWindow *pMainWindow;
-
 void _thread(void*)
 {
 	auto resCx = 1600, resCy = 900;
 	tke::enginePath = "../";
 	tke::init("TK Engine World Editor", resCx, resCy);
 
-	pMainWindow = new MainWindow;
+	auto pMainWindow = new MainWindow;
 	pMainWindow->create(resCx, resCy, "TK Engine World Editor", false);
 	pMainWindow->init();
 

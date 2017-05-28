@@ -759,8 +759,11 @@ namespace tke
 
 		RenderPass *findRenderPass(const std::string &n);
 
+		ExtType *ext = nullptr;
+
 		Renderer();
 		Renderer(int _cx, int _cy);
+		~Renderer();
 		template <class... _Valty>
 		RenderPass *addPass(_Valty&&... _Val)
 		{

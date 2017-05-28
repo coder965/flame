@@ -2,6 +2,8 @@
 
 #include <tuple>
 
+#include <process.h>
+
 #include <QtWidgets/QMainWindow>
 #include "ui_world_editor.h"
 
@@ -23,9 +25,13 @@
 #include <iomanip>
 #include <regex>
 
-#include "../src/window.h"
 #include "../src/qLineNumberEdit.h"
 #include "../src/qFindWidget.h"
+#include "../src/core.h"
+#include "../src/window.h"
+#include "../src/gui.h"
+#include "../src/event.h"
+#include "../src/image.file.h"
 
 class WorldEditor : public QMainWindow
 {
@@ -94,13 +100,25 @@ struct StageExt : tke::ExtType
 	~StageExt();
 };
 
+struct RendererExt : tke::ExtType 
+{
+	tke::Renderer *p;
+	QTreeWidgetItem *item = nullptr;
+	MonitorWidget *monitor = nullptr;
+	void setItemText();
+	RendererExt(tke::Renderer *_p);
+	~RendererExt();
+};
+
 struct Game
 {
 	std::vector<tke::Pipeline*> pipelines;
 	std::vector<tke::Renderer*> renderers;
 
-	void load();
-	void save();
+	void load_pipelines();
+	void save_pipelines();
+	void load_renderers();
+	void save_renderers();
 };
 
 struct GameExplorer : QDockWidget
@@ -134,12 +152,26 @@ struct GameExplorer : QDockWidget
 struct StageEditor : QDockWidget
 {
 	tke::Stage *stage;
-	using QDockWidget::QDockWidget;
 
 	QLineNumberEdit *edit;
 	QFindWidget *findWidget;
 
+	using QDockWidget::QDockWidget;
 	void edit_changed();
+	void setup();
+	void closeEvent(QCloseEvent *event) override;
+};
+
+struct MonitorWindow
+{
+
+};
+
+struct MonitorWidget : QDockWidget
+{
+	tke::Renderer *renderer;
+
+	using QDockWidget::QDockWidget;
 	void setup();
 	void closeEvent(QCloseEvent *event) override;
 };

@@ -7,7 +7,7 @@ namespace tke
 {
 	VkRenderPass windowRenderPass;
 
-	Window *currentWindow = nullptr;
+	thread_local Window *currentWindow = nullptr;
 
 	void Window::create(int _cx, int _cy, const std::string &title, bool hasFrame)
 	{

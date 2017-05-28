@@ -35,6 +35,9 @@ static WindowType getCurrentWindowType()
 		case WindowTypeStageEditor:
 			currentStageEditor = (StageEditor*)dock;
 			break;
+		case WindowTypeMonitorWidget:
+			currentMonitorWidget = (MonitorWidget*)dock;
+			break;
 		}
 		return (WindowType)data->v;
 	}
@@ -86,67 +89,92 @@ StageExt::~StageExt()
 	delete editor;
 }
 
-void Game::load()
+void RendererExt::setItemText()
 {
-	{ // load pipeles
-		tke::AttributeTree at("data");
-		at.loadXML("pipelines.xml");
-		for (auto c : at.children)
-		{
-			if (c->name == "pipeline")
-			{
-				auto a = c->firstAttribute("filename");
-				auto p = new tke::Pipeline;
-				p->loadXML(a.second);
-				p->ext = new PipelineExt(p);
-				for (int i = 0; i < 5; i++)
-				{
-					auto s = p->stages[i];
-					if (s)
-					{
-						auto ext = new StageExt(s);
-						s->ext = ext;
-						tke::OnceFileBuffer file(p->filepath + "/" + s->filename);
-						ext->text = file.data;
-					}
-				}
-				pipelines.push_back(p);
-			}
-		}
-	}
+	if (item)
+		item->setText(0, QString(p->filename.c_str()));
+}
 
-	{ // load renderers
-		tke::AttributeTree at("data");
-		at.loadXML("renderers.xml");
-		for (auto c : at.children)
+RendererExt::RendererExt(tke::Renderer *_p)
+{
+	p = _p;
+}
+
+RendererExt::~RendererExt()
+{
+	delete item;
+}
+
+void Game::load_pipelines()
+{
+	tke::AttributeTree at("data");
+	at.loadXML("pipelines.xml");
+	for (auto c : at.children)
+	{
+		if (c->name == "pipeline")
 		{
-			if (c->name == "renderer")
+			auto a = c->firstAttribute("filename");
+			auto p = new tke::Pipeline;
+			p->loadXML(a.second);
+			p->ext = new PipelineExt(p);
+			for (int i = 0; i < 5; i++)
 			{
-				auto a = c->firstAttribute("filename");
-				auto r = new tke::Renderer;
-				r->loadXML(a.second);
-				renderers.push_back(r);
+				auto s = p->stages[i];
+				if (s)
+				{
+					auto ext = new StageExt(s);
+					s->ext = ext;
+					tke::OnceFileBuffer file(p->filepath + "/" + s->filename);
+					ext->text = file.data;
+				}
 			}
+			pipelines.push_back(p);
 		}
 	}
 }
 
-void Game::save()
+void Game::save_pipelines()
 {
-	{ // save pipelines
-		tke::AttributeTree at("data");
+	tke::AttributeTree at("data");
 
-		for (auto pipeline : pipelines)
-		{
-			auto node = new tke::AttributeTreeNode("pipeline");
-			node->attributes.emplace_back(new tke::NormalVariable("filename", &pipeline->filename), std::string());
-			at.children.push_back(node);
-		}
-
-		at.saveXML("pipelines.xml");
+	for (auto p : pipelines)
+	{
+		auto node = new tke::AttributeTreeNode("pipeline");
+		node->attributes.emplace_back(new tke::NormalVariable("filename", &p->filename), std::string());
+		at.children.push_back(node);
 	}
-	{ // TODO : save renderers
 
+	at.saveXML("pipelines.xml");
+}
+
+void Game::save_renderers()
+{
+	tke::AttributeTree at("data");
+
+	for (auto r : renderers)
+	{
+		auto node = new tke::AttributeTreeNode("renderer");
+		node->attributes.emplace_back(new tke::NormalVariable("filename", &r->filename), std::string());
+		at.children.push_back(node);
+	}
+
+	at.saveXML("pipelines.xml");
+}
+
+void Game::load_renderers()
+{
+	tke::AttributeTree at("data");
+	at.loadXML("renderers.xml");
+	for (auto c : at.children)
+	{
+		if (c->name == "renderer")
+		{
+			auto a = c->firstAttribute("filename");
+			auto r = new tke::Renderer;
+			r->loadXML(a.second);
+			r->ext = new RendererExt(r);
+			renderers.push_back(r);
+		}
 	}
 }
 
@@ -178,6 +206,16 @@ void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
 			}
 		}
 	}
+	for (auto r : game.renderers)
+	{
+		auto ext = (RendererExt*)r->ext;
+		if (ext->item == curr)
+		{
+			currentItemType = ItemTypeRenderer;
+			currentRenderer = r;
+			return;
+		}
+	}
 	currentItemType = ItemTypeNull;
 }
 
@@ -194,6 +232,18 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 			ext->editor->stage = currentStage;
 			ext->editor->setup();
 			worldEditor->addDockWidget(Qt::RightDockWidgetArea, ext->editor);
+		}
+	}
+		break;
+	case ItemTypeRenderer:
+	{
+		auto ext = (RendererExt*)currentRenderer->ext;
+		if (!ext->monitor)
+		{
+			ext->monitor = new MonitorWidget(worldEditor);
+			ext->monitor->renderer = currentRenderer;
+			ext->monitor->setup();
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, ext->monitor);
 		}
 	}
 		break;
@@ -231,6 +281,13 @@ void GameExplorer::setup()
 	tree->addTopLevelItem(pipelinesItem);
 	renderersItem = new QTreeWidgetItem;
 	renderersItem->setText(0, "Renderers");
+	for (auto r : game.renderers)
+	{
+		auto ext = (RendererExt*)r->ext;
+		ext->item = new QTreeWidgetItem;
+		ext->setItemText();
+		renderersItem->addChild(ext->item);
+	}
 	tree->addTopLevelItem(renderersItem);
 	scenesItem = new QTreeWidgetItem;
 	scenesItem->setText(0, "Scenes");
@@ -254,6 +311,11 @@ void GameExplorer::closeEvent(QCloseEvent *event)
 				_ext->item = nullptr;
 			}
 		}
+	}
+	for (auto r : game.renderers)
+	{
+		auto ext = (RendererExt*)r->ext;
+		ext->item = nullptr;
 	}
 	delete gameExplorer;
 	gameExplorer = nullptr;
@@ -291,6 +353,20 @@ void StageEditor::closeEvent(QCloseEvent *event)
 	ext->editor = nullptr;
 }
 
+void MonitorWidget::setup()
+{
+	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
+
+	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
+}
+
+void MonitorWidget::closeEvent(QCloseEvent *event)
+{
+	auto ext = (RendererExt*)renderer->ext;
+	delete ext->monitor;
+	ext->monitor = nullptr;
+}
+
 void OutputWidget::setup()
 {
 	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
@@ -325,7 +401,8 @@ WorldEditor::WorldEditor(QWidget *parent)
 	ui.setupUi(this);
 	setWindowState(Qt::WindowMaximized);
 
-	game.load();
+	game.load_pipelines();
+	game.load_renderers();
 
 	{ // setup menus
 		connect(ui.action_new_stage, &QAction::triggered, this, &WorldEditor::on_new_stage);
@@ -477,7 +554,7 @@ void WorldEditor::on_new_pipeline()
 		}
 	}
 
-	game.save();
+	game.save_pipelines();
 }
 
 void WorldEditor::on_save_selected_item()
@@ -576,7 +653,7 @@ void WorldEditor::on_remove()
 
 			delete gameExplorer->currentPipeline;
 
-			game.save();
+			game.save_pipelines();
 
 			gameExplorer->currentItemType = GameExplorer::ItemTypeNull;
 		}
