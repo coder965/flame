@@ -44,64 +44,55 @@ static WindowType getCurrentWindowType()
 	return WindowTypeNull;
 }
 
-void PipelineExt::setItemText()
+void Stage::setItemText()
 {
 	if (item)
-		item->setText(0, QString(p->filename.c_str()) + (changed ? "*" : ""));
+		item->setText(0, QString(tke::StageNameByType(type).c_str()) + " - \"" + filename.c_str() + "\"" + (changed ? "*" : ""));
 }
 
-void PipelineExt::setChanged(bool _changed)
+void Stage::setChanged(bool _changed)
 {
 	changed = _changed;
 	setItemText();
 }
 
-PipelineExt::PipelineExt(tke::Pipeline *_p)
+Stage::Stage(Pipeline *_parent)
 {
-	p = _p;
+	parent = _parent;
 }
 
-PipelineExt::~PipelineExt()
-{
-	delete item;
-}
-
-void StageExt::setItemText()
-{
-	if (item)
-		item->setText(0, QString(tke::StageNameByType(p->type).c_str()) + " - \"" + p->filename.c_str() + "\"" + (changed ? "*" : ""));
-}
-
-void StageExt::setChanged(bool _changed)
-{
-	changed = _changed;
-	setItemText();
-}
-
-StageExt::StageExt(tke::Stage *_p)
-{
-	p = _p;
-}
-
-StageExt::~StageExt()
+Stage::~Stage()
 {
 	delete item;
 	delete editor;
 }
 
-void RendererExt::setItemText()
+void Pipeline::setItemText()
+{
+	if (item)
+		item->setText(0, QString(filename.c_str()) + (changed ? "*" : ""));
+}
+
+void Pipeline::setChanged(bool _changed)
+{
+	changed = _changed;
+	setItemText();
+}
+
+Pipeline::~Pipeline()
+{
+	delete item;
+}
+
+void Renderer::setItemText()
 {
 	if (item)
 		item->setText(0, QString(p->filename.c_str()));
 }
 
-RendererExt::RendererExt(tke::Renderer *_p)
+Renderer::~Renderer()
 {
-	p = _p;
-}
-
-RendererExt::~RendererExt()
-{
+	delete p;
 	delete item;
 }
 
@@ -114,18 +105,15 @@ void Game::load_pipelines()
 		if (c->name == "pipeline")
 		{
 			auto a = c->firstAttribute("filename");
-			auto p = new tke::Pipeline;
-			p->loadXML(a.second);
-			p->ext = new PipelineExt(p);
+			auto p = new Pipeline;
+			tke::pipelineLoadXML<Pipeline, Stage>(p, a.second);
 			for (int i = 0; i < 5; i++)
 			{
 				auto s = p->stages[i];
 				if (s)
 				{
-					auto ext = new StageExt(s);
-					s->ext = ext;
 					tke::OnceFileBuffer file(p->filepath + "/" + s->filename);
-					ext->text = file.data;
+					s->text = file.data;
 				}
 			}
 			pipelines.push_back(p);
@@ -147,20 +135,6 @@ void Game::save_pipelines()
 	at.saveXML("pipelines.xml");
 }
 
-void Game::save_renderers()
-{
-	tke::AttributeTree at("data");
-
-	for (auto r : renderers)
-	{
-		auto node = new tke::AttributeTreeNode("renderer");
-		node->attributes.emplace_back(new tke::NormalVariable("filename", &r->filename), std::string());
-		at.children.push_back(node);
-	}
-
-	at.saveXML("pipelines.xml");
-}
-
 void Game::load_renderers()
 {
 	tke::AttributeTree at("data");
@@ -170,12 +144,26 @@ void Game::load_renderers()
 		if (c->name == "renderer")
 		{
 			auto a = c->firstAttribute("filename");
-			auto r = new tke::Renderer;
-			r->loadXML(a.second);
-			r->ext = new RendererExt(r);
+			auto r = new Renderer;
+			r->p = new tke::Renderer;
+			r->p->loadXML(a.second);
 			renderers.push_back(r);
 		}
 	}
+}
+
+void Game::save_renderers()
+{
+	tke::AttributeTree at("data");
+
+	for (auto r : renderers)
+	{
+		auto node = new tke::AttributeTreeNode("renderer");
+		node->attributes.emplace_back(new tke::NormalVariable("filename", &r->p->filename), std::string());
+		at.children.push_back(node);
+	}
+
+	at.saveXML("pipelines.xml");
 }
 
 static Game game;
@@ -184,8 +172,7 @@ void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
 {
 	for (auto p : game.pipelines)
 	{
-		auto ext = (PipelineExt*)p->ext;
-		if (ext->item == curr)
+		if (p->item == curr)
 		{
 			currentItemType = ItemTypePipeline;
 			currentPipeline = p;
@@ -196,8 +183,7 @@ void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
 			auto s = p->stages[i];
 			if (s)
 			{
-				auto ext = (StageExt*)s->ext;
-				if (ext->item == curr)
+				if (s->item == curr)
 				{
 					currentItemType = ItemTypeStage;
 					currentStage = s;
@@ -208,8 +194,7 @@ void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
 	}
 	for (auto r : game.renderers)
 	{
-		auto ext = (RendererExt*)r->ext;
-		if (ext->item == curr)
+		if (r->item == curr)
 		{
 			currentItemType = ItemTypeRenderer;
 			currentRenderer = r;
@@ -225,25 +210,23 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 	{
 	case ItemTypeStage:
 	{
-		auto ext = (StageExt*)currentStage->ext;
-		if (!ext->editor)
+		if (!currentStage->editor)
 		{
-			ext->editor = new StageEditor(worldEditor);
-			ext->editor->stage = currentStage;
-			ext->editor->setup();
-			worldEditor->addDockWidget(Qt::RightDockWidgetArea, ext->editor);
+			currentStage->editor = new StageEditor(worldEditor);
+			currentStage->editor->stage = currentStage;
+			currentStage->editor->setup();
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentStage->editor);
 		}
 	}
 		break;
 	case ItemTypeRenderer:
 	{
-		auto ext = (RendererExt*)currentRenderer->ext;
-		if (!ext->monitor)
+		if (!currentRenderer->monitor)
 		{
-			ext->monitor = new MonitorWidget(worldEditor);
-			ext->monitor->renderer = currentRenderer;
-			ext->monitor->setup();
-			worldEditor->addDockWidget(Qt::RightDockWidgetArea, ext->monitor);
+			currentRenderer->monitor = new MonitorWidget(worldEditor);
+			currentRenderer->monitor->renderer = currentRenderer;
+			currentRenderer->monitor->setup();
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentRenderer->monitor);
 		}
 	}
 		break;
@@ -262,19 +245,17 @@ void GameExplorer::setup()
 	pipelinesItem->setText(0, "Pipelines");
 	for (auto p : game.pipelines)
 	{
-		auto ext = (PipelineExt*)p->ext;
-		ext->item = new QTreeWidgetItem;
-		ext->setItemText();
-		pipelinesItem->addChild(ext->item);
+		p->item = new QTreeWidgetItem;
+		p->setItemText();
+		pipelinesItem->addChild(p->item);
 		for (int i = 0; i < 5; i++)
 		{
 			auto s = p->stages[i];
 			if (s)
 			{
-				auto _ext = (StageExt*)s->ext;
-				_ext->item = new QTreeWidgetItem;
-				_ext->setItemText();
-				ext->item->addChild(_ext->item);
+				s->item = new QTreeWidgetItem;
+				s->setItemText();
+				p->item->addChild(s->item);
 			}
 		}
 	}
@@ -283,10 +264,9 @@ void GameExplorer::setup()
 	renderersItem->setText(0, "Renderers");
 	for (auto r : game.renderers)
 	{
-		auto ext = (RendererExt*)r->ext;
-		ext->item = new QTreeWidgetItem;
-		ext->setItemText();
-		renderersItem->addChild(ext->item);
+		r->item = new QTreeWidgetItem;
+		r->setItemText();
+		renderersItem->addChild(r->item);
 	}
 	tree->addTopLevelItem(renderersItem);
 	scenesItem = new QTreeWidgetItem;
@@ -301,44 +281,34 @@ void GameExplorer::closeEvent(QCloseEvent *event)
 {
 	for (auto p : game.pipelines)
 	{
-		auto ext = (PipelineExt*)p->ext;
-		ext->item = nullptr;
+		p->item = nullptr;
 		for (auto s : p->stages)
 		{
 			if (s)
-			{
-				auto _ext = (StageExt*)s->ext;
-				_ext->item = nullptr;
-			}
+				s->item = nullptr;
 		}
 	}
 	for (auto r : game.renderers)
-	{
-		auto ext = (RendererExt*)r->ext;
-		ext->item = nullptr;
-	}
+		r->item = nullptr;
 	delete gameExplorer;
 	gameExplorer = nullptr;
 }
 
 void StageEditor::edit_changed()
 {
-	auto ext = (StageExt*)stage->ext;
-	ext->changed = true;
-	ext->item->setText(0, QString(tke::StageNameByType(stage->type).c_str()) + " - \"" + stage->filename.c_str() + "\"*");
+	stage->changed = true;
+	stage->item->setText(0, QString(tke::StageNameByType(stage->type).c_str()) + " - \"" + stage->filename.c_str() + "\"*");
 }
 
 void StageEditor::setup()
 {
 	setUserData(0, new QMyUserData(WindowTypeStageEditor));
 
-	auto _ext = (StageExt*)stage->ext;
-
 	setWindowTitle(QString("Stage Editor - ") + stage->parent->name.c_str() + ":" + tke::StageNameByType(stage->type).c_str());
 
 	edit = new QLineNumberEdit;
 	edit->setLineWrapMode(QPlainTextEdit::LineWrapMode::NoWrap);
-	edit->setPlainText(_ext->text.c_str());
+	edit->setPlainText(stage->text.c_str());
 	connect(edit, &QPlainTextEdit::textChanged, this, &StageEditor::edit_changed);
 	//ext->editor->findWidget = new QFindWidget;
 	//ext->editor->stageTab->setCornerWidget(ext->editor->findWidget->group);
@@ -348,9 +318,8 @@ void StageEditor::setup()
 
 void StageEditor::closeEvent(QCloseEvent *event)
 {
-	auto ext = (StageExt*)stage->ext;
-	delete ext->editor;
-	ext->editor = nullptr;
+	stage->editor = nullptr;
+	delete this;
 }
 
 tke::UniformBuffer *pasteBuffer = nullptr;
@@ -362,7 +331,8 @@ struct MonitorWindow : tke::GuiWindow
 
 	tke::Renderer *progressRenderer;
 
-	void init()
+	MonitorWindow()
+		:GuiWindow(tke::resCx, tke::resCy, "TK Engine World Editor", false)
 	{
 		progressRenderer = new tke::Renderer();
 		progressRenderer->loadXML("../renderer/progress.xml");
@@ -376,7 +346,7 @@ struct MonitorWindow : tke::GuiWindow
 
 		for (int i = 0; i < 2; i++)
 		{
-			progressCmd[i] = tke::vk::commandPool.allocate();
+			progressCmd[i] = tke::commandPool.allocate();
 			tke::vk::beginCommandBuffer(progressCmd[i]);
 			progressRenderer->execute(progressCmd[i], i);
 			vkCmdSetEvent(progressCmd[i], renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -391,7 +361,7 @@ struct MonitorWindow : tke::GuiWindow
 			if (_t < 500)
 			{
 				float alpha = _t / 500.f;
-				pasteBuffer->update(&alpha, &tke::stagingBuffer);
+				pasteBuffer->update(&alpha, tke::stagingBuffer);
 			}
 		};
 		e0.duration = 1500;
@@ -405,9 +375,7 @@ struct MonitorWindow : tke::GuiWindow
 
 		beginUi();
 		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-		ImGui::TextUnformatted(tke::majorProgressText().c_str());
-		ImGui::TextUnformatted(tke::minorProgressText().c_str());
-		ImGui::TextUnformatted("123");
+		ImGui::Text("FPS:%d", getFPS());
 		ImGui::End();
 		endUi();
 
@@ -417,45 +385,59 @@ struct MonitorWindow : tke::GuiWindow
 	}
 };
 
-static void _monitor_thread(void *p)
+struct MonitorWidgetData
 {
-	auto window = new MonitorWindow;
-	window->create(tke::resCx, tke::resCy, "TK Engine World Editor", false);
-	window->initUi();
-	window->init();
+	MonitorWindow **window;
+	bool *dead;
+};
 
-	*(MonitorWindow**)p = window;
-
-	window->run();
-}
+struct QMyScrollArea : QScrollArea
+{
+	QSize sizeHint() const override
+	{
+		return QSize(tke::resCx, tke::resCy);
+	}
+};
 
 void MonitorWidget::setup()
 {
-	_beginthread(_monitor_thread, 0, &monitorWindow);
-	while (!monitorWindow) Sleep(100);
+	MonitorWidgetData data;
+	data.window = &window;
+	data.dead = &windowDead;
 
-	QWindow *window = QWindow::fromWinId((unsigned int)monitorWindow->hWnd);
-	window->setFlags(Qt::FramelessWindowHint);
+	_beginthread([](void *p){
+		auto window = new MonitorWindow;
 
-	QWidget *widget = QWidget::createWindowContainer(window);
-	//widget->setFixedWidth(1600);
-	//widget->setFixedHeight(900);
+		auto data = (MonitorWidgetData*)p;
+		*data->window = window;
 
-	//ui.scrollArea->setWidget(widget);
+		window->run(data->dead);
+	}, 0, &data);
+	while (!window) Sleep(100);
+
+	auto qWnd = QWindow::fromWinId((unsigned int)window->hWnd);
+	qWnd->setFlags(Qt::FramelessWindowHint);
+
+	QWidget *container = QWidget::createWindowContainer(qWnd);
+	container->setFixedWidth(tke::resCx);
+	container->setFixedHeight(tke::resCy);
+
+	auto scrollArea = new QMyScrollArea;
+	scrollArea->setWidget(container);
 
 	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
 
-	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
-	setWidget(widget);
+	setWindowTitle(QString("Monitor - ") + renderer->p->filename.c_str());
+	setWidget(scrollArea);
 }
 
 void MonitorWidget::closeEvent(QCloseEvent *event)
 {
+	window->die = true;
+	while (!windowDead) Sleep(100);
 
-
-	auto ext = (RendererExt*)renderer->ext;
-	delete ext->monitor;
-	ext->monitor = nullptr;
+	renderer->monitor = nullptr;
+	delete this;
 }
 
 void OutputWidget::setup()
@@ -530,7 +512,7 @@ void WorldEditor::on_new_stage()
 		switch (gameExplorer->currentItemType)
 		{
 		case GameExplorer::ItemTypePipeline:
-			if (gameExplorer->currentPipeline->isFullOfStage()) 
+			if (tke::isFullOfStage(gameExplorer->currentPipeline)) 
 				return;
 
 			bool ok;
@@ -548,7 +530,7 @@ void WorldEditor::on_new_stage()
 			if (gameExplorer->currentPipeline->stages[i])
 				return;
 
-			auto s = new tke::Stage(gameExplorer->currentPipeline);
+			auto s = new Stage(gameExplorer->currentPipeline);
 			s->type = type;
 			s->filename = filename;
 			s->filepath = p.parent_path().string();
@@ -560,21 +542,15 @@ void WorldEditor::on_new_stage()
 				file.close();
 			}
 
-			auto _ext = new StageExt(s);
-			s->ext = _ext;
 			tke::OnceFileBuffer file(filename);
-			_ext->text = file.data;
+			s->text = file.data;
 
-			auto ext = (PipelineExt*)gameExplorer->currentPipeline->ext;
 			{
 				for (int i = 0; i < 5; i++)
 				{
 					auto s = gameExplorer->currentPipeline->stages[i];
 					if (s)
-					{
-						auto ext = (StageExt*)s->ext;
-						delete ext->item;
-					}
+						delete s->item;
 				}
 				gameExplorer->currentPipeline->stages[i] = s;
 				for (int i = 0; i < 5; i++)
@@ -582,15 +558,14 @@ void WorldEditor::on_new_stage()
 					auto s = gameExplorer->currentPipeline->stages[i];
 					if (s)
 					{
-						auto _ext = (StageExt*)s->ext;
-						_ext->item = new QTreeWidgetItem;
-						_ext->setItemText();
-						ext->item->addChild(_ext->item);
+						s->item = new QTreeWidgetItem;
+						s->setItemText();
+						gameExplorer->currentPipeline->item->addChild(s->item);
 					}
 				}
 			}
 
-			ext->setChanged(true);
+			gameExplorer->currentPipeline->setChanged(true);
 		}
 		break;
 	}
@@ -603,28 +578,24 @@ void WorldEditor::on_new_pipeline()
 
 	for (auto i = 0; i < list.size(); i++)
 	{
-		auto p = new tke::Pipeline;
-		p->loadXML(list[i].toUtf8().data());
-		p->ext = new PipelineExt(p);
+		auto p = new Pipeline;
+		tke::pipelineLoadXML<Pipeline, Stage>(p, list[i].toUtf8().data());
 		game.pipelines.push_back(p);
 
 		if (gameExplorer)
 		{
-			auto ext = (PipelineExt*)p->ext;
-			ext->item = new QTreeWidgetItem;
-			ext->setItemText();
-			gameExplorer->pipelinesItem->addChild(ext->item);
+			p->item = new QTreeWidgetItem;
+			p->setItemText();
+			gameExplorer->pipelinesItem->addChild(p->item);
 
 			for (int i = 0; i < 5; i++)
 			{
 				auto s = p->stages[i];
 				if (s)
 				{
-					auto _ext = new StageExt(s);
-					s->ext = ext;
-					_ext->item = new QTreeWidgetItem;
-					_ext->setItemText();
-					ext->item->addChild(_ext->item);
+					s->item = new QTreeWidgetItem;
+					s->setItemText();
+					p->item->addChild(s->item);
 				}
 			}
 		}
@@ -741,9 +712,8 @@ void WorldEditor::on_remove()
 			auto p = s->parent;
 			p->stages[tke::StageIndexByType(s->type)] = nullptr;
 
-			auto ext = (PipelineExt*)p->ext;
-			ext->changed = true;
-			ext->item->setText(0, QString(p->filename.c_str()) + "*");
+			p->changed = true;
+			p->item->setText(0, QString(p->filename.c_str()) + "*");
 
 			delete s;
 
@@ -798,36 +768,31 @@ void WorldEditor::on_compile()
 	}
 }
 
-void WorldEditor::save_pipeline(tke::Pipeline *p)
+void WorldEditor::save_pipeline(Pipeline *p)
 {
-	auto ext = (PipelineExt*)p->ext;
-	if (!ext->changed) return;
-	p->saveXML();
-	ext->setChanged(false);
+	if (!p->changed) return;
+	tke::pipelineSaveXML<Pipeline>(p);
+	p->setChanged(false);
 }
 
-void WorldEditor::save_stage(tke::Stage *stage)
+void WorldEditor::save_stage(Stage *s)
 {
-	auto _ext = (StageExt*)stage->ext;
+	if (!s->changed) return;
 
-	if (!_ext->changed) return;
+	if (s->editor)
+		s->text = s->editor->edit->toPlainText().toUtf8().data();
 
-	if (_ext->editor)
-		_ext->text = _ext->editor->edit->toPlainText().toUtf8().data();
+	std::ofstream file(s->parent->filepath + "/" + s->filename);
+	file.write(s->text.c_str(), s->text.size());
 
-	std::ofstream file(stage->parent->filepath + "/" + stage->filename);
-	file.write(_ext->text.c_str(), _ext->text.size());
-
-	_ext->setChanged(false);
+	s->setChanged(false);
 }
 
-void WorldEditor::compile_stage(tke::Stage *s)
+void WorldEditor::compile_stage(Stage *s)
 {
-	auto _ext = (StageExt*)s->ext;
-
 	save_stage(s);
 
-	std::stringstream ss(_ext->text);
+	std::stringstream ss(s->text);
 	std::string stageText = "";
 
 	std::vector<std::tuple<int, int, int>> includeFileDatas;
@@ -1053,10 +1018,7 @@ void WorldEditor::compile_stage(tke::Stage *s)
 	DeleteFileA("temp.glsl");
 
 	if (!error)
-	{
-		auto ext = (PipelineExt*)s->parent->ext;
-		ext->setChanged(true);
-	}
+		s->parent->setChanged(true);
 
 	if (outputWidget)
 	{

@@ -88,4 +88,9 @@ namespace tke
 		}
 		return it->second;
 	}
+
+	void destroy()
+	{
+
+	}
 }

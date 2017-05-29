@@ -16,7 +16,7 @@ namespace tke
 
 		vk::queueWaitIdle();
 
-		auto cmd = vk::commandPool.begineOnce();
+		auto cmd = commandPool.begineOnce();
 
 		VkClearValue clearValue[2] = {
 			{ 0.f, 0.f, 0.f, 0.f },
@@ -28,9 +28,9 @@ namespace tke
 
 		vkCmdEndRenderPass(cmd);
 
-		vk::commandPool.endOnce(cmd);
+		commandPool.endOnce(cmd);
 
-		cmd = vk::commandPool.begineOnce();
+		cmd = commandPool.begineOnce();
 
 		VkBufferImageCopy range = {};
 		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -43,12 +43,12 @@ namespace tke
 
 		vkCmdCopyImageToBuffer(cmd, image.m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer.m_buffer, 1, &range);
 
-		vk::commandPool.endOnce(cmd);
+		commandPool.endOnce(cmd);
 
-		auto pixel = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, cx * cy * 4);
+		auto pixel = (unsigned char*)stagingBuffer.map(0, cx * cy * 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
 
-		vk::unmapMemory(stagingBuffer.m_memory);
+		stagingBuffer.unmap();
 
 		return index;
 	}
@@ -81,8 +81,8 @@ namespace tke
 
 		renderPass = vk::createRenderPass(ARRAYSIZE(attachments), attachments, 1, &subpass, 0, nullptr);
 
-		VkImageView views[] = { image.getView(), pDepthImage->getView() };
-		framebuffer = vk::createFramebuffer(resCx, resCy, renderPass, ARRAYSIZE(views), views);
+		std::vector<VkImageView> views = { image.getView(), pDepthImage->getView() };
+		framebuffer = createFramebuffer(resCx, resCy, renderPass, views);
 
 		plainPickUpPipeline.create(enginePath + "pipeline/pickUp/pickUp.xml", &vertexInputState, renderPass, 0);
 	}

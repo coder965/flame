@@ -30,6 +30,8 @@ namespace tke
 		Model *getModel(const std::string &str);
 		Pipeline *getPipeline(const std::string &str);
 		VkCommandBuffer getCmd(const std::string &str);
+
+		void destroy();
 	};
 
 	extern ResourceBank globalResource;

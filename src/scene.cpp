@@ -656,7 +656,7 @@ namespace tke
 				seed.x = pos.x - 500.f;
 				seed.y = pos.z - 500.f;
 				seed /= 1000.f;
-				proceduralTerrainBuffer.update(&seed, &stagingBuffer);
+				proceduralTerrainBuffer.update(&seed, stagingBuffer);
 			}
 		}
 		if (needUpdateProjMatrix || camera.m_changed)
@@ -670,7 +670,7 @@ namespace tke
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, camera.m_frustumPlanes, sizeof(glm::vec4) * 6);
 			stru.viewportDim = glm::vec2(resCx, resCy);
-			matrixBuffer.update(&stru, &stagingBuffer);
+			matrixBuffer.update(&stru, stagingBuffer);
 		}
 		if (needUpdataSky)
 		{
@@ -679,7 +679,7 @@ namespace tke
 				AmbientStruct stru;
 				stru.v = glm::vec4(ambient.color, 0);
 				stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-				ambientBuffer.update(&stru, &stagingBuffer);
+				ambientBuffer.update(&stru, stagingBuffer);
 			}
 			else if (skyType == SkyType::ePanorama)
 			{
@@ -691,7 +691,7 @@ namespace tke
 					AmbientStruct stru;
 					stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->m_mipmapLevels - 1);
 					stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-					ambientBuffer.update(&stru, &stagingBuffer);
+					ambientBuffer.update(&stru, stagingBuffer);
 				}
 			}
 			else if (skyType == SkyType::eAtmosphereScattering)
@@ -749,19 +749,18 @@ namespace tke
 					envrImage.m_mipmapLevels = 4;
 					envrImage.create(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-					VkImageView envrView[4];
-
 					for (int i = 0; i < 4; i++)
 					{
-						envrView[i] = envrImage.getView(0, i);
-						envrFramebuffer[i] = vk::createFramebuffer(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, postRenderPass, 1, &envrView[i]);
+						std::vector<VkImageView> views = { envrImage.getView(0, i) };
+						envrFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, postRenderPass, views);
 					}
 
 					for (int i = 0; i < 3; i++)
 					{
 						envrImageDownsample[i].create(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-						auto view = envrImageDownsample[i].getView();
-						envrDownsampleFramebuffer[i] = vk::createFramebuffer(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), postRenderPass, 1, &view);
+
+						std::vector<VkImageView> views = { envrImageDownsample[i].getView() };
+						envrDownsampleFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), postRenderPass, views);
 					}
 
 					convolveDescriptorSetLevel[0] = convolvePipeline.m_descriptorSet;
@@ -794,7 +793,7 @@ namespace tke
 
 					if (pano_tex_position != -1)
 					{
-						auto cmd = vk::commandPool.begineOnce();
+						auto cmd = commandPool.begineOnce();
 
 						vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(postRenderPass, envrFramebuffer[0],
 							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
@@ -804,7 +803,7 @@ namespace tke
 
 						vkCmdEndRenderPass(cmd);
 
-						vk::commandPool.endOnce(cmd);
+						commandPool.endOnce(cmd);
 
 						vk::descriptorPool.addWrite(panoramaPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage.getInfo(vk::colorSampler));
 
@@ -818,7 +817,7 @@ namespace tke
 							{
 								for (int i = 0; i < 3; i++)
 								{
-									auto cmd = vk::commandPool.begineOnce();
+									auto cmd = commandPool.begineOnce();
 
 									vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(postRenderPass, envrDownsampleFramebuffer[i],
 										TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
@@ -849,12 +848,12 @@ namespace tke
 
 									vkCmdEndRenderPass(cmd);
 
-									vk::commandPool.endOnce(cmd);
+									commandPool.endOnce(cmd);
 								}
 
 								for (int i = 1; i < envrImage.m_mipmapLevels; i++)
 								{
-									auto cmd = vk::commandPool.begineOnce();
+									auto cmd = commandPool.begineOnce();
 
 									vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(postRenderPass, envrFramebuffer[i],
 										TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
@@ -885,7 +884,7 @@ namespace tke
 
 									vkCmdEndRenderPass(cmd);
 
-									vk::commandPool.endOnce(cmd);
+									commandPool.endOnce(cmd);
 								}
 
 								vk::descriptorPool.addWrite(deferredPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(vk::colorSampler, 0, 0, envrImage.m_mipmapLevels));
@@ -893,7 +892,7 @@ namespace tke
 								AmbientStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
 								stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-								ambientBuffer.update(&stru, &stagingBuffer);
+								ambientBuffer.update(&stru, stagingBuffer);
 							}
 						}
 					}
@@ -908,7 +907,7 @@ namespace tke
 		{
 			std::vector<VkBufferCopy> ranges;
 
-			auto map = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, sizeof(HeightMapTerrainBufferStruct) * pTerrains.size());
+			auto map = (unsigned char*)stagingBuffer.map(0, sizeof(HeightMapTerrainBufferStruct) * pTerrains.size());
 
 			auto terrainIndex = 0;
 			for (auto pTerrain : pTerrains)
@@ -939,8 +938,8 @@ namespace tke
 				terrainIndex++;
 			}
 
-			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, heightMapTerrainBuffer.m_buffer, ranges.size(), ranges.data());
+			stagingBuffer.unmap();
+			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, heightMapTerrainBuffer.m_buffer, ranges.size(), ranges.data());
 
 			vk::descriptorPool.update();
 		}
@@ -986,7 +985,7 @@ namespace tke
 		if (needUpdateMaterialBuffer)
 		{
 			if (storeMaterials.size() > 0)
-				materialBuffer.update(storeMaterials.data(), &stagingBuffer, sizeof(MaterialUniformBufferStruct) * storeMaterials.size());
+				materialBuffer.update(storeMaterials.data(), stagingBuffer, sizeof(MaterialUniformBufferStruct) * storeMaterials.size());
 			needUpdateMaterialBuffer = false;
 		}
 		if (needUpdateSampler)
@@ -1007,7 +1006,7 @@ namespace tke
 		{
 			int objectIndex = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, sizeof(glm::mat4) * pStaticObjects.size());
+			auto map = (unsigned char*)stagingBuffer.map(0, sizeof(glm::mat4) * pStaticObjects.size());
 			for (auto pObject : pStaticObjects)
 			{
 				if (pObject->m_changed)
@@ -1023,14 +1022,14 @@ namespace tke
 				pObject->sceneIndex = objectIndex;
 				objectIndex++;
 			}
-			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, objectMatrixBuffer.m_buffer, ranges.size(), ranges.data());
+			stagingBuffer.unmap();
+			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, objectMatrixBuffer.m_buffer, ranges.size(), ranges.data());
 		}
 		if (pLights.size() > 0)
 		{ // light in editor
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, sizeof(glm::mat4) * pLights.size());
+			auto map = (unsigned char*)stagingBuffer.map(0, sizeof(glm::mat4) * pLights.size());
 			for (auto pLight : pLights)
 			{
 				if (pLight->m_changed)
@@ -1046,8 +1045,8 @@ namespace tke
 				pLight->sceneIndex = lightIndex;
 				lightIndex++;
 			}
-			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, lightMatrixBuffer.m_buffer, ranges.size(), ranges.data());
+			stagingBuffer.unmap();
+			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, lightMatrixBuffer.m_buffer, ranges.size(), ranges.data());
 		}
 		if (needUpdateIndirectBuffer)
 		{
@@ -1077,7 +1076,7 @@ namespace tke
 
 				drawCallCount = commands.size();
 
-				objectIndirectBuffer.update(commands.data(), &stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * drawCallCount);
+				objectIndirectBuffer.update(commands.data(), stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * drawCallCount);
 			}
 			needUpdateIndirectBuffer = false;
 		}
@@ -1085,7 +1084,7 @@ namespace tke
 		{ // light attribute
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)vk::mapMemory(stagingBuffer.m_memory, 0, sizeof(LightStruct) * pLights.size());
+			auto map = (unsigned char*)stagingBuffer.map(0, sizeof(LightStruct) * pLights.size());
 			for (auto pLight : pLights)
 			{
 				if (pLight->m_changed)
@@ -1107,8 +1106,8 @@ namespace tke
 				}
 				lightIndex++;
 			}
-			vk::unmapMemory(stagingBuffer.m_memory);
-			if (ranges.size() > 0) vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, lightBuffer.m_buffer, ranges.size(), ranges.data());
+			stagingBuffer.unmap();
+			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, lightBuffer.m_buffer, ranges.size(), ranges.data());
 		}
 		if (pLights.size() > 0)
 		{ // shadow
@@ -1169,7 +1168,7 @@ namespace tke
 		if (lightCountChanged)
 		{ // light count in light attribute
 			auto count = pLights.size();
-			lightBuffer.update(&count, &stagingBuffer, 4);
+			lightBuffer.update(&count, stagingBuffer, 4);
 			lightCountChanged = false;
 		}
 

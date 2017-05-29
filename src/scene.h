@@ -196,7 +196,7 @@ namespace tke
 		UniformBuffer objectMatrixBuffer;
 		UniformBuffer lightMatrixBuffer;
 		UniformBuffer materialBuffer;
-		IndexedIndirectBuffer objectIndirectBuffer;
+		IndirectIndexBuffer objectIndirectBuffer;
 		UniformBuffer heightMapTerrainBuffer;
 		UniformBuffer proceduralTerrainBuffer;
 		UniformBuffer lightBuffer;

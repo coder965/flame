@@ -211,7 +211,7 @@ namespace tke
 
 	VkRenderPass windowRenderPass;
 
-	void Window::create(int _cx, int _cy, const std::string &title, bool hasFrame)
+	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame)
 	{
 		cx = _cx;
 		cy = _cy;
@@ -247,7 +247,7 @@ namespace tke
 
 			std::vector<VkImageView> views;
 			views.push_back(image[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
-			framebuffer[i] = getFramebuffer(cx, cy, windowRenderPass, views);
+			framebuffer[i] = createFramebuffer(cx, cy, windowRenderPass, views);
 		}
 
 		commandPool.create();
@@ -257,7 +257,7 @@ namespace tke
 		frameDone = vk::createFence();
 	}
 
-	void Window::destroy(bool byCode)
+	Window::~Window()
 	{
 		die = false;
 		vk::destroyFence(frameDone);
@@ -266,13 +266,11 @@ namespace tke
 		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
 		{
-			vk::destroyFramebuffer(framebuffer[i]);
+			destroyFramebuffer(framebuffer[i]);
 			image[i].destroy();
 		}
 		vk::destroySwapchain(surface, swapchain);
-		if (byCode)
-			DestroyWindow(hWnd); // destroy window if window die cause by code
-		hWnd = 0; // this is the mark that if a window is valid
+		DestroyWindow(hWnd);
 	}
 
 	thread_local Window *currentWindow = nullptr;
@@ -352,7 +350,7 @@ namespace tke
 				}
 				break;
 			case WM_DESTROY:
-				PostQuitMessage(0);
+				currentWindow->die = true;
 				break;
 			}
 			currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
@@ -416,7 +414,7 @@ namespace tke
 		vk::queuePresent(&info);
 	}
 
-	void Window::run()
+	void Window::run(bool *dead)
 	{
 		ShowWindow(hWnd, SW_NORMAL);
 
@@ -429,7 +427,7 @@ namespace tke
 			if (die)
 			{
 				delete this;
-				currentWindow = nullptr;
+				*dead = nullptr;
 				return;
 			}
 
@@ -437,14 +435,7 @@ namespace tke
 			processEvents();
 
 			MSG msg;
-			auto hasMsg = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-			if ((hasMsg && msg.message == WM_QUIT) || die)
-			{
-				destroy(!(hasMsg && msg.message == WM_QUIT));
-				return;
-			}
-
-			if (hasMsg)
+			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);

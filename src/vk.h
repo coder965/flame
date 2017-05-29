@@ -11,6 +11,178 @@
 
 namespace tke
 {
+	struct Buffer
+	{
+		size_t m_size = 0;
+		VkBuffer m_buffer = 0;
+		VkDeviceMemory m_memory = 0;
+
+		void create(size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		void destory();
+	};
+
+	struct StagingBuffer : Buffer
+	{
+		void create(size_t size);
+
+		void *map(size_t offset, size_t size);
+		void unmap();
+	};
+
+	struct NonStagingBufferAbstract : Buffer
+	{
+		void create(size_t size, VkBufferUsageFlags usage, void *data = nullptr);
+		void update(void *data, StagingBuffer &stagingBuffer, size_t size = 0);
+	};
+
+	struct ShaderManipulatableBufferAbstract : NonStagingBufferAbstract
+	{
+		VkDescriptorBufferInfo m_info;
+		void create(size_t size, VkBufferUsageFlags usage);
+	};
+
+	struct UniformBuffer : ShaderManipulatableBufferAbstract
+	{
+		void create(size_t size);
+	};
+
+	struct VertexBuffer : NonStagingBufferAbstract
+	{
+		void create(size_t size, void *data = nullptr);
+		void bind(VkCommandBuffer cmd);
+	};
+
+	struct IndexBuffer : NonStagingBufferAbstract
+	{
+		void create(size_t size, void *data = nullptr);
+		void bind(VkCommandBuffer cmd);
+	};
+
+	struct IndirectVertexBuffer : NonStagingBufferAbstract
+	{
+		size_t stride();
+		void create(size_t size);
+	};
+
+	struct IndirectIndexBuffer : NonStagingBufferAbstract
+	{
+		size_t stride();
+		void create(size_t size);
+	};
+
+	struct Image
+	{
+		enum Type
+		{
+			eColor,
+			eSwapchain,
+			eDepth,
+			eDepthStencil
+		};
+		Type type = eColor;
+		inline bool isColorType() { return type == eColor || type == eSwapchain; }
+		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
+
+		struct View
+		{
+			VkImageAspectFlags aspect;
+			int baseLevel;
+			int levelCount;
+			int baseLayer;
+			int layerCount;
+			VkImageView view;
+		};
+
+		size_t m_size;
+		int m_width = 1, m_height = 1;
+		int m_mipmapLevels = 1;
+		int m_arrayLayers = 1;
+		VkFormat m_format = VK_FORMAT_R8G8B8A8_UNORM;
+		VkImage m_image = 0;
+		VkDeviceMemory m_memory = 0;
+		VkImageLayout m_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+		VkImageViewType m_viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+		std::vector<View> views;
+		std::list<VkDescriptorImageInfo> infos;
+
+		std::string filename;
+
+		bool m_sRGB = false;
+
+		int sceneIndex = -1;
+
+		unsigned char *m_data = nullptr;
+
+		int getWidth(int mipmapLevel = 0) const;
+		int getHeight(int mipmapLevel = 0) const;
+		void transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout);
+		void fillData(int level, std::uint8_t *data, size_t size, VkImageAspectFlags aspect);
+		void create(int w, int h, VkFormat format, VkImageUsageFlags usage, std::uint8_t *data = nullptr, size_t size = 0, VkImageAspectFlags aspect = 0);
+		void destroy();
+		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		unsigned char getPixel(int x, int y, int off) const;
+	};
+
+	struct CommandPool
+	{
+		VkCommandPool pool;
+
+		void create();
+		void destroy();
+		VkCommandBuffer allocate();
+		VkCommandBuffer allocateSecondary();
+		void free(VkCommandBuffer cmd);
+
+		VkCommandBuffer begineOnce();
+		void endOnce(VkCommandBuffer cmd);
+
+		void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
+		void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
+		void cmdUpdateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &uniformBuffer);
+
+		void cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+	};
+	extern CommandPool commandPool;
+
+	struct DescriptorSetLayout
+	{
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		VkDescriptorSetLayout v;
+	};
+
+	VkDescriptorSetLayout createDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding> &bindings);
+	void destroyDescriptorSetLayout(VkDescriptorSetLayout v);
+
+	struct PipelineLayout
+	{
+		VkDescriptorSetLayout descriptorLayout;
+		std::vector<VkPushConstantRange> pushConstantRanges;
+		VkPipelineLayout v;
+	};
+
+	VkPipelineLayout createPipelineLayout(VkDescriptorSetLayout descriptorLayout, std::vector<VkPushConstantRange> &pushConstantRanges);
+	void destroyPipelineLayout(VkPipelineLayout v);
+
+	struct Framebuffer
+	{
+		std::vector<VkImageView> views;
+		VkFramebuffer v;
+	};
+
+	VkFramebuffer createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
+	void destroyFramebuffer(VkFramebuffer v);
+
+	struct ShaderModule
+	{
+		std::string filename;
+		VkShaderModule v;
+	};
+
+	VkShaderModule createShaderModule(const std::string &filename);
+	void destroyShaderModule(VkShaderModule v);
+
 	namespace vk
 	{
 		extern VkFormat swapchainFormat;
@@ -23,49 +195,12 @@ namespace tke
 		void queueSubmitFence(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkFence fence);
 		void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
 
-		struct CommandPool
-		{
-			VkCommandPool pool;
-
-			void create();
-			void destroy();
-			VkCommandBuffer allocate();
-			VkCommandBuffer allocateSecondary();
-			void free(VkCommandBuffer cmd);
-
-			VkCommandBuffer begineOnce();
-			void endOnce(VkCommandBuffer cmd);
-
-			void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
-			void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
-			void cmdUpdateBuffer(void *data, size_t size, VkBuffer stagingBuffer, VkDeviceMemory stagingMemory, VkBuffer &uniformBuffer);
-
-			void cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
-			void cmdTransitionImageLayout(VkImage image, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, int level);
-		};
-		extern CommandPool commandPool;
-
-		void *mapMemory(VkDeviceMemory memory, size_t offset, size_t size);
-		void unmapMemory(VkDeviceMemory memory);
-		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
-		void destroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
-
-		size_t createImage(std::uint32_t w, std::uint32_t h, std::uint32_t mipmapLevels, std::uint32_t arrayLayers, VkFormat format, VkImageUsageFlags usage, VkImage &image, VkDeviceMemory &memory);
-		void destroyImage(VkImage image, VkDeviceMemory memory);
-		VkImageView createImageView(VkImage image, VkImageViewType type, VkImageAspectFlags aspect, VkFormat format, int baseLevel, int levelCount, int baseLayer, int layerCount);
-		void destroyImageView(VkImageView view);
-
 		extern VkSampler plainSampler;
 		extern VkSampler plainUnnormalizedSampler;
 		extern VkSampler colorSampler;
 		extern VkSampler colorBorderSampler;
 
 		VkPipelineVertexInputStateCreateInfo vertexState(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes);
-
-		VkDescriptorSetLayout createDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo *pInfo);
-		void destroyDescriptorLayout(VkDescriptorSetLayout layout);
 
 		struct DescriptrPool
 		{
@@ -81,11 +216,6 @@ namespace tke
 		};
 		extern DescriptrPool descriptorPool;
 
-		VkShaderModule loadShaderModule(const std::string &filename);
-		void destroyShaderModule(VkShaderModule shaderModule);
-
-		VkPipelineLayout createPipelineLayout(VkPipelineLayoutCreateInfo *pInfo);
-		void destroyPipelineLayout(VkPipelineLayout layout);
 		VkPipeline createPipeline(VkGraphicsPipelineCreateInfo *pInfo);
 		void destroyPipeline(VkPipeline pipeline);
 
@@ -97,9 +227,6 @@ namespace tke
 		VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies);
 		void destroyRenderPass(VkRenderPass rp);
 		VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues);
-
-		VkFramebuffer createFramebuffer(std::uint32_t cx, std::uint32_t cy, VkRenderPass renderPass, std::uint32_t attachmentCount, VkImageView *pViews);
-		void destroyFramebuffer(VkFramebuffer fb);
 
 		void createSwapchain(HWND hWnd, int cx, int cy, VkSurfaceKHR &surface, VkSwapchainKHR &swapchain, VkImage *pImages);
 		void destroySwapchain(VkSurfaceKHR surface, VkSwapchainKHR swapchain);

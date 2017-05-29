@@ -1,4 +1,4 @@
-<renderer name="" cx="1600" cy="900">
+<renderer name="" cx="-1" cy="-1">
   <buffers>
     <buffer name="Paste.UniformBuffer" size="4"/>
   </buffers>

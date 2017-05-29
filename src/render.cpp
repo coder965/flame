@@ -9,374 +9,7 @@
 
 namespace tke
 {
-	void Buffer::create(size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperty)
-	{
-		m_size = size;
-		vk::createBuffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, memoryProperty, m_buffer, m_memory);
-	}
-
-	void Buffer::destory()
-	{
-		vk::destroyBuffer(m_buffer, m_memory);
-		m_buffer = 0; // this is the mark that if a buffer is valid
-	}
-
-	void StagingBuffer::create(size_t size)
-	{
-		Buffer::create(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	}
-
-	void NonStagingBufferAbstract::create(size_t size, VkBufferUsageFlags usage, void *data)
-	{
-		Buffer::create(size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		if (data)
-		{
-			StagingBuffer stagingBuffer;
-			stagingBuffer.create(size);
-
-			void* map = vk::mapMemory(stagingBuffer.m_memory, 0, size);
-			memcpy(map, data, size);
-			vk::unmapMemory(stagingBuffer.m_memory);
-			vk::commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, m_buffer, size);
-
-			stagingBuffer.destory();
-		}
-	}
-
-	void NonStagingBufferAbstract::update(void *data, StagingBuffer *pStagingBuffer, size_t size)
-	{
-		if (size == 0) size = m_size;
-		vk::commandPool.cmdUpdateBuffer(data, size, pStagingBuffer->m_buffer, pStagingBuffer->m_memory, m_buffer);
-	}
-
-	void ShaderManipulatableBufferAbstract::create(size_t size, VkBufferUsageFlags usage)
-	{
-		NonStagingBufferAbstract::create(size, usage);
-		m_info = {};
-		m_info.buffer = m_buffer;
-		m_info.range = m_size;
-	}
-
-	void UniformBuffer::create(size_t size)
-	{
-		ShaderManipulatableBufferAbstract::create(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-	}
-
-	void VertexBuffer::create(size_t size, void *data)
-	{
-		NonStagingBufferAbstract::create(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data);
-	}
-
-	void VertexBuffer::bind(VkCommandBuffer cmd)
-	{
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(cmd, 0, 1, &m_buffer, offsets);
-	}
-
-	void IndexBuffer::create(size_t size, void *data)
-	{
-		NonStagingBufferAbstract::create(size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data);
-	}
-
-	void IndexBuffer::bind(VkCommandBuffer cmd)
-	{
-		vkCmdBindIndexBuffer(cmd, m_buffer, 0, VK_INDEX_TYPE_UINT32);
-	}
-
-	size_t VertexIndirectBuffer::stride()
-	{
-		return sizeof(VkDrawIndirectCommand);
-	}
-
-	void VertexIndirectBuffer::create(size_t size)
-	{
-		NonStagingBufferAbstract::create(size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT);
-	}
-
-	size_t IndexedIndirectBuffer::stride()
-	{
-		return sizeof(VkDrawIndexedIndirectCommand);
-	}
-
-	void IndexedIndirectBuffer::create(size_t size)
-	{
-		NonStagingBufferAbstract::create(size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT);
-	}
-
-	void Image::transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout)
-	{
-		vk::commandPool.cmdTransitionImageLayout(m_image, aspect, m_layout, layout, level);
-		m_layout = layout;
-	}
-
-	void Image::fillData(int level, std::uint8_t *data, size_t size, VkImageAspectFlags aspect)
-	{
-		transitionLayout(level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingMemory;
-
-		vk::createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingMemory);
-
-		void* map = vk::mapMemory(stagingMemory, 0, size);
-		memcpy(map, data, size);
-		vk::unmapMemory(stagingMemory);
-
-		VkBufferImageCopy region = {};
-		region.imageSubresource.aspectMask = aspect;
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = getWidth(level);
-		region.imageExtent.height = getHeight(level);
-		region.imageExtent.depth = 1;
-		region.bufferOffset = 0;
-
-		auto cmd = vk::commandPool.begineOnce();
-		vkCmdCopyBufferToImage(cmd, stagingBuffer, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		vk::commandPool.endOnce(cmd);
-
-		vk::destroyBuffer(stagingBuffer, stagingMemory);
-	}
-
-	void Image::create(int w, int h, VkFormat format, VkImageUsageFlags usage, std::uint8_t *data, size_t size, VkImageAspectFlags aspect)
-	{
-		m_width = w;
-		m_height = h;
-		m_format = format;
-		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
-			type = eDepth;
-		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-			type = eDepthStencil;
-		else
-			type = eColor;
-
-		if (aspect == 0)
-		{
-			if (type == eColor || type == eSwapchain)
-				aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-			else
-				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
-
-		m_size = vk::createImage(w, h, m_mipmapLevels, m_arrayLayers, format, usage, m_image, m_memory);
-
-		if (data && size)
-		{
-			assert(size <= m_size);
-			fillData(0, data, size, aspect);
-		}
-		transitionLayout(0, aspect, VK_IMAGE_LAYOUT_GENERAL);
-	}
-
-	void Image::destroy()
-	{
-		infos.clear();
-		for (auto &v : views)
-			vk::destroyImageView(v.view);
-		views.clear();
-		if (type != Type::eSwapchain)
-			vk::destroyImage(m_image, m_memory);
-		m_image = 0; // this is the mark that if a image is valid
-	}
-
-	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
-	{
-		if (aspect == 0)
-		{
-			if (type == eColor || type == eSwapchain)
-				aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-			else
-				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
-
-		for (auto &view : views)
-		{
-			if (view.aspect == aspect && view.baseLevel == baseLevel && view.levelCount == levelCount &&
-				view.baseLayer == baseLayer && view.layerCount == layerCount)
-				return view.view;
-		}
-		View view;
-		view.aspect = aspect;
-		view.baseLevel = baseLevel;
-		view.levelCount = levelCount;
-		view.baseLayer = baseLayer;
-		view.layerCount = layerCount;
-		view.view = vk::createImageView(m_image, m_viewType, aspect, m_format, baseLevel, levelCount, baseLayer, layerCount);
-		views.push_back(view);
-		return view.view;
-	}
-
-	VkDescriptorImageInfo *Image::getInfo(VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
-	{
-		auto view = getView(aspect, baseLevel, levelCount, baseLayer, layerCount);
-		for (auto &info : infos)
-		{
-			if (info.imageView == view && info.sampler == sampler)
-				return &info;
-		}
-		VkDescriptorImageInfo info;
-		info.imageView = view;
-		info.sampler = sampler;
-		info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		infos.push_back(info);
-		return &infos.back();
-	}
-
-	int Image::getWidth(int mipmapLevel) const
-	{
-		int w = m_width;
-		for (;;)
-		{
-			if (mipmapLevel <= 0 || w < 2)
-				break;
-			mipmapLevel--;
-			w >>= 1;
-		}
-		return w;
-	}
-
-	int Image::getHeight(int mipmapLevel) const
-	{
-		int h = m_height;
-		for (;;)
-		{
-			if (mipmapLevel <= 0 || h < 2)
-				break;
-			mipmapLevel--;
-			h >>= 1;
-		}
-		return h;
-	}
-
-	unsigned char Image::getPixel(int x, int y, int off) const
-	{
-		//if (!m_data || x >= m_width || y >= m_height)
-		//	return 0;
-
-		//int pixelLength = 4;
-		//int lineLength = PITCH(m_width);
-		//lineLength = PITCH(m_width * pixelLength);
-
-		//return m_data[x * pixelLength + y * lineLength + off];
-
-		return 0;
-	}
-
-	std::vector<DescriptorSetLayout> descriptorSetLayouts;
-	VkDescriptorSetLayout getDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding> &bindings)
-	{
-		for (auto &desc : descriptorSetLayouts)
-		{
-			if (desc.bindings.size() == bindings.size())
-			{
-				bool same = true;
-				for (auto i = 0; i < desc.bindings.size(); i++)
-				{
-					auto &binding = desc.bindings[i];
-					if (binding.binding != bindings[i].binding || binding.descriptorCount != bindings[i].descriptorCount ||
-						binding.descriptorType != bindings[i].descriptorType || binding.stageFlags != bindings[i].stageFlags)
-					{
-						same = false;
-						break;
-					}
-				}
-				if (same)
-					return desc.layout;
-			}
-		}
-		DescriptorSetLayout descriptorSetLayout;
-		descriptorSetLayout.bindings.insert(descriptorSetLayout.bindings.begin(), bindings.begin(), bindings.end());
-		VkDescriptorSetLayoutCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		info.bindingCount = bindings.size();
-		info.pBindings = bindings.data();
-		descriptorSetLayout.layout = vk::createDescriptorSetLayout(&info);
-		descriptorSetLayouts.push_back(descriptorSetLayout);
-		return descriptorSetLayout.layout;
-	}
-
-	std::vector<PipelineLayout> pipelineLayouts;
-	VkPipelineLayout getPipelineLayout(VkDescriptorSetLayout descriptorLayout, std::vector<VkPushConstantRange> &pushConstantRanges)
-	{
-		for (auto &pipe : pipelineLayouts)
-		{
-			if (pipe.descriptorLayout == descriptorLayout && pipe.pushConstantRanges.size() == pushConstantRanges.size())
-			{
-				bool same = true;
-				for (auto i = 0; i < pipe.pushConstantRanges.size(); i++)
-				{
-					auto &pc = pipe.pushConstantRanges[i];
-					if (pc.offset != pushConstantRanges[i].offset || pc.size != pushConstantRanges[i].size ||
-						pc.stageFlags != pushConstantRanges[i].stageFlags)
-					{
-						same = false;
-						break;
-					}
-				}
-				if (same)
-					return pipe.layout;
-			}
-		}
-		PipelineLayout pipelineLayout;
-		pipelineLayout.descriptorLayout = descriptorLayout;
-		pipelineLayout.pushConstantRanges.insert(pipelineLayout.pushConstantRanges.begin(), pushConstantRanges.begin(), pushConstantRanges.end());
-		VkPipelineLayoutCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		info.setLayoutCount = 1;
-		info.pSetLayouts = &pipelineLayout.descriptorLayout;
-		info.pushConstantRangeCount = pipelineLayout.pushConstantRanges.size();
-		info.pPushConstantRanges = pipelineLayout.pushConstantRanges.data();
-		pipelineLayout.layout = vk::createPipelineLayout(&info);
-		pipelineLayouts.push_back(pipelineLayout);
-		return pipelineLayout.layout;
-	}
-
-	std::vector<Framebuffer> framebuffers;
-	VkFramebuffer getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
-	{
-		for (auto &framebuffer : framebuffers)
-		{
-			if (framebuffer.views.size() == views.size())
-			{
-				bool same = true;
-				for (auto i = 0; i < framebuffer.views.size(); i++)
-				{
-					if (framebuffer.views[i] != views[i])
-					{
-						same = false;
-						break;
-					}
-				}
-				if (same)
-					return framebuffer.framebuffer;
-			}
-		}
-		Framebuffer framebuffer;
-		framebuffer.views.insert(framebuffer.views.begin(), views.begin(), views.end());
-		framebuffer.framebuffer = vk::createFramebuffer(cx, cy, renderPass, views.size(), views.data());
-		framebuffers.push_back(framebuffer);
-		return framebuffer.framebuffer;
-	}
-
-	std::vector<ShaderModule> shaderModules;
-	VkShaderModule getShaderModule(const std::string &filename)
-	{
-		// format the shader path, so that they can reuse if them refer the same one
-		auto path = std::experimental::filesystem::canonical(filename);
-		for (auto &shader : shaderModules)
-		{
-			if (shader.filename == path.string())
-				return shader.module;
-		}
-		ShaderModule shaderModule;
-		shaderModule.filename = path.string();
-		shaderModule.module = vk::loadShaderModule(shaderModule.filename);
-		shaderModules.push_back(shaderModule);
-		return shaderModule.module;
-	}
-
-	VkBlendFactor _vkBlendFactor(BlendFactor f) 
+	static VkBlendFactor _vkBlendFactor(BlendFactor f) 
 	{
 		switch (f)
 		{
@@ -390,7 +23,8 @@ namespace tke
 			return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		}
 	};
-	VkDescriptorType _vkDescriptorType(DescriptorType t)
+
+	static VkDescriptorType _vkDescriptorType(DescriptorType t)
 	{
 		switch (t)
 		{
@@ -414,119 +48,12 @@ namespace tke
 
 	Stage::~Stage()
 	{
-		delete ext;
 	}
 
-	Pipeline::~Pipeline()
+	void Pipeline::destroy()
 	{
-		for (int i = 0; i < 5; i++) delete stages[i];
-		delete ext;
-	}
-
-	void Pipeline::loadXML(const std::string &_filename)
-	{
-		filename = _filename;
-		std::experimental::filesystem::path p(filename);
-		filepath = p.parent_path().string();
-		if (filepath == "")
-			filepath = ".";
-
-		AttributeTree at("pipeline");
-		at.loadXML(filename);
-		at.obtainFromAttributes(this, b);
-
-		for (auto c : at.children)
-		{
-			if (c->name == "blend_attachment")
-			{
-				BlendAttachment ba;
-				c->obtainFromAttributes(&ba, ba.b);
-				blendAttachments.push_back(ba);
-			}
-			else if (c->name == "link")
-			{
-				LinkResource l;
-				c->obtainFromAttributes(&l, l.b);
-				links.push_back(l);
-			}
-			else if (c->name == "stage")
-			{
-				auto s = new Stage(this);
-				c->obtainFromAttributes(s, s->b);
-				std::experimental::filesystem::path p(s->filename);
-				s->filepath = p.parent_path().string();
-				if (s->filepath == "")
-					s->filepath = ".";
-				auto ext = p.extension().string();
-				s->type = StageFlagByExt(ext);
-
-				for (auto c : c->children)
-				{
-					if (c->name == "descriptor")
-					{
-						Descriptor d;
-						c->obtainFromAttributes(&d, d.b);
-						s->descriptors.push_back(d);
-					}
-					else if (c->name == "push_constant")
-					{
-						PushConstantRange pc;
-						c->obtainFromAttributes(&pc, pc.b);
-						s->pushConstantRanges.push_back(pc);
-					}
-				}
-
-				for (int i = 0; i < 5; i++)
-				{
-					if (StageTypes[i] == (int)s->type)
-					{
-						stages[i] = s;
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	void Pipeline::saveXML()
-	{
-		AttributeTree at("pipeline");
-		at.addAttributes(this, b);
-		for (auto &b : blendAttachments)
-		{
-			auto n = new AttributeTreeNode("blend_attachment");
-			n->addAttributes(&b, b.b);
-			at.children.push_back(n);
-		}
-		for (auto &l : links)
-		{
-			auto n = new AttributeTreeNode("link");
-			n->addAttributes(&l, l.b);
-			at.children.push_back(n);
-		}
-		for (auto s : stages)
-		{
-			if (!s) continue;
-
-			auto n = new AttributeTreeNode("stage");
-			n->addAttributes(s, s->b);
-			at.children.push_back(n);
-
-			for (auto &d : s->descriptors)
-			{
-				auto nn = new AttributeTreeNode("descriptor");
-				nn->addAttributes(&d, d.b);
-				n->children.push_back(nn);
-			}
-			for (auto &p : s->pushConstantRanges)
-			{
-				auto nn = new AttributeTreeNode("push_constant");
-				nn->addAttributes(&p, p.b);
-				n->children.push_back(nn);
-			}
-		}
-
-		at.saveXML(filename);
+		for (int i = 0; i < 5; i++) 
+			delete stages[i];
 	}
 
 	int Pipeline::descriptorPosition(const std::string &name)
@@ -545,12 +72,19 @@ namespace tke
 		return -1;
 	}
 
-	void Pipeline::create(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::create(const std::string &_filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
+		pipelineLoadXML<Pipeline, Stage>(this, _filename);
+
 		m_pVertexInputState = pVertexInputState;
 
 		m_renderPass = renderPass;
 		m_subpassIndex = subpassIndex;
+
+		if (cx == -1)
+			cx = tke::resCx;
+		if (cy == -1)
+			cy = tke::resCy;
 
 		if (cx == 0 && cy == 0)
 		{
@@ -621,7 +155,7 @@ namespace tke
 			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			i.pName = "main";
 			i.stage = (VkShaderStageFlagBits)vkStage(s->type);
-			i.module = getShaderModule(filepath + "/" + s->filename + ".spv");
+			i.module = createShaderModule(filepath + "/" + s->filename + ".spv");
 			vkStages.push_back(i);
 
 			for (auto &d : s->descriptors)
@@ -667,8 +201,8 @@ namespace tke
 			}
 		}
 
-		m_descriptorSetLayout = getDescriptorSetLayout(vkDescriptors);
-		m_pipelineLayout = getPipelineLayout(m_descriptorSetLayout, vkPushConstantRanges);
+		m_descriptorSetLayout = createDescriptorSetLayout(vkDescriptors);
+		m_pipelineLayout = createPipelineLayout(m_descriptorSetLayout, vkPushConstantRanges);
 
 		if (m_pipeline) vk::destroyPipeline(m_pipeline);
 
@@ -821,7 +355,7 @@ namespace tke
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
-				break;
+			break;
 			case DescriptorType::storage_buffer:
 			{
 				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
@@ -830,7 +364,7 @@ namespace tke
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
-				break;
+			break;
 			case DescriptorType::storage_image:
 			{
 				auto pStorageImage = pResource->getImage(link.resource_name);
@@ -839,7 +373,7 @@ namespace tke
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
-				break;
+			break;
 			case DescriptorType::image_n_sampler:
 			{
 				auto pTexture = pResource->getImage(link.resource_name);
@@ -868,17 +402,11 @@ namespace tke
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
-				break;
+			break;
 			}
 		}
 
 		vk::descriptorPool.update();
-	}
-
-	void Pipeline::create(const std::string &_filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
-	{
-		loadXML(_filename);
-		create(pVertexInputState, renderPass, subpassIndex);
 	}
 
 	Drawcall::Drawcall() {}
@@ -912,27 +440,27 @@ namespace tke
 		type = DrawcallType::index;
 	}
 
-	Drawcall::Drawcall(VertexIndirectBuffer *vertexIndirectBuffer, uint32_t firstIndirect, uint32_t indirectCount)
+	Drawcall::Drawcall(IndirectVertexBuffer *indirectVertexBuffer, uint32_t firstIndirect, uint32_t indirectCount)
 	{
-		m_vertexIndirectBuffer = vertexIndirectBuffer;
+		m_indirectVertexBuffer = indirectVertexBuffer;
 		first_indirect = firstIndirect;
 		indirect_count = indirectCount;
 		type = DrawcallType::indirect_vertex;
 	}
 
-	Drawcall::Drawcall(IndexedIndirectBuffer *indexedIndirectBuffer, uint32_t firstIndirect, uint32_t indirectCount)
+	Drawcall::Drawcall(IndirectIndexBuffer *indirectIndexBuffer, uint32_t firstIndirect, uint32_t indirectCount)
 	{
-		m_indexedIndirectBuffer = indexedIndirectBuffer;
+		m_indirectIndexBuffer = indirectIndexBuffer;
 		first_indirect = firstIndirect;
 		indirect_count = indirectCount;
 		type = DrawcallType::indirect_index;
 	}
 
-	Drawcall::Drawcall(VkShaderStageFlags stage, void *data, size_t size, size_t offset)
+	Drawcall::Drawcall(StageType stage, void *data, size_t size, size_t offset)
 	{
-		m_pushConstantStage = stage;
+		push_constant_stage = stage;
 		push_constant_offset = offset;
-		m_pushConstantSize = size;
+		push_constant_size = size;
 		push_constant_value = malloc(size);
 		memcpy(push_constant_value, data, size);
 		type = DrawcallType::push_constant;
@@ -1199,7 +727,6 @@ namespace tke
 
 	Renderer::~Renderer()
 	{
-		delete ext;
 	}
 
 	void Renderer::loadXML(const std::string &_filename)
@@ -1451,13 +978,13 @@ namespace tke
 								vkCmdDrawIndexed(cmd, drawcall.index_count, drawcall.instance_count, drawcall.first_index, drawcall.vertex_offset, drawcall.first_instance);
 								break;
 							case DrawcallType::indirect_vertex:
-								vkCmdDrawIndirect(cmd, drawcall.m_vertexIndirectBuffer->m_buffer, drawcall.first_indirect * drawcall.m_vertexIndirectBuffer->stride(), drawcall.indirect_count, drawcall.m_vertexIndirectBuffer->stride());
+								vkCmdDrawIndirect(cmd, drawcall.m_indirectVertexBuffer->m_buffer, drawcall.first_indirect * drawcall.m_indirectVertexBuffer->stride(), drawcall.indirect_count, drawcall.m_indirectVertexBuffer->stride());
 								break;
 							case DrawcallType::indirect_index:
-								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indexedIndirectBuffer->m_buffer, drawcall.first_indirect * drawcall.m_indexedIndirectBuffer->stride(), drawcall.indirect_count, drawcall.m_indexedIndirectBuffer->stride());
+								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * drawcall.m_indirectIndexBuffer->stride(), drawcall.indirect_count, drawcall.m_indirectIndexBuffer->stride());
 								break;
 							case DrawcallType::push_constant:
-								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout, drawcall.m_pushConstantStage, drawcall.push_constant_offset, drawcall.m_pushConstantSize, drawcall.push_constant_value);
+								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
 								break;
 							}
 						}
@@ -1487,6 +1014,11 @@ namespace tke
 
 	void Renderer::setup()
 	{
+		if (cx == -1)
+			cx = tke::resCx;
+		if (cy == -1)
+			cy = tke::resCy;
+
 		for (auto &b : bufferResources)
 		{
 			b.p = new UniformBuffer;
@@ -1496,6 +1028,11 @@ namespace tke
 
 		for (auto &i : imageResources)
 		{
+			if (i.cx == -1)
+				i.cx = tke::resCx;
+			if (i.cy == -1)
+				i.cy = tke::resCy;
+
 			if (i.file_name != "")
 			{
 				i.p = createImage(enginePath + i.file_name, i.sRGB);
@@ -1617,9 +1154,9 @@ namespace tke
 						for (auto &drawcall : action.drawcalls)
 						{
 							if (drawcall.indirect_vertex_buffer_name != "")
-								drawcall.m_vertexIndirectBuffer = (VertexIndirectBuffer*)resource.getBuffer(drawcall.indirect_vertex_buffer_name);
+								drawcall.m_indirectVertexBuffer = (IndirectVertexBuffer*)resource.getBuffer(drawcall.indirect_vertex_buffer_name);
 							if (drawcall.indirect_index_buffer_name != "")
-								drawcall.m_indexedIndirectBuffer = (IndexedIndirectBuffer*)resource.getBuffer(drawcall.indirect_index_buffer_name);
+								drawcall.m_indirectIndexBuffer = (IndirectIndexBuffer*)resource.getBuffer(drawcall.indirect_index_buffer_name);
 							if (drawcall.model_name != "")
 							{
 								auto p = resource.getModel(drawcall.model_name);
@@ -1650,12 +1187,12 @@ namespace tke
 		vkRenderPass = vk::createRenderPass(vkAttachments.size(), vkAttachments.data(),
 			vkSubpasses.size(), vkSubpasses.data(), vkDependencies.size(), vkDependencies.data());
 
-		if (vkFramebuffer[0]) vk::destroyFramebuffer(vkFramebuffer[0]);
-		vkFramebuffer[0] = getFramebuffer(cx, cy, vkRenderPass, vkViews[0]);
+		if (vkFramebuffer[0]) destroyFramebuffer(vkFramebuffer[0]);
+		vkFramebuffer[0] = createFramebuffer(cx, cy, vkRenderPass, vkViews[0]);
 		if (containSwapchain)
 		{
-			if (vkFramebuffer[1]) vk::destroyFramebuffer(vkFramebuffer[1]);
-			vkFramebuffer[1] = getFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
+			if (vkFramebuffer[1]) destroyFramebuffer(vkFramebuffer[1]);
+			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 		}
 
 		for (auto &p : pipelineResources)

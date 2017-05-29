@@ -12,135 +12,24 @@
 
 namespace tke
 {
-	struct Buffer
-	{
-		size_t m_size = 0;
-		VkBuffer m_buffer = 0;
-		VkDeviceMemory m_memory = 0;
-
-		void create(size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		void destory();
-	};
-
-	struct StagingBuffer : Buffer
-	{
-		void create(size_t size);
-	};
-
-	struct NonStagingBufferAbstract : Buffer
-	{
-		void create(size_t size, VkBufferUsageFlags usage, void *data = nullptr);
-		void update(void *data, StagingBuffer *pStagingBuffer, size_t size = 0);
-	};
-
-	struct ShaderManipulatableBufferAbstract : NonStagingBufferAbstract
-	{
-		VkDescriptorBufferInfo m_info;
-		void create(size_t size, VkBufferUsageFlags usage);
-	};
-
-	struct UniformBuffer : ShaderManipulatableBufferAbstract
-	{
-		void create(size_t size);
-	};
-
-	struct VertexBuffer : NonStagingBufferAbstract
-	{
-		void create(size_t size, void *data = nullptr);
-		void bind(VkCommandBuffer cmd);
-	};
-
-	struct IndexBuffer : NonStagingBufferAbstract
-	{
-		void create(size_t size, void *data = nullptr);
-		void bind(VkCommandBuffer cmd);
-	};
-
-	struct VertexIndirectBuffer : NonStagingBufferAbstract
-	{
-		size_t stride();
-		void create(size_t size);
-	};
-
-	struct IndexedIndirectBuffer : NonStagingBufferAbstract
-	{
-		size_t stride();
-		void create(size_t size);
-	};
-
-	REFLECTABLE enum class ImageFormat : int
+	REFLECTABLE enum class Format : int
 	{
 		null,
 		REFLe R8G8B8A8 = 1 << 0,
 		REFLe R16G16B16A16 = 1 << 1
 	};
 
-	inline VkFormat vkFormat(ImageFormat f)
+	inline VkFormat vkFormat(Format f)
 	{
 		switch (f)
 		{
-		case ImageFormat::R8G8B8A8:
+		case Format::R8G8B8A8:
 			return VK_FORMAT_R8G8B8A8_UNORM;
-		case ImageFormat::R16G16B16A16:
+		case Format::R16G16B16A16:
 			return VK_FORMAT_R16G16B16A16_SFLOAT;
 		}
 		return VK_FORMAT_UNDEFINED;
 	}
-
-	struct Image
-	{
-		enum Type
-		{
-			eColor,
-			eSwapchain,
-			eDepth,
-			eDepthStencil
-		};
-		Type type = eColor;
-		inline bool isColorType() { return type == eColor || type == eSwapchain; }
-		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
-
-		struct View
-		{
-			VkImageAspectFlags aspect;
-			int baseLevel;
-			int levelCount;
-			int baseLayer;
-			int layerCount;
-			VkImageView view;
-		};
-
-		size_t m_size;
-		int m_width = 1, m_height = 1;
-		int m_mipmapLevels = 1;
-		int m_arrayLayers = 1;
-		VkFormat m_format = VK_FORMAT_R8G8B8A8_UNORM;
-		VkImage m_image = 0;
-		VkDeviceMemory m_memory = 0;
-		VkImageLayout m_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-		VkImageViewType m_viewType = VK_IMAGE_VIEW_TYPE_2D;
-
-		std::vector<View> views;
-		std::list<VkDescriptorImageInfo> infos;
-
-		std::string filename;
-
-		bool m_sRGB = false;
-
-		int sceneIndex = -1;
-
-		unsigned char *m_data = nullptr;
-
-		int getWidth(int mipmapLevel = 0) const;
-		int getHeight(int mipmapLevel = 0) const;
-		void transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout);
-		void fillData(int level, std::uint8_t *data, size_t size, VkImageAspectFlags aspect);
-		void create(int w, int h, VkFormat format, VkImageUsageFlags usage, std::uint8_t *data = nullptr, size_t size = 0, VkImageAspectFlags aspect = 0);
-		void destroy();
-		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
-		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
-		unsigned char getPixel(int x, int y, int off) const;
-	};
 
 	REFLECTABLE enum class StageType : int
 	{
@@ -321,7 +210,7 @@ namespace tke
 
 	struct Pipeline;
 
-	REFLECTABLE struct Stage
+	REFLECTABLE struct StageArchive
 	{
 		REFL_BANK;
 
@@ -331,10 +220,14 @@ namespace tke
 
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
+	};
 
+	struct Stage : StageArchive
+	{
 		Pipeline *parent;
-		ExtType *ext = nullptr;
+
 		Stage(Pipeline *_parent);
+		void destroy();
 		~Stage();
 	};
 
@@ -366,7 +259,7 @@ namespace tke
 		REFLe normal = 1 << 1
 	};
 
-	REFLECTABLE struct Pipeline
+	REFLECTABLE struct PipelineArchive
 	{
 		REFL_BANK;
 
@@ -387,8 +280,125 @@ namespace tke
 		REFLe CullMode cull_mode = CullMode::back;
 
 		std::vector<BlendAttachment> blendAttachments;
-		Stage *stages[5] = {};
 		std::vector<LinkResource> links;
+	};
+
+	template<class PipelineType, class StageType>
+	void pipelineLoadXML(PipelineType *p, const std::string &_filename)
+	{
+		p->filename = _filename;
+		std::experimental::filesystem::path path(p->filename);
+		p->filepath = path.parent_path().string();
+		if (p->filepath == "")
+			p->filepath = ".";
+
+		AttributeTree at("pipeline");
+		at.loadXML(p->filename);
+		at.obtainFromAttributes(p, p->b);
+
+		for (auto c : at.children)
+		{
+			if (c->name == "blend_attachment")
+			{
+				BlendAttachment ba;
+				c->obtainFromAttributes(&ba, ba.b);
+				p->blendAttachments.push_back(ba);
+			}
+			else if (c->name == "link")
+			{
+				LinkResource l;
+				c->obtainFromAttributes(&l, l.b);
+				p->links.push_back(l);
+			}
+			else if (c->name == "stage")
+			{
+				auto s = new StageType(p);
+				c->obtainFromAttributes(s, s->b);
+				std::experimental::filesystem::path path(s->filename);
+				s->filepath = path.parent_path().string();
+				if (s->filepath == "")
+					s->filepath = ".";
+				auto ext = path.extension().string();
+				s->type = StageFlagByExt(ext);
+
+				for (auto c : c->children)
+				{
+					if (c->name == "descriptor")
+					{
+						Descriptor d;
+						c->obtainFromAttributes(&d, d.b);
+						s->descriptors.push_back(d);
+					}
+					else if (c->name == "push_constant")
+					{
+						PushConstantRange pc;
+						c->obtainFromAttributes(&pc, pc.b);
+						s->pushConstantRanges.push_back(pc);
+					}
+				}
+
+				p->stages[StageIndexByType(s->type)] = s;
+			}
+		}
+	}
+
+	template<class PipelineType>
+	void pipelineSaveXML(PipelineType *p)
+	{
+		AttributeTree at("pipeline");
+		at.addAttributes(p, p->b);
+		for (auto &b : p->blendAttachments)
+		{
+			auto n = new AttributeTreeNode("blend_attachment");
+			n->addAttributes(&b, b.b);
+			at.children.push_back(n);
+		}
+		for (auto &l : p->links)
+		{
+			auto n = new AttributeTreeNode("link");
+			n->addAttributes(&l, l.b);
+			at.children.push_back(n);
+		}
+		for (int i = 0; i < 5; i++)
+		{
+			auto s = p->stages[i];
+			if (!s) continue;
+
+			auto n = new AttributeTreeNode("stage");
+			n->addAttributes(s, s->b);
+			at.children.push_back(n);
+
+			for (auto &d : s->descriptors)
+			{
+				auto nn = new AttributeTreeNode("descriptor");
+				nn->addAttributes(&d, d.b);
+				n->children.push_back(nn);
+			}
+			for (auto &p : s->pushConstantRanges)
+			{
+				auto nn = new AttributeTreeNode("push_constant");
+				nn->addAttributes(&p, p.b);
+				n->children.push_back(nn);
+			}
+		}
+
+		at.saveXML(p->filename);
+	}
+
+	template<class PipelineType>
+	bool isFullOfStage(PipelineType *p)
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			if (p->stages[i])
+				return false;
+		}
+		return true;
+	}
+
+	struct Pipeline : PipelineArchive
+	{
+		Stage *stages[5] = {};
 
 		ResourceBank *pResource = &globalResource;
 
@@ -410,65 +420,22 @@ namespace tke
 		VkPipeline m_pipeline = 0;
 		VkDescriptorSet m_descriptorSet = 0;
 
-		ExtType *ext = nullptr;
-
-		inline bool isFullOfStage()
-		{
-			for (int i = 0; i < 5; i++)
-			{
-				if (stages[i])
-					return false;
-			}
-			return true;
-		}
-
-		~Pipeline();
-		void loadXML(const std::string &_filename);
-		void saveXML();
-		int descriptorPosition(const std::string &name);
-		void create(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 		void create(const std::string &filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
+		void destroy();
+		int descriptorPosition(const std::string &name);
 	};
 
-	struct DescriptorSetLayout
-	{
-		std::vector<VkDescriptorSetLayoutBinding> bindings;
-		VkDescriptorSetLayout layout;
-	};
-
-	VkDescriptorSetLayout getDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding> &bindings);
-
-	struct PipelineLayout
-	{
-		VkDescriptorSetLayout descriptorLayout;
-		std::vector<VkPushConstantRange> pushConstantRanges;
-		VkPipelineLayout layout;
-	};
-
-	VkPipelineLayout getPipelineLayout(VkDescriptorSetLayout descriptorLayout, std::vector<VkPushConstantRange> &pushConstantRanges);
-
-	struct Framebuffer
-	{
-		std::vector<VkImageView> views;
-		VkFramebuffer framebuffer;
-	};
-
-	VkFramebuffer getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
-
-	struct ShaderModule
-	{
-		std::string filename;
-		VkShaderModule module;
-	};
-
-	VkShaderModule getShaderModule(const std::string &filename);
-
-	typedef void (*PF_RenderFunc)(VkCommandBuffer);
+	struct Drawcall;
+	struct Dependency;
+	struct Attachment;
+	struct DrawAction;
+	struct RenderPass;
+	struct Renderer;
 
 	struct Model;
 	REFLECTABLE struct Drawcall : Element
 	{
-		Container *parent = nullptr;
+		DrawAction *parent = nullptr;
 
 		REFL_BANK;
 
@@ -486,39 +453,39 @@ namespace tke
 		REFLv int first_index = 0;
 		REFLv int vertex_offset = 0;
 
+		REFLv std::string model_name;
+
 		REFLv std::string indirect_vertex_buffer_name;
 		REFLv std::string indirect_index_buffer_name;
 
 		REFLv int first_indirect = 0;
 		REFLv int indirect_count = 0;
 
-		REFLv std::string model_name;
-
 		REFLv StageType push_constant_stage = StageType::null;
 		REFLv int push_constant_offset = 0;
 		REFLe PushConstantType push_constant_type = PushConstantType::int_t;
 		void *push_constant_value = nullptr;
+		size_t push_constant_size = 0;
 
-		VertexIndirectBuffer *m_vertexIndirectBuffer = nullptr;
-		IndexedIndirectBuffer *m_indexedIndirectBuffer = nullptr;
-		VkShaderStageFlags m_pushConstantStage;
-		size_t m_pushConstantSize;
+		IndirectVertexBuffer *m_indirectVertexBuffer = nullptr;
+		IndirectIndexBuffer *m_indirectIndexBuffer = nullptr;
 
 		Drawcall();
 		Drawcall(int vertexCount, int firstVertex, int instanceCount, int firstInstance);
 		Drawcall(int indexCount, int firstIndex, int vertexOffset, int instanceCount, int firstInstance);
 		Drawcall(Model *p, int instanceCount = 1, int firstInstance = 0);
-		Drawcall(VertexIndirectBuffer *vertexIndirectBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
-		Drawcall(IndexedIndirectBuffer *m_indexedIndirectBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
-		Drawcall(VkShaderStageFlags stage, void *data, size_t size, size_t offset = 0);
+		Drawcall(IndirectVertexBuffer *indirectVertexBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
+		Drawcall(IndirectIndexBuffer *indirectIndexBuffer, uint32_t firstIndirect = 0, uint32_t indirectCount = 0);
+		Drawcall(StageType stage, void *data, size_t size, size_t offset = 0);
 		~Drawcall();
 		void loadFromAt(AttributeTreeNode *n);
 		void saveToAt(AttributeTreeNode *n);
 	};
 
+	typedef void(*PF_RenderFunc)(VkCommandBuffer);
 	REFLECTABLE struct DrawAction : Element, Container
 	{
-		Container *parent = nullptr;
+		RenderPass *parent = nullptr;
 
 		REFL_BANK;
 
@@ -568,7 +535,7 @@ namespace tke
 
 	REFLECTABLE struct Attachment : Element
 	{
-		Container *parent;
+		RenderPass *parent;
 
 		REFL_BANK;
 
@@ -603,7 +570,7 @@ namespace tke
 
 	REFLECTABLE struct Dependency : Element
 	{
-		Container *parent;
+		RenderPass *parent;
 
 		REFL_BANK;
 
@@ -626,7 +593,7 @@ namespace tke
 
 	REFLECTABLE struct RenderPass : Element, Container
 	{
-		Container *parent;
+		Renderer *parent;
 
 		std::list<Attachment> attachments;
 
@@ -699,7 +666,7 @@ namespace tke
 		REFLv bool sRGB = true;
 		REFLv int cx = 0;
 		REFLv int cy = 0;
-		REFLe ImageFormat format = ImageFormat::null;
+		REFLe Format format = Format::null;
 
 		Image *p = nullptr;
 	};
@@ -758,8 +725,6 @@ namespace tke
 		VkFramebuffer vkFramebuffer[2] = {};
 
 		RenderPass *findRenderPass(const std::string &n);
-
-		ExtType *ext = nullptr;
 
 		Renderer();
 		Renderer(int _cx, int _cy);

@@ -33,6 +33,45 @@
 #include "../src/event.h"
 #include "../src/image.file.h"
 
+struct GameExplorer;
+struct StageEditor;
+struct MonitorWidget;
+struct OutputWidget;
+
+struct Pipeline;
+struct Stage : tke::StageArchive
+{
+	Pipeline *parent = nullptr;
+
+	bool changed = false;
+	QTreeWidgetItem *item = nullptr;
+	StageEditor *editor = nullptr;
+	std::string text;
+	void setItemText();
+	void setChanged(bool _changed);
+	Stage(Pipeline *_parent);
+	~Stage();
+};
+
+struct Pipeline : tke::PipelineArchive
+{
+	Stage *stages[5] = {};
+	bool changed = false;
+	QTreeWidgetItem *item = nullptr;
+	void setItemText();
+	void setChanged(bool _changed);
+	~Pipeline();
+};
+
+struct Renderer
+{
+	tke::Renderer *p;
+	QTreeWidgetItem *item = nullptr;
+	MonitorWidget *monitor = nullptr;
+	void setItemText();
+	~Renderer();
+};
+
 class WorldEditor : public QMainWindow
 {
 	Q_OBJECT
@@ -54,18 +93,13 @@ private slots:
 private:
 	Ui::WorldEditorClass ui;
 	
-	void save_pipeline(tke::Pipeline *);
-	void save_stage(tke::Stage *);
-	void compile_stage(tke::Stage *);
+	void save_pipeline(Pipeline *);
+	void save_stage(Stage *);
+	void compile_stage(Stage *);
 
 protected:
 	void keyPressEvent(QKeyEvent *k) override;
 };
-
-struct GameExplorer;
-struct StageEditor;
-struct MonitorWidget;
-struct OutputWidget;
 
 enum WindowType
 {
@@ -76,44 +110,10 @@ enum WindowType
 	WindowTypeOutputWidget = 3
 };
 
-struct PipelineExt : tke::ExtType
-{
-	tke::Pipeline *p;
-	bool changed = false;
-	QTreeWidgetItem *item = nullptr;
-	void setItemText();
-	void setChanged(bool _changed);
-	PipelineExt(tke::Pipeline *_p);
-	~PipelineExt();
-};
-
-struct StageExt : tke::ExtType
-{
-	tke::Stage *p;
-	bool changed = false;
-	QTreeWidgetItem *item = nullptr;
-	StageEditor *editor = nullptr;
-	std::string text;
-	void setItemText();
-	void setChanged(bool _changed);
-	StageExt(tke::Stage *_p);
-	~StageExt();
-};
-
-struct RendererExt : tke::ExtType 
-{
-	tke::Renderer *p;
-	QTreeWidgetItem *item = nullptr;
-	MonitorWidget *monitor = nullptr;
-	void setItemText();
-	RendererExt(tke::Renderer *_p);
-	~RendererExt();
-};
-
 struct Game
 {
-	std::vector<tke::Pipeline*> pipelines;
-	std::vector<tke::Renderer*> renderers;
+	std::vector<Pipeline*> pipelines;
+	std::vector<Renderer*> renderers;
 
 	void load_pipelines();
 	void save_pipelines();
@@ -138,9 +138,9 @@ struct GameExplorer : QDockWidget
 
 	ItemType currentItemType = ItemTypeNull;
 
-	tke::Pipeline *currentPipeline = nullptr;
-	tke::Stage *currentStage = nullptr;
-	tke::Renderer *currentRenderer = nullptr;
+	Pipeline *currentPipeline = nullptr;
+	Stage *currentStage = nullptr;
+	Renderer *currentRenderer = nullptr;
 
 	using QDockWidget::QDockWidget;
 	void on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev);
@@ -151,7 +151,7 @@ struct GameExplorer : QDockWidget
 
 struct StageEditor : QDockWidget
 {
-	tke::Stage *stage;
+	Stage *stage;
 
 	QLineNumberEdit *edit;
 	QFindWidget *findWidget;
@@ -165,8 +165,9 @@ struct StageEditor : QDockWidget
 struct MonitorWindow;
 struct MonitorWidget : QDockWidget
 {
-	tke::Renderer *renderer;
-	MonitorWindow *monitorWindow = nullptr;
+	Renderer *renderer;
+	MonitorWindow *window = nullptr;
+	bool windowDead = false;
 
 	using QDockWidget::QDockWidget;
 	void setup();

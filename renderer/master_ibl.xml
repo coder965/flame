@@ -1,8 +1,8 @@
-<renderer name="" cx="1600" cy="900" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" >
+<renderer name="" cx="-1" cy="-1" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" >
   <images>
-    <image name="Original.Image" cx="1600" cy="900" format="R16G16B16A16"/>
-    <image name="AlbedoSpec.Image" cx="1600" cy="900" format="R8G8B8A8"/>
-    <image name="NormalRoughness.Image" cx="1600" cy="900" format="R8G8B8A8"/>
+    <image name="Original.Image" cx="-1" cy="-1" format="R16G16B16A16"/>
+    <image name="AlbedoSpec.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
+    <image name="NormalRoughness.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
   </images>
   
   <pipelines>

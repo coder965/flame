@@ -1,4 +1,4 @@
-<renderer cx="1600" cy="900" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" name="" >
+<renderer cx="-1" cy="-1" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" name="" >
 	<passes>
 		<pass type="draw_action" name="Render Pass1">
 			<attachments>

@@ -106,7 +106,7 @@ namespace tke
 		VkSwapchainKHR swapchain;
 		Image image[2];
 		VkFramebuffer framebuffer[2];
-		vk::CommandPool commandPool;
+		CommandPool commandPool;
 
 		VkSemaphore imageAvailable;
 		unsigned int imageIndex = 0;
@@ -122,12 +122,12 @@ namespace tke
 		virtual void renderEvent();
 		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-		void create(int _cx, int _cy, const std::string &title, bool hasFrame = true);
-		void destroy(bool byCode);
+		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true);
+		~Window();
 		int getFPS();
 		void beginFrame();
 		void endFrame();
-		void run();
+		void run(bool *dead);
 	};
 }
 

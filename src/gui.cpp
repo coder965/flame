@@ -476,7 +476,7 @@ namespace tke
 		}
 
 		{
-			auto map = vk::mapMemory(stagingBuffer.m_memory, 0, totalSize);
+			auto map = stagingBuffer.map(0, totalSize);
 			auto vtx_dst = (ImDrawVert*)map;
 			auto idx_dst = (ImDrawIdx*)((char*)map + vertex_size);
 			for (int n = 0; n < draw_data->CmdListsCount; n++)
@@ -487,7 +487,7 @@ namespace tke
 				vtx_dst += cmd_list->VtxBuffer.Size;
 				idx_dst += cmd_list->IdxBuffer.Size;
 			}
-			vk::unmapMemory(stagingBuffer.m_memory);
+			stagingBuffer.unmap();
 
 			window->commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
 			window->commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
@@ -550,7 +550,8 @@ namespace tke
 		_icons.push_back(image);
 	}
 
-	void GuiWindow::initUi()
+	GuiWindow::GuiWindow(int _cx, int _cy, const std::string &title, bool hasFrame)
+		:Window(_cx, _cy, title, hasFrame)
 	{
 		static bool first = true;
 		if (first)

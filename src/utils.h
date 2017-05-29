@@ -277,11 +277,6 @@ namespace tke
 			}
 		}
 	}
-
-	struct ExtType
-	{
-		virtual ~ExtType() {}
-	};
 }
 
 #endif
