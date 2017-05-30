@@ -84,9 +84,6 @@
     <ClCompile Include="..\src\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\vk.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\imgui-master\imgui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -156,9 +153,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\vk.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

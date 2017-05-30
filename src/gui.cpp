@@ -451,32 +451,32 @@ namespace tke
 			return;
 		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-		static VertexBuffer	vertexBuffer;
+		static VertexBuffer	*vertexBuffer = nullptr;
 		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
-		if (!vertexBuffer.m_buffer || vertexBuffer.m_size < vertex_size)
+		if (!vertexBuffer || vertexBuffer->m_size < vertex_size)
 		{
-			if (vertexBuffer.m_buffer) vertexBuffer.destory();
-			vertexBuffer.create(vertex_size);
+			if (vertexBuffer) delete vertexBuffer;
+			vertexBuffer = new VertexBuffer(vertex_size);
 		}
 
-		static IndexBuffer indexBuffer;
+		static IndexBuffer *indexBuffer = nullptr;
 		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-		if (!indexBuffer.m_buffer || indexBuffer.m_size < index_size)
+		if (!indexBuffer || indexBuffer->m_size < index_size)
 		{
-			if (indexBuffer.m_buffer) indexBuffer.destory();
-			indexBuffer.create(index_size);
+			if (indexBuffer) delete indexBuffer;
+			indexBuffer = new IndexBuffer(index_size);
 		}
 
-		static StagingBuffer stagingBuffer;
+		static StagingBuffer *stagingBuffer = nullptr;
 		auto totalSize = vertex_size + index_size;
-		if (stagingBuffer.m_size < totalSize)
+		if (!stagingBuffer || stagingBuffer->m_size < totalSize)
 		{
-			if (stagingBuffer.m_buffer) stagingBuffer.destory();
-			stagingBuffer.create(totalSize);
+			if (stagingBuffer) delete stagingBuffer;
+			stagingBuffer = new StagingBuffer(totalSize);
 		}
 
 		{
-			auto map = stagingBuffer.map(0, totalSize);
+			auto map = stagingBuffer->map(0, totalSize);
 			auto vtx_dst = (ImDrawVert*)map;
 			auto idx_dst = (ImDrawIdx*)((char*)map + vertex_size);
 			for (int n = 0; n < draw_data->CmdListsCount; n++)
@@ -487,24 +487,24 @@ namespace tke
 				vtx_dst += cmd_list->VtxBuffer.Size;
 				idx_dst += cmd_list->IdxBuffer.Size;
 			}
-			stagingBuffer.unmap();
+			stagingBuffer->unmap();
 
-			window->commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, vertexBuffer.m_buffer, vertex_size, 0, 0);
-			window->commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, indexBuffer.m_buffer, index_size, vertex_size, 0);
+			window->commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, vertexBuffer->m_buffer, vertex_size, 0, 0);
+			window->commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, indexBuffer->m_buffer, index_size, vertex_size, 0);
 		}
 
 		auto cmd = window->uiCmd;
 
 		vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-		vk::beginCommandBuffer(cmd);
+		beginCommandBuffer(cmd);
 
 		vkCmdWaitEvents(cmd, 1, &window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
-		vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(windowRenderPass, window->framebuffer[window->imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(windowRenderPass, window->framebuffer[window->imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		VkDeviceSize vertex_offset[1] = { 0 };
-		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.m_buffer, vertex_offset);
-		vkCmdBindIndexBuffer(cmd, indexBuffer.m_buffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
+		vkCmdBindIndexBuffer(cmd, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT16);
 
 		vkCmdPushConstants(cmd, pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
@@ -592,14 +592,11 @@ namespace tke
 			static int texture_position = -1;
 			if (texture_position == -1) texture_position = pipeline.descriptorPosition("sTexture");
 
-			vk::descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(vk::colorSampler), 0);
+			descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(colorSampler), 0);
 			auto imageID = 1;
-			for (auto image : _icons)
-			{
-				vk::descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, image->getInfo(vk::colorSampler), imageID);
-				imageID++;
-			}
-			vk::descriptorPool.update();
+			for (int index = 0; index < _icons.size(); index++)
+				descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _icons[index]->getInfo(colorSampler), index + 1);
+			descriptorPool.update();
 		}
 		else
 		{
@@ -607,7 +604,7 @@ namespace tke
 		}
 
 		uiCmd = commandPool.allocate();
-		vk::beginCommandBuffer(uiCmd);
+		beginCommandBuffer(uiCmd);
 		vkCmdWaitEvents(uiCmd, 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 		vkEndCommandBuffer(uiCmd);
 

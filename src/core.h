@@ -3,7 +3,6 @@
 
 #include <Windows.h>
 
-#include "vk.h"
 #include "math.h"
 #include "render.h"
 
@@ -60,7 +59,7 @@ namespace tke
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
-	extern StagingBuffer stagingBuffer;
+	extern StagingBuffer *stagingBuffer;
 
 	void changeProjMat(int what);
 

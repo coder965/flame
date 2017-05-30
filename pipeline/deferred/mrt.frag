@@ -35,6 +35,7 @@ void main()
 	float spec, roughness;
 	
 	mapIndex = u_material.material[inMaterialID].mapIndex & 0x7ff;
+	mapIndex = 1;
 	uint albedoSpecCompress = u_material.material[inMaterialID].albedoSpecCompress;
 	albedo = vec3((albedoSpecCompress & 0xff) / 255.0, ((albedoSpecCompress >> 8) & 0xff) / 255.0, ((albedoSpecCompress >> 16) & 0xff) / 255.0);
 	spec = ((albedoSpecCompress >> 24) & 0xff) / 255.0;
@@ -50,6 +51,7 @@ void main()
 	
 	vec3 normal = inNormal;
 	mapIndex = (u_material.material[inMaterialID].mapIndex >> 10) & 0x7ff;
+	mapIndex = 1;
 	uint roughnessAlpha = u_material.material[inMaterialID].roughnessAlphaCompress;
 	roughness = (roughnessAlpha & 0xff) / 255.0;
 	if (mapIndex == 0)

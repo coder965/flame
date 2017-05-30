@@ -6,6 +6,7 @@
 #include "scene.h"
 #include "gui.h"
 #include "physics.h"
+#include "resource.h"
 
 namespace tke
 {
@@ -28,7 +29,7 @@ namespace tke
 	VkPipelineVertexInputStateCreateInfo vertexInputState;
 	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
-	StagingBuffer stagingBuffer;
+	StagingBuffer *stagingBuffer = nullptr;
 
 	std::string enginePath;
 
@@ -138,7 +139,7 @@ namespace tke
 
 	Err init(const char *appName, int rcx, int rcy)
 	{
-		vk::init(appName, 
+		initRender(appName, 
 #ifdef _DEBUG
 			true
 #else
@@ -161,7 +162,7 @@ namespace tke
 		strcpy(scene->name, "default");
 		scene->setUp();
 
-		stagingBuffer.create(65536);
+		stagingBuffer = new StagingBuffer(65536);
 
 		{
 			static VkVertexInputBindingDescription bindings0[] = {
@@ -183,24 +184,19 @@ namespace tke
 				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 }
 			};
 
-			zeroVertexInputState = vk::vertexState(0, nullptr, 0, nullptr);
+			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
 
-			vertexInputState = vk::vertexState(ARRAYSIZE(bindings0), bindings0, ARRAYSIZE(attributes0), attributes0);
+			vertexInputState = vertexStateInfo(ARRAYSIZE(bindings0), bindings0, ARRAYSIZE(attributes0), attributes0);
 
-			lineVertexInputState = vk::vertexState(ARRAYSIZE(bindings1), bindings1, ARRAYSIZE(attributes1), attributes1);
+			lineVertexInputState = vertexStateInfo(ARRAYSIZE(bindings1), bindings1, ARRAYSIZE(attributes1), attributes1);
 		}
 
 		_depthImage.create(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(&_depthImage, "Depth.Image");
 
 		{
-			auto attachment = vk::swapchainAttachment(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			VkSubpassDescription subpass = {};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
 			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			subpass.pColorAttachments = &ref;
-			windowRenderPass = vk::createRenderPass(1, &attachment, 1, &subpass, 0, nullptr);
+			windowRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
 		}
 
 		controllingObject = nullptr;
@@ -235,14 +231,54 @@ namespace tke
 		assert(hWnd);
 
 		VkImage vkImages[2];
-		vk::createSwapchain(hWnd, cx, cy, surface, swapchain, vkImages);
+
+		{
+			VkResult res;
+
+			inst.cs.lock();
+			device.cs.lock();
+
+			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
+			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surfaceInfo.hinstance = hInst;
+			surfaceInfo.hwnd = hWnd;
+			res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
+			assert(res == VK_SUCCESS);
+
+			VkSwapchainCreateInfoKHR swapchainInfo = {};
+			swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+			swapchainInfo.surface = surface;
+			swapchainInfo.minImageCount = 2;
+			swapchainInfo.imageFormat = swapchainFormat;
+			swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+			swapchainInfo.imageExtent.width = cx;
+			swapchainInfo.imageExtent.height = cy;
+			swapchainInfo.imageArrayLayers = 1;
+			swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+			swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+			swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+			swapchainInfo.clipped = true;
+			res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
+			assert(res == VK_SUCCESS);
+
+			uint32_t swapchainImageCount = 0;
+			vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, nullptr);
+			vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, vkImages);
+
+			device.cs.unlock();
+			inst.cs.unlock();
+		}
+
 		for (int i = 0; i < 2; i++)
 		{
 			image[i].type = Image::eSwapchain;
 			image[i].m_width = cx;
 			image[i].m_height = cy;
 			image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
-			image[i].m_format = vk::swapchainFormat;
+			image[i].m_format = swapchainFormat;
 			image[i].m_image = vkImages[i];
 
 			std::vector<VkImageView> views;
@@ -252,24 +288,29 @@ namespace tke
 
 		commandPool.create();
 
-		imageAvailable = vk::createSemaphore();
-		renderFinished = vk::createEvent();
-		frameDone = vk::createFence();
+		imageAvailable = createSemaphore();
+		renderFinished = createEvent();
+		frameDone = createFence();
 	}
 
 	Window::~Window()
 	{
 		die = false;
-		vk::destroyFence(frameDone);
-		vk::destroyEvent(renderFinished);
-		vk::destroySemaphore(imageAvailable);
+		destroyFence(frameDone);
+		destroyEvent(renderFinished);
+		destroySemaphore(imageAvailable);
 		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
 		{
 			destroyFramebuffer(framebuffer[i]);
 			image[i].destroy();
 		}
-		vk::destroySwapchain(surface, swapchain);
+		inst.cs.lock();
+		device.cs.lock();
+		vkDestroySwapchainKHR(device.v, swapchain, nullptr);
+		vkDestroySurfaceKHR(inst.v, surface, nullptr);
+		device.cs.unlock();
+		inst.cs.unlock();
 		DestroyWindow(hWnd);
 	}
 
@@ -399,19 +440,26 @@ namespace tke
 
 	void Window::beginFrame()
 	{
-		imageIndex = vk::acquireNextImage(swapchain, imageAvailable);
+		device.cs.lock();
+		auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &imageIndex);
+		assert(res == VK_SUCCESS);
+		device.cs.unlock();
 	}
 
 	void Window::endFrame()
 	{
-		vk::waitFence(frameDone);
+		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
 		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.swapchainCount = 1;
 		info.pSwapchains = &swapchain;
 		info.pImageIndices = &imageIndex;
-		vk::queuePresent(&info);
+
+		graphicsQueue.cs.lock();
+		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
+		assert(res == VK_SUCCESS);
+		graphicsQueue.cs.unlock();
 	}
 
 	void Window::run(bool *dead)
