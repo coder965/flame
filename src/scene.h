@@ -189,18 +189,18 @@ namespace tke
 		int getStoreImageIndex(Image *pImage);
 		std::vector<MaterialUniformBufferStruct> storeMaterials;
 
-		VertexBuffer vertexBuffer;
-		IndexBuffer indexBuffer;
+		VertexBuffer *vertexBuffer = nullptr;
+		IndexBuffer *indexBuffer = nullptr;
 
-		UniformBuffer matrixBuffer;
-		UniformBuffer objectMatrixBuffer;
-		UniformBuffer lightMatrixBuffer;
-		UniformBuffer materialBuffer;
-		IndirectIndexBuffer objectIndirectBuffer;
-		UniformBuffer heightMapTerrainBuffer;
-		UniformBuffer proceduralTerrainBuffer;
-		UniformBuffer lightBuffer;
-		UniformBuffer ambientBuffer;
+		UniformBuffer *matrixBuffer = nullptr;
+		UniformBuffer *objectMatrixBuffer = nullptr;
+		UniformBuffer *lightMatrixBuffer = nullptr;
+		UniformBuffer *materialBuffer = nullptr;
+		IndirectIndexBuffer *objectIndirectBuffer = nullptr;
+		UniformBuffer *heightMapTerrainBuffer = nullptr;
+		UniformBuffer *proceduralTerrainBuffer = nullptr;
+		UniformBuffer *lightBuffer = nullptr;
+		UniformBuffer *ambientBuffer = nullptr;
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 

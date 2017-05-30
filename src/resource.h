@@ -4,14 +4,10 @@
 #include <string>
 #include <map>
 
-#include "vk.h"
+#include "render.h"
 
 namespace tke
 {
-	struct Buffer;
-	struct Image;
-	struct Model;
-	struct Pipeline;
 	struct ResourceBank
 	{
 		std::map<std::string, Buffer*> bufferResources;
@@ -30,8 +26,6 @@ namespace tke
 		Model *getModel(const std::string &str);
 		Pipeline *getPipeline(const std::string &str);
 		VkCommandBuffer getCmd(const std::string &str);
-
-		void destroy();
 	};
 
 	extern ResourceBank globalResource;

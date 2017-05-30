@@ -1,5 +1,6 @@
 #include "pickUp.h"
 #include "render.h"
+#include "resource.h"
 #include "core.h"
 
 namespace tke
@@ -14,7 +15,7 @@ namespace tke
 		if (x + cx > image.m_width || y + cy > image.m_height)
 			return 0;
 
-		vk::queueWaitIdle();
+		graphicsQueue.waitIdle();
 
 		auto cmd = commandPool.begineOnce();
 
@@ -22,7 +23,7 @@ namespace tke
 			{ 0.f, 0.f, 0.f, 0.f },
 			{ 1.f, 0 }
 		};
-		vkCmdBeginRenderPass(cmd, &vk::renderPassBeginInfo(renderPass, framebuffer, resCx, resCy, 2, clearValue), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(renderPass, framebuffer, resCx, resCy, 2, clearValue), VK_SUBPASS_CONTENTS_INLINE);
 		
 		drawCallback(cmd);
 
@@ -41,14 +42,14 @@ namespace tke
 		range.imageExtent.height = cy;
 		range.imageExtent.depth = 1;
 
-		vkCmdCopyImageToBuffer(cmd, image.m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer.m_buffer, 1, &range);
+		vkCmdCopyImageToBuffer(cmd, image.m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->m_buffer, 1, &range);
 
 		commandPool.endOnce(cmd);
 
-		auto pixel = (unsigned char*)stagingBuffer.map(0, cx * cy * 4);
+		auto pixel = (unsigned char*)stagingBuffer->map(0, cx * cy * 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
 
-		stagingBuffer.unmap();
+		stagingBuffer->unmap();
 
 		return index;
 	}
@@ -63,23 +64,15 @@ namespace tke
 		auto pDepthImage = globalResource.getImage("Depth.Image");
 
 		VkAttachmentDescription attachments[] = {
-			vk::colorAttachment(image.m_format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image
-			vk::depthAttachment(pDepthImage->m_format, VK_ATTACHMENT_LOAD_OP_CLEAR) // depth
+			colorAttachmentDesc(image.m_format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image
+			depthAttachmentDesc(pDepthImage->m_format, VK_ATTACHMENT_LOAD_OP_CLEAR) // depth
 		};
 
-		VkAttachmentReference colorRef = {
-			0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-		};
+		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
-		VkAttachmentReference depthRef = {
-			1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-		};
+		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-		VkSubpassDescription subpass = {
-			vk::subpass(1, &colorRef, &depthRef)
-		};
-
-		renderPass = vk::createRenderPass(ARRAYSIZE(attachments), attachments, 1, &subpass, 0, nullptr);
+		renderPass = createRenderPass(ARRAYSIZE(attachments), attachments, 1, &subpassDesc(1, &colorRef, &depthRef), 0, nullptr);
 
 		std::vector<VkImageView> views = { image.getView(), pDepthImage->getView() };
 		framebuffer = createFramebuffer(resCx, resCy, renderPass, views);

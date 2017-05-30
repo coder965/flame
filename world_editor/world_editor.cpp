@@ -322,65 +322,120 @@ void StageEditor::closeEvent(QCloseEvent *event)
 	delete this;
 }
 
-tke::UniformBuffer *pasteBuffer = nullptr;
 struct MonitorWindow : tke::GuiWindow
 {
-	VkCommandBuffer progressCmd[2];
+	tke::Model *test_model;
 
-	tke::Image *titleImage;
+	VkCommandBuffer cmd[2];
 
-	tke::Renderer *progressRenderer;
+	tke::Renderer *renderer;
 
-	MonitorWindow()
+	MonitorWindow(tke::Renderer *_renderer)
 		:GuiWindow(tke::resCx, tke::resCy, "TK Engine World Editor", false)
 	{
-		progressRenderer = new tke::Renderer();
-		progressRenderer->loadXML("../renderer/progress.xml");
+		test_model = tke::createModel("brick.obj");
+		tke::scene->addModel(test_model);
 
-		titleImage = tke::createImage("../misc/title.jpg", true, false);
-		progressRenderer->resource.setImage(titleImage, "Paste.Texture");
+		auto obj = new tke::Object();
+		obj->pModel = test_model;
+		tke::scene->addObject(obj);
 
-		progressRenderer->resource.setImage(image, "Window.Image");
+		auto lit = new tke::Light;
+		lit->color = glm::vec3(1.f);
+		lit->type = tke::Light::Type::ePoint;
+		lit->decayFactor = glm::vec3(0.5f, 0.f, 1.f);
+		lit->setCoord(glm::vec3(1, 1, 1));
+		tke::scene->addLight(lit);
 
-		progressRenderer->setup();
+		renderer = _renderer;
+
+		renderer->pResource->setImage(image, "Window.Image");
+
+		renderer->setup();
+
+		tke::scene->setResources(renderer);
 
 		for (int i = 0; i < 2; i++)
+			cmd[i] = tke::commandPool.allocate();
+
+		tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
+		tke::scene->camera.setCoord(glm::vec3(0, 5, 0));
+	}
+	
+	void makeCmd()
+	{
+		for (int i = 0; i < 2; i++)
 		{
-			progressCmd[i] = tke::commandPool.allocate();
-			tke::vk::beginCommandBuffer(progressCmd[i]);
-			progressRenderer->execute(progressCmd[i], i);
-			vkCmdSetEvent(progressCmd[i], renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-			vkEndCommandBuffer(progressCmd[i]);
+			vkResetCommandBuffer(cmd[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
+			cmd[i] = tke::commandPool.allocate();
+
+			tke::beginCommandBuffer(cmd[i]);
+
+			auto objectDrawcall = renderer->findRenderPass("mrt")->findAction("1")->findDrawcall("1");
+			objectDrawcall->indirect_count = tke::scene->drawCallCount;
+
+			renderer->execute(cmd[i], i);
+
+			vkCmdSetEvent(cmd[i], renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+			vkEndCommandBuffer(cmd[i]);
 		}
+	}
 
-		pasteBuffer = (tke::UniformBuffer*)progressRenderer->resource.getBuffer("Paste.UniformBuffer");
+	virtual void mouseEvent() override
+	{
+		if (tke::uiAcceptedMouse)
+			return;
 
-		auto list = new tke::EventList;
-		tke::Event e0;
-		e0.tickFunc = [](int _t) {
-			if (_t < 500)
+		float distX = mouseX - mousePrevX;
+		float distY = mouseY - mousePrevY;
+
+		if (distX != 0 || distY != 0)
+		{
+			distX /= tke::resCx;
+			distY /= tke::resCy;
+			if (leftPressing)
 			{
-				float alpha = _t / 500.f;
-				pasteBuffer->update(&alpha, tke::stagingBuffer);
+				if (GetAsyncKeyState(VK_MENU) & 0x8000)
+				{
+					tke::scene->camera.addAngAccrodingToScreen(distX, distY);
+				}
 			}
-		};
-		e0.duration = 1500;
-		list->events.push_back(e0);
-		tke::addEventList(list);
+			else if (middlePressing)
+			{
+				if (GetAsyncKeyState(VK_MENU) & 0x8000)
+					tke::scene->camera.moveAccrodingToScreen(tke::aspect, distX, distY);
+			}
+			else if (rightPressing)
+			{
+				if (GetAsyncKeyState(VK_MENU) & 0x8000)
+					tke::scene->camera.scroll(mouseX - mousePrevX);
+			}
+		}
 	}
 
 	virtual void renderEvent() override
 	{
+		tke::scene->update();
+
+		if (tke::needRedraw)
+		{
+			makeCmd();
+			tke::needRedraw = false;
+		}
+
 		beginFrame();
 
 		beginUi();
-		ImGui::Begin("Progress", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Text("FPS:%d", getFPS());
 		ImGui::End();
 		endUi();
 
-		VkCommandBuffer cmds[2] = { progressCmd[imageIndex], uiCmd };
-		tke::vk::queueSubmitFence(imageAvailable, 2, cmds, frameDone);
+		VkCommandBuffer cmds[2] = { cmd[imageIndex], uiCmd };
+		tke::graphicsQueue.submitFence(imageAvailable, 2, cmds, frameDone);
+
 		endFrame();
 	}
 };
@@ -388,6 +443,7 @@ struct MonitorWindow : tke::GuiWindow
 struct MonitorWidgetData
 {
 	MonitorWindow **window;
+	tke::Renderer *renderer;
 	bool *dead;
 };
 
@@ -403,12 +459,14 @@ void MonitorWidget::setup()
 {
 	MonitorWidgetData data;
 	data.window = &window;
+	data.renderer = renderer->p;
 	data.dead = &windowDead;
 
 	_beginthread([](void *p){
-		auto window = new MonitorWindow;
-
 		auto data = (MonitorWidgetData*)p;
+
+		auto window = new MonitorWindow(data->renderer);
+
 		*data->window = window;
 
 		window->run(data->dead);

@@ -7,11 +7,235 @@
 #include <memory>
 #include <experimental/filesystem>
 
-#include "vk.h"
-#include "resource.h"
+#define VK_USE_PLATFORM_WIN32_KHR 1
+#include <vulkan\vulkan.h>
+
+#include "utils.h"
 
 namespace tke
 {
+	struct Instance
+	{
+		VkInstance v;
+		CriticalSection cs;
+	};
+
+	struct Device
+	{
+		VkDevice v;
+		CriticalSection cs;
+
+		void waitIdle();
+	};
+
+	struct Queue
+	{
+		VkQueue v;
+		CriticalSection cs;
+
+		void waitIdle();
+		void submit(VkSemaphore waitSemaphore, VkCommandBuffer cmd, VkSemaphore signalSemaphore);
+		void submit(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkSemaphore signalSemaphore);
+		void submitFence(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkFence fence);
+	};
+
+	extern Instance inst;
+	extern Device device;
+	extern Queue graphicsQueue;
+
+	struct Buffer
+	{
+		size_t m_size = 0;
+		VkBuffer m_buffer = 0;
+		VkDeviceMemory m_memory = 0;
+
+		VkBufferUsageFlags usage;
+		VkMemoryPropertyFlags memoryProperty;
+
+		Buffer(size_t size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		~Buffer();
+		void recreate(size_t size);
+	};
+
+	struct StagingBuffer : Buffer
+	{
+		StagingBuffer(size_t size);
+		void *map(size_t offset, size_t size);
+		void unmap();
+	};
+
+	struct NonStagingBufferAbstract : Buffer
+	{
+		NonStagingBufferAbstract(size_t size, VkBufferUsageFlags usage, void *data = nullptr);
+		void recreate(size_t size, void *data = nullptr);
+		void update(void *data, StagingBuffer &stagingBuffer, size_t size = 0);
+	};
+
+	struct ShaderManipulatableBufferAbstract : NonStagingBufferAbstract
+	{
+		VkDescriptorBufferInfo m_info;
+
+		ShaderManipulatableBufferAbstract(size_t size, VkBufferUsageFlags usage);
+	};
+
+	struct UniformBuffer : ShaderManipulatableBufferAbstract
+	{
+		UniformBuffer(size_t size);
+	};
+
+	struct VertexBuffer : NonStagingBufferAbstract
+	{
+		VertexBuffer(size_t size = 16, void *data = nullptr);
+		void bind(VkCommandBuffer cmd);
+	};
+
+	struct IndexBuffer : NonStagingBufferAbstract
+	{
+		IndexBuffer(size_t size = 16, void *data = nullptr);
+		void bind(VkCommandBuffer cmd);
+	};
+
+	struct IndirectVertexBuffer : NonStagingBufferAbstract
+	{
+		IndirectVertexBuffer(size_t size = sizeof VkDrawIndirectCommand);
+	};
+
+	struct IndirectIndexBuffer : NonStagingBufferAbstract
+	{
+		IndirectIndexBuffer(size_t size = sizeof VkDrawIndexedIndirectCommand);
+	};
+
+	struct Image
+	{
+		enum Type
+		{
+			eColor,
+			eSwapchain,
+			eDepth,
+			eDepthStencil
+		};
+		Type type = eColor;
+		inline bool isColorType() { return type == eColor || type == eSwapchain; }
+		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
+
+		struct View
+		{
+			VkImageAspectFlags aspect;
+			int baseLevel;
+			int levelCount;
+			int baseLayer;
+			int layerCount;
+			VkImageView view;
+		};
+
+		size_t m_size;
+		int m_width = 1, m_height = 1;
+		int m_mipmapLevels = 1;
+		int m_arrayLayers = 1;
+		VkFormat m_format = VK_FORMAT_R8G8B8A8_UNORM;
+		VkImage m_image = 0;
+		VkDeviceMemory m_memory = 0;
+		VkImageLayout m_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+		VkImageViewType m_viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+		std::vector<View> views;
+		std::list<VkDescriptorImageInfo> infos;
+
+		std::string filename;
+
+		bool m_sRGB = false;
+
+		int sceneIndex = -1;
+
+		unsigned char *m_data = nullptr;
+
+		int getWidth(int mipmapLevel = 0) const;
+		int getHeight(int mipmapLevel = 0) const;
+		void transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout);
+		void fillData(int level, std::uint8_t *data, size_t size, VkImageAspectFlags aspect);
+		void create(int w, int h, VkFormat format, VkImageUsageFlags usage, std::uint8_t *data = nullptr, size_t size = 0, VkImageAspectFlags aspect = 0);
+		void destroy();
+		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		unsigned char getPixel(int x, int y, int off) const;
+	};
+
+	struct CommandPool
+	{
+		VkCommandPool pool;
+
+		void create();
+		void destroy();
+		VkCommandBuffer allocate();
+		VkCommandBuffer allocateSecondary();
+		void free(VkCommandBuffer cmd);
+
+		VkCommandBuffer begineOnce();
+		void endOnce(VkCommandBuffer cmd);
+
+		void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
+		void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
+		void cmdUpdateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &uniformBuffer);
+
+		void cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+	};
+	extern CommandPool commandPool;
+
+	struct DescriptrPool
+	{
+		VkDescriptorPool pool;
+		std::vector<VkWriteDescriptorSet> writes;
+
+		void create();
+		VkDescriptorSet allocate(VkDescriptorSetLayout *pLayout);
+		void free(VkDescriptorSet set);
+		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement = 0);
+		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement = 0);
+		void update();
+	};
+	extern DescriptrPool descriptorPool;
+
+	struct Framebuffer
+	{
+		std::vector<VkImageView> views;
+		VkFramebuffer v;
+	};
+
+	VkFramebuffer createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
+	void destroyFramebuffer(VkFramebuffer v);
+
+	extern VkFormat swapchainFormat;
+	extern VkSampler plainSampler;
+	extern VkSampler plainUnnormalizedSampler;
+	extern VkSampler colorSampler;
+	extern VkSampler colorBorderSampler;
+
+	void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
+
+	VkFence createFence();
+	void destroyFence(VkFence fence);
+
+	VkEvent createEvent();
+	void destroyEvent(VkEvent event);
+
+	VkSemaphore createSemaphore();
+	void destroySemaphore(VkSemaphore semaphore);
+
+	void waitFence(VkFence);
+
+	VkPipelineVertexInputStateCreateInfo vertexStateInfo(std::uint32_t bindingCount, VkVertexInputBindingDescription *pBindings, std::uint32_t attributeCount, VkVertexInputAttributeDescription *pAttributes);
+
+	VkAttachmentDescription colorAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
+	VkAttachmentDescription depthAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
+	VkAttachmentDescription swapchainAttachmentDesc(VkAttachmentLoadOp loadOp);
+	VkSubpassDescription subpassDesc(int colorCount, VkAttachmentReference *pColors, VkAttachmentReference *pDepth = nullptr, int inputCount = 0, VkAttachmentReference *pInputs = nullptr);
+	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
+	VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies);
+	void destroyRenderPass(VkRenderPass rp);
+	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues);
+
+	Err initRender(const char *appName, bool debug);
+
 	REFLECTABLE enum class Format : int
 	{
 		null,
@@ -225,9 +449,10 @@ namespace tke
 	struct Stage : StageArchive
 	{
 		Pipeline *parent;
+		VkShaderModule module = 0;
 
 		Stage(Pipeline *_parent);
-		void destroy();
+		void create();
 		~Stage();
 	};
 
@@ -396,11 +621,12 @@ namespace tke
 		return true;
 	}
 
+	struct ResourceBank;
 	struct Pipeline : PipelineArchive
 	{
 		Stage *stages[5] = {};
 
-		ResourceBank *pResource = &globalResource;
+		ResourceBank *pResource = nullptr;
 
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
@@ -420,8 +646,9 @@ namespace tke
 		VkPipeline m_pipeline = 0;
 		VkDescriptorSet m_descriptorSet = 0;
 
+		Pipeline();
 		void create(const std::string &filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
-		void destroy();
+		~Pipeline();
 		int descriptorPosition(const std::string &name);
 	};
 
@@ -704,7 +931,7 @@ namespace tke
 
 		bool containSwapchain = false;
 
-		ResourceBank resource;
+		ResourceBank *pResource = nullptr;
 
 		VertexBuffer *initVertexBuffer = nullptr;
 		IndexBuffer *initIndexBuffer = nullptr;
@@ -726,8 +953,7 @@ namespace tke
 
 		RenderPass *findRenderPass(const std::string &n);
 
-		Renderer();
-		Renderer(int _cx, int _cy);
+		Renderer(int _cx = -1, int _cy = -1);
 		~Renderer();
 		template <class... _Valty>
 		RenderPass *addPass(_Valty&&... _Val)

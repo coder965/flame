@@ -8,7 +8,7 @@
   <pipelines>
     <pipeline name="Panorama.Pipeline" file_name="pipeline/sky/panorama.xml" vertex_input_type="normal"/>
     <pipeline name="Mrt.Pipeline" file_name="pipeline/deferred/mrt.xml" vertex_input_type="normal"/>
-    <pipeline name="Deferred.Pipeline" file_name="pipeline/deferred/deferred_ibl.xml" vertex_input_type="zero"/>
+    <pipeline name="Deferred_IBL.Pipeline" file_name="pipeline/deferred/deferred_ibl.xml" vertex_input_type="zero"/>
     <pipeline name="Combine.Pipeline" file_name="pipeline/combine/combine.xml" vertex_input_type="zero"/>
   </pipelines>
   
@@ -48,7 +48,7 @@
         <dependency pass_name="mrt"/>
       </dependencies>
       <actions>
-        <action name="1" type="draw_action" pipeline_name="Deferred.Pipeline">
+        <action name="1" type="draw_action" pipeline_name="Deferred_IBL.Pipeline">
           <drawcalls>
             <drawcall name="1" instance_count="1" first_instance="0" type="vertex" vertex_count="3"/>
           </drawcalls>
