@@ -103,8 +103,8 @@ namespace tke
 
 		VkSurfaceKHR surface;
 		VkSwapchainKHR swapchain;
-		Image image[2];
-		VkFramebuffer framebuffer[2];
+		Image *images = nullptr;
+		VkFramebuffer framebuffers[2];
 		CommandPool commandPool;
 
 		VkSemaphore imageAvailable;

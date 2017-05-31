@@ -5,14 +5,15 @@
 
 namespace tke
 {
-	Image image;
-	VkRenderPass renderPass;
-	VkFramebuffer framebuffer;
+	static Image *image = nullptr;
+	static VkRenderPass renderPass;
+	static VkFramebuffer framebuffer;
+
 	Pipeline plainPickUpPipeline;
 
 	unsigned int pickUp(int x, int y, int cx, int cy, void(*drawCallback)(VkCommandBuffer))
 	{
-		if (x + cx > image.m_width || y + cy > image.m_height)
+		if (x + cx > image->m_width || y + cy > image->m_height)
 			return 0;
 
 		graphicsQueue.waitIdle();
@@ -42,7 +43,7 @@ namespace tke
 		range.imageExtent.height = cy;
 		range.imageExtent.depth = 1;
 
-		vkCmdCopyImageToBuffer(cmd, image.m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->m_buffer, 1, &range);
+		vkCmdCopyImageToBuffer(cmd, image->m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->m_buffer, 1, &range);
 
 		commandPool.endOnce(cmd);
 
@@ -56,15 +57,15 @@ namespace tke
 
 	void initPickUp()
 	{
-		image.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		globalResource.setImage(&image, "PickUp.Image");
+		image = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		globalResource.setImage(image, "PickUp.Image");
 
 		globalResource.setPipeline(&plainPickUpPipeline, "PickUp.Pipeline");
 
 		auto pDepthImage = globalResource.getImage("Depth.Image");
 
 		VkAttachmentDescription attachments[] = {
-			colorAttachmentDesc(image.m_format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image
+			colorAttachmentDesc(image->m_format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image
 			depthAttachmentDesc(pDepthImage->m_format, VK_ATTACHMENT_LOAD_OP_CLEAR) // depth
 		};
 
@@ -74,7 +75,7 @@ namespace tke
 
 		renderPass = createRenderPass(ARRAYSIZE(attachments), attachments, 1, &subpassDesc(1, &colorRef, &depthRef), 0, nullptr);
 
-		std::vector<VkImageView> views = { image.getView(), pDepthImage->getView() };
+		std::vector<VkImageView> views = { image->getView(), pDepthImage->getView() };
 		framebuffer = createFramebuffer(resCx, resCy, renderPass, views);
 
 		plainPickUpPipeline.create(enginePath + "pipeline/pickUp/pickUp.xml", &vertexInputState, renderPass, 0);

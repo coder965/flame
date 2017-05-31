@@ -27,7 +27,7 @@ namespace tke
 					std::swap(m_data[i * m_pitch + j * m_channel + channel0], m_data[i * m_pitch + j * m_channel + channel1]);
 			}
 		}
-		void release()
+		~_Data()
 		{
 			delete[]m_data;
 		}
@@ -115,11 +115,12 @@ namespace tke
 
 		auto vkFormat = _getFormat(pData, sRGB);
 
-		auto pImage = new Image;
+		auto pImage = new Image(pData->m_cx, pData->m_cy, vkFormat, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pData->m_data, pData->m_size);
 		pImage->filename = filename;
 		pImage->m_sRGB = sRGB;
-		pImage->create(pData->m_cx, pData->m_cy, vkFormat, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pData->m_data, pData->m_size);
-		pData->release();
+
+		delete pData;
+
 		return pImage;
 	}
 }

@@ -706,10 +706,10 @@ namespace tke
 			{
 				static VkRenderPass postRenderPass;
 
-				static Image envrImage;
+				static Image *envrImage = nullptr;
 				static VkFramebuffer envrFramebuffer[4];
 
-				static Image envrImageDownsample[3];
+				static Image *envrImageDownsample[3] = {};
 				static VkFramebuffer envrDownsampleFramebuffer[3];
 
 				static VkDescriptorSet downsampleDescriptorSetLevel[3];
@@ -742,20 +742,19 @@ namespace tke
 					convolvePipeline.create(enginePath + "pipeline/sky/convolve.xml", &zeroVertexInputState, postRenderPass, 0);
 					globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 
-					envrImage.m_mipmapLevels = 4;
-					envrImage.create(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+					envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
 
 					for (int i = 0; i < 4; i++)
 					{
-						std::vector<VkImageView> views = { envrImage.getView(0, i) };
+						std::vector<VkImageView> views = { envrImage->getView(0, i) };
 						envrFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, postRenderPass, views);
 					}
 
 					for (int i = 0; i < 3; i++)
 					{
-						envrImageDownsample[i].create(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+						envrImageDownsample[i]= new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-						std::vector<VkImageView> views = { envrImageDownsample[i].getView() };
+						std::vector<VkImageView> views = { envrImageDownsample[i]->getView() };
 						envrDownsampleFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), postRenderPass, views);
 					}
 
@@ -770,13 +769,13 @@ namespace tke
 					static int source_position = -1;
 					if (source_position == -1) source_position = downsamplePipeline.descriptorPosition("source");
 
-					descriptorPool.addWrite(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImage.getInfo(plainSampler));
-					descriptorPool.addWrite(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0].getInfo(plainSampler));
-					descriptorPool.addWrite(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(plainSampler));
+					descriptorPool.addWrite(downsampleDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImage->getInfo(plainSampler));
+					descriptorPool.addWrite(downsampleDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0]->getInfo(plainSampler));
+					descriptorPool.addWrite(downsampleDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1]->getInfo(plainSampler));
 
-					descriptorPool.addWrite(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0].getInfo(plainSampler));
-					descriptorPool.addWrite(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1].getInfo(plainSampler));
-					descriptorPool.addWrite(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[2].getInfo(plainSampler));
+					descriptorPool.addWrite(convolveDescriptorSetLevel[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[0]->getInfo(plainSampler));
+					descriptorPool.addWrite(convolveDescriptorSetLevel[1], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[1]->getInfo(plainSampler));
+					descriptorPool.addWrite(convolveDescriptorSetLevel[2], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, source_position, envrImageDownsample[2]->getInfo(plainSampler));
 
 					descriptorPool.update();
 				}
@@ -801,7 +800,7 @@ namespace tke
 
 						commandPool.endOnce(cmd);
 
-						descriptorPool.addWrite(panoramaPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage.getInfo(colorSampler));
+						descriptorPool.addWrite(panoramaPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
 
 						if (deferredIblPipeline)
 						{ // update IBL
@@ -847,7 +846,7 @@ namespace tke
 									commandPool.endOnce(cmd);
 								}
 
-								for (int i = 1; i < envrImage.m_mipmapLevels; i++)
+								for (int i = 1; i < envrImage->m_mipmapLevels; i++)
 								{
 									auto cmd = commandPool.begineOnce();
 
@@ -883,7 +882,7 @@ namespace tke
 									commandPool.endOnce(cmd);
 								}
 
-								descriptorPool.addWrite(deferredIblPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage.getInfo(colorSampler, 0, 0, envrImage.m_mipmapLevels));
+								descriptorPool.addWrite(deferredIblPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->m_mipmapLevels));
 
 								AmbientStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);

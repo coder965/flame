@@ -134,8 +134,6 @@ namespace tke
 
 	int thread_local startUpTime = 0;
 	int thread_local nowTime = 0;
-	
-	static Image _depthImage;
 
 	Err init(const char *appName, int rcx, int rcy)
 	{
@@ -191,8 +189,7 @@ namespace tke
 			lineVertexInputState = vertexStateInfo(ARRAYSIZE(bindings1), bindings1, ARRAYSIZE(attributes1), attributes1);
 		}
 
-		_depthImage.create(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		globalResource.setImage(&_depthImage, "Depth.Image");
+		globalResource.setImage(new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), "Depth.Image");
 
 		{
 			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
@@ -272,18 +269,15 @@ namespace tke
 			inst.cs.unlock();
 		}
 
+		images = (Image*)malloc(sizeof(Image) * 2);
+
 		for (int i = 0; i < 2; i++)
 		{
-			image[i].type = Image::eSwapchain;
-			image[i].m_width = cx;
-			image[i].m_height = cy;
-			image[i].m_viewType = VK_IMAGE_VIEW_TYPE_2D;
-			image[i].m_format = swapchainFormat;
-			image[i].m_image = vkImages[i];
+			new (&images[i]) Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
 
 			std::vector<VkImageView> views;
-			views.push_back(image[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
-			framebuffer[i] = createFramebuffer(cx, cy, windowRenderPass, views);
+			views.push_back(images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
+			framebuffers[i] = createFramebuffer(cx, cy, windowRenderPass, views);
 		}
 
 		commandPool.create();
@@ -301,10 +295,8 @@ namespace tke
 		destroySemaphore(imageAvailable);
 		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
-		{
-			destroyFramebuffer(framebuffer[i]);
-			image[i].destroy();
-		}
+			destroyFramebuffer(framebuffers[i]);
+		delete images;
 		inst.cs.lock();
 		device.cs.lock();
 		vkDestroySwapchainKHR(device.v, swapchain, nullptr);

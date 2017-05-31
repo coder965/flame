@@ -500,7 +500,7 @@ namespace tke
 
 		vkCmdWaitEvents(cmd, 1, &window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(windowRenderPass, window->framebuffer[window->imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(windowRenderPass, window->framebuffers[window->imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		VkDeviceSize vertex_offset[1] = { 0 };
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
@@ -585,8 +585,7 @@ namespace tke
 			unsigned char* pixels;
 			int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			auto fontImage = new Image;
-			fontImage->create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
+			auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
 			static int texture_position = -1;

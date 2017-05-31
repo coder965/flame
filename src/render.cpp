@@ -705,6 +705,8 @@ namespace tke
 
 		swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
+		// sampler must be created correctly
+
 		{
 			VkSamplerCreateInfo samplerInfo = {};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -724,7 +726,7 @@ namespace tke
 			samplerInfo.minLod = 0.0f;
 			samplerInfo.maxLod = 0.0f;
 
-			auto res = vkCreateSampler(device.v, &samplerInfo, nullptr, &plainSampler);
+			res = vkCreateSampler(device.v, &samplerInfo, nullptr, &plainSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -747,7 +749,7 @@ namespace tke
 			info.minLod = 0.0f;
 			info.maxLod = 0.0f;
 
-			auto res = vkCreateSampler(device.v, &info, nullptr, &plainUnnormalizedSampler);
+			res = vkCreateSampler(device.v, &info, nullptr, &plainUnnormalizedSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -770,7 +772,7 @@ namespace tke
 			info.minLod = 0.f;
 			info.maxLod = 128.f;
 
-			auto res = vkCreateSampler(device.v, &info, nullptr, &colorSampler);
+			res = vkCreateSampler(device.v, &info, nullptr, &colorSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -793,7 +795,7 @@ namespace tke
 			info.minLod = 0.f;
 			info.maxLod = 128.f;
 
-			auto res = vkCreateSampler(device.v, &info, nullptr, &colorBorderSampler);
+			res = vkCreateSampler(device.v, &info, nullptr, &colorBorderSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -1003,7 +1005,7 @@ namespace tke
 		m_layout = layout;
 	}
 
-	void Image::fillData(int level, std::uint8_t *data, size_t size, VkImageAspectFlags aspect)
+	void Image::fillData(int level, void *data, size_t size, VkImageAspectFlags aspect)
 	{
 		transitionLayout(level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -1028,10 +1030,11 @@ namespace tke
 		commandPool.endOnce(cmd);
 	}
 
-	void Image::create(int w, int h, VkFormat format, VkImageUsageFlags usage, std::uint8_t *data, size_t size, VkImageAspectFlags aspect)
+	Image::Image(int w, int h, VkFormat format, VkImageUsageFlags usage, int mipmapLevels, void *data, size_t size, VkImageAspectFlags aspect)
 	{
 		m_width = w;
 		m_height = h;
+		m_mipmapLevels = mipmapLevels;
 		m_format = format;
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
 			type = eDepth;
@@ -1096,22 +1099,26 @@ namespace tke
 		transitionLayout(0, aspect, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	void Image::destroy()
+	Image::Image(Type _type, VkImage _image, int w, int h, VkFormat format)
+	{
+		type = _type;
+		m_image = _image;
+		m_width = w;
+		m_height = h;
+		m_format = format;
+	}
+
+	Image::~Image()
 	{
 		device.cs.lock();
-		infos.clear();
 		for (auto &v : views)
-		{
 			vkDestroyImageView(device.v, v.view, nullptr);
-		}
-		views.clear();
 		if (type != Type::eSwapchain)
 		{
 			vkFreeMemory(device.v, m_memory, nullptr);
 			vkDestroyImage(device.v, m_image, nullptr);
 		}
 		device.cs.unlock();
-		m_image = 0; // this is the mark that if a image is valid
 	}
 
 	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -2441,14 +2448,9 @@ namespace tke
 				i.cy = tke::resCy;
 
 			if (i.file_name != "")
-			{
 				i.p = createImage(enginePath + i.file_name, i.sRGB);
-			}
 			else
-			{
-				i.p = new Image;
-				i.p->create(i.cx, i.cy, vkFormat(i.format), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			}
+				i.p = new Image(i.cx, i.cy, vkFormat(i.format), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			pResource->setImage(i.p, i.name);
 		}
 
@@ -2590,17 +2592,12 @@ namespace tke
 			subpassIndex++;
 		}
 
-		if (vkRenderPass) destroyRenderPass(vkRenderPass);
 		vkRenderPass = createRenderPass(vkAttachments.size(), vkAttachments.data(),
 			vkSubpasses.size(), vkSubpasses.data(), vkDependencies.size(), vkDependencies.data());
 
-		if (vkFramebuffer[0]) destroyFramebuffer(vkFramebuffer[0]);
 		vkFramebuffer[0] = createFramebuffer(cx, cy, vkRenderPass, vkViews[0]);
 		if (containSwapchain)
-		{
-			if (vkFramebuffer[1]) destroyFramebuffer(vkFramebuffer[1]);
 			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
-		}
 
 		for (auto &p : pipelineResources)
 			p.p->create(enginePath + p.file_name, p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
