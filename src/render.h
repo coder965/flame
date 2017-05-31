@@ -966,7 +966,6 @@ namespace tke
 		void loadXML(const std::string &_filename);
 		void saveXML();
 		void maintain(int row) override;
-		void pushImage(Attachment *ai);
 		void getDescriptorSets();
 		void setup();
 		void execute(VkCommandBuffer cmd, int index = 0);

@@ -585,14 +585,14 @@ namespace tke
 			unsigned char* pixels;
 			int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			static Image fontImage;
-			fontImage.create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
+			auto fontImage = new Image;
+			fontImage->create(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
 			static int texture_position = -1;
 			if (texture_position == -1) texture_position = pipeline.descriptorPosition("sTexture");
 
-			descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(colorSampler));
+			descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
 
 			auto imageID = 1;
 			for (int index = 0; index < _icons.size(); index++)

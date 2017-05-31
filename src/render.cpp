@@ -2252,14 +2252,14 @@ namespace tke
 		maintainList(passes);
 	}
 
-	void Renderer::pushImage(Attachment *ai)
+	void renderer_pushImage(Renderer *r, Attachment *ai)
 	{
 		auto view = ai->image->getView(VkImageAspectFlags(ai->aspect), ai->level, 1, ai->layer, 1);
 
 		auto index = 0;
-		for (; index < vkViews[0].size(); index++)
+		for (; index < r->vkViews[0].size(); index++)
 		{
-			if (vkViews[0][index] == view)
+			if (r->vkViews[0][index] == view)
 			{
 				ai->index = index;
 				return;
@@ -2282,15 +2282,15 @@ namespace tke
 			//attachment = Vk::depthAttachmentDesc(ai->image->m_format, ai->loadOp);
 			break;
 		}
-		vkAttachments.push_back(attachment);
-		vkViews[0].push_back(view);
-		if (containSwapchain)
+		r->vkAttachments.push_back(attachment);
+		r->vkViews[0].push_back(view);
+		if (r->containSwapchain)
 		{
 			if (ai->image->type == Image::eSwapchain)
 				view = ai->image[1].getView(VkImageAspectFlags(ai->aspect), ai->layer, 1, ai->layer, 1);
-			vkViews[1].push_back(view);
+			r->vkViews[1].push_back(view);
 		}
-		vkClearValues.push_back(ai->clearValue);
+		r->vkClearValues.push_back(ai->clearValue);
 		ai->index = index;
 	}
 
@@ -2505,7 +2505,7 @@ namespace tke
 			pass.index = subpassIndex;
 
 			for (auto &a : pass.attachments)
-				pushImage(&a);
+				renderer_pushImage(this, &a);
 
 			VkSubpassDescription desc = {};
 			desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
