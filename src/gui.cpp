@@ -592,10 +592,12 @@ namespace tke
 			static int texture_position = -1;
 			if (texture_position == -1) texture_position = pipeline.descriptorPosition("sTexture");
 
-			descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(colorSampler), 0);
+			descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage.getInfo(colorSampler));
+
 			auto imageID = 1;
 			for (int index = 0; index < _icons.size(); index++)
-				descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _icons[index]->getInfo(colorSampler), index + 1);
+				descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _icons[index]->getInfo(colorSampler), index);
+
 			descriptorPool.update();
 		}
 		else
