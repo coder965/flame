@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <map>
 #include <memory>
 #include <experimental/filesystem>
 
@@ -435,6 +436,82 @@ namespace tke
 
 	struct Pipeline;
 
+	REFLECTABLE struct UniformBufferInfo
+	{
+		REFL_BANK;
+
+		REFLv std::string name;
+		REFLv int size = 0;
+
+		UniformBuffer *p = nullptr;
+	};
+
+	REFLECTABLE struct ImageInfo
+	{
+		REFL_BANK;
+
+		REFLv std::string name;
+		REFLv std::string file_name;
+		REFLv bool sRGB = true;
+		REFLv int cx = 0;
+		REFLv int cy = 0;
+		REFLe Format format = Format::null;
+
+		Image *p = nullptr;
+	};
+
+	REFLECTABLE enum class VertexInputType : int
+	{
+		null,
+		REFLe zero = 1 << 0,
+		REFLe normal = 1 << 1
+	};
+
+	REFLECTABLE struct PipelineInfo
+	{
+		REFL_BANK;
+
+		REFLv std::string name;
+		REFLv std::string file_name;
+		REFLe VertexInputType vertex_input_type = VertexInputType::zero;
+
+		Pipeline *p = nullptr;
+		int subpassIndex = -1;
+	};
+
+	struct Model;
+	struct ResourceBank
+	{
+		ResourceBank *parent;
+
+		std::vector<UniformBufferInfo> privateBuffers;
+		std::vector<ImageInfo> privateImages;
+		std::vector<PipelineInfo> privatePipelines;
+
+		std::map<std::string, Buffer*> bufferResources;
+		std::map<std::string, Image*> imageResources;
+		std::map<std::string, Model*> modelResources;
+		std::map<std::string, Pipeline*> pipelineResources;
+		std::map<std::string, VkCommandBuffer> cmdResources;
+
+		void setBuffer(Buffer *p, const std::string &str);
+		void setImage(Image *p, const std::string &str);
+		void setModel(Model *p, const std::string &str);
+		void setPipeline(Pipeline *p, const std::string &str);
+		void setCmd(VkCommandBuffer p, const std::string &str);
+
+		Buffer *getBuffer(const std::string &str);
+		Image *getImage(const std::string &str);
+		Model *getModel(const std::string &str);
+		Pipeline *getPipeline(const std::string &str);
+		VkCommandBuffer getCmd(const std::string &str);
+
+		ResourceBank(ResourceBank *_parent);
+		~ResourceBank();
+	};
+
+	extern ResourceBank globalResource;
+
 	REFLECTABLE struct StageArchive
 	{
 		REFL_BANK;
@@ -476,13 +553,6 @@ namespace tke
 		REFLv std::string descriptor_name;
 		REFLv std::string resource_name;
 		REFLe SamplerType sampler = SamplerType::none;
-	};
-
-	REFLECTABLE enum class VertexInputType : int
-	{
-		null,
-		REFLe zero = 1 << 0,
-		REFLe normal = 1 << 1
 	};
 
 	REFLECTABLE struct PipelineArchive
@@ -875,42 +945,6 @@ namespace tke
 		void maintain(int row) override;
 	};
 
-	REFLECTABLE struct BufferResource
-	{
-		REFL_BANK;
-
-		REFLv std::string name;
-		REFLv int size = 0;
-
-		UniformBuffer *p = nullptr;
-	};
-
-	REFLECTABLE struct ImageResource
-	{
-		REFL_BANK;
-
-		REFLv std::string name;
-		REFLv std::string file_name;
-		REFLv bool sRGB = true;
-		REFLv int cx = 0;
-		REFLv int cy = 0;
-		REFLe Format format = Format::null;
-
-		Image *p = nullptr;
-	};
-
-	REFLECTABLE struct PipelineResource
-	{
-		REFL_BANK;
-
-		REFLv std::string name;
-		REFLv std::string file_name;
-		REFLe VertexInputType vertex_input_type = VertexInputType::zero;
-
-		Pipeline *p = nullptr;
-		int subpassIndex = -1;
-	};
-
 	REFLECTABLE struct Renderer : Container
 	{
 		REFL_BANK;
@@ -926,13 +960,9 @@ namespace tke
 
 		std::list<RenderPass> passes;
 
-		std::vector<BufferResource> bufferResources;
-		std::vector<ImageResource> imageResources;
-		std::vector<PipelineResource> pipelineResources;
-
 		bool containSwapchain = false;
 
-		ResourceBank *pResource = nullptr;
+		ResourceBank resource;
 
 		VertexBuffer *initVertexBuffer = nullptr;
 		IndexBuffer *initIndexBuffer = nullptr;

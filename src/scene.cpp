@@ -1,7 +1,6 @@
 #include "core.h"
 #include "scene.h"
 #include "gui.h"
-#include "resource.h"
 
 namespace tke
 {
@@ -643,9 +642,9 @@ namespace tke
 
 	void Scene::setResources(Renderer *r)
 	{
-		panoramaPipeline = r->pResource->getPipeline("Panorama.Pipeline");
-		deferredIblPipeline = r->pResource->getPipeline("Deferred_IBL.Pipeline");
-		mrtPipeline = r->pResource->getPipeline("Mrt.Pipeline");
+		panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
+		deferredIblPipeline = r->resource.getPipeline("Deferred_IBL.Pipeline");
+		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
 	}
 
 	void Scene::update()

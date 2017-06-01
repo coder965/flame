@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #include "render.h"
-#include "resource.h"
 #include "core.h"
 #include "gui.h"
 #include "model.h"
@@ -1253,6 +1252,108 @@ namespace tke
 		}
 	}
 
+	void ResourceBank::setBuffer(Buffer *p, const std::string &str)
+	{
+		bufferResources[str] = p;
+	}
+
+	void ResourceBank::setImage(Image *p, const std::string &str)
+	{
+		imageResources[str] = p;
+	}
+
+	void ResourceBank::setModel(Model *p, const std::string &str)
+	{
+		modelResources[str] = p;
+	}
+
+	void ResourceBank::setPipeline(Pipeline *p, const std::string &str)
+	{
+		pipelineResources[str] = p;
+	}
+
+	void ResourceBank::setCmd(VkCommandBuffer p, const std::string &str)
+	{
+		cmdResources[str] = p;
+	}
+
+	Buffer *ResourceBank::getBuffer(const std::string &str)
+	{
+		auto it = bufferResources.find(str);
+		if (it == bufferResources.end())
+		{
+			if (parent)
+				return parent->getBuffer(str);
+			else
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	Image *ResourceBank::getImage(const std::string &str)
+	{
+		auto it = imageResources.find(str);
+		if (it == imageResources.end())
+		{
+			if (parent)
+				return parent->getImage(str);
+			else
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	Model *ResourceBank::getModel(const std::string &str)
+	{
+		auto it = modelResources.find(str);
+		if (it == modelResources.end())
+		{
+			if (parent)
+				return parent->getModel(str);
+			else
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	Pipeline *ResourceBank::getPipeline(const std::string &str)
+	{
+		auto it = pipelineResources.find(str);
+		if (it == pipelineResources.end())
+		{
+			if (parent)
+				return parent->getPipeline(str);
+			else
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	VkCommandBuffer ResourceBank::getCmd(const std::string &str)
+	{
+		auto it = cmdResources.find(str);
+		if (it == cmdResources.end())
+		{
+			if (parent)
+				return parent->getCmd(str);
+			else
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	ResourceBank::ResourceBank(ResourceBank *_parent)
+	{
+		parent = _parent;
+	}
+
+	ResourceBank::~ResourceBank()
+	{
+
+	}
+
+	ResourceBank globalResource(nullptr);
+
 	struct ShaderModule
 	{
 		std::string filename;
@@ -2134,8 +2235,8 @@ namespace tke
 	}
 
 	Renderer::Renderer(int _cx, int _cy)
+		:resource(&globalResource)
 	{
-		pResource = new ResourceBank;
 		cx = _cx;
 		cy = _cy;
 	}
@@ -2160,9 +2261,9 @@ namespace tke
 			{
 				if (c->name == "buffer")
 				{
-					BufferResource b;
+					UniformBufferInfo b;
 					c->obtainFromAttributes(&b, b.b);
-					bufferResources.push_back(b);
+					resource.privateBuffers.push_back(b);
 				}
 			}
 		}
@@ -2174,9 +2275,9 @@ namespace tke
 			{
 				if (c->name == "image")
 				{
-					ImageResource i;
+					ImageInfo i;
 					c->obtainFromAttributes(&i, i.b);
-					imageResources.push_back(i);
+					resource.privateImages.push_back(i);
 				}
 			}
 		}
@@ -2188,9 +2289,9 @@ namespace tke
 			{
 				if (c->name == "pipeline")
 				{
-					PipelineResource p;
+					PipelineInfo p;
 					c->obtainFromAttributes(&p, p.b);
-					pipelineResources.push_back(p);
+					resource.privatePipelines.push_back(p);
 				}
 			}
 		}
@@ -2434,13 +2535,13 @@ namespace tke
 		if (cy == -1)
 			cy = tke::resCy;
 
-		for (auto &b : bufferResources)
+		for (auto &b : resource.privateBuffers)
 		{
 			b.p = new UniformBuffer(b.size);
-			pResource->setBuffer(b.p, b.name);
+			resource.setBuffer(b.p, b.name);
 		}
 
-		for (auto &i : imageResources)
+		for (auto &i : resource.privateImages)
 		{
 			if (i.cx == -1)
 				i.cx = tke::resCx;
@@ -2451,27 +2552,27 @@ namespace tke
 				i.p = createImage(enginePath + i.file_name, i.sRGB);
 			else
 				i.p = new Image(i.cx, i.cy, vkFormat(i.format), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			pResource->setImage(i.p, i.name);
+			resource.setImage(i.p, i.name);
 		}
 
-		for (auto &p : pipelineResources)
+		for (auto &p : resource.privatePipelines)
 		{
 			p.p = new Pipeline;
-			p.p->pResource = pResource;
-			pResource->setPipeline(p.p, p.name);
+			p.p->pResource = &resource;
+			resource.setPipeline(p.p, p.name);
 		}
 
 		if (vertex_buffer_name!= "")
-			initVertexBuffer = (VertexBuffer*)pResource->getBuffer(vertex_buffer_name);
+			initVertexBuffer = (VertexBuffer*)resource.getBuffer(vertex_buffer_name);
 		if (index_buffer_name != "")
-			initIndexBuffer = (IndexBuffer*)pResource->getBuffer(index_buffer_name);
+			initIndexBuffer = (IndexBuffer*)resource.getBuffer(index_buffer_name);
 
 		for (auto &p : passes)
 		{
 			for (auto &a : p.attachments)
 			{
 				if (a.image_name != "")
-					a.image = pResource->getImage(a.image_name);
+					a.image = resource.getImage(a.image_name);
 				if (a.image->type == Image::eSwapchain)
 					containSwapchain = true;
 				if (a.clear)
@@ -2550,10 +2651,10 @@ namespace tke
 					case DrawActionType::draw_action:
 						if (action.pipeline_name != "")
 						{
-							action.m_pipeline = pResource->getPipeline(action.pipeline_name.c_str());
+							action.m_pipeline = resource.getPipeline(action.pipeline_name.c_str());
 							if (action.m_pipeline)
 							{
-								for (auto &p : pipelineResources)
+								for (auto &p : resource.privatePipelines)
 								{
 									if (p.name == action.pipeline_name)
 										p.subpassIndex = subpassIndex;
@@ -2563,12 +2664,12 @@ namespace tke
 						for (auto &drawcall : action.drawcalls)
 						{
 							if (drawcall.indirect_vertex_buffer_name != "")
-								drawcall.m_indirectVertexBuffer = (IndirectVertexBuffer*)pResource->getBuffer(drawcall.indirect_vertex_buffer_name);
+								drawcall.m_indirectVertexBuffer = (IndirectVertexBuffer*)resource.getBuffer(drawcall.indirect_vertex_buffer_name);
 							if (drawcall.indirect_index_buffer_name != "")
-								drawcall.m_indirectIndexBuffer = (IndirectIndexBuffer*)pResource->getBuffer(drawcall.indirect_index_buffer_name);
+								drawcall.m_indirectIndexBuffer = (IndirectIndexBuffer*)resource.getBuffer(drawcall.indirect_index_buffer_name);
 							if (drawcall.model_name != "")
 							{
-								auto p = pResource->getModel(drawcall.model_name);
+								auto p = resource.getModel(drawcall.model_name);
 								if (p)
 								{
 									drawcall.index_count = p->indices.size();
@@ -2585,7 +2686,7 @@ namespace tke
 				break;
 			case RenderPassType::call_secondary_cmd:
 				if (pass.secondary_cmd_name != "")
-					pass.secondaryCmd = pResource->getCmd(pass.secondary_cmd_name.c_str());
+					pass.secondaryCmd = resource.getCmd(pass.secondary_cmd_name.c_str());
 				break;
 			}
 
@@ -2599,7 +2700,7 @@ namespace tke
 		if (containSwapchain)
 			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 
-		for (auto &p : pipelineResources)
+		for (auto &p : resource.privatePipelines)
 			p.p->create(enginePath + p.file_name, p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
 
 		getDescriptorSets();

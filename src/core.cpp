@@ -6,7 +6,6 @@
 #include "scene.h"
 #include "gui.h"
 #include "physics.h"
-#include "resource.h"
 
 namespace tke
 {

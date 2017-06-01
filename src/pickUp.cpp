@@ -1,6 +1,5 @@
 #include "pickUp.h"
 #include "render.h"
-#include "resource.h"
 #include "core.h"
 
 namespace tke

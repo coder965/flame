@@ -349,7 +349,7 @@ struct MonitorWindow : tke::GuiWindow
 
 		renderer = _renderer;
 
-		renderer->pResource->setImage(image, "Window.Image");
+		renderer->resource.setImage(images, "Window.Image");
 
 		renderer->setup();
 
