@@ -1435,6 +1435,11 @@ namespace tke
 	};
 	std::vector<PipelineLayout> pipelineLayouts;
 
+	Pipeline::Pipeline()
+	{
+		pResource = &globalResource;
+	}
+
 	void Pipeline::create(const std::string &_filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
 		pipelineLoadXML<Pipeline, Stage>(this, _filename);
@@ -1870,11 +1875,6 @@ namespace tke
 		}
 
 		descriptorPool.update();
-	}
-
-	Pipeline::Pipeline()
-	{
-		pResource = &globalResource;
 	}
 
 	Pipeline::~Pipeline()

@@ -442,7 +442,7 @@ namespace tke
 			io.AddInputCharacter((unsigned short)wParam);
 	}
 
-	static Pipeline pipeline;
+	static Pipeline *pipeline = nullptr;
 
 	static void _guiRenderer(ImDrawData* draw_data)
 	{
@@ -506,10 +506,10 @@ namespace tke
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
 		vkCmdBindIndexBuffer(cmd, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdPushConstants(cmd, pipeline.m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		vkCmdPushConstants(cmd, pipeline->m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipelineLayout, 0, 1, &pipeline.m_descriptorSet, 0, NULL);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout, 0, 1, &pipeline->m_descriptorSet, 0, NULL);
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -576,8 +576,9 @@ namespace tke
 				attribute_desc
 			};
 
-			pipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-			pipeline.create(enginePath + "pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
+			pipeline = new Pipeline;
+			pipeline->m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+			pipeline->create(enginePath + "pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
 
 			uiContext = ImGui::GetCurrentContext();
 
@@ -589,13 +590,13 @@ namespace tke
 			io.Fonts->TexID = (void*)0; // image index
 
 			static int texture_position = -1;
-			if (texture_position == -1) texture_position = pipeline.descriptorPosition("sTexture");
+			if (texture_position == -1) texture_position = pipeline->descriptorPosition("sTexture");
 
-			descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
+			descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
 
 			auto imageID = 1;
 			for (int index = 0; index < _icons.size(); index++)
-				descriptorPool.addWrite(pipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _icons[index]->getInfo(colorSampler), index);
+				descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _icons[index]->getInfo(colorSampler), index);
 
 			descriptorPool.update();
 		}
