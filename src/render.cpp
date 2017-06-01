@@ -1349,7 +1349,12 @@ namespace tke
 
 	ResourceBank::~ResourceBank()
 	{
-
+		for (auto &b : privateBuffers)
+			delete b.p;
+		for (auto &i : privateImages)
+			delete i.p;
+		for (auto &p : privatePipelines)
+			delete p.p;
 	}
 
 	ResourceBank globalResource(nullptr);
@@ -2243,6 +2248,9 @@ namespace tke
 
 	Renderer::~Renderer()
 	{
+		destroyFramebuffer(vkFramebuffer[0]);
+		destroyFramebuffer(vkFramebuffer[1]);
+		destroyRenderPass(vkRenderPass);
 	}
 
 	void Renderer::loadXML(const std::string &_filename)
@@ -2594,9 +2602,6 @@ namespace tke
 			}
 		}
 
-		vkAttachments.clear();
-		vkViews[0].clear();
-		vkViews[1].clear();
 		std::vector<VkSubpassDescription> vkSubpasses;
 		std::vector<VkSubpassDependency> vkDependencies;
 
