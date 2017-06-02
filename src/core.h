@@ -95,7 +95,7 @@ namespace tke
 			eSinalToRun
 		};
 
-		State state = eRunning;
+		volatile State state = eRunning;
 
 		int cx = 0, cy = 0;
 
