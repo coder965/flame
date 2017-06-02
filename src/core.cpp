@@ -479,11 +479,15 @@ namespace tke
 				*dead = true;
 				return;
 			}
+
 			if (state == eSinalToPause)
+			{
 				state = ePausing;
-			if (state == eSinalToRun)
+				while (state != eSinalToRun) Sleep(100);
 				state = eRunning;
-			if (!hasMsg && state == eRunning)
+			}
+
+			if (!hasMsg)
 			{
 				mouseEvent();
 				renderEvent();

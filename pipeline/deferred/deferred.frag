@@ -120,12 +120,15 @@ void main()
 		if (light.coord.w == 1.0)
 		{
 			float dist = length(lightDir);
-			lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
+			//lightColor /= dist;
+			lightColor /= vec3(dist);
+			//lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
 		}
 		lightDir = normalize(lightDir);
 		float nl = dot(normal, lightDir);
 		//litColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
-		litColor += vec3(nl) * albedo * lightColor;
+		//litColor += vec3(nl) * albedo * lightColor;
+		litColor += lightColor;
 	}
 	
 	vec3 color = vec3(litColor + u_ambient.v.rgb * albedo);
@@ -134,5 +137,6 @@ void main()
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
 	//outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	outColor = vec4(litColor, 1.0);
+	//outColor = vec4(litColor, 1.0);
+	outColor = vec4(1.0);
 }
