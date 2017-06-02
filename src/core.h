@@ -1,6 +1,7 @@
 #ifndef __TKE__
 #define __TKE__
 
+#include <atomic>
 #include <Windows.h>
 
 #include "math.h"
@@ -95,7 +96,7 @@ namespace tke
 			eSinalToRun
 		};
 
-		volatile State state = eRunning;
+		std::atomic_int32_t state = eRunning;
 
 		int cx = 0, cy = 0;
 

@@ -128,11 +128,11 @@ void main()
 		litColor += vec3(nl) * albedo * lightColor;
 	}
 	
-	//vec3 color = vec3(litColor + u_ambient.v.rgb * albedo);
-	vec3 color = vec3(litColor);
+	vec3 color = vec3(litColor + u_ambient.v.rgb * albedo);
+	//vec3 color = vec3(litColor);
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
-	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	//outColor = vec4(1.0);
+	//outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
+	outColor = vec4(litColor, 1.0);
 }
