@@ -1889,7 +1889,7 @@ namespace tke
 				vkDestroyPipelineLayout(device.v, m_pipelineLayout, nullptr);
 				device.cs.unlock();
 
-				return;
+				break;
 			}
 		}
 

@@ -842,6 +842,9 @@ void WorldEditor::on_compile()
 
 void WorldEditor::on_update_changes()
 {
+	on_compile();
+	on_save_all();
+	
 	for (auto r : game.renderers)
 	{
 		if (r->monitor)
