@@ -65,7 +65,7 @@
     <property name="title">
      <string>Debug</string>
     </property>
-    <addaction name="actionUpdate_Changes"/>
+    <addaction name="action_update_changes"/>
    </widget>
    <widget class="QMenu" name="menuShader">
     <property name="title">
@@ -158,7 +158,7 @@
     <string>Game Explorer</string>
    </property>
   </action>
-  <action name="actionUpdate_Changes">
+  <action name="action_update_changes">
    <property name="text">
     <string>Update Changes</string>
    </property>

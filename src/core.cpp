@@ -288,7 +288,6 @@ namespace tke
 
 	Window::~Window()
 	{
-		die = false;
 		destroyFence(frameDone);
 		destroyEvent(renderFinished);
 		destroySemaphore(imageAvailable);
@@ -302,7 +301,6 @@ namespace tke
 		vkDestroySurfaceKHR(inst.v, surface, nullptr);
 		device.cs.unlock();
 		inst.cs.unlock();
-		DestroyWindow(hWnd);
 	}
 
 	thread_local Window *currentWindow = nullptr;
@@ -327,7 +325,7 @@ namespace tke
 				currentWindow->mouseY = HIWORD(lParam);
 				SetCapture(hWnd);
 			}
-			break;
+				break;
 			case WM_LBUTTONUP:
 				currentWindow->leftPressing = false;
 				currentWindow->leftDown = false;
@@ -463,23 +461,29 @@ namespace tke
 
 		for (;;)
 		{
-			if (die)
-			{
-				delete this;
-				*dead = nullptr;
-				return;
-			}
-
 			nowTime = GetTickCount() - startUpTime;
 			processEvents();
 
+			bool hasMsg;
+
 			MSG msg;
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			hasMsg = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+			if (hasMsg)
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else
+			if (die)
+			{
+				delete this;
+				*dead = true;
+				return;
+			}
+			if (state == eSinalToPause)
+				state = ePausing;
+			if (state == eSinalToRun)
+				state = eRunning;
+			if (!hasMsg && state == eRunning)
 			{
 				mouseEvent();
 				renderEvent();

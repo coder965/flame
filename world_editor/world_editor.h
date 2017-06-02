@@ -68,7 +68,8 @@ struct Pipeline : tke::PipelineArchive
 
 struct Renderer
 {
-	tke::Renderer *p;
+	std::string filename;
+	tke::Renderer *p = nullptr;
 	QTreeWidgetItem *item = nullptr;
 	MonitorWidget *monitor = nullptr;
 	void setItemText();
@@ -93,6 +94,7 @@ private slots:
 	void on_view_game_explorer();
 	void on_view_output_widget();
 	void on_compile();
+	void on_update_changes();
 private:
 	Ui::WorldEditorClass ui;
 	
@@ -162,7 +164,7 @@ struct StageEditor : QDockWidget
 	using QDockWidget::QDockWidget;
 	void edit_changed();
 	void setup();
-	void closeEvent(QCloseEvent *event) override;
+	~StageEditor();
 };
 
 struct MonitorWindow;
@@ -174,7 +176,7 @@ struct MonitorWidget : QDockWidget
 
 	using QDockWidget::QDockWidget;
 	void setup();
-	void closeEvent(QCloseEvent *event) override;
+	~MonitorWidget();
 };
 
 struct OutputWidget : QDockWidget
@@ -183,5 +185,5 @@ struct OutputWidget : QDockWidget
 
 	using QDockWidget::QDockWidget;
 	void setup();
-	void closeEvent(QCloseEvent *event) override;
+	~OutputWidget();
 };

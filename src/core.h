@@ -87,6 +87,16 @@ namespace tke
 
 	struct Window
 	{
+		enum State
+		{
+			eRunning,
+			ePausing,
+			eSinalToPause,
+			eSinalToRun
+		};
+
+		State state = eRunning;
+
 		int cx = 0, cy = 0;
 
 		bool doubleClick = false;

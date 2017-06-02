@@ -36,7 +36,7 @@ public:
     QAction *actionPaste;
     QAction *action_remove;
     QAction *action_view_game_explorer;
-    QAction *actionUpdate_Changes;
+    QAction *action_update_changes;
     QAction *actionGame;
     QAction *actionGame_2;
     QAction *action_new_pipeline;
@@ -92,8 +92,8 @@ public:
         action_remove->setObjectName(QStringLiteral("action_remove"));
         action_view_game_explorer = new QAction(WorldEditorClass);
         action_view_game_explorer->setObjectName(QStringLiteral("action_view_game_explorer"));
-        actionUpdate_Changes = new QAction(WorldEditorClass);
-        actionUpdate_Changes->setObjectName(QStringLiteral("actionUpdate_Changes"));
+        action_update_changes = new QAction(WorldEditorClass);
+        action_update_changes->setObjectName(QStringLiteral("action_update_changes"));
         actionGame = new QAction(WorldEditorClass);
         actionGame->setObjectName(QStringLiteral("actionGame"));
         actionGame_2 = new QAction(WorldEditorClass);
@@ -170,7 +170,7 @@ public:
         menuEdit->addAction(action_remove);
         menuView->addAction(action_view_game_explorer);
         menuView->addAction(action_view_output_widget);
-        menuDebug->addAction(actionUpdate_Changes);
+        menuDebug->addAction(action_update_changes);
         menuShader->addAction(action_compile);
         menuShader->addAction(actionBuild);
         toolBar->addAction(action_save_selected_item);
@@ -194,7 +194,7 @@ public:
         actionPaste->setText(QApplication::translate("WorldEditorClass", "Paste", Q_NULLPTR));
         action_remove->setText(QApplication::translate("WorldEditorClass", "Remove", Q_NULLPTR));
         action_view_game_explorer->setText(QApplication::translate("WorldEditorClass", "Game Explorer", Q_NULLPTR));
-        actionUpdate_Changes->setText(QApplication::translate("WorldEditorClass", "Update Changes", Q_NULLPTR));
+        action_update_changes->setText(QApplication::translate("WorldEditorClass", "Update Changes", Q_NULLPTR));
         actionGame->setText(QApplication::translate("WorldEditorClass", "Game", Q_NULLPTR));
         actionGame_2->setText(QApplication::translate("WorldEditorClass", "Game", Q_NULLPTR));
         action_new_pipeline->setText(QApplication::translate("WorldEditorClass", "Pipeline", Q_NULLPTR));

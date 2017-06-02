@@ -87,7 +87,7 @@ Pipeline::~Pipeline()
 void Renderer::setItemText()
 {
 	if (item)
-		item->setText(0, QString(p->filename.c_str()));
+		item->setText(0, QString(filename.c_str()));
 }
 
 Renderer::~Renderer()
@@ -145,8 +145,7 @@ void Game::load_renderers()
 		{
 			auto a = c->firstAttribute("filename");
 			auto r = new Renderer;
-			r->p = new tke::Renderer;
-			r->p->loadXML(a.second);
+			r->filename = a.second;
 			renderers.push_back(r);
 		}
 	}
@@ -302,6 +301,8 @@ void StageEditor::edit_changed()
 
 void StageEditor::setup()
 {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	setUserData(0, new QMyUserData(WindowTypeStageEditor));
 
 	setWindowTitle(QString("Stage Editor - ") + stage->parent->name.c_str() + ":" + tke::StageNameByType(stage->type).c_str());
@@ -316,10 +317,9 @@ void StageEditor::setup()
 	setWidget(edit);
 }
 
-void StageEditor::closeEvent(QCloseEvent *event)
+StageEditor::~StageEditor()
 {
 	stage->editor = nullptr;
-	delete this;
 }
 
 struct MonitorWindow : tke::GuiWindow
@@ -347,13 +347,7 @@ struct MonitorWindow : tke::GuiWindow
 		lit->setCoord(glm::vec3(1, 1, 1));
 		tke::scene->addLight(lit);
 
-		renderer = _renderer;
-
-		renderer->resource.setImage(images, "Window.Image");
-
-		renderer->setup();
-
-		tke::scene->setResources(renderer);
+		setRenderer(_renderer);
 
 		for (int i = 0; i < 2; i++)
 			cmd[i] = tke::commandPool.allocate();
@@ -362,6 +356,21 @@ struct MonitorWindow : tke::GuiWindow
 		tke::scene->camera.setCoord(glm::vec3(0, 5, 0));
 	}
 	
+	void setRenderer(tke::Renderer *_renderer)
+	{
+		renderer = _renderer;
+
+		renderer->resource.setImage(images, "Window.Image");
+
+		renderer->setup();
+
+		tke::scene->setResources(renderer);
+
+		tke::needRedraw = true;
+		tke::scene->needUpdataSky = true;
+		tke::scene->needUpdateSampler = true;
+	}
+
 	void makeCmd()
 	{
 		for (int i = 0; i < 2; i++)
@@ -457,8 +466,12 @@ struct QMyScrollArea : QScrollArea
 
 void MonitorWidget::setup()
 {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	MonitorWidgetData data;
 	data.window = &window;
+	renderer->p = new tke::Renderer;
+	renderer->p->loadXML(renderer->filename);
 	data.renderer = renderer->p;
 	data.dead = &windowDead;
 
@@ -489,17 +502,18 @@ void MonitorWidget::setup()
 	setWidget(scrollArea);
 }
 
-void MonitorWidget::closeEvent(QCloseEvent *event)
+MonitorWidget::~MonitorWidget()
 {
-	window->die = true;
-	while (!windowDead) Sleep(100);
-
+	SendMessage(window->hWnd, WM_CLOSE, 0, 0);
+	delete renderer->p;
+	renderer->p = nullptr;
 	renderer->monitor = nullptr;
-	delete this;
 }
 
 void OutputWidget::setup()
 {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
 
 	setWindowTitle("Output");
@@ -510,9 +524,8 @@ void OutputWidget::setup()
 	setWidget(text);
 }
 
-void OutputWidget::closeEvent(QCloseEvent *event)
+OutputWidget::~OutputWidget()
 {
-	delete outputWidget;
 	outputWidget = nullptr;
 }
 
@@ -544,6 +557,7 @@ WorldEditor::WorldEditor(QWidget *parent)
 	connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
 	connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
 	connect(ui.action_compile, &QAction::triggered, this, &WorldEditor::on_compile);
+	connect(ui.action_update_changes, &QAction::triggered, this, &WorldEditor::on_update_changes);
 }
 
 void WorldEditor::keyPressEvent(QKeyEvent *k)
@@ -823,6 +837,26 @@ void WorldEditor::on_compile()
 	case WindowTypeStageEditor:
 		compile_stage(currentStageEditor->stage);
 		break;
+	}
+}
+
+void WorldEditor::on_update_changes()
+{
+	for (auto r : game.renderers)
+	{
+		if (r->monitor)
+		{
+			r->monitor->window->state = tke::Window::State::eSinalToPause;
+			while (r->monitor->window->state != tke::Window::State::ePausing) Sleep(100);
+			// wait for window pausing
+			delete r->p;
+			r->p = new tke::Renderer;
+			r->p->loadXML(r->filename);
+			r->monitor->window->setRenderer(r->p);
+			// resume the window
+			r->monitor->window->state = tke::Window::State::eSinalToRun;
+			while (r->monitor->window->state != tke::Window::State::eRunning) Sleep(100);
+		}
 	}
 }
 
