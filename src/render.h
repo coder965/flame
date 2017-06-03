@@ -617,19 +617,23 @@ namespace tke
 				auto ext = path.extension().string();
 				s->type = StageFlagByExt(ext);
 
-				for (auto c : c->children)
+				auto at = createAttributeTreeFromXML("stage", p->filepath + "/" + s->filename + ".xml");
+				if (at)
 				{
-					if (c->name == "descriptor")
+					for (auto c : at->children)
 					{
-						Descriptor d;
-						c->obtainFromAttributes(&d, d.b);
-						s->descriptors.push_back(d);
-					}
-					else if (c->name == "push_constant")
-					{
-						PushConstantRange pc;
-						c->obtainFromAttributes(&pc, pc.b);
-						s->pushConstantRanges.push_back(pc);
+						if (c->name == "descriptor")
+						{
+							Descriptor d;
+							c->obtainFromAttributes(&d, d.b);
+							s->descriptors.push_back(d);
+						}
+						else if (c->name == "push_constant")
+						{
+							PushConstantRange pc;
+							c->obtainFromAttributes(&pc, pc.b);
+							s->pushConstantRanges.push_back(pc);
+						}
 					}
 				}
 
@@ -663,19 +667,6 @@ namespace tke
 			auto n = new AttributeTreeNode("stage");
 			n->addAttributes(s, s->b);
 			at.children.push_back(n);
-
-			for (auto &d : s->descriptors)
-			{
-				auto nn = new AttributeTreeNode("descriptor");
-				nn->addAttributes(&d, d.b);
-				n->children.push_back(nn);
-			}
-			for (auto &p : s->pushConstantRanges)
-			{
-				auto nn = new AttributeTreeNode("push_constant");
-				nn->addAttributes(&p, p.b);
-				n->children.push_back(nn);
-			}
 		}
 
 		at.saveXML(p->filename);

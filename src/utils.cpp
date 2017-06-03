@@ -466,4 +466,15 @@ namespace tke
 		std::ofstream file(filename);
 		file.write(str.data(), str.size());
 	}
+
+	AttributeTree *createAttributeTreeFromXML(const std::string &_name, const std::string &filename)
+	{
+		std::ifstream file(filename);
+		if (!file.good()) return nullptr;
+		file.close();
+
+		auto at = new AttributeTree(_name);
+		at->loadXML(filename);
+		return at;
+	}
 }

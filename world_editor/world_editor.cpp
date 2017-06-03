@@ -540,6 +540,8 @@ extern "C" {
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)
 {
+	
+
 	worldEditor = this;
 
 	ui.setupUi(this);
@@ -1110,13 +1112,30 @@ void WorldEditor::compile_stage(Stage *s)
 				break;
 			}
 		}
+
+		if (!error)
+		{
+			tke::AttributeTree at("stage");
+
+			for (auto &d : s->descriptors)
+			{
+				auto n = new tke::AttributeTreeNode("descriptor");
+				n->addAttributes(&d, d.b);
+				at.children.push_back(n);
+			}
+			for (auto &p : s->pushConstantRanges)
+			{
+				auto n = new tke::AttributeTreeNode("push_constant");
+				n->addAttributes(&p, p.b);
+				at.children.push_back(n);
+			}
+
+			at.saveXML(s->parent->filepath + "/" + s->filename + ".xml");
+		}
 	}
 
 	DeleteFileA("output.txt");
 	DeleteFileA("temp.glsl");
-
-	if (!error)
-		s->parent->setChanged(true);
 
 	if (outputWidget)
 	{

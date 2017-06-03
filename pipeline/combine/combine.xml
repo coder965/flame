@@ -1,8 +1,6 @@
 <pipeline name="Combine.Pipeline" cx="-1" cy="-1" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
 	<link binding="-1" array_element="0" descriptor_name="originalSampler" resource_name="Original.Image" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreen.vert"/>
-	<stage filename="combine.frag">
-		<descriptor type="image_n_sampler" binding="0" count="1" name="originalSampler"/>
-	</stage>
+	<stage filename="combine.frag"/>
 </pipeline>
 

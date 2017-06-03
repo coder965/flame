@@ -210,6 +210,8 @@ namespace tke
 
 	typedef AttributeTreeNode AttributeTree;
 
+	AttributeTree *createAttributeTreeFromXML(const std::string &_name, const std::string &filename);
+
 #define REFLECTABLE
 #define REFL_BANK static tke::ReflectionBank *b
 #define REFLv
