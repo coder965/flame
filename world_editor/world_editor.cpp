@@ -558,6 +558,9 @@ WorldEditor::WorldEditor(QWidget *parent)
 	connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
 	connect(ui.action_compile, &QAction::triggered, this, &WorldEditor::on_compile);
 	connect(ui.action_update_changes, &QAction::triggered, this, &WorldEditor::on_update_changes);
+
+	on_view_output_widget();
+	on_view_game_explorer();
 }
 
 void WorldEditor::keyPressEvent(QKeyEvent *k)

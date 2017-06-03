@@ -473,6 +473,7 @@ namespace tke
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
+
 			if (die)
 			{
 				delete this;
