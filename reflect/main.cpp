@@ -58,13 +58,14 @@ int main(int argc, char **argv)
 	{
 		if (!std::experimental::filesystem::exists(INPUT))
 			return 1;
-		if (!std::experimental::filesystem::exists(OUTPUT))
-			return 1;
 
-		auto input_last_modification_time = std::experimental::filesystem::last_write_time(INPUT);
-		auto output_last_modification_time = std::experimental::filesystem::last_write_time(OUTPUT);
-		if (output_last_modification_time > input_last_modification_time)
-			return 0;
+		if (std::experimental::filesystem::exists(OUTPUT))
+		{
+			auto input_last_modification_time = std::experimental::filesystem::last_write_time(INPUT);
+			auto output_last_modification_time = std::experimental::filesystem::last_write_time(OUTPUT);
+			if (output_last_modification_time > input_last_modification_time)
+				return 0;
+		}
 	}
 
 	yyin = fopen(INPUT, "rb");
