@@ -28,6 +28,39 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Pipelines">
+      <UniqueIdentifier>{c71941a6-87c5-497c-8455-0a62572021db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\Headers">
+      <UniqueIdentifier>{21c1a8e3-4fb8-4bf6-a98d-dab797336e84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\combine">
+      <UniqueIdentifier>{0e0bcc68-045f-41fb-8ebe-8bf63b584eec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\deferred">
+      <UniqueIdentifier>{466d03fa-b829-411c-9ee0-21c7112ef91b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\lightFrame">
+      <UniqueIdentifier>{c23a10b2-bd49-430d-ba5e-4d17eac6d9a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\pickUp">
+      <UniqueIdentifier>{82c78db4-5872-4992-8833-654e135ba43d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\sky">
+      <UniqueIdentifier>{ff2c2c66-f12a-4ff6-b5ca-11f6349f7055}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\terrain">
+      <UniqueIdentifier>{0a595644-07c1-45fa-ad41-b921bc09ff6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\tool">
+      <UniqueIdentifier>{6ac6c797-61e7-4a1b-813d-1cf534043b79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\ui">
+      <UniqueIdentifier>{a5fc039b-7df2-4a11-8e0a-d58a5f6e54d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipelines\paste">
+      <UniqueIdentifier>{01fe8f50-c23d-440a-a71f-499fb0926bf3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -67,5 +100,78 @@
     <ClInclude Include="GeneratedFiles\ui_world_editor.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\pipeline\resolutionCube.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\resolution.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\pi.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\panorama.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\noise.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\fovyCube.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\fovy.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pipeline\depth.h">
+      <Filter>Pipelines\Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pipeline\fullscreen.vert">
+      <Filter>Pipelines</Filter>
+    </None>
+    <None Include="..\pipeline\fullscreenUv.vert">
+      <Filter>Pipelines</Filter>
+    </None>
+    <None Include="..\pipeline\fullscreenUvView.vert">
+      <Filter>Pipelines</Filter>
+    </None>
+    <None Include="..\pipeline\fullscreenUvViewInstance.vert">
+      <Filter>Pipelines</Filter>
+    </None>
+    <None Include="..\pipeline\fullscreenView.vert">
+      <Filter>Pipelines</Filter>
+    </None>
+    <None Include="..\pipeline\combine\combine.frag">
+      <Filter>Pipelines\combine</Filter>
+    </None>
+    <None Include="..\pipeline\deferred\deferred.frag">
+      <Filter>Pipelines\deferred</Filter>
+    </None>
+    <None Include="..\pipeline\deferred\deferred_ibl.frag">
+      <Filter>Pipelines\deferred</Filter>
+    </None>
+    <None Include="..\pipeline\deferred\mrt.frag">
+      <Filter>Pipelines\deferred</Filter>
+    </None>
+    <None Include="..\pipeline\deferred\mrt.vert">
+      <Filter>Pipelines\deferred</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\pipeline\combine\combine.xml">
+      <Filter>Pipelines\combine</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\combine\combine.frag.xml">
+      <Filter>Pipelines\combine</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\deferred\deferred.xml">
+      <Filter>Pipelines\deferred</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\deferred\deferred_ibl.xml">
+      <Filter>Pipelines\deferred</Filter>
+    </Xml>
+    <Xml Include="..\pipeline\deferred\mrt.xml">
+      <Filter>Pipelines\deferred</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

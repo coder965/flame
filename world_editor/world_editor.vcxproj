@@ -121,7 +121,34 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\pipeline\depth.h" />
+    <ClInclude Include="..\pipeline\fovy.h" />
+    <ClInclude Include="..\pipeline\fovyCube.h" />
+    <ClInclude Include="..\pipeline\noise.h" />
+    <ClInclude Include="..\pipeline\panorama.h" />
+    <ClInclude Include="..\pipeline\pi.h" />
+    <ClInclude Include="..\pipeline\resolution.h" />
+    <ClInclude Include="..\pipeline\resolutionCube.h" />
     <ClInclude Include="GeneratedFiles\ui_world_editor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pipeline\combine\combine.frag" />
+    <None Include="..\pipeline\deferred\deferred.frag" />
+    <None Include="..\pipeline\deferred\deferred_ibl.frag" />
+    <None Include="..\pipeline\deferred\mrt.frag" />
+    <None Include="..\pipeline\deferred\mrt.vert" />
+    <None Include="..\pipeline\fullscreen.vert" />
+    <None Include="..\pipeline\fullscreenUv.vert" />
+    <None Include="..\pipeline\fullscreenUvView.vert" />
+    <None Include="..\pipeline\fullscreenUvViewInstance.vert" />
+    <None Include="..\pipeline\fullscreenView.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\pipeline\combine\combine.frag.xml" />
+    <Xml Include="..\pipeline\combine\combine.xml" />
+    <Xml Include="..\pipeline\deferred\deferred.xml" />
+    <Xml Include="..\pipeline\deferred\deferred_ibl.xml" />
+    <Xml Include="..\pipeline\deferred\mrt.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
