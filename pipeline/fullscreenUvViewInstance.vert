@@ -2,6 +2,9 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+#include "resolution.h"
+#include "fovy.h"
+
 layout(location = 0) out vec2 outTexcoord;
 layout(location = 1) out vec3 outViewDir;
 layout(location = 2) flat out uint outIndex;

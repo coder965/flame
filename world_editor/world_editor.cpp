@@ -106,7 +106,7 @@ void Game::load_pipelines()
 		{
 			auto a = c->firstAttribute("filename");
 			auto p = new Pipeline;
-			tke::pipelineLoadXML<Pipeline, Stage>(p, a.second);
+			tke::pipelineLoadXML<Pipeline, Stage>(p, a->second);
 			for (int i = 0; i < 5; i++)
 			{
 				auto s = p->stages[i];
@@ -145,7 +145,7 @@ void Game::load_renderers()
 		{
 			auto a = c->firstAttribute("filename");
 			auto r = new Renderer;
-			r->filename = a.second;
+			r->filename = a->second;
 			renderers.push_back(r);
 		}
 	}
@@ -905,11 +905,11 @@ void WorldEditor::compile_stage(Stage *s)
 		std::smatch sm;
 		if (std::regex_search(line, sm, pat))
 		{
-			tke::OnceFileBuffer file(s->parent->filepath + "/" + s->filepath + "/" + sm[1].str());
-			stageText += file.data;
+			tke::OnceFileBuffer includeFile(s->parent->filepath + "/" + s->filepath + "/" + sm[1].str());
+			stageText += includeFile.data;
 			stageText += "\n";
 
-			auto includeFileLineNum = tke::lineNumber(file.data);
+			auto includeFileLineNum = tke::lineNumber(includeFile.data);
 			includeFileDatas.push_back({ lineNum, fullLineNum, includeFileLineNum });
 
 			fullLineNum += includeFileLineNum;

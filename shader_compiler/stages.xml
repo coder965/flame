@@ -1,3 +1,51 @@
 <stages>
   <stage filename="../pipeline/fullscreen.vert" />
+  <stage filename="../pipeline/fullscreenUv.vert" />
+  <stage filename="../pipeline/fullscreenUvView.vert" />
+  <stage filename="../pipeline/fullscreenUvViewInstance.vert" />
+  <stage filename="../pipeline/fullscreenView.vert" />
+  
+  <stage filename="../pipeline/combine/combine.frag" />
+
+  <stage filename="../pipeline/deferred/deferred.frag" />
+  <stage filename="../pipeline/deferred/deferred_ibl.frag" />
+  <stage filename="../pipeline/deferred/mrt.frag" />
+  <stage filename="../pipeline/deferred/mrt.vert" />
+  
+  <stage filename="../pipeline/lightFrame/lightFrame.frag" />
+  <stage filename="../pipeline/lightFrame/lightFrame.vert" />
+  
+  <stage filename="../pipeline/paste/paste.frag" />
+  
+  <stage filename="../pipeline/pickUp/pickUp.frag" />
+  <stage filename="../pipeline/pickUp/pickUp.vert" />
+  
+  <stage filename="../pipeline/sky/convolve.frag" />
+  <stage filename="../pipeline/sky/downsample.frag" />
+  <stage filename="../pipeline/sky/panorama.frag" />
+  <stage filename="../pipeline/sky/scattering.frag" />
+  <stage filename="../pipeline/sky/panorama.vert" />
+  
+  <stage filename="../pipeline/terrain/height_map/terrain.frag" />
+  <stage filename="../pipeline/terrain/height_map/terrain.tesc" />
+  <stage filename="../pipeline/terrain/height_map/terrain.tese" />
+  <stage filename="../pipeline/terrain/height_map/terrain.vert" />
+  
+  <stage filename="../pipeline/terrain/procedural/terrain.frag" />
+  <stage filename="../pipeline/terrain/procedural/terrain.tesc" />
+  <stage filename="../pipeline/terrain/procedural/terrain.tese" />
+  <stage filename="../pipeline/terrain/procedural/terrain.vert" />
+  
+  <stage filename="../pipeline/tool/transform/pickUp.frag" />
+  <stage filename="../pipeline/tool/transform/rect.frag" />
+  <stage filename="../pipeline/tool/transform/transform.frag" />
+  <stage filename="../pipeline/tool/transform/pickUp.vert" />
+  <stage filename="../pipeline/tool/transform/rect.vert" />
+  <stage filename="../pipeline/tool/transform/transform.vert" />
+
+  <stage filename="../pipeline/ui/ui.frag" />
+  <stage filename="../pipeline/ui/ui.vert" />
+  
+  <stage filename="../pipeline/wireFrame/wireFrame.frag" />
+  <stage filename="../pipeline/wireFrame/wireFrame.vert" />
 </stages>

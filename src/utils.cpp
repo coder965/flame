@@ -255,14 +255,14 @@ namespace tke
 		return nullptr;
 	}
 
-	std::pair<Variable*, std::string> &AttributeTreeNode::firstAttribute(const std::string &_name)
+	std::pair<Variable*, std::string> *AttributeTreeNode::firstAttribute(const std::string &_name)
 	{
 		for (auto &a : attributes)
 		{
 			if (a.first->name == _name)
-				return a;
+				return &a;
 		}
-		assert(0);
+		return nullptr;
 	}
 
 	void AttributeTreeNode::addAttributes(void *p, ReflectionBank *b)
