@@ -1,0 +1,4 @@
+<stage>
+    <descriptor type="image_n_sampler" binding="0" count="1" name="source"/>
+    <push_constant offset="0" size="4"/>
+</stage>

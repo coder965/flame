@@ -2,11 +2,7 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="INSTANCE" resource_name="LightMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="1" descriptor_name="INSTANCE" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
-	<stage filename="pickUp.vert">
-		<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
-		<descriptor type="uniform_buffer" binding="1" count="2" name="INSTANCE"/>
-		<push_constant offset="0" size="8"/>
-	</stage>
+	<stage filename="pickUp.vert"/>
 	<stage filename="pickUp.frag"/>
 </pipeline>
 

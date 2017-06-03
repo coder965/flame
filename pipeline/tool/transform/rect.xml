@@ -1,8 +1,6 @@
 <pipeline name="" cx="-1" cy="-1" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="line_strip" polygon_mode="fill" cull_mode="none">
 	<link binding="-1" array_element="0" descriptor_name="RECT_DATA" resource_name="Editor.Tool.Transform.Rect.UniformBuffer" sampler="none"/>
-	<stage filename="rect.vert">
-		<descriptor type="uniform_buffer" binding="0" count="1" name="RECT_DATA"/>
-	</stage>
+	<stage filename="rect.vert"/>
 	<stage filename="rect.frag"/>
 </pipeline>
 

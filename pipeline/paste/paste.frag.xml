@@ -1,0 +1,4 @@
+<stage>
+    <descriptor type="image_n_sampler" binding="0" count="1" name="tex"/>
+    <descriptor type="uniform_buffer" binding="1" count="1" name="ALPHA"/>
+</stage>

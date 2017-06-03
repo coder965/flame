@@ -1,0 +1,4 @@
+<stage>
+	<descriptor type="uniform_buffer" binding="0" count="1" name="VERT_DATA"/>
+</stage>
+

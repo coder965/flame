@@ -540,12 +540,6 @@ extern "C" {
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)
 {
-	char buf[100] = {};
-	buf[3] = 0x61;
-	buf[2] = 0x0f;
-	buf[1] = 0x76;
-	buf[0] = 0x4b;
-
 	worldEditor = this;
 
 	ui.setupUi(this);

@@ -1,0 +1,4 @@
+<stage>
+	<descriptor type="image_n_sampler" binding="0" count="2" name="sTexture"/>
+</stage>
+

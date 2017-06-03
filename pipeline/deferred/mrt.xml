@@ -4,13 +4,7 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-	<stage filename="mrt.vert">
-		<descriptor type="uniform_buffer" binding="1" count="1" name="OBJECT"/>
-		<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
-	</stage>
-	<stage filename="mrt.frag">
-		<descriptor type="image_n_sampler" binding="3" count="1024" name="mapSamplers"/>
-		<descriptor type="uniform_buffer" binding="2" count="1" name="MATERIAL"/>
-	</stage>
+	<stage filename="mrt.vert"/>
+	<stage filename="mrt.frag"/>
 </pipeline>
 

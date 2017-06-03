@@ -1,3 +1,4 @@
 <stage>
-  
+    <descriptor type="image_n_sampler" binding="3" count="1024" name="mapSamplers"/>
+    <descriptor type="uniform_buffer" binding="2" count="1" name="MATERIAL"/>
 </stage>

@@ -1,10 +1,7 @@
 <pipeline name="" cx="-1" cy="-1" patch_control_points="0" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="LIGHT" resource_name="LightMatrix.UniformBuffer" sampler="none"/>
-	<stage filename="lightFrame.vert">
-		<descriptor type="uniform_buffer" binding="1" count="1" name="LIGHT"/>
-		<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
-	</stage>
+	<stage filename="lightFrame.vert"/>
 	<stage filename="lightFrame.frag"/>
 </pipeline>
 

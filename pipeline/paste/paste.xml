@@ -3,9 +3,6 @@
 	<link binding="-1" array_element="0" descriptor_name="tex" resource_name="Paste.Texture" sampler="plain"/>
 	<link binding="-1" array_element="0" descriptor_name="ALPHA" resource_name="Paste.UniformBuffer" sampler="none"/>
 	<stage filename="../fullscreenUv.vert"/>
-	<stage filename="paste.frag">
-		<descriptor type="image_n_sampler" binding="0" count="1" name="tex"/>
-		<descriptor type="uniform_buffer" binding="1" count="1" name="ALPHA"/>
-	</stage>
+	<stage filename="paste.frag"/>
 </pipeline>
 
