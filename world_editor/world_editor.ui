@@ -32,8 +32,6 @@
       <string>New</string>
      </property>
      <addaction name="actionGame"/>
-     <addaction name="action_new_stage"/>
-     <addaction name="action_new_pipeline"/>
      <addaction name="actionRenderer"/>
      <addaction name="actionScene"/>
     </widget>
@@ -71,7 +69,6 @@
     <property name="title">
      <string>Build</string>
     </property>
-    <addaction name="action_compile"/>
     <addaction name="actionBuild"/>
    </widget>
    <addaction name="menuFile"/>
@@ -168,21 +165,6 @@
     <string>Game</string>
    </property>
   </action>
-  <action name="actionGame_2">
-   <property name="text">
-    <string>Game</string>
-   </property>
-  </action>
-  <action name="action_new_pipeline">
-   <property name="text">
-    <string>Pipeline</string>
-   </property>
-  </action>
-  <action name="actionPipeline_2">
-   <property name="text">
-    <string>Pipeline</string>
-   </property>
-  </action>
   <action name="actionRenderer">
    <property name="text">
     <string>Renderer</string>
@@ -193,29 +175,9 @@
     <string>Scene</string>
    </property>
   </action>
-  <action name="actionRenderer_2">
-   <property name="text">
-    <string>Renderer</string>
-   </property>
-  </action>
-  <action name="actionScene_2">
-   <property name="text">
-    <string>Scene</string>
-   </property>
-  </action>
   <action name="action_open_in_file_explorer">
    <property name="text">
     <string>Open In Explorer</string>
-   </property>
-  </action>
-  <action name="action_new_stage">
-   <property name="text">
-    <string>Stage</string>
-   </property>
-  </action>
-  <action name="action_compile">
-   <property name="text">
-    <string>Compile</string>
    </property>
   </action>
   <action name="action_view_output_widget">

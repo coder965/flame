@@ -48,9 +48,6 @@
     <ClCompile Include="..\src\qFindWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lex.stage_editor_yy.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="world_editor.h">

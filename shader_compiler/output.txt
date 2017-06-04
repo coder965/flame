@@ -1,0 +1,117 @@
+2017-06-04 17:12:35
+Warnning:push constants in different stages must be merged, or else they would not reflect properly.
+
+Now Processing:../pipeline/fullscreen.vert
+Spv Up To Date
+
+Now Processing:../pipeline/fullscreenUv.vert
+Spv Up To Date
+
+Now Processing:../pipeline/fullscreenUvView.vert
+Spv Up To Date
+
+Now Processing:../pipeline/fullscreenUvViewInstance.vert
+Spv Up To Date
+
+Now Processing:../pipeline/fullscreenView.vert
+Spv Up To Date
+
+Now Processing:../pipeline/combine/combine.frag
+Spv Up To Date
+
+Now Processing:../pipeline/deferred/deferred.frag
+Spv Up To Date
+
+Now Processing:../pipeline/deferred/deferred_ibl.frag
+Spv Up To Date
+
+Now Processing:../pipeline/deferred/mrt.frag
+Spv Up To Date
+
+Now Processing:../pipeline/deferred/mrt.vert
+Spv Up To Date
+
+Now Processing:../pipeline/lightFrame/lightFrame.frag
+Spv Up To Date
+
+Now Processing:../pipeline/lightFrame/lightFrame.vert
+Spv Up To Date
+
+Now Processing:../pipeline/paste/paste.frag
+Spv Up To Date
+
+Now Processing:../pipeline/pickUp/pickUp.frag
+Spv Up To Date
+
+Now Processing:../pipeline/pickUp/pickUp.vert
+Spv Up To Date
+
+Now Processing:../pipeline/sky/convolve.frag
+Spv Up To Date
+
+Now Processing:../pipeline/sky/downsample.frag
+Spv Up To Date
+
+Now Processing:../pipeline/sky/panorama.frag
+Spv Up To Date
+
+Now Processing:../pipeline/sky/scattering.frag
+Spv Up To Date
+
+Now Processing:../pipeline/sky/panorama.vert
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/height_map/terrain.frag
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/height_map/terrain.tesc
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/height_map/terrain.tese
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/height_map/terrain.vert
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/procedural/terrain.frag
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/procedural/terrain.tesc
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/procedural/terrain.tese
+Spv Up To Date
+
+Now Processing:../pipeline/terrain/procedural/terrain.vert
+Spv Up To Date
+
+Now Processing:../pipeline/tool/transform/pickUp.frag
+Spv Up To Date
+
+Now Processing:../pipeline/tool/transform/rect.frag
+Spv Up To Date
+
+Now Processing:../pipeline/tool/transform/transform.frag
+Spv Up To Date
+
+Now Processing:../pipeline/tool/transform/pickUp.vert
+Spv Up To Date
+
+Now Processing:../pipeline/tool/transform/rect.vert
+Spv Up To Date
+
+Now Processing:../pipeline/tool/transform/transform.vert
+Spv Up To Date
+
+Now Processing:../pipeline/ui/ui.frag
+Spv Up To Date
+
+Now Processing:../pipeline/ui/ui.vert
+Spv Up To Date
+
+Now Processing:../pipeline/wireFrame/wireFrame.frag
+Spv Up To Date
+
+Now Processing:../pipeline/wireFrame/wireFrame.vert
+Spv Up To Date
+

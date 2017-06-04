@@ -37,34 +37,8 @@
 #include "../src/image.file.h"
 
 struct GameExplorer;
-struct StageEditor;
 struct MonitorWidget;
 struct OutputWidget;
-
-struct Pipeline;
-struct Stage : tke::StageArchive
-{
-	Pipeline *parent = nullptr;
-
-	bool changed = false;
-	QTreeWidgetItem *item = nullptr;
-	StageEditor *editor = nullptr;
-	std::string text;
-	void setItemText();
-	void setChanged(bool _changed);
-	Stage(Pipeline *_parent);
-	~Stage();
-};
-
-struct Pipeline : tke::PipelineArchive
-{
-	Stage *stages[5] = {};
-	bool changed = false;
-	QTreeWidgetItem *item = nullptr;
-	void setItemText();
-	void setChanged(bool _changed);
-	~Pipeline();
-};
 
 struct Renderer
 {
@@ -85,22 +59,15 @@ public:
 
 private slots:
 	// menus
-	void on_new_stage();
-	void on_new_pipeline();
 	void on_save_selected_item();
 	void on_save_all();
 	void on_open_in_file_explorer();
 	void on_remove();
 	void on_view_game_explorer();
 	void on_view_output_widget();
-	void on_compile();
 	void on_update_changes();
 private:
 	Ui::WorldEditorClass ui;
-	
-	void save_pipeline(Pipeline *);
-	void save_stage(Stage *);
-	void compile_stage(Stage *);
 
 protected:
 	void keyPressEvent(QKeyEvent *k) override;
@@ -110,18 +77,14 @@ enum WindowType
 {
 	WindowTypeNull = -1,
 	WindowTypeGameExplorer = 0,
-	WindowTypeStageEditor = 1,
-	WindowTypeMonitorWidget = 2,
-	WindowTypeOutputWidget = 3
+	WindowTypeMonitorWidget = 1,
+	WindowTypeOutputWidget = 2
 };
 
 struct Game
 {
-	std::vector<Pipeline*> pipelines;
 	std::vector<Renderer*> renderers;
 
-	void load_pipelines();
-	void save_pipelines();
 	void load_renderers();
 	void save_renderers();
 };
@@ -136,15 +99,11 @@ struct GameExplorer : QDockWidget
 	enum ItemType
 	{
 		ItemTypeNull = -1,
-		ItemTypePipeline = 0,
-		ItemTypeStage = 2,
-		ItemTypeRenderer = 3
+		ItemTypeRenderer = 0
 	};
 
 	ItemType currentItemType = ItemTypeNull;
 
-	Pipeline *currentPipeline = nullptr;
-	Stage *currentStage = nullptr;
 	Renderer *currentRenderer = nullptr;
 
 	using QDockWidget::QDockWidget;
@@ -152,19 +111,6 @@ struct GameExplorer : QDockWidget
 	void on_item_dbClicked(QTreeWidgetItem *item, int column);
 	void setup();
 	void closeEvent(QCloseEvent *event) override;
-};
-
-struct StageEditor : QDockWidget
-{
-	Stage *stage;
-
-	QLineNumberEdit *edit;
-	QFindWidget *findWidget;
-
-	using QDockWidget::QDockWidget;
-	void edit_changed();
-	void setup();
-	~StageEditor();
 };
 
 struct MonitorWindow;
