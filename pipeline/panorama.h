@@ -1,6 +1,6 @@
 vec2 panorama(vec3 v)
 {
-	return vec2(0.5 + 0.5 * atan(v.x, -v.z) / PI, acos(v.y) / PI);
+	return vec2(0.5 + 0.5 * atan(v.x, -v.z) * PI_INV, acos(v.y) * PI_INV);
 }
 
 vec3 inversePanorama(vec2 tc)

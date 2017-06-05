@@ -93,18 +93,11 @@ namespace tke
 		float fScaleOverScaleDepth = fScale / fScaleDepth;	// fScale / fScaleDepth
 	}
 
-	void HDR::set()
-	{
-	}
-
-	void Ambient::set()
-	{
-	}
-
 	Scene::Scene()
 	{
 		InitializeCriticalSection(&cs);
 
+		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 		matrixBuffer = new UniformBuffer(sizeof MatrixUniformBufferStruct);
 		objectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
 		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT);
@@ -118,6 +111,7 @@ namespace tke
 		indexBuffer = new IndexBuffer();
 		objectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 
+		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
 		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
 		globalResource.setBuffer(objectMatrixBuffer, "ObjectMatrix.UniformBuffer");
 		globalResource.setBuffer(lightMatrixBuffer, "LightMatrix.UniformBuffer");
@@ -134,6 +128,7 @@ namespace tke
 
 	Scene::~Scene()
 	{
+		delete constantBuffer;
 		delete matrixBuffer;
 		delete objectMatrixBuffer;
 		delete lightMatrixBuffer;
@@ -150,9 +145,19 @@ namespace tke
 
 	void Scene::setUp()
 	{
+		ConstantBufferStruct stru;
+		stru.depth_near = TKE_NEAR;
+		stru.depth_far = TKE_FAR;
+		stru.cx = resCx;
+		stru.cy = resCy;
+		stru.aspect = aspect;
+		stru.fovy = TKE_FOVY;
+		stru.tanHfFovy = std::tan(TKE_FOVY * 0.5f);
+		stru.envrCx = TKE_ENVR_SIZE_CX;
+		stru.envrCy = TKE_ENVR_SIZE_CY;
+		constantBuffer->update(&stru, *stagingBuffer);
+
 		atmosphere.set();
-		hdr.set();
-		ambient.set();
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
@@ -683,7 +688,7 @@ namespace tke
 			if (skyType == SkyType::eNull)
 			{
 				AmbientStruct stru;
-				stru.v = glm::vec4(ambient.color, 0);
+				stru.v = glm::vec4(ambientColor, 0);
 				stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 				ambientBuffer->update(&stru, *stagingBuffer);
 			}
@@ -1069,6 +1074,14 @@ namespace tke
 		}
 		if (pLights.size() > 0)
 		{ // light attribute
+
+
+			auto coord = camera.getMatInv() * glm::vec4(pLights[0]->getCoord(), 1.f);
+			auto c1    = camera.getMatInv() * glm::vec4(glm::vec3(0), 1.f);
+
+			auto c2 = c1 - coord;
+
+
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightStruct) * pLights.size());
@@ -1249,8 +1262,8 @@ namespace tke
 		EnterCriticalSection(&pScene->cs);
 
 		pScene->atmosphere = atmosphere;
-		pScene->hdr = hdr;
-		pScene->ambient = ambient;
+		//pScene->hdr = hdr;
+		//pScene->ambient = ambient;
 		pScene->fogThickness = fogThickness;
 
 		pScene->clearActors();
@@ -1308,8 +1321,8 @@ namespace tke
 		EnterCriticalSection(&pScene->cs);
 
 		atmosphere = pScene->atmosphere;
-		hdr = pScene->hdr;
-		ambient = pScene->ambient;
+		//hdr = pScene->hdr;
+		//ambient = pScene->ambient;
 		fogThickness = pScene->fogThickness;
 
 		lightSaves.clear();

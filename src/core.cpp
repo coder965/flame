@@ -155,11 +155,11 @@ namespace tke
 
 		changeProjMat(PERSPECTIVE);
 
+		stagingBuffer = new StagingBuffer(65536);
+
 		scene = new Scene;
 		strcpy(scene->name, "default");
 		scene->setUp();
-
-		stagingBuffer = new StagingBuffer(65536);
 
 		{
 			static VkVertexInputBindingDescription bindings0[] = {

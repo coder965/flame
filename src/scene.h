@@ -47,6 +47,7 @@ namespace tke
 
 	struct AnimationTemplate;
 	struct CollisionGroup;
+
 	enum class SkyType
 	{
 		eNull,
@@ -67,23 +68,17 @@ namespace tke
 		void set();
 	};
 
-	struct HDR
+	struct ConstantBufferStruct
 	{
-		float exposure = 0.01f;
-		float white = 1.f;
-
-		void set();
-	};
-
-	struct Ambient
-	{
-		glm::vec3 color = glm::vec3(0.5f);
-
-		float ssaoRadius = 10.f;
-		float ssaoBias = 0.01f;
-		float ssaoIntensity = 100000.f;
-
-		void set();
+		float depth_near;
+		float depth_far;
+		float cx;
+		float cy;
+		float aspect;
+		float fovy;
+		float tanHfFovy;
+		float envrCx;
+		float envrCy;
 	};
 
 	struct MatrixUniformBufferStruct
@@ -152,9 +147,14 @@ namespace tke
 		char skyName[50];
 		Image *skyImage = nullptr;
 
-		HDR hdr;
+		float exposure = 0.01f;
+		float white = 1.f;
 
-		Ambient ambient;
+		glm::vec3 ambientColor = glm::vec3(0.5f);
+
+		float ssaoRadius = 10.f;
+		float ssaoBias = 0.01f;
+		float ssaoIntensity = 100000.f;
 
 		float fogThickness = 0.01f;
 
@@ -192,6 +192,7 @@ namespace tke
 		VertexBuffer *vertexBuffer = nullptr;
 		IndexBuffer *indexBuffer = nullptr;
 
+		UniformBuffer *constantBuffer = nullptr;
 		UniformBuffer *matrixBuffer = nullptr;
 		UniformBuffer *objectMatrixBuffer = nullptr;
 		UniformBuffer *lightMatrixBuffer = nullptr;
@@ -290,8 +291,8 @@ namespace tke
 	struct SceneSave
 	{
 		Atmosphere atmosphere;
-		HDR hdr;
-		Ambient ambient;
+		//HDR hdr;
+		//Ambient ambient;
 		float fogThickness;
 
 		std::vector<LightSave> lightSaves;

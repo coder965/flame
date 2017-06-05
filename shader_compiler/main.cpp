@@ -21,6 +21,18 @@ extern "C" {
 
 int main(int argc, char** argv)
 {
+	bool show_all = false;
+
+	for (int i = 0; i < argc; i++)
+	{
+		if (argv[i] == std::string("-show-all"))
+			show_all = true;
+	}
+
+	int succeeded = 0;
+	int failed = 0;
+	int up_to_date = 0;
+
 	auto yy_out_file = fopen("yy_out", "wb");
 
 	{
@@ -40,10 +52,9 @@ int main(int argc, char** argv)
 				auto a = c->firstAttribute("filename");
 				if (a)
 				{
-					printf("Now Processing:%s\n", a->second.c_str());
 					if (!std::experimental::filesystem::exists(a->second))
 					{
-						printf("Stage File Does Not Exist!\n\n");
+						printf("%s Not Found!\n\n", a->second.c_str());
 						continue;
 					}
 
@@ -53,10 +64,13 @@ int main(int argc, char** argv)
 						auto spv_file_last_modification_time = std::experimental::filesystem::last_write_time(a->second + ".spv");
 						if (spv_file_last_modification_time > stage_file_last_modification_time)
 						{
-							printf("Spv Up To Date\n\n");
+							if (show_all) printf("%s Up To Date\n\n", a->second.c_str());
+							up_to_date++;
 							continue;
 						}
 					}
+
+					printf("Now Processing:%s\n", a->second.c_str());
 
 					auto stage_type = tke::StageFlagByExt(std::experimental::filesystem::path(a->second).extension().string());
 					auto file_path = std::experimental::filesystem::path(a->second).parent_path().string();
@@ -305,6 +319,12 @@ int main(int argc, char** argv)
 							}
 
 							at.saveXML(a->second + ".xml");
+
+							failed++;
+						}
+						else
+						{
+							succeeded++;
 						}
 					}
 
@@ -315,10 +335,12 @@ int main(int argc, char** argv)
 				}
 			}
 		}
+
+		printf("succeeded:%d, failed:%d, up-to-date:%d\n", succeeded, failed, up_to_date);
 	}
 	else
 	{
-		printf("Miss stages.xml file!\n");
+		printf("stages.xml : Not Found!\n");
 	}
 
 	fclose(yy_out_file);

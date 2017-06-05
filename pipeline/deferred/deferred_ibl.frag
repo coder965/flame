@@ -6,7 +6,20 @@
 #include "..\pi.h"
 #include "..\panorama.h"
 
-layout(binding = 0) uniform MATRIX
+layout(binding = 0) uniform CONSTANT
+{
+	float near;
+	float far;
+	float cx;
+	float cy;
+	float aspect;
+	float fovy;
+	float tanHfFovy;
+	float envrCx;
+	float envrCy;
+}u_constant;
+
+layout(binding = 1) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -18,9 +31,10 @@ layout(binding = 0) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 1) uniform AMBIENT
+layout(binding = 2) uniform AMBIENT
 {
 	vec4 v; // (R,G,B) - ambient color, (A) - EnvrMipmaps
+	vec4 fogColor;
 }u_ambient;
 
 struct Light
@@ -30,17 +44,17 @@ struct Light
 	vec4 decayFactor;
 };
 
-layout(binding = 2) uniform LIGHT
+layout(binding = 3) uniform LIGHT
 {
 	uint count;
 	Light lights[1024];
 }u_light;
       
-layout(binding = 3) uniform sampler2D depthSampler;
-layout(binding = 4) uniform sampler2D albedoSpecSampler;
-layout(binding = 5) uniform sampler2D normalRoughnessSampler;
-layout(binding = 6) uniform sampler2D aoSampler;
-layout(binding = 7) uniform sampler2D envrSampler;
+layout(binding = 4) uniform sampler2D depthSampler;
+layout(binding = 5) uniform sampler2D albedoSpecSampler;
+layout(binding = 6) uniform sampler2D normalRoughnessSampler;
+layout(binding = 7) uniform sampler2D aoSampler;
+layout(binding = 8) uniform sampler2D envrSampler;
 
 layout(location = 0) in vec3 inViewDir;
 
@@ -66,7 +80,7 @@ float G_schlick(float alpha, float nl, float nv)
 float D_GGX(float alpha, float nh)
 {
 	float r = alpha / (nh * (alpha * alpha - 1.0) + 1.0);
-	return r * r * INV_PI;
+	return r * r * PI_INV;
 }
 
 vec3 brdf(vec3 V, vec3 L, vec3 N, float roughness, float spec, vec3 albedo, vec3 lightColor)
@@ -88,10 +102,11 @@ void main()
 	//outColor = textureLod(envrSampler, gl_FragCoord.xy / vec2(1600.0, 900.0), 3.0);
 	//return;
 	
-	float inDepth = texture(depthSampler, gl_FragCoord.xy).r * 2.0 - 1.0;
-	float linerDepth = LinearDepthPerspective(inDepth);
-	if (linerDepth > 999.0)
+	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
+	if (inDepth == 1.0)
 		discard;
+	inDepth = inDepth * 2.0 - 1.0;
+	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
 		
 	vec3 viewDir = normalize(inViewDir);
 	vec3 coordView = viewDir * (-linerDepth / viewDir.z);

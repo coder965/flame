@@ -2,7 +2,6 @@
   <stage filename="../pipeline/fullscreen.vert" />
   <stage filename="../pipeline/fullscreenUv.vert" />
   <stage filename="../pipeline/fullscreenUvView.vert" />
-  <stage filename="../pipeline/fullscreenUvViewInstance.vert" />
   <stage filename="../pipeline/fullscreenView.vert" />
   
   <stage filename="../pipeline/combine/combine.frag" />

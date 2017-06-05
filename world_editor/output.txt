@@ -1,4 +1,4 @@
-2017-06-05 11:22:39
+2017-06-05 13:34:23
 Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
 Now Processing:../pipeline/fullscreen.vert
@@ -20,7 +20,23 @@ Now Processing:../pipeline/combine/combine.frag
 Spv Up To Date
 
 Now Processing:../pipeline/deferred/deferred.frag
-Spv Up To Date
+temp.glsl
+Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
+ERROR: temp.glsl:170: '*' :  wrong operand types: no operation '*' exists that takes a left-hand operand of type 'layout( column_major std140) uniform highp 4X4 matrix of float' and a right operand of type ' temp 3-component vector of float' (or there is no acceptable conversion)
+ERROR: temp.glsl:170: '' : compilation terminated 
+ERROR: 2 compilation errors.  No code generated.
+
+
+Uniform reflection:
+
+Uniform block reflection:
+
+Vertex attribute reflection:
+
+SPIR-V is not generated for failed compile or link
+
+Error, line num:143
+Error, line num:143
 
 Now Processing:../pipeline/deferred/deferred_ibl.frag
 Spv Up To Date

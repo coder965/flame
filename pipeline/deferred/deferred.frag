@@ -6,7 +6,20 @@
 #include "..\pi.h"
 #include "..\panorama.h"
 
-layout(binding = 0) uniform MATRIX
+layout(binding = 0) uniform CONSTANT
+{
+	float near;
+	float far;
+	float cx;
+	float cy;
+	float aspect;
+	float fovy;
+	float tanHfFovy;
+	float envrCx;
+	float envrCy;
+}u_constant;
+
+layout(binding = 1) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -18,7 +31,7 @@ layout(binding = 0) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 1) uniform AMBIENT
+layout(binding = 2) uniform AMBIENT
 {
 	vec4 v; // (R,G,B) - ambient color, (A) - EnvrMipmaps
 	vec4 fogColor;
@@ -31,17 +44,17 @@ struct Light
 	vec4 decayFactor;
 };
 
-layout(binding = 2) uniform LIGHT
+layout(binding = 3) uniform LIGHT
 {
 	uint count;
 	Light lights[1024];
 }u_light;
       
-layout(binding = 3) uniform sampler2D depthSampler;
-layout(binding = 4) uniform sampler2D albedoSpecSampler;
-layout(binding = 5) uniform sampler2D normalRoughnessSampler;
-layout(binding = 6) uniform sampler2D aoSampler;
-layout(binding = 7) uniform sampler2D envrSampler;
+layout(binding = 4) uniform sampler2D depthSampler;
+layout(binding = 5) uniform sampler2D albedoSpecSampler;
+layout(binding = 6) uniform sampler2D normalRoughnessSampler;
+layout(binding = 7) uniform sampler2D aoSampler;
+layout(binding = 8) uniform sampler2D envrSampler;
 
 layout(location = 0) in vec3 inViewDir;
 
@@ -67,7 +80,7 @@ float G_schlick(float alpha, float nl, float nv)
 float D_GGX(float alpha, float nh)
 {
 	float r = alpha / (nh * (alpha * alpha - 1.0) + 1.0);
-	return r * r * INV_PI;
+	return r * r * PI_INV;
 }
 
 vec3 brdf(vec3 V, vec3 L, vec3 N, float roughness, float spec, vec3 albedo, vec3 lightColor)
@@ -86,10 +99,11 @@ float specularOcclusion(float dotNV, float ao, float smothness)
 
 void main()
 {
-	float inDepth = texture(depthSampler, gl_FragCoord.xy).r * 2.0 - 1.0;
-	float linerDepth = LinearDepthPerspective(inDepth);
-	if (linerDepth > 999.0)
+	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
+	if (inDepth == 1.0)
 		discard;
+	inDepth = inDepth * 2.0 - 1.0;
+	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
 		
 	vec3 viewDir = normalize(inViewDir);
 	vec3 coordView = viewDir * (-linerDepth / viewDir.z);
@@ -110,33 +124,34 @@ void main()
 	float ao = 1.0;
 	float specAo = specularOcclusion(dotNV, ao, smothness);
 	
-	vec3 litColor = vec3(0.0);
+	vec3 lightSumColor = vec3(0.0);
 	for (int i = 0; i < u_light.count; i++)
 	{
 		Light light = u_light.lights[i];
 		vec3 lightColor = light.color.rgb;
-		vec4 lightCoord = u_matrix.view * light.coord;
+		//vec4 lightCoord = u_matrix.view * light.coord;
+		vec4 lightCoord = light.coord;
+		lightCoord /= lightCoord.w;
 		vec3 lightDir = lightCoord.xyz - coordView * lightCoord.w;
 		if (light.coord.w == 1.0)
 		{
 			float dist = length(lightDir);
-			//lightColor /= dist;
-			lightColor /= vec3(dist);
+			lightColor /= dist;
 			//lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
 		}
 		lightDir = normalize(lightDir);
 		float nl = dot(normal, lightDir);
-		//litColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
-		//litColor += vec3(nl) * albedo * lightColor;
-		litColor += lightColor;
+		//lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
+		//lightSumColor += vec3(nl) * albedo * lightColor;
+		lightSumColor += lightColor;
 	}
 	
-	vec3 color = vec3(litColor + u_ambient.v.rgb * albedo);
-	//vec3 color = vec3(litColor);
+	vec3 color = vec3(lightSumColor + u_ambient.v.rgb * albedo);
+	//vec3 color = vec3(lightSumColor);
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
 	//outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	//outColor = vec4(litColor, 1.0);
-	outColor = vec4(1.0);
+	outColor = vec4(lightSumColor, 1.0);
+	outColor = vec4(vec3(1 / length((u_matrix.viewInv * vec4(coordView,1)).xyz)), 1.0);
 }
