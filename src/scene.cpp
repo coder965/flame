@@ -152,7 +152,7 @@ namespace tke
 		stru.cy = resCy;
 		stru.aspect = aspect;
 		stru.fovy = TKE_FOVY;
-		stru.tanHfFovy = std::tan(TKE_FOVY * 0.5f);
+		stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
 		stru.envrCx = TKE_ENVR_SIZE_CX;
 		stru.envrCy = TKE_ENVR_SIZE_CY;
 		constantBuffer->update(&stru, *stagingBuffer);

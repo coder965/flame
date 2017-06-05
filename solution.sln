@@ -8,10 +8,19 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Reflect", "reflect\reflect.vcxproj", "{8D428B63-50BD-4EEA-B4D8-E1D35630EA21}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "engine\engine.vcxproj", "{6F5FD7B3-5E83-4A48-B23D-497D31A48266}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8D428B63-50BD-4EEA-B4D8-E1D35630EA21} = {8D428B63-50BD-4EEA-B4D8-E1D35630EA21}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "world_editor", "world_editor\world_editor.vcxproj", "{42182552-4A07-4EE4-860C-226A8D59CDC4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6F5FD7B3-5E83-4A48-B23D-497D31A48266} = {6F5FD7B3-5E83-4A48-B23D-497D31A48266}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader_compiler", "shader_compiler\shader_compiler.vcxproj", "{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6F5FD7B3-5E83-4A48-B23D-497D31A48266} = {6F5FD7B3-5E83-4A48-B23D-497D31A48266}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

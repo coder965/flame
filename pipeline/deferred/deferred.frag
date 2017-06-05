@@ -102,11 +102,11 @@ void main()
 	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
 	if (inDepth == 1.0)
 		discard;
-	inDepth = inDepth * 2.0 - 1.0;
+		
 	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
 		
 	vec3 viewDir = normalize(inViewDir);
-	vec3 coordView = viewDir * (-linerDepth / viewDir.z);
+	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
 	
 	vec4 inAlbedoSpec = texture(albedoSpecSampler, gl_FragCoord.xy);
 	vec4 inNormalRoughness = texture(normalRoughnessSampler, gl_FragCoord.xy);
@@ -128,30 +128,22 @@ void main()
 	for (int i = 0; i < u_light.count; i++)
 	{
 		Light light = u_light.lights[i];
-		vec3 lightColor = light.color.rgb;
-		//vec4 lightCoord = u_matrix.view * light.coord;
-		vec4 lightCoord = light.coord;
-		lightCoord /= lightCoord.w;
+		vec3 lightColor = light.color.xyz;
+		vec4 lightCoord = u_matrix.view * light.coord;
 		vec3 lightDir = lightCoord.xyz - coordView * lightCoord.w;
 		if (light.coord.w == 1.0)
 		{
 			float dist = length(lightDir);
-			lightColor /= dist;
-			//lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
+			lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
 		}
 		lightDir = normalize(lightDir);
 		float nl = dot(normal, lightDir);
-		//lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
-		//lightSumColor += vec3(nl) * albedo * lightColor;
-		lightSumColor += lightColor;
+		lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
 	}
 	
 	vec3 color = vec3(lightSumColor + u_ambient.v.rgb * albedo);
-	//vec3 color = vec3(lightSumColor);
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
-	//outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	outColor = vec4(lightSumColor, 1.0);
-	outColor = vec4(vec3(1 / length((u_matrix.viewInv * vec4(coordView,1)).xyz)), 1.0);
+	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
 }

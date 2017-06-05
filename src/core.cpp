@@ -188,6 +188,7 @@ namespace tke
 			lineVertexInputState = vertexStateInfo(ARRAYSIZE(bindings1), bindings1, ARRAYSIZE(attributes1), attributes1);
 		}
 
+		// this kind of depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
 		globalResource.setImage(new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), "Depth.Image");
 
 		{

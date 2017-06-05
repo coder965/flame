@@ -150,6 +150,13 @@ void GameExplorer::closeEvent(QCloseEvent *event)
 	gameExplorer = nullptr;
 }
 
+float LinearDepthPerspective(float z, float depth_near, float depth_far)
+{
+	float a = (1.0 - depth_far / depth_near) * 0.5 / depth_far;
+	float b = (1.0 + depth_far / depth_near) * 0.5 / depth_far;
+	return 1.0 / (a * z + b);
+}
+
 struct MonitorWindow : tke::GuiWindow
 {
 	tke::Model *test_model;
@@ -356,6 +363,7 @@ OutputWidget::~OutputWidget()
 {
 	outputWidget = nullptr;
 }
+
 
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)

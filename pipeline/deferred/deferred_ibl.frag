@@ -105,7 +105,6 @@ void main()
 	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
 	if (inDepth == 1.0)
 		discard;
-	inDepth = inDepth * 2.0 - 1.0;
 	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
 		
 	vec3 viewDir = normalize(inViewDir);

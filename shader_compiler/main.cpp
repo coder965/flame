@@ -320,11 +320,11 @@ int main(int argc, char** argv)
 
 							at.saveXML(a->second + ".xml");
 
-							failed++;
+							succeeded++;
 						}
 						else
 						{
-							succeeded++;
+							failed++;
 						}
 					}
 

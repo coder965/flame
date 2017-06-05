@@ -1791,9 +1791,8 @@ namespace tke
 				bool found = false;
 				for (auto s : stages)
 				{
-					if (!s) continue;
-
 					if (found) break;
+					if (!s) continue;
 					for (auto &d : s->descriptors)
 					{
 						if (d.name == link.descriptor_name)
@@ -1812,9 +1811,8 @@ namespace tke
 				bool found = false;
 				for (auto s : stages)
 				{
-					if (!s) continue;
-
 					if (found) break;
+					if (!s) continue;
 					for (auto &d : s->descriptors)
 					{
 						if (d.binding == link.binding)
