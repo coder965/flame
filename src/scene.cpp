@@ -706,10 +706,10 @@ namespace tke
 				static VkRenderPass postRenderPass;
 
 				static Image *envrImage = nullptr;
-				static VkFramebuffer envrFramebuffer[4];
+				static Framebuffer *envrFramebuffer[4];
 
 				static Image *envrImageDownsample[3] = {};
-				static VkFramebuffer envrDownsampleFramebuffer[3];
+				static Framebuffer *envrDownsampleFramebuffer[3];
 
 				static VkDescriptorSet downsampleDescriptorSetLevel[3];
 				static VkDescriptorSet convolveDescriptorSetLevel[3];
@@ -789,7 +789,7 @@ namespace tke
 					{
 						auto cmd = commandPool.begineOnce();
 
-						vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[0],
+						vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[0]->v,
 							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 						vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scatteringPipeline.m_pipeline);
@@ -813,7 +813,7 @@ namespace tke
 								{
 									auto cmd = commandPool.begineOnce();
 
-									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrDownsampleFramebuffer[i],
+									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrDownsampleFramebuffer[i]->v,
 										TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.m_pipeline);
@@ -849,7 +849,7 @@ namespace tke
 								{
 									auto cmd = commandPool.begineOnce();
 
-									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[i],
+									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[i]->v,
 										TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.m_pipeline);

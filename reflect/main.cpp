@@ -44,6 +44,7 @@ bool needSkip(const std::string &name)
 
 extern "C" {
 	extern FILE *yyin;
+	extern FILE *yyout;
 	extern int yylex();
 	extern int yylineno;
 	extern char *yytext;
@@ -55,6 +56,8 @@ std::string currentEnumName;
 
 int main(int argc, char **argv)
 {
+	auto yy_out_file = fopen("yy_out", "wb");
+
 	{
 		if (!std::experimental::filesystem::exists(INPUT))
 			return 1;
@@ -74,6 +77,8 @@ int main(int argc, char **argv)
 
 	std::string declString;
 	std::string implString;
+
+	yyout = yy_out_file;
 
 	int token = yylex();
 	while(token)

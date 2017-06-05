@@ -201,10 +201,14 @@ namespace tke
 	{
 		std::vector<VkImageView> views;
 		VkFramebuffer v;
+		int refCount = 1;
+
+		~Framebuffer();
 	};
 
-	VkFramebuffer createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
-	void destroyFramebuffer(VkFramebuffer v);
+	Framebuffer *createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
+
+	void releaseFramebuffer(Framebuffer *f);
 
 	extern VkFormat swapchainFormat;
 	extern VkSampler plainSampler;
@@ -971,7 +975,7 @@ namespace tke
 
 		VkRenderPass vkRenderPass = 0;
 
-		VkFramebuffer vkFramebuffer[2] = {};
+		Framebuffer *vkFramebuffer[2] = {};
 
 		RenderPass *findRenderPass(const std::string &n);
 

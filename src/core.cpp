@@ -293,7 +293,7 @@ namespace tke
 		destroySemaphore(imageAvailable);
 		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
-			destroyFramebuffer(framebuffers[i]);
+			releaseFramebuffer(framebuffers[i]);
 		delete images;
 		inst.cs.lock();
 		device.cs.lock();
@@ -461,6 +461,13 @@ namespace tke
 
 		for (;;)
 		{
+			if (state == eSinalToPause)
+			{
+				state = ePausing;
+				while (state != eSinalToRun) Sleep(100);
+				state = eRunning;
+			}
+
 			nowTime = GetTickCount() - startUpTime;
 			processEvents();
 
@@ -479,13 +486,6 @@ namespace tke
 				delete this;
 				*dead = true;
 				return;
-			}
-
-			if (state == eSinalToPause)
-			{
-				state = ePausing;
-				while (state != eSinalToRun) Sleep(100);
-				state = eRunning;
 			}
 
 			if (!hasMsg)

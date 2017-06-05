@@ -318,28 +318,39 @@ namespace tke
 
 	DescriptrPool descriptorPool;
 
-	std::vector<Framebuffer> framebuffers;
-	VkFramebuffer createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
+	Framebuffer::~Framebuffer()
+	{
+		device.cs.lock();
+		vkDestroyFramebuffer(device.v, v, nullptr);
+		device.cs.unlock();
+	}
+
+	std::vector<Framebuffer*> framebuffers;
+	Framebuffer *createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
 	{
 		for (auto &f : framebuffers)
 		{
-			if (f.views.size() == views.size())
+			if (f->views.size() == views.size())
 			{
 				bool same = true;
-				for (auto i = 0; i < f.views.size(); i++)
+				for (auto i = 0; i < f->views.size(); i++)
 				{
-					if (f.views[i] != views[i])
+					if (f->views[i] != views[i])
 					{
 						same = false;
 						break;
 					}
 				}
 				if (same)
-					return f.v;
+				{
+					f->refCount++;
+					return f;
+				}
 			}
 		}
-		Framebuffer framebuffer;
-		framebuffer.views.insert(framebuffer.views.begin(), views.begin(), views.end());
+
+		auto f = new Framebuffer;
+		f->views.insert(f->views.begin(), views.begin(), views.end());
 
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -351,27 +362,26 @@ namespace tke
 		info.pAttachments = views.data();
 
 		device.cs.lock();
-		auto res = vkCreateFramebuffer(device.v, &info, nullptr, &framebuffer.v);
+		auto res = vkCreateFramebuffer(device.v, &info, nullptr, &f->v);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 
-		framebuffers.push_back(framebuffer);
-		return framebuffer.v;
+		framebuffers.push_back(f);
+		return f;
 	}
 
-	void destroyFramebuffer(VkFramebuffer v)
+	void releaseFramebuffer(Framebuffer *f)
 	{
-		for (auto it = framebuffers.begin(); it != framebuffers.end(); it++)
+		f->refCount--;
+		if (f->refCount == 0)
 		{
-			if (it->v == v)
+			for (auto it = framebuffers.begin(); it != framebuffers.end(); it++)
 			{
-				framebuffers.erase(it);
-
-				device.cs.lock();
-				vkDestroyFramebuffer(device.v, v, nullptr);
-				device.cs.unlock();
-
-				return;
+				if (*it == f)
+				{
+					framebuffers.erase(it);
+					return;
+				}
 			}
 		}
 	}
@@ -2248,8 +2258,8 @@ namespace tke
 
 	Renderer::~Renderer()
 	{
-		destroyFramebuffer(vkFramebuffer[0]);
-		destroyFramebuffer(vkFramebuffer[1]);
+		releaseFramebuffer(vkFramebuffer[0]);
+		releaseFramebuffer(vkFramebuffer[1]);
 		destroyRenderPass(vkRenderPass);
 	}
 
@@ -2430,7 +2440,7 @@ namespace tke
 		currentPipeline = initPipeline;
 		currentDescriptorSet = initDescriptorSet;
 
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index], cx, cy, vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index]->v, cx, cy, vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
 
 		if (currentVertexBuffer)
 			currentVertexBuffer->bind(cmd);

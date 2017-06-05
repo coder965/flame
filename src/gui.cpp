@@ -500,7 +500,7 @@ namespace tke
 
 		vkCmdWaitEvents(cmd, 1, &window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(windowRenderPass, window->framebuffers[window->imageIndex], resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(windowRenderPass, window->framebuffers[window->imageIndex]->v, resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		VkDeviceSize vertex_offset[1] = { 0 };
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);

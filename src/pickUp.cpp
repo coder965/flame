@@ -6,7 +6,7 @@ namespace tke
 {
 	static Image *image = nullptr;
 	static VkRenderPass renderPass;
-	static VkFramebuffer framebuffer;
+	static Framebuffer *framebuffer;
 
 	Pipeline plainPickUpPipeline;
 
@@ -23,7 +23,7 @@ namespace tke
 			{ 0.f, 0.f, 0.f, 0.f },
 			{ 1.f, 0 }
 		};
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(renderPass, framebuffer, resCx, resCy, 2, clearValue), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(renderPass, framebuffer->v, resCx, resCy, 2, clearValue), VK_SUBPASS_CONTENTS_INLINE);
 		
 		drawCallback(cmd);
 
