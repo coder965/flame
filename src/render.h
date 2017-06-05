@@ -528,10 +528,19 @@ namespace tke
 		std::vector<PushConstantRange> pushConstantRanges;
 	};
 
+	struct ShaderModule
+	{
+		std::string filename;
+		VkShaderModule v;
+		int refCount = 1;
+
+		~ShaderModule();
+	};
+
 	struct Stage : StageArchive
 	{
 		Pipeline *parent;
-		VkShaderModule module = 0;
+		ShaderModule *module = nullptr;
 
 		Stage(Pipeline *_parent);
 		void create();
@@ -687,6 +696,25 @@ namespace tke
 		return true;
 	}
 
+	struct DescriptorSetLayout
+	{
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		VkDescriptorSetLayout v;
+		int refCount = 1;
+
+		~DescriptorSetLayout();
+	};
+
+	struct PipelineLayout
+	{
+		VkDescriptorSetLayout descriptorLayout;
+		std::vector<VkPushConstantRange> pushConstantRanges;
+		VkPipelineLayout v;
+		int refCount = 1;
+
+		~PipelineLayout();
+	};
+
 	struct ResourceBank;
 	struct Pipeline : PipelineArchive
 	{
@@ -707,8 +735,8 @@ namespace tke
 		int m_subpassIndex;
 		std::vector<VkDynamicState> m_dynamics;
 
-		VkDescriptorSetLayout m_descriptorSetLayout = 0;
-		VkPipelineLayout m_pipelineLayout = 0;
+		DescriptorSetLayout *m_descriptorSetLayout = nullptr;
+		PipelineLayout *m_pipelineLayout = nullptr;
 		VkPipeline m_pipeline = 0;
 		VkDescriptorSet m_descriptorSet = 0;
 

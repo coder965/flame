@@ -328,7 +328,7 @@ namespace tke
 	std::vector<Framebuffer*> framebuffers;
 	Framebuffer *createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
 	{
-		for (auto &f : framebuffers)
+		for (auto f : framebuffers)
 		{
 			if (f->views.size() == views.size())
 			{
@@ -380,6 +380,7 @@ namespace tke
 				if (*it == f)
 				{
 					framebuffers.erase(it);
+					delete f;
 					return;
 				}
 			}
@@ -1369,12 +1370,14 @@ namespace tke
 
 	ResourceBank globalResource(nullptr);
 
-	struct ShaderModule
+	ShaderModule::~ShaderModule()
 	{
-		std::string filename;
-		VkShaderModule v;
-	};
-	static std::vector<ShaderModule> shaderModules;
+		device.cs.lock();
+		vkDestroyShaderModule(device.v, v, nullptr);
+		device.cs.unlock();
+	}
+
+	static std::vector<ShaderModule*> shaderModules;
 
 	Stage::Stage(Pipeline *_parent)
 	{
@@ -1385,17 +1388,17 @@ namespace tke
 	{
 		// format the shader path, so that they can reuse if them refer the same one
 		auto path = std::experimental::filesystem::canonical(parent->filepath + "/" + filename + ".spv").string();
-		for (auto &m : shaderModules)
+		for (auto m : shaderModules)
 		{
-			if (m.filename == path)
+			if (m->filename == path)
 			{
-				module = m.v;
+				module = m;
 				return;
 			}
 		}
 
-		ShaderModule shaderModule;
-		shaderModule.filename = path;
+		auto m = new ShaderModule;
+		m->filename = path;
 
 		OnceFileBuffer file(path);
 		VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
@@ -1404,46 +1407,49 @@ namespace tke
 		shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
 
 		device.cs.lock();
-		auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &shaderModule.v);
+		auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &m->v);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 
-		shaderModules.push_back(shaderModule);
+		shaderModules.push_back(m);
 
-		module = shaderModule.v;
+		module = m;
 	}
 
 	Stage::~Stage()
 	{
-		for (auto it = shaderModules.begin(); it != shaderModules.end(); it++)
+		module->refCount--;
+		if (module->refCount == 0)
 		{
-			if (it->v == module)
+			for (auto it = shaderModules.begin(); it != shaderModules.end(); it++)
 			{
-				shaderModules.erase(it);
-
-				device.cs.lock();
-				vkDestroyShaderModule(device.v, module, nullptr);
-				device.cs.unlock();
-
-				return;
+				if (*it == module)
+				{
+					shaderModules.erase(it);
+					delete module;
+					return;
+				}
 			}
 		}
 	}
 
-	struct DescriptorSetLayout
+	DescriptorSetLayout::~DescriptorSetLayout()
 	{
-		std::vector<VkDescriptorSetLayoutBinding> bindings;
-		VkDescriptorSetLayout v;
-	};
-	static std::vector<DescriptorSetLayout> descriptorSetLayouts;
+		device.cs.lock();
+		vkDestroyDescriptorSetLayout(device.v, v, nullptr);
+		device.cs.unlock();
+	}
 
-	struct PipelineLayout
+	static std::vector<DescriptorSetLayout*> descriptorSetLayouts;
+
+	PipelineLayout::~PipelineLayout()
 	{
-		VkDescriptorSetLayout descriptorLayout;
-		std::vector<VkPushConstantRange> pushConstantRanges;
-		VkPipelineLayout v;
-	};
-	std::vector<PipelineLayout> pipelineLayouts;
+		device.cs.lock();
+		vkDestroyPipelineLayout(device.v, v, nullptr);
+		device.cs.unlock();
+	}
+
+	static std::vector<PipelineLayout*> pipelineLayouts;
 
 	Pipeline::Pipeline()
 	{
@@ -1539,7 +1545,7 @@ namespace tke
 			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			i.pName = "main";
 			i.stage = (VkShaderStageFlagBits)vkStage(s->type);
-			i.module = s->module;
+			i.module = s->module->v;
 			vkStages.push_back(i);
 
 			for (auto &d : s->descriptors)
@@ -1587,14 +1593,14 @@ namespace tke
 
 		{
 			bool found = false;
-			for (auto &d : descriptorSetLayouts)
+			for (auto d : descriptorSetLayouts)
 			{
-				if (d.bindings.size() == vkDescriptors.size())
+				if (d->bindings.size() == vkDescriptors.size())
 				{
 					bool same = true;
-					for (auto i = 0; i < d.bindings.size(); i++)
+					for (auto i = 0; i < d->bindings.size(); i++)
 					{
-						auto &binding = d.bindings[i];
+						auto &binding = d->bindings[i];
 						if (binding.binding != vkDescriptors[i].binding || binding.descriptorCount != vkDescriptors[i].descriptorCount ||
 							binding.descriptorType != vkDescriptors[i].descriptorType || binding.stageFlags != vkDescriptors[i].stageFlags)
 						{
@@ -1604,7 +1610,7 @@ namespace tke
 					}
 					if (same)
 					{
-						m_descriptorSetLayout = d.v;
+						m_descriptorSetLayout = d;
 						found = true;
 						break;
 					}
@@ -1613,8 +1619,8 @@ namespace tke
 
 			if (!found)
 			{
-				DescriptorSetLayout descriptorSetLayout;
-				descriptorSetLayout.bindings.insert(descriptorSetLayout.bindings.begin(), vkDescriptors.begin(), vkDescriptors.end());
+				auto d = new DescriptorSetLayout;
+				d->bindings.insert(d->bindings.begin(), vkDescriptors.begin(), vkDescriptors.end());
 
 				VkDescriptorSetLayoutCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1622,28 +1628,28 @@ namespace tke
 				info.pBindings = vkDescriptors.data();
 
 				device.cs.lock();
-				auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &descriptorSetLayout.v);
+				auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &d->v);
 				assert(res == VK_SUCCESS);
 				device.cs.unlock();
 
-				descriptorSetLayouts.push_back(descriptorSetLayout);
+				descriptorSetLayouts.push_back(d);
 
-				m_descriptorSetLayout = descriptorSetLayout.v;
+				m_descriptorSetLayout = d;
 			}
 		}
 
-		m_descriptorSet = descriptorPool.allocate(&m_descriptorSetLayout);
+		m_descriptorSet = descriptorPool.allocate(&m_descriptorSetLayout->v);
 
 		{
 			bool found = false;
-			for (auto &p : pipelineLayouts)
+			for (auto p : pipelineLayouts)
 			{
-				if (p.descriptorLayout == m_descriptorSetLayout && p.pushConstantRanges.size() == vkPushConstantRanges.size())
+				if (p->descriptorLayout == m_descriptorSetLayout->v && p->pushConstantRanges.size() == vkPushConstantRanges.size())
 				{
 					bool same = true;
-					for (auto i = 0; i < p.pushConstantRanges.size(); i++)
+					for (auto i = 0; i < p->pushConstantRanges.size(); i++)
 					{
-						auto &pc = p.pushConstantRanges[i];
+						auto &pc = p->pushConstantRanges[i];
 						if (pc.offset != vkPushConstantRanges[i].offset || pc.size != vkPushConstantRanges[i].size ||
 							pc.stageFlags != vkPushConstantRanges[i].stageFlags)
 						{
@@ -1653,7 +1659,7 @@ namespace tke
 					}
 					if (same)
 					{
-						m_pipelineLayout = p.v;
+						m_pipelineLayout = p;
 						found = true;
 						break;
 					}
@@ -1662,25 +1668,25 @@ namespace tke
 
 			if (!found)
 			{
-				PipelineLayout pipelineLayout;
-				pipelineLayout.descriptorLayout = m_descriptorSetLayout;
-				pipelineLayout.pushConstantRanges.insert(pipelineLayout.pushConstantRanges.begin(), vkPushConstantRanges.begin(), vkPushConstantRanges.end());
+				auto p = new PipelineLayout;
+				p->descriptorLayout = m_descriptorSetLayout->v;
+				p->pushConstantRanges.insert(p->pushConstantRanges.begin(), vkPushConstantRanges.begin(), vkPushConstantRanges.end());
 
 				VkPipelineLayoutCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 				info.setLayoutCount = 1;
-				info.pSetLayouts = &pipelineLayout.descriptorLayout;
-				info.pushConstantRangeCount = pipelineLayout.pushConstantRanges.size();
-				info.pPushConstantRanges = pipelineLayout.pushConstantRanges.data();
+				info.pSetLayouts = &m_descriptorSetLayout->v;
+				info.pushConstantRangeCount = p->pushConstantRanges.size();
+				info.pPushConstantRanges = p->pushConstantRanges.data();
 
 				device.cs.lock();
-				auto res = vkCreatePipelineLayout(device.v, &info, nullptr, &pipelineLayout.v);
+				auto res = vkCreatePipelineLayout(device.v, &info, nullptr, &p->v);
 				assert(res == VK_SUCCESS);
 				device.cs.unlock();
 
-				pipelineLayouts.push_back(pipelineLayout);
+				pipelineLayouts.push_back(p);
 
-				m_pipelineLayout = pipelineLayout.v;
+				m_pipelineLayout = p;
 			}
 		}
 
@@ -1756,7 +1762,7 @@ namespace tke
 
 		VkGraphicsPipelineCreateInfo pipelineInfo = {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.layout = m_pipelineLayout;
+		pipelineInfo.layout = m_pipelineLayout->v;
 		pipelineInfo.stageCount = vkStages.size();
 		pipelineInfo.pStages = vkStages.data();
 		pipelineInfo.pVertexInputState = m_pVertexInputState;
@@ -1889,31 +1895,31 @@ namespace tke
 
 	Pipeline::~Pipeline()
 	{
-		for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); it++)
+		m_pipelineLayout->refCount--;
+		if (m_pipelineLayout->refCount == 0)
 		{
-			if (it->v == m_pipelineLayout)
+			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); it++)
 			{
-				pipelineLayouts.erase(it);
-
-				device.cs.lock();
-				vkDestroyPipelineLayout(device.v, m_pipelineLayout, nullptr);
-				device.cs.unlock();
-
-				break;
+				if (*it == m_pipelineLayout)
+				{
+					pipelineLayouts.erase(it);
+					delete m_pipelineLayout;
+					break;
+				}
 			}
 		}
 
-		for (auto it = descriptorSetLayouts.begin(); it != descriptorSetLayouts.end(); it++)
+		m_descriptorSetLayout->refCount--;
+		if (m_descriptorSetLayout->refCount == 0)
 		{
-			if (it->v == m_descriptorSetLayout)
+			for (auto it = descriptorSetLayouts.begin(); it != descriptorSetLayouts.end(); it++)
 			{
-				descriptorSetLayouts.erase(it);
-
-				device.cs.lock();
-				vkDestroyDescriptorSetLayout(device.v, m_descriptorSetLayout, nullptr);
-				device.cs.unlock();
-
-				break;
+				if (*it == m_descriptorSetLayout)
+				{
+					descriptorSetLayouts.erase(it);
+					delete m_descriptorSetLayout;
+					break;
+				}
 			}
 		}
 
@@ -2497,7 +2503,7 @@ namespace tke
 						}
 						if (action.m_descriptorSet && action.m_descriptorSet != currentDescriptorSet)
 						{
-							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipelineLayout, 0, 1, &action.m_descriptorSet, 0, nullptr);
+							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipelineLayout->v, 0, 1, &action.m_descriptorSet, 0, nullptr);
 							currentDescriptorSet = action.m_descriptorSet;
 						}
 
@@ -2518,7 +2524,7 @@ namespace tke
 								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
 								break;
 							case DrawcallType::push_constant:
-								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
+								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
 								break;
 							}
 						}

@@ -470,13 +470,13 @@ void WorldEditor::on_view_output_widget()
 
 void WorldEditor::on_update_changes()
 {
-	//tke::exec("cmd", "/C cd ..\\shader_compiler & Debug\\shader_compiler.exe > output.txt");
+	tke::exec("cmd", "/C cd ..\\shader_compiler & Debug\\shader_compiler.exe > ..\\world_editor\\output.txt");
 
-	//if (outputWidget)
-	//{
-	//	tke::OnceFileBuffer outputFile("../shader_compiler/output.txt");
-	//	outputWidget->text->setPlainText(outputFile.data);
-	//}
+	if (outputWidget)
+	{
+		tke::OnceFileBuffer outputFile("output.txt");
+		outputWidget->text->setPlainText(outputFile.data);
+	}
 	
 	for (auto r : game.renderers)
 	{

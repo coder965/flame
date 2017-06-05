@@ -758,12 +758,12 @@ namespace tke
 					}
 
 					convolveDescriptorSetLevel[0] = convolvePipeline.m_descriptorSet;
-					convolveDescriptorSetLevel[1] = descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout);
-					convolveDescriptorSetLevel[2] = descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout);
+					convolveDescriptorSetLevel[1] = descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout->v);
+					convolveDescriptorSetLevel[2] = descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout->v);
 
 					downsampleDescriptorSetLevel[0] = downsamplePipeline.m_descriptorSet;
-					downsampleDescriptorSetLevel[1] = descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout);
-					downsampleDescriptorSetLevel[2] = descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout);
+					downsampleDescriptorSetLevel[1] = descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout->v);
+					downsampleDescriptorSetLevel[2] = descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout->v);
 
 					static int source_position = -1;
 					if (source_position == -1) source_position = downsamplePipeline.descriptorPosition("source");
@@ -835,9 +835,9 @@ namespace tke
 									vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 									auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
-									vkCmdPushConstants(cmd, downsamplePipeline.m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
+									vkCmdPushConstants(cmd, downsamplePipeline.m_pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
 
-									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.m_pipelineLayout, 0, 1, &downsampleDescriptorSetLevel[i], 0, nullptr);
+									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.m_pipelineLayout->v, 0, 1, &downsampleDescriptorSetLevel[i], 0, nullptr);
 									vkCmdDraw(cmd, 3, 1, 0, 0);
 
 									vkCmdEndRenderPass(cmd);
@@ -855,7 +855,7 @@ namespace tke
 									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.m_pipeline);
 
 									auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-									vkCmdPushConstants(cmd, convolvePipeline.m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
+									vkCmdPushConstants(cmd, convolvePipeline.m_pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 
 									VkViewport viewport;
 									viewport.x = 0.f;
@@ -873,7 +873,7 @@ namespace tke
 									scissor.extent.height = TKE_ENVR_SIZE_CY >> i;
 									vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.m_pipelineLayout, 0, 1, &convolveDescriptorSetLevel[i - 1], 0, nullptr);
+									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.m_pipelineLayout->v, 0, 1, &convolveDescriptorSetLevel[i - 1], 0, nullptr);
 									vkCmdDraw(cmd, 3, 1, 0, 0);
 
 									vkCmdEndRenderPass(cmd);
