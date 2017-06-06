@@ -8,3 +8,5 @@ map_Kd brick.jpg
 Ni 1.00
 Ks 0.50 0.50 0.50
 Ns 18.00
+tk_spec 0.3
+tk_roughness 0.5

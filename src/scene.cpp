@@ -685,12 +685,13 @@ namespace tke
 		}
 		if (needUpdataSky)
 		{
+			AmbientStruct stru;
+			stru.v = glm::vec4(ambientColor, 0);
+			stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+			ambientBuffer->update(&stru, *stagingBuffer);
+
 			if (skyType == SkyType::eNull)
 			{
-				AmbientStruct stru;
-				stru.v = glm::vec4(ambientColor, 0);
-				stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-				ambientBuffer->update(&stru, *stagingBuffer);
 			}
 			else if (skyType == SkyType::ePanorama)
 			{

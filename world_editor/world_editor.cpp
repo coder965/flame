@@ -179,7 +179,7 @@ struct MonitorWindow : tke::GuiWindow
 		lit->color = glm::vec3(1.f);
 		lit->type = tke::Light::Type::ePoint;
 		lit->decayFactor = glm::vec3(0.5f, 0.f, 1.f);
-		lit->setCoord(glm::vec3(1, 1, 1));
+		lit->setCoord(glm::vec3(0, 1, 0));
 		tke::scene->addLight(lit);
 
 		setRenderer(_renderer);

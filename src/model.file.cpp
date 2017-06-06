@@ -163,13 +163,13 @@ namespace tke
 								pmt = &m->renderGroups.back().material;
 								pmt->name = mtlName;
 							}
-							else if (token == "tk_roughness")
+							else if (token == "tk_spec")
 							{
 								float spec;
 								ss >> spec;
 								pmt->spec = 255.f * spec;
 							}
-							else if (token == "tk_spec")
+							else if (token == "tk_roughness")
 							{
 								float roughness;
 								ss >> roughness;

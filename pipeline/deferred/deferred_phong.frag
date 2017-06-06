@@ -60,43 +60,6 @@ layout(location = 0) in vec3 inViewDir;
 
 layout(location = 0) out vec4 outColor;
 
-float F_schlick(float f0, float cita)
-{
-	return f0 + (1.0 - f0) * pow(1.0 - cita, 5.0);
-}
-
-float G1_schlick(float cita, float k)
-{
-	return cita / (cita * (1.0 - k) + k);
-}
-
-float G_schlick(float alpha, float nl, float nv)
-{
-	float k = 0.8 + 0.5 * alpha;
-	k *= k * 0.5;
-	return G1_schlick(nl, k) * G1_schlick(nv, k);
-}
-
-float D_GGX(float alpha, float nh)
-{
-	float r = alpha / (nh * (alpha * alpha - 1.0) + 1.0);
-	return r * r * PI_INV;
-}
-
-vec3 brdf(vec3 V, vec3 L, vec3 N, float roughness, float spec, vec3 albedo, vec3 lightColor)
-{
-	vec3 H = normalize(L + V);
-	float nl = dot(N, L);
-	float nv = dot(N, V);
-	float alpha = pow(1.0 - (1.0 - roughness) * 0.7, 6.0);
-	return albedo * lightColor + (D_GGX(alpha, dot(N, H)) * F_schlick(spec, dot(L, H)) * G_schlick(alpha, nl, nv) / (4.0 * nl * nv)) * lightColor;
-}
-
-float specularOcclusion(float dotNV, float ao, float smothness)
-{
-    return clamp(pow(dotNV + ao, smothness) - 1.0 + ao, 0.0, 1.0);
-}	
-
 void main()
 {
 	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
@@ -118,12 +81,6 @@ void main()
 	vec3 normal = normalize(inNormalRoughness.xyz * 2.0 - 1.0);
 	float roughness = inNormalRoughness.a;
 	
-	float dotNV = dot(normal, -viewDir);
-	float smothness = 1.0 - roughness;
-	
-	float ao = 1.0;
-	float specAo = specularOcclusion(dotNV, ao, smothness);
-	
 	vec3 lightSumColor = vec3(0.0);
 	for (int i = 0; i < u_light.count; i++)
 	{
@@ -131,22 +88,26 @@ void main()
 		vec3 lightColor = light.color.xyz;
 		vec4 lightCoord = u_matrix.view * light.coord;
 		vec3 lightDir = lightCoord.xyz - coordView * lightCoord.w;
-		float attenuation = 1.0;
 		if (light.coord.w == 1.0)
 		{
 			float dist = length(lightDir);
-			attenuation = 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
+			lightColor /= (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
 		}
 		lightDir = normalize(lightDir);
-		float nl = dot(normal, lightDir);
-		//lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl * attenuation;
-		lightSumColor += attenuation;
+		float nl = max(dot(normal, lightDir), 0.0);
+		if (nl > 0.0)
+		{
+			vec3 r = reflect(-lightDir, normal);
+			float vr = max(dot(r, -viewDir), 0.0);
+			lightSumColor += albedo * lightColor * nl;
+			lightSumColor += spec * pow(vr, (1.0 - roughness) * 128.0) * lightColor;
+		}
 	}
 	
-	vec3 color = vec3(lightSumColor + u_ambient.v.rgb * albedo);
+	vec3 color = lightSumColor;
+	color += u_ambient.v.rgb * albedo;
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
 	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	//outColor = vec4(normal, 1.0);
 }
