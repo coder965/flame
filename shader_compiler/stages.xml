@@ -6,8 +6,8 @@
   
   <stage filename="../pipeline/combine/combine.frag" />
 
-  <stage filename="../pipeline/deferred/deferred.frag" />
-  <stage filename="../pipeline/deferred/deferred_ibl.frag" />
+  <stage filename="../pipeline/deferred/deferred_phong.frag" />
+  <stage filename="../pipeline/deferred/deferred_pbr_ibl.frag" />
   <stage filename="../pipeline/deferred/mrt.frag" />
   <stage filename="../pipeline/deferred/mrt.vert" />
   

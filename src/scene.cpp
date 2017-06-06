@@ -648,7 +648,7 @@ namespace tke
 	void Scene::setResources(Renderer *r)
 	{
 		panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
-		deferredIblPipeline = r->resource.getPipeline("Deferred_IBL.Pipeline");
+		deferredIblPipeline = r->resource.getPipeline("Deferred_PBR_IBL.Pipeline");
 		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
 	}
 

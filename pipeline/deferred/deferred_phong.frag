@@ -89,7 +89,7 @@ vec3 brdf(vec3 V, vec3 L, vec3 N, float roughness, float spec, vec3 albedo, vec3
 	float nl = dot(N, L);
 	float nv = dot(N, V);
 	float alpha = pow(1.0 - (1.0 - roughness) * 0.7, 6.0);
-	return (albedo + D_GGX(alpha, dot(N, H)) * F_schlick(spec, dot(L, H)) * G_schlick(alpha, nl, nv) / (4.0 * nl * nv)) * lightColor;
+	return albedo * lightColor + (D_GGX(alpha, dot(N, H)) * F_schlick(spec, dot(L, H)) * G_schlick(alpha, nl, nv) / (4.0 * nl * nv)) * lightColor;
 }
 
 float specularOcclusion(float dotNV, float ao, float smothness)
@@ -131,14 +131,16 @@ void main()
 		vec3 lightColor = light.color.xyz;
 		vec4 lightCoord = u_matrix.view * light.coord;
 		vec3 lightDir = lightCoord.xyz - coordView * lightCoord.w;
+		float attenuation = 1.0;
 		if (light.coord.w == 1.0)
 		{
 			float dist = length(lightDir);
-			lightColor *= 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
+			attenuation = 1.0 / (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
 		}
 		lightDir = normalize(lightDir);
 		float nl = dot(normal, lightDir);
-		lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
+		//lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl * attenuation;
+		lightSumColor += attenuation;
 	}
 	
 	vec3 color = vec3(lightSumColor + u_ambient.v.rgb * albedo);
@@ -146,4 +148,5 @@ void main()
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 
 	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
+	//outColor = vec4(normal, 1.0);
 }

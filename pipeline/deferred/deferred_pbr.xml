@@ -7,6 +7,6 @@
 	<link binding="-1" array_element="0" descriptor_name="albedoSpecSampler" resource_name="AlbedoSpec.Image" sampler="plain_unnormalized"/>
 	<link binding="-1" array_element="0" descriptor_name="normalRoughnessSampler" resource_name="NormalRoughness.Image" sampler="plain_unnormalized"/>
 	<stage filename="../fullscreenView.vert"/>
-	<stage filename="deferred_ibl.frag"/>
+	<stage filename="deferred_pbr_ibl.frag"/>
 </pipeline>
 

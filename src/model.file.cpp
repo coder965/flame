@@ -163,6 +163,18 @@ namespace tke
 								pmt = &m->renderGroups.back().material;
 								pmt->name = mtlName;
 							}
+							else if (token == "tk_roughness")
+							{
+								float spec;
+								ss >> spec;
+								pmt->spec = 255.f * spec;
+							}
+							else if (token == "tk_spec")
+							{
+								float roughness;
+								ss >> roughness;
+								pmt->roughness = 255.f * roughness;
+							}
 							else if (token == "map_Kd")
 							{
 								std::string filename;

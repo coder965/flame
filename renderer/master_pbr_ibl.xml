@@ -8,7 +8,7 @@
   <pipelines>
     <pipeline name="Panorama.Pipeline" file_name="pipeline/sky/panorama.xml" vertex_input_type="normal"/>
     <pipeline name="Mrt.Pipeline" file_name="pipeline/deferred/mrt.xml" vertex_input_type="normal"/>
-    <pipeline name="Deferred_IBL.Pipeline" file_name="pipeline/deferred/deferred_ibl.xml" vertex_input_type="zero"/>
+    <pipeline name="Deferred_PBR_IBL.Pipeline" file_name="pipeline/deferred/deferred_pbr_ibl.xml" vertex_input_type="zero"/>
     <pipeline name="Combine.Pipeline" file_name="pipeline/combine/combine.xml" vertex_input_type="zero"/>
   </pipelines>
   

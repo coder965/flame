@@ -8,7 +8,7 @@
   <pipelines>
     <pipeline name="Panorama.Pipeline" file_name="pipeline/sky/panorama.xml" vertex_input_type="normal"/>
     <pipeline name="Mrt.Pipeline" file_name="pipeline/deferred/mrt.xml" vertex_input_type="normal"/>
-    <pipeline name="Deferred.Pipeline" file_name="pipeline/deferred/deferred.xml" vertex_input_type="zero"/>
+    <pipeline name="Deferred_Phong.Pipeline" file_name="pipeline/deferred/deferred_phong.xml" vertex_input_type="zero"/>
     <pipeline name="Combine.Pipeline" file_name="pipeline/combine/combine.xml" vertex_input_type="zero"/>
   </pipelines>
   
