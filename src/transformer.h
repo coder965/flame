@@ -7,8 +7,6 @@ namespace tke
 {
 	struct Transformer
 	{
-		int id;
-
 		enum class Type
 		{
 			eMove,

@@ -23,34 +23,14 @@ namespace tke
 		Image *normalHeightMap = nullptr;
 		Image *specRoughnessMap = nullptr;
 
-		int sceneIndex = -1;
-
-		void *ptr = nullptr;
-
-		Material();
-	};
-
-	struct RenderGroupTemplate
-	{
-		enum class Type : int
-		{
-			eOpaque,
-			eAlphaTest,
-			eWater,
-
-			eLast
-		};
-
-		Type type = Type::eOpaque;
-
 		int indiceBase = 0;
 		int indiceCount = 0;
 
-		Material material;
-
 		bool visible = true;
 
-		static char *getTypeName(Type _type);
+		int sceneIndex = -1;
+
+		void *ptr = nullptr;
 	};
 
 	struct Bone
@@ -210,15 +190,7 @@ namespace tke
 		std::vector<glm::vec4> clusterWeights;
 		std::vector<int> indices;
 
-		enum class RenderGroupType
-		{
-			eShadow,
-			eShadowAT,
-			eWater,
-
-			eLast
-		};
-		std::vector<RenderGroupTemplate> renderGroups;
+		std::vector<Material*> materials;
 
 		std::vector<Image*> pImages;
 
@@ -275,6 +247,7 @@ namespace tke
 		BoneData *boneData = nullptr;
 		glm::mat4 *boneMatrix = nullptr;
 		unsigned int boneMatrixUBO;
+
 		AnimationSolver(Model *_pModel);
 		~AnimationSolver();
 		void setAnimation(Animation *_pAnimation);

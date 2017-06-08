@@ -7,41 +7,41 @@
 
 namespace tke
 {
+	enum ObjectType
+	{
+		ObjectTypeStatic,
+		ObjectTypeAnimated
+	};
+
 	struct Model;
 	struct Object : Transformer, Controller
 	{
-		enum class MoveType : int
-		{
-			eNormal,
-			eByAnimationLockY
-		};
-
-		enum class UpMethod : int
-		{
-			eBan,
-			eJet,
-			eJump
-		};
-
-		int refrenceCount = 0;
-		bool dying = false;
+		ObjectType type;
 
 		Model *pModel = nullptr;
 		bool phyx = false;
-		MoveType moveType = MoveType::eNormal;
-		UpMethod upMethod = UpMethod::eJump;
-
-		AnimationSolver *animationSolver = nullptr;
 
 		float floatingTime = 0.f;
 		RigidData *rigidDatas = nullptr;
 
 		int sceneIndex = -1;
 
-		Object(Model *_pModel);
-		~Object();
-		void getRefrence();
-		void release();
+		Object(ObjectType _type, Model *_pModel);
+		virtual ~Object();
+	};
+
+	struct StaticObject : Object
+	{
+		StaticObject(Model *_pModel);
+		virtual ~StaticObject() override;
+	};
+
+	struct AnimatedObject : Object
+	{
+		AnimationSolver *animationSolver;
+
+		AnimatedObject(Model *_pModel);
+		virtual ~AnimatedObject() override;
 	};
 }
 

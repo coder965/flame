@@ -2,48 +2,37 @@
 
 namespace tke
 {
-	Light::Light(Type _type)
+	Light::Light(LightType _type)
 		:type(_type)
 	{
 	}
 
-	void Light::getRefrence()
-	{
-		refrenceCount++;
-	}
-
-	void Light::release()
-	{
-		refrenceCount--;
-		if (refrenceCount == 0)
-			delete this;
-	}
-
 	char *typeNames[] = {
 		"parallax light",
-		"point light"
+		"point light",
+		"spot light"
 	};
 
-	char *Light::getTypeName(Type _type)
+	char *Light::getTypeName(LightType _type)
 	{
-		return typeNames[(int)_type];
+		return typeNames[_type];
 	}
 
 	char *Light::getTypeName()
 	{
-		return typeNames[(int)type];
+		return typeNames[type];
 	}
 
 	ParallaxLight::ParallaxLight()
-		:Light(Type::eParallax)
+		:Light(LightTypeParallax)
 	{}
 
 	PointLight::PointLight()
-		: Light(Type::ePoint)
+		: Light(LightTypePoint)
 	{}
 
 	SpotLight::SpotLight()
 	{
-		type = Type::eSpot;
+		type = LightTypeSpot;
 	}
 }

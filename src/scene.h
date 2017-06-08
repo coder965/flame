@@ -32,24 +32,11 @@ namespace tke
 	struct AnimationTemplate;
 	struct CollisionGroup;
 
-	enum class SkyType
+	enum SkyType
 	{
-		eNull,
-		eAtmosphereScattering,
-		ePanorama
-	};
-
-	struct Atmosphere
-	{
-		glm::vec2 sunDir = glm::vec2(0.f, -90.f);
-		float eSun = 20.f;
-		float innerRadius = 10.f; // The inner (planetary) radius
-		float outerRadius = 10.25f; // The outer (atmosphere) radius
-		float cameraHeight = 10.0002f;
-		float km = 0.0025f;
-		float kr = 0.001f;
-
-		void set();
+		SkyTypeNull,
+		SkyTypeAtmosphereScattering,
+		SkyTypePanorama
 	};
 
 	struct ConstantBufferStruct
@@ -65,7 +52,7 @@ namespace tke
 		float envrCy;
 	};
 
-	struct MatrixUniformBufferStruct
+	struct MatrixBufferShaderStruct
 	{
 		glm::mat4 proj;
 		glm::mat4 projInv;
@@ -77,7 +64,7 @@ namespace tke
 		glm::vec2 viewportDim;
 	};
 
-	struct MaterialUniformBufferStruct
+	struct MaterialShaderStruct
 	{
 		unsigned int albedoSpecCompress;
 		unsigned int roughnessAlphaCompress;
@@ -87,7 +74,7 @@ namespace tke
 		unsigned int dummy;
 	};
 
-	struct LightStruct
+	struct LightShaderStruct
 	{
 		glm::vec4 coord; // w - the light type
 		glm::vec4 color;
@@ -95,17 +82,17 @@ namespace tke
 		glm::vec4 spotData; // spot direction and spot range
 	};
 
-	struct LightBufferStruct
+	struct LightBufferShaderStruct
 	{
 		unsigned int count;
 		unsigned int dummy0;
 		unsigned int dummy1;
 		unsigned int dummy2;
 
-		LightStruct lights[TKE_MAX_LIGHT_COUNT];
+		LightShaderStruct lights[TKE_MAX_LIGHT_COUNT];
 	};
 
-	struct HeightMapTerrainBufferStruct
+	struct HeightMapTerrainShaderStruct
 	{
 		unsigned int patchSize;
 		float ext;
@@ -114,7 +101,7 @@ namespace tke
 		float mapDim;
 	};
 
-	struct AmbientStruct
+	struct AmbientBufferShaderStruct
 	{
 		glm::vec4 v;
 		glm::vec4 fogcolor;
@@ -127,8 +114,14 @@ namespace tke
 		char name[50];
 		char filePath[50];
 
-		SkyType skyType = SkyType::eAtmosphereScattering;
-		Atmosphere atmosphere;
+		SkyType skyType = SkyTypeAtmosphereScattering;
+		glm::vec2 atmosphereSunDir = glm::vec2(0.f, -90.f);
+		float atmosphereSunE = 20.f;
+		float atmosphereInnerRadius = 10.f; // The inner (planetary) radius
+		float atmosphereOuterRadius = 10.25f; // The outer (atmosphere) radius
+		float atmosphereCameraHeight = 10.0002f;
+		float atmosphereKm = 0.0025f;
+		float atmosphereKr = 0.001f;
 		char skyName[50];
 		Image *skyImage = nullptr;
 
@@ -154,8 +147,6 @@ namespace tke
 		Light *pSunLight = nullptr;
 
 		std::vector<Object*> objects;
-		std::vector<Object*> staticObjects;
-		std::vector<Object*> animatedObjects;
 
 		std::vector<Terrain*> terrains;
 
@@ -170,7 +161,7 @@ namespace tke
 
 		std::vector<Image*> storeImages;
 		int getStoreImageIndex(Image *pImage);
-		std::vector<MaterialUniformBufferStruct> storeMaterials;
+		std::vector<MaterialShaderStruct> storeMaterials;
 
 		VertexBuffer *vertexBuffer = nullptr;
 		IndexBuffer *indexBuffer = nullptr;
@@ -204,24 +195,14 @@ namespace tke
 		Model *getModel(char *name);
 		void clearModel();
 
-		Rigidbody *getRigidbody(int id);
-		Shape *getShape(int id);
-		Joint *getJoint(int id);
-		Light *getLight(int id);
-		Object *getObject(int id);
-		Terrain *getTerrain(int id);
-
-		void addLight(Light *pLight, int id);
 		void addLight(Light *pLight);
 		Light *deleteLight(Light *pLight);
 
-		void addObject(Object *pObject, int id);
 		void addObject(Object *pObject);
 		Object *deleteObject(Object *pObject);
 
 		int getCollisionGroupID(int ID, unsigned int mask);
 
-		void addTerrain(Terrain *pTerrain, int id);
 		void addTerrain(Terrain *pTerrain);
 		Terrain *deleteTerrain(Terrain *pTerrain);
 
@@ -273,7 +254,7 @@ namespace tke
 
 	struct SceneSave
 	{
-		Atmosphere atmosphere;
+		//Atmosphere atmosphere;
 		//HDR hdr;
 		//Ambient ambient;
 		float fogThickness;

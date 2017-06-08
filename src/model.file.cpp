@@ -37,7 +37,6 @@ namespace tke
 			reportMinorProgress(0);
 
 			int currentIndex = 0;
-			int currentRenderGroupID = -1;
 			Material *pmt = nullptr;
 
 			std::vector<glm::vec3> rawPositions;
@@ -119,19 +118,19 @@ namespace tke
 						}
 						m->indices.push_back(index);
 						currentIndex++;
-						m->renderGroups[currentRenderGroupID].indiceCount++;
+						pmt->indiceCount++;
 					}
 				}
 				else if (token == "usemtl")
 				{
 					std::string name;
 					ss >> name;
-					for (int i = 0; i < m->renderGroups.size(); i++)
+					for (auto mt : m->materials)
 					{
-						if (name.compare(m->renderGroups[i].material.name) == 0)
+						if (name == mt->name)
 						{
-							currentRenderGroupID = i;
-							m->renderGroups[i].indiceBase = currentIndex;
+							pmt = mt;
+							pmt->indiceBase = currentIndex;
 							break;
 						}
 					}
@@ -156,12 +155,13 @@ namespace tke
 
 							if (token == "newmtl")
 							{
-								m->renderGroups.emplace_back();
+								pmt = new Material;
 
 								std::string mtlName;
 								ss >> mtlName;
-								pmt = &m->renderGroups.back().material;
 								pmt->name = mtlName;
+
+								m->materials.push_back(pmt);
 							}
 							else if (token == "tk_spec")
 							{
@@ -372,25 +372,23 @@ namespace tke
 				m->indices[i + 1] = indice;
 			}
 
-			int renderGroupCount;
-			file >> renderGroupCount;
-			m->renderGroups.resize(renderGroupCount);
+			int materialCount;
+			file >> materialCount;
 			int currentIndiceVertex = 0;
-			for (int i = 0; i < renderGroupCount; i++)
+			for (int i = 0; i < materialCount; i++)
 			{
 				MaterialData data;
 				file.read((char*)&data, sizeof(MaterialData));
 
-				auto prg = &m->renderGroups[i];
-				auto pmt = &prg->material;
+				auto pmt = new Material;
 				pmt->name = std::to_string(i);
 
 				pmt->albedoR = data.diffuse.r * 255;
 				pmt->albedoG = data.diffuse.g * 255;
 				pmt->albedoB = data.diffuse.b * 255;
 				pmt->alpha = data.diffuse.a * 255;
-				prg->indiceBase = currentIndiceVertex;
-				prg->indiceCount = data.indiceCount;
+				pmt->indiceBase = currentIndiceVertex;
+				pmt->indiceCount = data.indiceCount;
 
 				auto pImage = m->getImage(data.mapName);
 				if (!pImage)
@@ -402,6 +400,8 @@ namespace tke
 
 
 				currentIndiceVertex += data.indiceCount;
+
+				m->materials.push_back(pmt);
 			}
 
 			unsigned short boneCount;
@@ -701,35 +701,33 @@ namespace tke
 
 			reportMinorProgress(50);
 
-			int renderGroupCount;
-			file >> renderGroupCount;
-			for (int i = 0; i < renderGroupCount; i++)
+			int materialCount;
+			file >> materialCount;
+			for (int i = 0; i < materialCount; i++)
 			{
-				RenderGroupTemplate rg;
+				auto pmt = new Material;
 
-				file.read((char*)rg.type, sizeof(RenderGroupTemplate::Type));
+				file >> pmt->indiceBase;
+				file >> pmt->indiceCount;
 
-				file >> rg.indiceBase;
-				file >> rg.indiceCount;
+				file >> pmt->visible;
 
-				file >> rg.visible;
-
-				file >> rg.material.name;
-				file >> rg.material.albedoR;
-				file >> rg.material.albedoG;
-				file >> rg.material.albedoB;
-				file >> rg.material.alpha;
-				file >> rg.material.spec;
-				file >> rg.material.roughness;
+				file >> pmt->name;
+				file >> pmt->albedoR;
+				file >> pmt->albedoG;
+				file >> pmt->albedoB;
+				file >> pmt->alpha;
+				file >> pmt->spec;
+				file >> pmt->roughness;
 				std::string name;
 				file >> name;
-				rg.material.albedoAlphaMap = m->getImage(name.c_str());
+				pmt->albedoAlphaMap = m->getImage(name.c_str());
 				file >> name;
-				rg.material.normalHeightMap = m->getImage(name.c_str());
+				pmt->normalHeightMap = m->getImage(name.c_str());
 				file >> name;
-				rg.material.specRoughnessMap = m->getImage(name.c_str());
+				pmt->specRoughnessMap = m->getImage(name.c_str());
 
-				m->renderGroups.push_back(rg);
+				m->materials.push_back(pmt);
 			}
 
 			reportMinorProgress(80);
@@ -916,30 +914,27 @@ namespace tke
 				file.write((char*)m->indices.data(), vertexCount * sizeof(int));
 			}
 
-			file << m->renderGroups.size();
-			for (auto &rg : m->renderGroups)
+			file << m->materials.size();
+			for (auto mt : m->materials)
 			{
-				int type = (int)rg.type;
-				file << type;
+				file << mt->indiceBase;
+				file << mt->indiceCount;
 
-				file << rg.indiceBase;
-				file << rg.indiceCount;
+				file << mt->visible;
 
-				file << rg.visible;
+				file << mt->name;
 
-				file << rg.material.name;
-
-				file << rg.material.albedoR;
-				file << rg.material.albedoG;
-				file << rg.material.albedoB;
-				file << rg.material.alpha;
-				file << rg.material.spec;
-				file << rg.material.roughness;
-				if (rg.material.albedoAlphaMap) file << rg.material.albedoAlphaMap->filename;
+				file << mt->albedoR;
+				file << mt->albedoG;
+				file << mt->albedoB;
+				file << mt->alpha;
+				file << mt->spec;
+				file << mt->roughness;
+				if (mt->albedoAlphaMap) file << mt->albedoAlphaMap->filename;
 				else file << 0;
-				if (rg.material.normalHeightMap) file << rg.material.normalHeightMap->filename;
+				if (mt->normalHeightMap) file << mt->normalHeightMap->filename;
 				else file << 0;
-				if (rg.material.specRoughnessMap) file << rg.material.specRoughnessMap->filename;
+				if (mt->specRoughnessMap) file << mt->specRoughnessMap->filename;
 				else file << 0;
 			}
 

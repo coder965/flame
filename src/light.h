@@ -6,19 +6,16 @@
 
 namespace tke
 {
+	enum LightType
+	{
+		LightTypeParallax,
+		LightTypePoint,
+		LightTypeSpot
+	};
+
 	struct Light : Transformer
 	{
-		enum class Type : int
-		{
-			eParallax,
-			ePoint,
-			eSpot
-		};
-
-		int refrenceCount = 0;
-		bool dying = false;
-
-		Type type;
+		LightType type;
 		glm::vec3 color = glm::vec3(0.5f);
 
 		bool shadow = false;
@@ -26,10 +23,8 @@ namespace tke
 		int sceneIndex = -1;
 		int sceneShadowIndex = -1;
 
-		Light(Type _type);
-		void getRefrence();
-		void release();
-		static char *getTypeName(Type _type);
+		Light(LightType _type);
+		static char *getTypeName(LightType _type);
 		char *getTypeName();
 	};
 

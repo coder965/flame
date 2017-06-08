@@ -6,21 +6,6 @@
 
 namespace tke
 {
-	Material::Material()
-	{
-		name[0] = 0;
-	}
-
-	char *RenderGroupTemplate::getTypeName(Type _type)
-	{
-		static char *names[] = {
-			"Opaque",
-			"Alpha Test",
-			"Water"
-		};
-		return names[(int)_type];
-	}
-
 	Animation::~Animation()
 	{
 		for (auto t : pTracks)

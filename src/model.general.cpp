@@ -314,8 +314,9 @@ namespace tke
 
 			addTriangleVertex(triangleModel, glm::mat3(), glm::vec3());
 
-			triangleModel->renderGroups.resize(1);
-			triangleModel->renderGroups[0].indiceCount = triangleModel->indices.size();
+			auto mt = new Material;
+			mt->indiceCount = triangleModel->indices.size();
+			triangleModel->materials.push_back(mt);
 
 			scene->addModel(triangleModel);
 
@@ -328,8 +329,9 @@ namespace tke
 
 			addCubeVertex(cubeModel, glm::mat3(), glm::vec3(), 1.f);
 
-			cubeModel->renderGroups.resize(1);
-			cubeModel->renderGroups[0].indiceCount = cubeModel->indices.size();
+			auto mt = new Material;
+			mt->indiceCount = cubeModel->indices.size();
+			cubeModel->materials.push_back(mt);
 
 			auto pRigidbody = new Rigidbody;
 			pRigidbody->mode = Rigidbody::Mode::eDynamic;
@@ -350,11 +352,13 @@ namespace tke
 
 			addSphereVertex(sphereModel, glm::mat3(), glm::vec3(), 0.5f, 32, 32);
 
-			sphereModel->renderGroups.resize(2);
-			auto count = sphereModel->indices.size() / 2;
-			sphereModel->renderGroups[0].indiceCount = count;
-			sphereModel->renderGroups[1].indiceBase = count;
-			sphereModel->renderGroups[1].indiceCount = count;
+			auto mt0 = new Material;
+			mt0->indiceCount = sphereModel->indices.size() / 2;
+			sphereModel->materials.push_back(mt0);
+			auto mt1 = new Material;
+			mt1->indiceBase = sphereModel->indices.size() / 2;
+			mt1->indiceCount = sphereModel->indices.size() / 2;
+			sphereModel->materials.push_back(mt1);
 
 			auto pRigidbody = new Rigidbody;
 			pRigidbody->mode = Rigidbody::Mode::eDynamic;
@@ -375,8 +379,9 @@ namespace tke
 
 			addCylinderVertex(cylinderModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
 
-			cylinderModel->renderGroups.resize(1);
-			cylinderModel->renderGroups[0].indiceCount = cylinderModel->indices.size();
+			auto mt = new Material;
+			mt->indiceCount = cylinderModel->indices.size();
+			cylinderModel->materials.push_back(mt);
 
 			auto pRigidbody = new Rigidbody;
 			pRigidbody->mode = Rigidbody::Mode::eDynamic;
@@ -397,8 +402,9 @@ namespace tke
 
 			addConeVertex(coneModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
 
-			coneModel->renderGroups.resize(1);
-			coneModel->renderGroups[0].indiceCount = coneModel->indices.size();
+			auto mt = new Material;
+			mt->indiceCount = coneModel->indices.size();
+			coneModel->materials.push_back(mt);
 
 			scene->addModel(coneModel);
 
@@ -414,8 +420,9 @@ namespace tke
 			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
 			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
 
-			arrowModel->renderGroups.resize(1);
-			arrowModel->renderGroups[0].indiceCount = arrowModel->indices.size();
+			auto mt = new Material;
+			mt->indiceCount = arrowModel->indices.size();
+			arrowModel->materials.push_back(mt);
 
 			scene->addModel(arrowModel);
 
@@ -430,8 +437,9 @@ namespace tke
 
 			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
 
-			torusModel->renderGroups.resize(1);
-			torusModel->renderGroups[0].indiceCount = torusModel->indices.size();
+			auto mt = new Material;
+			mt->indiceCount = torusModel->indices.size();
+			torusModel->materials.push_back(mt);
 
 			scene->addModel(torusModel);
 
@@ -449,10 +457,13 @@ namespace tke
 			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
 			int ic1 = hamerModel->indices.size();
 
-			hamerModel->renderGroups.resize(2);
-			hamerModel->renderGroups[0].indiceCount = ic0;
-			hamerModel->renderGroups[1].indiceBase = ic0;
-			hamerModel->renderGroups[1].indiceCount = ic1 - ic0;
+			auto mt0 = new Material;
+			mt0->indiceCount = ic0;
+			hamerModel->materials.push_back(mt0);
+			auto mt1 = new Material;
+			mt1->indiceBase = ic0;
+			mt1->indiceCount = ic1 - ic0;
+			hamerModel->materials.push_back(mt1);
 
 			scene->addModel(hamerModel);
 

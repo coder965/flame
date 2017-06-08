@@ -19,33 +19,19 @@ namespace tke
 
 	//}
 
-	void Atmosphere::set()
-	{
-		float fScaleDepth = 0.25;// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
-
-		auto mrX = glm::mat3(glm::rotate(sunDir.x, glm::vec3(0.f, 1.f, 0.f)));
-		auto v3LightPosition = glm::normalize(glm::mat3(glm::rotate(sunDir.y, mrX * glm::vec3(0.f, 0.f, 1.f))) * mrX * glm::vec3(1.f, 0.f, 0.f));// The direction vector to the light source
-
-		if (scene->pSunLight)
-			scene->pSunLight->setEuler(glm::vec3(sunDir, 0.f));
-
-		float fScale = 1.f / (outerRadius - innerRadius);	// 1 / (fOuterRadius - fInnerRadius)
-		float fScaleOverScaleDepth = fScale / fScaleDepth;	// fScale / fScaleDepth
-	}
-
 	Scene::Scene()
 	{
 		InitializeCriticalSection(&cs);
 
 		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-		matrixBuffer = new UniformBuffer(sizeof MatrixUniformBufferStruct);
+		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
 		objectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
 		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT);
-		materialBuffer = new UniformBuffer(sizeof(MaterialUniformBufferStruct) * TKE_MAX_MATERIAL_COUNT);
-		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainBufferStruct) * 8);
+		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
+		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
 		proceduralTerrainBuffer = new UniformBuffer(sizeof(glm::vec2));
-		lightBuffer = new UniformBuffer(sizeof(LightBufferStruct));
-		ambientBuffer = new UniformBuffer(sizeof AmbientStruct);
+		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
+		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
 
 		vertexBuffer = new VertexBuffer();
 		indexBuffer = new IndexBuffer();
@@ -96,8 +82,6 @@ namespace tke
 		stru.envrCx = TKE_ENVR_SIZE_CX;
 		stru.envrCy = TKE_ENVR_SIZE_CY;
 		constantBuffer->update(&stru, *stagingBuffer);
-
-		atmosphere.set();
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
@@ -178,17 +162,15 @@ namespace tke
 				storeImages.push_back(pSrcImage);
 			}
 		}
-		for (auto &rg : pModel->renderGroups)
+		for (auto mt : pModel->materials)
 		{
-			auto pSrcMaterial = &rg.material;
+			MaterialShaderStruct stru;
+			stru.albedoSpecCompress = mt->albedoR + (mt->albedoG << 8) + (mt->albedoB << 16) + (mt->spec << 24);
+			stru.roughnessAlphaCompress = mt->roughness + (mt->alpha << 8);
 
-			MaterialUniformBufferStruct material;
-			material.albedoSpecCompress = pSrcMaterial->albedoR + (pSrcMaterial->albedoG << 8) + (pSrcMaterial->albedoB << 16) + (pSrcMaterial->spec << 24);
-			material.roughnessAlphaCompress = pSrcMaterial->roughness + (pSrcMaterial->alpha << 8);
-
-			auto albedoAlphaMapIndex = getStoreImageIndex(pSrcMaterial->albedoAlphaMap) + 1;
-			auto normalHeightMapIndex = getStoreImageIndex(pSrcMaterial->normalHeightMap) + 1;
-			auto specRoughnessMapIndex = getStoreImageIndex(pSrcMaterial->specRoughnessMap) + 1;
+			auto albedoAlphaMapIndex = getStoreImageIndex(mt->albedoAlphaMap) + 1;
+			auto normalHeightMapIndex = getStoreImageIndex(mt->normalHeightMap) + 1;
+			auto specRoughnessMapIndex = getStoreImageIndex(mt->specRoughnessMap) + 1;
 
 			int sameIndex = -1;
 			int materialIndex = 0;
@@ -205,14 +187,14 @@ namespace tke
 				if (albedoAlphaMapIndex != 0 && albedoAlphaMapIndex == storeAlbedoAlphaMapIndex)
 					theSameAlbedoAlpha = true;
 				else if (albedoAlphaMapIndex == 0 && storeAlbedoAlphaMapIndex == 0 &&
-					material.albedoSpecCompress == storeMaterial.albedoSpecCompress)
+					stru.albedoSpecCompress == storeMaterial.albedoSpecCompress)
 					theSameAlbedoAlpha = true;
 				if (normalHeightMapIndex == storeNormalHeightMapIndex)
 					theSameNormalHeight = true;
 				if (specRoughnessMapIndex != 0 && specRoughnessMapIndex == storeSpecRoughnessMapIndex)
 					theSameSpecRoughness = true;
 				else if (specRoughnessMapIndex == 0 && storeSpecRoughnessMapIndex == 0 &&
-					material.roughnessAlphaCompress == storeMaterial.roughnessAlphaCompress)
+					stru.roughnessAlphaCompress == storeMaterial.roughnessAlphaCompress)
 					theSameSpecRoughness = true;
 
 				if (theSameAlbedoAlpha && theSameNormalHeight && theSameSpecRoughness)
@@ -225,13 +207,13 @@ namespace tke
 			}
 			if (sameIndex == -1)
 			{
-				pSrcMaterial->sceneIndex = storeMaterials.size();
-				material.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 10) + (specRoughnessMapIndex << 20);
-				storeMaterials.push_back(material);
+				mt->sceneIndex = storeMaterials.size();
+				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 10) + (specRoughnessMapIndex << 20);
+				storeMaterials.push_back(stru);
 			}
 			else
 			{
-				pSrcMaterial->sceneIndex = sameIndex;
+				mt->sceneIndex = sameIndex;
 			}
 		}
 		models.push_back(pModel);
@@ -257,94 +239,13 @@ namespace tke
 		models.clear();
 	}
 
-	Rigidbody *Scene::getRigidbody(int id)
-	{
-		for (auto m : models)
-		{
-			for (auto pRigidbody : m->rigidbodies)
-			{
-				if (pRigidbody->id == id)
-					return pRigidbody;
-			}
-		}
-		return nullptr;
-	}
-
-	Shape *Scene::getShape(int id)
-	{
-		for (auto m : models)
-		{
-			for (auto pRigidbody : m->rigidbodies)
-			{
-				for (auto pShape : pRigidbody->shapes)
-				{
-					if (pShape->id == id)
-						return pShape;
-				}
-			}
-		}
-		return nullptr;
-	}
-
-	Joint *Scene::getJoint(int id)
-	{
-		for (auto m : models)
-		{
-			for (auto pJoint : m->joints)
-			{
-				if (pJoint->id == id)
-					return pJoint;
-			}
-		}
-		return nullptr;
-	}
-
-	Light *Scene::getLight(int id)
-	{
-		for (auto pLight : lights)
-		{
-			if (pLight->id == id)
-				return pLight;
-		}
-		return nullptr;
-	}
-
-	Object *Scene::getObject(int id)
-	{
-		for (auto pObject : objects)
-		{
-			if (pObject->id == id)
-				return pObject;
-		}
-		return nullptr;
-	}
-
-	Terrain *Scene::getTerrain(int id)
-	{
-		for (auto pTerrain : terrains)
-		{
-			if (pTerrain->id == id)
-				return pTerrain;
-		}
-		return nullptr;
-	}
-
-
-	void Scene::addLight(Light *pLight, int id)
+	void Scene::addLight(Light *pLight)
 	{
 		EnterCriticalSection(&cs);
-		pLight->id = id;
-		pLight->getRefrence();
 		lights.push_back(pLight);
 		tke::needRedraw = true;
 		lightCountChanged = true;
 		LeaveCriticalSection(&cs);
-	}
-
-	void Scene::addLight(Light *pLight)
-	{
-		static auto magicNumber = 0;
-		addLight(pLight, magicNumber++);
 	}
 
 	Light *Scene::deleteLight(Light *pLight)
@@ -354,20 +255,19 @@ namespace tke
 		{
 			if (*it == pLight)
 			{
-				pLight->dying = true;
-				pLight->release();
 				for (auto itt = it + 1; itt != lights.end(); itt++)
 				{
 					(*itt)->sceneIndex--;
 					if ((*itt)->shadow && pLight->shadow)
 					{
-						if (pLight->type == Light::Type::eParallax)
+						if (pLight->type == LightTypeParallax)
 							(*itt)->sceneShadowIndex--;
-						else if (pLight->type == Light::Type::ePoint)
+						else if (pLight->type == LightTypePoint)
 							(*itt)->sceneShadowIndex -= 6;
 					}
 					(*itt)->changed = true;
 				}
+				delete pLight;
 				it = lights.erase(it);
 				if (it == lights.end())
 					pLight = nullptr;
@@ -382,73 +282,30 @@ namespace tke
 		return pLight;
 	}
 
-	void Scene::addObject(Object *pObject, int id)
+	void Scene::addObject(Object *pObject)
 	{
 		EnterCriticalSection(&cs);
-		pObject->getRefrence();
-		pObject->id = id;
+
 		objects.push_back(pObject);
-		auto pModel = pObject->pModel;
-		if (pModel->animated)
-		{
-			pObject->animationSolver = new AnimationSolver(pObject->pModel);
-			animatedObjects.push_back(pObject);
-		}
-		else
-		{
-			staticObjects.push_back(pObject);
-		}
-		if (pModel->rigidbodies.size() > 0)
-			pObject->rigidDatas = new RigidData[pModel->rigidbodies.size()];
 
 		tke::needRedraw = true;
 		needUpdateIndirectBuffer = true;
 		LeaveCriticalSection(&cs);
 	}
 
-	void Scene::addObject(Object *pObject)
-	{
-		static auto magicNumber = 0;
-		addObject(pObject, magicNumber++);
-	}
-
 	Object *Scene::deleteObject(Object *pObject)
 	{
 		EnterCriticalSection(&cs);
-		if (pObject->pModel->animated)
-		{
-			for (auto it = animatedObjects.begin(); it != animatedObjects.end(); it++)
-			{
-				if (*it == pObject)
-				{
-					animatedObjects.erase(it);
-					break;
-				}
-			}
-		}
-		else
-		{
-			for (auto it = staticObjects.begin(); it != staticObjects.end(); it++)
-			{
-				if (*it == pObject)
-				{
-					staticObjects.erase(it);
-					break;
-				}
-			}
-		}
 		for (auto it = objects.begin(); it != objects.end(); it++)
 		{
 			if (*it == pObject)
 			{
-				pObject->dying = true;
-				pObject->release();
 				for (auto itt = it + 1; itt != objects.end(); itt++)
 				{
 					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
 				}
-
+				delete pObject;
 				if (it > objects.begin())
 					pObject = *(it - 1);
 				else
@@ -484,23 +341,15 @@ namespace tke
 		return count;
 	}
 
-	void Scene::addTerrain(Terrain *pTerrain, int id)
+	void Scene::addTerrain(Terrain *pTerrain)
 	{
 		EnterCriticalSection(&cs);
 
-		pTerrain->id = id;
-		pTerrain->getRefrence();
 		terrains.push_back(pTerrain);
 
 		tke::needRedraw = true;
 
 		LeaveCriticalSection(&cs);
-	}
-
-	void Scene::addTerrain(Terrain *pTerrain)
-	{
-		static auto magicNumber = 0;
-		addTerrain(pTerrain, magicNumber++);
 	}
 
 	Terrain *Scene::deleteTerrain(Terrain *pTerrain)
@@ -511,8 +360,7 @@ namespace tke
 		{
 			if (*it == pTerrain)
 			{
-				pTerrain->dying = true;
-				pTerrain->release();
+				delete pTerrain;
 				if (it > terrains.begin())
 					pTerrain = *(it - 1);
 				else
@@ -540,8 +388,6 @@ namespace tke
 		for (auto pObject : objects)
 			delete pObject;
 		objects.clear();
-		animatedObjects.clear();
-		staticObjects.clear();
 
 		for (auto pTerrain : terrains)
 			delete pTerrain;
@@ -581,7 +427,7 @@ namespace tke
 		}
 		if (needUpdateProjMatrix || camera.changed)
 		{
-			MatrixUniformBufferStruct stru;
+			MatrixBufferShaderStruct stru;
 			stru.proj = *pMatProj;
 			stru.projInv = *pMatProjInv;
 			stru.view = camera.getMatInv();
@@ -594,15 +440,15 @@ namespace tke
 		}
 		if (needUpdataSky)
 		{
-			AmbientStruct stru;
+			AmbientBufferShaderStruct stru;
 			stru.v = glm::vec4(ambientColor, 0);
 			stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 			ambientBuffer->update(&stru, *stagingBuffer);
 
-			if (skyType == SkyType::eNull)
+			if (skyType == SkyTypeNull)
 			{
 			}
-			else if (skyType == SkyType::ePanorama)
+			else if (skyType == SkyTypePanorama)
 			{
 				// TODO : FIX SKY FROM FILE
 				if (skyImage)
@@ -610,13 +456,13 @@ namespace tke
 					//writes.push_back(vk->writeDescriptorSet(engine->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(engine->colorSampler), 0));
 					//writes.push_back(vk->writeDescriptorSet(engine->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(engine->colorSampler), 0));
 
-					AmbientStruct stru;
+					AmbientBufferShaderStruct stru;
 					stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->m_mipmapLevels - 1);
 					stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 					ambientBuffer->update(&stru, *stagingBuffer);
 				}
 			}
-			else if (skyType == SkyType::eAtmosphereScattering)
+			else if (skyType == SkyTypeAtmosphereScattering)
 			{
 				static VkRenderPass postRenderPass;
 
@@ -696,6 +542,19 @@ namespace tke
 
 				if (panoramaPipeline)
 				{ // update Atmospheric Scattering
+
+					{
+						float fScaleDepth = 0.25;// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
+
+						auto mrX = glm::mat3(glm::rotate(atmosphereSunDir.x, glm::vec3(0.f, 1.f, 0.f)));
+						auto v3LightPosition = glm::normalize(glm::mat3(glm::rotate(atmosphereSunDir.y, mrX * glm::vec3(0.f, 0.f, 1.f))) * mrX * glm::vec3(1.f, 0.f, 0.f));// The direction vector to the light source
+
+						if (scene->pSunLight)
+							scene->pSunLight->setEuler(glm::vec3(atmosphereSunDir, 0.f));
+
+						float fScale = 1.f / (atmosphereOuterRadius - atmosphereInnerRadius);	// 1 / (fOuterRadius - fInnerRadius)
+						float fScaleOverScaleDepth = fScale / fScaleDepth;	// fScale / fScaleDepth
+					}
 
 					static int pano_tex_position = -1;
 					if (pano_tex_position == -1) pano_tex_position = panoramaPipeline->descriptorPosition("tex");
@@ -798,7 +657,7 @@ namespace tke
 
 								descriptorPool.addWrite(deferredIblPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->m_mipmapLevels));
 
-								AmbientStruct stru;
+								AmbientBufferShaderStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
 								stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 								ambientBuffer->update(&stru, *stagingBuffer);
@@ -816,26 +675,26 @@ namespace tke
 		{
 			std::vector<VkBufferCopy> ranges;
 
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(HeightMapTerrainBufferStruct) * terrains.size());
+			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(HeightMapTerrainShaderStruct) * terrains.size());
 
 			auto terrainIndex = 0;
 			for (auto pTerrain : terrains)
 			{
 				if (pTerrain->changed)
 				{
-					HeightMapTerrainBufferStruct stru;
+					HeightMapTerrainShaderStruct stru;
 					stru.patchSize = pTerrain->patchSize;
 					stru.ext = pTerrain->ext;
 					stru.height = pTerrain->height;
 					stru.tessFactor = pTerrain->tessFactor;
 					stru.mapDim = pTerrain->heightMap->m_width;
 
-					auto srcOffset = sizeof(HeightMapTerrainBufferStruct) * ranges.size();
-					memcpy(map + srcOffset, &stru, sizeof(HeightMapTerrainBufferStruct));
+					auto srcOffset = sizeof(HeightMapTerrainShaderStruct) * ranges.size();
+					memcpy(map + srcOffset, &stru, sizeof(HeightMapTerrainShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(HeightMapTerrainBufferStruct) * terrainIndex;
-					range.size = sizeof(HeightMapTerrainBufferStruct);
+					range.dstOffset = sizeof(HeightMapTerrainShaderStruct) * terrainIndex;
+					range.size = sizeof(HeightMapTerrainShaderStruct);
 					ranges.push_back(range);
 
 					static int position = -1;
@@ -891,7 +750,7 @@ namespace tke
 		if (needUpdateMaterialBuffer)
 		{
 			if (storeMaterials.size() > 0)
-				materialBuffer->update(storeMaterials.data(), *stagingBuffer, sizeof(MaterialUniformBufferStruct) * storeMaterials.size());
+				materialBuffer->update(storeMaterials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * storeMaterials.size());
 			needUpdateMaterialBuffer = false;
 		}
 		if (needUpdateSampler)
@@ -904,13 +763,15 @@ namespace tke
 			descriptorPool.update();
 			needUpdateSampler = false;
 		}
-		if (staticObjects.size() > 0)
+		if (objects.size() > 0)
 		{
-			int objectIndex = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * staticObjects.size());
-			for (auto pObject : staticObjects)
+			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * objects.size());
+			int objectIndex = 0;
+			for (auto pObject : objects)
 			{
+				if (pObject->type != ObjectTypeStatic) continue;
+
 				if (pObject->changed)
 				{
 					auto srcOffset = sizeof(glm::mat4) * ranges.size();
@@ -952,23 +813,25 @@ namespace tke
 		}
 		if (needUpdateIndirectBuffer)
 		{
-			if (staticObjects.size() > 0)
+			if (objects.size() > 0)
 			{
 				std::vector<VkDrawIndexedIndirectCommand> commands;
 
 				int objID = 0;
-				for (auto pObject : staticObjects)
+				for (auto pObject : objects)
 				{
+					if (pObject->type != ObjectTypeStatic) continue;
+
 					auto pModel = pObject->pModel;
 
-					for (auto &rg : pModel->renderGroups)
+					for (auto mt : pModel->materials)
 					{
 						VkDrawIndexedIndirectCommand command = {};
 						command.instanceCount = 1;
-						command.indexCount = rg.indiceCount;
+						command.indexCount = mt->indiceCount;
 						command.vertexOffset = pModel->vertexBase;
-						command.firstIndex = pModel->indiceBase + rg.indiceBase;
-						command.firstInstance = (objID << 16) + rg.material.sceneIndex;
+						command.firstIndex = pModel->indiceBase + mt->indiceBase;
+						command.firstInstance = (objID << 16) + mt->sceneIndex;
 
 						commands.push_back(command);
 					}
@@ -978,7 +841,7 @@ namespace tke
 
 				drawCallCount = commands.size();
 
-				objectIndirectBuffer->update(commands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * drawCallCount);
+				if (commands.size() > 0) objectIndirectBuffer->update(commands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * commands.size());
 			}
 			needUpdateIndirectBuffer = false;
 		}
@@ -986,33 +849,33 @@ namespace tke
 		{ // light attribute
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightStruct) * lights.size());
+			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightShaderStruct) * lights.size());
 			for (auto pLight : lights)
 			{
 				if (pLight->changed)
 				{
-					auto srcOffset = sizeof(LightStruct) * ranges.size();
-					LightStruct stru;
-					if (pLight->type == Light::Type::eParallax)
+					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
+					LightShaderStruct stru;
+					if (pLight->type == LightTypeParallax)
 						stru.coord = glm::vec4(-pLight->getAxis()[0], 0.f);
 					else
 						stru.coord = glm::vec4(pLight->getCoord(), pLight->type);
 					stru.color = glm::vec4(pLight->color, 1.f);
-					if (pLight->type == Light::Type::ePoint || pLight->type == Light::Type::eSpot)
+					if (pLight->type == LightTypePoint || pLight->type == LightTypeSpot)
 					{
 						auto pointLight = (PointLight*)pLight;
 						stru.decayFactor = glm::vec4(pointLight->decayFactor, 0.f);
 					}
-					if (pLight->type == Light::Type::eSpot)
+					if (pLight->type == LightTypeSpot)
 					{
 						auto spotLight = (SpotLight*)pLight;
 						stru.spotData = glm::vec4(spotLight->spotDirection, spotLight->spotRange);
 					}
-					memcpy(map + srcOffset, &stru, sizeof(LightStruct));
+					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
-					range.dstOffset = 16 + sizeof(LightStruct) * lightIndex;
-					range.size = sizeof(LightStruct);
+					range.dstOffset = 16 + sizeof(LightShaderStruct) * lightIndex;
+					range.size = sizeof(LightShaderStruct);
 					ranges.push_back(range);
 				}
 				lightIndex++;
@@ -1029,7 +892,7 @@ namespace tke
 				if (pLight->shadow)
 				{
 					pLight->sceneShadowIndex = shadowCount;
-					if (pLight->type == Light::Type::eParallax)
+					if (pLight->type == LightTypeParallax)
 					{
 						if (pLight->changed || camera.changed)
 						{
@@ -1056,7 +919,7 @@ namespace tke
 						}
 						shadowCount++;
 					}
-					else if (pLight->type == Light::Type::ePoint)
+					else if (pLight->type == LightTypePoint)
 					{
 						if (pLight->changed)
 						{
@@ -1124,8 +987,12 @@ namespace tke
 
 	void Scene::updateAnimation()
 	{
-		for (auto pObject : animatedObjects)
+		for (auto object : objects)
 		{
+			if (object->type != ObjectTypeAnimated) continue;
+
+			auto pObject = (AnimatedObject*)object;
+
 			pObject->animationSolver->sample();
 			for (int i = 0; i < pObject->pModel->bones.size(); i++)
 				pObject->animationSolver->boneMatrix[i] = glm::mat4();
@@ -1136,8 +1003,12 @@ namespace tke
 
 	void Scene::updateAnimationUBO()
 	{
-		for (auto pObject : animatedObjects)
+		for (auto object : objects)
 		{
+			if (object->type != ObjectTypeAnimated) continue;
+
+			auto pObject = (AnimatedObject*)object;
+
 			pObject->animationSolver->fixMatrix();
 			pObject->animationSolver->updateUBO();
 		}

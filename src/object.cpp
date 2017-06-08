@@ -2,26 +2,33 @@
 
 namespace tke
 {
-	Object::Object(Model *_pModel)
-		:pModel(_pModel)
+	Object::Object(ObjectType _type, Model *_pModel)
+		:type(_type), pModel(_pModel)
 	{
+		if (pModel->rigidbodies.size() > 0)
+			rigidDatas = new RigidData[pModel->rigidbodies.size()];
 	}
 
 	Object::~Object()
 	{
-		delete animationSolver;
 		delete[]rigidDatas;
 	}
 
-	void Object::getRefrence()
+	StaticObject::StaticObject(Model *_pModel)
+		:Object(ObjectTypeStatic, _pModel)
 	{
-		refrenceCount++;
 	}
 
-	void Object::release()
+	StaticObject::~StaticObject() {}
+
+	AnimatedObject::AnimatedObject(Model *_pModel)
+		: Object(ObjectTypeAnimated, _pModel)
 	{
-		refrenceCount--;
-		if (refrenceCount == 0)
-			delete this;
+		animationSolver = new AnimationSolver(pModel);
+	}
+
+	AnimatedObject::~AnimatedObject() 
+	{
+		delete animationSolver;
 	}
 }
