@@ -1,6 +1,0 @@
-<stage>
-	<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
-	<descriptor type="uniform_buffer" binding="1" count="2" name="INSTANCE"/>
-	<push_constant offset="0" size="32"/>
-</stage>
-

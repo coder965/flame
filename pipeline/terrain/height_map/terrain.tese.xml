@@ -1,6 +1,0 @@
-<stage>
-	<descriptor type="image_n_sampler" binding="2" count="8" name="displacementMap"/>
-	<descriptor type="uniform_buffer" binding="1" count="1" name="TERRAIN"/>
-	<descriptor type="uniform_buffer" binding="0" count="1" name="MATRIX"/>
-</stage>
-

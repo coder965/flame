@@ -1,4 +1,0 @@
-<stage>
-	<descriptor type="image_n_sampler" binding="1" count="1" name="tex"/>
-</stage>
-

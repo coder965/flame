@@ -1,4 +1,0 @@
-<stage>
-	<descriptor type="uniform_buffer" binding="1" count="1" name="FRAG_DATA"/>
-</stage>
-
