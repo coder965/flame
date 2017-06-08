@@ -17,11 +17,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "world_editor", "world_edito
 		{6F5FD7B3-5E83-4A48-B23D-497D31A48266} = {6F5FD7B3-5E83-4A48-B23D-497D31A48266}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader_compiler", "shader_compiler\shader_compiler.vcxproj", "{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}"
-	ProjectSection(ProjectDependencies) = postProject
-		{6F5FD7B3-5E83-4A48-B23D-497D31A48266} = {6F5FD7B3-5E83-4A48-B23D-497D31A48266}
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -54,12 +49,6 @@ Global
 		{42182552-4A07-4EE4-860C-226A8D59CDC4}.Release|x64.ActiveCfg = Release|Win32
 		{42182552-4A07-4EE4-860C-226A8D59CDC4}.Release|x86.ActiveCfg = Release|Win32
 		{42182552-4A07-4EE4-860C-226A8D59CDC4}.Release|x86.Build.0 = Release|Win32
-		{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}.Debug|x64.ActiveCfg = Debug|Win32
-		{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}.Debug|x86.ActiveCfg = Debug|Win32
-		{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}.Debug|x86.Build.0 = Debug|Win32
-		{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}.Release|x64.ActiveCfg = Release|Win32
-		{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}.Release|x86.ActiveCfg = Release|Win32
-		{A08CCC58-090D-4F4D-9D7F-4AB31F3342D8}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

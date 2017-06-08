@@ -1,2 +1,0 @@
-flex yy.l
-pause
