@@ -1782,6 +1782,49 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 
+		updateDescriptors();
+	}
+
+	Pipeline::~Pipeline()
+	{
+		m_pipelineLayout->refCount--;
+		if (m_pipelineLayout->refCount == 0)
+		{
+			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); it++)
+			{
+				if (*it == m_pipelineLayout)
+				{
+					pipelineLayouts.erase(it);
+					delete m_pipelineLayout;
+					break;
+				}
+			}
+		}
+
+		m_descriptorSetLayout->refCount--;
+		if (m_descriptorSetLayout->refCount == 0)
+		{
+			for (auto it = descriptorSetLayouts.begin(); it != descriptorSetLayouts.end(); it++)
+			{
+				if (*it == m_descriptorSetLayout)
+				{
+					descriptorSetLayouts.erase(it);
+					delete m_descriptorSetLayout;
+					break;
+				}
+			}
+		}
+
+		device.cs.lock();
+		vkDestroyPipeline(device.v, m_pipeline, nullptr);
+		device.cs.unlock();
+
+		for (int i = 0; i < 5; i++)
+			delete stages[i];
+	}
+
+	void Pipeline::updateDescriptors()
+	{
 		for (auto &link : links)
 		{
 			DescriptorType type = DescriptorType::null;
@@ -1889,44 +1932,6 @@ namespace tke
 		}
 
 		descriptorPool.update();
-	}
-
-	Pipeline::~Pipeline()
-	{
-		m_pipelineLayout->refCount--;
-		if (m_pipelineLayout->refCount == 0)
-		{
-			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); it++)
-			{
-				if (*it == m_pipelineLayout)
-				{
-					pipelineLayouts.erase(it);
-					delete m_pipelineLayout;
-					break;
-				}
-			}
-		}
-
-		m_descriptorSetLayout->refCount--;
-		if (m_descriptorSetLayout->refCount == 0)
-		{
-			for (auto it = descriptorSetLayouts.begin(); it != descriptorSetLayouts.end(); it++)
-			{
-				if (*it == m_descriptorSetLayout)
-				{
-					descriptorSetLayouts.erase(it);
-					delete m_descriptorSetLayout;
-					break;
-				}
-			}
-		}
-
-		device.cs.lock();
-		vkDestroyPipeline(device.v, m_pipeline, nullptr);
-		device.cs.unlock();
-
-		for (int i = 0; i < 5; i++)
-			delete stages[i];
 	}
 
 	int Pipeline::descriptorPosition(const std::string &name)
@@ -2723,5 +2728,11 @@ namespace tke
 			p.p->create(enginePath + p.file_name, p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
 
 		getDescriptorSets();
+	}
+
+	void Renderer::updateDescriptors()
+	{
+		for (auto &p : resource.privatePipelines)
+			p.p->updateDescriptors();
 	}
 }

@@ -42,12 +42,13 @@ struct Light
 	vec4 coord;
 	vec4 color;
 	vec4 decayFactor;
+	vec4 spotData;
 };
 
 layout(binding = 3) uniform LIGHT
 {
 	uint count;
-	Light lights[1024];
+	Light lights[256];
 }u_light;
       
 layout(binding = 4) uniform sampler2D depthSampler;
@@ -85,23 +86,37 @@ void main()
 	for (int i = 0; i < u_light.count; i++)
 	{
 		Light light = u_light.lights[i];
+		
 		vec3 lightColor = light.color.xyz;
-		vec4 lightCoord = u_matrix.view * light.coord;
-		vec3 lightDir = lightCoord.xyz - coordView * lightCoord.w;
-		if (light.coord.w == 1.0)
+
+		vec3 lightDir = light.coord.xyz;;
+		if (light.coord.w == 0.0)
 		{
+			lightDir = (u_matrix.view * vec4(lightDir, 0.0)).xyz;
+		}
+		else
+		{
+			lightDir = (u_matrix.view * vec4(lightDir, 1.0)).xyz - coordView;
 			float dist = length(lightDir);
 			lightColor /= (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
 		}
 		lightDir = normalize(lightDir);
-		float nl = max(dot(normal, lightDir), 0.0);
-		if (nl > 0.0)
+		float nl = dot(normal, lightDir);
+		if (nl < 0.0) continue;
+
+		if (light.coord.w == 2.0)
 		{
-			vec3 r = reflect(-lightDir, normal);
-			float vr = max(dot(r, -viewDir), 0.0);
-			lightSumColor += albedo * lightColor * nl;
-			lightSumColor += spec * pow(vr, (1.0 - roughness) * 128.0) * lightColor;
+			float spotVal = dot(-lightDir, vec3(u_matrix.view * vec4(light.spotData.xyz, 0.0)));
+			spotVal -= light.spotData.w;
+			if (spotVal < 0.0) continue;
+			float k = spotVal / (1.0 - light.spotData.w);
+			lightColor *= k * k;
 		}
+
+		vec3 r = reflect(-lightDir, normal);
+		float vr = max(dot(r, -viewDir), 0.0);
+		lightSumColor += albedo * lightColor * nl;
+		lightSumColor += spec * pow(vr, (1.0 - roughness) * 128.0) * lightColor;
 	}
 	
 	vec3 color = lightSumColor;

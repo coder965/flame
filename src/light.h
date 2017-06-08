@@ -11,7 +11,8 @@ namespace tke
 		enum class Type : int
 		{
 			eParallax,
-			ePoint
+			ePoint,
+			eSpot
 		};
 
 		int refrenceCount = 0;
@@ -20,12 +21,15 @@ namespace tke
 		Type type;
 		glm::vec3 color = glm::vec3(0.5f);
 		glm::vec3 decayFactor = glm::vec3(0.f, 0.f, 1.f);
+		glm::vec3 spotDirection = glm::vec3(1.f, 0.f, 0.f);
+		float spotRange = 0.5f;
 
 		bool shadow = false;
 
 		int sceneIndex = -1;
 		int sceneShadowIndex = -1;
 
+		Light(Type _type);
 		void getRefrence();
 		void release();
 		static char *getTypeName(Type _type);

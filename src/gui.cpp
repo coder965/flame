@@ -541,6 +541,8 @@ namespace tke
 
 		vkCmdEndRenderPass(cmd);
 
+		vkCmdResetEvent(cmd, window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
 		vkEndCommandBuffer(cmd);
 	}
 
@@ -608,6 +610,7 @@ namespace tke
 		uiCmd = commandPool.allocate();
 		beginCommandBuffer(uiCmd);
 		vkCmdWaitEvents(uiCmd, 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+		vkCmdResetEvent(uiCmd, renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		vkEndCommandBuffer(uiCmd);
 
 		ImGui::SetCurrentContext(uiContext);
@@ -651,10 +654,7 @@ namespace tke
 
 		io.DeltaTime = (float)(1.0f / 60.0f);
 
-		if (focus)
-			io.MousePos = ImVec2((float)mouseX, (float)mouseY);
-		else
-			io.MousePos = ImVec2(-1, -1);
+		io.MousePos = ImVec2((float)mouseX, (float)mouseY);
 
 		io.MouseDown[0] = leftPressing;
 		io.MouseDown[1] = rightPressing;

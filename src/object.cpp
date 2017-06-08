@@ -2,9 +2,9 @@
 
 namespace tke
 {
-	Object::Object()
+	Object::Object(Model *_pModel)
+		:pModel(_pModel)
 	{
-		baseForwardAng = -90.f;
 	}
 
 	Object::~Object()

@@ -6,77 +6,17 @@ namespace tke
 {
 	//MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
 	//{
-	//	static ResourceBank _resources;
-
-	//	originalImage.create(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	//	albedoSpecImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	//	normalRoughnessImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	//	miscImage.create(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-
-	//	renderer = new Renderer();
-	//	renderer->cx = _cx;
-	//	renderer->cy = _cy;
-	//	renderer->pResource = &_resources;
-
-	//	_resources.setImage(&originalImage, "Original.Texture");
-	//	_resources.setImage(&albedoSpecImage, "AlbedoSpec.Texture");
-	//	_resources.setImage(&normalRoughnessImage, "NormalRoughness.Texture");
-	//	_resources.setImage(&miscImage, "Misc.Texture");
-
-	//	_resources.setPipeline(&panoramaPipeline, "Panorama.Pipeline");
 	//	_resources.setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
 	//	_resources.setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
-	//	_resources.setPipeline(&mrtPipeline, "Mrt.Pipeline");
-	//	_resources.setPipeline(&deferredPipeline, "Deferred.Pipeline");
-	//	_resources.setPipeline(&combinePipeline, "Combine.Pipeline");
 
-	//	auto skyPass = renderer->addPass();
-	//	skyPass->addAttachment(&originalImage);
-	//	skyAction = skyPass->addAction(&panoramaPipeline);
-
-	//	auto mrtPass = renderer->addPass();
-	//	mrtPass->addAttachment(&albedoSpecImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-	//	mrtPass->addAttachment(&normalRoughnessImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-	//	mrtPass->addAttachment(_resources.getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
-	//	auto mrtObjectAction = mrtPass->addAction(&mrtPipeline);
-	//	mrtObjectDrawcall = mrtObjectAction->addDrawcall(indirectBuffer);
 	//	mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
 	//	// TODO : FIX PROCEDURAL TERRAIN
 	//	//auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
 	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
 
-	//	auto deferredPass = renderer->addPass();
-	//	deferredPass->addAttachment(&originalImage);
-	//	deferredPass->addDependency(skyPass);
-	//	deferredPass->addDependency(mrtPass);
-	//	auto deferredAction = deferredPass->addAction(&deferredPipeline);
-	//	deferredAction->addDrawcall(3, 0, 1, 0);
-
-	//	miscPass = renderer->addPass();
-	//	miscPass->addAttachment(&miscImage, VkClearValue{ 0.f, 0.f, 0.f, 0.f });
-	//	miscPass->addAttachment(_resources.getImage("Depth.Image"), VkClearValue{ 1.f, 0.f });
-	//	miscPass->addDependency(mrtPass);
-
-	//	auto combinePass = renderer->addPass();
-	//	combinePass->addAttachment(pWindow->image);
-	//	combinePass->addDependency(deferredPass);
-	//	combinePass->addDependency(miscPass);
-	//	auto combineAction = combinePass->addAction(&combinePipeline);
-	//	combineAction->addDrawcall(3, 0, 1, 0);
-
-	//	renderer->initVertexBuffer = vertexBuffer;
-	//	renderer->initIndexBuffer = indexBuffer;
-
-	//	renderer->setup();
-
-	//	panoramaPipeline.create(enginePath + "pipeline/sky/panorama.xml", &vertexInputState, renderer->vkRenderPass, skyPass->index);
 	//	heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
 	//	proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-	//	mrtPipeline.create(enginePath + "pipeline/deferred/mrt.xml", &vertexInputState, renderer->vkRenderPass, mrtPass->index);
-	//	deferredPipeline.create(enginePath + "pipeline/deferred/deferred.xml", &zeroVertexInputState, renderer->vkRenderPass, deferredPass->index);
-	//	combinePipeline.create(enginePath + "pipeline/combine/combine.xml", &zeroVertexInputState, renderer->vkRenderPass, combinePass->index);
 
-	//	renderer->getDescriptorSets();
 	//}
 
 	void Atmosphere::set()
@@ -616,7 +556,7 @@ namespace tke
 		return pTerrain;
 	}
 
-	void Scene::clearActors()
+	void Scene::clear()
 	{
 		EnterCriticalSection(&cs);
 
@@ -1075,14 +1015,6 @@ namespace tke
 		}
 		if (pLights.size() > 0)
 		{ // light attribute
-
-
-			auto coord = camera.getMatInv() * glm::vec4(pLights[0]->getCoord(), 1.f);
-			auto c1    = camera.getMatInv() * glm::vec4(glm::vec3(0), 1.f);
-
-			auto c2 = c1 - coord;
-
-
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightStruct) * pLights.size());
@@ -1094,10 +1026,11 @@ namespace tke
 					LightStruct stru;
 					if (pLight->type == Light::Type::eParallax)
 						stru.coord = glm::vec4(-pLight->getAxis()[0], 0.f);
-					else if (pLight->type == Light::Type::ePoint)
-						stru.coord = glm::vec4(pLight->getCoord(), 1.f);
+					else
+						stru.coord = glm::vec4(pLight->getCoord(), pLight->type);
 					stru.color = glm::vec4(pLight->color, 1.f);
 					stru.decayFactor = glm::vec4(pLight->decayFactor, 0.f);
+					stru.spotData = glm::vec4(pLight->spotDirection, pLight->spotRange);
 					memcpy(map + srcOffset, &stru, sizeof(LightStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
@@ -1260,97 +1193,97 @@ namespace tke
 
 	void SceneSave::push(Scene *pScene)
 	{
-		EnterCriticalSection(&pScene->cs);
+		//EnterCriticalSection(&pScene->cs);
 
-		pScene->atmosphere = atmosphere;
-		//pScene->hdr = hdr;
-		//pScene->ambient = ambient;
-		pScene->fogThickness = fogThickness;
+		//pScene->atmosphere = atmosphere;
+		////pScene->hdr = hdr;
+		////pScene->ambient = ambient;
+		//pScene->fogThickness = fogThickness;
 
-		pScene->clearActors();
+		//pScene->clearActors();
 
-		for (auto &lightSave : lightSaves)
-		{
-			auto pLight = new Light;
-			pLight->type = lightSave.type;
-			memcpy(pLight, &lightSave, sizeof(Transformer));
-
-			pLight->color = lightSave.color;
-			pLight->decayFactor = lightSave.decayFactor;
-			pLight->shadow = lightSave.shadow;
-
-			scene->addLight(pLight, lightSave.m_id);
-		}
-
-		int objID = 0;
-		for (auto &objectSave : objectSaves)
-		{
-			auto pObject = new Object;
-			memcpy(pObject, &objectSave, sizeof(Transformer));
-			pObject->pModel = objectSave.pModel;
-
-			pObject->phyx = objectSave.phyx;
-			pObject->moveType = objectSave.moveType;
-			pObject->upMethod = objectSave.upMethod;
-
-			pScene->addObject(pObject, objectSave.m_id);
-
-			if (objID == controlingID)
-				controllingObject = pObject;
-		}
-
-		//for (auto &terrainSave : terrainSaves)
+		//for (auto &lightSave : lightSaves)
 		//{
-		//	auto pTerrain = new Terrain;
-		//	memcpy(pTerrain, &terrainSave, sizeof(Transformer));
+		//	auto pLight = new Light;
+		//	pLight->type = lightSave.type;
+		//	memcpy(pLight, &lightSave, sizeof(Transformer));
 
-		//	pTerrain->size = terrainSave.size;
-		//	pTerrain->height = terrainSave.height;
-		//	pTerrain->heightMap = terrainSave.heightMap;
-		//	pTerrain->colorMap = terrainSave.colorMap;
-		//	pTerrain->spec = terrainSave.spec;
-		//	pTerrain->roughness = terrainSave.roughness;
+		//	pLight->color = lightSave.color;
+		//	pLight->decayFactor = lightSave.decayFactor;
+		//	pLight->shadow = lightSave.shadow;
 
-		//	pScene->addTerrain(pTerrain, terrainSave.m_id);
+		//	scene->addLight(pLight, lightSave.m_id);
 		//}
 
-		LeaveCriticalSection(&pScene->cs);
+		//int objID = 0;
+		//for (auto &objectSave : objectSaves)
+		//{
+		//	auto pObject = new Object;
+		//	memcpy(pObject, &objectSave, sizeof(Transformer));
+		//	pObject->pModel = objectSave.pModel;
+
+		//	pObject->phyx = objectSave.phyx;
+		//	pObject->moveType = objectSave.moveType;
+		//	pObject->upMethod = objectSave.upMethod;
+
+		//	pScene->addObject(pObject, objectSave.m_id);
+
+		//	if (objID == controlingID)
+		//		controllingObject = pObject;
+		//}
+
+		////for (auto &terrainSave : terrainSaves)
+		////{
+		////	auto pTerrain = new Terrain;
+		////	memcpy(pTerrain, &terrainSave, sizeof(Transformer));
+
+		////	pTerrain->size = terrainSave.size;
+		////	pTerrain->height = terrainSave.height;
+		////	pTerrain->heightMap = terrainSave.heightMap;
+		////	pTerrain->colorMap = terrainSave.colorMap;
+		////	pTerrain->spec = terrainSave.spec;
+		////	pTerrain->roughness = terrainSave.roughness;
+
+		////	pScene->addTerrain(pTerrain, terrainSave.m_id);
+		////}
+
+		//LeaveCriticalSection(&pScene->cs);
 	}
 
 	void SceneSave::pull(Scene *pScene)
 	{
-		EnterCriticalSection(&pScene->cs);
+		//EnterCriticalSection(&pScene->cs);
 
-		atmosphere = pScene->atmosphere;
-		//hdr = pScene->hdr;
-		//ambient = pScene->ambient;
-		fogThickness = pScene->fogThickness;
+		//atmosphere = pScene->atmosphere;
+		////hdr = pScene->hdr;
+		////ambient = pScene->ambient;
+		//fogThickness = pScene->fogThickness;
 
-		lightSaves.clear();
-		for (auto pLight : pScene->pLights)
-			lightSaves.push_back(LightSave(*pLight));
+		//lightSaves.clear();
+		//for (auto pLight : pScene->pLights)
+		//	lightSaves.push_back(LightSave(*pLight));
 
-		objectSaves.clear();
-		controlingID = -1;
-		int objID = 0;
-		for (auto pObject : pScene->pObjects)
-		{
-			if (controllingObject == pObject)
-				controlingID = objID;
-			objectSaves.push_back(ObjectSave(*pObject));
-			objID++;
-		}
+		//objectSaves.clear();
+		//controlingID = -1;
+		//int objID = 0;
+		//for (auto pObject : pScene->pObjects)
+		//{
+		//	if (controllingObject == pObject)
+		//		controlingID = objID;
+		//	objectSaves.push_back(ObjectSave(*pObject));
+		//	objID++;
+		//}
 
-		//terrainSaves.clear();
-		//for (auto pTerrain : pScene->pTerrains)
-		//	terrainSaves.push_back(TerrainSave(*pTerrain));
+		////terrainSaves.clear();
+		////for (auto pTerrain : pScene->pTerrains)
+		////	terrainSaves.push_back(TerrainSave(*pTerrain));
 
-		LeaveCriticalSection(&pScene->cs);
+		//LeaveCriticalSection(&pScene->cs);
 	}
 
 	void loadScene(char *s)
 	{
-		scene->clearActors();
+		scene->clear();
 		scene->clearModel();
 
 		scene->load(s);

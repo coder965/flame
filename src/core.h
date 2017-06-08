@@ -106,7 +106,6 @@ namespace tke
 		int mouseX = 0, mouseY = 0;
 		int mousePrevX = 0, mousePrevY = 0;
 		int mouseScroll = 0;
-		bool focus = false;
 
 		HWND hWnd = nullptr;
 

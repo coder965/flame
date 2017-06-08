@@ -369,17 +369,6 @@ namespace tke
 			case WM_CHAR:
 				currentWindow->charEvent(wParam);
 				break;
-			case WM_ACTIVATE:
-				switch (LOWORD(wParam))
-				{
-				case WA_ACTIVE: case WA_CLICKACTIVE:
-					currentWindow->focus = true;
-					break;
-				case WA_INACTIVE:
-					currentWindow->focus = false;
-					break;
-				}
-				break;
 			case WM_DESTROY:
 				currentWindow->die = true;
 				break;

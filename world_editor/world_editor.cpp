@@ -171,13 +171,11 @@ struct MonitorWindow : tke::GuiWindow
 		test_model = tke::createModel("brick.obj");
 		tke::scene->addModel(test_model);
 
-		auto obj = new tke::Object();
-		obj->pModel = test_model;
+		auto obj = new tke::Object(test_model);
 		tke::scene->addObject(obj);
 
-		auto lit = new tke::Light;
+		auto lit = new tke::Light(tke::Light::Type::ePoint);
 		lit->color = glm::vec3(1.f);
-		lit->type = tke::Light::Type::ePoint;
 		lit->decayFactor = glm::vec3(0.5f, 0.f, 1.f);
 		lit->setCoord(glm::vec3(0, 1, 0));
 		tke::scene->addLight(lit);

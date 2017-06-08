@@ -11,7 +11,7 @@
 #include "model.h"
 
 #define TKE_MAX_OBJECT_COUNT (1024)
-#define TKE_MAX_LIGHT_COUNT (1024)
+#define TKE_MAX_LIGHT_COUNT (256)
 #define TKE_MAX_TEXTURE_COUNT (1024)
 #define TKE_MAX_MATERIAL_COUNT (1024)
 #define TKE_MAX_INDIRECT_COUNT (1024)
@@ -20,29 +20,13 @@ namespace tke
 {
 	struct Window;
 	//struct MasterRenderer
-	//{
-	//	Image originalImage;
-	//	Image albedoSpecImage;
-	//	Image normalRoughnessImage;
-	//	Image miscImage;
+	//
 
-	//	Pipeline panoramaPipeline;
 	//	Pipeline heightMapTerrainPipeline;
 	//	Pipeline proceduralTerrainPipeline;
-	//	Pipeline mrtPipeline;
-	//	Pipeline deferredPipeline;
-	//	Pipeline combinePipeline;
 
-	//	Drawcall *mrtObjectDrawcall;
-
-	//	DrawAction *skyAction;
 	//	DrawAction *mrtHeightMapTerrainAction;
 
-	//	RenderPass *miscPass;
-
-	//	Renderer *renderer;
-
-	//	MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer);
 	//};
 
 	struct AnimationTemplate;
@@ -105,9 +89,10 @@ namespace tke
 
 	struct LightStruct
 	{
-		glm::vec4 coord;
+		glm::vec4 coord; // w - the light type
 		glm::vec4 color;
 		glm::vec4 decayFactor;
+		glm::vec4 spotData; // spot direction and spot range
 	};
 
 	struct LightBufferStruct
@@ -242,7 +227,7 @@ namespace tke
 		void addTerrain(Terrain *pTerrain);
 		Terrain *deleteTerrain(Terrain *pTerrain);
 
-		void clearActors();
+		void clear();
 
 		void setResources(Renderer *r);
 		void update();

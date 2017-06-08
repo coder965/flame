@@ -21,23 +21,23 @@ namespace tke
 
 		if (front && frontSpeed > 0.f)
 		{
-			outCoord.x += cos(inEulerX) * frontSpeed * dist;
-			outCoord.z -= sin(inEulerX) * frontSpeed * dist;
+			outCoord.x -= sin(inEulerX) * frontSpeed * dist;
+			outCoord.z -= cos(inEulerX) * frontSpeed * dist;
 		}
 		if (back && backSpeed > 0.f)
 		{
-			outCoord.x -= cos(inEulerX) * backSpeed * dist;
-			outCoord.z += sin(inEulerX) * backSpeed * dist;
+			outCoord.x += sin(inEulerX) * backSpeed * dist;
+			outCoord.z += cos(inEulerX) * backSpeed * dist;
 		}
 		if (left && leftSpeed > 0.f)
 		{
-			outCoord.x -= sin(inEulerX) * leftSpeed * dist;
-			outCoord.z -= cos(inEulerX) * leftSpeed * dist;
+			outCoord.x -= cos(inEulerX) * leftSpeed * dist;
+			outCoord.z += sin(inEulerX) * leftSpeed * dist;
 		}
 		if (right && rightSpeed > 0.f)
 		{
-			outCoord.x += sin(inEulerX) * rightSpeed * dist;
-			outCoord.z += cos(inEulerX) * rightSpeed * dist;
+			outCoord.x += cos(inEulerX) * rightSpeed * dist;
+			outCoord.z -= sin(inEulerX) * rightSpeed * dist;
 		}
 		if (up)
 			outCoord.y += upSpeed * dist;
@@ -67,16 +67,10 @@ namespace tke
 			back = true;
 			return true;
 		case 'A':
-			turnLeft = true;
+			left = true;
 			return true;
 		case 'D':
-			turnRight = true;
-			return true;
-		case 'Q':
-			turnUp = true;
-			return true;
-		case 'E':
-			turnDown = true;
+			right = true;
 			return true;
 		}
 		return false;
@@ -93,16 +87,10 @@ namespace tke
 			back = false;
 			return true;
 		case 'A':
-			turnLeft = false;
+			left = false;
 			return true;
 		case 'D':
-			turnRight = false;
-			return true;
-		case 'Q':
-			turnUp = false;
-			return true;
-		case 'E':
-			turnDown = false;
+			right = false;
 			return true;
 		}
 		return false;

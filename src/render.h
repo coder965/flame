@@ -743,6 +743,7 @@ namespace tke
 		Pipeline();
 		void create(const std::string &filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 		~Pipeline();
+		void updateDescriptors();
 		int descriptorPosition(const std::string &name);
 	};
 
@@ -1022,6 +1023,7 @@ namespace tke
 		void maintain(int row) override;
 		void getDescriptorSets();
 		void setup();
+		void updateDescriptors();
 		void execute(VkCommandBuffer cmd, int index = 0);
 	};
 }

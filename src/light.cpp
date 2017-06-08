@@ -2,6 +2,11 @@
 
 namespace tke
 {
+	Light::Light(Type _type)
+		:type(_type)
+	{
+	}
+
 	void Light::getRefrence()
 	{
 		refrenceCount++;

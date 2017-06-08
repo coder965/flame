@@ -31,14 +31,14 @@ namespace tke
 		MoveType moveType = MoveType::eNormal;
 		UpMethod upMethod = UpMethod::eJump;
 
-		AnimationSolver *animationSolver;
+		AnimationSolver *animationSolver = nullptr;
 
 		float floatingTime = 0.f;
 		RigidData *rigidDatas = nullptr;
 
 		int sceneIndex = -1;
 
-		Object();
+		Object(Model *_pModel);
 		~Object();
 		void getRefrence();
 		void release();
