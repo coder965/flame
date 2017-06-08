@@ -174,7 +174,7 @@ struct MonitorWindow : tke::GuiWindow
 		auto obj = new tke::Object(test_model);
 		tke::scene->addObject(obj);
 
-		auto lit = new tke::Light(tke::Light::Type::ePoint);
+		auto lit = new tke::PointLight;
 		lit->color = glm::vec3(1.f);
 		lit->decayFactor = glm::vec3(0.5f, 0.f, 1.f);
 		lit->setCoord(glm::vec3(0, 1, 0));

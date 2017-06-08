@@ -6,121 +6,121 @@ namespace tke
 
 	Transformer::Transformer(glm::mat3 &rotation, glm::vec3 coord)
 	{
-		m_axis = rotation;
-		m_coord = coord;
+		axis = rotation;
+		coord = coord;
 
-		m_needUpdateQuat = true;
-		m_needUpdateEuler = true;
-		m_needUpdateMat = true;
+		needUpdateQuat = true;
+		needUpdateEuler = true;
+		needUpdateMat = true;
 	}
 
 	void Transformer::updateAxis()
 	{
-		if (!m_needUpdateQuat)
-			quaternionToMatrix(m_quat, m_axis);// update by quat
+		if (!needUpdateQuat)
+			quaternionToMatrix(quat, axis);// update by quat
 		else
-			eulerYzxToMatrix(m_euler, m_axis);// update by euler
-		m_needUpdateAxis = false;
+			eulerYzxToMatrix(euler, axis);// update by euler
+		needUpdateAxis = false;
 	}
 
 	void Transformer::updateEuler()
 	{
-		if (m_needUpdateQuat) updateQuat();
+		if (needUpdateQuat) updateQuat();
 		// updata by quat
 		float heading, attitude, bank;
 
-		auto sqw = m_quat.w * m_quat.w;
-		auto sqx = m_quat.x * m_quat.x;
-		auto sqy = m_quat.y * m_quat.y;
-		auto sqz = m_quat.z * m_quat.z;
+		auto sqw = quat.w * quat.w;
+		auto sqx = quat.x * quat.x;
+		auto sqy = quat.y * quat.y;
+		auto sqz = quat.z * quat.z;
 
 		auto unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
-		auto test = m_quat.x * m_quat.y + m_quat.z * m_quat.w;
+		auto test = quat.x * quat.y + quat.z * quat.w;
 		if (test > 0.499f * unit)
 		{ // singularity at north pole
-			heading = 2.f * atan2(m_quat.x, m_quat.w);
+			heading = 2.f * atan2(quat.x, quat.w);
 			attitude = M_PI / 2.f;
 			bank = 0;
 			return;
 		}
 		if (test < -0.499f * unit)
 		{ // singularity at south pole
-			heading = -2.f * atan2(m_quat.x, m_quat.w);
+			heading = -2.f * atan2(quat.x, quat.w);
 			attitude = -M_PI / 2.f;
 			bank = 0;
 			return;
 		}
 
-		heading = atan2(2.f * m_quat.y * m_quat.w - 2.f * m_quat.x * m_quat.z, sqx - sqy - sqz + sqw);
+		heading = atan2(2.f * quat.y * quat.w - 2.f * quat.x * quat.z, sqx - sqy - sqz + sqw);
 		attitude = asin(2.f * test / unit);
-		bank = atan2(2.f * m_quat.x * m_quat.w - 2.f * m_quat.y * m_quat.z, -sqx + sqy - sqz + sqw);
+		bank = atan2(2.f * quat.x * quat.w - 2.f * quat.y * quat.z, -sqx + sqy - sqz + sqw);
 
-		m_euler.x = glm::degrees(heading);
-		m_euler.y = glm::degrees(attitude);
-		m_euler.z = glm::degrees(bank);
-		m_needUpdateEuler = false;
+		euler.x = glm::degrees(heading);
+		euler.y = glm::degrees(attitude);
+		euler.z = glm::degrees(bank);
+		needUpdateEuler = false;
 	}
 
 	void Transformer::updateQuat()
 	{
-		if (m_needUpdateAxis) updateAxis();
+		if (needUpdateAxis) updateAxis();
 		// update by axis
-		matrixToQuaternion(m_axis, m_quat);
-		m_needUpdateQuat = false;
+		matrixToQuaternion(axis, quat);
+		needUpdateQuat = false;
 	}
 
 	void Transformer::updateMat()
 	{
-		if (m_needUpdateAxis) updateAxis();
-		m_mat = glm::translate(m_coord * m_worldScale) * glm::mat4(m_axis) * glm::scale(m_scale * m_worldScale);
-		m_matInv = glm::inverse(m_mat);
-		m_needUpdateMat = false;
+		if (needUpdateAxis) updateAxis();
+		mat = glm::translate(coord * worldScale) * glm::mat4(axis) * glm::scale(scale * worldScale);
+		matInv = glm::inverse(mat);
+		needUpdateMat = false;
 	}
 
 	glm::vec3 Transformer::getCoord() const
 	{
-		return m_coord;
+		return coord;
 	}
 
 	glm::mat3 Transformer::getAxis()
 	{
-		if (m_needUpdateAxis) updateAxis();
-		return m_axis;
+		if (needUpdateAxis) updateAxis();
+		return axis;
 	}
 
 	glm::vec3 Transformer::getScale() const
 	{
-		return m_scale;
+		return scale;
 	}
 
 	glm::vec3 Transformer::getWorldScale() const
 	{
-		return m_worldScale;
+		return worldScale;
 	}
 
 	glm::vec3 Transformer::getEuler()
 	{
-		if (m_needUpdateEuler) updateEuler(); // Y -> Z -> X
-		return m_euler;
+		if (needUpdateEuler) updateEuler(); // Y -> Z -> X
+		return euler;
 	}
 
 	glm::vec4 Transformer::getQuat()
 	{
-		if (m_needUpdateQuat)
+		if (needUpdateQuat)
 			updateQuat();
-		return m_quat;
+		return quat;
 	}
 
 	glm::mat4 Transformer::getMat()
 	{
-		if (m_needUpdateMat) updateMat();
-		return m_mat;
+		if (needUpdateMat) updateMat();
+		return mat;
 	}
 
 	glm::mat4 Transformer::getMatInv()
 	{
-		if (m_needUpdateMat) updateMat();
-		return m_matInv;
+		if (needUpdateMat) updateMat();
+		return matInv;
 	}
 
 	glm::vec3 Transformer::getTrans(Transformer::Type type)
@@ -137,65 +137,65 @@ namespace tke
 		return glm::vec3(0);
 	}
 
-	void Transformer::setCoord(const glm::vec3 &coord)
+	void Transformer::setCoord(const glm::vec3 &_coord)
 	{
-		m_coord = coord;
-		m_needUpdateMat = true;
-		m_changed = true;
+		coord = _coord;
+		needUpdateMat = true;
+		changed = true;
 	}
 
-	void Transformer::addCoord(const glm::vec3 &coord)
+	void Transformer::addCoord(const glm::vec3 &_coord)
 	{
-		setCoord(m_coord + coord);
+		setCoord(coord + _coord);
 	}
 
-	void Transformer::setScale(const glm::vec3 &scale)
+	void Transformer::setScale(const glm::vec3 &_scale)
 	{
-		m_scale = scale;
-		m_needUpdateMat = true;
+		scale = _scale;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
-	void Transformer::addScale(const glm::vec3 &scale)
+	void Transformer::addScale(const glm::vec3 &_scale)
 	{
-		setScale(m_scale + scale);
+		setScale(scale + _scale);
 	}
 
-	void Transformer::setWorldScale(const glm::vec3 &scale)
+	void Transformer::setWorldScale(const glm::vec3 &_scale)
 	{
-		m_worldScale = scale;
-		m_needUpdateMat = true;
+		worldScale = _scale;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
-	void Transformer::setEuler(const glm::vec3 &euler)
+	void Transformer::setEuler(const glm::vec3 &_euler)
 	{
-		m_euler = glm::mod(euler, 360.f);
+		euler = glm::mod(_euler, 360.f);
 
-		m_needUpdateAxis = true;
-		m_needUpdateEuler = false;
-		m_needUpdateQuat = true;
-		m_needUpdateMat = true;
+		needUpdateAxis = true;
+		needUpdateEuler = false;
+		needUpdateQuat = true;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
-	void Transformer::addEuler(const glm::vec3 &euler)
+	void Transformer::addEuler(const glm::vec3 &_euler)
 	{
-		setEuler(getEuler() + euler);
+		setEuler(getEuler() + _euler);
 	}
 
-	void Transformer::setQuat(const glm::vec4 &quat)
+	void Transformer::setQuat(const glm::vec4 &_quat)
 	{
-		m_quat = quat;
-		m_needUpdateAxis = true;
-		m_needUpdateEuler = true;
-		m_needUpdateQuat = false;
-		m_needUpdateMat = true;
+		quat = _quat;
+		needUpdateAxis = true;
+		needUpdateEuler = true;
+		needUpdateQuat = false;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
 	void Transformer::axisRotate(Axis which, float angle)
@@ -205,77 +205,77 @@ namespace tke
 		{
 		case Axis::eX:
 		{
-			auto m = mat3(rotate(angle, m_axis[0]));
-			m_axis[1] = normalize(m * m_axis[1]);
-			m_axis[2] = normalize(m * m_axis[2]);
+			auto m = mat3(rotate(angle, axis[0]));
+			axis[1] = normalize(m * axis[1]);
+			axis[2] = normalize(m * axis[2]);
 		}
 		break;
 		case Axis::eY:
 		{
-			auto m = mat3(rotate(angle, m_axis[1]));
-			m_axis[0] = normalize(m * m_axis[0]);
-			m_axis[2] = normalize(m * m_axis[2]);
+			auto m = mat3(rotate(angle, axis[1]));
+			axis[0] = normalize(m * axis[0]);
+			axis[2] = normalize(m * axis[2]);
 		}
 		break;
 		case Axis::eZ:
 		{
-			auto m = mat3(rotate(angle, m_axis[2]));
-			m_axis[1] = normalize(m * m_axis[1]);
-			m_axis[0] = normalize(m * m_axis[0]);
+			auto m = mat3(rotate(angle, axis[2]));
+			axis[1] = normalize(m * axis[1]);
+			axis[0] = normalize(m * axis[0]);
 		}
 		break;
 		}
 
-		m_needUpdateAxis = false;
-		m_needUpdateEuler = true;
-		m_needUpdateQuat = true;
-		m_needUpdateMat = true;
+		needUpdateAxis = false;
+		needUpdateEuler = true;
+		needUpdateQuat = true;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
-	void Transformer::leftRotate(glm::mat3 left)
+	void Transformer::leftRotate(const glm::mat3 &left)
 	{
-		m_axis = left * m_axis;
+		axis = left * axis;
 
-		m_needUpdateAxis = false;
-		m_needUpdateEuler = true;
-		m_needUpdateQuat = true;
-		m_needUpdateMat = true;
+		needUpdateAxis = false;
+		needUpdateEuler = true;
+		needUpdateQuat = true;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
-	void Transformer::rightRotate(glm::mat3 right)
+	void Transformer::rightRotate(const glm::mat3 &right)
 	{
-		m_axis = m_axis * right;
+		axis = axis * right;
 
-		m_needUpdateAxis = false;
-		m_needUpdateEuler = true;
-		m_needUpdateQuat = true;
-		m_needUpdateMat = true;
+		needUpdateAxis = false;
+		needUpdateEuler = true;
+		needUpdateQuat = true;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
 	void Transformer::scaleRelate(Transformer *t)
 	{
-		m_coord *= t->m_scale;
-		m_coord *= t->m_scale;
-		m_axis = t->m_axis * m_axis;
-		m_coord = t->m_axis * m_coord;
-		m_coord += t->m_coord;
-		m_needUpdateMat = true;
+		coord *= t->scale;
+		coord *= t->scale;
+		axis = t->axis * axis;
+		coord = t->axis * coord;
+		coord += t->coord;
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 
 	void Transformer::relate(Transformer *t)
 	{
-		m_coord -= t->m_coord;
-		m_axis *= glm::transpose(t->m_axis);
-		m_needUpdateMat = true;
+		coord -= t->coord;
+		axis *= glm::transpose(t->axis);
+		needUpdateMat = true;
 
-		m_changed = true;
+		changed = true;
 	}
 }

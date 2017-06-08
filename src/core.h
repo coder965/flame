@@ -53,9 +53,6 @@ namespace tke
 	extern glm::mat4 *pMatProjInv;
 	extern bool needUpdateProjMatrix;
 
-	struct Object;
-	extern Object *controllingObject;
-
 	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;

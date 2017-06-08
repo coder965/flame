@@ -16,26 +16,24 @@ namespace tke
 			eTargeting
 		};
 
-		Mode m_mode = Mode::eFree;
-		glm::vec3 m_target;
-		float m_length = 1.f;
+		Mode mode = Mode::eFree;
+		glm::vec3 target;
+		float length = 1.f;
 
-		glm::vec3 m_frustumPoints[8];
-		glm::vec4 m_frustumPlanes[6];
+		glm::vec3 frustumPoints[8];
+		glm::vec4 frustumPlanes[6];
 
 		Camera();
-		void setMode(Mode mode);
-		void setLength(float length);
-		void setTarget(glm::vec3 target);
+		void setMode(Mode _mode);
+		void setLength(float _length);
+		void setTarget(const glm::vec3 &_target);
 		void lookAtTarget();
-		void updateFrustum(float aspect, glm::mat4 &matProj);
+		void updateFrustum();
 		void reset();
 		void addAngAccrodingToScreen(float x, float y);
 		void scroll(short value);
-		void moveAccrodingToScreen(float aspect, float x, float y);
+		void moveAccrodingToScreen(float x, float y);
 		void move();
-		void load(std::ifstream &file);
-		void save(std::ofstream &file);
 	};
 }
 

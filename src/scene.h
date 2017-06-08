@@ -145,21 +145,19 @@ namespace tke
 
 		Camera camera;
 
-		std::vector<Model*> pModels;
+		std::vector<Model*> models;
 
-		std::vector<AnimationTemplate*> pAnimTemps;
+		std::vector<AnimationTemplate*> animationTemplates;
 
-		std::vector<Light*> pLights;
-		std::vector<Light*> pParallaxLights;
-		std::vector<Light*> pPointLights;
+		std::vector<Light*> lights;
 
 		Light *pSunLight = nullptr;
 
-		std::vector<Object*> pObjects;
-		std::vector<Object*> pStaticObjects;
-		std::vector<Object*> pAnimatedObjects;
+		std::vector<Object*> objects;
+		std::vector<Object*> staticObjects;
+		std::vector<Object*> animatedObjects;
 
-		std::vector<Terrain*> pTerrains;
+		std::vector<Terrain*> terrains;
 
 		int vertexBase = 0;
 
@@ -240,26 +238,26 @@ namespace tke
 	// make sure tke3_scene always vaild
 	extern Scene *scene;
 
-	struct LightSave : Transformer
-	{
-		Light::Type type;
-		glm::vec3 color;
-		glm::vec3 decayFactor;
-		bool shadow;
+	//struct LightSave : Transformer
+	//{
+	//	Light::Type type;
+	//	glm::vec3 color;
+	//	glm::vec3 decayFactor;
+	//	bool shadow;
 
-		LightSave(Light &light);
-	};
+	//	LightSave(Light &light);
+	//};
 
-	struct ObjectSave : Transformer
-	{
-		Model *pModel;
+	//struct ObjectSave : Transformer
+	//{
+	//	Model *pModel;
 
-		bool phyx;
-		Object::MoveType moveType;
-		Object::UpMethod upMethod;
+	//	bool phyx;
+	//	Object::MoveType moveType;
+	//	Object::UpMethod upMethod;
 
-		ObjectSave(Object &object);
-	};
+	//	ObjectSave(Object &object);
+	//};
 
 	//struct TerrainSave : Transformer
 	//{
@@ -280,8 +278,8 @@ namespace tke
 		//Ambient ambient;
 		float fogThickness;
 
-		std::vector<LightSave> lightSaves;
-		std::vector<ObjectSave> objectSaves;
+		//std::vector<LightSave> lightSaves;
+		//std::vector<ObjectSave> objectSaves;
 		//std::vector<TerrainSave> terrainSaves;
 
 		int controlingID = -1;

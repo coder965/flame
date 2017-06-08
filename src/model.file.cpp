@@ -640,7 +640,7 @@ namespace tke
 		{
 			std::string animName;
 			file >> animName;
-			for (auto anim : scene->pAnimTemps)
+			for (auto anim : scene->animationTemplates)
 			{
 				if (anim->name == animName == 0)
 					return pModel->bindAnimation(anim);

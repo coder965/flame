@@ -345,5 +345,7 @@ int main(int argc, char** argv)
 
 	fclose(yy_out_file);
 
+	DeleteFileA("yy_out");
+
 	return 0;
 }

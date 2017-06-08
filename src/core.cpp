@@ -22,8 +22,6 @@ namespace tke
 	glm::mat4 *pMatProjInv;
 	bool needUpdateProjMatrix;
 
-	Object *controllingObject;
-
 	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	VkPipelineVertexInputStateCreateInfo vertexInputState;
 	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
@@ -196,7 +194,6 @@ namespace tke
 			windowRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
 		}
 
-		controllingObject = nullptr;
 		initPhysics();
 
 		return Err::eNoErr;

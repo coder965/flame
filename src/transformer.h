@@ -7,7 +7,7 @@ namespace tke
 {
 	struct Transformer
 	{
-		int m_id;
+		int id;
 
 		enum class Type
 		{
@@ -25,22 +25,22 @@ namespace tke
 			eZ
 		};
 
-		glm::vec3 m_coord;
-		glm::vec3 m_euler; // (yaw(y), pitch(z), roll(x))
-		glm::vec4 m_quat = glm::vec4(0.f, 0.f, 0.f, 1.f);
-		glm::vec3 m_scale = glm::vec3(1.f);
-		glm::vec3 m_worldScale = glm::vec3(1.f);
+		glm::vec3 coord;
+		glm::vec3 euler; // (yaw(y), pitch(z), roll(x))
+		glm::vec4 quat = glm::vec4(0.f, 0.f, 0.f, 1.f);
+		glm::vec3 scale = glm::vec3(1.f);
+		glm::vec3 worldScale = glm::vec3(1.f);
 
-		glm::mat3 m_axis;
-		glm::mat4 m_mat;
-		glm::mat4 m_matInv;
+		glm::mat3 axis;
+		glm::mat4 mat;
+		glm::mat4 matInv;
 
-		bool m_needUpdateAxis = false;
-		bool m_needUpdateEuler = false;
-		bool m_needUpdateQuat = false;
-		bool m_needUpdateMat = false;
+		bool needUpdateAxis = false;
+		bool needUpdateEuler = false;
+		bool needUpdateQuat = false;
+		bool needUpdateMat = false;
 
-		bool m_changed = true;
+		bool changed = true;
 
 		Transformer();
 		Transformer(glm::mat3 &rotation, glm::vec3 coord);
@@ -57,17 +57,17 @@ namespace tke
 
 		glm::vec3 getTrans(Transformer::Type type);
 
-		void setCoord(const glm::vec3 &coord);
-		void addCoord(const glm::vec3 &coord);
-		void setEuler(const glm::vec3 &euler);
-		void addEuler(const glm::vec3 &euler);
-		void setQuat(const glm::vec4 &quat);
-		void leftRotate(glm::mat3 left);
-		void rightRotate(glm::mat3 right);
+		void setCoord(const glm::vec3 &_coord);
+		void addCoord(const glm::vec3 &_coord);
+		void setEuler(const glm::vec3 &_euler);
+		void addEuler(const glm::vec3 &_euler);
+		void setQuat(const glm::vec4 &_quat);
+		void leftRotate(const glm::mat3 &left);
+		void rightRotate(const glm::mat3 &right);
 		void axisRotate(Axis which, float angle);
-		void setScale(const glm::vec3 &scale);
-		void addScale(const glm::vec3 &scale);
-		void setWorldScale(const glm::vec3 &scale);
+		void setScale(const glm::vec3 &_scale);
+		void addScale(const glm::vec3 &_scale);
+		void setWorldScale(const glm::vec3 &_scale);
 
 		void relate(Transformer *t);
 		void scaleRelate(Transformer *t);

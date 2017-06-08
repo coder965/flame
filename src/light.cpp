@@ -33,4 +33,17 @@ namespace tke
 	{
 		return typeNames[(int)type];
 	}
+
+	ParallaxLight::ParallaxLight()
+		:Light(Type::eParallax)
+	{}
+
+	PointLight::PointLight()
+		: Light(Type::ePoint)
+	{}
+
+	SpotLight::SpotLight()
+	{
+		type = Type::eSpot;
+	}
 }

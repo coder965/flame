@@ -1,6 +1,6 @@
 <renderer name="" cx="-1" cy="-1">
   <buffers>
-    <buffer name="Paste.UniformBuffer" size="4"/>
+    <buffer name="Paste.UniformBuffer" size="16"/>
   </buffers>
   
   <pipelines>
