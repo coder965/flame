@@ -195,9 +195,8 @@ struct MonitorWindow : tke::GuiWindow
 
 		renderer->resource.setImage(images, "Window.Image");
 		tke::ShaderMacro macro;
-		macro.pipelineName = "Deferred_Phong.Pipeline";
+		macro.pipelineName = "Deferred.Pipeline";
 		macro.stageType = tke::StageType::frag;
-		macro.value = "#define FUCK_YOU\n";
 		renderer->resource.shaderMacros.push_back(macro);
 
 		renderer->setup();
