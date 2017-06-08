@@ -533,10 +533,12 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "1.l"
 #line 2 "1.l"
+#define YY_NO_UNISTD_H
+#define ECHO
 #include "def.h"
 int yywrap(void);
-#line 538 "lex.yy.c"
-#line 539 "lex.yy.c"
+#line 540 "lex.yy.c"
+#line 541 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -753,9 +755,9 @@ YY_DECL
 		}
 
 	{
-#line 6 "1.l"
+#line 8 "1.l"
 
-#line 758 "lex.yy.c"
+#line 760 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -814,45 +816,45 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 7 "1.l"
+#line 9 "1.l"
 return REFLECTABLE;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 8 "1.l"
+#line 10 "1.l"
 return REFLv;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 9 "1.l"
+#line 11 "1.l"
 return REFLe;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 10 "1.l"
+#line 12 "1.l"
 return STRUCT;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 11 "1.l"
+#line 13 "1.l"
 return ENUM;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 12 "1.l"
+#line 14 "1.l"
 return IDENTIFIER;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 13 "1.l"
+#line 15 "1.l"
 ;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 14 "1.l"
+#line 16 "1.l"
 ECHO;
 	YY_BREAK
-#line 855 "lex.yy.c"
+#line 857 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1853,7 +1855,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 14 "1.l"
+#line 16 "1.l"
 
 
 int yywrap(void)

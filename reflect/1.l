@@ -1,4 +1,6 @@
 %{
+#define YY_NO_UNISTD_H
+#define ECHO
 #include "def.h"
 int yywrap(void);
 %}

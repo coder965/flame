@@ -1,7 +1,3 @@
-#version 450 core
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
-
 #include "..\depth.h"
 #include "..\pi.h"
 #include "..\panorama.h"
@@ -123,6 +119,9 @@ void main()
 	color += u_ambient.v.rgb * albedo;
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
-
+#ifdef FUCK_YOU
+	outColor = vec4(1.0);
+	return;
+#endif
 	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
 }

@@ -483,6 +483,13 @@ namespace tke
 		int subpassIndex = -1;
 	};
 
+	struct ShaderMacro
+	{
+		std::string pipelineName;
+		StageType stageType = StageType::null;
+		std::string value;
+	};
+
 	struct Model;
 	struct ResourceBank
 	{
@@ -491,6 +498,7 @@ namespace tke
 		std::vector<UniformBufferInfo> privateBuffers;
 		std::vector<ImageInfo> privateImages;
 		std::vector<PipelineInfo> privatePipelines;
+		std::vector<ShaderMacro> shaderMacros;
 
 		std::map<std::string, Buffer*> bufferResources;
 		std::map<std::string, Image*> imageResources;

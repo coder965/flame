@@ -1421,7 +1421,18 @@ namespace tke
 			std::vector<std::tuple<int, int, int>> includeFileDatas;
 			std::string line;
 			int lineNum = 0;
-			int fullLineNum = 0;
+			stageText += "#version 450 core\n"; lineNum++;
+			stageText += "#extension GL_ARB_separate_shader_objects : enable\n"; lineNum++;
+			stageText += "#extension GL_ARB_shading_language_420pack : enable\n\n"; lineNum++;
+			for (auto &m : parent->pResource->shaderMacros)
+			{
+				if (m.pipelineName == parent->name && m.stageType == type)
+				{
+					stageText += m.value;
+					lineNum++;
+				}
+			}
+			int fullLineNum = lineNum;
 			while (!ss.eof())
 			{
 				std::getline(ss, line);
