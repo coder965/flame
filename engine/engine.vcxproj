@@ -56,7 +56,8 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>D:\VulkanSDK\1.0.49.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/D  _CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
+/D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -98,6 +99,7 @@
     <ClCompile Include="..\src\event.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
     <ClCompile Include="..\src\image.file.cpp" />
+    <ClCompile Include="..\src\lex.glslang_validator_yy.c" />
     <ClCompile Include="..\src\light.cpp" />
     <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\model.cpp" />

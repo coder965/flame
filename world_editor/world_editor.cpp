@@ -171,7 +171,7 @@ struct MonitorWindow : tke::GuiWindow
 		test_model = tke::createModel("brick.obj");
 		tke::scene->addModel(test_model);
 
-		auto obj = new tke::Object(test_model);
+		auto obj = new tke::StaticObject(test_model);
 		tke::scene->addObject(obj);
 
 		auto lit = new tke::PointLight;
@@ -247,7 +247,7 @@ struct MonitorWindow : tke::GuiWindow
 			else if (middlePressing)
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					tke::scene->camera.moveAccrodingToScreen(tke::aspect, distX, distY);
+					tke::scene->camera.moveAccrodingToScreen(distX, distY);
 			}
 			else if (rightPressing)
 			{

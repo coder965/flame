@@ -1,6 +1,7 @@
 #include <experimental/filesystem>
 #include <regex>
 #include <assert.h>
+#include <sstream>
 
 #include "render.h"
 #include "core.h"
@@ -1384,10 +1385,18 @@ namespace tke
 		parent = _parent;
 	}
 
+#include "glslang_validator_yy.h"
+	extern "C" {
+		extern FILE *glslang_validator_yyin;
+		extern int glslang_validator_yylex();
+		int glslang_validator_yylex_destroy();
+		extern char *glslang_validator_yytext;
+	}
+
 	void Stage::create()
 	{
 		// format the shader path, so that they can reuse if them refer the same one
-		auto path = std::experimental::filesystem::canonical(parent->filepath + "/" + filename + ".spv").string();
+		auto path = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
 		for (auto m : shaderModules)
 		{
 			if (m->filename == path)
@@ -1400,16 +1409,260 @@ namespace tke
 		auto m = new ShaderModule;
 		m->filename = path;
 
-		OnceFileBuffer file(path);
-		VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
-		shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		shaderModuleCreateInfo.codeSize = file.length;
-		shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
+		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
-		device.cs.lock();
-		auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &m->v);
-		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		{
+			auto file_path = std::experimental::filesystem::path(path).parent_path().string();
+			tke::OnceFileBuffer file(path);
+
+			std::stringstream ss(file.data);
+			std::string stageText = "";
+
+			std::vector<std::tuple<int, int, int>> includeFileDatas;
+			std::string line;
+			int lineNum = 0;
+			int fullLineNum = 0;
+			while (!ss.eof())
+			{
+				std::getline(ss, line);
+
+				std::regex pat(R"(#include\s+\"([\w\.\\]+)\")");
+				std::smatch sm;
+				if (std::regex_search(line, sm, pat))
+				{
+					tke::OnceFileBuffer includeFile(file_path + "/" + sm[1].str());
+					stageText += includeFile.data;
+					stageText += "\n";
+
+					auto includeFileLineNum = tke::lineNumber(includeFile.data);
+					includeFileDatas.emplace_back(lineNum, fullLineNum, includeFileLineNum);
+
+					fullLineNum += includeFileLineNum;
+				}
+				else
+				{
+					stageText += line + "\n";
+
+					fullLineNum += 1;
+				}
+
+				lineNum++;
+			}
+
+			{
+				std::ofstream file("temp.glsl");
+				file.write(stageText.c_str(), stageText.size());
+				file.close();
+			}
+
+			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "/src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
+
+			std::string output;
+			{
+				tke::OnceFileBuffer outputFile("output.txt");
+				output = outputFile.data;
+				output += "\n";
+			}
+
+			bool error = false;
+
+			{
+				// analyzing the reflection
+
+				enum ReflectionType
+				{
+					eNull = -1,
+					eUniform = 0,
+					eUniformBlock = 1,
+					eVertexAttribute = 2
+				};
+
+				ReflectionType currentReflectionType = eNull;
+
+				struct Reflection
+				{
+					int COUNT = 1; // special for UBO
+
+					ReflectionType reflectionType;
+					std::string name;
+					int offset;
+					std::string type;
+					int size;
+					int index;
+					int binding;
+				};
+				struct ReflectionManager
+				{
+					std::vector<Reflection> rs;
+					void add(Reflection &_r)
+					{
+						if (_r.reflectionType == eUniformBlock && _r.binding != -1)
+						{
+							for (auto &r : rs)
+							{
+								if (r.binding == _r.binding)
+								{
+									r.COUNT++;
+									return;
+								}
+							}
+						}
+						rs.push_back(_r);
+					}
+				};
+				ReflectionManager reflections;
+				Reflection currentReflection;
+
+				glslang_validator_yylex_destroy();
+
+				glslang_validator_yyin = fopen("output.txt", "rb");
+				int token = glslang_validator_yylex();
+				std::string last_string;
+				int error_count = 0;
+				while (token)
+				{
+					switch (token)
+					{
+					case glslang_validator_yy_ERROR_FILE_NOT_FOUND:
+						error = true;
+						break;
+					case glslang_validator_yy_ERROR:
+					{
+						error = true;
+						token = glslang_validator_yylex();
+						if (token == glslang_validator_yy_VALUE)
+						{
+							auto n = std::stoi(glslang_validator_yytext);
+
+							for (auto it = includeFileDatas.rbegin(); it != includeFileDatas.rend(); it++)
+							{
+								if (n > std::get<1>(*it) + std::get<2>(*it))
+								{
+									n = n - std::get<1>(*it) + std::get<0>(*it) - std::get<2>(*it) - 1;
+									break;
+								}
+								else if (n > std::get<1>(*it))
+								{
+									n = std::get<0>(*it);
+									break;
+								}
+							}
+
+							error_count++;
+							output += std::string("The ") + std::to_string(error_count) + "th Error, redirect line num:" + std::to_string(n) + "\n";
+						}
+					}
+						break;
+					case glslang_validator_yy_COLON:
+						if (currentReflectionType != eNull)
+						{
+							if (currentReflection.name != "") reflections.add(currentReflection);
+							currentReflection.reflectionType = currentReflectionType;
+							currentReflection.name = last_string;
+							last_string = "";
+						}
+						break;
+					case glslang_validator_yy_IDENTIFIER:
+					{
+						std::string string(glslang_validator_yytext);
+						last_string = string;
+					}
+						break;
+					case glslang_validator_yy_VALUE:
+					{
+						std::string string(glslang_validator_yytext);
+						if (currentReflectionType != eNull)
+						{
+							if (last_string == "offset")
+								currentReflection.offset = std::stoi(string);
+							else if (last_string == "type")
+								currentReflection.type = string;
+							else if (last_string == "size")
+								currentReflection.size = std::stoi(string);
+							else if (last_string == "index")
+								currentReflection.index = std::stoi(string);
+							else if (last_string == "binding")
+								currentReflection.binding = std::stoi(string);
+						}
+					}
+						break;
+					case glslang_validator_yy_UR_MK:
+						currentReflectionType = eUniform;
+						break;
+					case glslang_validator_yy_UBR_MK:
+						currentReflectionType = eUniformBlock;
+						break;
+					case glslang_validator_yy_VAR_MK:
+						currentReflectionType = eVertexAttribute;
+						break;
+					}
+					token = glslang_validator_yylex();
+				}
+				if (currentReflection.name != "") reflections.add(currentReflection);
+				fclose(glslang_validator_yyin);
+				glslang_validator_yyin = NULL;
+
+				for (auto &r : reflections.rs)
+				{
+					switch (r.reflectionType)
+					{
+					case eUniform:
+						if (r.binding != -1 && r.type == "8b5e") // SAMPLER
+						{
+							tke::Descriptor d;
+							d.type = tke::DescriptorType::image_n_sampler;
+							d.name = r.name;
+							d.binding = r.binding;
+							d.count = r.size;
+							descriptors.push_back(d);
+						}
+						break;
+					case eUniformBlock:
+						if (r.binding != -1) // UBO
+						{
+							tke::Descriptor d;
+							d.type = tke::DescriptorType::uniform_buffer;
+							d.name = r.name;
+							d.binding = r.binding;
+							d.count = r.COUNT;
+							descriptors.push_back(d);
+						}
+						else // PC
+						{
+							tke::PushConstantRange p;
+							p.offset = 0; // 0 always
+							p.size = r.size;
+							pushConstantRanges.push_back(p);
+						}
+						break;
+					}
+				}
+			}
+
+			if (!error)
+			{
+				OnceFileBuffer file("temp.spv");
+				VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
+				shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+				shaderModuleCreateInfo.codeSize = file.length;
+				shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
+
+				device.cs.lock();
+				auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &m->v);
+				assert(res == VK_SUCCESS);
+				device.cs.unlock();
+
+				DeleteFileA("temp.spv");
+			}
+			else
+			{
+				MessageBox(NULL, output.c_str(), path.c_str(), 0);
+				exit(1);
+			}
+
+			DeleteFileA("output.txt");
+			DeleteFileA("temp.glsl");
+		}
 
 		shaderModules.push_back(m);
 
