@@ -1,8 +1,9 @@
 <renderer name="" cx="-1" cy="-1">
   <images>
     <image name="Original.Image" cx="-1" cy="-1" format="R16G16B16A16"/>
-    <image name="AlbedoSpec.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
-    <image name="NormalRoughness.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
+    <image name="AlbedoAlpha.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
+    <image name="NormalHeight.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
+    <image name="SpecRoughness.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
   </images>
   
   <pipelines>
@@ -28,8 +29,9 @@
 		</pass>
     <pass type="draw_action" name="mrt">
       <attachments>
-        <attachment name="1" image_name="AlbedoSpec.Image" aspect="color" clear="true"/>
-        <attachment name="2" image_name="NormalRoughness.Image" aspect="color" clear="true"/>
+        <attachment name="1" image_name="AlbedoAlpha.Image" aspect="color" clear="true"/>
+        <attachment name="2" image_name="NormalHeight.Image" aspect="color" clear="true"/>
+        <attachment name="2" image_name="SpecRoughness.Image" aspect="color" clear="true"/>
         <attachment name="3" image_name="Depth.Image" aspect="depth" clear="true"/>
       </attachments>
       <actions>

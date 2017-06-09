@@ -52,11 +52,12 @@ layout(binding = 3) uniform LIGHT
 }u_light;
       
 layout(binding = 4) uniform sampler2D depthSampler;
-layout(binding = 5) uniform sampler2D albedoSpecSampler;
-layout(binding = 6) uniform sampler2D normalRoughnessSampler;
-layout(binding = 7) uniform sampler2D aoSampler;
+layout(binding = 5) uniform sampler2D albedoAlphaSampler;
+layout(binding = 6) uniform sampler2D normalHeightSampler;
+layout(binding = 7) uniform sampler2D specRoughnessSampler;
+layout(binding = 8) uniform sampler2D aoSampler;
 #if defined(USE_IBL)
-layout(binding = 8) uniform sampler2D envrSampler;
+layout(binding = 9) uniform sampler2D envrSampler;
 #endif
 
 layout(location = 0) in vec3 inViewDir;
@@ -111,15 +112,16 @@ void main()
 	vec3 viewDir = normalize(inViewDir);
 	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
 	
-	vec4 inAlbedoSpec = texture(albedoSpecSampler, gl_FragCoord.xy);
-	vec4 inNormalRoughness = texture(normalRoughnessSampler, gl_FragCoord.xy);
+	vec4 inAlbedoAlpha = texture(albedoAlphaSampler, gl_FragCoord.xy);
+	vec4 inNormalHeight = texture(normalHeightSampler, gl_FragCoord.xy);
+	vec4 inSpecRoughness = texture(specRoughnessSampler, gl_FragCoord.xy);
 	
-	vec3 albedo = inAlbedoSpec.rgb;
-	float spec = inAlbedoSpec.a;
+	vec3 albedo = inAlbedoAlpha.rgb;
+	float spec = inSpecRoughness.r;
 	albedo *= 1.0 - spec;
 	
-	vec3 normal = normalize(inNormalRoughness.xyz * 2.0 - 1.0);
-	float roughness = inNormalRoughness.a;
+	vec3 normal = normalize(inNormalHeight.xyz * 2.0 - 1.0);
+	float roughness = inSpecRoughness.g;
 	
 	vec3 lightSumColor = vec3(0.0);
 	for (int i = 0; i < u_light.count; i++)
@@ -173,5 +175,5 @@ void main()
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	outColor = vec4(inAlbedoSpec.rgb, 1.0);
+	outColor = vec4(vec3(1.0), 1.0);
 }

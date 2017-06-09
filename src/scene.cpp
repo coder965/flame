@@ -18,14 +18,15 @@ namespace tke
 	//	proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
 
 	//}
-
+	 
 	Scene::Scene()
 	{
 		InitializeCriticalSection(&cs);
 
 		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
-		objectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
+		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
+		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
 		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT);
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
 		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
@@ -42,7 +43,8 @@ namespace tke
 
 		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
 		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
-		globalResource.setBuffer(objectMatrixBuffer, "ObjectMatrix.UniformBuffer");
+		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
+		globalResource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
 		globalResource.setBuffer(lightMatrixBuffer, "LightMatrix.UniformBuffer");
 		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
 		globalResource.setBuffer(heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
@@ -62,7 +64,8 @@ namespace tke
 	{
 		delete constantBuffer;
 		delete matrixBuffer;
-		delete objectMatrixBuffer;
+		delete staticObjectMatrixBuffer;
+		delete animatedObjectMatrixBuffer;
 		delete lightMatrixBuffer;
 		delete materialBuffer;
 		delete heightMapTerrainBuffer;
@@ -174,8 +177,8 @@ namespace tke
 		for (auto mt : pModel->materials)
 		{
 			MaterialShaderStruct stru;
-			stru.albedoSpecCompress = mt->albedoR + (mt->albedoG << 8) + (mt->albedoB << 16) + (mt->spec << 24);
-			stru.roughnessAlphaCompress = mt->roughness + (mt->alpha << 8);
+			stru.albedoAlphaCompress = mt->albedoR + (mt->albedoG << 8) + (mt->albedoB << 16) + (mt->alpha << 24);
+			stru.specRoughnessCompress = mt->spec + (mt->roughness << 8);
 
 			auto albedoAlphaMapIndex = getStoreImageIndex(mt->albedoAlphaMap) + 1;
 			auto normalHeightMapIndex = getStoreImageIndex(mt->normalHeightMap) + 1;
@@ -186,8 +189,8 @@ namespace tke
 			for (auto &storeMaterial : storeMaterials)
 			{
 				auto storeAlbedoAlphaMapIndex = storeMaterial.mapIndex & 0xff;
-				auto storeNormalHeightMapIndex = (storeMaterial.mapIndex >> 10) & 0xff;
-				auto storeSpecRoughnessMapIndex = (storeMaterial.mapIndex >> 20) & 0xff;
+				auto storeNormalHeightMapIndex = (storeMaterial.mapIndex >> 8) & 0xff;
+				auto storeSpecRoughnessMapIndex = (storeMaterial.mapIndex >> 16) & 0xff;
 
 				bool theSameAlbedoAlpha = false;
 				bool theSameNormalHeight = false;
@@ -196,14 +199,14 @@ namespace tke
 				if (albedoAlphaMapIndex != 0 && albedoAlphaMapIndex == storeAlbedoAlphaMapIndex)
 					theSameAlbedoAlpha = true;
 				else if (albedoAlphaMapIndex == 0 && storeAlbedoAlphaMapIndex == 0 &&
-					stru.albedoSpecCompress == storeMaterial.albedoSpecCompress)
+					stru.albedoAlphaCompress == storeMaterial.albedoAlphaCompress)
 					theSameAlbedoAlpha = true;
 				if (normalHeightMapIndex == storeNormalHeightMapIndex)
 					theSameNormalHeight = true;
 				if (specRoughnessMapIndex != 0 && specRoughnessMapIndex == storeSpecRoughnessMapIndex)
 					theSameSpecRoughness = true;
 				else if (specRoughnessMapIndex == 0 && storeSpecRoughnessMapIndex == 0 &&
-					stru.roughnessAlphaCompress == storeMaterial.roughnessAlphaCompress)
+					stru.specRoughnessCompress == storeMaterial.specRoughnessCompress)
 					theSameSpecRoughness = true;
 
 				if (theSameAlbedoAlpha && theSameNormalHeight && theSameSpecRoughness)
@@ -217,7 +220,7 @@ namespace tke
 			if (sameIndex == -1)
 			{
 				mt->sceneIndex = storeMaterials.size();
-				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 10) + (specRoughnessMapIndex << 20);
+				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 8) + (specRoughnessMapIndex << 16);
 				storeMaterials.push_back(stru);
 			}
 			else
@@ -774,28 +777,53 @@ namespace tke
 		}
 		if (objects.size() > 0)
 		{
-			std::vector<VkBufferCopy> ranges;
+			int updateCount = 0;
+			std::vector<VkBufferCopy> staticUpdateRanges;
+			std::vector<VkBufferCopy> animatedUpdateRanges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * objects.size());
-			int objectIndex = 0;
+			int staticObjectIndex = 0;
+			int animatedObjectIndex = 0;
 			for (auto pObject : objects)
 			{
-				if (pObject->type != ObjectTypeStatic) continue;
-
-				if (pObject->changed)
+				if (pObject->type == ObjectTypeStatic)
 				{
-					auto srcOffset = sizeof(glm::mat4) * ranges.size();
-					memcpy(map + srcOffset, &pObject->getMat(), sizeof(glm::mat4));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(glm::mat4) * objectIndex;
-					range.size = sizeof(glm::mat4);
-					ranges.push_back(range);
+					if (pObject->changed)
+					{
+						auto srcOffset = sizeof(glm::mat4) * updateCount;
+						memcpy(map + srcOffset, &pObject->getMat(), sizeof(glm::mat4));
+						VkBufferCopy range = {};
+						range.srcOffset = srcOffset;
+						range.dstOffset = sizeof(glm::mat4) * staticObjectIndex;
+						range.size = sizeof(glm::mat4);
+						staticUpdateRanges.push_back(range);
+
+						updateCount++;
+					}
+					pObject->sceneIndex = staticObjectIndex;
+					staticObjectIndex++;
 				}
-				pObject->sceneIndex = objectIndex;
-				objectIndex++;
+				else
+				{
+					if (pObject->changed)
+					{
+						auto srcOffset = sizeof(glm::mat4) * updateCount;
+						memcpy(map + srcOffset, &pObject->getMat(), sizeof(glm::mat4));
+						VkBufferCopy range = {};
+						range.srcOffset = srcOffset;
+						range.dstOffset = sizeof(glm::mat4) * animatedObjectIndex;
+						range.size = sizeof(glm::mat4);
+						animatedUpdateRanges.push_back(range);
+
+						updateCount++;
+					}
+					pObject->sceneIndex = animatedObjectIndex;
+					animatedObjectIndex++;
+				}
+
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, objectMatrixBuffer->m_buffer, ranges.size(), ranges.data());
+			if (staticUpdateRanges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, staticObjectMatrixBuffer->m_buffer, staticUpdateRanges.size(), staticUpdateRanges.data());
+			if (animatedUpdateRanges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, animatedObjectMatrixBuffer->m_buffer, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 		if (lights.size() > 0)
 		{ // light in editor

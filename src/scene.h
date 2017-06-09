@@ -12,13 +12,12 @@
 
 #define TKE_MAX_OBJECT_COUNT (1024)
 #define TKE_MAX_LIGHT_COUNT (256)
-#define TKE_MAX_TEXTURE_COUNT (1024)
-#define TKE_MAX_MATERIAL_COUNT (1024)
+#define TKE_MAX_MATERIAL_COUNT (256)
+#define TKE_MAX_TEXTURE_COUNT (256)
 #define TKE_MAX_INDIRECT_COUNT (1024)
 
 namespace tke
 {
-	struct Window;
 	//struct MasterRenderer
 	//
 
@@ -171,7 +170,8 @@ namespace tke
 
 		UniformBuffer *constantBuffer = nullptr;
 		UniformBuffer *matrixBuffer = nullptr;
-		UniformBuffer *objectMatrixBuffer = nullptr;
+		UniformBuffer *staticObjectMatrixBuffer = nullptr;
+		UniformBuffer *animatedObjectMatrixBuffer = nullptr;
 		UniformBuffer *lightMatrixBuffer = nullptr;
 		UniformBuffer *materialBuffer = nullptr;
 		IndirectIndexBuffer *staticObjectIndirectBuffer = nullptr;

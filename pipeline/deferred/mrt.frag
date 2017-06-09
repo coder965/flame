@@ -1,7 +1,7 @@
 struct Material
 {
-	uint albedoSpecCompress;
-	uint roughnessAlphaCompress;
+	uint albedoAlphaCompress;
+	uint specRoughnessCompress;
 
 	uint mapIndex;
 	
@@ -10,54 +10,64 @@ struct Material
 
 layout(binding = 2) uniform MATERIAL
 {
-	Material material[1024];
+	Material material[256];
 }u_material;
 
-layout(binding = 3) uniform sampler2D mapSamplers[1024];
+layout(binding = 3) uniform sampler2D mapSamplers[256];
 
 layout(location = 0) in flat uint inMaterialID;
 layout(location = 1) in vec2 inTexcoord;
 layout(location = 2) in vec3 inNormal;
 layout(location = 3) in vec3 inTangent;
 
-layout(location = 0) out vec4 outAlbedoSpec;
-layout(location = 1) out vec4 outNormalRoughness;
+layout(location = 0) out vec4 outAlbedoAlpha;
+layout(location = 1) out vec4 outNormalHeight;
+layout(location = 2) out vec4 outSpecRoughness;
 		
 void main()
 {
 	uint mapIndex;
 
 	vec3 albedo;
-	float spec, roughness;
-	
-	mapIndex = u_material.material[inMaterialID].mapIndex & 0x7ff;
-	uint albedoSpecCompress = u_material.material[inMaterialID].albedoSpecCompress;
-	albedo = vec3((albedoSpecCompress & 0xff) / 255.0, ((albedoSpecCompress >> 8) & 0xff) / 255.0, ((albedoSpecCompress >> 16) & 0xff) / 255.0);
-	spec = ((albedoSpecCompress >> 24) & 0xff) / 255.0;
+	float alpha;
+	mapIndex = u_material.material[inMaterialID].mapIndex & 0xff;
 	if (mapIndex == 0)
 	{
+		uint v = u_material.material[inMaterialID].albedoAlphaCompress;
+		albedo = vec3((v & 0xff) / 255.0, ((v >> 8) & 0xff) / 255.0, ((v >> 16) & 0xff) / 255.0);
+		alpha = ((v >> 24) & 0xff) / 255.0;
 	}
 	else
 	{
-		vec4 albedoSpec = texture(mapSamplers[mapIndex - 1], inTexcoord);
-		albedo = albedoSpec.rgb;
+		vec4 v = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		albedo = v.rgb;
+		alpha = v.a;
 	}
 	
 	vec3 normal = inNormal;
-	mapIndex = (u_material.material[inMaterialID].mapIndex >> 10) & 0x7ff;
-	uint roughnessAlpha = u_material.material[inMaterialID].roughnessAlphaCompress;
-	roughness = (roughnessAlpha & 0xff) / 255.0;
+	mapIndex = (u_material.material[inMaterialID].mapIndex >> 8) & 0xff;
+	if (mapIndex > 0)
+	{
+		vec4 v = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		vec3 tn = normalize(v.xyz * 2.0 - 1.0);
+		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
+	}
+
+	float spec, roughness;
+	mapIndex = (u_material.material[inMaterialID].mapIndex >> 16) & 0xff;
 	if (mapIndex == 0)
 	{
+		uint v = u_material.material[inMaterialID].specRoughnessCompress;
+		spec = (v & 0xff) / 255.0;
+		roughness = ((v >> 8) & 0xff) / 255.0;
 	}
 	else
 	{
-		vec4 normalRoughness = texture(mapSamplers[mapIndex - 1], inTexcoord);
-		vec3 tn = normalize(normalRoughness.xyz * 2.0 - 1.0);
-		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
+		vec4 v = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		spec = v.r;
+		roughness = v.g;
 	}
 	
-	outAlbedoSpec = vec4(albedo, spec);
-	outAlbedoSpec = vec4(vec3(mapIndex), spec);
-	outNormalRoughness = vec4(normal * 0.5 + 0.5, roughness);
+	outAlbedoAlpha = vec4(albedo, alpha);
+	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
 }
