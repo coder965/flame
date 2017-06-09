@@ -111,8 +111,9 @@ namespace tke
 	{
 		CRITICAL_SECTION cs;
 
-		char name[50];
-		char filePath[50];
+		std::string name;
+		std::string filename;
+		std::string filepath;
 
 		SkyType skyType = SkyTypeAtmosphereScattering;
 		glm::vec2 atmosphereSunDir = glm::vec2(0.f, -90.f);
@@ -122,7 +123,7 @@ namespace tke
 		float atmosphereCameraHeight = 10.0002f;
 		float atmosphereKm = 0.0025f;
 		float atmosphereKr = 0.001f;
-		char skyName[50];
+		std::string skyFilename;
 		Image *skyImage = nullptr;
 
 		float exposure = 0.01f;
@@ -143,7 +144,6 @@ namespace tke
 		std::vector<AnimationTemplate*> animationTemplates;
 
 		std::vector<Light*> lights;
-
 		Light *pSunLight = nullptr;
 
 		std::vector<Object*> objects;
@@ -210,10 +210,6 @@ namespace tke
 
 		void setResources(Renderer *r);
 		void update();
-
-		void showWater();
-		void updateAnimation();
-		void updateAnimationUBO();
 	};
 
 	// make sure tke3_scene always vaild

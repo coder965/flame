@@ -77,6 +77,7 @@ namespace tke
 		std::vector<VkImageView> views = { image->getView(), pDepthImage->getView() };
 		framebuffer = createFramebuffer(resCx, resCy, renderPass, views);
 
-		plainPickUpPipeline.create(enginePath + "pipeline/pickUp/pickUp.xml", &vertexInputState, renderPass, 0);
+		plainPickUpPipeline.loadXML(enginePath + "pipeline/pickUp/pickUp.xml");
+		plainPickUpPipeline.setup(&vertexInputState, renderPass, 0);
 	}
 }

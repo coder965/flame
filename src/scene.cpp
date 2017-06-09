@@ -397,13 +397,12 @@ namespace tke
 	}
 
 	static Pipeline *panoramaPipeline = nullptr;
-	static Pipeline *deferredIblPipeline = nullptr;
+	static Pipeline *deferredPipeline = nullptr;
 	static Pipeline *mrtPipeline = nullptr;
-
 	void Scene::setResources(Renderer *r)
 	{
 		panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
-		deferredIblPipeline = r->resource.getPipeline("Deferred_PBR_IBL.Pipeline");
+		deferredPipeline = r->resource.getPipeline("Deferred.Pipeline");
 		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
 	}
 
@@ -489,17 +488,20 @@ namespace tke
 						postRenderPass = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
 					}
 
-					scatteringPipeline.create(enginePath + "pipeline/sky/scattering.xml", &zeroVertexInputState, postRenderPass, 0);
+					scatteringPipeline.loadXML(enginePath + "pipeline/sky/scattering.xml");
+					scatteringPipeline.setup(&zeroVertexInputState, postRenderPass, 0);
 					globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
 
+					downsamplePipeline.loadXML(enginePath + "pipeline/sky/downsample.xml");
 					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-					downsamplePipeline.create(enginePath + "pipeline/sky/downsample.xml", &zeroVertexInputState, postRenderPass, 0);
+					downsamplePipeline.setup(&zeroVertexInputState, postRenderPass, 0);
 					globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
 
+					convolvePipeline.loadXML(enginePath + "pipeline/sky/convolve.xml");
 					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-					convolvePipeline.create(enginePath + "pipeline/sky/convolve.xml", &zeroVertexInputState, postRenderPass, 0);
+					convolvePipeline.setup(&zeroVertexInputState, postRenderPass, 0);
 					globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 
 					envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
@@ -575,11 +577,11 @@ namespace tke
 
 						descriptorPool.addWrite(panoramaPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
 
-						if (deferredIblPipeline)
+						if (deferredPipeline)
 						{ // update IBL
 
 							static int defe_envr_position = -1;
-							if (defe_envr_position == -1) defe_envr_position = deferredIblPipeline->descriptorPosition("envrSampler");
+							if (defe_envr_position == -1) defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 
 							if (defe_envr_position != -1)
 							{
@@ -655,7 +657,7 @@ namespace tke
 									commandPool.endOnce(cmd);
 								}
 
-								descriptorPool.addWrite(deferredIblPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->m_mipmapLevels));
+								descriptorPool.addWrite(deferredPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->m_mipmapLevels));
 
 								AmbientBufferShaderStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -946,6 +948,22 @@ namespace tke
 			lightCountChanged = false;
 		}
 
+		for (auto object : objects)
+		{
+			if (object->type != ObjectTypeAnimated) continue;
+
+			auto pObject = (AnimatedObject*)object;
+
+			pObject->animationSolver->sample();
+			for (int i = 0; i < pObject->pModel->bones.size(); i++)
+				pObject->animationSolver->boneMatrix[i] = glm::mat4();
+			pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
+			pObject->animationSolver->calcIK();
+
+			pObject->animationSolver->fixMatrix();
+			pObject->animationSolver->updateUBO();
+		}
+
 		camera.changed = false;
 
 		for (auto pLight : lights)
@@ -966,52 +984,6 @@ namespace tke
 			textureIndex++;
 		}
 		return -1;
-	}
-
-	void Scene::showWater()
-	{
-		//for (auto package : pgLists[pgWater])
-		//{
-		//	tke3Object *pObject = pObjects[package.id];
-		//	glm::mat4 mat_mv = camera.getMat() * pObject->getMat();
-		//	glm::mat3 mat_normal = camera.getMatNormal();
-		//	tke3_program_3water::set_matrixMVP(*tke3_matProj * mat_mv);
-		//	tke3_program_3water::set_matrixModelView(mat_mv);
-		//	tke3_program_3water::set_matrixNormal(mat_normal);
-		//	tke3_program_3water::set_matrixNormalTranspose(glm::transpose(mat_normal));
-		//	glBindVertexArray(tke_vao_rect.vao);
-		//	for (auto pmt : package.pMtList)
-		//		glDrawArraysInstanced(GL_PATCHES, 0, 4, 64 * 64);
-		//}
-	}
-
-	void Scene::updateAnimation()
-	{
-		for (auto object : objects)
-		{
-			if (object->type != ObjectTypeAnimated) continue;
-
-			auto pObject = (AnimatedObject*)object;
-
-			pObject->animationSolver->sample();
-			for (int i = 0; i < pObject->pModel->bones.size(); i++)
-				pObject->animationSolver->boneMatrix[i] = glm::mat4();
-			pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
-			pObject->animationSolver->calcIK();
-		}
-	}
-
-	void Scene::updateAnimationUBO()
-	{
-		for (auto object : objects)
-		{
-			if (object->type != ObjectTypeAnimated) continue;
-
-			auto pObject = (AnimatedObject*)object;
-
-			pObject->animationSolver->fixMatrix();
-			pObject->animationSolver->updateUBO();
-		}
 	}
 
 	Scene *scene;

@@ -1466,7 +1466,7 @@ namespace tke
 				file.close();
 			}
 
-			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "/src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
+			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
 
 			std::string output;
 			{
@@ -1720,10 +1720,13 @@ namespace tke
 		pResource = &globalResource;
 	}
 
-	void Pipeline::create(const std::string &_filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::loadXML(const std::string &_filename)
 	{
 		pipelineLoadXML<Pipeline, Stage>(this, _filename);
+	}
 
+	void Pipeline::setup(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	{
 		m_pVertexInputState = pVertexInputState;
 
 		m_renderPass = renderPass;
@@ -2850,7 +2853,8 @@ namespace tke
 		{
 			p.p = new Pipeline;
 			p.p->pResource = &resource;
-			resource.setPipeline(p.p, p.name);
+			p.p->loadXML(enginePath + p.file_name);
+			resource.setPipeline(p.p, p.p->name);
 		}
 
 		if (vertex_buffer_name!= "")
@@ -2944,7 +2948,7 @@ namespace tke
 							{
 								for (auto &p : resource.privatePipelines)
 								{
-									if (p.name == action.pipeline_name)
+									if (p.p->name == action.pipeline_name)
 										p.subpassIndex = subpassIndex;
 								}
 							}
@@ -2989,7 +2993,7 @@ namespace tke
 			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 
 		for (auto &p : resource.privatePipelines)
-			p.p->create(enginePath + p.file_name, p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
+			p.p->setup(p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
 
 		getDescriptorSets();
 	}

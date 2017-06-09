@@ -4,7 +4,7 @@
   </buffers>
   
   <pipelines>
-    <pipeline name="Paste.Pipeline" file_name="pipeline/paste/paste.xml" vertex_input_type="zero"/>
+    <pipeline file_name="pipeline/paste/paste.xml" vertex_input_type="zero"/>
   </pipelines>
     
   <passes>

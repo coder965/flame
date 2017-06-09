@@ -103,7 +103,6 @@ currentEnum = tke::addReflectEnum("VertexInputType");
 currentEnum->items.emplace_back("zero", (int)VertexInputType::zero);
 currentEnum->items.emplace_back("normal", (int)VertexInputType::normal);
 currentBank = PipelineInfo::b;
-currentBank->addV<std::string>("name", offsetof(PipelineInfo, name));
 currentBank->addV<std::string>("file_name", offsetof(PipelineInfo, file_name));
 currentBank->addE("VertexInputType", "vertex_input_type", offsetof(PipelineInfo, vertex_input_type));
 currentBank = StageArchive::b;

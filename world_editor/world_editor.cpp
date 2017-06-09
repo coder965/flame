@@ -197,6 +197,7 @@ struct MonitorWindow : tke::GuiWindow
 		tke::ShaderMacro macro;
 		macro.pipelineName = "Deferred.Pipeline";
 		macro.stageType = tke::StageType::frag;
+		macro.value = "#define USE_PBR\n";
 		renderer->resource.shaderMacros.push_back(macro);
 
 		renderer->setup();

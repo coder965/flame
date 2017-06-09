@@ -475,7 +475,6 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLv std::string name;
 		REFLv std::string file_name;
 		REFLe VertexInputType vertex_input_type = VertexInputType::zero;
 
@@ -749,8 +748,9 @@ namespace tke
 		VkDescriptorSet m_descriptorSet = 0;
 
 		Pipeline();
-		void create(const std::string &filename, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 		~Pipeline();
+		void loadXML(const std::string &filename);
+		void setup(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
 		void updateDescriptors();
 		int descriptorPosition(const std::string &name);
 	};

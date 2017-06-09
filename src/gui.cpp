@@ -579,8 +579,9 @@ namespace tke
 			};
 
 			pipeline = new Pipeline;
+			pipeline->loadXML(enginePath + "pipeline/ui/ui.xml");
 			pipeline->m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-			pipeline->create(enginePath + "pipeline/ui/ui.xml", &vertex_info, windowRenderPass, 0);
+			pipeline->setup(&vertex_info, windowRenderPass, 0);
 
 			uiContext = ImGui::GetCurrentContext();
 
