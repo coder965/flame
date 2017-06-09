@@ -163,15 +163,19 @@ namespace tke
 		int getStoreImageIndex(Image *pImage);
 		std::vector<MaterialShaderStruct> storeMaterials;
 
-		VertexBuffer *vertexBuffer = nullptr;
-		IndexBuffer *indexBuffer = nullptr;
+		VertexBuffer *staticVertexBuffer = nullptr;
+		IndexBuffer *staticIndexBuffer = nullptr;
+
+		VertexBuffer *animatedVertexBuffer = nullptr;
+		IndexBuffer *animatedIndexBuffer = nullptr;
 
 		UniformBuffer *constantBuffer = nullptr;
 		UniformBuffer *matrixBuffer = nullptr;
 		UniformBuffer *objectMatrixBuffer = nullptr;
 		UniformBuffer *lightMatrixBuffer = nullptr;
 		UniformBuffer *materialBuffer = nullptr;
-		IndirectIndexBuffer *objectIndirectBuffer = nullptr;
+		IndirectIndexBuffer *staticObjectIndirectBuffer = nullptr;
+		IndirectIndexBuffer *animatedObjectIndirectBuffer = nullptr;
 		UniformBuffer *heightMapTerrainBuffer = nullptr;
 		UniformBuffer *proceduralTerrainBuffer = nullptr;
 		UniformBuffer *lightBuffer = nullptr;
@@ -180,7 +184,7 @@ namespace tke
 		std::vector<CollisionGroup*> pCollisionGroups;
 
 		unsigned int shadowCount = 0;
-		unsigned int drawCallCount = 0;
+		unsigned int staticIndirectCount = 0;
 
 		Scene();
 		~Scene();

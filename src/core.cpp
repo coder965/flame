@@ -25,6 +25,7 @@ namespace tke
 	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	VkPipelineVertexInputStateCreateInfo vertexInputState;
 	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
+	VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 
 	StagingBuffer *stagingBuffer = nullptr;
 
@@ -156,34 +157,41 @@ namespace tke
 		stagingBuffer = new StagingBuffer(65536);
 
 		scene = new Scene;
-		strcpy(scene->name, "default");
+		scene->name = "default";
 		scene->setUp();
 
 		{
-			static VkVertexInputBindingDescription bindings0[] = {
-				{ 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX }
-			};
-
-			static VkVertexInputAttributeDescription attributes0[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(glm::vec3) },
-				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3) + sizeof(glm::vec2) },
-				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3) + sizeof(glm::vec2) + sizeof(glm::vec3) }
-			};
-
-			static VkVertexInputBindingDescription bindings1[] = {
-				{ 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX }
-			};
-
-			static VkVertexInputAttributeDescription attributes1[] = {
-				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 }
-			};
-
 			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
 
-			vertexInputState = vertexStateInfo(ARRAYSIZE(bindings0), bindings0, ARRAYSIZE(attributes0), attributes0);
+			static VkVertexInputBindingDescription bindings0 = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
 
-			lineVertexInputState = vertexStateInfo(ARRAYSIZE(bindings1), bindings1, ARRAYSIZE(attributes1), attributes1);
+			static VkVertexInputAttributeDescription attributes0[] = {
+				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
+				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
+				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
+				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
+			};
+
+			vertexInputState = vertexStateInfo(1, &bindings0, ARRAYSIZE(attributes0), attributes0);
+
+			static VkVertexInputBindingDescription bindings1 = { 0, sizeof(AnimatedVertex), VK_VERTEX_INPUT_RATE_VERTEX };
+
+			static VkVertexInputAttributeDescription attributes1[] = {
+				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, position) },
+				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(AnimatedVertex, uv) },
+				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
+				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
+				{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
+				{ 5, 0, VK_FORMAT_R32G32B32A32_SINT, offsetof(AnimatedVertex, boneID) }
+			};
+
+			animatedVertexInputState = vertexStateInfo(1, &bindings1, ARRAYSIZE(attributes1), attributes1);
+
+			static VkVertexInputBindingDescription bindings2 = { 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX };
+
+			static VkVertexInputAttributeDescription attributes2 = { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 };
+
+			lineVertexInputState = vertexStateInfo(1, &bindings2, 1, &attributes2);
 		}
 
 		// this kind of depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.

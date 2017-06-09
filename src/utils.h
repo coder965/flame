@@ -9,6 +9,20 @@
 #include <typeindex>
 #include <Windows.h>
 
+template<class T>
+inline std::ifstream& operator>>(std::ifstream &file, T &v)
+{
+	file.read((char*)&v, sizeof(T));
+	return file;
+}
+
+template<class T>
+inline std::ofstream& operator<<(std::ofstream &file, T &v)
+{
+	file.write((char*)&v, sizeof(T));
+	return file;
+}
+
 inline std::ifstream& operator>>(std::ifstream &file, std::string &str)
 {
 	int size;

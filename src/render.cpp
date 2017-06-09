@@ -2213,7 +2213,6 @@ namespace tke
 					return d.binding;
 			}
 		}
-		assert(false);
 		return -1;
 	}
 
@@ -2993,7 +2992,25 @@ namespace tke
 			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 
 		for (auto &p : resource.privatePipelines)
-			p.p->setup(p.vertex_input_type == VertexInputType::zero ? &zeroVertexInputState : &vertexInputState, vkRenderPass, p.subpassIndex);
+		{
+			VkPipelineVertexInputStateCreateInfo *vi = nullptr;
+			switch (p.vertex_input_type)
+			{
+			case VertexInputType::zero:
+				vi = &zeroVertexInputState;
+				break;
+			case VertexInputType::normal:
+				vi = &vertexInputState;
+				break;
+			case VertexInputType::line:
+				vi = &lineVertexInputState;
+				break;
+			case VertexInputType::animated:
+				vi = &animatedVertexInputState;
+				break;
+			}
+			p.p->setup(vi, vkRenderPass, p.subpassIndex);
+		}
 
 		getDescriptorSets();
 	}

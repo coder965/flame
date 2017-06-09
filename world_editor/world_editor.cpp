@@ -220,7 +220,7 @@ struct MonitorWindow : tke::GuiWindow
 			tke::beginCommandBuffer(cmd[i]);
 
 			auto objectDrawcall = renderer->findRenderPass("mrt")->findAction("1")->findDrawcall("1");
-			objectDrawcall->indirect_count = tke::scene->drawCallCount;
+			objectDrawcall->indirect_count = tke::scene->staticIndirectCount;
 
 			renderer->execute(cmd[i], i);
 

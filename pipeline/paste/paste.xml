@@ -1,4 +1,4 @@
-<pipeline name="" cx="-1" cy="-1" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
+<pipeline name="Paste.Pipeline" cx="-1" cy="-1" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
 	<blend_attachment enable="true" src_color="src_alpha" dst_color="one_minus_src_alpha" src_alpha="zero" dst_alpha="one_minus_src_alpha"/>
 	<link binding="-1" array_element="0" descriptor_name="tex" resource_name="Paste.Texture" sampler="plain"/>
 	<link binding="-1" array_element="0" descriptor_name="COLOR" resource_name="Paste.UniformBuffer" sampler="none"/>

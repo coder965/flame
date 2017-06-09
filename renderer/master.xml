@@ -1,4 +1,4 @@
-<renderer name="" cx="-1" cy="-1" vertex_buffer_name="Scene.VertexBuffer" index_buffer_name="Scene.IndexBuffer" >
+<renderer name="" cx="-1" cy="-1" vertex_buffer_name="Scene.StaticVertexBuffer" index_buffer_name="Scene.StaticIndexBuffer" >
   <images>
     <image name="Original.Image" cx="-1" cy="-1" format="R16G16B16A16"/>
     <image name="AlbedoSpec.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
@@ -34,7 +34,7 @@
       <actions>
         <action name="1" type="draw_action" pipeline_name="Mrt.Pipeline">
           <drawcalls>
-            <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.IndirectBuffer"/>
+            <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.StaticIndirectBuffer"/>
           </drawcalls>
         </action>
       </actions>

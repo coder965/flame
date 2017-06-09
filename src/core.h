@@ -32,12 +32,15 @@ namespace tke
 		glm::vec3 tangent;
 	};
 
-	struct VertexAnimation
+	struct AnimatedVertex
 	{
 		glm::vec3 position;
-		glm::vec2 texcoord;
+		glm::vec2 uv;
 		glm::vec3 normal;
 		glm::vec3 tangent;
+
+		glm::vec4 boneWeight;
+		glm::ivec4 boneID;
 	};
 
 	extern int resCx;
@@ -54,6 +57,7 @@ namespace tke
 	extern bool needUpdateProjMatrix;
 
 	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+	extern VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 

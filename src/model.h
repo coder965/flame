@@ -185,9 +185,8 @@ namespace tke
 		std::vector<glm::vec2> uvs;
 		std::vector<glm::vec3> normals;
 		std::vector<glm::vec3> tangents;
-		std::vector<float> clusterCounts;
-		std::vector<glm::vec4> boneIDs;
-		std::vector<glm::vec4> clusterWeights;
+		std::vector<glm::vec4> boneWeights;
+		std::vector<glm::ivec4> boneIDs;
 		std::vector<int> indices;
 
 		std::vector<Material*> materials;

@@ -61,42 +61,6 @@ bool inline operator >= (glm::vec3 a, float b)
 	return a.x >= b && a.y >= b && a.z >= b;
 }
 
-inline std::ifstream& operator>>(std::ifstream &file, glm::vec2 &v)
-{
-	file.read((char*)&v, sizeof(glm::vec2));
-	return file;
-}
-
-inline std::ofstream& operator<<(std::ofstream &file, glm::vec2 &v)
-{
-	file.write((char*)&v, sizeof(glm::vec2));
-	return file;
-}
-
-inline std::ifstream& operator>>(std::ifstream &file, glm::vec3 &v)
-{
-	file.read((char*)&v, sizeof(glm::vec3));
-	return file;
-}
-
-inline std::ofstream& operator<<(std::ofstream &file, glm::vec3 &v)
-{
-	file.write((char*)&v, sizeof(glm::vec3));
-	return file;
-}
-
-inline std::ifstream& operator>>(std::ifstream &file, glm::vec4 &v)
-{
-	file.read((char*)&v, sizeof(glm::vec4));
-	return file;
-}
-
-inline std::ofstream& operator<<(std::ofstream &file, glm::vec4 &v)
-{
-	file.write((char*)&v, sizeof(glm::vec4));
-	return file;
-}
-
 namespace tke
 {
 	void quaternionToMatrix(glm::vec4 &q, glm::mat3 &mat);

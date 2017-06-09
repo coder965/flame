@@ -33,9 +33,12 @@ namespace tke
 		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
 		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
 
-		vertexBuffer = new VertexBuffer();
-		indexBuffer = new IndexBuffer();
-		objectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+		staticVertexBuffer = new VertexBuffer();
+		staticIndexBuffer = new IndexBuffer();
+		animatedVertexBuffer = new VertexBuffer();
+		animatedIndexBuffer = new IndexBuffer();
+		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 
 		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
 		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
@@ -47,9 +50,12 @@ namespace tke
 		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
 		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
 
-		globalResource.setBuffer(vertexBuffer, "Scene.VertexBuffer");
-		globalResource.setBuffer(indexBuffer, "Scene.IndexBuffer");
-		globalResource.setBuffer(objectIndirectBuffer, "Scene.IndirectBuffer");
+		globalResource.setBuffer(staticVertexBuffer, "Scene.StaticVertexBuffer");
+		globalResource.setBuffer(staticIndexBuffer, "Scene.StaticIndexBuffer");
+		globalResource.setBuffer(animatedVertexBuffer, "Scene.AnimatedVertexBuffer");
+		globalResource.setBuffer(animatedIndexBuffer, "Scene.AnimatedIndexBuffer");
+		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.StaticIndirectBuffer");
+		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.AnimatedIndirectBuffer");
 	}
 
 	Scene::~Scene()
@@ -64,9 +70,12 @@ namespace tke
 		delete lightBuffer;
 		delete ambientBuffer;
 
-		delete vertexBuffer;
-		delete indexBuffer;
-		delete objectIndirectBuffer;
+		delete staticVertexBuffer;
+		delete staticIndexBuffer;
+		delete animatedVertexBuffer;
+		delete animatedIndexBuffer;
+		delete staticObjectIndirectBuffer;
+		delete animatedObjectIndirectBuffer;
 	}
 
 	void Scene::setUp()
@@ -673,78 +682,76 @@ namespace tke
 
 			needUpdataSky = false;
 		}
-		if (terrains.size() > 0)
-		{
-			std::vector<VkBufferCopy> ranges;
-
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(HeightMapTerrainShaderStruct) * terrains.size());
-
-			auto terrainIndex = 0;
-			for (auto pTerrain : terrains)
-			{
-				if (pTerrain->changed)
-				{
-					HeightMapTerrainShaderStruct stru;
-					stru.patchSize = pTerrain->patchSize;
-					stru.ext = pTerrain->ext;
-					stru.height = pTerrain->height;
-					stru.tessFactor = pTerrain->tessFactor;
-					stru.mapDim = pTerrain->heightMap->m_width;
-
-					auto srcOffset = sizeof(HeightMapTerrainShaderStruct) * ranges.size();
-					memcpy(map + srcOffset, &stru, sizeof(HeightMapTerrainShaderStruct));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(HeightMapTerrainShaderStruct) * terrainIndex;
-					range.size = sizeof(HeightMapTerrainShaderStruct);
-					ranges.push_back(range);
-
-					static int position = -1;
-					// TODO : FIX TERRAIN
-					//if (position == -1) position = masterRenderer->heightMapTerrainPipeline.descriptorPosition("samplerHeight");
-					//vk::descriptorPool.addWrite(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex);
-				}
-
-				terrainIndex++;
-			}
-
-			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, heightMapTerrainBuffer->m_buffer, ranges.size(), ranges.data());
-
-			descriptorPool.update();
-		}
 		if (needUpdateVertexBuffer)
 		{
-			std::vector<Vertex> vertexs;
-			std::vector<int> indices;
+			std::vector<Vertex> staticVertexs;
+			std::vector<int> staticIndices;
+
+			std::vector<AnimatedVertex> animatedVertexs;
+			std::vector<int> animatedIndices;
 
 			for (auto pModel : models)
 			{
-				pModel->vertexBase = vertexs.size();
-				pModel->indiceBase = indices.size();
-
-				for (int i = 0; i < pModel->positions.size(); i++)
+				if (!pModel->animated)
 				{
-					Vertex vertex;
-					if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-					else vertex.position = glm::vec3(0.f);
-					if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-					else vertex.uv = glm::vec2(0.f);
-					if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-					else vertex.normal = glm::vec3(0.f);
-					if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-					else vertex.tangent = glm::vec3(0.f);
+					pModel->vertexBase = staticVertexs.size();
+					pModel->indiceBase = staticIndices.size();
 
-					vertexs.push_back(vertex);
+					for (int i = 0; i < pModel->positions.size(); i++)
+					{
+						Vertex vertex;
+						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+						else vertex.position = glm::vec3(0.f);
+						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+						else vertex.uv = glm::vec2(0.f);
+						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+						else vertex.normal = glm::vec3(0.f);
+						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+						else vertex.tangent = glm::vec3(0.f);
+
+						staticVertexs.push_back(vertex);
+					}
+					for (int i = 0; i < pModel->indices.size(); i++)
+					{
+						staticIndices.push_back(pModel->indices[i]);
+					}
 				}
-				for (int i = 0; i < pModel->indices.size(); i++)
+				else
 				{
-					indices.push_back(pModel->indices[i]);
+					pModel->vertexBase = animatedVertexs.size();
+					pModel->indiceBase = animatedIndices.size();
+
+					for (int i = 0; i < pModel->positions.size(); i++)
+					{
+						AnimatedVertex vertex;
+						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+						else vertex.position = glm::vec3(0.f);
+						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+						else vertex.uv = glm::vec2(0.f);
+						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+						else vertex.normal = glm::vec3(0.f);
+						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+						else vertex.tangent = glm::vec3(0.f);
+
+						if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
+						else vertex.boneWeight = glm::vec4(0.f);
+						if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
+						else vertex.boneID = glm::ivec4(0);
+
+						animatedVertexs.push_back(vertex);
+					}
+					for (int i = 0; i < pModel->indices.size(); i++)
+					{
+						animatedIndices.push_back(pModel->indices[i]);
+					}
 				}
 			}
 
-			vertexBuffer->recreate(sizeof(Vertex) * vertexs.size(), vertexs.data());
-			indexBuffer->recreate(sizeof(int) * indices.size(), indices.data());
+			if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
+			if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
+
+			if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
+			if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
 
 			tke::needRedraw = true;
 			needUpdateVertexBuffer = false;
@@ -813,13 +820,53 @@ namespace tke
 			stagingBuffer->unmap();
 			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, lightMatrixBuffer->m_buffer, ranges.size(), ranges.data());
 		}
+		if (terrains.size() > 0)
+		{
+			std::vector<VkBufferCopy> ranges;
+
+			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(HeightMapTerrainShaderStruct) * terrains.size());
+
+			auto terrainIndex = 0;
+			for (auto pTerrain : terrains)
+			{
+				if (pTerrain->changed)
+				{
+					HeightMapTerrainShaderStruct stru;
+					stru.patchSize = pTerrain->patchSize;
+					stru.ext = pTerrain->ext;
+					stru.height = pTerrain->height;
+					stru.tessFactor = pTerrain->tessFactor;
+					stru.mapDim = pTerrain->heightMap->m_width;
+
+					auto srcOffset = sizeof(HeightMapTerrainShaderStruct) * ranges.size();
+					memcpy(map + srcOffset, &stru, sizeof(HeightMapTerrainShaderStruct));
+					VkBufferCopy range = {};
+					range.srcOffset = srcOffset;
+					range.dstOffset = sizeof(HeightMapTerrainShaderStruct) * terrainIndex;
+					range.size = sizeof(HeightMapTerrainShaderStruct);
+					ranges.push_back(range);
+
+					static int position = -1;
+					// TODO : FIX TERRAIN
+					//if (position == -1) position = masterRenderer->heightMapTerrainPipeline.descriptorPosition("samplerHeight");
+					//vk::descriptorPool.addWrite(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex);
+				}
+
+				terrainIndex++;
+			}
+
+			stagingBuffer->unmap();
+			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, heightMapTerrainBuffer->m_buffer, ranges.size(), ranges.data());
+
+			descriptorPool.update();
+		}
 		if (needUpdateIndirectBuffer)
 		{
 			if (objects.size() > 0)
 			{
-				std::vector<VkDrawIndexedIndirectCommand> commands;
+				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
 
-				int objID = 0;
+				int staticIndex = 0;
 				for (auto pObject : objects)
 				{
 					if (pObject->type != ObjectTypeStatic) continue;
@@ -833,17 +880,17 @@ namespace tke
 						command.indexCount = mt->indiceCount;
 						command.vertexOffset = pModel->vertexBase;
 						command.firstIndex = pModel->indiceBase + mt->indiceBase;
-						command.firstInstance = (objID << 16) + mt->sceneIndex;
+						command.firstInstance = (staticIndex << 16) + mt->sceneIndex;
 
-						commands.push_back(command);
+						staticCommands.push_back(command);
 					}
 
-					objID++;
+					staticIndex++;
 				}
 
-				drawCallCount = commands.size();
+				staticIndirectCount = staticCommands.size();
 
-				if (commands.size() > 0) objectIndirectBuffer->update(commands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * commands.size());
+				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
 			}
 			needUpdateIndirectBuffer = false;
 		}

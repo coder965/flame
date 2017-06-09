@@ -335,9 +335,8 @@ namespace tke
 			m->positions.resize(vertexCount);
 			m->normals.resize(vertexCount);
 			m->uvs.resize(vertexCount);
-			m->clusterCounts.resize(vertexCount);
+			m->boneWeights.resize(vertexCount);
 			m->boneIDs.resize(vertexCount);
-			m->clusterWeights.resize(vertexCount);
 			for (int i = 0; i < vertexCount; i++)
 			{
 				VertexData data;
@@ -348,13 +347,11 @@ namespace tke
 				m->normals[i].z *= -1.f;
 				m->uvs[i] = data.uv;
 				m->uvs[i].y *= -1.f;
+				float fWeight = data.weight / 100.f;
+				m->boneWeights[i].x = fWeight;
+				m->boneWeights[i].y = 1.f - fWeight;
 				m->boneIDs[i].x = data.boneID0;
 				m->boneIDs[i].y = data.boneID1;
-				if (data.weight < 100) m->clusterCounts[i] = 2.f;
-				else m->clusterCounts[i] = 1.f;
-				float fWeight = data.weight / 100.f;
-				m->clusterWeights[i].x = fWeight;
-				m->clusterWeights[i].y = 1.f - fWeight;
 			}
 			m->createTangent();
 
@@ -685,12 +682,10 @@ namespace tke
 				file.read((char*)m->tangents.data(), vertexCount * sizeof(glm::vec3));
 				if (m->animated)
 				{
-					m->clusterCounts.resize(vertexCount);
+					m->boneWeights.resize(vertexCount);
 					m->boneIDs.resize(vertexCount);
-					m->clusterWeights.resize(vertexCount);
-					file.read((char*)m->clusterCounts.data(), vertexCount * sizeof(float));
-					file.read((char*)m->boneIDs.data(), vertexCount * sizeof(glm::vec4));
-					file.read((char*)m->clusterWeights.data(), vertexCount * sizeof(glm::vec4));
+					file.read((char*)m->boneWeights.data(), vertexCount * sizeof(glm::vec4));
+					file.read((char*)m->boneIDs.data(), vertexCount * sizeof(glm::ivec4));
 				}
 			}
 			if (indiceCount > 0)
@@ -904,9 +899,8 @@ namespace tke
 				file.write((char*)m->tangents.data(), vertexCount * sizeof glm::vec3);
 				if (m->animated)
 				{
-					file.write((char*)m->clusterCounts.data(), vertexCount * sizeof(float));
-					file.write((char*)m->boneIDs.data(), vertexCount * sizeof glm::vec4);
-					file.write((char*)m->clusterWeights.data(), vertexCount * sizeof glm::vec4);
+					file.write((char*)m->boneWeights.data(), vertexCount * sizeof glm::vec4);
+					file.write((char*)m->boneIDs.data(), vertexCount * sizeof glm::ivec4);
 				}
 			}
 			if (indiceCount > 0)

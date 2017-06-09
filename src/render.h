@@ -468,7 +468,9 @@ namespace tke
 	{
 		null,
 		REFLe zero = 1 << 0,
-		REFLe normal = 1 << 1
+		REFLe normal = 1 << 1,
+		REFLe line = 1 << 2,
+		REFLe animated = 1 << 3
 	};
 
 	REFLECTABLE struct PipelineInfo
