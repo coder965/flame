@@ -2957,6 +2957,10 @@ namespace tke
 					switch (action.type)
 					{
 					case DrawActionType::draw_action:
+						if (action.vertex_buffer_name != "")
+							action.m_vertexBuffer = (VertexBuffer*)resource.getBuffer(action.vertex_buffer_name);
+						if (action.index_buffer_name != "")
+							action.m_indexBuffer = (IndexBuffer*)resource.getBuffer(action.index_buffer_name);
 						if (action.pipeline_name != "")
 						{
 							action.m_pipeline = resource.getPipeline(action.pipeline_name.c_str());

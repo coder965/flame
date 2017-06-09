@@ -19,6 +19,8 @@ layout(location = 0) in vec3 inVertex;
 layout(location = 1) in vec2 inTexcoord;
 layout(location = 2) in vec3 inNormal;
 layout(location = 3) in vec3 inTangent;
+layout(location = 4) out vec4 inBoneWeight;
+layout(location = 5) out ivec4 inBoneID;
 
 layout(location = 0) out flat uint outMaterialID;
 layout(location = 1) out vec2 outTexcoord;

@@ -865,32 +865,54 @@ namespace tke
 			if (objects.size() > 0)
 			{
 				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
+				std::vector<VkDrawIndexedIndirectCommand> animatedCommands;
 
 				int staticIndex = 0;
+				int animatedIndex = 0;
+
 				for (auto pObject : objects)
 				{
-					if (pObject->type != ObjectTypeStatic) continue;
-
 					auto pModel = pObject->pModel;
 
-					for (auto mt : pModel->materials)
+					if (pObject->type == ObjectTypeStatic)
 					{
-						VkDrawIndexedIndirectCommand command = {};
-						command.instanceCount = 1;
-						command.indexCount = mt->indiceCount;
-						command.vertexOffset = pModel->vertexBase;
-						command.firstIndex = pModel->indiceBase + mt->indiceBase;
-						command.firstInstance = (staticIndex << 16) + mt->sceneIndex;
+						for (auto mt : pModel->materials)
+						{
+							VkDrawIndexedIndirectCommand command = {};
+							command.instanceCount = 1;
+							command.indexCount = mt->indiceCount;
+							command.vertexOffset = pModel->vertexBase;
+							command.firstIndex = pModel->indiceBase + mt->indiceBase;
+							command.firstInstance = (staticIndex << 16) + mt->sceneIndex;
 
-						staticCommands.push_back(command);
+							staticCommands.push_back(command);
+						}
+
+						staticIndex++;
 					}
+					else
+					{
+						for (auto mt : pModel->materials)
+						{
+							VkDrawIndexedIndirectCommand command = {};
+							command.instanceCount = 1;
+							command.indexCount = mt->indiceCount;
+							command.vertexOffset = pModel->vertexBase;
+							command.firstIndex = pModel->indiceBase + mt->indiceBase;
+							command.firstInstance = (animatedIndex << 16) + mt->sceneIndex;
 
-					staticIndex++;
+							animatedCommands.push_back(command);
+						}
+
+						animatedIndex++;
+					}
 				}
 
 				staticIndirectCount = staticCommands.size();
+				animatedIndirectCount = animatedCommands.size();
 
 				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
+				if (animatedCommands.size() > 0) animatedObjectIndirectBuffer->update(animatedCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 			}
 			needUpdateIndirectBuffer = false;
 		}

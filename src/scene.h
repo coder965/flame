@@ -66,8 +66,8 @@ namespace tke
 
 	struct MaterialShaderStruct
 	{
-		unsigned int albedoSpecCompress;
-		unsigned int roughnessAlphaCompress;
+		unsigned int albedoAlphaCompress;
+		unsigned int specRoughnessCompress;
 
 		unsigned int mapIndex;
 
@@ -185,6 +185,7 @@ namespace tke
 
 		unsigned int shadowCount = 0;
 		unsigned int staticIndirectCount = 0;
+		unsigned int animatedIndirectCount = 0;
 
 		Scene();
 		~Scene();

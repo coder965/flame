@@ -41,7 +41,6 @@ void main()
 	{
 		vec4 albedoSpec = texture(mapSamplers[mapIndex - 1], inTexcoord);
 		albedo = albedoSpec.rgb;
-		//spec = albedoSpec.a;
 	}
 	
 	vec3 normal = inNormal;
@@ -56,7 +55,6 @@ void main()
 		vec4 normalRoughness = texture(mapSamplers[mapIndex - 1], inTexcoord);
 		vec3 tn = normalize(normalRoughness.xyz * 2.0 - 1.0);
 		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
-		//roughness = normalRoughness.a;
 	}
 	
 	outAlbedoSpec = vec4(albedo, spec);

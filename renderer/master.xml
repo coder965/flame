@@ -1,4 +1,4 @@
-<renderer name="" cx="-1" cy="-1" vertex_buffer_name="Scene.StaticVertexBuffer" index_buffer_name="Scene.StaticIndexBuffer" >
+<renderer name="" cx="-1" cy="-1">
   <images>
     <image name="Original.Image" cx="-1" cy="-1" format="R16G16B16A16"/>
     <image name="AlbedoSpec.Image" cx="-1" cy="-1" format="R8G8B8A8"/>
@@ -8,6 +8,7 @@
   <pipelines>
     <pipeline file_name="pipeline/sky/panorama.xml"/>
     <pipeline file_name="pipeline/deferred/mrt.xml"/>
+    <pipeline file_name="pipeline/deferred/mrt_anim.xml"/>
     <pipeline file_name="pipeline/deferred/deferred.xml"/>
     <pipeline file_name="pipeline/combine/combine.xml"/>
   </pipelines>
@@ -18,7 +19,7 @@
         <attachment name="1" image_name="Original.Image" aspect="color" />
 			</attachments>
 			<actions>
-				<action name="1" type="draw_action" pipeline_name="Panorama.Pipeline">
+				<action name="1" type="draw_action" pipeline_name="Panorama.Pipeline" vertex_buffer_name="Scene.StaticVertexBuffer" index_buffer_name="Scene.StaticIndexBuffer">
 					<drawcalls>
 						<drawcall name="1" instance_count="1" first_instance="0" type="index" model_name="Sphere.Model"/>
 					</drawcalls>
@@ -32,9 +33,14 @@
         <attachment name="3" image_name="Depth.Image" aspect="depth" clear="true"/>
       </attachments>
       <actions>
-        <action name="1" type="draw_action" pipeline_name="Mrt.Pipeline">
+        <action name="1" type="draw_action" pipeline_name="Mrt.Pipeline" vertex_buffer_name="Scene.StaticVertexBuffer" index_buffer_name="Scene.StaticIndexBuffer">
           <drawcalls>
             <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.StaticIndirectBuffer"/>
+          </drawcalls>
+        </action>
+        <action name="2" type="draw_action" pipeline_name="Mrt_Anim.Pipeline" vertex_buffer_name="Scene.AnimatedVertexBuffer" index_buffer_name="Scene.AnimatedIndexBuffer">
+          <drawcalls>
+            <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.AnimatedIndirectBuffer"/>
           </drawcalls>
         </action>
       </actions>
