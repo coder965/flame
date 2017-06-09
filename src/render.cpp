@@ -1725,9 +1725,26 @@ namespace tke
 		pipelineLoadXML<Pipeline, Stage>(this, _filename);
 	}
 
-	void Pipeline::setup(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::setup(VkRenderPass renderPass, std::uint32_t subpassIndex)
 	{
-		m_pVertexInputState = pVertexInputState;
+		if (!m_pVertexInputState)
+		{
+			switch (vertex_input_type)
+			{
+			case VertexInputType::zero:
+				m_pVertexInputState = &zeroVertexInputState;
+				break;
+			case VertexInputType::normal:
+				m_pVertexInputState = &vertexInputState;
+				break;
+			case VertexInputType::line:
+				m_pVertexInputState = &lineVertexInputState;
+				break;
+			case VertexInputType::animated:
+				m_pVertexInputState = &animatedVertexInputState;
+				break;
+			}
+		}
 
 		m_renderPass = renderPass;
 		m_subpassIndex = subpassIndex;
@@ -2992,25 +3009,7 @@ namespace tke
 			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 
 		for (auto &p : resource.privatePipelines)
-		{
-			VkPipelineVertexInputStateCreateInfo *vi = nullptr;
-			switch (p.vertex_input_type)
-			{
-			case VertexInputType::zero:
-				vi = &zeroVertexInputState;
-				break;
-			case VertexInputType::normal:
-				vi = &vertexInputState;
-				break;
-			case VertexInputType::line:
-				vi = &lineVertexInputState;
-				break;
-			case VertexInputType::animated:
-				vi = &animatedVertexInputState;
-				break;
-			}
-			p.p->setup(vi, vkRenderPass, p.subpassIndex);
-		}
+			p.p->setup(vkRenderPass, p.subpassIndex);
 
 		getDescriptorSets();
 	}

@@ -498,19 +498,19 @@ namespace tke
 					}
 
 					scatteringPipeline.loadXML(enginePath + "pipeline/sky/scattering.xml");
-					scatteringPipeline.setup(&zeroVertexInputState, postRenderPass, 0);
+					scatteringPipeline.setup(postRenderPass, 0);
 					globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
 
 					downsamplePipeline.loadXML(enginePath + "pipeline/sky/downsample.xml");
 					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-					downsamplePipeline.setup(&zeroVertexInputState, postRenderPass, 0);
+					downsamplePipeline.setup(postRenderPass, 0);
 					globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
 
 					convolvePipeline.loadXML(enginePath + "pipeline/sky/convolve.xml");
 					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-					convolvePipeline.setup(&zeroVertexInputState, postRenderPass, 0);
+					convolvePipeline.setup(postRenderPass, 0);
 					globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
 
 					envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);

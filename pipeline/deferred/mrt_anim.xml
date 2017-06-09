@@ -1,10 +1,10 @@
-<pipeline name="Mrt.Pipeline" cx="-1" cy="-1" vertex_input_type="normal" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
+<pipeline name="Mrt_Anim.Pipeline" cx="-1" cy="-1" depth_test="true" depth_write="true" depth_clamp="false" polygon_mode="fill" cull_mode="back">
 	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
 	<blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="ObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-	<stage filename="mrt.vert"/>
-	<stage filename="mrt.frag"/>
+	<stage filename="mrt_anim.vert"/>
+	<stage filename="mrt_anim.frag"/>
 </pipeline>
 

@@ -78,6 +78,7 @@ namespace tke
 		framebuffer = createFramebuffer(resCx, resCy, renderPass, views);
 
 		plainPickUpPipeline.loadXML(enginePath + "pipeline/pickUp/pickUp.xml");
-		plainPickUpPipeline.setup(&vertexInputState, renderPass, 0);
+		plainPickUpPipeline.vertex_input_type = VertexInputType::normal;
+		plainPickUpPipeline.setup(renderPass, 0);
 	}
 }

@@ -6,10 +6,10 @@
   </images>
   
   <pipelines>
-    <pipeline file_name="pipeline/sky/panorama.xml" vertex_input_type="normal"/>
-    <pipeline file_name="pipeline/deferred/mrt.xml" vertex_input_type="normal"/>
-    <pipeline file_name="pipeline/deferred/deferred.xml" vertex_input_type="zero"/>
-    <pipeline file_name="pipeline/combine/combine.xml" vertex_input_type="zero"/>
+    <pipeline file_name="pipeline/sky/panorama.xml"/>
+    <pipeline file_name="pipeline/deferred/mrt.xml"/>
+    <pipeline file_name="pipeline/deferred/deferred.xml"/>
+    <pipeline file_name="pipeline/combine/combine.xml"/>
   </pipelines>
   
 	<passes>

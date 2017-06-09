@@ -580,8 +580,9 @@ namespace tke
 
 			pipeline = new Pipeline;
 			pipeline->loadXML(enginePath + "pipeline/ui/ui.xml");
+			pipeline->m_pVertexInputState = &vertex_info;
 			pipeline->m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-			pipeline->setup(&vertex_info, windowRenderPass, 0);
+			pipeline->setup(windowRenderPass, 0);
 
 			uiContext = ImGui::GetCurrentContext();
 

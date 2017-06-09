@@ -478,7 +478,6 @@ namespace tke
 		REFL_BANK;
 
 		REFLv std::string file_name;
-		REFLe VertexInputType vertex_input_type = VertexInputType::zero;
 
 		Pipeline *p = nullptr;
 		int subpassIndex = -1;
@@ -588,6 +587,7 @@ namespace tke
 		REFLv int cx = 0;
 		REFLv int cy = 0;
 
+		REFLe VertexInputType vertex_input_type = VertexInputType::zero;
 		REFLv int patch_control_points = 0;
 		REFLv bool depth_test = false;
 		REFLv bool depth_write = false;
@@ -739,7 +739,7 @@ namespace tke
 		std::vector<VkPushConstantRange> vkPushConstantRanges;
 		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 
-		VkPipelineVertexInputStateCreateInfo *m_pVertexInputState;
+		VkPipelineVertexInputStateCreateInfo *m_pVertexInputState = nullptr;
 		VkRenderPass m_renderPass;
 		int m_subpassIndex;
 		std::vector<VkDynamicState> m_dynamics;
@@ -752,7 +752,7 @@ namespace tke
 		Pipeline();
 		~Pipeline();
 		void loadXML(const std::string &filename);
-		void setup(VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkRenderPass renderPass, std::uint32_t subpassIndex);
+		void setup(VkRenderPass renderPass, std::uint32_t subpassIndex);
 		void updateDescriptors();
 		int descriptorPosition(const std::string &name);
 	};
