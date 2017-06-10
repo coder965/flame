@@ -149,27 +149,6 @@ namespace tke
 		setCoord(coord + _coord);
 	}
 
-	void Transformer::setScale(const glm::vec3 &_scale)
-	{
-		scale = _scale;
-		needUpdateMat = true;
-
-		changed = true;
-	}
-
-	void Transformer::addScale(const glm::vec3 &_scale)
-	{
-		setScale(scale + _scale);
-	}
-
-	void Transformer::setWorldScale(const glm::vec3 &_scale)
-	{
-		worldScale = _scale;
-		needUpdateMat = true;
-
-		changed = true;
-	}
-
 	void Transformer::setEuler(const glm::vec3 &_euler)
 	{
 		euler = glm::mod(_euler, 360.f);
@@ -253,6 +232,27 @@ namespace tke
 		needUpdateAxis = false;
 		needUpdateEuler = true;
 		needUpdateQuat = true;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::setScale(const glm::vec3 &_scale)
+	{
+		scale = _scale;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::addScale(const glm::vec3 &_scale)
+	{
+		setScale(scale + _scale);
+	}
+
+	void Transformer::setWorldScale(const glm::vec3 &_scale)
+	{
+		worldScale = _scale;
 		needUpdateMat = true;
 
 		changed = true;

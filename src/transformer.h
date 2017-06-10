@@ -56,16 +56,24 @@ namespace tke
 		glm::vec3 getTrans(Transformer::Type type);
 
 		void setCoord(const glm::vec3 &_coord);
+		inline void setCoord(float x, float y, float z) { setCoord(glm::vec3(x, y, z)); }
 		void addCoord(const glm::vec3 &_coord);
+		inline void addCoord(float x, float y, float z) { addCoord(glm::vec3(x, y, z)); }
 		void setEuler(const glm::vec3 &_euler);
+		inline void setEuler(float x, float y, float z) { setEuler(glm::vec3(x, y, z)); }
 		void addEuler(const glm::vec3 &_euler);
+		inline void addEuler(float x, float y, float z) { addEuler(glm::vec3(x, y, z)); }
 		void setQuat(const glm::vec4 &_quat);
+		inline void setQuat(float x, float y, float z, float w) { setQuat(glm::vec4(x, y, z, w)); }
 		void leftRotate(const glm::mat3 &left);
 		void rightRotate(const glm::mat3 &right);
 		void axisRotate(Axis which, float angle);
 		void setScale(const glm::vec3 &_scale);
+		inline void setScale(float x, float y, float z) { setScale(glm::vec3(x, y, z)); }
 		void addScale(const glm::vec3 &_scale);
+		inline void addScale(float x, float y, float z) { addScale(glm::vec3(x, y, z)); }
 		void setWorldScale(const glm::vec3 &_scale);
+		inline void setWorldScale(float x, float y, float z) { setWorldScale(glm::vec3(x, y, z)); }
 
 		void relate(Transformer *t);
 		void scaleRelate(Transformer *t);
