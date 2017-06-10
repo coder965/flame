@@ -3,18 +3,13 @@
 
 #include <vector>
 
+#include "core.h"
 #include "render.h"
 #include "camera.h"
 #include "light.h"
 #include "object.h"
 #include "terrain.h"
 #include "model.h"
-
-#define TKE_MAX_OBJECT_COUNT (1024)
-#define TKE_MAX_LIGHT_COUNT (256)
-#define TKE_MAX_MATERIAL_COUNT (256)
-#define TKE_MAX_TEXTURE_COUNT (256)
-#define TKE_MAX_INDIRECT_COUNT (1024)
 
 namespace tke
 {

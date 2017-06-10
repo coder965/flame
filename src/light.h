@@ -1,7 +1,6 @@
 #ifndef __TKE_LIGHT__
 #define __TKE_LIGHT__
 
-#include "math.h"
 #include "transformer.h"
 
 namespace tke

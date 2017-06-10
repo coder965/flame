@@ -747,7 +747,7 @@ namespace tke
 						if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
 						else vertex.boneWeight = glm::vec4(0.f);
 						if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
-						else vertex.boneID = glm::ivec4(0);
+						else vertex.boneID = glm::vec4(0.f);
 
 						animatedVertexs.push_back(vertex);
 					}
@@ -796,6 +796,7 @@ namespace tke
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * objects.size());
 			int staticObjectIndex = 0;
 			int animatedObjectIndex = 0;
+
 			for (auto pObject : objects)
 			{
 				if (pObject->type == ObjectTypeStatic)
@@ -905,6 +906,9 @@ namespace tke
 		{
 			if (objects.size() > 0)
 			{
+				static int bone_position = -1;
+				if (bone_position == -1) bone_position = mrtAnimPipeline->descriptorPosition("BONE");
+
 				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
 				std::vector<VkDrawIndexedIndirectCommand> animatedCommands;
 
@@ -945,6 +949,12 @@ namespace tke
 							animatedCommands.push_back(command);
 						}
 
+						if (bone_position != -1)
+						{
+							auto animObj = (AnimatedObject*)pObject;
+							descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bone_position, &animObj->boneMatrixBuffer->m_info, animatedIndex);
+						}
+
 						animatedIndex++;
 					}
 				}
@@ -954,6 +964,8 @@ namespace tke
 
 				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
 				if (animatedCommands.size() > 0) animatedObjectIndirectBuffer->update(animatedCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
+
+				descriptorPool.update();
 			}
 			needUpdateIndirectBuffer = false;
 		}
@@ -1058,21 +1070,23 @@ namespace tke
 			lightCountChanged = false;
 		}
 
-		//for (auto object : objects)
-		//{
-		//	if (object->type != ObjectTypeAnimated) continue;
+		for (auto object : objects)
+		{
+			if (object->type != ObjectTypeAnimated) continue;
 
-		//	auto pObject = (AnimatedObject*)object;
+			auto pObject = (AnimatedObject*)object;
 
-		//	pObject->animationSolver->sample();
-		//	for (int i = 0; i < pObject->pModel->bones.size(); i++)
-		//		pObject->animationSolver->boneMatrix[i] = glm::mat4();
-		//	pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
-		//	pObject->animationSolver->calcIK();
+			pObject->boneMatrixBuffer->update(pObject->boneMatrix, *stagingBuffer, sizeof(glm::mat4) * pObject->pModel->bones.size());
 
-		//	pObject->animationSolver->fixMatrix();
-		//	pObject->animationSolver->updateUBO();
-		//}
+			//pObject->animationSolver->sample();
+			//for (int i = 0; i < pObject->pModel->bones.size(); i++)
+			//	pObject->animationSolver->boneMatrix[i] = glm::mat4();
+			//pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
+			//pObject->animationSolver->calcIK();
+
+			//pObject->animationSolver->fixMatrix();
+			//pObject->animationSolver->updateUBO();
+		}
 
 		camera.changed = false;
 

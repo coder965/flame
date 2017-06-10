@@ -182,7 +182,7 @@ namespace tke
 				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
 				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
 				{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
-				{ 5, 0, VK_FORMAT_R32G32B32A32_SINT, offsetof(AnimatedVertex, boneID) }
+				{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneID) }
 			};
 
 			animatedVertexInputState = vertexStateInfo(1, &bindings1, ARRAYSIZE(attributes1), attributes1);

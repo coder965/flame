@@ -143,7 +143,6 @@ namespace tke
 		};
 
 		std::string name;
-		//char name[20];
 		int boneID = -1;
 		void *phyActor = nullptr;
 		int originCollisionGroupID;
@@ -186,7 +185,7 @@ namespace tke
 		std::vector<glm::vec3> normals;
 		std::vector<glm::vec3> tangents;
 		std::vector<glm::vec4> boneWeights;
-		std::vector<glm::ivec4> boneIDs;
+		std::vector<glm::vec4> boneIDs;
 		std::vector<int> indices;
 
 		std::vector<Material*> materials;

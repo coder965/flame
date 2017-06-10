@@ -346,12 +346,12 @@ namespace tke
 				m->normals[i] = data.normal;
 				m->normals[i].z *= -1.f;
 				m->uvs[i] = data.uv;
-				m->uvs[i].y *= -1.f;
+				m->uvs[i].y = 1.f - m->uvs[i].y;
 				float fWeight = data.weight / 100.f;
 				m->boneWeights[i].x = fWeight;
 				m->boneWeights[i].y = 1.f - fWeight;
-				m->boneIDs[i].x = data.boneID0;
-				m->boneIDs[i].y = data.boneID1;
+				m->boneIDs[i].x = data.boneID0 + 0.5f;
+				m->boneIDs[i].y = data.boneID1 + 0.5f;
 			}
 			m->createTangent();
 
