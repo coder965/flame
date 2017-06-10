@@ -25,8 +25,8 @@ namespace tke
 
 		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
-		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
-		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_OBJECT_COUNT);
+		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
+		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
 		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT);
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
 		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);

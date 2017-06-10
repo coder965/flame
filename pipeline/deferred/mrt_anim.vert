@@ -12,7 +12,7 @@ layout(binding = 0) uniform MATRIX
 
 layout(binding = 1) uniform OBJECT
 {
-	mat4 matrix[1024];
+	mat4 matrix[8];
 }u_object;
 
 layout(binding = 2) uniform BONE
