@@ -38,10 +38,19 @@ namespace tke
 
 	struct AnimatedObject : Object
 	{
-		AnimationSolver *animationSolver;
+		Animation *currentAnimation = nullptr;
+		float frame = 0;
+		BoneData *boneData = nullptr;
+		glm::mat4 *boneMatrix = nullptr;
+		UniformBuffer *boneMatrixBuffer = nullptr;
 
 		AnimatedObject(Model *_pModel);
 		virtual ~AnimatedObject() override;
+		void setAnimation(Animation *animation);
+		void sample();
+		void calcIK();
+		void fixMatrix();
+		void updateUBO();
 	};
 }
 

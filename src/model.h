@@ -237,24 +237,6 @@ namespace tke
 
 		void addJoint(Joint *pJoint);
 	};
-
-	struct AnimationSolver
-	{
-		Model *pModel;
-		Animation *pAnimation = nullptr;
-		float frame = 0;
-		BoneData *boneData = nullptr;
-		glm::mat4 *boneMatrix = nullptr;
-		unsigned int boneMatrixUBO;
-
-		AnimationSolver(Model *_pModel);
-		~AnimationSolver();
-		void setAnimation(Animation *_pAnimation);
-		void sample();
-		void calcIK();
-		void fixMatrix();
-		void updateUBO();
-	};
 }
 
 #endif

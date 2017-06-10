@@ -1058,21 +1058,21 @@ namespace tke
 			lightCountChanged = false;
 		}
 
-		for (auto object : objects)
-		{
-			if (object->type != ObjectTypeAnimated) continue;
+		//for (auto object : objects)
+		//{
+		//	if (object->type != ObjectTypeAnimated) continue;
 
-			auto pObject = (AnimatedObject*)object;
+		//	auto pObject = (AnimatedObject*)object;
 
-			pObject->animationSolver->sample();
-			for (int i = 0; i < pObject->pModel->bones.size(); i++)
-				pObject->animationSolver->boneMatrix[i] = glm::mat4();
-			pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
-			pObject->animationSolver->calcIK();
+		//	pObject->animationSolver->sample();
+		//	for (int i = 0; i < pObject->pModel->bones.size(); i++)
+		//		pObject->animationSolver->boneMatrix[i] = glm::mat4();
+		//	pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
+		//	pObject->animationSolver->calcIK();
 
-			pObject->animationSolver->fixMatrix();
-			pObject->animationSolver->updateUBO();
-		}
+		//	pObject->animationSolver->fixMatrix();
+		//	pObject->animationSolver->updateUBO();
+		//}
 
 		camera.changed = false;
 
