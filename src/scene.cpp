@@ -97,6 +97,13 @@ namespace tke
 		stru.envrCx = TKE_ENVR_SIZE_CX;
 		stru.envrCy = TKE_ENVR_SIZE_CY;
 		constantBuffer->update(&stru, *stagingBuffer);
+
+		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
+		pxSceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+		pxScene = pxPhysics->createScene(pxSceneDesc);
+		pxControllerManager = PxCreateControllerManager(*pxScene);
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
@@ -301,6 +308,77 @@ namespace tke
 	{
 		EnterCriticalSection(&cs);
 
+		switch(pObject->physicsType)
+		{
+		case ObjectPhysicsTypeStatic:
+		case ObjectPhysicsTypeDynamic:
+		{		
+			auto pModel = pObject->pModel;
+
+			if (pModel->rigidbodies.size() > 0)
+			{
+				auto objScale = pObject->getScale();
+				auto objCoord = pObject->getCoord();
+				auto objAxis = pObject->getAxis();
+				physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
+					physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
+					physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
+					physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
+
+				for (auto r : pModel->rigidbodies)
+				{
+					RigidBodyData rigidbodyData;
+					rigidbodyData.rigidbody = r;
+
+					auto rigidCoord = r->getCoord();
+					if (r->boneID != -1) rigidCoord += pModel->bones[r->boneID].rootCoord;
+					rigidCoord *= objScale;
+					auto rigidAxis = r->getAxis();
+
+					rigidbodyData.rotation = objAxis * rigidAxis;
+					rigidbodyData.coord = objCoord + objAxis * rigidCoord;
+					physx::PxTransform rigTrans(rigidCoord.x, rigidCoord.y, rigidCoord.z, physx::PxQuat(physx::PxMat33(
+						physx::PxVec3(rigidAxis[0][0], rigidAxis[0][1], rigidAxis[0][2]),
+						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
+						physx::PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2]))));
+					rigTrans = objTrans * rigTrans;
+					auto actor = (pObject->physicsType == ObjectPhysicsTypeDynamic && (r->type == RigidbodyTypeDynamic || r->type == RigidbodyTypeDynamicButLocation)) ?
+						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
+
+					for (auto s : r->shapes)
+					{
+						glm::vec3 coord = s->getCoord() * objScale;
+						glm::mat3 axis = s->getAxis();
+						glm::vec3 scale = s->getScale() * objScale;
+						physx::PxTransform trans(coord.x, coord.y, coord.z, physx::PxQuat(physx::PxMat33(
+							physx::PxVec3(axis[0][0], axis[0][1], axis[0][2]),
+							physx::PxVec3(axis[1][0], axis[1][1], axis[1][2]),
+							physx::PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
+						switch (s->type)
+						{
+						case ShapeTypeBox:
+							actor->createShape(physx::PxBoxGeometry(scale[0], scale[1], scale[2]), *pxDefaultMaterial, trans);
+							break;
+						case ShapeTypeSphere:
+							actor->createShape(physx::PxSphereGeometry(scale[0]), *pxDefaultMaterial, trans);
+							break;
+						case ShapeTypeCapsule:
+							actor->createShape(physx::PxCapsuleGeometry(scale[0], scale[1]), *pxDefaultMaterial, trans * physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
+							break;
+						}
+					}
+
+					rigidbodyData.actor = actor;
+
+					pObject->rigidbodyDatas.push_back(rigidbodyData);
+
+					pxScene->addActor(*actor);
+				}
+			}
+		}
+			break;
+		}
+
 		objects.push_back(pObject);
 
 		tke::needRedraw = true;
@@ -425,6 +503,91 @@ namespace tke
 
 	void Scene::update()
 	{
+		static int last_time = 0;
+		if (firstUpdate)
+		{
+			firstUpdate = false;
+			last_time = nowTime;
+		}
+
+		// update animation and bones
+		for (auto object : objects)
+		{
+			if (object->type != ObjectTypeAnimated) continue;
+
+			auto pObject = (AnimatedObject*)object;
+
+			pObject->update();
+		}
+
+		// update physics
+		pxScene->simulate((nowTime - last_time) / 1000.f);
+		pxScene->fetchResults(true);
+		for (auto object : objects)
+		{
+			auto pModel = object->pModel;
+
+			auto objScale = object->getScale();
+			auto objCoord = object->getCoord();
+			auto objAxis = object->getAxis();
+			physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
+				physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
+				physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
+				physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
+
+			for (auto &data : object->rigidbodyDatas)
+			{
+				if (data.rigidbody->boneID == -1)
+				{
+					auto trans = data.actor->getGlobalPose();
+					auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
+					auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
+					object->setCoord(coord);
+					object->setQuat(quat);
+					glm::mat3 axis;
+					quaternionToMatrix(quat, axis);
+					data.coord = coord;
+					data.rotation = axis;
+				}
+				//else
+				//{
+				//	auto solver = pObject->animationSolver;
+				//	if (r->mode == Rigidbody::Mode::eStatic)
+				//	{
+				//		auto pBone = &pModel->bones[r->boneID];
+				//		auto coord = objAxis * (glm::vec3(solver->boneMatrix[r->boneID][3]) + glm::mat3(solver->boneMatrix[r->boneID]) * r->getCoord()) * objScale + objCoord;
+				//		auto axis = objAxis * glm::mat3(solver->boneMatrix[r->boneID]) * r->getAxis();
+				//		PxTransform trans(coord.x, coord.y, coord.z, PxQuat(PxMat33(
+				//			PxVec3(axis[0][0], axis[0][1], axis[0][2]),
+				//			PxVec3(axis[1][0], axis[1][1], axis[1][2]),
+				//			PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
+				//		((PxRigidDynamic*)body)->setKinematicTarget(trans);
+				//		pObject->rigidDatas[id].coord = coord;
+				//		pObject->rigidDatas[id].rotation = axis;
+				//	}
+				//	else
+				//	{
+				//		auto objAxisT = glm::transpose(objAxis);
+				//		auto rigidAxis = r->getAxis();
+				//		auto rigidAxisT = glm::transpose(rigidAxis);
+				//		auto trans = body->getGlobalPose();
+				//		auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
+				//		glm::mat3 axis;
+				//		Math::quaternionToMatrix(glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w), axis);
+				//		pObject->rigidDatas[id].coord = coord;
+				//		pObject->rigidDatas[id].rotation = axis;
+				//		auto boneAxis = objAxisT * axis * rigidAxisT;
+				//		glm::vec3 boneCoord;
+				//		if (r->mode != Rigidbody::Mode::eDynamicLockLocation)
+				//			boneCoord = (objAxisT * (coord - objCoord) - boneAxis * (r->getCoord() * objScale)) / objScale;
+				//		else
+				//			boneCoord = glm::vec3(solver->boneMatrix[r->boneID][3]);
+				//		solver->boneMatrix[r->boneID] = Math::makeMatrix(boneAxis, boneCoord);
+				//	}
+				//}
+			}
+		}
+
 		camera.move();
 		if (camera.changed)
 		{
@@ -1070,15 +1233,6 @@ namespace tke
 			lightCountChanged = false;
 		}
 
-		for (auto object : objects)
-		{
-			if (object->type != ObjectTypeAnimated) continue;
-
-			auto pObject = (AnimatedObject*)object;
-
-			pObject->update();
-		}
-
 		camera.changed = false;
 
 		for (auto pLight : lights)
@@ -1087,6 +1241,8 @@ namespace tke
 			pObject->changed = false;
 		for (auto pTerrain : terrains)
 			pTerrain->changed = false;
+
+		last_time = nowTime;
 	}
 
 	int Scene::getStoreImageIndex(Image *pImage)

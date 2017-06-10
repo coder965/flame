@@ -518,7 +518,7 @@ namespace tke
 				RigidData data;
 				file.read((char*)&data, sizeof(RigidData));
 
-				auto p = new Rigidbody;
+				auto p = (Rigidbody*)malloc(sizeof(Rigidbody));
 				p->name = japaneseToChinese(data.name);
 				p->boneID = data.bone;
 				p->originCollisionGroupID = data.collisionGroupNumber;
@@ -531,22 +531,22 @@ namespace tke
 				glm::vec4 rotationQuat;
 				matrixToQuaternion(rotationMat, rotationQuat);
 				p->setQuat(rotationQuat);
-				p->mode = (Rigidbody::Mode)data.mode;
+				p->type = (RigidbodyType)data.mode;
 				m->addRigidbody(p);
-				auto q = new Shape;
+				auto q = (Shape*)malloc(sizeof(Shape));
 				p->addShape(q);
 				switch (data.type)
 				{
-				case 0: q->type = Shape::Type::eSphere; break;
-				case 1: q->type = Shape::Type::eBox; break;
-				case 2: q->type = Shape::Type::eCapsule; break;
+				case 0: q->type = ShapeTypeSphere; break;
+				case 1: q->type = ShapeTypeBox; break;
+				case 2: q->type = ShapeTypeCapsule; break;
 				}
 				switch (q->type)
 				{
-				case Shape::Type::eSphere:
+				case ShapeTypeSphere:
 					data.size.y = data.size.z = data.size.x;
 					break;
-				case Shape::Type::eCapsule:
+				case ShapeTypeCapsule:
 					data.size.y *= 0.5f;
 					data.size.z = data.size.x;
 					break;
@@ -782,10 +782,10 @@ namespace tke
 			file >> rigidbodyCount;
 			for (int i = 0; i < rigidbodyCount; i++)
 			{
-				auto p = new Rigidbody;
-				int mode;
-				file >> mode;
-				p->mode = (Rigidbody::Mode)mode;
+				auto p = (Rigidbody*)malloc(sizeof(Rigidbody));
+				int type;
+				file >> type;
+				p->type = (RigidbodyType)type;
 				file >> p->name;
 				file >> p->originCollisionGroupID;
 				file >> p->originCollisionFreeFlag;
@@ -807,7 +807,7 @@ namespace tke
 				file >> shapeCount;
 				for (int j = 0; j < shapeCount; j++)
 				{
-					auto q = new Shape;
+					auto q = (Shape*)malloc(sizeof(Shape));
 					p->addShape(q);
 					glm::vec3 coord;
 					file >> coord;
@@ -820,7 +820,7 @@ namespace tke
 					q->setScale(scale);
 					int type;
 					file >> type;
-					q->type = (Shape::Type)type;
+					q->type = (ShapeType)type;
 				}
 			}
 
@@ -973,7 +973,7 @@ namespace tke
 			file << m->rigidbodies.size();
 			for (auto rb : m->rigidbodies)
 			{
-				int mode = (int)rb->mode;
+				int mode = (int)rb->type;
 				file << mode;
 				file << rb->name;
 				file << rb->originCollisionGroupID;

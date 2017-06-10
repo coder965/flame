@@ -202,7 +202,13 @@ namespace tke
 			windowRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
 		}
 
-		initPhysics();
+		{
+			static auto allocator = physx::PxDefaultAllocator();
+			static auto errorCallBack = physx::PxDefaultErrorCallback();
+			pxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallBack);
+			pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation, physx::PxTolerancesScale());
+			pxDefaultMaterial = pxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+		}
 
 		return Err::eNoErr;
 	}

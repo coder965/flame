@@ -52,12 +52,6 @@ namespace tke
 		glm::vec3 coord;
 	};
 
-	struct RigidData
-	{
-		glm::mat3 rotation;
-		glm::vec3 coord;
-	};
-
 	struct IK
 	{
 		int targetID = -1;
@@ -105,58 +99,60 @@ namespace tke
 		unsigned int originalmask;
 	};
 
+	enum ShapeType
+	{
+		ShapeTypeBox,
+		ShapeTypeSphere,
+		ShapeTypeCapsule, // scale: 0 - radius, scale 1 - length
+		ShapeTypePlane,
+		ShapeTypeConvexMesh,
+		ShapeTypeTriangleMesh,
+		ShapeTypeHeightField,
+
+		ShapeTypeLast
+	};
+
 	struct Shape : Transformer
 	{
 		int id;
 
-		enum class Type : int
-		{
-			eBox,
-			eSphere,
-			eCapsule, // scale: 0 - radius, scale 1 - length
-			ePlane,
-			eConvexMesh,
-			eTriangleMesh,
-			eHeightField,
+		ShapeType type = ShapeTypeBox;
 
-			eLast
-		};
-
+		Shape(ShapeType _type);
 		static char *getTypeName(Type _type);
 		char *getTypeName();
 		float getVolume() const;
+	};
 
-		Type type = Type::eBox;
+	enum RigidbodyType
+	{
+		RigidbodyTypeStatic,
+		RigidbodyTypeDynamic,
+		RigidbodyTypeDynamicButLocation // special for pmd/pmx 
 	};
 
 	struct Rigidbody : Transformer
 	{
 		int id;
 
-		~Rigidbody();
-		void addShape(Shape *pShape);
-		Shape *deleteShape(Shape *pRigidBody);
-
-		enum class Mode : int
-		{
-			eStatic,
-			eDynamic,
-			eDynamicLockLocation
-		};
+		RigidbodyType type = RigidbodyTypeStatic;
 
 		std::string name;
 		int boneID = -1;
-		void *phyActor = nullptr;
 		int originCollisionGroupID;
 		int originCollisionFreeFlag;
 		int collisionGroupID = -1;
-		Mode mode = Mode::eStatic;
 		float density = 10.f;
 		float velocityAttenuation;
 		float rotationAttenuation;
 		float bounce;
 		float friction;
 		std::vector<Shape*> shapes;
+
+		Rigidbody(RigidbodyType _type);
+		~Rigidbody();
+		void addShape(Shape *pShape);
+		Shape *deleteShape(Shape *pRigidBody);
 	};
 
 	struct Joint : Transformer
@@ -209,8 +205,6 @@ namespace tke
 		Animation* animationJump = nullptr;
 
 		std::vector<Rigidbody*> rigidbodies;
-		std::vector<Rigidbody*> staticRigidbodies;
-		std::vector<Rigidbody*> dynamicRigidbodies;
 
 		std::vector<Joint*> joints;
 

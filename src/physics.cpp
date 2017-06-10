@@ -2,33 +2,28 @@
 
 namespace tke
 {
-	void initPhysics()
+	physx::PxFoundation *pxFoundation = nullptr;
+	physx::PxPhysics *pxPhysics = nullptr;
+	physx::PxMaterial *pxDefaultMaterial = nullptr;
+
+
+	physx::PxRigidActor *createStaticRigidActor(physx::PxTransform &trans)
 	{
-		//static auto allocator = PxDefaultAllocator();
-		//static auto errorCallBack = PxDefaultErrorCallback();
-		//pxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallBack);
-		//pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation, PxTolerancesScale());
-		//pxMaterial = pxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+		auto body = pxPhysics->createRigidStatic(trans);
+		return body;
 	}
 
-	//static PxRigidActor *_createRigidActor(PxTransform &trans, bool dynamic, float d)
-	//{
-	//	auto body = pxPhysics->createRigidDynamic(trans);
-	//	PxRigidBodyExt::updateMassAndInertia(*body, d);
-	//	if (!dynamic)
-	//		body->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
-	//	return body;
-	//}
+	physx::PxRigidActor *createDynamicRigidActor(physx::PxTransform &trans, bool kinematic, float density)
+	{
+		auto body = pxPhysics->createRigidDynamic(trans);
+		physx::PxRigidBodyExt::updateMassAndInertia(*body, density);
+		if (kinematic)
+			body->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
+		return body;
+	}
 
 	void createPhysicsScene()
 	{
-		//PxSceneDesc sceneDesc(pxPhysics->getTolerancesScale());
-		//sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
-		////sceneDesc.gravity = PxVec3(0.0f, 0.f, 0.0f);
-		//sceneDesc.cpuDispatcher = PxDefaultCpuDispatcherCreate(2);
-		//sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-		//pxScene = pxPhysics->createScene(sceneDesc);
-		//pxControllerManager = PxCreateControllerManager(*pxScene);
 		//pxScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.f);
 		////scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1.f);
 		//pxScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.f);
@@ -121,85 +116,6 @@ namespace tke
 
 		//		pxController = pxControllerManager->createController(capsuleDesc);
 		//	}
-
-		//	for (auto pObject : scene->pObjects)
-		//	{
-		//		//if (pObject == tke3_controlingObject)
-		//		//{
-		//		//	continue;
-		//		//}
-
-		//		auto pModel = pObject->pModel;
-
-		//		if (pModel->rigidbodies.size() == 0)
-		//			continue;
-
-		//		auto objScale = pObject->getScale();
-		//		auto objCoord = pObject->getCoord();
-		//		auto objAxis = pObject->getAxis();
-		//		PxTransform trans(objCoord.x, objCoord.y, objCoord.z, PxQuat(PxMat33(
-		//			PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
-		//			PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
-		//			PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
-		//		int id = 0;
-		//		for (auto r : pModel->rigidbodies)
-		//		{
-		//			//if (/*r->mode != tke3RigidBody::Mode::eStatic &&*/ (id != 0 && (id < 6 || id > 19)))
-		//			//{
-		//			//	id++;
-		//			//	continue;
-		//			//}
-
-		//			//if (r->mode == tke3RigidBody::Mode::eStatic/* && id != pModel->joints[0]->rigid1ID*/)
-		//			//	continue;
-
-		//			r->collisionGroupID = scene->getCollisionGroupID(r->originCollisionGroupID, r->originCollisionFreeFlag);
-
-		//			auto rigidCoord = r->getCoord();
-		//			if (r->boneID != -1) rigidCoord += pModel->bones[r->boneID].rootCoord;
-		//			rigidCoord *= objScale;
-		//			auto rigidAxis = r->getAxis();
-
-		//			pObject->rigidDatas[id].rotation = objAxis * rigidAxis;
-		//			pObject->rigidDatas[id].coord = objCoord + objAxis * rigidCoord;
-		//			auto actor = _createRigidActor(trans * PxTransform(rigidCoord.x, rigidCoord.y, rigidCoord.z, PxQuat(PxMat33(
-		//				PxVec3(rigidAxis[0][0], rigidAxis[0][1], rigidAxis[0][2]),
-		//				PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
-		//				PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2])))), r->mode != Rigidbody::Mode::eStatic, r->density);
-		//			r->phyActor = actor;
-		//			for (auto s : r->shapes)
-		//			{
-		//				//if (r->mode == tke3RigidBody::Mode::eStatic)
-		//				//	break;
-
-		//				glm::vec3 coord = s->getCoord() * objScale;
-		//				glm::mat3 axis = s->getAxis();
-		//				glm::vec3 scale = s->getScale() * objScale;
-		//				PxTransform trans(coord.x, coord.y, coord.z, PxQuat(PxMat33(
-		//					PxVec3(axis[0][0], axis[0][1], axis[0][2]),
-		//					PxVec3(axis[1][0], axis[1][1], axis[1][2]),
-		//					PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
-		//				switch (s->type)
-		//				{
-		//				case Shape::Type::eBox:
-		//					actor->createShape(PxBoxGeometry(scale[0], scale[1], scale[2]), *pxMaterial, trans);
-		//					break;
-		//				case Shape::Type::eSphere:
-		//					actor->createShape(PxSphereGeometry(scale[0]), *pxMaterial, trans);
-		//					break;
-		//				case Shape::Type::eCapsule:
-		//					actor->createShape(PxCapsuleGeometry(scale[0], scale[1]), *pxMaterial, trans * PxTransform(PxQuat(PxHalfPi, PxVec3(0, 0, 1))));
-		//					break;
-		//				}
-		//			}
-		//			pxScene->addActor(*actor);
-		//			PxSetGroup(*actor, r->collisionGroupID + 1);
-
-		//			//if (r->mode != tke3RigidBody::Mode::eStatic)
-		//			//	break;
-
-		//			id++;
-		//		}
 
 		//		int jID = 0;
 		//		for (auto j : pModel->joints)
@@ -342,18 +258,6 @@ namespace tke
 
 		//void syncPhysics()
 		//{
-		//	//{
-		//	//	scene->simulate(1.f / 60.f);
-		//	//	scene->fetchResults(true);
-
-		//	//	auto trans = testAct1->getGlobalPose();
-		//	//	auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
-		//	//	auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
-		//	//	tke3_scene->pObjects[1]->setCoord(coord);
-		//	//	tke3_scene->pObjects[1]->setQuat(quat);
-		//	//}
-
-		//	//return;
 
 		//	if (engine->controllingObject)
 		//	{
@@ -376,89 +280,6 @@ namespace tke
 		//			pObject->floatingTime = 0.f;
 		//	}
 
-		//	pxScene->simulate(1.f / 60.f);
-		//	pxScene->fetchResults(true);
-
-		//	if (true)
-		//	{
-		//		for (auto pObject : scene->pObjects)
-		//		{
-		//			auto objScale = pObject->getScale();
-		//			auto objCoord = pObject->getCoord();
-		//			auto objAxis = pObject->getAxis();
-		//			PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, PxQuat(PxMat33(
-		//				PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
-		//				PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
-		//				PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
-		//			auto pModel = pObject->pModel;
-		//			int id = 0;
-		//			for (auto r : pModel->rigidbodies)
-		//			{
-		//				//if (/*r->mode != tke3RigidBody::Mode::eStatic && */(id != 0 && (id < 6 || id > 19)))
-		//				//{
-		//				//	id++;
-		//				//	continue;
-		//				//}
-		//				//if (id != 41 && id != 42 && id != 33)
-		//				//{
-		//				//	id++;
-		//				//	continue;
-		//				//}
-
-		//				PxRigidActor *body = (PxRigidActor*)r->phyActor;
-		//				if (r->boneID == -1)
-		//				{
-		//					auto trans = body->getGlobalPose();
-		//					auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
-		//					auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
-		//					pObject->setCoord(coord);
-		//					pObject->setQuat(quat);
-		//					glm::mat3 axis;
-		//					Math::quaternionToMatrix(quat, axis);
-		//					pObject->rigidDatas[id].coord = coord;
-		//					pObject->rigidDatas[id].rotation = axis;
-		//				}
-		//				else
-		//				{
-		//					auto solver = pObject->animationSolver;
-		//					if (r->mode == Rigidbody::Mode::eStatic)
-		//					{
-		//						auto pBone = &pModel->bones[r->boneID];
-		//						auto coord = objAxis * (glm::vec3(solver->boneMatrix[r->boneID][3]) + glm::mat3(solver->boneMatrix[r->boneID]) * r->getCoord()) * objScale + objCoord;
-		//						auto axis = objAxis * glm::mat3(solver->boneMatrix[r->boneID]) * r->getAxis();
-		//						PxTransform trans(coord.x, coord.y, coord.z, PxQuat(PxMat33(
-		//							PxVec3(axis[0][0], axis[0][1], axis[0][2]),
-		//							PxVec3(axis[1][0], axis[1][1], axis[1][2]),
-		//							PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
-		//						((PxRigidDynamic*)body)->setKinematicTarget(trans);
-		//						pObject->rigidDatas[id].coord = coord;
-		//						pObject->rigidDatas[id].rotation = axis;
-		//					}
-		//					else
-		//					{
-		//						auto objAxisT = glm::transpose(objAxis);
-		//						auto rigidAxis = r->getAxis();
-		//						auto rigidAxisT = glm::transpose(rigidAxis);
-		//						auto trans = body->getGlobalPose();
-		//						auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
-		//						glm::mat3 axis;
-		//						Math::quaternionToMatrix(glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w), axis);
-		//						pObject->rigidDatas[id].coord = coord;
-		//						pObject->rigidDatas[id].rotation = axis;
-		//						auto boneAxis = objAxisT * axis * rigidAxisT;
-		//						glm::vec3 boneCoord;
-		//						if (r->mode != Rigidbody::Mode::eDynamicLockLocation)
-		//							boneCoord = (objAxisT * (coord - objCoord) - boneAxis * (r->getCoord() * objScale)) / objScale;
-		//						else
-		//							boneCoord = glm::vec3(solver->boneMatrix[r->boneID][3]);
-		//						solver->boneMatrix[r->boneID] = Math::makeMatrix(boneAxis, boneCoord);
-		//					}
-		//				}
-
-		//				id++;
-		//			}
-		//		}
-		//	}
 
 		//	if (engine->controllingObject)
 		//	{

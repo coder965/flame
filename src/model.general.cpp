@@ -333,12 +333,10 @@ namespace tke
 			mt->indiceCount = cubeModel->indices.size();
 			cubeModel->materials.push_back(mt);
 
-			auto pRigidbody = new Rigidbody;
-			pRigidbody->mode = Rigidbody::Mode::eDynamic;
+			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
 			cubeModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape;
+			auto pShape = new Shape(ShapeTypeBox);
 			pRigidbody->addShape(pShape);
-			pShape->type = Shape::Type::eBox;
 			pShape->setScale(glm::vec3(0.5f));
 
 			scene->addModel(cubeModel);
@@ -360,12 +358,10 @@ namespace tke
 			mt1->indiceCount = sphereModel->indices.size() / 2;
 			sphereModel->materials.push_back(mt1);
 
-			auto pRigidbody = new Rigidbody;
-			pRigidbody->mode = Rigidbody::Mode::eDynamic;
+			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
 			sphereModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape;
+			auto pShape = new Shape(ShapeTypeSphere);
 			pRigidbody->addShape(pShape);
-			pShape->type = Shape::Type::eSphere;
 			pShape->setScale(glm::vec3(0.5f));
 
 			scene->addModel(sphereModel);
@@ -383,12 +379,10 @@ namespace tke
 			mt->indiceCount = cylinderModel->indices.size();
 			cylinderModel->materials.push_back(mt);
 
-			auto pRigidbody = new Rigidbody;
-			pRigidbody->mode = Rigidbody::Mode::eDynamic;
+			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
 			cylinderModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape;
+			auto pShape = new Shape(ShapeTypeCapsule);
 			pRigidbody->addShape(pShape);
-			pShape->type = Shape::Type::eCapsule;
 			pShape->setScale(glm::vec3(0.5f));
 
 			scene->addModel(cylinderModel);

@@ -22,6 +22,11 @@ namespace tke
 		"Height Field"
 	};
 
+	Shape::Shape(ShapeType _type)
+		:type(_type)
+	{
+	}
+
 	char *Shape::getTypeName(Type _type)
 	{
 		return shapeNames[(int)_type];
@@ -37,14 +42,19 @@ namespace tke
 		auto size = getScale();
 		switch (type)
 		{
-		case Type::eBox:
+		case ShapeTypeBox:
 			return size.x * size.y * size.z * 8.f;
-		case Type::eSphere:
+		case ShapeTypeSphere:
 			return 4.f * size.x * size.x * size.x * M_PI / 3.f;
-		case Type::eCapsule:
+		case ShapeTypeCapsule:
 			return 4.f * size.x * size.x * size.x * M_PI / 3.f + M_PI * size.x * size.x * size.y;
 		}
 		return 0.f;
+	}
+
+	Rigidbody::Rigidbody(RigidbodyType _type)
+		:type(_type)
+	{
 	}
 
 	Rigidbody::~Rigidbody()
@@ -116,7 +126,7 @@ namespace tke
 		rigidbodies.clear();
 		for (int i = 0; i < count; i++)
 		{
-			auto rb = new Rigidbody;
+			auto rb = (Rigidbody*)malloc(sizeof(Rigidbody));
 			file.read((char*)rb, sizeof(Rigidbody));
 
 			rigidbodies.push_back(rb);
@@ -248,53 +258,19 @@ namespace tke
 	{
 		static auto magicNumber = 0;
 		pRigidbody->id = magicNumber++;
-		if (pRigidbody->mode == Rigidbody::Mode::eStatic)
-		{
-			staticRigidbodies.push_back(pRigidbody);
-		}
-		else
-		{
-			dynamicRigidbodies.push_back(pRigidbody);
-		}
 		rigidbodies.push_back(pRigidbody);
 	}
 
 	Rigidbody *Model::deleteRigidbody(Rigidbody *pRigidBody)
 	{
-		if (pRigidBody->mode == Rigidbody::Mode::eStatic)
-		{
-			for (auto it = staticRigidbodies.begin(); it != staticRigidbodies.end(); it++)
-			{
-				if (*it == pRigidBody)
-				{
-					staticRigidbodies.erase(it);
-					break;
-				}
-			}
-		}
-		else
-		{
-			for (auto it = dynamicRigidbodies.begin(); it != dynamicRigidbodies.end(); it++)
-			{
-				if (*it == pRigidBody)
-				{
-					dynamicRigidbodies.erase(it);
-					break;
-				}
-			}
-		}
 		for (auto it = rigidbodies.begin(); it != rigidbodies.end(); it++)
 		{
 			if (*it == pRigidBody)
 			{
 				if (it > rigidbodies.begin())
-				{
 					pRigidBody = *(it - 1);
-				}
 				else
-				{
 					pRigidBody = nullptr;
-				}
 				rigidbodies.erase(it);
 				break;
 			}

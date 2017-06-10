@@ -10,6 +10,7 @@
 #include "object.h"
 #include "terrain.h"
 #include "model.h"
+#include "physics.h"
 
 namespace tke
 {
@@ -181,6 +182,11 @@ namespace tke
 		int shadowCount = 0;
 		int staticIndirectCount = 0;
 		int animatedIndirectCount = 0;
+
+		physx::PxScene *pxScene = nullptr;
+		physx::PxControllerManager *pxControllerManager = nullptr;
+
+		bool firstUpdate = true;
 
 		Scene();
 		~Scene();
