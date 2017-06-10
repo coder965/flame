@@ -521,7 +521,7 @@ namespace tke
 		}
 
 		// update physics
-		pxScene->simulate((nowTime - last_time) / 1000.f);
+		pxScene->simulate(/*(nowTime - last_time) / 1000.f*/ 1.f / 600.f);
 		pxScene->fetchResults(true);
 		for (auto object : objects)
 		{

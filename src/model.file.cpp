@@ -518,7 +518,7 @@ namespace tke
 				RigidData data;
 				file.read((char*)&data, sizeof(RigidData));
 
-				auto p = (Rigidbody*)malloc(sizeof(Rigidbody));
+				auto p = new Rigidbody;
 				p->name = japaneseToChinese(data.name);
 				p->boneID = data.bone;
 				p->originCollisionGroupID = data.collisionGroupNumber;
@@ -533,7 +533,7 @@ namespace tke
 				p->setQuat(rotationQuat);
 				p->type = (RigidbodyType)data.mode;
 				m->addRigidbody(p);
-				auto q = (Shape*)malloc(sizeof(Shape));
+				auto q = new Shape;
 				p->addShape(q);
 				switch (data.type)
 				{
@@ -782,7 +782,7 @@ namespace tke
 			file >> rigidbodyCount;
 			for (int i = 0; i < rigidbodyCount; i++)
 			{
-				auto p = (Rigidbody*)malloc(sizeof(Rigidbody));
+				auto p = new Rigidbody;
 				int type;
 				file >> type;
 				p->type = (RigidbodyType)type;
@@ -807,7 +807,7 @@ namespace tke
 				file >> shapeCount;
 				for (int j = 0; j < shapeCount; j++)
 				{
-					auto q = (Shape*)malloc(sizeof(Shape));
+					auto q = new Shape;
 					p->addShape(q);
 					glm::vec3 coord;
 					file >> coord;

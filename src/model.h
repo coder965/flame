@@ -118,6 +118,7 @@ namespace tke
 
 		ShapeType type = ShapeTypeBox;
 
+		Shape();
 		Shape(ShapeType _type);
 		static char *getTypeName(Type _type);
 		char *getTypeName();
@@ -149,6 +150,7 @@ namespace tke
 		float friction;
 		std::vector<Shape*> shapes;
 
+		Rigidbody();
 		Rigidbody(RigidbodyType _type);
 		~Rigidbody();
 		void addShape(Shape *pShape);

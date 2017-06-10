@@ -69,6 +69,10 @@
     <BuildLog>
       <Path>$(MSBuildProjectName).log</Path>
     </BuildLog>
+    <Lib>
+      <AdditionalLibraryDirectories>D:\PhysX-3.3-master\PhysXSDK\Lib\vc14win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>PhysX3CommonDEBUG_x86.lib;PhysX3DEBUG_x86.lib;PhysX3ExtensionsDEBUG.lib;PhysX3CharacterKinematicDEBUG_x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

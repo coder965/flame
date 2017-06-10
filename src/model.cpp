@@ -22,6 +22,10 @@ namespace tke
 		"Height Field"
 	};
 
+	Shape::Shape()
+	{
+	}
+
 	Shape::Shape(ShapeType _type)
 		:type(_type)
 	{
@@ -50,6 +54,10 @@ namespace tke
 			return 4.f * size.x * size.x * size.x * M_PI / 3.f + M_PI * size.x * size.x * size.y;
 		}
 		return 0.f;
+	}
+
+	Rigidbody::Rigidbody()
+	{
 	}
 
 	Rigidbody::Rigidbody(RigidbodyType _type)
@@ -126,7 +134,7 @@ namespace tke
 		rigidbodies.clear();
 		for (int i = 0; i < count; i++)
 		{
-			auto rb = (Rigidbody*)malloc(sizeof(Rigidbody));
+			auto rb = new Rigidbody;
 			file.read((char*)rb, sizeof(Rigidbody));
 
 			rigidbodies.push_back(rb);
