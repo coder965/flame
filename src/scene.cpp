@@ -1076,16 +1076,7 @@ namespace tke
 
 			auto pObject = (AnimatedObject*)object;
 
-			pObject->boneMatrixBuffer->update(pObject->boneMatrix, *stagingBuffer, sizeof(glm::mat4) * pObject->pModel->bones.size());
-
-			//pObject->animationSolver->sample();
-			//for (int i = 0; i < pObject->pModel->bones.size(); i++)
-			//	pObject->animationSolver->boneMatrix[i] = glm::mat4();
-			//pObject->pModel->refreshBone(pObject->animationSolver->boneData, pObject->animationSolver->boneMatrix);
-			//pObject->animationSolver->calcIK();
-
-			//pObject->animationSolver->fixMatrix();
-			//pObject->animationSolver->updateUBO();
+			pObject->update();
 		}
 
 		camera.changed = false;

@@ -39,7 +39,8 @@ namespace tke
 	struct AnimatedObject : Object
 	{
 		Animation *currentAnimation = nullptr;
-		float frame = 0;
+		float currentFrame = 0.f;
+		float currentTime = 0.f;
 		BoneData *boneData = nullptr;
 		glm::mat4 *boneMatrix = nullptr;
 		UniformBuffer *boneMatrixBuffer = nullptr;
@@ -47,10 +48,7 @@ namespace tke
 		AnimatedObject(Model *_pModel);
 		virtual ~AnimatedObject() override;
 		void setAnimation(Animation *animation);
-		void sample();
-		void calcIK();
-		void fixMatrix();
-		void updateUBO();
+		void update();
 	};
 }
 

@@ -79,6 +79,8 @@ namespace tke
 	struct AnimationTemplate
 	{
 		std::string name;
+		std::string comment;
+		std::string filename;
 		std::string filepath;
 		std::vector<BoneMotion> motions;
 	};
@@ -161,6 +163,7 @@ namespace tke
 	{
 		int id;
 
+		std::string name;
 		int rigid0ID;
 		int rigid1ID;
 		glm::vec3 maxCoord;
@@ -174,6 +177,8 @@ namespace tke
 	struct Model
 	{
 		std::string name;
+		std::string comment;
+		std::string filename;
 		std::string filepath;
 		bool animated = false;
 

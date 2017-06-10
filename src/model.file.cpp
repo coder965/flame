@@ -329,6 +329,8 @@ namespace tke
 
 			Header header;
 			file.read((char*)&header, sizeof(Header));
+			m->name = japaneseToChinese(header.name);
+			m->comment = japaneseToChinese(header.comment);
 
 			int vertexCount;
 			file >> vertexCount;
@@ -409,6 +411,7 @@ namespace tke
 				BoneData data;
 				file.read((char*)&data, sizeof(BoneData));
 
+				m->bones[i].name = japaneseToChinese(data.name);
 				m->bones[i].parent = data.parent;
 				m->bones[i].type = data.type;
 				m->bones[i].rootCoord = data.coord;
@@ -516,7 +519,7 @@ namespace tke
 				file.read((char*)&data, sizeof(RigidData));
 
 				auto p = new Rigidbody;
-				p->name = data.name;
+				p->name = japaneseToChinese(data.name);
 				p->boneID = data.bone;
 				p->originCollisionGroupID = data.collisionGroupNumber;
 				p->originCollisionFreeFlag = data.collisionGroupMask;
@@ -561,6 +564,7 @@ namespace tke
 				file.read((char*)&data, sizeof(JointData));
 
 				auto p = new Joint;
+				p->name = japaneseToChinese(data.name);
 				p->rigid0ID = data.rigid0;
 				p->rigid1ID = data.rigid1;
 				p->maxCoord = data.maxCoord;
@@ -610,6 +614,8 @@ namespace tke
 
 			Header header;
 			file.read((char*)&header, sizeof(Header));
+			a->name = japaneseToChinese(header.modelName);
+			a->comment = japaneseToChinese(header.str);
 
 			int count;
 			file >> count;
@@ -618,7 +624,7 @@ namespace tke
 			{
 				BoneMotionData data;
 				file.read((char*)&data, sizeof(BoneMotionData));
-				a->motions[i].name = data.name;
+				a->motions[i].name = japaneseToChinese(data.name);
 				a->motions[i].frame = data.frame;
 				a->motions[i].coord = glm::vec3(data.coord);
 				a->motions[i].quaternion = glm::vec4(data.quaternion);
@@ -1086,7 +1092,7 @@ namespace tke
 		}
 
 		auto pModel = new Model;
-		pModel->name = p.filename().string();
+		pModel->filename = p.filename().string();
 		pModel->filepath = p.parent_path().string();
 		if (pModel->filepath == "")
 			pModel->filepath = ".";
@@ -1117,7 +1123,7 @@ namespace tke
 			return nullptr;
 		}
 		auto pAnimation = new AnimationTemplate;
-		pAnimation->name = p.filename().string();
+		pAnimation->filename = p.filename().string();
 		pAnimation->filepath = p.parent_path().string();
 		if (pAnimation->filepath == "")
 			pAnimation->filepath = ".";

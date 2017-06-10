@@ -82,12 +82,16 @@ namespace tke
 		CloseClipboard();
 	}
 
-	void japaneseToChinese(char *str, int len)
+	std::string japaneseToChinese(const std::string &str)
 	{
-		wchar_t *wbuf = new wchar_t[len];
-		MultiByteToWideChar(932, 0, str, -1, wbuf, len);
-		WideCharToMultiByte(936, 0, wbuf, -1, str, len, NULL, false);
+		wchar_t *wbuf = new wchar_t[str.size() + 1];
+		char *buf = new char[str.size() + 1];
+		MultiByteToWideChar(932, 0, str.c_str(), -1, wbuf, str.size() + 1);
+		WideCharToMultiByte(936, 0, wbuf, -1, buf, str.size() + 1, NULL, false);
+		std::string newStr = buf;
 		delete[]wbuf;
+		delete[]buf;
+		return newStr;
 	}
 
 	void saveBitmap24(const std::string &filename, int width, int height, void *data)

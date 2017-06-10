@@ -47,9 +47,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
-      <AdditionalLibraryDirectories>$(QTDIR)\lib;D:\TK_Engine\engine\Debug;D:\VulkanSDK\1.0.49.0\lib32;D:\FreeImage\Dist\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;D:\TK_Engine\engine\Debug;D:\VulkanSDK\1.0.49.0\lib32;D:\FreeImage\Dist\x32;D:\PhysX-3.3-master\PhysXSDK\Lib\vc14win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Engine.lib;vulkan-1.lib;freeimage.lib;qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Engine.lib;vulkan-1.lib;freeimage.lib;qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;PhysX3DEBUG_x86.lib;PhysX3CommonDEBUG_x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <BuildLog>
       <Path>$(MSBuildProjectName).log</Path>
