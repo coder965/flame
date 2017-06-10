@@ -59,7 +59,8 @@ namespace tke
 		image = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		globalResource.setImage(image, "PickUp.Image");
 
-		globalResource.setPipeline(&plainPickUpPipeline, "PickUp.Pipeline");
+		plainPickUpPipeline.name = "PickUp.Pipeline";
+		globalResource.setPipeline(&plainPickUpPipeline);
 
 		auto pDepthImage = globalResource.getImage("Depth.Image");
 

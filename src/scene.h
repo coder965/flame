@@ -183,9 +183,9 @@ namespace tke
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 
-		unsigned int shadowCount = 0;
-		unsigned int staticIndirectCount = 0;
-		unsigned int animatedIndirectCount = 0;
+		int shadowCount = 0;
+		int staticIndirectCount = 0;
+		int animatedIndirectCount = 0;
 
 		Scene();
 		~Scene();

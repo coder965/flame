@@ -505,18 +505,21 @@ namespace tke
 		std::map<std::string, Model*> modelResources;
 		std::map<std::string, Pipeline*> pipelineResources;
 		std::map<std::string, VkCommandBuffer> cmdResources;
+		std::map<std::string, int*> intResources;
 
 		void setBuffer(Buffer *p, const std::string &str);
 		void setImage(Image *p, const std::string &str);
 		void setModel(Model *p, const std::string &str);
-		void setPipeline(Pipeline *p, const std::string &str);
+		void setPipeline(Pipeline *p);
 		void setCmd(VkCommandBuffer p, const std::string &str);
+		void setInt(int *p, const std::string &str);
 
 		Buffer *getBuffer(const std::string &str);
 		Image *getImage(const std::string &str);
 		Model *getModel(const std::string &str);
 		Pipeline *getPipeline(const std::string &str);
 		VkCommandBuffer getCmd(const std::string &str);
+		int *getInt(const std::string &str);
 
 		ResourceBank(ResourceBank *_parent);
 		~ResourceBank();
@@ -791,7 +794,10 @@ namespace tke
 		REFLv std::string indirect_index_buffer_name;
 
 		REFLv int first_indirect = 0;
+
 		REFLv int indirect_count = 0;
+		REFLv std::string indirect_count_name;
+		int *p_indirect_count = nullptr;
 
 		REFLv StageType push_constant_stage = StageType::null;
 		REFLv int push_constant_offset = 0;

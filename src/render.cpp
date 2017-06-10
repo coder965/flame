@@ -1279,14 +1279,19 @@ namespace tke
 		modelResources[str] = p;
 	}
 
-	void ResourceBank::setPipeline(Pipeline *p, const std::string &str)
+	void ResourceBank::setPipeline(Pipeline *p)
 	{
-		pipelineResources[str] = p;
+		pipelineResources[p->name] = p;
 	}
 
 	void ResourceBank::setCmd(VkCommandBuffer p, const std::string &str)
 	{
 		cmdResources[str] = p;
+	}
+
+	void ResourceBank::setInt(int *p, const std::string &str)
+	{
+		intResources[str] = p;
 	}
 
 	Buffer *ResourceBank::getBuffer(const std::string &str)
@@ -1348,6 +1353,19 @@ namespace tke
 		{
 			if (parent)
 				return parent->getCmd(str);
+			else
+				return nullptr;
+		}
+		return it->second;
+	}
+
+	int *ResourceBank::getInt(const std::string &str)
+	{
+		auto it = intResources.find(str);
+		if (it == intResources.end())
+		{
+			if (parent)
+				return parent->getInt(str);
 			else
 				return nullptr;
 		}
@@ -2804,10 +2822,10 @@ namespace tke
 								vkCmdDrawIndexed(cmd, drawcall.index_count, drawcall.instance_count, drawcall.first_index, drawcall.vertex_offset, drawcall.first_instance);
 								break;
 							case DrawcallType::indirect_vertex:
-								vkCmdDrawIndirect(cmd, drawcall.m_indirectVertexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndirectCommand, drawcall.indirect_count, sizeof VkDrawIndirectCommand);
+								vkCmdDrawIndirect(cmd, drawcall.m_indirectVertexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndirectCommand);
 								break;
 							case DrawcallType::indirect_index:
-								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
+								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
 								break;
 							case DrawcallType::push_constant:
 								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
@@ -2870,7 +2888,7 @@ namespace tke
 			p.p = new Pipeline;
 			p.p->pResource = &resource;
 			p.p->loadXML(enginePath + p.file_name);
-			resource.setPipeline(p.p, p.p->name);
+			resource.setPipeline(p.p);
 		}
 
 		if (vertex_buffer_name!= "")
@@ -2989,6 +3007,8 @@ namespace tke
 									drawcall.vertex_offset = p->vertexBase;
 								}
 							}
+							if (drawcall.indirect_count_name != "")
+								drawcall.p_indirect_count = resource.getInt(drawcall.indirect_count_name);
 						}
 						break;
 					case DrawActionType::call_fuction:

@@ -147,6 +147,7 @@ currentBank->addV<std::string>("indirect_vertex_buffer_name", offsetof(Drawcall,
 currentBank->addV<std::string>("indirect_index_buffer_name", offsetof(Drawcall, indirect_index_buffer_name));
 currentBank->addV<int>("first_indirect", offsetof(Drawcall, first_indirect));
 currentBank->addV<int>("indirect_count", offsetof(Drawcall, indirect_count));
+currentBank->addV<std::string>("indirect_count_name", offsetof(Drawcall, indirect_count_name));
 currentBank->addV<StageType>("push_constant_stage", offsetof(Drawcall, push_constant_stage));
 currentBank->addV<int>("push_constant_offset", offsetof(Drawcall, push_constant_offset));
 currentBank->addE("PushConstantType", "push_constant_type", offsetof(Drawcall, push_constant_type));

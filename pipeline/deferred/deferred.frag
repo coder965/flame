@@ -175,5 +175,4 @@ void main()
 	
 	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	outColor = vec4(vec3(1.0), 1.0);
 }

@@ -52,12 +52,15 @@ namespace tke
 		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
 		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
 
-		globalResource.setBuffer(staticVertexBuffer, "Scene.StaticVertexBuffer");
-		globalResource.setBuffer(staticIndexBuffer, "Scene.StaticIndexBuffer");
-		globalResource.setBuffer(animatedVertexBuffer, "Scene.AnimatedVertexBuffer");
-		globalResource.setBuffer(animatedIndexBuffer, "Scene.AnimatedIndexBuffer");
-		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.StaticIndirectBuffer");
-		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.AnimatedIndirectBuffer");
+		globalResource.setBuffer(staticVertexBuffer, "Scene.Static.VertexBuffer");
+		globalResource.setBuffer(staticIndexBuffer, "Scene.Static.IndexBuffer");
+		globalResource.setBuffer(animatedVertexBuffer, "Scene.Animated.VertexBuffer");
+		globalResource.setBuffer(animatedIndexBuffer, "Scene.Animated.IndexBuffer");
+		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
+		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
+
+		globalResource.setInt(&staticIndirectCount, "Scene.Static.IndirectCount");
+		globalResource.setInt(&animatedIndirectCount, "Scene.Animated.IndirectCount");
 	}
 
 	Scene::~Scene()
@@ -411,11 +414,13 @@ namespace tke
 	static Pipeline *panoramaPipeline = nullptr;
 	static Pipeline *deferredPipeline = nullptr;
 	static Pipeline *mrtPipeline = nullptr;
+	static Pipeline *mrtAnimPipeline = nullptr;
 	void Scene::setResources(Renderer *r)
 	{
 		panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
 		deferredPipeline = r->resource.getPipeline("Deferred.Pipeline");
 		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
+		mrtAnimPipeline = r->resource.getPipeline("Mrt_Anim.Pipeline");
 	}
 
 	void Scene::update()
@@ -500,21 +505,24 @@ namespace tke
 						postRenderPass = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
 					}
 
+					scatteringPipeline.name = "Scattering.Pipeline";
 					scatteringPipeline.loadXML(enginePath + "pipeline/sky/scattering.xml");
 					scatteringPipeline.setup(postRenderPass, 0);
-					globalResource.setPipeline(&scatteringPipeline, "Scattering.Pipeline");
+					globalResource.setPipeline(&scatteringPipeline);
 
+					downsamplePipeline.name = "Downsample.Pipeline";
 					downsamplePipeline.loadXML(enginePath + "pipeline/sky/downsample.xml");
 					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 					downsamplePipeline.setup(postRenderPass, 0);
-					globalResource.setPipeline(&downsamplePipeline, "Downsample.Pipeline");
+					globalResource.setPipeline(&downsamplePipeline);
 
+					convolvePipeline.name = "Convolve.Pipeline";
 					convolvePipeline.loadXML(enginePath + "pipeline/sky/convolve.xml");
 					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 					convolvePipeline.setup(postRenderPass, 0);
-					globalResource.setPipeline(&convolvePipeline, "Convolve.Pipeline");
+					globalResource.setPipeline(&convolvePipeline);
 
 					envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
 
@@ -767,10 +775,15 @@ namespace tke
 		}
 		if (needUpdateSampler)
 		{
-			static int map_position = -1;
-			if (map_position == -1) map_position = mrtPipeline->descriptorPosition("mapSamplers");
+			static int map_position0 = -1;
+			static int map_position1 = -1;
+			if (map_position0 == -1) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
+			if (map_position1 == -1) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
 			for (int index = 0; index < storeImages.size(); index++)
-				descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position, storeImages[index]->getInfo(colorSampler), index);
+			{
+				descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, storeImages[index]->getInfo(colorSampler), index);
+				descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, storeImages[index]->getInfo(colorSampler), index);
+			}
 
 			descriptorPool.update();
 			needUpdateSampler = false;
