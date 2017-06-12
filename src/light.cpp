@@ -7,32 +7,13 @@ namespace tke
 	{
 	}
 
-	char *typeNames[] = {
-		"parallax light",
-		"point light",
-		"spot light"
-	};
-
-	char *Light::getTypeName(LightType _type)
+	std::string getLightTypeName(LightType _type)
 	{
+		char *typeNames[] = {
+			"parallax light",
+			"point light",
+			"spot light"
+		};
 		return typeNames[_type];
-	}
-
-	char *Light::getTypeName()
-	{
-		return typeNames[type];
-	}
-
-	ParallaxLight::ParallaxLight()
-		:Light(LightTypeParallax)
-	{}
-
-	PointLight::PointLight()
-		: Light(LightTypePoint)
-	{}
-
-	SpotLight::SpotLight()
-	{
-		type = LightTypeSpot;
 	}
 }

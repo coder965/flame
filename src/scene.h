@@ -73,7 +73,6 @@ namespace tke
 	{
 		glm::vec4 coord; // w - the light type
 		glm::vec4 color;
-		glm::vec4 decayFactor;
 		glm::vec4 spotData; // spot direction and spot range
 	};
 
@@ -147,7 +146,7 @@ namespace tke
 
 		int vertexBase = 0;
 
-		bool needUpdataSky = true;
+		bool needUpdateSky = true;
 		bool needUpdateVertexBuffer = true;
 		bool needUpdateMaterialBuffer = true;
 		bool needUpdateSampler = true;

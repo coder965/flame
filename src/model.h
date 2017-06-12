@@ -229,13 +229,26 @@ namespace tke
 		void arrangeBone();
 		Animation *bindAnimation(AnimationTemplate *pAnimationTemplate);
 
-		void refreshBone(BoneData *boneData, glm::mat4 *outMat);
-		void refreshBone(int boneID, BoneData *boneData, glm::mat4 *outMat);
-
 		void addRigidbody(Rigidbody *pRigidbody);
 		Rigidbody *deleteRigidbody(Rigidbody *pRigidbody);
 
 		void addJoint(Joint *pJoint);
+	};
+
+	struct AnimationComponent
+	{
+		Model *model;
+		Animation *currentAnimation = nullptr;
+		float currentFrame = 0.f;
+		float currentTime = 0.f;
+		BoneData *boneData = nullptr;
+		glm::mat4 *boneMatrix = nullptr;
+		UniformBuffer *boneMatrixBuffer = nullptr;
+
+		AnimationComponent(Model *_pModel);
+		~AnimationComponent();
+		void setAnimation(Animation *animation);
+		void update();
 	};
 }
 

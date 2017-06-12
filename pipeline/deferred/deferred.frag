@@ -41,7 +41,6 @@ struct Light
 {
 	vec4 coord;
 	vec4 color;
-	vec4 decayFactor;
 	vec4 spotData;
 };
 
@@ -138,8 +137,7 @@ void main()
 		else
 		{
 			lightDir = (u_matrix.view * vec4(lightDir, 1.0)).xyz - coordView;
-			float dist = length(lightDir);
-			lightColor /= (dist * (dist * light.decayFactor.x + light.decayFactor.y) + light.decayFactor.z);
+			lightColor /= lightDir.x * lightDir.x + lightDir.y * lightDir.y + lightDir.z * lightDir.z;
 		}
 		lightDir = normalize(lightDir);
 		float nl = dot(normal, lightDir);
