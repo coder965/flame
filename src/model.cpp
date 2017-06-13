@@ -674,166 +674,7 @@ namespace tke
 	Model *torusModel = nullptr;
 	Model *hamerModel = nullptr;
 
-	void initGeneralModels()
-	{
-		{
-			triangleModel = new Model;
-			triangleModel->name = "triangle";
-
-			addTriangleVertex(triangleModel, glm::mat3(), glm::vec3());
-
-			auto mt = new Material;
-			mt->indiceCount = triangleModel->indices.size();
-			triangleModel->materials.push_back(mt);
-
-			scene->addModel(triangleModel);
-
-			globalResource.setModel(triangleModel, "Triangle.Model");
-		}
-
-		{
-			cubeModel = new Model;
-			cubeModel->name = "cube";
-
-			addCubeVertex(cubeModel, glm::mat3(), glm::vec3(), 1.f);
-
-			auto mt = new Material;
-			mt->indiceCount = cubeModel->indices.size();
-			cubeModel->materials.push_back(mt);
-
-			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
-			cubeModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeTypeBox);
-			pRigidbody->addShape(pShape);
-			pShape->setScale(glm::vec3(0.5f));
-
-			scene->addModel(cubeModel);
-
-			globalResource.setModel(cubeModel, "Cube.Model");
-		}
-
-		{
-			sphereModel = new Model;
-			sphereModel->name = "sphere";
-
-			addSphereVertex(sphereModel, glm::mat3(), glm::vec3(), 0.5f, 32, 32);
-
-			auto mt0 = new Material;
-			mt0->indiceCount = sphereModel->indices.size() / 2;
-			sphereModel->materials.push_back(mt0);
-			auto mt1 = new Material;
-			mt1->indiceBase = sphereModel->indices.size() / 2;
-			mt1->indiceCount = sphereModel->indices.size() / 2;
-			sphereModel->materials.push_back(mt1);
-
-			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
-			sphereModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeTypeSphere);
-			pRigidbody->addShape(pShape);
-			pShape->setScale(glm::vec3(0.5f));
-
-			scene->addModel(sphereModel);
-
-			globalResource.setModel(sphereModel, "Sphere.Model");
-		}
-
-		{
-			cylinderModel = new Model;
-			cylinderModel->name = "cylinder";
-
-			addCylinderVertex(cylinderModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
-
-			auto mt = new Material;
-			mt->indiceCount = cylinderModel->indices.size();
-			cylinderModel->materials.push_back(mt);
-
-			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
-			cylinderModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeTypeCapsule);
-			pRigidbody->addShape(pShape);
-			pShape->setScale(glm::vec3(0.5f));
-
-			scene->addModel(cylinderModel);
-
-			globalResource.setModel(cylinderModel, "Cylinder.Model");
-		}
-
-		{
-			coneModel = new Model;
-			coneModel->name = "cone";
-
-			addConeVertex(coneModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
-
-			auto mt = new Material;
-			mt->indiceCount = coneModel->indices.size();
-			coneModel->materials.push_back(mt);
-
-			scene->addModel(coneModel);
-
-			globalResource.setModel(coneModel, "Cone.Model");
-		}
-
-		{
-			arrowModel = new Model;
-			arrowModel->name = "arrow";
-
-			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
-
-			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
-			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
-
-			auto mt = new Material;
-			mt->indiceCount = arrowModel->indices.size();
-			arrowModel->materials.push_back(mt);
-
-			scene->addModel(arrowModel);
-
-			globalResource.setModel(arrowModel, "Arrow.Model");
-		}
-
-		{
-			torusModel = new Model;
-			torusModel->name = "torus";
-
-			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
-
-			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
-
-			auto mt = new Material;
-			mt->indiceCount = torusModel->indices.size();
-			torusModel->materials.push_back(mt);
-
-			scene->addModel(torusModel);
-
-			globalResource.setModel(torusModel, "Torus.Model");
-		}
-
-		{
-			hamerModel = new Model;
-			hamerModel->name = "hammer";
-
-			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
-
-			addCylinderVertex(hamerModel, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
-			int ic0 = hamerModel->indices.size();
-			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
-			int ic1 = hamerModel->indices.size();
-
-			auto mt0 = new Material;
-			mt0->indiceCount = ic0;
-			hamerModel->materials.push_back(mt0);
-			auto mt1 = new Material;
-			mt1->indiceBase = ic0;
-			mt1->indiceCount = ic1 - ic0;
-			hamerModel->materials.push_back(mt1);
-
-			scene->addModel(hamerModel);
-
-			globalResource.setModel(hamerModel, "Hamer.Model");
-		}
-	}
-
-	static void _after_load(Model *m)
+	static void _model_after_process(Model *m)
 	{
 		m->maxCoord = m->positions[0];
 		m->minCoord = m->positions[0];
@@ -843,7 +684,7 @@ namespace tke
 			m->minCoord = glm::min(m->minCoord, m->positions[i]);
 		}
 
-		if (m->tangents.size() == 0)
+		if (m->tangents.size() == 0 && m->uvs.size() > 0)
 		{
 			m->tangents.resize(m->positions.size());
 
@@ -882,6 +723,181 @@ namespace tke
 				m->bones[i].relateCoord -= m->bones[parentID].rootCoord;
 				m->bones[parentID].children.push_back(i);
 			}
+		}
+	}
+
+	void initGeneralModels()
+	{
+		{
+			triangleModel = new Model;
+			triangleModel->name = "triangle";
+
+			addTriangleVertex(triangleModel, glm::mat3(), glm::vec3());
+
+			auto mt = new Material;
+			mt->indiceCount = triangleModel->indices.size();
+			triangleModel->materials.push_back(mt);
+
+			_model_after_process(triangleModel);
+
+			scene->addModel(triangleModel);
+
+			globalResource.setModel(triangleModel, "Triangle.Model");
+		}
+
+		{
+			cubeModel = new Model;
+			cubeModel->name = "cube";
+
+			addCubeVertex(cubeModel, glm::mat3(), glm::vec3(), 1.f);
+
+			auto mt = new Material;
+			mt->indiceCount = cubeModel->indices.size();
+			cubeModel->materials.push_back(mt);
+
+			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
+			cubeModel->addRigidbody(pRigidbody);
+			auto pShape = new Shape(ShapeTypeBox);
+			pRigidbody->addShape(pShape);
+			pShape->setScale(glm::vec3(0.5f));
+
+			_model_after_process(cubeModel);
+
+			scene->addModel(cubeModel);
+
+			globalResource.setModel(cubeModel, "Cube.Model");
+		}
+
+		{
+			sphereModel = new Model;
+			sphereModel->name = "sphere";
+
+			addSphereVertex(sphereModel, glm::mat3(), glm::vec3(), 0.5f, 32, 32);
+
+			auto mt0 = new Material;
+			mt0->indiceCount = sphereModel->indices.size() / 2;
+			sphereModel->materials.push_back(mt0);
+			auto mt1 = new Material;
+			mt1->indiceBase = sphereModel->indices.size() / 2;
+			mt1->indiceCount = sphereModel->indices.size() / 2;
+			sphereModel->materials.push_back(mt1);
+
+			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
+			sphereModel->addRigidbody(pRigidbody);
+			auto pShape = new Shape(ShapeTypeSphere);
+			pRigidbody->addShape(pShape);
+			pShape->setScale(glm::vec3(0.5f));
+
+			_model_after_process(sphereModel);
+
+			scene->addModel(sphereModel);
+
+			globalResource.setModel(sphereModel, "Sphere.Model");
+		}
+
+		{
+			cylinderModel = new Model;
+			cylinderModel->name = "cylinder";
+
+			addCylinderVertex(cylinderModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
+
+			auto mt = new Material;
+			mt->indiceCount = cylinderModel->indices.size();
+			cylinderModel->materials.push_back(mt);
+
+			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
+			cylinderModel->addRigidbody(pRigidbody);
+			auto pShape = new Shape(ShapeTypeCapsule);
+			pRigidbody->addShape(pShape);
+			pShape->setScale(glm::vec3(0.5f));
+
+			_model_after_process(cylinderModel);
+
+			scene->addModel(cylinderModel);
+
+			globalResource.setModel(cylinderModel, "Cylinder.Model");
+		}
+
+		{
+			coneModel = new Model;
+			coneModel->name = "cone";
+
+			addConeVertex(coneModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
+
+			auto mt = new Material;
+			mt->indiceCount = coneModel->indices.size();
+			coneModel->materials.push_back(mt);
+
+			_model_after_process(coneModel);
+
+			scene->addModel(coneModel);
+
+			globalResource.setModel(coneModel, "Cone.Model");
+		}
+
+		{
+			arrowModel = new Model;
+			arrowModel->name = "arrow";
+
+			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
+
+			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
+			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
+
+			auto mt = new Material;
+			mt->indiceCount = arrowModel->indices.size();
+			arrowModel->materials.push_back(mt);
+
+			_model_after_process(arrowModel);
+
+			scene->addModel(arrowModel);
+
+			globalResource.setModel(arrowModel, "Arrow.Model");
+		}
+
+		{
+			torusModel = new Model;
+			torusModel->name = "torus";
+
+			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
+
+			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
+
+			auto mt = new Material;
+			mt->indiceCount = torusModel->indices.size();
+			torusModel->materials.push_back(mt);
+
+			_model_after_process(torusModel);
+
+			scene->addModel(torusModel);
+
+			globalResource.setModel(torusModel, "Torus.Model");
+		}
+
+		{
+			hamerModel = new Model;
+			hamerModel->name = "hammer";
+
+			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
+
+			addCylinderVertex(hamerModel, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
+			int ic0 = hamerModel->indices.size();
+			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
+			int ic1 = hamerModel->indices.size();
+
+			auto mt0 = new Material;
+			mt0->indiceCount = ic0;
+			hamerModel->materials.push_back(mt0);
+			auto mt1 = new Material;
+			mt1->indiceBase = ic0;
+			mt1->indiceCount = ic1 - ic0;
+			hamerModel->materials.push_back(mt1);
+
+			_model_after_process(hamerModel);
+
+			scene->addModel(hamerModel);
+
+			globalResource.setModel(hamerModel, "Hamer.Model");
 		}
 	}
 
@@ -1082,7 +1098,7 @@ namespace tke
 
 			reportMinorProgress(50);
 
-			_after_load(m);
+			_model_after_process(m);
 
 			reportMinorProgress(100);
 		}
@@ -1457,7 +1473,7 @@ namespace tke
 				m->addJoint(p);
 			}
 
-			_after_load(m);
+			_model_after_process(m);
 
 			reportMinorProgress(100);
 		}
@@ -1719,16 +1735,12 @@ namespace tke
 				m->addJoint(j);
 			}
 
-			file >> m->controllerPosition;
-			file >> m->controllerHeight;
-			file >> m->controllerRadius;
-
 			file >> m->boundingPosition;
 			file >> m->boundingSize;
 
 			file >> m->eyePosition;
 
-			_after_load(m);
+			_model_after_process(m);
 
 			reportMinorProgress(100);
 		}
@@ -1886,10 +1898,6 @@ namespace tke
 				file << j->springConstant;
 				file << j->sprintRotationConstant;
 			}
-
-			file << m->controllerPosition;
-			file << m->controllerHeight;
-			file << m->controllerRadius;
 
 			file << m->boundingPosition;
 			file << m->boundingSize;

@@ -6,6 +6,7 @@
 #include "scene.h"
 #include "gui.h"
 #include "physics.h"
+#include "sound.h"
 
 namespace tke
 {
@@ -135,14 +136,6 @@ namespace tke
 
 	Err init(const char *appName, int rcx, int rcy)
 	{
-		initRender(appName, 
-#ifdef _DEBUG
-			true
-#else
-			false
-#endif
-		);
-
 		resCx = rcx;
 		resCy = rcy;
 
@@ -154,15 +147,19 @@ namespace tke
 
 		changeProjMat(PERSPECTIVE);
 
+		initRender(appName, 
+#ifdef _DEBUG
+			true
+#else
+			false
+#endif
+		);
+
 		stagingBuffer = new StagingBuffer(65536);
 
-		{
-			static auto allocator = physx::PxDefaultAllocator();
-			static auto errorCallBack = physx::PxDefaultErrorCallback();
-			pxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallBack);
-			pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation, physx::PxTolerancesScale());
-			pxDefaultMaterial = pxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-		}
+		initPhysics();
+
+		initSound();
 
 		scene = new Scene;
 		scene->name = "default";

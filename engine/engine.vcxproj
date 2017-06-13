@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\VulkanSDK\1.0.49.0\Include;D:\PhysX-3.3-master\PhysXSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\VulkanSDK\1.0.49.0\Include;D:\PhysX-3.3-master\PhysXSDK\Include;D:\OpenAL 1.1 SDK\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
 /D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -70,8 +70,8 @@
       <Path>$(MSBuildProjectName).log</Path>
     </BuildLog>
     <Lib>
-      <AdditionalLibraryDirectories>D:\PhysX-3.3-master\PhysXSDK\Lib\vc14win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>PhysX3CommonDEBUG_x86.lib;PhysX3DEBUG_x86.lib;PhysX3ExtensionsDEBUG.lib;PhysX3CharacterKinematicDEBUG_x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\FreeImage\Dist\x32;D:\VulkanSDK\1.0.49.0\Lib32;D:\PhysX-3.3-master\PhysXSDK\Lib\vc14win32;D:\OpenAL 1.1 SDK\libs\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;FreeImage.lib;PhysX3CommonDEBUG_x86.lib;PhysX3DEBUG_x86.lib;PhysX3ExtensionsDEBUG.lib;PhysX3CharacterKinematicDEBUG_x86.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -113,6 +113,7 @@
     <ClCompile Include="..\src\render.cpp" />
     <ClCompile Include="..\src\scene.cpp" />
     <ClCompile Include="..\src\script.cpp" />
+    <ClCompile Include="..\src\sound.cpp" />
     <ClCompile Include="..\src\terrain.cpp" />
     <ClCompile Include="..\src\transformer.cpp" />
     <ClCompile Include="..\src\utils.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="..\src\render.h" />
     <ClInclude Include="..\src\scene.h" />
     <ClInclude Include="..\src\script.h" />
+    <ClInclude Include="..\src\sound.h" />
     <ClInclude Include="..\src\terrain.h" />
     <ClInclude Include="..\src\transformer.h" />
     <ClInclude Include="..\src\utils.h" />

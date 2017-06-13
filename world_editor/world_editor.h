@@ -30,11 +30,8 @@
 #include "../src/qFindWidget.h"
 #include "../src/core.h"
 #include "../src/scene.h"
-#include "../src/model.general.h"
-#include "../src/model.file.h"
 #include "../src/gui.h"
 #include "../src/event.h"
-#include "../src/image.file.h"
 
 struct GameExplorer;
 struct MonitorWidget;

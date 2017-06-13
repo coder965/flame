@@ -166,4 +166,13 @@ namespace tke
 		//glBindVertexArray(tke3_dynamicVertexVAO);
 		//glDrawArrays(GL_TRIANGLES, 0, triangleCount * 3);
 	}
+
+	void initPhysics()
+	{
+		static auto allocator = physx::PxDefaultAllocator();
+		static auto errorCallBack = physx::PxDefaultErrorCallback();
+		pxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallBack);
+		pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation, physx::PxTolerancesScale());
+		pxDefaultMaterial = pxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	}
 }

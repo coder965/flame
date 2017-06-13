@@ -7,7 +7,6 @@
 #include "core.h"
 #include "gui.h"
 #include "model.h"
-#include "image.file.h"
 
 namespace tke
 {

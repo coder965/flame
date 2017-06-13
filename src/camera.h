@@ -8,15 +8,15 @@
 
 namespace tke
 {
+	enum CameraMode
+	{
+		CameraModeFree,
+		CameraModeTargeting
+	};
+
 	struct Camera : Transformer, Controller
 	{
-		enum class Mode : int
-		{
-			eFree,
-			eTargeting
-		};
-
-		Mode mode = Mode::eFree;
+		CameraMode mode = CameraModeFree;
 		glm::vec3 target;
 		float length = 1.f;
 
@@ -24,7 +24,7 @@ namespace tke
 		glm::vec4 frustumPlanes[6];
 
 		Camera();
-		void setMode(Mode _mode);
+		void setMode(CameraMode _mode);
 		void setLength(float _length);
 		void setTarget(const glm::vec3 &_target);
 		void lookAtTarget();

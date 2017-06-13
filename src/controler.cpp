@@ -19,39 +19,39 @@ namespace tke
 
 		inEulerX = glm::radians(inEulerX + baseForwardAng);
 
-		if (front && frontSpeed > 0.f)
+		if (front && speed > 0.f)
 		{
-			outCoord.x -= sin(inEulerX) * frontSpeed * dist;
-			outCoord.z -= cos(inEulerX) * frontSpeed * dist;
+			outCoord.x -= sin(inEulerX) * speed * dist;
+			outCoord.z -= cos(inEulerX) * speed * dist;
 		}
-		if (back && backSpeed > 0.f)
+		if (back && speed > 0.f)
 		{
-			outCoord.x += sin(inEulerX) * backSpeed * dist;
-			outCoord.z += cos(inEulerX) * backSpeed * dist;
+			outCoord.x += sin(inEulerX) * speed * dist;
+			outCoord.z += cos(inEulerX) * speed * dist;
 		}
-		if (left && leftSpeed > 0.f)
+		if (left && speed > 0.f)
 		{
-			outCoord.x -= cos(inEulerX) * leftSpeed * dist;
-			outCoord.z += sin(inEulerX) * leftSpeed * dist;
+			outCoord.x -= cos(inEulerX) * speed * dist;
+			outCoord.z += sin(inEulerX) * speed * dist;
 		}
-		if (right && rightSpeed > 0.f)
+		if (right && speed > 0.f)
 		{
-			outCoord.x += cos(inEulerX) * rightSpeed * dist;
-			outCoord.z -= sin(inEulerX) * rightSpeed * dist;
+			outCoord.x += cos(inEulerX) * speed * dist;
+			outCoord.z -= sin(inEulerX) * speed * dist;
 		}
 		if (up)
-			outCoord.y += upSpeed * dist;
+			outCoord.y += speed * dist;
 		if (down)
-			outCoord.y -= downSpeed * dist;
+			outCoord.y -= speed * dist;
 
 		if (turnLeft)
-			outEuler.x = turnLeftSpeed * dist;
+			outEuler.x = turnSpeed * dist;
 		if (turnRight)
-			outEuler.x = -turnRightSpeed * dist;
+			outEuler.x = -turnSpeed * dist;
 		if (turnUp)
-			outEuler.z = turnUpSpeed * dist;
+			outEuler.z = turnSpeed * dist;
 		if (turnDown)
-			outEuler.z = -turnDownSpeed * dist;
+			outEuler.z = -turnSpeed * dist;
 
 		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler.x != 0.f) || (outEuler.y != 0.f) || (outEuler.z != 0.f);
 	}

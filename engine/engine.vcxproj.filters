@@ -81,6 +81,9 @@
     <ClCompile Include="..\src\lex.glslang_validator_yy.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\sound.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\camera.h">
@@ -132,6 +135,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\render.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sound.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

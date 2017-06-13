@@ -9,11 +9,8 @@ namespace tke
 	{
 		int lastTime = 0;
 		float baseForwardAng = 0.f;
-		float frontSpeed = 1.f, backSpeed = 1.f, leftSpeed = 1.f, rightSpeed = 1.f, upSpeed = 1.f, downSpeed = 1.f;
-		float turnLeftSpeed = 75.f;
-		float turnRightSpeed = 75.f;
-		float turnUpSpeed = 75.f;
-		float turnDownSpeed = 75.f;
+		float speed = 1.f;
+		float turnSpeed = 75.f;
 		bool front = false, back = false, left = false, right = false, up = false, down = false, turnLeft = false, turnRight = false, turnUp = false, turnDown = false;
 
 		void reset();

@@ -9,7 +9,7 @@ namespace tke
 		baseForwardAng = 90.f;
 	}
 
-	void Camera::setMode(Mode _mode)
+	void Camera::setMode(CameraMode _mode)
 	{
 		mode = _mode;
 		needUpdateMat = true;
@@ -32,7 +32,7 @@ namespace tke
 
 	void Camera::lookAtTarget()
 	{
-		if (mode == Mode::eTargeting)
+		if (mode == CameraModeTargeting)
 		{
 			if (needUpdateAxis) updateAxis();
 			coord = target + axis[2] * length;
@@ -124,7 +124,7 @@ namespace tke
 
 	void Camera::scroll(short value)
 	{
-		if (mode == Mode::eTargeting)
+		if (mode == CameraModeTargeting)
 		{
 			if (value < 0)
 				length = (length + 0.1) * 1.1f;
@@ -156,10 +156,10 @@ namespace tke
 			return;
 		switch (mode)
 		{
-		case Mode::eFree:
+		case CameraModeFree:
 			addCoord(coord);
 			break;
-		case Mode::eTargeting:
+		case CameraModeTargeting:
 			setTarget(target + coord);
 			break;
 		}

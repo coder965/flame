@@ -437,7 +437,7 @@ namespace tke
 
 		if (o->physicsType & ObjectPhysicsTypeController)
 		{
-			auto centerPos = ((m->maxCoord - m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
+			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
 			capsuleDesc.height = (m->maxCoord.y - m->minCoord.y) * o->getScale().y;
 			capsuleDesc.radius = glm::max((m->maxCoord.x - m->minCoord.x) * o->getScale().x,  (m->maxCoord.z - m->minCoord.z) * o->getScale().z) * 0.5f;
@@ -597,20 +597,14 @@ namespace tke
 			{
 				if (object->physicsType & ObjectPhysicsTypeController)
 				{
-					physx::PxVec3 disp;
-					disp.y = -gravity * object->floatingTime * object->floatingTime;
+					glm::vec3 e, c;
+					object->move(object->getEuler().x, c, e);
+					object->addEuler(e);
+
+					physx::PxVec3 disp(c.x, -gravity * object->floatingTime * object->floatingTime, c.z);
 					object->floatingTime += dist;
 
-					glm::vec3 e;
-					glm::vec3 v;
-					object->move(object->getEuler().x, v, e);
-
-					object->setEuler(e);
-
-					disp.x = v.x;
-					disp.z = v.z;
-
-					if (object->pxController->move(disp, 0.f, 1.f / 60.f, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
+					if (object->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
 						object->floatingTime = 0.f;
 				}
 			}
@@ -686,9 +680,8 @@ namespace tke
 				if (o->physicsType & ObjectPhysicsTypeController)
 				{
 					auto p = o->pxController->getPosition();
-					auto v = glm::vec3(p.x, p.y, p.z);
-					v -= (o->model->maxCoord - o->model->minCoord) * 0.5f * o->getScale();
-					o->setCoord(v);
+					auto c = glm::vec3(p.x, p.y, p.z) - (o->model->maxCoord + o->model->minCoord) * 0.5f * o->getScale();
+					o->setCoord(c);
 				}
 			}
 		}
