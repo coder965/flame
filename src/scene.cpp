@@ -306,33 +306,33 @@ namespace tke
 		return pLight;
 	}
 
-	void Scene::addObject(Object *object) // when a object is added to scene, the owner is the scene, object cannot be deleted elsewhere
+	void Scene::addObject(Object *o) // when a object is added to scene, the owner is the scene, object cannot be deleted elsewhere
 										   // and, if object has physics componet, it can be only moved by physics
 	{
-		auto model = object->model;
+		auto m = o->model;
 
 		EnterCriticalSection(&cs);
 
 		// since object can move to somewhere first, we create physics component here
-		if (object->physicsType & ObjectPhysicsTypeStatic || object->physicsType & ObjectPhysicsTypeDynamic)
+		if (o->physicsType & ObjectPhysicsTypeStatic || o->physicsType & ObjectPhysicsTypeDynamic)
 		{
-			if (model->rigidbodies.size() > 0)
+			if (m->rigidbodies.size() > 0)
 			{
-				auto objScale = object->getScale();
-				auto objCoord = object->getCoord();
-				auto objAxis = object->getAxis();
+				auto objScale = o->getScale();
+				auto objCoord = o->getCoord();
+				auto objAxis = o->getAxis();
 				physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
 					physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
 					physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
 					physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
 
-				for (auto r : model->rigidbodies)
+				for (auto r : m->rigidbodies)
 				{
 					RigidBodyData rigidbodyData;
 					rigidbodyData.rigidbody = r;
 
 					auto rigidCoord = r->getCoord();
-					if (r->boneID != -1) rigidCoord += model->bones[r->boneID].rootCoord;
+					if (r->boneID != -1) rigidCoord += m->bones[r->boneID].rootCoord;
 					rigidCoord *= objScale;
 					auto rigidAxis = r->getAxis();
 
@@ -343,7 +343,7 @@ namespace tke
 						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
 						physx::PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2]))));
 					rigTrans = objTrans * rigTrans;
-					auto actor = ((object->physicsType & ObjectPhysicsTypeDynamic) && (r->type == RigidbodyTypeDynamic || r->type == RigidbodyTypeDynamicButLocation)) ?
+					auto actor = ((o->physicsType & ObjectPhysicsTypeDynamic) && (r->type == RigidbodyTypeDynamic || r->type == RigidbodyTypeDynamicButLocation)) ?
 						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
 
 					for (auto s : r->shapes)
@@ -371,7 +371,7 @@ namespace tke
 
 					rigidbodyData.actor = actor;
 
-					object->rigidbodyDatas.push_back(rigidbodyData);
+					o->rigidbodyDatas.push_back(rigidbodyData);
 
 					pxScene->addActor(*actor);
 				}
@@ -435,22 +435,23 @@ namespace tke
 			//		}
 		}
 
-		if (object->physicsType & ObjectPhysicsTypeController)
+		if (o->physicsType & ObjectPhysicsTypeController)
 		{
+			auto centerPos = ((m->maxCoord - m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
-			capsuleDesc.height = model->controllerHeight * object->getScale().y;
-			capsuleDesc.radius = model->controllerRadius * object->getScale().y;
+			capsuleDesc.height = (m->maxCoord.y - m->minCoord.y) * o->getScale().y;
+			capsuleDesc.radius = glm::max((m->maxCoord.x - m->minCoord.x) * o->getScale().x,  (m->maxCoord.z - m->minCoord.z) * o->getScale().z) * 0.5f;
 			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 			capsuleDesc.material = pxDefaultMaterial;
-			capsuleDesc.position.x = model->controllerPosition.x * object->getScale().x + object->getCoord().x;
-			capsuleDesc.position.y = model->controllerPosition.y * object->getScale().y + object->getCoord().y;
-			capsuleDesc.position.z = model->controllerPosition.z * object->getScale().z + object->getCoord().z;
+			capsuleDesc.position.x = centerPos.x;
+			capsuleDesc.position.y = centerPos.y;
+			capsuleDesc.position.z = centerPos.z;
 			capsuleDesc.stepOffset = capsuleDesc.radius;
 
-			object->pxController = pxControllerManager->createController(capsuleDesc);
+			o->pxController = pxControllerManager->createController(capsuleDesc);
 		}
 
-		objects.push_back(object);
+		objects.push_back(o);
 
 		tke::needRedraw = true;
 		needUpdateIndirectBuffer = true;
@@ -615,29 +616,29 @@ namespace tke
 			}
 			pxScene->simulate(dist);
 			pxScene->fetchResults(true);
-			for (auto object : objects)
+			for (auto o : objects)
 			{
-				if (object->physicsType & ObjectPhysicsTypeDynamic)
+				if (o->physicsType & ObjectPhysicsTypeDynamic)
 				{
-					auto pModel = object->model;
+					auto pModel = o->model;
 
-					auto objScale = object->getScale();
-					auto objCoord = object->getCoord();
-					auto objAxis = object->getAxis();
+					auto objScale = o->getScale();
+					auto objCoord = o->getCoord();
+					auto objAxis = o->getAxis();
 					physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
 						physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
 						physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
 						physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
 
-					for (auto &data : object->rigidbodyDatas)
+					for (auto &data : o->rigidbodyDatas)
 					{
 						if (data.rigidbody->boneID == -1)
 						{
 							auto trans = data.actor->getGlobalPose();
 							auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
 							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
-							object->setCoord(coord);
-							object->setQuat(quat);
+							o->setCoord(coord);
+							o->setQuat(quat);
 							glm::mat3 axis;
 							quaternionToMatrix(quat, axis);
 							data.coord = coord;
@@ -682,12 +683,12 @@ namespace tke
 					}
 				}
 
-				if (object->physicsType & ObjectPhysicsTypeController)
+				if (o->physicsType & ObjectPhysicsTypeController)
 				{
-					auto p = object->pxController->getPosition();
+					auto p = o->pxController->getPosition();
 					auto v = glm::vec3(p.x, p.y, p.z);
-					v -= object->model->controllerPosition * object->getScale();
-					object->setCoord(v);
+					v -= (o->model->maxCoord - o->model->minCoord) * 0.5f * o->getScale();
+					o->setCoord(v);
 				}
 			}
 		}

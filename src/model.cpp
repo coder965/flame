@@ -96,35 +96,6 @@ namespace tke
 		return pShape;
 	}
 
-	void Model::createTangent()
-	{
-		tangents.resize(positions.size());
-
-		for (int i = 0; i < indices.size(); i += 3)
-		{
-			int id[3];
-			id[0] = indices[i];
-			id[1] = indices[i + 1];
-			id[2] = indices[i + 2];
-
-			auto u0 = uvs[id[1]].s - uvs[id[0]].s;
-			auto v0 = uvs[id[1]].t - uvs[id[0]].t;
-
-			auto u1 = uvs[id[2]].s - uvs[id[0]].s;
-			auto v1 = uvs[id[2]].t - uvs[id[0]].t;
-
-			auto e0 = positions[id[1]] - positions[id[0]];
-			auto e1 = positions[id[2]] - positions[id[0]];
-
-			auto d = u0 * v1 - u1 * v0;
-			if (d == 0.f) continue;
-
-			tangents[id[0]] = glm::normalize(glm::vec3(v1 * e0.x - v0 * e1.x, v1 * e0.y - v0 * e1.y, v1 * e0.z - v0 * e1.z));
-			tangents[id[1]] = tangents[id[0]];
-			tangents[id[2]] = tangents[id[0]];
-		}
-	}
-
 	void Model::loadDat(const std::string &filename)
 	{
 		std::ifstream file(filename);
@@ -216,20 +187,6 @@ namespace tke
 				return pImage;
 		}
 		return nullptr;
-	}
-
-	void Model::arrangeBone()
-	{
-		for (int i = 0; i < bones.size(); i++)
-		{
-			bones[i].relateCoord = bones[i].rootCoord;
-			int parentID = bones[i].parent;
-			if (parentID != -1)
-			{
-				bones[i].relateCoord -= bones[parentID].rootCoord;
-				bones[parentID].children.push_back(i);
-			}
-		}
 	}
 
 	void Model::addRigidbody(Rigidbody *pRigidbody)
@@ -876,6 +833,58 @@ namespace tke
 		}
 	}
 
+	static void _after_load(Model *m)
+	{
+		m->maxCoord = m->positions[0];
+		m->minCoord = m->positions[0];
+		for (int i = 1; i < m->positions.size(); i++)
+		{
+			m->maxCoord = glm::max(m->maxCoord, m->positions[i]);
+			m->minCoord = glm::min(m->minCoord, m->positions[i]);
+		}
+
+		if (m->tangents.size() == 0)
+		{
+			m->tangents.resize(m->positions.size());
+
+			for (int i = 0; i < m->indices.size(); i += 3)
+			{
+				int id[3] = {
+					m->indices[i],
+					m->indices[i + 1],
+					m->indices[i + 2]
+				};
+
+				auto u0 = m->uvs[id[1]].s - m->uvs[id[0]].s;
+				auto v0 = m->uvs[id[1]].t - m->uvs[id[0]].t;
+
+				auto u1 = m->uvs[id[2]].s - m->uvs[id[0]].s;
+				auto v1 = m->uvs[id[2]].t - m->uvs[id[0]].t;
+
+				auto e0 = m->positions[id[1]] - m->positions[id[0]];
+				auto e1 = m->positions[id[2]] - m->positions[id[0]];
+
+				auto d = u0 * v1 - u1 * v0;
+				if (d == 0.f) continue;
+
+				m->tangents[id[0]] = glm::normalize(glm::vec3(v1 * e0.x - v0 * e1.x, v1 * e0.y - v0 * e1.y, v1 * e0.z - v0 * e1.z));
+				m->tangents[id[1]] = m->tangents[id[0]];
+				m->tangents[id[2]] = m->tangents[id[0]];
+			}
+		}
+
+		for (int i = 0; i < m->bones.size(); i++)
+		{
+			m->bones[i].relateCoord = m->bones[i].rootCoord;
+			int parentID = m->bones[i].parent;
+			if (parentID != -1)
+			{
+				m->bones[i].relateCoord -= m->bones[parentID].rootCoord;
+				m->bones[parentID].children.push_back(i);
+			}
+		}
+	}
+
 	namespace OBJ
 	{
 		struct obj_ctype : std::ctype<char>
@@ -1073,7 +1082,7 @@ namespace tke
 
 			reportMinorProgress(50);
 
-			m->createTangent();
+			_after_load(m);
 
 			reportMinorProgress(100);
 		}
@@ -1222,7 +1231,6 @@ namespace tke
 				m->boneIDs[i].x = data.boneID0 + 0.5f;
 				m->boneIDs[i].y = data.boneID1 + 0.5f;
 			}
-			m->createTangent();
 
 			int indiceCount;
 			file >> indiceCount;
@@ -1284,8 +1292,6 @@ namespace tke
 				m->bones[i].rootCoord = data.coord;
 				m->bones[i].rootCoord.z *= -1.f;
 			}
-
-			m->arrangeBone();
 
 			unsigned short ikCount;
 			file >> ikCount;
@@ -1450,6 +1456,8 @@ namespace tke
 				p->setQuat(rotationQuat);
 				m->addJoint(p);
 			}
+
+			_after_load(m);
 
 			reportMinorProgress(100);
 		}
@@ -1617,8 +1625,6 @@ namespace tke
 				m->bones.push_back(bone);
 			}
 
-			m->arrangeBone();
-
 			int ikCount;
 			file >> ikCount;
 			m->iks.resize(boneCount);
@@ -1721,6 +1727,8 @@ namespace tke
 			file >> m->boundingSize;
 
 			file >> m->eyePosition;
+
+			_after_load(m);
 
 			reportMinorProgress(100);
 		}

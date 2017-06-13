@@ -210,22 +210,19 @@ namespace tke
 
 		std::vector<Joint*> joints;
 
-		glm::vec3 controllerPosition; // center of the capsule, center of the object
-		float controllerHeight = 1.f;
-		float controllerRadius = 0.5f;
+		glm::vec3 maxCoord;
+		glm::vec3 minCoord;
 
 		glm::vec3 boundingPosition;
 		float boundingSize = 1.f;
 
 		glm::vec3 eyePosition;
 
-		void createTangent();
 		void loadDat(const std::string &filename);
 		void saveDat(const std::string &filename);
 
 		Image *getImage(const char *name);
 
-		void arrangeBone();
 		AnimationBinding *bindAnimation(Animation *pAnimationTemplate);
 
 		void addRigidbody(Rigidbody *pRigidbody);
