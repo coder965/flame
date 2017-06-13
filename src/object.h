@@ -10,10 +10,10 @@ namespace tke
 {
 	enum ObjectPhysicsType
 	{
-		ObjectPhysicsTypeNull,
-		ObjectPhysicsTypeStatic,
-		ObjectPhysicsTypeDynamic,
-		ObjectPhysicsTypeController
+		ObjectPhysicsTypeNull = 0,
+		ObjectPhysicsTypeStatic = 1 << 0, // cannot use with dynamic bit
+		ObjectPhysicsTypeDynamic = 1 << 1, // cannot use with static bit
+		ObjectPhysicsTypeController = 1 << 2
 	};
 
 	struct RigidBodyData
@@ -27,15 +27,18 @@ namespace tke
 	struct Model;
 	struct Object : Transformer, Controller
 	{
-		Model *model = nullptr;
+		Model *model;
+
+		ObjectPhysicsType physicsType; // cannot change
 
 		AnimationComponent *animationComponent = nullptr;
-		ObjectPhysicsType physicsType = ObjectPhysicsTypeNull;
 		std::vector<RigidBodyData> rigidbodyDatas;
+		physx::PxController *pxController = nullptr;
+		float floatingTime = 0.f;
 
 		int sceneIndex = -1;
 
-		Object(Model *_model);
+		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsTypeNull);
 		~Object();
 	};
 }

@@ -162,6 +162,8 @@ namespace tke
 		unsigned char getPixel(int x, int y, int off) const;
 	};
 
+	Image *createImage(const std::string &filename, bool sRGB, bool saveData = false);
+
 	struct CommandPool
 	{
 		VkCommandPool pool;

@@ -33,9 +33,6 @@
     <ClCompile Include="..\src\gui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\image.file.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\light.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -43,12 +40,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\model.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\model.file.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\model.general.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\object.cpp">
@@ -107,19 +98,10 @@
     <ClInclude Include="..\src\gui.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\image.file.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\light.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\math.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\model.file.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\model.general.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\model.h">

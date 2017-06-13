@@ -24,7 +24,7 @@ namespace tke
 
 	//};
 
-	struct AnimationTemplate;
+	struct Animation;
 	struct CollisionGroup;
 
 	enum SkyType
@@ -135,7 +135,7 @@ namespace tke
 
 		std::vector<Model*> models;
 
-		std::vector<AnimationTemplate*> animationTemplates;
+		std::vector<Animation*> animations;
 
 		std::vector<Light*> lights;
 		Light *pSunLight = nullptr;

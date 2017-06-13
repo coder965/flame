@@ -102,13 +102,10 @@
     <ClCompile Include="..\src\core.cpp" />
     <ClCompile Include="..\src\event.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
-    <ClCompile Include="..\src\image.file.cpp" />
     <ClCompile Include="..\src\lex.glslang_validator_yy.c" />
     <ClCompile Include="..\src\light.cpp" />
     <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\model.cpp" />
-    <ClCompile Include="..\src\model.file.cpp" />
-    <ClCompile Include="..\src\model.general.cpp" />
     <ClCompile Include="..\src\object.cpp" />
     <ClCompile Include="..\src\physics.cpp" />
     <ClCompile Include="..\src\pickUp.cpp" />
@@ -126,11 +123,8 @@
     <ClInclude Include="..\src\core.h" />
     <ClInclude Include="..\src\event.h" />
     <ClInclude Include="..\src\gui.h" />
-    <ClInclude Include="..\src\image.file.h" />
     <ClInclude Include="..\src\light.h" />
     <ClInclude Include="..\src\math.h" />
-    <ClInclude Include="..\src\model.file.h" />
-    <ClInclude Include="..\src\model.general.h" />
     <ClInclude Include="..\src\model.h" />
     <ClInclude Include="..\src\object.h" />
     <ClInclude Include="..\src\physics.h" />

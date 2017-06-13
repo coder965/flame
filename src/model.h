@@ -70,7 +70,7 @@ namespace tke
 		char bezier[64] = {};
 	};
 
-	struct AnimationTemplate
+	struct Animation
 	{
 		std::string name;
 		std::string comment;
@@ -85,10 +85,10 @@ namespace tke
 		std::vector<BoneMotion*> pMotions;
 	};
 
-	struct Animation
+	struct AnimationBinding
 	{
-		~Animation();
-		AnimationTemplate *pTemplate;
+		~AnimationBinding();
+		Animation *pTemplate;
 		int frameTotal;
 		std::vector<BoneMotionTrack*> pTracks;
 	};
@@ -198,27 +198,26 @@ namespace tke
 		std::vector<Bone> bones;
 		std::vector<IK> iks;
 
-		std::vector<Animation*> animations;
-		Animation* animationStand = nullptr;
-		Animation* animationForward = nullptr;
-		Animation* animationLeft = nullptr;
-		Animation* animationRight = nullptr;
-		Animation* animationBackward = nullptr;
-		Animation* animationJump = nullptr;
+		std::vector<AnimationBinding*> animations;
+		AnimationBinding* animationStand = nullptr;
+		AnimationBinding* animationForward = nullptr;
+		AnimationBinding* animationLeft = nullptr;
+		AnimationBinding* animationRight = nullptr;
+		AnimationBinding* animationBackward = nullptr;
+		AnimationBinding* animationJump = nullptr;
 
 		std::vector<Rigidbody*> rigidbodies;
 
 		std::vector<Joint*> joints;
 
-		glm::vec3 controllerPosition;
+		glm::vec3 controllerPosition; // center of the capsule, center of the object
 		float controllerHeight = 1.f;
-		float controllerRadius = 1.f;
+		float controllerRadius = 0.5f;
 
 		glm::vec3 boundingPosition;
 		float boundingSize = 1.f;
 
 		glm::vec3 eyePosition;
-		glm::vec3 mainWeaponPosition;
 
 		void createTangent();
 		void loadDat(const std::string &filename);
@@ -227,7 +226,7 @@ namespace tke
 		Image *getImage(const char *name);
 
 		void arrangeBone();
-		Animation *bindAnimation(AnimationTemplate *pAnimationTemplate);
+		AnimationBinding *bindAnimation(Animation *pAnimationTemplate);
 
 		void addRigidbody(Rigidbody *pRigidbody);
 		Rigidbody *deleteRigidbody(Rigidbody *pRigidbody);
@@ -238,7 +237,7 @@ namespace tke
 	struct AnimationComponent
 	{
 		Model *model;
-		Animation *currentAnimation = nullptr;
+		AnimationBinding *currentAnimation = nullptr;
 		float currentFrame = 0.f;
 		float currentTime = 0.f;
 		BoneData *boneData = nullptr;
@@ -247,9 +246,59 @@ namespace tke
 
 		AnimationComponent(Model *_pModel);
 		~AnimationComponent();
-		void setAnimation(Animation *animation);
+		void setAnimation(AnimationBinding *animation);
 		void update();
 	};
+
+	void addTriangleVertex(Model *m, glm::mat3 rotation, glm::vec3 center);
+	void addCubeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float length);
+	void addSphereVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv);
+	void addCylinderVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, int subdiv);
+	void addConeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
+	void addTorusVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
+
+	extern Model *triangleModel;
+	extern Model *cubeModel;
+	extern Model *sphereModel;
+	extern Model *cylinderModel;
+	extern Model *coneModel;
+	extern Model *arrowModel;
+	extern Model *torusModel;
+	extern Model *hamerModel;
+
+	void initGeneralModels();
+
+	namespace OBJ
+	{
+		void load(Model *m, std::ifstream &file);
+	}
+
+	namespace PMD
+	{
+		void load(Model *m, std::ifstream &file);
+	}
+
+	namespace VMD
+	{
+
+		void load(Animation *a, std::ifstream &file);
+	}
+
+	namespace TKM
+	{
+		void load(Model *m, std::ifstream &file);
+		void save(Model *, const std::string &filename, bool copyTexture);
+	}
+
+	namespace TKA
+	{
+		void load(Animation *a, std::ifstream &file);
+		void save(Animation *a, const std::string &filename);
+	}
+
+	Model *createModel(const std::string &filename);
+
+	Animation *createAnimation(const std::string &filename);
 }
 
 #endif

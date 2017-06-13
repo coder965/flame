@@ -31,29 +31,6 @@ namespace tke
 		//pxScene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LOCAL_FRAMES, 1.f);
 		////scene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LIMITS, 1.f);
 
-		//	if (engine->controllingObject)
-		//	{
-		//		auto pObject = engine->controllingObject;
-
-		//		auto pModel = pObject->pModel;
-
-		//		pObject->floatingTime = 0.f;
-
-		//		PxCapsuleControllerDesc capsuleDesc;
-		//		capsuleDesc.height = pModel->controllerHeight;
-		//		capsuleDesc.radius = pModel->controllerRadius;
-		//		capsuleDesc.climbingMode = PxCapsuleClimbingMode::eCONSTRAINED;
-		//		capsuleDesc.material = pxMaterial;
-		//		PxExtendedVec3 v;
-		//		v.x = pModel->controllerPosition.x * pObject->getScale().x + pObject->getCoord().x;
-		//		v.y = pModel->controllerPosition.y * pObject->getScale().y + pObject->getCoord().y;
-		//		v.z = pModel->controllerPosition.z * pObject->getScale().z + pObject->getCoord().z;
-		//		capsuleDesc.position = v;
-		//		capsuleDesc.stepOffset = capsuleDesc.radius;
-
-		//		pxController = pxControllerManager->createController(capsuleDesc);
-		//	}
-
 		//	for (auto pTerrain : scene->pTerrains)
 		//	{
 		//		if (pTerrain->heightMap)
@@ -129,41 +106,6 @@ namespace tke
 		//	pxControllerManager->release();
 		//	pxScene->release();
 		//}
-
-		//void syncPhysics()
-		//{
-
-		//	if (engine->controllingObject)
-		//	{
-		//		auto pObject = engine->controllingObject;
-
-		//		PxVec3 disp;
-		//		disp.y = -0.001f * pObject->floatingTime * pObject->floatingTime;
-		//		pObject->floatingTime += 1.f;
-		//		disp.y = -0.1f;
-
-		//		auto e = pObject->getEuler();
-		//		auto v = pObject->controller.move(e.x);
-
-		//		pObject->addEuler(glm::vec3(e.x, 0.f, 0.f));
-
-		//		disp.x = v.x;
-		//		disp.z = v.z;
-
-		//		if (pxController->move(disp, 0.f, 1.f / 60.f, nullptr)& PxControllerCollisionFlag::eCOLLISION_DOWN)
-		//			pObject->floatingTime = 0.f;
-		//	}
-
-
-		//	if (engine->controllingObject)
-		//	{
-		//		auto pObject = engine->controllingObject;
-
-		//		auto p = pxController->getPosition();
-		//		glm::vec3 v = glm::vec3(p.x, p.y, p.z);
-		//		v -= pObject->pModel->controllerPosition * pObject->getScale();
-		//		pObject->setCoord(v);
-		//	}
 	}
 
 	void viewPhysicsDebug()
