@@ -113,7 +113,8 @@ struct GameExplorer : QDockWidget
 struct MonitorWindow;
 struct MonitorWidget : QDockWidget
 {
-	Renderer *renderer;
+	Renderer *renderer = nullptr;
+	tke::Scene *scene = nullptr;
 	MonitorWindow *window = nullptr;
 	bool windowDead = false;
 

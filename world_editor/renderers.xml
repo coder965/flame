@@ -1,6 +1,4 @@
 <data>
-	<renderer filename="../renderer/progress.xml"/>
 	<renderer filename="../renderer/master.xml"/>
-	<renderer filename="../renderer/pick_up.xml"/>
 </data>
 

@@ -164,29 +164,31 @@ struct MonitorWindow : tke::GuiWindow
 	VkCommandBuffer cmd[2];
 
 	tke::Renderer *renderer;
+	tke::Scene *scene;
 
-	MonitorWindow(tke::Renderer *_renderer)
+	MonitorWindow(tke::Renderer *_renderer, tke::Scene *_scene)
 		:GuiWindow(tke::resCx, tke::resCy, "TK Engine World Editor", false)
 	{
+		scene = _scene;
+
 		test_model = tke::createModel("brick.obj");
-		tke::scene->addModel(test_model);
+		tke::addModel(test_model);
 
-		auto obj = new tke::StaticObject(test_model);
-		tke::scene->addObject(obj);
+		auto obj = new tke::Object(test_model);
+		scene->addObject(obj);
 
-		auto lit = new tke::PointLight;
+		auto lit = new tke::Light(tke::LightTypePoint);
 		lit->color = glm::vec3(1.f);
-		lit->decayFactor = glm::vec3(0.5f, 0.f, 1.f);
 		lit->setCoord(glm::vec3(0, 1, 0));
-		tke::scene->addLight(lit);
+		scene->addLight(lit);
 
 		setRenderer(_renderer);
 
 		for (int i = 0; i < 2; i++)
 			cmd[i] = tke::commandPool.allocate();
 
-		tke::scene->camera.setMode(tke::Camera::Mode::eTargeting);
-		tke::scene->camera.setCoord(glm::vec3(0, 5, 0));
+		scene->camera.setMode(tke::CameraModeTargeting);
+		scene->camera.setCoord(glm::vec3(0, 5, 0));
 	}
 	
 	void setRenderer(tke::Renderer *_renderer)
@@ -202,11 +204,12 @@ struct MonitorWindow : tke::GuiWindow
 
 		renderer->setup();
 
-		tke::scene->setResources(renderer);
+		tke::setMasterRenderer(_renderer);
+		scene->setRenderer(renderer);
 
 		tke::needRedraw = true;
-		tke::scene->needUpdataSky = true;
-		tke::scene->needUpdateSampler = true;
+		tke::needUpdateTexture = true;
+		scene->needUpdateSky = true;
 	}
 
 	void makeCmd()
@@ -218,9 +221,6 @@ struct MonitorWindow : tke::GuiWindow
 			cmd[i] = tke::commandPool.allocate();
 
 			tke::beginCommandBuffer(cmd[i]);
-
-			auto objectDrawcall = renderer->findRenderPass("mrt")->findAction("1")->findDrawcall("1");
-			objectDrawcall->indirect_count = tke::scene->staticIndirectCount;
 
 			renderer->execute(cmd[i], i);
 
@@ -246,25 +246,25 @@ struct MonitorWindow : tke::GuiWindow
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
 				{
-					tke::scene->camera.addAngAccrodingToScreen(distX, distY);
+					scene->camera.addAngAccrodingToScreen(distX, distY);
 				}
 			}
 			else if (middlePressing)
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					tke::scene->camera.moveAccrodingToScreen(distX, distY);
+					scene->camera.moveAccrodingToScreen(distX, distY);
 			}
 			else if (rightPressing)
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					tke::scene->camera.scroll(mouseX - mousePrevX);
+					scene->camera.scroll(mouseX - mousePrevX);
 			}
 		}
 	}
 
 	virtual void renderEvent() override
 	{
-		tke::scene->update();
+		scene->update();
 
 		if (tke::needRedraw)
 		{
@@ -291,6 +291,7 @@ struct MonitorWidgetData
 {
 	MonitorWindow **window;
 	tke::Renderer *renderer;
+	tke::Scene *scene;
 	bool *dead;
 };
 
@@ -311,12 +312,14 @@ void MonitorWidget::setup()
 	renderer->p = new tke::Renderer;
 	renderer->p->loadXML(renderer->filename);
 	data.renderer = renderer->p;
+	scene = new tke::Scene;
+	data.scene = scene;
 	data.dead = &windowDead;
 
 	_beginthread([](void *p){
 		auto data = (MonitorWidgetData*)p;
 
-		auto window = new MonitorWindow(data->renderer);
+		auto window = new MonitorWindow(data->renderer, data->scene);
 
 		*data->window = window;
 

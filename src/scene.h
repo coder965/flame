@@ -34,41 +34,6 @@ namespace tke
 		SkyTypePanorama
 	};
 
-	struct ConstantBufferStruct
-	{
-		float depth_near;
-		float depth_far;
-		float cx;
-		float cy;
-		float aspect;
-		float fovy;
-		float tanHfFovy;
-		float envrCx;
-		float envrCy;
-	};
-
-	struct MatrixBufferShaderStruct
-	{
-		glm::mat4 proj;
-		glm::mat4 projInv;
-		glm::mat4 view;
-		glm::mat4 viewInv;
-		glm::mat4 projView;
-		glm::mat4 projViewRotate;
-		glm::vec4 frustumPlanes[6];
-		glm::vec2 viewportDim;
-	};
-
-	struct MaterialShaderStruct
-	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
-
-		unsigned int mapIndex;
-
-		unsigned int dummy;
-	};
-
 	struct LightShaderStruct
 	{
 		glm::vec4 coord; // w - the light type
@@ -133,10 +98,6 @@ namespace tke
 
 		Camera camera;
 
-		std::vector<Model*> models;
-
-		std::vector<Animation*> animations;
-
 		std::vector<Light*> lights;
 		Light *pSunLight = nullptr;
 
@@ -144,37 +105,21 @@ namespace tke
 
 		std::vector<Terrain*> terrains;
 
-		int vertexBase = 0;
-
 		bool needUpdateSky = true;
-		bool needUpdateVertexBuffer = true;
-		bool needUpdateMaterialBuffer = true;
-		bool needUpdateSampler = true;
 		bool needUpdateIndirectBuffer = true;
 		bool lightCountChanged = true;
 
-		std::vector<Image*> storeImages;
-		int getStoreImageIndex(Image *pImage);
-		std::vector<MaterialShaderStruct> storeMaterials;
-
-		VertexBuffer *staticVertexBuffer = nullptr;
-		IndexBuffer *staticIndexBuffer = nullptr;
-
-		VertexBuffer *animatedVertexBuffer = nullptr;
-		IndexBuffer *animatedIndexBuffer = nullptr;
-
-		UniformBuffer *constantBuffer = nullptr;
 		UniformBuffer *matrixBuffer = nullptr;
 		UniformBuffer *staticObjectMatrixBuffer = nullptr;
 		UniformBuffer *animatedObjectMatrixBuffer = nullptr;
-		UniformBuffer *lightMatrixBuffer = nullptr;
-		UniformBuffer *materialBuffer = nullptr;
 		IndirectIndexBuffer *staticObjectIndirectBuffer = nullptr;
 		IndirectIndexBuffer *animatedObjectIndirectBuffer = nullptr;
 		UniformBuffer *heightMapTerrainBuffer = nullptr;
 		UniformBuffer *proceduralTerrainBuffer = nullptr;
 		UniformBuffer *lightBuffer = nullptr;
 		UniformBuffer *ambientBuffer = nullptr;
+
+		UniformBuffer *lightMatrixBuffer = nullptr; // remove ??
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 
@@ -190,15 +135,9 @@ namespace tke
 		Scene();
 		~Scene();
 
-		void setUp();
-
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void load(char *file);
 		void save(char *file);
-
-		void addModel(Model *pModel);
-		Model *getModel(char *name);
-		void clearModel();
 
 		void addLight(Light *pLight);
 		Light *deleteLight(Light *pLight);
@@ -213,12 +152,12 @@ namespace tke
 
 		void clear();
 
-		void setResources(Renderer *r);
+		void setRenderer(Renderer *r);
 		void update();
 	};
 
 	// make sure tke3_scene always vaild
-	extern Scene *scene;
+	//extern Scene *scene;
 
 	//struct LightSave : Transformer
 	//{

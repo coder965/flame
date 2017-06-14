@@ -7,6 +7,8 @@
 
 namespace tke
 {
+	std::vector<Animation*> animations;
+
 	AnimationBinding::~AnimationBinding()
 	{
 		for (auto t : pTracks)
@@ -218,6 +220,93 @@ namespace tke
 		static auto magicNumber = 0;
 		pJoint->id = magicNumber++;
 		joints.push_back(pJoint);
+	}
+
+	std::vector<Model*> models;
+	void addModel(Model *m)
+	{
+		for (auto src : m->pImages)
+		{
+			bool found = false;
+			for (auto i : textures)
+			{
+				if (i == src)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				src->index = textures.size();
+				textures.push_back(src);
+			}
+		}
+		for (auto mt : m->materials)
+		{
+			MaterialShaderStruct stru;
+			stru.albedoAlphaCompress = mt->albedoR + (mt->albedoG << 8) + (mt->albedoB << 16) + (mt->alpha << 24);
+			stru.specRoughnessCompress = mt->spec + (mt->roughness << 8);
+
+			auto albedoAlphaMapIndex = mt->albedoAlphaMap ? mt->albedoAlphaMap->index + 1 : 0;
+			auto normalHeightMapIndex = mt->normalHeightMap ? mt->normalHeightMap->index + 1 : 0;
+			auto specRoughnessMapIndex = mt->specRoughnessMap ? mt->specRoughnessMap->index + 1 : 0;
+
+			int sameIndex = -1;
+			int materialIndex = 0;
+			for (auto &mt : materials)
+			{
+				auto storeAlbedoAlphaMapIndex = mt.mapIndex & 0xff;
+				auto storeNormalHeightMapIndex = (mt.mapIndex >> 8) & 0xff;
+				auto storeSpecRoughnessMapIndex = (mt.mapIndex >> 16) & 0xff;
+
+				bool theSameAlbedoAlpha = false;
+				bool theSameNormalHeight = false;
+				bool theSameSpecRoughness = false;
+
+				if (albedoAlphaMapIndex != 0 && albedoAlphaMapIndex == storeAlbedoAlphaMapIndex)
+					theSameAlbedoAlpha = true;
+				else if (albedoAlphaMapIndex == 0 && storeAlbedoAlphaMapIndex == 0 &&
+					stru.albedoAlphaCompress == mt.albedoAlphaCompress)
+					theSameAlbedoAlpha = true;
+				if (normalHeightMapIndex == storeNormalHeightMapIndex)
+					theSameNormalHeight = true;
+				if (specRoughnessMapIndex != 0 && specRoughnessMapIndex == storeSpecRoughnessMapIndex)
+					theSameSpecRoughness = true;
+				else if (specRoughnessMapIndex == 0 && storeSpecRoughnessMapIndex == 0 &&
+					stru.specRoughnessCompress == mt.specRoughnessCompress)
+					theSameSpecRoughness = true;
+
+				if (theSameAlbedoAlpha && theSameNormalHeight && theSameSpecRoughness)
+				{
+					sameIndex = materialIndex;
+					break;
+				}
+
+				materialIndex++;
+			}
+			if (sameIndex == -1)
+			{
+				mt->sceneIndex = materials.size();
+				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 8) + (specRoughnessMapIndex << 16);
+				materials.push_back(stru);
+			}
+			else
+			{
+				mt->sceneIndex = sameIndex;
+			}
+		}
+		models.push_back(m);
+		needUpdateVertexBuffer = true;
+		needUpdateMaterialBuffer = true;
+		needUpdateTexture = true;
+	}
+
+	void clearModel()
+	{
+		for (auto m : models)
+			delete m;
+		models.clear();
 	}
 
 	static void _refreshBone(Model *model, AnimationComponent *com)
@@ -740,7 +829,7 @@ namespace tke
 
 			_model_after_process(triangleModel);
 
-			scene->addModel(triangleModel);
+			addModel(triangleModel);
 
 			globalResource.setModel(triangleModel, "Triangle.Model");
 		}
@@ -763,7 +852,7 @@ namespace tke
 
 			_model_after_process(cubeModel);
 
-			scene->addModel(cubeModel);
+			addModel(cubeModel);
 
 			globalResource.setModel(cubeModel, "Cube.Model");
 		}
@@ -790,7 +879,7 @@ namespace tke
 
 			_model_after_process(sphereModel);
 
-			scene->addModel(sphereModel);
+			addModel(sphereModel);
 
 			globalResource.setModel(sphereModel, "Sphere.Model");
 		}
@@ -813,7 +902,7 @@ namespace tke
 
 			_model_after_process(cylinderModel);
 
-			scene->addModel(cylinderModel);
+			addModel(cylinderModel);
 
 			globalResource.setModel(cylinderModel, "Cylinder.Model");
 		}
@@ -830,7 +919,7 @@ namespace tke
 
 			_model_after_process(coneModel);
 
-			scene->addModel(coneModel);
+			addModel(coneModel);
 
 			globalResource.setModel(coneModel, "Cone.Model");
 		}
@@ -850,7 +939,7 @@ namespace tke
 
 			_model_after_process(arrowModel);
 
-			scene->addModel(arrowModel);
+			addModel(arrowModel);
 
 			globalResource.setModel(arrowModel, "Arrow.Model");
 		}
@@ -869,7 +958,7 @@ namespace tke
 
 			_model_after_process(torusModel);
 
-			scene->addModel(torusModel);
+			addModel(torusModel);
 
 			globalResource.setModel(torusModel, "Torus.Model");
 		}
@@ -895,7 +984,7 @@ namespace tke
 
 			_model_after_process(hamerModel);
 
-			scene->addModel(hamerModel);
+			addModel(hamerModel);
 
 			globalResource.setModel(hamerModel, "Hamer.Model");
 		}
@@ -1534,10 +1623,10 @@ namespace tke
 		{
 			std::string animName;
 			file >> animName;
-			for (auto anim : scene->animations)
+			for (auto a : animations)
 			{
-				if (anim->name == animName == 0)
-					return pModel->bindAnimation(anim);
+				if (a->name == animName == 0)
+					return pModel->bindAnimation(a);
 			}
 			return nullptr;
 		}

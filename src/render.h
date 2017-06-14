@@ -146,7 +146,7 @@ namespace tke
 
 		bool m_sRGB = false;
 
-		int sceneIndex = -1;
+		int index = -1;
 
 		unsigned char *m_data = nullptr;
 
@@ -242,7 +242,7 @@ namespace tke
 	void destroyRenderPass(VkRenderPass rp);
 	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues);
 
-	Err initRender(const char *appName, bool debug);
+	Err initRender(bool debug);
 
 	REFLECTABLE enum class Format : int
 	{

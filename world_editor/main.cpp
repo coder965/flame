@@ -3,8 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-	tke::enginePath = "../";
-	tke::init("TK Engine World Editor", 1280, 720);
+	tke::init("../", 1280, 720);
 	tke::initGeneralModels();
 
 	QApplication a(argc, argv);

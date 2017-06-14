@@ -25,44 +25,41 @@ namespace tke
 	{
 		InitializeCriticalSection(&cs);
 
-		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
 		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
 		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
-		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT);
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
 		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
 		proceduralTerrainBuffer = new UniformBuffer(sizeof(glm::vec2));
 		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
 		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
 
-		staticVertexBuffer = new VertexBuffer();
-		staticIndexBuffer = new IndexBuffer();
-		animatedVertexBuffer = new VertexBuffer();
-		animatedIndexBuffer = new IndexBuffer();
+		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT); // remove ?? 
+
 		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 
-		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
 		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
 		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
 		globalResource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
-		globalResource.setBuffer(lightMatrixBuffer, "LightMatrix.UniformBuffer");
-		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
 		globalResource.setBuffer(heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
 		globalResource.setBuffer(proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
 		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
 		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
 
-		globalResource.setBuffer(staticVertexBuffer, "Scene.Static.VertexBuffer");
-		globalResource.setBuffer(staticIndexBuffer, "Scene.Static.IndexBuffer");
-		globalResource.setBuffer(animatedVertexBuffer, "Scene.Animated.VertexBuffer");
-		globalResource.setBuffer(animatedIndexBuffer, "Scene.Animated.IndexBuffer");
+		globalResource.setBuffer(lightMatrixBuffer, "LightMatrix.UniformBuffer"); // remove ??
+
 		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
 		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
 
 		globalResource.setInt(&staticIndirectCount, "Scene.Static.IndirectCount");
 		globalResource.setInt(&animatedIndirectCount, "Scene.Animated.IndirectCount");
+
+		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
+		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
+		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+		pxScene = pxPhysics->createScene(pxSceneDesc);
+		pxControllerManager = PxCreateControllerManager(*pxScene);
 	}
 
 	Scene::~Scene()
@@ -84,28 +81,6 @@ namespace tke
 		delete animatedIndexBuffer;
 		delete staticObjectIndirectBuffer;
 		delete animatedObjectIndirectBuffer;
-	}
-
-	void Scene::setUp()
-	{
-		ConstantBufferStruct stru;
-		stru.depth_near = TKE_NEAR;
-		stru.depth_far = TKE_FAR;
-		stru.cx = resCx;
-		stru.cy = resCy;
-		stru.aspect = aspect;
-		stru.fovy = TKE_FOVY;
-		stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
-		stru.envrCx = TKE_ENVR_SIZE_CX;
-		stru.envrCy = TKE_ENVR_SIZE_CY;
-		constantBuffer->update(&stru, *stagingBuffer);
-
-		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
-		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
-		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-		pxScene = pxPhysics->createScene(pxSceneDesc);
-		pxControllerManager = PxCreateControllerManager(*pxScene);
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
@@ -165,102 +140,6 @@ namespace tke
 
 	void Scene::save(char *file)
 	{
-	}
-
-	void Scene::addModel(Model *pModel)
-	{
-		for (auto pSrcImage : pModel->pImages)
-		{
-			bool found = false;
-			for (auto pStoreImage : storeImages)
-			{
-				if (pStoreImage == pSrcImage)
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				pSrcImage->sceneIndex = storeImages.size();
-				storeImages.push_back(pSrcImage);
-			}
-		}
-		for (auto mt : pModel->materials)
-		{
-			MaterialShaderStruct stru;
-			stru.albedoAlphaCompress = mt->albedoR + (mt->albedoG << 8) + (mt->albedoB << 16) + (mt->alpha << 24);
-			stru.specRoughnessCompress = mt->spec + (mt->roughness << 8);
-
-			auto albedoAlphaMapIndex = getStoreImageIndex(mt->albedoAlphaMap) + 1;
-			auto normalHeightMapIndex = getStoreImageIndex(mt->normalHeightMap) + 1;
-			auto specRoughnessMapIndex = getStoreImageIndex(mt->specRoughnessMap) + 1;
-
-			int sameIndex = -1;
-			int materialIndex = 0;
-			for (auto &storeMaterial : storeMaterials)
-			{
-				auto storeAlbedoAlphaMapIndex = storeMaterial.mapIndex & 0xff;
-				auto storeNormalHeightMapIndex = (storeMaterial.mapIndex >> 8) & 0xff;
-				auto storeSpecRoughnessMapIndex = (storeMaterial.mapIndex >> 16) & 0xff;
-
-				bool theSameAlbedoAlpha = false;
-				bool theSameNormalHeight = false;
-				bool theSameSpecRoughness = false;
-
-				if (albedoAlphaMapIndex != 0 && albedoAlphaMapIndex == storeAlbedoAlphaMapIndex)
-					theSameAlbedoAlpha = true;
-				else if (albedoAlphaMapIndex == 0 && storeAlbedoAlphaMapIndex == 0 &&
-					stru.albedoAlphaCompress == storeMaterial.albedoAlphaCompress)
-					theSameAlbedoAlpha = true;
-				if (normalHeightMapIndex == storeNormalHeightMapIndex)
-					theSameNormalHeight = true;
-				if (specRoughnessMapIndex != 0 && specRoughnessMapIndex == storeSpecRoughnessMapIndex)
-					theSameSpecRoughness = true;
-				else if (specRoughnessMapIndex == 0 && storeSpecRoughnessMapIndex == 0 &&
-					stru.specRoughnessCompress == storeMaterial.specRoughnessCompress)
-					theSameSpecRoughness = true;
-
-				if (theSameAlbedoAlpha && theSameNormalHeight && theSameSpecRoughness)
-				{
-					sameIndex = materialIndex;
-					break;
-				}
-
-				materialIndex++;
-			}
-			if (sameIndex == -1)
-			{
-				mt->sceneIndex = storeMaterials.size();
-				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 8) + (specRoughnessMapIndex << 16);
-				storeMaterials.push_back(stru);
-			}
-			else
-			{
-				mt->sceneIndex = sameIndex;
-			}
-		}
-		models.push_back(pModel);
-		needUpdateVertexBuffer = true;
-		needUpdateMaterialBuffer = true;
-		needUpdateSampler = true;
-	}
-
-	Model *Scene::getModel(char *name)
-	{
-		for (auto m : models)
-		{
-			if (m->name.compare(name) == 0)
-				return m;
-		}
-		return nullptr;
-	}
-
-	void Scene::clearModel()
-	{
-		for (auto m : models)
-			delete m;
-		models.clear();
 	}
 
 	void Scene::addLight(Light *pLight) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
@@ -563,14 +442,10 @@ namespace tke
 
 	static Pipeline *panoramaPipeline = nullptr;
 	static Pipeline *deferredPipeline = nullptr;
-	static Pipeline *mrtPipeline = nullptr;
-	static Pipeline *mrtAnimPipeline = nullptr;
-	void Scene::setResources(Renderer *r)
+	void Scene::setRenderer(Renderer *r)
 	{
 		panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
 		deferredPipeline = r->resource.getPipeline("Deferred.Pipeline");
-		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
-		mrtAnimPipeline = r->resource.getPipeline("Mrt_Anim.Pipeline");
 	}
 
 	void Scene::update()
@@ -693,17 +568,14 @@ namespace tke
 			camera.updateFrustum();
 			// update procedural terrain
 			{
-				glm::vec2 seed;
 
 				auto pos = camera.getCoord();
-				seed.x = pos.x - 500.f;
-				seed.y = pos.z - 500.f;
+				auto seed = glm::vec2(pos.x - 500.f, pos.z - 500.f);
 				seed /= 1000.f;
 				proceduralTerrainBuffer->update(&seed, *stagingBuffer);
 			}
 		}
-		if (needUpdateProjMatrix || camera.changed)
-		{
+		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
 			stru.proj = *pMatProj;
 			stru.projInv = *pMatProjInv;
@@ -832,8 +704,8 @@ namespace tke
 						auto mrX = glm::mat3(glm::rotate(atmosphereSunDir.x, glm::vec3(0.f, 1.f, 0.f)));
 						auto v3LightPosition = glm::normalize(glm::mat3(glm::rotate(atmosphereSunDir.y, mrX * glm::vec3(0.f, 0.f, 1.f))) * mrX * glm::vec3(1.f, 0.f, 0.f));// The direction vector to the light source
 
-						if (scene->pSunLight)
-							scene->pSunLight->setEuler(glm::vec3(atmosphereSunDir, 0.f));
+						if (pSunLight)
+							pSunLight->setEuler(glm::vec3(atmosphereSunDir, 0.f));
 
 						float fScale = 1.f / (atmosphereOuterRadius - atmosphereInnerRadius);	// 1 / (fOuterRadius - fInnerRadius)
 						float fScaleOverScaleDepth = fScale / fScaleDepth;	// fScale / fScaleDepth
@@ -954,101 +826,6 @@ namespace tke
 
 			needUpdateSky = false;
 		}
-		if (needUpdateVertexBuffer)
-		{
-			std::vector<Vertex> staticVertexs;
-			std::vector<int> staticIndices;
-
-			std::vector<AnimatedVertex> animatedVertexs;
-			std::vector<int> animatedIndices;
-
-			for (auto pModel : models)
-			{
-				if (!pModel->animated)
-				{
-					pModel->vertexBase = staticVertexs.size();
-					pModel->indiceBase = staticIndices.size();
-
-					for (int i = 0; i < pModel->positions.size(); i++)
-					{
-						Vertex vertex;
-						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-						else vertex.position = glm::vec3(0.f);
-						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-						else vertex.uv = glm::vec2(0.f);
-						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-						else vertex.normal = glm::vec3(0.f);
-						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-						else vertex.tangent = glm::vec3(0.f);
-
-						staticVertexs.push_back(vertex);
-					}
-					for (int i = 0; i < pModel->indices.size(); i++)
-					{
-						staticIndices.push_back(pModel->indices[i]);
-					}
-				}
-				else
-				{
-					pModel->vertexBase = animatedVertexs.size();
-					pModel->indiceBase = animatedIndices.size();
-
-					for (int i = 0; i < pModel->positions.size(); i++)
-					{
-						AnimatedVertex vertex;
-						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-						else vertex.position = glm::vec3(0.f);
-						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-						else vertex.uv = glm::vec2(0.f);
-						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-						else vertex.normal = glm::vec3(0.f);
-						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-						else vertex.tangent = glm::vec3(0.f);
-
-						if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
-						else vertex.boneWeight = glm::vec4(0.f);
-						if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
-						else vertex.boneID = glm::vec4(0.f);
-
-						animatedVertexs.push_back(vertex);
-					}
-					for (int i = 0; i < pModel->indices.size(); i++)
-					{
-						animatedIndices.push_back(pModel->indices[i]);
-					}
-				}
-			}
-
-			if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
-			if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
-
-			if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
-			if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
-
-			tke::needRedraw = true;
-			needUpdateVertexBuffer = false;
-		}
-		if (needUpdateMaterialBuffer)
-		{
-			if (storeMaterials.size() > 0)
-				materialBuffer->update(storeMaterials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * storeMaterials.size());
-			needUpdateMaterialBuffer = false;
-		}
-		if (needUpdateSampler)
-		{
-			static int map_position0 = -1;
-			static int map_position1 = -1;
-			if (map_position0 == -1) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
-			if (map_position1 == -1) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
-			for (int index = 0; index < storeImages.size(); index++)
-			{
-				descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, storeImages[index]->getInfo(colorSampler), index);
-				descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, storeImages[index]->getInfo(colorSampler), index);
-			}
-
-			descriptorPool.update();
-			needUpdateSampler = false;
-		}
 		if (objects.size() > 0)
 		{
 			int updateCount = 0;
@@ -1168,7 +945,7 @@ namespace tke
 			if (objects.size() > 0)
 			{
 				static int bone_position = -1;
-				if (bone_position == -1) bone_position = mrtAnimPipeline->descriptorPosition("BONE");
+				if (bone_position == -1 && mrtAnimPipeline) bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
 				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
 				std::vector<VkDrawIndexedIndirectCommand> animatedCommands;
@@ -1331,19 +1108,7 @@ namespace tke
 		last_time = nowTime;
 	}
 
-	int Scene::getStoreImageIndex(Image *pImage)
-	{
-		int textureIndex = 0;
-		for (auto storeImage : storeImages)
-		{
-			if (storeImage == pImage)
-				return textureIndex;
-			textureIndex++;
-		}
-		return -1;
-	}
-
-	Scene *scene;
+	//Scene *scene;
 
 	//LightSave::LightSave(Light &light)
 	//	: Transformer(light),
@@ -1460,10 +1225,8 @@ namespace tke
 
 	void loadScene(char *s)
 	{
-		scene->clear();
-		scene->clearModel();
+		//scene->clear();
 
-		scene->load(s);
-		scene->setUp();
+		//scene->load(s);
 	}
 }

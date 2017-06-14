@@ -10,6 +10,8 @@
 
 namespace tke
 {
+	std::string enginePath;
+
 	int resCx;
 	int resCy;
 
@@ -21,7 +23,20 @@ namespace tke
 	glm::mat4 matPerspectiveInv;
 	glm::mat4 *pMatProj;
 	glm::mat4 *pMatProjInv;
-	bool needUpdateProjMatrix;
+
+	void changeProjMat(ProjectType type)
+	{
+		if (type == ProjectTypeOrtho)
+		{
+			pMatProj = &matOrtho;
+			pMatProjInv = &matOrthoInv;
+		}
+		else
+		{
+			pMatProj = &matPerspective;
+			pMatProjInv = &matPerspectiveInv;
+		}
+	}
 
 	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	VkPipelineVertexInputStateCreateInfo vertexInputState;
@@ -29,8 +44,6 @@ namespace tke
 	VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 
 	StagingBuffer *stagingBuffer = nullptr;
-
-	std::string enginePath;
 
 	void(*reporter)(const std::string &) = nullptr;
 	void setReporter(void(*_reporter)(const std::string &))
@@ -114,28 +127,38 @@ namespace tke
 		return text;
 	}
 
-	bool needRedraw;
-
-	void changeProjMat(int what)
+	Pipeline *mrtPipeline = nullptr;
+	Pipeline *mrtAnimPipeline = nullptr;
+	void setMasterRenderer(Renderer *r)
 	{
-		if (what == ORTHO)
-		{
-			pMatProj = &matOrtho;
-			pMatProjInv = &matOrthoInv;
-		}
-		else
-		{
-			pMatProj = &matPerspective;
-			pMatProjInv = &matPerspectiveInv;
-		}
-		needUpdateProjMatrix;
+		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
+		mrtAnimPipeline = r->resource.getPipeline("Mrt_Anim.Pipeline");
 	}
+
+	bool needRedraw = true;
+	bool needUpdateVertexBuffer = true;
+	bool needUpdateMaterialBuffer = true;
+	bool needUpdateTexture = true;
+
+	std::vector<Image*> textures;
+	std::vector<MaterialShaderStruct> materials;
+
+	VertexBuffer *staticVertexBuffer = nullptr;
+	IndexBuffer *staticIndexBuffer = nullptr;
+
+	VertexBuffer *animatedVertexBuffer = nullptr;
+	IndexBuffer *animatedIndexBuffer = nullptr;
+
+	UniformBuffer *constantBuffer = nullptr;
+	UniformBuffer *materialBuffer = nullptr;
 
 	int thread_local startUpTime = 0;
 	int thread_local nowTime = 0;
 
-	Err init(const char *appName, int rcx, int rcy)
+	Err init(const std::string &path, int rcx, int rcy)
 	{
+		enginePath = path;
+
 		resCx = rcx;
 		resCy = rcy;
 
@@ -145,9 +168,9 @@ namespace tke
 		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, aspect, TKE_NEAR, TKE_FAR);
 		matPerspectiveInv = glm::inverse(matPerspective);
 
-		changeProjMat(PERSPECTIVE);
+		changeProjMat(ProjectTypePerspective);
 
-		initRender(appName, 
+		initRender( 
 #ifdef _DEBUG
 			true
 #else
@@ -156,14 +179,6 @@ namespace tke
 		);
 
 		stagingBuffer = new StagingBuffer(65536);
-
-		initPhysics();
-
-		initSound();
-
-		scene = new Scene;
-		scene->name = "default";
-		scene->setUp();
 
 		{
 			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
@@ -205,6 +220,42 @@ namespace tke
 		{
 			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
 			windowRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
+		}
+
+		initPhysics();
+
+		initSound();
+
+		staticVertexBuffer = new VertexBuffer();
+		staticIndexBuffer = new IndexBuffer();
+
+		animatedVertexBuffer = new VertexBuffer();
+		animatedIndexBuffer = new IndexBuffer();
+
+		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
+		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
+
+		globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
+		globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
+
+		globalResource.setBuffer(animatedVertexBuffer, "Animated.VertexBuffer");
+		globalResource.setBuffer(animatedIndexBuffer, "Animated.IndexBuffer");
+
+		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
+		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
+
+		{
+			ConstantBufferStruct stru;
+			stru.depth_near = TKE_NEAR;
+			stru.depth_far = TKE_FAR;
+			stru.cx = resCx;
+			stru.cy = resCy;
+			stru.aspect = aspect;
+			stru.fovy = TKE_FOVY;
+			stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
+			stru.envrCx = TKE_ENVR_SIZE_CX;
+			stru.envrCy = TKE_ENVR_SIZE_CY;
+			constantBuffer->update(&stru, *stagingBuffer);
 		}
 
 		return Err::eNoErr;
@@ -488,6 +539,104 @@ namespace tke
 
 			if (!hasMsg)
 			{
+				if (needUpdateVertexBuffer)
+				{
+					std::vector<Vertex> staticVertexs;
+					std::vector<int> staticIndices;
+
+					std::vector<AnimatedVertex> animatedVertexs;
+					std::vector<int> animatedIndices;
+
+					for (auto pModel : models)
+					{
+						if (!pModel->animated)
+						{
+							pModel->vertexBase = staticVertexs.size();
+							pModel->indiceBase = staticIndices.size();
+
+							for (int i = 0; i < pModel->positions.size(); i++)
+							{
+								Vertex vertex;
+								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+								else vertex.position = glm::vec3(0.f);
+								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+								else vertex.uv = glm::vec2(0.f);
+								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+								else vertex.normal = glm::vec3(0.f);
+								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+								else vertex.tangent = glm::vec3(0.f);
+
+								staticVertexs.push_back(vertex);
+							}
+							for (int i = 0; i < pModel->indices.size(); i++)
+							{
+								staticIndices.push_back(pModel->indices[i]);
+							}
+						}
+						else
+						{
+							pModel->vertexBase = animatedVertexs.size();
+							pModel->indiceBase = animatedIndices.size();
+
+							for (int i = 0; i < pModel->positions.size(); i++)
+							{
+								AnimatedVertex vertex;
+								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+								else vertex.position = glm::vec3(0.f);
+								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+								else vertex.uv = glm::vec2(0.f);
+								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+								else vertex.normal = glm::vec3(0.f);
+								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+								else vertex.tangent = glm::vec3(0.f);
+
+								if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
+								else vertex.boneWeight = glm::vec4(0.f);
+								if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
+								else vertex.boneID = glm::vec4(0.f);
+
+								animatedVertexs.push_back(vertex);
+							}
+							for (int i = 0; i < pModel->indices.size(); i++)
+							{
+								animatedIndices.push_back(pModel->indices[i]);
+							}
+						}
+					}
+
+					if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
+					if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
+
+					if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
+					if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
+
+					tke::needRedraw = true;
+					needUpdateVertexBuffer = false;
+				}
+				if (needUpdateTexture)
+				{
+					static int map_position0 = -1;
+					static int map_position1 = -1;
+					if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
+					if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
+					if (map_position0 != -1 && map_position1 != -1)
+					{
+						for (int index = 0; index < textures.size(); index++)
+						{
+							descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, textures[index]->getInfo(colorSampler), index);
+							descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
+						}
+						descriptorPool.update();
+						needUpdateTexture = false;
+					}
+				}
+				if (needUpdateMaterialBuffer)
+				{
+					if (materials.size() > 0)
+						materialBuffer->update(materials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * materials.size());
+					needUpdateMaterialBuffer = false;
+				}
+
 				mouseEvent();
 				renderEvent();
 				frameCount++;

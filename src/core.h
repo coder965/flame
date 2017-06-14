@@ -24,11 +24,26 @@
 
 namespace tke
 {
-	enum
+	extern std::string enginePath;
+
+	extern int resCx;
+	extern int resCy;
+
+	extern float aspect;
+
+	extern glm::mat4 matOrtho;
+	extern glm::mat4 matOrthoInv;
+	extern glm::mat4 matPerspective;
+	extern glm::mat4 matPerspectiveInv;
+	extern glm::mat4 *pMatProj;
+	extern glm::mat4 *pMatProjInv;
+
+	enum ProjectType
 	{
-		ORTHO,
-		PERSPECTIVE
+		ProjectTypeOrtho,
+		ProjectTypePerspective
 	};
+	void changeProjMat(ProjectType type);
 
 	struct Vertex
 	{
@@ -49,29 +64,12 @@ namespace tke
 		glm::vec4 boneID;
 	};
 
-	extern int resCx;
-	extern int resCy;
-
-	extern float aspect;
-
-	extern glm::mat4 matOrtho;
-	extern glm::mat4 matOrthoInv;
-	extern glm::mat4 matPerspective;
-	extern glm::mat4 matPerspectiveInv;
-	extern glm::mat4 *pMatProj;
-	extern glm::mat4 *pMatProjInv;
-	extern bool needUpdateProjMatrix;
-
 	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	extern StagingBuffer *stagingBuffer;
-
-	void changeProjMat(int what);
-
-	extern std::string enginePath;
 
 	void setReporter(void(*_reporter)(const std::string &));
 	void report(const std::string &str);
@@ -84,9 +82,64 @@ namespace tke
 	std::string majorProgressText();
 	std::string minorProgressText();
 
-	extern bool needRedraw;
+	extern Pipeline *mrtPipeline;
+	extern Pipeline *mrtAnimPipeline;
+	void setMasterRenderer(Renderer *r);
 
-	Err init(const char *appName, int rcx, int rcy);
+	extern bool needRedraw;
+	extern bool needUpdateVertexBuffer;
+	extern bool needUpdateMaterialBuffer;
+	extern bool needUpdateTexture;
+
+	struct ConstantBufferStruct
+	{
+		float depth_near;
+		float depth_far;
+		float cx;
+		float cy;
+		float aspect;
+		float fovy;
+		float tanHfFovy;
+		float envrCx;
+		float envrCy;
+	};
+
+	struct MatrixBufferShaderStruct
+	{
+		glm::mat4 proj;
+		glm::mat4 projInv;
+		glm::mat4 view;
+		glm::mat4 viewInv;
+		glm::mat4 projView;
+		glm::mat4 projViewRotate;
+		glm::vec4 frustumPlanes[6];
+		glm::vec2 viewportDim;
+	};
+
+	struct MaterialShaderStruct
+	{
+		unsigned int albedoAlphaCompress;
+		unsigned int specRoughnessCompress;
+
+		unsigned int mapIndex;
+
+		unsigned int dummy;
+	};
+
+	extern std::vector<Image*> textures;
+
+	extern std::vector<MaterialShaderStruct> materials;
+
+	extern VertexBuffer *staticVertexBuffer;
+	extern IndexBuffer *staticIndexBuffer;
+
+	extern VertexBuffer *animatedVertexBuffer;
+	extern IndexBuffer *animatedIndexBuffer;
+
+	extern UniformBuffer *constantBuffer;
+	extern UniformBuffer *materialBuffer;
+
+	Err init(const std::string &path, int rcx, int rcy);
 
 	extern thread_local int startUpTime;
 	extern thread_local int nowTime;

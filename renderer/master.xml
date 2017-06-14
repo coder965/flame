@@ -20,7 +20,7 @@
         <attachment name="1" image_name="Original.Image" aspect="color" />
 			</attachments>
 			<actions>
-				<action name="1" type="draw_action" pipeline_name="Panorama.Pipeline" vertex_buffer_name="Scene.Static.VertexBuffer" index_buffer_name="Scene.Static.IndexBuffer">
+				<action name="1" type="draw_action" pipeline_name="Panorama.Pipeline" vertex_buffer_name="Static.VertexBuffer" index_buffer_name="Static.IndexBuffer">
 					<drawcalls>
 						<drawcall name="1" instance_count="1" first_instance="0" type="index" model_name="Sphere.Model"/>
 					</drawcalls>
@@ -35,12 +35,12 @@
         <attachment name="3" image_name="Depth.Image" aspect="depth" clear="true"/>
       </attachments>
       <actions>
-        <action name="1" type="draw_action" pipeline_name="Mrt.Pipeline" vertex_buffer_name="Scene.Static.VertexBuffer" index_buffer_name="Scene.Static.IndexBuffer">
+        <action name="1" type="draw_action" pipeline_name="Mrt.Pipeline" vertex_buffer_name="Static.VertexBuffer" index_buffer_name="Static.IndexBuffer">
           <drawcalls>
             <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.Static.IndirectBuffer" indirect_count_name="Scene.Static.IndirectCount"/>
           </drawcalls>
         </action>
-        <action name="2" type="draw_action" pipeline_name="Mrt_Anim.Pipeline" vertex_buffer_name="Scene.Animated.VertexBuffer" index_buffer_name="Scene.Animated.IndexBuffer">
+        <action name="2" type="draw_action" pipeline_name="Mrt_Anim.Pipeline" vertex_buffer_name="Animated.VertexBuffer" index_buffer_name="Animated.IndexBuffer">
           <drawcalls>
             <drawcall name="1" instance_count="1" first_instance="0" type="indirect_index" indirect_index_buffer_name="Scene.Animated.IndirectBuffer" indirect_count_name="Scene.Animated.IndirectCount"/>
           </drawcalls>

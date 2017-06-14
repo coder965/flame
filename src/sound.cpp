@@ -14,7 +14,7 @@ namespace tke
 
 	void setSoundListenerDir(const glm::vec3 &p)
 	{
-		float v[6] = {
+		float v[] = {
 			p.x, p.y, p.z,
 			0.f, 1.f, 0.f
 		};
@@ -25,8 +25,7 @@ namespace tke
 	{
 		alGenSources(1, &obj);
 		alSourcei(obj, AL_BUFFER, soundBuffers[0]);
-		alSourcef(obj, AL_PITCH, 1.f);
-		alSourcef(obj, AL_GAIN, 1.f);
+		alSourcef(obj, AL_GAIN, 0.5f);
 		alSourcei(obj, AL_LOOPING, true);
 		alSourcePlay(obj);
 	}
@@ -53,7 +52,7 @@ namespace tke
 
 		ALuint buffer;
 		alGenBuffers(1, &buffer);
-		alBufferData(buffer, AL_FORMAT_STEREO8, buf, 512, 512);
+		alBufferData(buffer, AL_FORMAT_STEREO8, buf, 512, 16000);
 		soundBuffers.push_back(buffer);
 	}
 }

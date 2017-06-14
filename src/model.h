@@ -79,6 +79,8 @@ namespace tke
 		std::vector<BoneMotion> motions;
 	};
 
+	extern std::vector<Animation*> animations;
+
 	struct BoneMotionTrack
 	{
 		int boneID;
@@ -230,6 +232,19 @@ namespace tke
 
 		void addJoint(Joint *pJoint);
 	};
+
+	extern std::vector<Model*> models;
+	inline Model *getModel(const std::string &name)
+	{
+		for (auto m : models)
+		{
+			if (m->name == name)
+				return m;
+		}
+		return nullptr;
+	}
+	void addModel(Model *m); // when add a model, its owner change to engine, you cannot delete model outside
+	void clearModel();
 
 	struct AnimationComponent
 	{
