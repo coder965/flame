@@ -1,10 +1,16 @@
 #include "world_editor.h"
 
+tke::Model *test_model = nullptr;
+std::string master_renderer_filename("../renderer/master.xml");
+
+tke::Object *currentObject = nullptr;
+
 static WorldEditor *worldEditor = nullptr;
 
 static GameExplorer *gameExplorer = nullptr;
 static MonitorWidget *currentMonitorWidget = nullptr;
 static OutputWidget *outputWidget = nullptr;
+static ObjectController *objectController = nullptr;
 
 struct QMyUserData : QObjectUserData
 {
@@ -40,16 +46,21 @@ static WindowType getCurrentWindowType()
 	return WindowTypeNull;
 }
 
-void Renderer::setItemText()
+void RendererEditorStruct::setItemText()
 {
 	if (item)
 		item->setText(0, QString(filename.c_str()));
 }
 
-Renderer::~Renderer()
+RendererEditorStruct::~RendererEditorStruct()
 {
-	delete p;
 	delete item;
+}
+
+void ModelEditorStruct::setItemText()
+{
+	if (item)
+		item->setText(0, QString(filename.c_str()));
 }
 
 void Game::load_renderers()
@@ -61,7 +72,7 @@ void Game::load_renderers()
 		if (c->name == "renderer")
 		{
 			auto a = c->firstAttribute("filename");
-			auto r = new Renderer;
+			auto r = new RendererEditorStruct;
 			r->filename = a->second;
 			renderers.push_back(r);
 		}
@@ -75,11 +86,28 @@ void Game::save_renderers()
 	for (auto r : renderers)
 	{
 		auto node = new tke::AttributeTreeNode("renderer");
-		node->attributes.emplace_back(new tke::NormalVariable("filename", &r->p->filename), std::string());
+		node->attributes.emplace_back(new tke::NormalVariable("filename", &r->filename), std::string());
 		at.children.push_back(node);
 	}
 
 	at.saveXML("pipelines.xml");
+}
+
+void Game::load_models()
+{
+	tke::AttributeTree at("data");
+	at.loadXML("models.xml");
+	for (auto c : at.children)
+	{
+		if (c->name == "model")
+		{
+			auto a = c->firstAttribute("filename");
+			auto m = new ModelEditorStruct;
+			m->filename = a->second;
+			m->p = tke::createModel(a->second);
+			models.push_back(m);
+		}
+	}
 }
 
 static Game game;
@@ -95,6 +123,15 @@ void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
 			return;
 		}
 	}
+	for (auto m : game.models)
+	{
+		if (m->item == curr)
+		{
+			currentItemType = ItemTypeModel;
+			currentModel = m;
+			return;
+		}
+	}
 	currentItemType = ItemTypeNull;
 }
 
@@ -107,9 +144,22 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 		if (!currentRenderer->monitor)
 		{
 			currentRenderer->monitor = new MonitorWidget(worldEditor);
-			currentRenderer->monitor->renderer = currentRenderer;
-			currentRenderer->monitor->setup();
+			currentRenderer->monitor->renderer_filename = currentRenderer->filename;
+			currentRenderer->monitor->model = test_model;
+			currentRenderer->monitor->setup(&currentRenderer->monitor);
 			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentRenderer->monitor);
+		}
+	}
+		break;
+	case ItemTypeModel:
+	{
+		if (!currentModel->monitor)
+		{
+			currentModel->monitor = new MonitorWidget(worldEditor);
+			currentModel->monitor->renderer_filename = master_renderer_filename;
+			currentModel->monitor->model = currentModel->p;
+			currentModel->monitor->setup(&currentModel->monitor);
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentModel->monitor);
 		}
 	}
 		break;
@@ -134,9 +184,21 @@ void GameExplorer::setup()
 		renderersItem->addChild(r->item);
 	}
 	tree->addTopLevelItem(renderersItem);
+
 	scenesItem = new QTreeWidgetItem;
 	scenesItem->setText(0, "Scenes");
 	tree->addTopLevelItem(scenesItem);
+
+	modelsItem = new QTreeWidgetItem;
+	modelsItem->setText(0, "Models");
+	for (auto m : game.models)
+	{
+		m->item = new QTreeWidgetItem;
+		m->setItemText();
+		modelsItem->addChild(m->item);
+	}
+	tree->addTopLevelItem(modelsItem);
+
 	setWidget(tree);
 	connect(tree, &QTreeWidget::currentItemChanged, this, &GameExplorer::on_item_changed);
 	connect(tree, &QTreeWidget::itemDoubleClicked, this, &GameExplorer::on_item_dbClicked);
@@ -150,50 +212,40 @@ void GameExplorer::closeEvent(QCloseEvent *event)
 	gameExplorer = nullptr;
 }
 
-float LinearDepthPerspective(float z, float depth_near, float depth_far)
-{
-	float a = (1.0 - depth_far / depth_near) * 0.5 / depth_far;
-	float b = (1.0 + depth_far / depth_near) * 0.5 / depth_far;
-	return 1.0 / (a * z + b);
-}
-
 struct MonitorWindow : tke::GuiWindow
 {
-	tke::Model *test_model;
+	MonitorWidget *widget;
+
+	tke::Object *obj;
+	tke::Light *lit;
 
 	VkCommandBuffer cmd[2];
 
-	tke::Renderer *renderer;
-	tke::Scene *scene;
-
-	MonitorWindow(tke::Renderer *_renderer, tke::Scene *_scene)
+	MonitorWindow(MonitorWidget *_widget)
 		:GuiWindow(tke::resCx, tke::resCy, "TK Engine World Editor", false)
 	{
-		scene = _scene;
+		widget = _widget;
 
-		test_model = tke::createModel("brick.obj");
-		tke::addModel(test_model);
+		obj = new tke::Object(widget->model);
+		widget->scene->addObject(obj);
 
-		auto obj = new tke::Object(test_model);
-		scene->addObject(obj);
-
-		auto lit = new tke::Light(tke::LightTypePoint);
+		lit = new tke::Light(tke::LightTypePoint);
 		lit->color = glm::vec3(1.f);
-		lit->setCoord(glm::vec3(0, 1, 0));
-		scene->addLight(lit);
+		lit->setCoord(0.f, 1.f, 0.f);
+		widget->scene->addLight(lit);
 
-		setRenderer(_renderer);
+		setRenderer();
 
 		for (int i = 0; i < 2; i++)
 			cmd[i] = tke::commandPool.allocate();
 
-		scene->camera.setMode(tke::CameraModeTargeting);
-		scene->camera.setCoord(glm::vec3(0, 5, 0));
+		widget->scene->camera.setMode(tke::CameraModeTargeting);
+		widget->scene->camera.setCoord(0.f, 5.f, 0.f);
 	}
 	
-	void setRenderer(tke::Renderer *_renderer)
+	void setRenderer()
 	{
-		renderer = _renderer;
+		auto renderer = widget->renderer;
 
 		renderer->resource.setImage(images, "Window.Image");
 		tke::ShaderMacro macro;
@@ -204,12 +256,12 @@ struct MonitorWindow : tke::GuiWindow
 
 		renderer->setup();
 
-		tke::setMasterRenderer(_renderer);
-		scene->setRenderer(renderer);
+		tke::setMasterRenderer(renderer);
+		widget->scene->setRenderer(renderer);
 
 		tke::needRedraw = true;
 		tke::needUpdateTexture = true;
-		scene->needUpdateSky = true;
+		widget->scene->needUpdateSky = true;
 	}
 
 	void makeCmd()
@@ -222,7 +274,7 @@ struct MonitorWindow : tke::GuiWindow
 
 			tke::beginCommandBuffer(cmd[i]);
 
-			renderer->execute(cmd[i], i);
+			widget->renderer->execute(cmd[i], i);
 
 			vkCmdSetEvent(cmd[i], renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
@@ -246,25 +298,25 @@ struct MonitorWindow : tke::GuiWindow
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
 				{
-					scene->camera.addAngAccrodingToScreen(distX, distY);
+					widget->scene->camera.addAngAccrodingToScreen(distX, distY);
 				}
 			}
 			else if (middlePressing)
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					scene->camera.moveAccrodingToScreen(distX, distY);
+					widget->scene->camera.moveAccrodingToScreen(distX, distY);
 			}
 			else if (rightPressing)
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					scene->camera.scroll(mouseX - mousePrevX);
+					widget->scene->camera.scroll(mouseX - mousePrevX);
 			}
 		}
 	}
 
 	virtual void renderEvent() override
 	{
-		scene->update();
+		widget->scene->update();
 
 		if (tke::needRedraw)
 		{
@@ -287,14 +339,6 @@ struct MonitorWindow : tke::GuiWindow
 	}
 };
 
-struct MonitorWidgetData
-{
-	MonitorWindow **window;
-	tke::Renderer *renderer;
-	tke::Scene *scene;
-	bool *dead;
-};
-
 struct QMyScrollArea : QScrollArea
 {
 	QSize sizeHint() const override
@@ -303,28 +347,21 @@ struct QMyScrollArea : QScrollArea
 	}
 };
 
-void MonitorWidget::setup()
+void MonitorWidget::setup(MonitorWidget **_owner)
 {
+	owner = _owner;
+
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	MonitorWidgetData data;
-	data.window = &window;
-	renderer->p = new tke::Renderer;
-	renderer->p->loadXML(renderer->filename);
-	data.renderer = renderer->p;
+	renderer = new tke::Renderer;
+	renderer->loadXML(renderer_filename);
 	scene = new tke::Scene;
-	data.scene = scene;
-	data.dead = &windowDead;
 
-	_beginthread([](void *p){
-		auto data = (MonitorWidgetData*)p;
-
-		auto window = new MonitorWindow(data->renderer, data->scene);
-
-		*data->window = window;
-
-		window->run(data->dead);
-	}, 0, &data);
+	_beginthread([](void *_p){
+		auto p = (MonitorWidget*)_p;
+		p->window = new MonitorWindow(p);
+		p->window->run(&p->windowDead);
+	}, 0, this);
 	while (!window) Sleep(100);
 
 	auto qWnd = QWindow::fromWinId((unsigned int)window->hWnd);
@@ -339,16 +376,19 @@ void MonitorWidget::setup()
 
 	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
 
-	setWindowTitle(QString("Monitor - ") + renderer->p->filename.c_str());
+	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
 	setWidget(scrollArea);
 }
 
-MonitorWidget::~MonitorWidget()
+void MonitorWidget::closeEvent(QCloseEvent *event)
 {
 	SendMessage(window->hWnd, WM_CLOSE, 0, 0);
-	delete renderer->p;
-	renderer->p = nullptr;
-	renderer->monitor = nullptr;
+
+	delete renderer;
+
+	delete scene;
+
+	*owner = nullptr;
 }
 
 void OutputWidget::setup()
@@ -370,23 +410,50 @@ OutputWidget::~OutputWidget()
 	outputWidget = nullptr;
 }
 
+void ObjectController::attachCurrentObject()
+{
+
+}
+
+void ObjectController::setup()
+{
+	auto spliter = new QSplitter(Qt::Vertical);
+	tree = new QTreeWidget;
+	spliter->addWidget(tree);
+	auto group = new QGroupBox;
+	auto exSlider = new QSlider(Qt::Horizontal, group);
+	auto eySlider = new QSlider(Qt::Horizontal, group);
+	spliter->addWidget(group);
+	setWidget(spliter);
+
+	attachCurrentObject();
+}
+
+ObjectController::~ObjectController()
+{
+
+}
 
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)
 {
+	test_model = tke::createModel("brick.obj");
+
 	worldEditor = this;
 
 	ui.setupUi(this);
 	setWindowState(Qt::WindowMaximized);
 
 	game.load_renderers();
+	game.load_models();
 
 	connect(ui.action_save_selected_item, &QAction::triggered, this, &WorldEditor::on_save_selected_item);
 	connect(ui.action_save_all, &QAction::triggered, this, &WorldEditor::on_save_all);
 	connect(ui.action_open_in_file_explorer, &QAction::triggered, this, &WorldEditor::on_open_in_file_explorer);
 	connect(ui.action_remove, &QAction::triggered, this, &WorldEditor::on_remove);
-	connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
 	connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
+	connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
+	connect(ui.action_view_bone_controller, &QAction::triggered, this, &WorldEditor::on_view_bone_controller);
 	connect(ui.action_update_changes, &QAction::triggered, this, &WorldEditor::on_update_changes);
 
 	on_view_output_widget();
@@ -482,6 +549,14 @@ void WorldEditor::on_view_output_widget()
 	addDockWidget(Qt::BottomDockWidgetArea, outputWidget);
 }
 
+void WorldEditor::on_view_bone_controller()
+{
+	if (objectController) return;
+	objectController = new ObjectController(this);
+	objectController->setup();
+	addDockWidget(Qt::RightDockWidgetArea, objectController);
+}
+
 void WorldEditor::on_update_changes()
 {
 	tke::exec("cmd", "/C cd ..\\shader_compiler & Debug\\shader_compiler.exe > ..\\world_editor\\output.txt");
@@ -499,10 +574,10 @@ void WorldEditor::on_update_changes()
 			r->monitor->window->state = tke::Window::State::eSinalToPause;
 			while (r->monitor->window->state != tke::Window::State::ePausing) Sleep(100);
 			// wait for window pausing
-			delete r->p;
-			r->p = new tke::Renderer;
-			r->p->loadXML(r->filename);
-			r->monitor->window->setRenderer(r->p);
+			delete r->monitor->renderer;
+			r->monitor->renderer = new tke::Renderer;
+			r->monitor->renderer->loadXML(r->filename);
+			r->monitor->window->setRenderer();
 			// resume the window
 			r->monitor->window->state = tke::Window::State::eSinalToRun;
 			while (r->monitor->window->state != tke::Window::State::eRunning) Sleep(100);

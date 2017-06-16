@@ -223,7 +223,7 @@ namespace tke
 	}
 
 	std::vector<Model*> models;
-	void addModel(Model *m)
+	static void _add_model(Model *m)
 	{
 		for (auto src : m->pImages)
 		{
@@ -327,8 +327,9 @@ namespace tke
 			_refreshBone(model, com, child);
 	}
 
-	AnimationComponent::AnimationComponent(Model *_pModel)
+	AnimationComponent::AnimationComponent(Model *_model)
 	{
+		model = _model;
 		boneData = new BoneData[model->bones.size()];
 		boneMatrix = new glm::mat4[model->bones.size()];
 		boneMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * model->bones.size());
@@ -797,9 +798,20 @@ namespace tke
 				auto d = u0 * v1 - u1 * v0;
 				if (d == 0.f) continue;
 
-				m->tangents[id[0]] = glm::normalize(glm::vec3(v1 * e0.x - v0 * e1.x, v1 * e0.y - v0 * e1.y, v1 * e0.z - v0 * e1.z));
-				m->tangents[id[1]] = m->tangents[id[0]];
-				m->tangents[id[2]] = m->tangents[id[0]];
+				auto tangent = glm::vec3(v1 * e0.x - v0 * e1.x, v1 * e0.y - v0 * e1.y, v1 * e0.z - v0 * e1.z);
+				if (glm::length(tangent) > 0.f)
+				{
+					tangent = glm::normalize(tangent);
+					m->tangents[id[0]] = tangent;
+					m->tangents[id[1]] = tangent;
+					m->tangents[id[2]] = tangent;
+				}
+				else
+				{
+					m->tangents[id[0]] = glm::vec3();
+					m->tangents[id[1]] = glm::vec3();
+					m->tangents[id[2]] = glm::vec3();
+				}
 			}
 		}
 
@@ -829,7 +841,7 @@ namespace tke
 
 			_model_after_process(triangleModel);
 
-			addModel(triangleModel);
+			_add_model(triangleModel);
 
 			globalResource.setModel(triangleModel, "Triangle.Model");
 		}
@@ -852,7 +864,7 @@ namespace tke
 
 			_model_after_process(cubeModel);
 
-			addModel(cubeModel);
+			_add_model(cubeModel);
 
 			globalResource.setModel(cubeModel, "Cube.Model");
 		}
@@ -879,7 +891,7 @@ namespace tke
 
 			_model_after_process(sphereModel);
 
-			addModel(sphereModel);
+			_add_model(sphereModel);
 
 			globalResource.setModel(sphereModel, "Sphere.Model");
 		}
@@ -902,7 +914,7 @@ namespace tke
 
 			_model_after_process(cylinderModel);
 
-			addModel(cylinderModel);
+			_add_model(cylinderModel);
 
 			globalResource.setModel(cylinderModel, "Cylinder.Model");
 		}
@@ -919,7 +931,7 @@ namespace tke
 
 			_model_after_process(coneModel);
 
-			addModel(coneModel);
+			_add_model(coneModel);
 
 			globalResource.setModel(coneModel, "Cone.Model");
 		}
@@ -939,7 +951,7 @@ namespace tke
 
 			_model_after_process(arrowModel);
 
-			addModel(arrowModel);
+			_add_model(arrowModel);
 
 			globalResource.setModel(arrowModel, "Arrow.Model");
 		}
@@ -958,7 +970,7 @@ namespace tke
 
 			_model_after_process(torusModel);
 
-			addModel(torusModel);
+			_add_model(torusModel);
 
 			globalResource.setModel(torusModel, "Torus.Model");
 		}
@@ -984,7 +996,7 @@ namespace tke
 
 			_model_after_process(hamerModel);
 
-			addModel(hamerModel);
+			_add_model(hamerModel);
 
 			globalResource.setModel(hamerModel, "Hamer.Model");
 		}
@@ -2061,14 +2073,16 @@ namespace tke
 			return nullptr;
 		}
 
-		auto pModel = new Model;
-		pModel->filename = p.filename().string();
-		pModel->filepath = p.parent_path().string();
-		if (pModel->filepath == "")
-			pModel->filepath = ".";
-		load_func(pModel, file);
+		auto m = new Model;
+		m->filename = p.filename().string();
+		m->filepath = p.parent_path().string();
+		if (m->filepath == "")
+			m->filepath = ".";
+		load_func(m, file);
 
-		return pModel;
+		_add_model(m);
+
+		return m;
 	}
 
 	Animation *createAnimation(const std::string &filename)
@@ -2092,13 +2106,15 @@ namespace tke
 			report("Animation Format Not Support:%s" + ext);
 			return nullptr;
 		}
-		auto pAnimation = new Animation;
-		pAnimation->filename = p.filename().string();
-		pAnimation->filepath = p.parent_path().string();
-		if (pAnimation->filepath == "")
-			pAnimation->filepath = ".";
-		load_func(pAnimation, file);
+		auto a = new Animation;
+		a->filename = p.filename().string();
+		a->filepath = p.parent_path().string();
+		if (a->filepath == "")
+			a->filepath = ".";
+		load_func(a, file);
 
-		return pAnimation;
+		animations.push_back(a);
+
+		return a;
 	}
 }

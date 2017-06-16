@@ -43,6 +43,7 @@ public:
     QAction *action_open_in_file_explorer;
     QAction *action_view_output_widget;
     QAction *actionBuild;
+    QAction *action_view_bone_controller;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuFile;
@@ -99,6 +100,8 @@ public:
         action_view_output_widget->setObjectName(QStringLiteral("action_view_output_widget"));
         actionBuild = new QAction(WorldEditorClass);
         actionBuild->setObjectName(QStringLiteral("actionBuild"));
+        action_view_bone_controller = new QAction(WorldEditorClass);
+        action_view_bone_controller->setObjectName(QStringLiteral("action_view_bone_controller"));
         centralWidget = new QWidget(WorldEditorClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         WorldEditorClass->setCentralWidget(centralWidget);
@@ -147,6 +150,7 @@ public:
         menuEdit->addAction(action_remove);
         menuView->addAction(action_view_game_explorer);
         menuView->addAction(action_view_output_widget);
+        menuView->addAction(action_view_bone_controller);
         menuDebug->addAction(action_update_changes);
         menuShader->addAction(actionBuild);
         toolBar->addAction(action_save_selected_item);
@@ -177,6 +181,7 @@ public:
         action_open_in_file_explorer->setText(QApplication::translate("WorldEditorClass", "Open In Explorer", Q_NULLPTR));
         action_view_output_widget->setText(QApplication::translate("WorldEditorClass", "Output", Q_NULLPTR));
         actionBuild->setText(QApplication::translate("WorldEditorClass", "Build", Q_NULLPTR));
+        action_view_bone_controller->setText(QApplication::translate("WorldEditorClass", "Bone Controller", Q_NULLPTR));
         menuFile->setTitle(QApplication::translate("WorldEditorClass", "File", Q_NULLPTR));
         menuNew->setTitle(QApplication::translate("WorldEditorClass", "New", Q_NULLPTR));
         menuEdit->setTitle(QApplication::translate("WorldEditorClass", "Edit", Q_NULLPTR));

@@ -58,6 +58,7 @@
     </property>
     <addaction name="action_view_game_explorer"/>
     <addaction name="action_view_output_widget"/>
+    <addaction name="action_view_bone_controller"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -188,6 +189,11 @@
   <action name="actionBuild">
    <property name="text">
     <string>Build</string>
+   </property>
+  </action>
+  <action name="action_view_bone_controller">
+   <property name="text">
+    <string>Bone Controller</string>
    </property>
   </action>
  </widget>

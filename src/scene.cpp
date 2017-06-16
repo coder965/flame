@@ -81,6 +81,15 @@ namespace tke
 		delete animatedIndexBuffer;
 		delete staticObjectIndirectBuffer;
 		delete animatedObjectIndirectBuffer;
+
+		for (auto pLight : lights)
+			delete pLight;
+
+		for (auto pObject : objects)
+			delete pObject;
+
+		for (auto pTerrain : terrains)
+			delete pTerrain;
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)

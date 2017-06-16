@@ -243,7 +243,6 @@ namespace tke
 		}
 		return nullptr;
 	}
-	void addModel(Model *m); // when add a model, its owner change to engine, you cannot delete model outside
 	void clearModel();
 
 	struct AnimationComponent
@@ -256,7 +255,7 @@ namespace tke
 		glm::mat4 *boneMatrix = nullptr;
 		UniformBuffer *boneMatrixBuffer = nullptr;
 
-		AnimationComponent(Model *_pModel);
+		AnimationComponent(Model *_model);
 		~AnimationComponent();
 		void setAnimation(AnimationBinding *animation);
 		void update();

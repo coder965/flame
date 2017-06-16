@@ -20,6 +20,7 @@
 #include <QDockWidget>
 #include <QSplitter>
 #include <QScrollArea>
+#include <QSlider>
 
 #include <Windows.h>
 #include <sstream>
@@ -37,14 +38,24 @@ struct GameExplorer;
 struct MonitorWidget;
 struct OutputWidget;
 
-struct Renderer
+struct RendererEditorStruct
 {
 	std::string filename;
-	tke::Renderer *p = nullptr;
 	QTreeWidgetItem *item = nullptr;
 	MonitorWidget *monitor = nullptr;
+
 	void setItemText();
-	~Renderer();
+	~RendererEditorStruct();
+};
+
+struct ModelEditorStruct
+{
+	std::string filename;
+	tke::Model *p = nullptr;
+	QTreeWidgetItem *item = nullptr;
+	MonitorWidget *monitor = nullptr;
+
+	void setItemText();
 };
 
 class WorldEditor : public QMainWindow
@@ -62,6 +73,7 @@ private slots:
 	void on_remove();
 	void on_view_game_explorer();
 	void on_view_output_widget();
+	void on_view_bone_controller();
 	void on_update_changes();
 private:
 	Ui::WorldEditorClass ui;
@@ -75,33 +87,38 @@ enum WindowType
 	WindowTypeNull = -1,
 	WindowTypeGameExplorer = 0,
 	WindowTypeMonitorWidget = 1,
-	WindowTypeOutputWidget = 2
+	WindowTypeOutputWidget = 2,
+	WindowTypeBoneController = 3
 };
 
 struct Game
 {
-	std::vector<Renderer*> renderers;
+	std::vector<RendererEditorStruct*> renderers;
+	std::vector<ModelEditorStruct*> models;
 
 	void load_renderers();
 	void save_renderers();
+	void load_models();
 };
 
 struct GameExplorer : QDockWidget
 {
 	QTreeWidget *tree;
-	QTreeWidgetItem *pipelinesItem;
 	QTreeWidgetItem *renderersItem;
 	QTreeWidgetItem *scenesItem;
+	QTreeWidgetItem *modelsItem;
 
 	enum ItemType
 	{
 		ItemTypeNull = -1,
-		ItemTypeRenderer = 0
+		ItemTypeRenderer = 0,
+		ItemTypeModel = 1
 	};
 
 	ItemType currentItemType = ItemTypeNull;
 
-	Renderer *currentRenderer = nullptr;
+	RendererEditorStruct *currentRenderer = nullptr;
+	ModelEditorStruct *currentModel = nullptr;
 
 	using QDockWidget::QDockWidget;
 	void on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev);
@@ -113,14 +130,19 @@ struct GameExplorer : QDockWidget
 struct MonitorWindow;
 struct MonitorWidget : QDockWidget
 {
-	Renderer *renderer = nullptr;
+	MonitorWidget **owner = nullptr;
+
+	std::string renderer_filename;
+	tke::Renderer *renderer = nullptr;
 	tke::Scene *scene = nullptr;
+	tke::Model *model = nullptr;
+
 	MonitorWindow *window = nullptr;
 	bool windowDead = false;
 
 	using QDockWidget::QDockWidget;
-	void setup();
-	~MonitorWidget();
+	void setup(MonitorWidget **_owner);
+	void closeEvent(QCloseEvent *event) override;
 };
 
 struct OutputWidget : QDockWidget
@@ -130,4 +152,14 @@ struct OutputWidget : QDockWidget
 	using QDockWidget::QDockWidget;
 	void setup();
 	~OutputWidget();
+};
+
+struct ObjectController : QDockWidget
+{
+	QTreeWidget *tree;
+
+	using QDockWidget::QDockWidget;
+	void attachCurrentObject();
+	void setup();
+	~ObjectController();
 };
