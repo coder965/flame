@@ -3,14 +3,61 @@
 tke::Model *test_model = nullptr;
 std::string master_renderer_filename("../renderer/master.xml");
 
-tke::Object *currentObject = nullptr;
+enum ItemType
+{
+	ItemTypeNull,
+	ItemTypeObject,
+	ItemTypeLight
+};
+
+struct SelectedItem : tke::Observer, tke::ObservedObject
+{
+	ItemType selected_type = ItemTypeNull;
+	void *selected_ptr = nullptr;
+
+	void reset()
+	{
+		selected_type = ItemTypeNull;
+		selected_ptr = nullptr;
+	}
+
+	void select(tke::Object *_obj)
+	{
+		if (_obj == selected_ptr) return;
+
+		switch (selected_type)
+		{
+		case ItemTypeObject:
+			((tke::Object*)selected_ptr)->removeObserver(this);
+			break;
+		case ItemTypeLight:
+			//((tke::Light*)selected_ptr)->removeObserver(this);
+			break;
+		}
+
+		selected_type = ItemTypeObject;
+		selected_ptr = _obj;
+
+		_obj->addObserver(this);
+
+		for (auto o : observers)
+			o->listen(this, tke::NotificationTypeChange, _obj);
+	}
+
+	virtual void listen(void *sender, tke::NotificationType type, void *newData) override
+	{
+		selected_ptr = newData;
+		for (auto o : observers)
+			o->listen(this, tke::NotificationTypeRefresh, selected_ptr);
+	}
+}selectedItem;
 
 static WorldEditor *worldEditor = nullptr;
 
 static GameExplorer *gameExplorer = nullptr;
 static MonitorWidget *currentMonitorWidget = nullptr;
 static OutputWidget *outputWidget = nullptr;
-static ObjectController *objectController = nullptr;
+static AttributeWidget *attributeWidget = nullptr;
 
 struct QMyUserData : QObjectUserData
 {
@@ -63,23 +110,41 @@ void ModelEditorStruct::setItemText()
 		item->setText(0, QString(filename.c_str()));
 }
 
-void Game::load_renderers()
+void Game::load()
 {
-	tke::AttributeTree at("data");
-	at.loadXML("renderers.xml");
-	for (auto c : at.children)
 	{
-		if (c->name == "renderer")
+		tke::AttributeTree at("data");
+		at.loadXML("renderers.xml");
+		for (auto c : at.children)
 		{
-			auto a = c->firstAttribute("filename");
-			auto r = new RendererEditorStruct;
-			r->filename = a->second;
-			renderers.push_back(r);
+			if (c->name == "renderer")
+			{
+				auto a = c->firstAttribute("filename");
+				auto r = new RendererEditorStruct;
+				r->filename = a->second;
+				renderers.push_back(r);
+			}
+		}
+	}
+
+	{
+		tke::AttributeTree at("data");
+		at.loadXML("models.xml");
+		for (auto c : at.children)
+		{
+			if (c->name == "model")
+			{
+				auto a = c->firstAttribute("filename");
+				auto m = new ModelEditorStruct;
+				m->filename = a->second;
+				m->p = tke::createModel(a->second);
+				models.push_back(m);
+			}
 		}
 	}
 }
 
-void Game::save_renderers()
+void Game::save()
 {
 	tke::AttributeTree at("data");
 
@@ -93,80 +158,10 @@ void Game::save_renderers()
 	at.saveXML("pipelines.xml");
 }
 
-void Game::load_models()
-{
-	tke::AttributeTree at("data");
-	at.loadXML("models.xml");
-	for (auto c : at.children)
-	{
-		if (c->name == "model")
-		{
-			auto a = c->firstAttribute("filename");
-			auto m = new ModelEditorStruct;
-			m->filename = a->second;
-			m->p = tke::createModel(a->second);
-			models.push_back(m);
-		}
-	}
-}
-
 static Game game;
 
-void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
-{
-	for (auto r : game.renderers)
-	{
-		if (r->item == curr)
-		{
-			currentItemType = ItemTypeRenderer;
-			currentRenderer = r;
-			return;
-		}
-	}
-	for (auto m : game.models)
-	{
-		if (m->item == curr)
-		{
-			currentItemType = ItemTypeModel;
-			currentModel = m;
-			return;
-		}
-	}
-	currentItemType = ItemTypeNull;
-}
-
-void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
-{
-	switch (currentItemType)
-	{
-	case ItemTypeRenderer:
-	{
-		if (!currentRenderer->monitor)
-		{
-			currentRenderer->monitor = new MonitorWidget(worldEditor);
-			currentRenderer->monitor->renderer_filename = currentRenderer->filename;
-			currentRenderer->monitor->model = test_model;
-			currentRenderer->monitor->setup(&currentRenderer->monitor);
-			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentRenderer->monitor);
-		}
-	}
-		break;
-	case ItemTypeModel:
-	{
-		if (!currentModel->monitor)
-		{
-			currentModel->monitor = new MonitorWidget(worldEditor);
-			currentModel->monitor->renderer_filename = master_renderer_filename;
-			currentModel->monitor->model = currentModel->p;
-			currentModel->monitor->setup(&currentModel->monitor);
-			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentModel->monitor);
-		}
-	}
-		break;
-	}
-}
-
-void GameExplorer::setup()
+GameExplorer::GameExplorer(QWidget *_parent)
+	:QDockWidget(_parent)
 {
 	setUserData(0, new QMyUserData(WindowTypeGameExplorer));
 
@@ -204,12 +199,59 @@ void GameExplorer::setup()
 	connect(tree, &QTreeWidget::itemDoubleClicked, this, &GameExplorer::on_item_dbClicked);
 }
 
-void GameExplorer::closeEvent(QCloseEvent *event)
+GameExplorer::~GameExplorer()
 {
 	for (auto r : game.renderers)
 		r->item = nullptr;
-	delete gameExplorer;
 	gameExplorer = nullptr;
+}
+
+void GameExplorer::on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
+{
+	for (auto r : game.renderers)
+	{
+		if (r->item == curr)
+		{
+			currentItemType = ItemTypeRenderer;
+			currentRenderer = r;
+			return;
+		}
+	}
+	for (auto m : game.models)
+	{
+		if (m->item == curr)
+		{
+			currentItemType = ItemTypeModel;
+			currentModel = m;
+			return;
+		}
+	}
+	currentItemType = ItemTypeNull;
+}
+
+void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
+{
+	switch (currentItemType)
+	{
+	case ItemTypeRenderer:
+	{
+		if (!currentRenderer->monitor)
+		{
+			currentRenderer->monitor = new MonitorWidget(worldEditor, &currentRenderer->monitor, currentRenderer->filename, test_model);
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentRenderer->monitor);
+		}
+	}
+		break;
+	case ItemTypeModel:
+	{
+		if (!currentModel->monitor)
+		{
+			currentModel->monitor = new MonitorWidget(worldEditor, &currentModel->monitor, master_renderer_filename, currentModel->p);
+			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentModel->monitor);
+		}
+	}
+		break;
+	}
 }
 
 struct MonitorWindow : tke::GuiWindow
@@ -228,6 +270,7 @@ struct MonitorWindow : tke::GuiWindow
 
 		obj = new tke::Object(widget->model);
 		widget->scene->addObject(obj);
+		selectedItem.select(obj);
 
 		lit = new tke::Light(tke::LightTypePoint);
 		lit->color = glm::vec3(1.f);
@@ -347,10 +390,9 @@ struct QMyScrollArea : QScrollArea
 	}
 };
 
-void MonitorWidget::setup(MonitorWidget **_owner)
+MonitorWidget::MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std::string _renderer_filename, tke::Model *_model)
+	:QDockWidget(_parent), owner(_owner), renderer_filename(_renderer_filename), model(_model)
 {
-	owner = _owner;
-
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	renderer = new tke::Renderer;
@@ -380,7 +422,7 @@ void MonitorWidget::setup(MonitorWidget **_owner)
 	setWidget(scrollArea);
 }
 
-void MonitorWidget::closeEvent(QCloseEvent *event)
+MonitorWidget::~MonitorWidget()
 {
 	SendMessage(window->hWnd, WM_CLOSE, 0, 0);
 
@@ -391,7 +433,8 @@ void MonitorWidget::closeEvent(QCloseEvent *event)
 	*owner = nullptr;
 }
 
-void OutputWidget::setup()
+OutputWidget::OutputWidget(QWidget *_parent)
+	:QDockWidget(_parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -410,29 +453,61 @@ OutputWidget::~OutputWidget()
 	outputWidget = nullptr;
 }
 
-void ObjectController::attachCurrentObject()
+AttributeWidget::AttributeWidget(QWidget *_parent)
+	:QDockWidget(_parent)
 {
-
-}
-
-void ObjectController::setup()
-{
-	auto spliter = new QSplitter(Qt::Vertical);
-	tree = new QTreeWidget;
-	spliter->addWidget(tree);
-	auto group = new QGroupBox;
-	auto exSlider = new QSlider(Qt::Horizontal, group);
-	auto eySlider = new QSlider(Qt::Horizontal, group);
-	spliter->addWidget(group);
-	setWidget(spliter);
+	selectedItem.addObserver(this);
 
 	attachCurrentObject();
 }
 
-ObjectController::~ObjectController()
+AttributeWidget::~AttributeWidget()
 {
-
+	selectedItem.removeObserver(this);
 }
+
+void AttributeWidget::attachCurrentObject()
+{
+	auto obj = selectedItem.selected_ptr;
+
+	if (!obj)
+	{
+		auto g = new QGroupBox;
+		auto layout = new QVBoxLayout;
+		g->setLayout(layout);
+		auto label = new QLabel;
+		label->setAutoFillBackground(true);
+		label->setAlignment(Qt::AlignCenter);
+		label->setWordWrap(true);
+		label->setText("Select An Item");
+		layout->addWidget(label);
+		setWidget(g);
+		return;
+	}
+
+	{
+		auto g = new QGroupBox(this);
+		auto layout = new QVBoxLayout;
+		g->setLayout(layout);
+		auto spliter = new QSplitter(Qt::Vertical);
+		tree = new QTreeWidget;
+		spliter->addWidget(tree);
+		{
+			auto group = new QGroupBox;
+			auto exSlider = new QSlider(Qt::Horizontal, group);
+			spliter->addWidget(group);
+		}
+		layout->addWidget(spliter);
+
+		setWidget(g);
+	}
+}
+
+void AttributeWidget::listen(void *sender, tke::NotificationType type, void *newData)
+{
+	attachCurrentObject();
+}
+
 
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)
@@ -444,8 +519,7 @@ WorldEditor::WorldEditor(QWidget *parent)
 	ui.setupUi(this);
 	setWindowState(Qt::WindowMaximized);
 
-	game.load_renderers();
-	game.load_models();
+	game.load();
 
 	connect(ui.action_save_selected_item, &QAction::triggered, this, &WorldEditor::on_save_selected_item);
 	connect(ui.action_save_all, &QAction::triggered, this, &WorldEditor::on_save_all);
@@ -453,7 +527,7 @@ WorldEditor::WorldEditor(QWidget *parent)
 	connect(ui.action_remove, &QAction::triggered, this, &WorldEditor::on_remove);
 	connect(ui.action_view_game_explorer, &QAction::triggered, this, &WorldEditor::on_view_game_explorer);
 	connect(ui.action_view_output_widget, &QAction::triggered, this, &WorldEditor::on_view_output_widget);
-	connect(ui.action_view_bone_controller, &QAction::triggered, this, &WorldEditor::on_view_bone_controller);
+	connect(ui.action_view_attribute_widget, &QAction::triggered, this, &WorldEditor::on_view_attribute_widget);
 	connect(ui.action_update_changes, &QAction::triggered, this, &WorldEditor::on_update_changes);
 
 	on_view_output_widget();
@@ -537,7 +611,6 @@ void WorldEditor::on_view_game_explorer()
 {
 	if (gameExplorer) return;
 	gameExplorer = new GameExplorer(this);
-	gameExplorer->setup();
 	addDockWidget(Qt::LeftDockWidgetArea, gameExplorer);
 }
 
@@ -545,28 +618,18 @@ void WorldEditor::on_view_output_widget()
 {
 	if (outputWidget) return;
 	outputWidget = new OutputWidget(this);
-	outputWidget->setup();
 	addDockWidget(Qt::BottomDockWidgetArea, outputWidget);
 }
 
-void WorldEditor::on_view_bone_controller()
+void WorldEditor::on_view_attribute_widget()
 {
-	if (objectController) return;
-	objectController = new ObjectController(this);
-	objectController->setup();
-	addDockWidget(Qt::RightDockWidgetArea, objectController);
+	if (attributeWidget) return;
+	attributeWidget = new AttributeWidget(this);
+	addDockWidget(Qt::RightDockWidgetArea, attributeWidget);
 }
 
 void WorldEditor::on_update_changes()
 {
-	tke::exec("cmd", "/C cd ..\\shader_compiler & Debug\\shader_compiler.exe > ..\\world_editor\\output.txt");
-
-	if (outputWidget)
-	{
-		tke::OnceFileBuffer outputFile("output.txt");
-		outputWidget->text->setPlainText(outputFile.data);
-	}
-	
 	for (auto r : game.renderers)
 	{
 		if (r->monitor)

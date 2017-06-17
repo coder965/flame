@@ -25,7 +25,7 @@ namespace tke
 	};
 
 	struct Model;
-	struct Object : Transformer, Controller
+	struct Object : ObservedObject, Transformer, Controller
 	{
 		Model *model;
 

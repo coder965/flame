@@ -6,20 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1032</width>
-    <height>800</height>
+    <width>941</width>
+    <height>754</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>WorldEditor</string>
   </property>
-  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout"/>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1032</width>
+     <width>941</width>
      <height>26</height>
     </rect>
    </property>
@@ -58,7 +60,7 @@
     </property>
     <addaction name="action_view_game_explorer"/>
     <addaction name="action_view_output_widget"/>
-    <addaction name="action_view_bone_controller"/>
+    <addaction name="action_view_attribute_widget"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -191,9 +193,9 @@
     <string>Build</string>
    </property>
   </action>
-  <action name="action_view_bone_controller">
+  <action name="action_view_attribute_widget">
    <property name="text">
-    <string>Bone Controller</string>
+    <string>Attribute</string>
    </property>
   </action>
  </widget>

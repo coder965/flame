@@ -13,6 +13,7 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
@@ -43,8 +44,9 @@ public:
     QAction *action_open_in_file_explorer;
     QAction *action_view_output_widget;
     QAction *actionBuild;
-    QAction *action_view_bone_controller;
+    QAction *action_view_object_controller;
     QWidget *centralWidget;
+    QGridLayout *gridLayout;
     QMenuBar *menuBar;
     QMenu *menuFile;
     QMenu *menuNew;
@@ -59,7 +61,7 @@ public:
     {
         if (WorldEditorClass->objectName().isEmpty())
             WorldEditorClass->setObjectName(QStringLiteral("WorldEditorClass"));
-        WorldEditorClass->resize(1032, 800);
+        WorldEditorClass->resize(941, 754);
         action_save_selected_item = new QAction(WorldEditorClass);
         action_save_selected_item->setObjectName(QStringLiteral("action_save_selected_item"));
         QIcon icon;
@@ -100,14 +102,18 @@ public:
         action_view_output_widget->setObjectName(QStringLiteral("action_view_output_widget"));
         actionBuild = new QAction(WorldEditorClass);
         actionBuild->setObjectName(QStringLiteral("actionBuild"));
-        action_view_bone_controller = new QAction(WorldEditorClass);
-        action_view_bone_controller->setObjectName(QStringLiteral("action_view_bone_controller"));
+        action_view_object_controller = new QAction(WorldEditorClass);
+        action_view_object_controller->setObjectName(QStringLiteral("action_view_object_controller"));
         centralWidget = new QWidget(WorldEditorClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
+        gridLayout = new QGridLayout(centralWidget);
+        gridLayout->setSpacing(6);
+        gridLayout->setContentsMargins(11, 11, 11, 11);
+        gridLayout->setObjectName(QStringLiteral("gridLayout"));
         WorldEditorClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(WorldEditorClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1032, 26));
+        menuBar->setGeometry(QRect(0, 0, 941, 26));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuNew = new QMenu(menuFile);
@@ -150,7 +156,7 @@ public:
         menuEdit->addAction(action_remove);
         menuView->addAction(action_view_game_explorer);
         menuView->addAction(action_view_output_widget);
-        menuView->addAction(action_view_bone_controller);
+        menuView->addAction(action_view_object_controller);
         menuDebug->addAction(action_update_changes);
         menuShader->addAction(actionBuild);
         toolBar->addAction(action_save_selected_item);
@@ -181,7 +187,7 @@ public:
         action_open_in_file_explorer->setText(QApplication::translate("WorldEditorClass", "Open In Explorer", Q_NULLPTR));
         action_view_output_widget->setText(QApplication::translate("WorldEditorClass", "Output", Q_NULLPTR));
         actionBuild->setText(QApplication::translate("WorldEditorClass", "Build", Q_NULLPTR));
-        action_view_bone_controller->setText(QApplication::translate("WorldEditorClass", "Bone Controller", Q_NULLPTR));
+        action_view_object_controller->setText(QApplication::translate("WorldEditorClass", "Object Controller", Q_NULLPTR));
         menuFile->setTitle(QApplication::translate("WorldEditorClass", "File", Q_NULLPTR));
         menuNew->setTitle(QApplication::translate("WorldEditorClass", "New", Q_NULLPTR));
         menuEdit->setTitle(QApplication::translate("WorldEditorClass", "Edit", Q_NULLPTR));

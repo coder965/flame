@@ -21,6 +21,7 @@
 #include <QSplitter>
 #include <QScrollArea>
 #include <QSlider>
+#include <QLabel>
 
 #include <Windows.h>
 #include <sstream>
@@ -73,7 +74,7 @@ private slots:
 	void on_remove();
 	void on_view_game_explorer();
 	void on_view_output_widget();
-	void on_view_bone_controller();
+	void on_view_attribute_widget();
 	void on_update_changes();
 private:
 	Ui::WorldEditorClass ui;
@@ -96,9 +97,8 @@ struct Game
 	std::vector<RendererEditorStruct*> renderers;
 	std::vector<ModelEditorStruct*> models;
 
-	void load_renderers();
-	void save_renderers();
-	void load_models();
+	void load();
+	void save();
 };
 
 struct GameExplorer : QDockWidget
@@ -120,11 +120,10 @@ struct GameExplorer : QDockWidget
 	RendererEditorStruct *currentRenderer = nullptr;
 	ModelEditorStruct *currentModel = nullptr;
 
-	using QDockWidget::QDockWidget;
+	GameExplorer(QWidget *_parent);
+	~GameExplorer();
 	void on_item_changed(QTreeWidgetItem *curr, QTreeWidgetItem *prev);
 	void on_item_dbClicked(QTreeWidgetItem *item, int column);
-	void setup();
-	void closeEvent(QCloseEvent *event) override;
 };
 
 struct MonitorWindow;
@@ -140,26 +139,24 @@ struct MonitorWidget : QDockWidget
 	MonitorWindow *window = nullptr;
 	bool windowDead = false;
 
-	using QDockWidget::QDockWidget;
-	void setup(MonitorWidget **_owner);
-	void closeEvent(QCloseEvent *event) override;
+	MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std::string _renderer_filename, tke::Model *_model);
+	~MonitorWidget();
 };
 
 struct OutputWidget : QDockWidget
 {
 	QTextBrowser *text;
 
-	using QDockWidget::QDockWidget;
-	void setup();
+	OutputWidget(QWidget *_parent);
 	~OutputWidget();
 };
 
-struct ObjectController : QDockWidget
+struct AttributeWidget : tke::Observer, QDockWidget
 {
 	QTreeWidget *tree;
 
-	using QDockWidget::QDockWidget;
+	AttributeWidget(QWidget *_parent);
+	~AttributeWidget();
 	void attachCurrentObject();
-	void setup();
-	~ObjectController();
+	virtual void listen(void *sender, tke::NotificationType type, void *newData) override;
 };

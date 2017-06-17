@@ -481,4 +481,27 @@ namespace tke
 		at->loadXML(filename);
 		return at;
 	}
+
+	ObservedObject::~ObservedObject()
+	{
+		for (auto o : observers)
+			o->listen(this, NotificationTypeChange, nullptr);
+	}
+
+	void ObservedObject::addObserver(Observer *o)
+	{
+		observers.push_back(o);
+	}
+
+	void ObservedObject::removeObserver(Observer *o)
+	{
+		for (auto it = observers.begin(); it != observers.end(); it++)
+		{
+			if (*it == o)
+			{
+				observers.erase(it);
+				return;
+			}
+		}
+	}
 }
