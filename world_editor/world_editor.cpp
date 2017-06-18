@@ -404,10 +404,11 @@ MonitorWidget::MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std
 
 	setUserData(0, new QMyUserData(WindowTypeMonitorWidget));
 
-	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
-
 	renderer = new tke::Renderer;
 	renderer->loadXML(renderer_filename);
+
+	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
+
 	scene = new tke::Scene;
 
 	_beginthread([](void *_p){
@@ -417,7 +418,7 @@ MonitorWidget::MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std
 	}, 0, this);
 	while (!window) Sleep(100);
 
-	auto qWnd = QWindow::fromWinId((unsigned int)window->hWnd);
+	auto qWnd = QWindow::fromWinId((LONG_PTR)window->hWnd);
 	qWnd->setFlags(Qt::FramelessWindowHint);
 
 	QWidget *container = QWidget::createWindowContainer(qWnd);

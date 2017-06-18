@@ -171,7 +171,7 @@ namespace tke
 		T *ptr(void *p = nullptr)
 		{
 			if (!p) return (T*)v.ptr;
-			return (T*)((int)p + (int)v.ptr);
+			return (T*)((LONG_PTR)p + (LONG_PTR)v.ptr);
 		}
 	};
 

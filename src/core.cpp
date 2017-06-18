@@ -224,7 +224,7 @@ namespace tke
 
 		initPhysics();
 
-		initSound();
+		//initSound();
 
 		staticVertexBuffer = new VertexBuffer();
 		staticIndexBuffer = new IndexBuffer();

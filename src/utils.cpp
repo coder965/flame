@@ -207,7 +207,7 @@ namespace tke
 	int *EnumVariable::ptr(void *p)
 	{
 		if (!p) return _ptr;
-		return (int*)((int)p + (int)_ptr);
+		return (int*)((LONG_PTR)p + (LONG_PTR)_ptr);
 	}
 
 	std::vector<std::pair<std::string, ReflectionBank*>> _reflectionBanks;

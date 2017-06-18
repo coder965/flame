@@ -3041,11 +3041,7 @@ namespace tke
 		currentDescriptorSet = 0;
 	}
 
-#ifdef _WIN32
-#include "../../../FreeImage\Dist\x32\FreeImage.h"
-#else
-#include "../../../FreeImage\Dist\x64\FreeImage.h"
-#endif
+#include <FreeImage.h>
 
 	struct _ImageData
 	{
