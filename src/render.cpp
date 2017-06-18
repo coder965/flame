@@ -2742,119 +2742,6 @@ namespace tke
 		currentPipeline = nullptr;
 	}
 
-	void Renderer::execute(VkCommandBuffer cmd, int index)
-	{
-		currentVertexBuffer = initVertexBuffer;
-		currentIndexBuffer = initIndexBuffer;
-		currentPipeline = initPipeline;
-		currentDescriptorSet = initDescriptorSet;
-
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index]->v, cx, cy, vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
-
-		if (currentVertexBuffer)
-			currentVertexBuffer->bind(cmd);
-
-		if (currentIndexBuffer)
-			currentIndexBuffer->bind(cmd);
-
-		bool firstPass = true;
-		for (auto &pass : passes)
-		{
-			switch (pass.type)
-			{
-			case RenderPassType::draw_action:
-				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-				for (auto &action : pass.actions)
-				{
-					if (!action.show) continue;
-
-					if (action.cx || action.cy)
-					{
-						VkViewport viewport;
-						viewport.x = 0;
-						viewport.y = 0;
-						viewport.width = action.cx;
-						viewport.height = action.cy;
-						viewport.minDepth = 0.0f;
-						viewport.maxDepth = 1.0f;
-						vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-						VkRect2D scissor;
-						scissor.offset.x = 0;
-						scissor.offset.y = 0;
-						scissor.extent.width = action.cx;
-						scissor.extent.height = action.cy;
-						vkCmdSetScissor(cmd, 0, 1, &scissor);
-					}
-					switch (action.type)
-					{
-					case DrawActionType::draw_action:
-						if (action.m_pipeline && action.m_pipeline != currentPipeline)
-						{
-							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipeline);
-							currentPipeline = action.m_pipeline;
-						}
-						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
-						{
-							action.m_vertexBuffer->bind(cmd);
-							currentVertexBuffer = action.m_vertexBuffer;
-						}
-						if (action.m_indexBuffer && action.m_indexBuffer != currentIndexBuffer)
-						{
-							action.m_indexBuffer->bind(cmd);
-							currentIndexBuffer = action.m_indexBuffer;
-						}
-						if (action.m_descriptorSet && action.m_descriptorSet != currentDescriptorSet)
-						{
-							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipelineLayout->v, 0, 1, &action.m_descriptorSet, 0, nullptr);
-							currentDescriptorSet = action.m_descriptorSet;
-						}
-
-						for (auto &drawcall : action.drawcalls)
-						{
-							switch (drawcall.type)
-							{
-							case DrawcallType::vertex:
-								vkCmdDraw(cmd, drawcall.vertex_count, drawcall.instance_count, drawcall.first_vertex, drawcall.first_instance);
-								break;
-							case DrawcallType::index:
-								vkCmdDrawIndexed(cmd, drawcall.index_count, drawcall.instance_count, drawcall.first_index, drawcall.vertex_offset, drawcall.first_instance);
-								break;
-							case DrawcallType::indirect_vertex:
-								vkCmdDrawIndirect(cmd, drawcall.m_indirectVertexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndirectCommand);
-								break;
-							case DrawcallType::indirect_index:
-								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
-								break;
-							case DrawcallType::push_constant:
-								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
-								break;
-							}
-						}
-						break;
-					case DrawActionType::call_fuction:
-						if (action.m_pRenderFunc)
-							action.m_pRenderFunc(cmd);
-						break;
-					}
-				}
-				break;
-			case RenderPassType::call_secondary_cmd:
-				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-				if (pass.secondaryCmd) vkCmdExecuteCommands(cmd, 1, &pass.secondaryCmd);
-				break;
-			}
-			firstPass = false;
-		}
-
-		vkCmdEndRenderPass(cmd);
-
-		currentVertexBuffer = nullptr;
-		currentIndexBuffer = nullptr;
-		currentPipeline = nullptr;
-		currentDescriptorSet = 0;
-	}
-
 	void Renderer::setup()
 	{
 		if (cx == -1)
@@ -2997,15 +2884,7 @@ namespace tke
 							if (drawcall.indirect_index_buffer_name != "")
 								drawcall.m_indirectIndexBuffer = (IndirectIndexBuffer*)resource.getBuffer(drawcall.indirect_index_buffer_name);
 							if (drawcall.model_name != "")
-							{
-								auto p = resource.getModel(drawcall.model_name);
-								if (p)
-								{
-									drawcall.index_count = p->indices.size();
-									drawcall.first_index = p->indiceBase;
-									drawcall.vertex_offset = p->vertexBase;
-								}
-							}
+								drawcall.model = resource.getModel(drawcall.model_name);
 							if (drawcall.indirect_count_name != "")
 								drawcall.p_indirect_count = resource.getInt(drawcall.indirect_count_name);
 						}
@@ -3041,6 +2920,125 @@ namespace tke
 	{
 		for (auto &p : resource.privatePipelines)
 			p.p->updateDescriptors();
+	}
+
+	void Renderer::execute(VkCommandBuffer cmd, int index)
+	{
+		currentVertexBuffer = initVertexBuffer;
+		currentIndexBuffer = initIndexBuffer;
+		currentPipeline = initPipeline;
+		currentDescriptorSet = initDescriptorSet;
+
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index]->v, cx, cy, vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
+
+		if (currentVertexBuffer)
+			currentVertexBuffer->bind(cmd);
+
+		if (currentIndexBuffer)
+			currentIndexBuffer->bind(cmd);
+
+		bool firstPass = true;
+		for (auto &pass : passes)
+		{
+			switch (pass.type)
+			{
+			case RenderPassType::draw_action:
+				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+				for (auto &action : pass.actions)
+				{
+					if (!action.show) continue;
+
+					if (action.cx || action.cy)
+					{
+						VkViewport viewport;
+						viewport.x = 0;
+						viewport.y = 0;
+						viewport.width = action.cx;
+						viewport.height = action.cy;
+						viewport.minDepth = 0.0f;
+						viewport.maxDepth = 1.0f;
+						vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+						VkRect2D scissor;
+						scissor.offset.x = 0;
+						scissor.offset.y = 0;
+						scissor.extent.width = action.cx;
+						scissor.extent.height = action.cy;
+						vkCmdSetScissor(cmd, 0, 1, &scissor);
+					}
+					switch (action.type)
+					{
+					case DrawActionType::draw_action:
+						if (action.m_pipeline && action.m_pipeline != currentPipeline)
+						{
+							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipeline);
+							currentPipeline = action.m_pipeline;
+						}
+						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
+						{
+							action.m_vertexBuffer->bind(cmd);
+							currentVertexBuffer = action.m_vertexBuffer;
+						}
+						if (action.m_indexBuffer && action.m_indexBuffer != currentIndexBuffer)
+						{
+							action.m_indexBuffer->bind(cmd);
+							currentIndexBuffer = action.m_indexBuffer;
+						}
+						if (action.m_descriptorSet && action.m_descriptorSet != currentDescriptorSet)
+						{
+							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipelineLayout->v, 0, 1, &action.m_descriptorSet, 0, nullptr);
+							currentDescriptorSet = action.m_descriptorSet;
+						}
+
+						for (auto &drawcall : action.drawcalls)
+						{
+							if (drawcall.model)
+							{
+								drawcall.index_count = drawcall.model->indices.size();
+								drawcall.first_index = drawcall.model->indiceBase;
+								drawcall.vertex_offset = drawcall.model->vertexBase;
+							}
+							switch (drawcall.type)
+							{
+							case DrawcallType::vertex:
+								vkCmdDraw(cmd, drawcall.vertex_count, drawcall.instance_count, drawcall.first_vertex, drawcall.first_instance);
+								break;
+							case DrawcallType::index:
+								vkCmdDrawIndexed(cmd, drawcall.index_count, drawcall.instance_count, drawcall.first_index, drawcall.vertex_offset, drawcall.first_instance);
+								break;
+							case DrawcallType::indirect_vertex:
+								vkCmdDrawIndirect(cmd, drawcall.m_indirectVertexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndirectCommand);
+								break;
+							case DrawcallType::indirect_index:
+								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
+								break;
+							case DrawcallType::push_constant:
+								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
+								break;
+							}
+						}
+						break;
+					case DrawActionType::call_fuction:
+						if (action.m_pRenderFunc)
+							action.m_pRenderFunc(cmd);
+						break;
+					}
+				}
+				break;
+			case RenderPassType::call_secondary_cmd:
+				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+				if (pass.secondaryCmd) vkCmdExecuteCommands(cmd, 1, &pass.secondaryCmd);
+				break;
+			}
+			firstPass = false;
+		}
+
+		vkCmdEndRenderPass(cmd);
+
+		currentVertexBuffer = nullptr;
+		currentIndexBuffer = nullptr;
+		currentPipeline = nullptr;
+		currentDescriptorSet = 0;
 	}
 
 #ifdef _WIN32

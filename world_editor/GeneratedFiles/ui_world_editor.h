@@ -44,7 +44,7 @@ public:
     QAction *action_open_in_file_explorer;
     QAction *action_view_output_widget;
     QAction *actionBuild;
-    QAction *action_view_object_controller;
+    QAction *action_view_attribute_widget;
     QWidget *centralWidget;
     QGridLayout *gridLayout;
     QMenuBar *menuBar;
@@ -102,8 +102,8 @@ public:
         action_view_output_widget->setObjectName(QStringLiteral("action_view_output_widget"));
         actionBuild = new QAction(WorldEditorClass);
         actionBuild->setObjectName(QStringLiteral("actionBuild"));
-        action_view_object_controller = new QAction(WorldEditorClass);
-        action_view_object_controller->setObjectName(QStringLiteral("action_view_object_controller"));
+        action_view_attribute_widget = new QAction(WorldEditorClass);
+        action_view_attribute_widget->setObjectName(QStringLiteral("action_view_attribute_widget"));
         centralWidget = new QWidget(WorldEditorClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         gridLayout = new QGridLayout(centralWidget);
@@ -156,7 +156,7 @@ public:
         menuEdit->addAction(action_remove);
         menuView->addAction(action_view_game_explorer);
         menuView->addAction(action_view_output_widget);
-        menuView->addAction(action_view_object_controller);
+        menuView->addAction(action_view_attribute_widget);
         menuDebug->addAction(action_update_changes);
         menuShader->addAction(actionBuild);
         toolBar->addAction(action_save_selected_item);
@@ -187,7 +187,7 @@ public:
         action_open_in_file_explorer->setText(QApplication::translate("WorldEditorClass", "Open In Explorer", Q_NULLPTR));
         action_view_output_widget->setText(QApplication::translate("WorldEditorClass", "Output", Q_NULLPTR));
         actionBuild->setText(QApplication::translate("WorldEditorClass", "Build", Q_NULLPTR));
-        action_view_object_controller->setText(QApplication::translate("WorldEditorClass", "Object Controller", Q_NULLPTR));
+        action_view_attribute_widget->setText(QApplication::translate("WorldEditorClass", "Attribute", Q_NULLPTR));
         menuFile->setTitle(QApplication::translate("WorldEditorClass", "File", Q_NULLPTR));
         menuNew->setTitle(QApplication::translate("WorldEditorClass", "New", Q_NULLPTR));
         menuEdit->setTitle(QApplication::translate("WorldEditorClass", "Edit", Q_NULLPTR));

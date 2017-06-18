@@ -35,6 +35,15 @@
 #include "../src/gui.h"
 #include "../src/event.h"
 
+enum WindowType
+{
+	WindowTypeNull = -1,
+	WindowTypeGameExplorer = 0,
+	WindowTypeMonitorWidget = 1,
+	WindowTypeOutputWidget = 2,
+	WindowTypeAttributeWidget = 3
+};
+
 struct GameExplorer;
 struct MonitorWidget;
 struct OutputWidget;
@@ -81,15 +90,6 @@ private:
 
 protected:
 	void keyPressEvent(QKeyEvent *k) override;
-};
-
-enum WindowType
-{
-	WindowTypeNull = -1,
-	WindowTypeGameExplorer = 0,
-	WindowTypeMonitorWidget = 1,
-	WindowTypeOutputWidget = 2,
-	WindowTypeBoneController = 3
 };
 
 struct Game

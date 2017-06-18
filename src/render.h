@@ -791,6 +791,7 @@ namespace tke
 		REFLv int vertex_offset = 0;
 
 		REFLv std::string model_name;
+		Model *model = nullptr;
 
 		REFLv std::string indirect_vertex_buffer_name;
 		REFLv std::string indirect_index_buffer_name;

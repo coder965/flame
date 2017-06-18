@@ -163,6 +163,8 @@ static Game game;
 GameExplorer::GameExplorer(QWidget *_parent)
 	:QDockWidget(_parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	setUserData(0, new QMyUserData(WindowTypeGameExplorer));
 
 	setWindowTitle("Game Explorer");
@@ -330,6 +332,11 @@ struct MonitorWindow : tke::GuiWindow
 		if (tke::uiAcceptedMouse)
 			return;
 
+		if (leftDown)
+		{
+			
+		}
+
 		float distX = mouseX - mousePrevX;
 		float distY = mouseY - mousePrevY;
 
@@ -395,6 +402,10 @@ MonitorWidget::MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 
+	setUserData(0, new QMyUserData(WindowTypeMonitorWidget));
+
+	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
+
 	renderer = new tke::Renderer;
 	renderer->loadXML(renderer_filename);
 	scene = new tke::Scene;
@@ -415,10 +426,6 @@ MonitorWidget::MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std
 
 	auto scrollArea = new QMyScrollArea;
 	scrollArea->setWidget(container);
-
-	setUserData(0, new QMyUserData(WindowTypeOutputWidget));
-
-	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
 	setWidget(scrollArea);
 }
 
@@ -458,6 +465,12 @@ AttributeWidget::AttributeWidget(QWidget *_parent)
 {
 	selectedItem.addObserver(this);
 
+	setAttribute(Qt::WA_DeleteOnClose);
+
+	setUserData(0, new QMyUserData(WindowTypeAttributeWidget));
+
+	setWindowTitle("Attribute");
+
 	attachCurrentObject();
 }
 
@@ -472,23 +485,23 @@ void AttributeWidget::attachCurrentObject()
 
 	if (!obj)
 	{
-		auto g = new QGroupBox;
+		auto group = new QGroupBox;
 		auto layout = new QVBoxLayout;
-		g->setLayout(layout);
+		group->setLayout(layout);
 		auto label = new QLabel;
 		label->setAutoFillBackground(true);
 		label->setAlignment(Qt::AlignCenter);
 		label->setWordWrap(true);
 		label->setText("Select An Item");
 		layout->addWidget(label);
-		setWidget(g);
+		setWidget(group);
 		return;
 	}
 
 	{
-		auto g = new QGroupBox(this);
+		auto group = new QGroupBox(this);
 		auto layout = new QVBoxLayout;
-		g->setLayout(layout);
+		group->setLayout(layout);
 		auto spliter = new QSplitter(Qt::Vertical);
 		tree = new QTreeWidget;
 		spliter->addWidget(tree);
@@ -498,8 +511,7 @@ void AttributeWidget::attachCurrentObject()
 			spliter->addWidget(group);
 		}
 		layout->addWidget(spliter);
-
-		setWidget(g);
+		setWidget(group);
 	}
 }
 
