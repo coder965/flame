@@ -136,18 +136,14 @@ namespace tke
 
 	void exec(const std::string &filename, const std::string &parameters)
 	{
-		SHELLEXECUTEINFOA ShExecInfo = {};
-		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
-		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-		ShExecInfo.hwnd = NULL;
-		ShExecInfo.lpVerb = "open";
-		ShExecInfo.lpFile = filename.c_str();
-		ShExecInfo.lpParameters = parameters.c_str();
-		ShExecInfo.lpDirectory = NULL;
-		ShExecInfo.nShow = SW_HIDE;
-		ShExecInfo.hInstApp = NULL;
-		ShellExecuteExA(&ShExecInfo);
-		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+		SHELLEXECUTEINFOA info = {};
+		info.cbSize = sizeof(SHELLEXECUTEINFOA);
+		info.fMask = SEE_MASK_NOCLOSEPROCESS;
+		info.lpVerb = "open";
+		info.lpFile = filename.c_str();
+		info.lpParameters = parameters.c_str();
+		ShellExecuteExA(&info);
+		WaitForSingleObject(info.hProcess, INFINITE);
 	}
 
 	struct UtilsInit

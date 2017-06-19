@@ -115,6 +115,7 @@ namespace tke
 		virtual void keyUpEvent(int) override;
 		virtual void charEvent(int) override;
 
+		GuiWindow(int _cx, int _cy, HWND _hWnd);
 		GuiWindow(int _cx, int _cy, const std::string &title, bool hasFrame = true);
 		void beginUi();
 		void endUi();

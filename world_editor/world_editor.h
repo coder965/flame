@@ -22,6 +22,8 @@
 #include <QScrollArea>
 #include <QSlider>
 #include <QLabel>
+#include <QtOpenGL\QGLWidget>
+#include <QTimer>
 
 #include <Windows.h>
 #include <sstream>
@@ -87,6 +89,8 @@ private slots:
 	void on_update_changes();
 private:
 	Ui::WorldEditorClass ui;
+
+	void update();
 
 protected:
 	void keyPressEvent(QKeyEvent *k) override;

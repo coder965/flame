@@ -148,20 +148,11 @@ namespace tke
 
 	struct Window
 	{
-		enum State
-		{
-			eRunning,
-			ePausing,
-			eSinalToPause,
-			eSinalToRun
-		};
-
-		std::atomic_int32_t state = eRunning;
-
 		int cx = 0, cy = 0;
 
-		bool doubleClick = false;
-		bool leftDown = false, leftUp = false;
+		int lastClickTime = 0;
+		bool doubleClicked = false;
+		bool leftJustDown = false, leftJustUp = false;
 		bool leftPressing = false, middlePressing = false, rightPressing = false;
 		int mouseX = 0, mouseY = 0;
 		int mousePrevX = 0, mousePrevY = 0;
@@ -182,22 +173,34 @@ namespace tke
 		VkEvent renderFinished;
 		VkFence frameDone;
 
-		bool die = false;
+		bool dead = false;
 
 		virtual void keyDownEvent(int);
 		virtual void keyUpEvent(int);
 		virtual void charEvent(int);
-		virtual void mouseEvent();
+		virtual void mouseLeftDownEvent(int, int);
+		virtual void mouseLeftUpEvent(int, int);
+		virtual void mouseMiddleDownEvent(int, int);
+		virtual void mouseMiddleUpEvent(int, int);
+		virtual void mouseRightDownEvent(int, int);
+		virtual void mouseRightUpEvent(int, int);
+		virtual void mouseMoveEvent(int, int);
+		virtual void mouseWheelEvent(int);
 		virtual void renderEvent();
-		virtual LRESULT extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+		void update();
+
+		Window(int _cx, int _cy, HWND _hWnd);
 		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true);
 		~Window();
 		int getFPS();
 		void beginFrame();
 		void endFrame();
-		void run(bool *dead);
+		void addToList();
 	};
+
+	void update();
+	void run();
 }
 
 #endif

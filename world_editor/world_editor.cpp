@@ -240,7 +240,7 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 		if (!currentRenderer->monitor)
 		{
 			currentRenderer->monitor = new MonitorWidget(worldEditor, &currentRenderer->monitor, currentRenderer->filename, test_model);
-			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentRenderer->monitor);
+			worldEditor->addDockWidget(Qt::TopDockWidgetArea, currentRenderer->monitor);
 		}
 	}
 		break;
@@ -249,7 +249,7 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 		if (!currentModel->monitor)
 		{
 			currentModel->monitor = new MonitorWidget(worldEditor, &currentModel->monitor, master_renderer_filename, currentModel->p);
-			worldEditor->addDockWidget(Qt::RightDockWidgetArea, currentModel->monitor);
+			worldEditor->addDockWidget(Qt::TopDockWidgetArea, currentModel->monitor);
 		}
 	}
 		break;
@@ -265,14 +265,13 @@ struct MonitorWindow : tke::GuiWindow
 
 	VkCommandBuffer cmd[2];
 
-	MonitorWindow(MonitorWidget *_widget)
-		:GuiWindow(tke::resCx, tke::resCy, "TK Engine World Editor", false)
+	MonitorWindow(MonitorWidget *_widget, HWND _hWnd)
+		:GuiWindow(tke::resCx, tke::resCy, _hWnd)
 	{
 		widget = _widget;
 
 		obj = new tke::Object(widget->model);
 		widget->scene->addObject(obj);
-		selectedItem.select(obj);
 
 		lit = new tke::Light(tke::LightTypePoint);
 		lit->color = glm::vec3(1.f);
@@ -327,45 +326,37 @@ struct MonitorWindow : tke::GuiWindow
 		}
 	}
 
-	virtual void mouseEvent() override
-	{
-		if (tke::uiAcceptedMouse)
-			return;
-
-		if (leftDown)
-		{
-			
-		}
-
-		float distX = mouseX - mousePrevX;
-		float distY = mouseY - mousePrevY;
-
-		if (distX != 0 || distY != 0)
-		{
-			distX /= tke::resCx;
-			distY /= tke::resCy;
-			if (leftPressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-				{
-					widget->scene->camera.addAngAccrodingToScreen(distX, distY);
-				}
-			}
-			else if (middlePressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					widget->scene->camera.moveAccrodingToScreen(distX, distY);
-			}
-			else if (rightPressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					widget->scene->camera.scroll(mouseX - mousePrevX);
-			}
-		}
-	}
-
 	virtual void renderEvent() override
 	{
+		if (!tke::uiAcceptedMouse)
+		{
+			float distX = mouseX - mousePrevX;
+			float distY = mouseY - mousePrevY;
+
+			if (distX != 0 || distY != 0)
+			{
+				distX /= tke::resCx;
+				distY /= tke::resCy;
+				if (leftPressing)
+				{
+					if (GetAsyncKeyState(VK_MENU) & 0x8000)
+					{
+						widget->scene->camera.addAngAccrodingToScreen(distX, distY);
+					}
+				}
+				else if (middlePressing)
+				{
+					if (GetAsyncKeyState(VK_MENU) & 0x8000)
+						widget->scene->camera.moveAccrodingToScreen(distX, distY);
+				}
+				else if (rightPressing)
+				{
+					if (GetAsyncKeyState(VK_MENU) & 0x8000)
+						widget->scene->camera.scroll(mouseX - mousePrevX);
+				}
+			}
+		}
+
 		widget->scene->update();
 
 		if (tke::needRedraw)
@@ -389,6 +380,11 @@ struct MonitorWindow : tke::GuiWindow
 	}
 };
 
+struct QVKContainer : QWidget
+{
+	MonitorWindow *p = nullptr;
+};
+
 struct QMyScrollArea : QScrollArea
 {
 	QSize sizeHint() const override
@@ -404,26 +400,22 @@ MonitorWidget::MonitorWidget(QWidget *_parent, MonitorWidget **_owner, const std
 
 	setUserData(0, new QMyUserData(WindowTypeMonitorWidget));
 
+	setWindowTitle(QString("Monitor - ") + renderer_filename.c_str());
+
 	renderer = new tke::Renderer;
 	renderer->loadXML(renderer_filename);
 
-	setWindowTitle(QString("Monitor - ") + renderer->filename.c_str());
-
 	scene = new tke::Scene;
 
-	_beginthread([](void *_p){
-		auto p = (MonitorWidget*)_p;
-		p->window = new MonitorWindow(p);
-		p->window->run(&p->windowDead);
-	}, 0, this);
-	while (!window) Sleep(100);
-
-	auto qWnd = QWindow::fromWinId((LONG_PTR)window->hWnd);
-	qWnd->setFlags(Qt::FramelessWindowHint);
-
-	QWidget *container = QWidget::createWindowContainer(qWnd);
+	auto container = new QVKContainer;
+	container->setAutoFillBackground(false);
 	container->setFixedWidth(tke::resCx);
 	container->setFixedHeight(tke::resCy);
+	window = new MonitorWindow(this, (HWND)container->winId());
+	container->p = window;
+	window->addToList();
+
+	selectedItem.select(window->obj);
 
 	auto scrollArea = new QMyScrollArea;
 	scrollArea->setWidget(container);
@@ -521,10 +513,13 @@ void AttributeWidget::listen(void *sender, tke::NotificationType type, void *new
 	attachCurrentObject();
 }
 
-
 WorldEditor::WorldEditor(QWidget *parent)
 	: QMainWindow(parent)
 {
+	auto timer = new QTimer(this);
+	connect(timer, &QTimer::timeout, this, &WorldEditor::update);
+	timer->start(0);
+
 	test_model = tke::createModel("brick.obj");
 
 	worldEditor = this;
@@ -624,7 +619,7 @@ void WorldEditor::on_view_game_explorer()
 {
 	if (gameExplorer) return;
 	gameExplorer = new GameExplorer(this);
-	addDockWidget(Qt::LeftDockWidgetArea, gameExplorer);
+	addDockWidget(Qt::TopDockWidgetArea, gameExplorer);
 }
 
 void WorldEditor::on_view_output_widget()
@@ -638,7 +633,7 @@ void WorldEditor::on_view_attribute_widget()
 {
 	if (attributeWidget) return;
 	attributeWidget = new AttributeWidget(this);
-	addDockWidget(Qt::RightDockWidgetArea, attributeWidget);
+	addDockWidget(Qt::TopDockWidgetArea, attributeWidget);
 }
 
 void WorldEditor::on_update_changes()
@@ -647,16 +642,15 @@ void WorldEditor::on_update_changes()
 	{
 		if (r->monitor)
 		{
-			r->monitor->window->state = tke::Window::State::eSinalToPause;
-			while (r->monitor->window->state != tke::Window::State::ePausing) Sleep(100);
-			// wait for window pausing
 			delete r->monitor->renderer;
 			r->monitor->renderer = new tke::Renderer;
 			r->monitor->renderer->loadXML(r->filename);
 			r->monitor->window->setRenderer();
-			// resume the window
-			r->monitor->window->state = tke::Window::State::eSinalToRun;
-			while (r->monitor->window->state != tke::Window::State::eRunning) Sleep(100);
 		}
 	}
+}
+
+void WorldEditor::update()
+{
+	tke::update();
 }

@@ -552,8 +552,7 @@ namespace tke
 		_icons.push_back(image);
 	}
 
-	GuiWindow::GuiWindow(int _cx, int _cy, const std::string &title, bool hasFrame)
-		:Window(_cx, _cy, title, hasFrame)
+	static void _create_window(GuiWindow *p)
 	{
 		static bool first = true;
 		if (first)
@@ -584,7 +583,7 @@ namespace tke
 			pipeline->m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
 			pipeline->setup(windowRenderPass, 0);
 
-			uiContext = ImGui::GetCurrentContext();
+			p->uiContext = ImGui::GetCurrentContext();
 
 			ImGuiIO& io = ImGui::GetIO();
 			unsigned char* pixels;
@@ -606,16 +605,16 @@ namespace tke
 		}
 		else
 		{
-			uiContext = ImGui::CreateContext();
+			p->uiContext = ImGui::CreateContext();
 		}
 
-		uiCmd = commandPool.allocate();
-		beginCommandBuffer(uiCmd);
-		vkCmdWaitEvents(uiCmd, 1, &renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-		vkCmdResetEvent(uiCmd, renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		vkEndCommandBuffer(uiCmd);
+		p->uiCmd = commandPool.allocate();
+		beginCommandBuffer(p->uiCmd);
+		vkCmdWaitEvents(p->uiCmd, 1, &p->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+		vkCmdResetEvent(p->uiCmd, p->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		vkEndCommandBuffer(p->uiCmd);
 
-		ImGui::SetCurrentContext(uiContext);
+		ImGui::SetCurrentContext(p->uiContext);
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
@@ -640,6 +639,18 @@ namespace tke
 		io.RenderDrawListsFn = _guiRenderer;
 		io.SetClipboardTextFn = _SetClipboardCallback;
 		io.GetClipboardTextFn = _GetClipboardCallback;
+	}
+
+	GuiWindow::GuiWindow(int _cx, int _cy, HWND _hWnd)
+		:Window(_cx, _cy, _hWnd)
+	{
+		_create_window(this);
+	}
+
+	GuiWindow::GuiWindow(int _cx, int _cy, const std::string &title, bool hasFrame)
+		:Window(_cx, _cy, title, hasFrame)
+	{
+		_create_window(this);
 	}
 
 	void GuiWindow::beginUi()

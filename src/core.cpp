@@ -263,10 +263,144 @@ namespace tke
 
 	VkRenderPass windowRenderPass;
 
-	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame)
+	static void _create_window(Window *p)
 	{
-		cx = _cx;
-		cy = _cy;
+		VkResult res;
+
+		inst.cs.lock();
+		device.cs.lock();
+
+		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
+		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		surfaceInfo.hinstance = hInst;
+		surfaceInfo.hwnd = p->hWnd;
+		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &p->surface);
+		assert(res == VK_SUCCESS);
+
+		VkSwapchainCreateInfoKHR swapchainInfo = {};
+		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchainInfo.surface = p->surface;
+		swapchainInfo.minImageCount = 2;
+		swapchainInfo.imageFormat = swapchainFormat;
+		swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+		swapchainInfo.imageExtent.width = p->cx;
+		swapchainInfo.imageExtent.height = p->cy;
+		swapchainInfo.imageArrayLayers = 1;
+		swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+		swapchainInfo.clipped = true;
+		res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &p->swapchain);
+		assert(res == VK_SUCCESS);
+
+		VkImage vkImages[2];
+		uint32_t swapchainImageCount = 0;
+		vkGetSwapchainImagesKHR(device.v, p->swapchain, &swapchainImageCount, nullptr);
+		vkGetSwapchainImagesKHR(device.v, p->swapchain, &swapchainImageCount, vkImages);
+
+		device.cs.unlock();
+		inst.cs.unlock();
+
+		p->images = (Image*)malloc(sizeof(Image) * 2);
+
+		for (int i = 0; i < 2; i++)
+		{
+			new (&p->images[i]) Image(Image::eSwapchain, vkImages[i], p->cx, p->cy, swapchainFormat);
+
+			std::vector<VkImageView> views;
+			views.push_back(p->images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
+			p->framebuffers[i] = createFramebuffer(p->cx, p->cy, windowRenderPass, views);
+		}
+
+		p->commandPool.create();
+
+		p->imageAvailable = createSemaphore();
+		p->renderFinished = createEvent();
+		p->frameDone = createFence();
+	}
+
+	Window::Window(int _cx, int _cy, HWND _hWnd)
+		:cx(_cx), cy(_cy), hWnd(_hWnd)
+	{
+		_create_window(this);
+	}
+
+	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		auto p = (Window*)GetWindowLongPtr(hWnd, 0);
+
+		if (p)
+		{
+			switch (message)
+			{
+			case WM_LBUTTONDOWN:
+				p->mouseLeftDownEvent(LOWORD(lParam), HIWORD(lParam));
+				SetCapture(hWnd);
+				break;
+			case WM_LBUTTONUP:
+				p->mouseLeftUpEvent(LOWORD(lParam), HIWORD(lParam));
+				ReleaseCapture();
+				break;
+			case WM_MBUTTONDOWN:
+				p->mouseMiddleDownEvent(LOWORD(lParam), HIWORD(lParam));
+				SetCapture(hWnd);
+				break;
+			case WM_MBUTTONUP:
+				p->mouseMiddleUpEvent(LOWORD(lParam), HIWORD(lParam));
+				ReleaseCapture();
+				break;
+			case WM_RBUTTONDOWN:
+				p->mouseRightDownEvent(LOWORD(lParam), HIWORD(lParam));
+				SetCapture(hWnd);
+				break;
+			case WM_RBUTTONUP:
+				p->mouseRightUpEvent(LOWORD(lParam), HIWORD(lParam));
+				ReleaseCapture();
+				break;
+			case WM_MOUSEMOVE:
+				p->mouseMoveEvent(LOWORD(lParam), HIWORD(lParam));
+				break;
+			case WM_MOUSEWHEEL:
+				p->mouseWheelEvent((short)HIWORD(wParam));
+				break;
+			case WM_KEYDOWN:
+				p->keyDownEvent(wParam);
+				break;
+			case WM_KEYUP:
+				p->keyUpEvent(wParam);
+				break;
+			case WM_CHAR:
+				p->charEvent(wParam);
+				break;
+			case WM_DESTROY:
+				p->dead = true;
+				break;
+			}
+		}
+
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame)
+		:cx(_cx), cy(_cy)
+	{
+		static bool first = true;
+		if (first)
+		{
+			first = false;
+			WNDCLASSEXA wcex = {};
+			wcex.cbSize = sizeof(WNDCLASSEXA);
+			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+			wcex.lpfnWndProc = _wnd_proc;
+			wcex.hInstance = hInst;
+			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcex.lpszClassName = "tke_wnd";
+			wcex.cbWndExtra = sizeof(LONG_PTR);
+			RegisterClassExA(&wcex);
+		}
 
 		unsigned int windowStyle;
 		if (hasFrame)
@@ -282,68 +416,10 @@ namespace tke
 		{
 			windowStyle = WS_POPUP;
 		}
-		hWnd = CreateWindowA("wndClass", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
+		hWnd = CreateWindowA("tke_wnd", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
+		SetWindowLongPtr(hWnd, 0, (LONG_PTR)this);
 
-		assert(hWnd);
-
-		VkImage vkImages[2];
-
-		{
-			VkResult res;
-
-			inst.cs.lock();
-			device.cs.lock();
-
-			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
-			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			surfaceInfo.hinstance = hInst;
-			surfaceInfo.hwnd = hWnd;
-			res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
-			assert(res == VK_SUCCESS);
-
-			VkSwapchainCreateInfoKHR swapchainInfo = {};
-			swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-			swapchainInfo.surface = surface;
-			swapchainInfo.minImageCount = 2;
-			swapchainInfo.imageFormat = swapchainFormat;
-			swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-			swapchainInfo.imageExtent.width = cx;
-			swapchainInfo.imageExtent.height = cy;
-			swapchainInfo.imageArrayLayers = 1;
-			swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-			swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-			swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-			swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-			swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
-			swapchainInfo.clipped = true;
-			res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
-			assert(res == VK_SUCCESS);
-
-			uint32_t swapchainImageCount = 0;
-			vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, nullptr);
-			vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, vkImages);
-
-			device.cs.unlock();
-			inst.cs.unlock();
-		}
-
-		images = (Image*)malloc(sizeof(Image) * 2);
-
-		for (int i = 0; i < 2; i++)
-		{
-			new (&images[i]) Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
-
-			std::vector<VkImageView> views;
-			views.push_back(images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
-			framebuffers[i] = createFramebuffer(cx, cy, windowRenderPass, views);
-		}
-
-		commandPool.create();
-
-		imageAvailable = createSemaphore();
-		renderFinished = createEvent();
-		frameDone = createFence();
+		_create_window(this);
 	}
 
 	Window::~Window()
@@ -363,103 +439,93 @@ namespace tke
 		inst.cs.unlock();
 	}
 
-	thread_local Window *currentWindow = nullptr;
-	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-	{
-		if (currentWindow)
-		{
-			switch (message)
-			{
-			case WM_LBUTTONDOWN:
-			{
-				static int lastClickTime = 0;
-				if (nowTime - lastClickTime < 300)
-					currentWindow->doubleClick = true;
-				else
-					currentWindow->doubleClick = false;
-				lastClickTime = nowTime;
-				currentWindow->leftPressing = true;
-				currentWindow->leftDown = true;
-				currentWindow->leftUp = false;
-				currentWindow->mouseX = LOWORD(lParam);
-				currentWindow->mouseY = HIWORD(lParam);
-				SetCapture(hWnd);
-			}
-				break;
-			case WM_LBUTTONUP:
-				currentWindow->leftPressing = false;
-				currentWindow->leftDown = false;
-				currentWindow->leftUp = true;
-				ReleaseCapture();
-				break;
-			case WM_MBUTTONDOWN:
-				currentWindow->middlePressing = true;
-				currentWindow->mouseX = LOWORD(lParam);
-				currentWindow->mouseY = HIWORD(lParam);
-				SetCapture(hWnd);
-				break;
-			case WM_MBUTTONUP:
-				currentWindow->middlePressing = false;
-				ReleaseCapture();
-				break;
-			case WM_RBUTTONDOWN:
-				currentWindow->rightPressing = true;
-				currentWindow->mouseX = LOWORD(lParam);
-				currentWindow->mouseY = HIWORD(lParam);
-				SetCapture(hWnd);
-				break;
-			case WM_RBUTTONUP:
-				currentWindow->rightPressing = false;
-				ReleaseCapture();
-				break;
-			case WM_MOUSEMOVE:
-				currentWindow->mouseX = (short)LOWORD(lParam);
-				currentWindow->mouseY = (short)HIWORD(lParam);
-				break;
-			case WM_MOUSEWHEEL:
-				currentWindow->mouseScroll += (short)HIWORD(wParam);
-				break;
-			case WM_KEYDOWN:
-				currentWindow->keyDownEvent(wParam);
-				break;
-			case WM_KEYUP:
-				currentWindow->keyUpEvent(wParam);
-				break;
-			case WM_CHAR:
-				currentWindow->charEvent(wParam);
-				break;
-			case WM_DESTROY:
-				currentWindow->die = true;
-				break;
-			}
-			currentWindow->extraMsgEvent(hWnd, message, wParam, lParam);
-		}
-
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-
-	struct _WindowInit
-	{
-		_WindowInit()
-		{
-			WNDCLASSEXA wcex = {};
-			wcex.cbSize = sizeof(WNDCLASSEXA);
-			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-			wcex.lpfnWndProc = wndProc;
-			wcex.hInstance = hInst;
-			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wcex.lpszClassName = "wndClass";
-			RegisterClassExA(&wcex);
-		}
-	};
-	static _WindowInit _windowInit;
-
 	void Window::keyDownEvent(int wParam) {}
 	void Window::keyUpEvent(int wParam) {}
 	void Window::charEvent(int wParam) {}
-	void Window::mouseEvent() {}
+
+	void Window::mouseLeftDownEvent(int x, int y)
+	{
+		if (nowTime - lastClickTime < 300)
+			doubleClicked = true;
+		else
+			doubleClicked = false;
+		lastClickTime = nowTime;
+
+		leftPressing = true;
+		leftJustDown = true;
+		leftJustUp = false;
+
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseLeftUpEvent(int x, int y)
+	{
+		leftPressing = false;
+		leftJustDown = false;
+		leftJustUp = true;
+
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseMiddleDownEvent(int x, int y)
+	{
+		middlePressing = true;
+
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseMiddleUpEvent(int x, int y)
+	{
+		middlePressing = false;
+
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseRightDownEvent(int x, int y)
+	{
+		rightPressing = true;
+
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseRightUpEvent(int x, int y)
+	{
+		rightPressing = false;
+
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseMoveEvent(int x, int y)
+	{
+		mouseX = x;
+		mouseY = y;
+	}
+
+	void Window::mouseWheelEvent(int v)
+	{
+		mouseScroll += v;
+	}
+
 	void Window::renderEvent() {}
-	LRESULT Window::extraMsgEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) { return 0; }
+
+
+	void Window::update()
+	{
+		renderEvent();
+		frameCount++;
+
+		leftJustDown = false;
+		leftJustUp = false;
+		mousePrevX = mouseX;
+		mousePrevY = mouseY;
+		mouseScroll = 0;
+	}
 
 	int Window::getFPS()
 	{
@@ -500,152 +566,153 @@ namespace tke
 		graphicsQueue.cs.unlock();
 	}
 
-	void Window::run(bool *dead)
+	static std::vector<Window*> window_list;
+
+	void Window::addToList()
 	{
 		ShowWindow(hWnd, SW_NORMAL);
+		window_list.push_back(this);
+	}
 
-		currentWindow = this;
+	void update()
+	{
+		if (needUpdateVertexBuffer)
+		{
+			std::vector<Vertex> staticVertexs;
+			std::vector<int> staticIndices;
 
+			std::vector<AnimatedVertex> animatedVertexs;
+			std::vector<int> animatedIndices;
+
+			for (auto pModel : models)
+			{
+				if (!pModel->animated)
+				{
+					pModel->vertexBase = staticVertexs.size();
+					pModel->indiceBase = staticIndices.size();
+
+					for (int i = 0; i < pModel->positions.size(); i++)
+					{
+						Vertex vertex;
+						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+						else vertex.position = glm::vec3(0.f);
+						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+						else vertex.uv = glm::vec2(0.f);
+						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+						else vertex.normal = glm::vec3(0.f);
+						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+						else vertex.tangent = glm::vec3(0.f);
+
+						staticVertexs.push_back(vertex);
+					}
+					for (int i = 0; i < pModel->indices.size(); i++)
+					{
+						staticIndices.push_back(pModel->indices[i]);
+					}
+				}
+				else
+				{
+					pModel->vertexBase = animatedVertexs.size();
+					pModel->indiceBase = animatedIndices.size();
+
+					for (int i = 0; i < pModel->positions.size(); i++)
+					{
+						AnimatedVertex vertex;
+						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+						else vertex.position = glm::vec3(0.f);
+						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+						else vertex.uv = glm::vec2(0.f);
+						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+						else vertex.normal = glm::vec3(0.f);
+						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+						else vertex.tangent = glm::vec3(0.f);
+
+						if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
+						else vertex.boneWeight = glm::vec4(0.f);
+						if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
+						else vertex.boneID = glm::vec4(0.f);
+
+						animatedVertexs.push_back(vertex);
+					}
+					for (int i = 0; i < pModel->indices.size(); i++)
+					{
+						animatedIndices.push_back(pModel->indices[i]);
+					}
+				}
+			}
+
+			if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
+			if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
+
+			if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
+			if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
+
+			tke::needRedraw = true;
+			needUpdateVertexBuffer = false;
+		}
+		if (needUpdateTexture)
+		{
+			static int map_position0 = -1;
+			static int map_position1 = -1;
+			if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
+			if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
+			if (map_position0 != -1 && map_position1 != -1)
+			{
+				for (int index = 0; index < textures.size(); index++)
+				{
+					descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, textures[index]->getInfo(colorSampler), index);
+					descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
+				}
+				descriptorPool.update();
+				needUpdateTexture = false;
+			}
+		}
+		if (needUpdateMaterialBuffer)
+		{
+			if (materials.size() > 0)
+				materialBuffer->update(materials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * materials.size());
+			needUpdateMaterialBuffer = false;
+		}
+
+		for (auto it = window_list.begin(); it != window_list.end(); )
+		{
+			auto w = *it;
+			if (w->dead)
+			{
+				delete w;
+				it = window_list.erase(it);
+			}
+			else
+			{
+				w->update();
+
+				it++;
+			}
+		}
+	}
+
+	void run()
+	{
 		startUpTime = GetTickCount();
 
 		for (;;)
 		{
-			if (state == eSinalToPause)
-			{
-				state = ePausing;
-				while (state != eSinalToRun) Sleep(100);
-				state = eRunning;
-			}
-
 			nowTime = GetTickCount() - startUpTime;
 			processEvents();
 
-			bool hasMsg;
-
 			MSG msg;
-			hasMsg = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-			if (hasMsg)
+			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-
-			if (die)
+			else
 			{
-				delete this;
-				*dead = true;
+				update();
+			}
+
+			if (window_list.size() == 0)
 				return;
-			}
-
-			if (!hasMsg)
-			{
-				if (needUpdateVertexBuffer)
-				{
-					std::vector<Vertex> staticVertexs;
-					std::vector<int> staticIndices;
-
-					std::vector<AnimatedVertex> animatedVertexs;
-					std::vector<int> animatedIndices;
-
-					for (auto pModel : models)
-					{
-						if (!pModel->animated)
-						{
-							pModel->vertexBase = staticVertexs.size();
-							pModel->indiceBase = staticIndices.size();
-
-							for (int i = 0; i < pModel->positions.size(); i++)
-							{
-								Vertex vertex;
-								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-								else vertex.position = glm::vec3(0.f);
-								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-								else vertex.uv = glm::vec2(0.f);
-								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-								else vertex.normal = glm::vec3(0.f);
-								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-								else vertex.tangent = glm::vec3(0.f);
-
-								staticVertexs.push_back(vertex);
-							}
-							for (int i = 0; i < pModel->indices.size(); i++)
-							{
-								staticIndices.push_back(pModel->indices[i]);
-							}
-						}
-						else
-						{
-							pModel->vertexBase = animatedVertexs.size();
-							pModel->indiceBase = animatedIndices.size();
-
-							for (int i = 0; i < pModel->positions.size(); i++)
-							{
-								AnimatedVertex vertex;
-								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-								else vertex.position = glm::vec3(0.f);
-								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-								else vertex.uv = glm::vec2(0.f);
-								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-								else vertex.normal = glm::vec3(0.f);
-								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-								else vertex.tangent = glm::vec3(0.f);
-
-								if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
-								else vertex.boneWeight = glm::vec4(0.f);
-								if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
-								else vertex.boneID = glm::vec4(0.f);
-
-								animatedVertexs.push_back(vertex);
-							}
-							for (int i = 0; i < pModel->indices.size(); i++)
-							{
-								animatedIndices.push_back(pModel->indices[i]);
-							}
-						}
-					}
-
-					if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
-					if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
-
-					if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
-					if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
-
-					tke::needRedraw = true;
-					needUpdateVertexBuffer = false;
-				}
-				if (needUpdateTexture)
-				{
-					static int map_position0 = -1;
-					static int map_position1 = -1;
-					if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
-					if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
-					if (map_position0 != -1 && map_position1 != -1)
-					{
-						for (int index = 0; index < textures.size(); index++)
-						{
-							descriptorPool.addWrite(mrtPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, textures[index]->getInfo(colorSampler), index);
-							descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
-						}
-						descriptorPool.update();
-						needUpdateTexture = false;
-					}
-				}
-				if (needUpdateMaterialBuffer)
-				{
-					if (materials.size() > 0)
-						materialBuffer->update(materials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * materials.size());
-					needUpdateMaterialBuffer = false;
-				}
-
-				mouseEvent();
-				renderEvent();
-				frameCount++;
-				leftDown = false;
-				leftUp = false;
-				mousePrevX = mouseX;
-				mousePrevY = mouseY;
-				mouseScroll = 0;
-			}
 		}
 	}
 }

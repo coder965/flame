@@ -1,4 +1,5 @@
 #include "world_editor.h"
+#include <QTimer>
 #include <QtWidgets/QApplication>
 
 int main(int argc, char *argv[])
