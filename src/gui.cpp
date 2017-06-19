@@ -5,7 +5,9 @@
 
 namespace tke
 {
-	static thread_local GuiWindow *window;
+	static thread_local Window *current_window;
+	static bool need_wait_event = true;
+	static bool need_clear = false;
 
 	bool uiAcceptedMouse = false;
 	bool uiAcceptedKey = false;
@@ -401,50 +403,9 @@ namespace tke
 		saveFileDialog.show();
 	}
 
-	static void _SetClipboardCallback(void *user_data, const char *s)
-	{
-		setClipBoard(s);
-	}
-
-	static const char *_GetClipboardCallback(void *user_data)
-	{
-		return getClipBoard();
-	}
-
-	void GuiWindow::keyDownEvent(int wParam)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeysDown[wParam] = true;
-
-		io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
-		io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
-		io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
-		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
-	}
-
-	void GuiWindow::keyUpEvent(int wParam)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeysDown[wParam] = false;
-
-		io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
-		io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
-		io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
-		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
-	}
-
-	void GuiWindow::charEvent(int wParam)
-	{
-		if (wParam == VK_TAB)
-			return;
-		ImGuiIO& io = ImGui::GetIO();
-		if (wParam > 0 && wParam < 0x10000)
-			io.AddInputCharacter((unsigned short)wParam);
-	}
-
 	static Pipeline *pipeline = nullptr;
 
-	static void _guiRenderer(ImDrawData* draw_data)
+	static void _gui_renderer(ImDrawData* draw_data)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		if ((int)(io.DisplaySize.x * io.DisplayFramebufferScale.x) == 0 || (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y) == 0)
@@ -489,18 +450,23 @@ namespace tke
 			}
 			stagingBuffer->unmap();
 
-			window->commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, vertexBuffer->m_buffer, vertex_size, 0, 0);
-			window->commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, indexBuffer->m_buffer, index_size, vertex_size, 0);
+			commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, vertexBuffer->m_buffer, vertex_size, 0, 0);
+			commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, indexBuffer->m_buffer, index_size, vertex_size, 0);
 		}
 
-		auto cmd = window->uiCmd;
+		auto cmd = current_window->ui->cmd;
 
 		vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 		beginCommandBuffer(cmd);
 
-		vkCmdWaitEvents(cmd, 1, &window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+		if (need_wait_event)
+			vkCmdWaitEvents(cmd, 1, &current_window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(windowRenderPass, window->framebuffers[window->imageIndex]->v, resCx, resCy, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
+		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(need_clear ? plainRenderPass_clear : plainRenderPass, 
+			current_window->framebuffers[current_window->imageIndex]->v, current_window->cx, current_window->cy, need_clear ? 1 : 0, need_clear ? &clear_value : nullptr), VK_SUBPASS_CONTENTS_INLINE);
+
+		cmdSetViewportAndScissor(cmd, current_window->cx, current_window->cy);
 
 		VkDeviceSize vertex_offset[1] = { 0 };
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
@@ -541,18 +507,26 @@ namespace tke
 
 		vkCmdEndRenderPass(cmd);
 
-		vkCmdResetEvent(cmd, window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		if (need_wait_event)
+			vkCmdResetEvent(cmd, current_window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 		vkEndCommandBuffer(cmd);
 	}
 
-	std::vector<Image*> _icons;
-	void guiPushIcon(Image *image)
+	static void _SetClipboardCallback(void *user_data, const char *s)
 	{
-		_icons.push_back(image);
+		setClipBoard(s);
 	}
 
-	static void _create_window(GuiWindow *p)
+	static const char *_GetClipboardCallback(void *user_data)
+	{
+		return getClipBoard();
+	}
+
+	static std::vector<Image*> _icons;
+
+	GuiComponent::GuiComponent(Window *_window)
+		:window(_window)
 	{
 		static bool first = true;
 		if (first)
@@ -581,9 +555,9 @@ namespace tke
 			pipeline->loadXML(enginePath + "pipeline/ui/ui.xml");
 			pipeline->m_pVertexInputState = &vertex_info;
 			pipeline->m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
-			pipeline->setup(windowRenderPass, 0);
+			pipeline->setup(plainRenderPass, 0);
 
-			p->uiContext = ImGui::GetCurrentContext();
+			context = ImGui::GetCurrentContext();
 
 			ImGuiIO& io = ImGui::GetIO();
 			unsigned char* pixels;
@@ -605,16 +579,14 @@ namespace tke
 		}
 		else
 		{
-			p->uiContext = ImGui::CreateContext();
+			context = ImGui::CreateContext();
 		}
 
-		p->uiCmd = commandPool.allocate();
-		beginCommandBuffer(p->uiCmd);
-		vkCmdWaitEvents(p->uiCmd, 1, &p->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-		vkCmdResetEvent(p->uiCmd, p->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		vkEndCommandBuffer(p->uiCmd);
+		cmd = commandPool.allocate();
+		beginCommandBuffer(cmd);
+		vkEndCommandBuffer(cmd);
 
-		ImGui::SetCurrentContext(p->uiContext);
+		ImGui::SetCurrentContext(context);
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
@@ -636,53 +608,79 @@ namespace tke
 		io.KeyMap[ImGuiKey_X] = 'X';
 		io.KeyMap[ImGuiKey_Y] = 'Y';
 		io.KeyMap[ImGuiKey_Z] = 'Z';
-		io.RenderDrawListsFn = _guiRenderer;
+		io.RenderDrawListsFn = _gui_renderer;
 		io.SetClipboardTextFn = _SetClipboardCallback;
 		io.GetClipboardTextFn = _GetClipboardCallback;
 	}
 
-	GuiWindow::GuiWindow(int _cx, int _cy, HWND _hWnd)
-		:Window(_cx, _cy, _hWnd)
+	void GuiComponent::onKeyDown(int k)
 	{
-		_create_window(this);
+		ImGuiIO& io = ImGui::GetIO();
+		io.KeysDown[k] = true;
+
+		io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
+		io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
+		io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
+		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
 	}
 
-	GuiWindow::GuiWindow(int _cx, int _cy, const std::string &title, bool hasFrame)
-		:Window(_cx, _cy, title, hasFrame)
+	void GuiComponent::onKeyUp(int k)
 	{
-		_create_window(this);
+		ImGuiIO& io = ImGui::GetIO();
+		io.KeysDown[k] = false;
+
+		io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
+		io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
+		io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
+		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
 	}
 
-	void GuiWindow::beginUi()
+	void GuiComponent::onChar(int c)
 	{
-		window = this;
+		if (c == VK_TAB)
+			return;
+		ImGuiIO& io = ImGui::GetIO();
+		if (c > 0 && c < 0x10000)
+			io.AddInputCharacter((unsigned short)c);
+	}
+
+	void GuiComponent::begin(bool _need_wait_event, bool _need_clear)
+	{
+		current_window = window;
+		need_wait_event = _need_wait_event;
+		need_clear = _need_clear;
 
 		uiAcceptedMouse = false;
 		uiAcceptedKey = false;
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		io.DisplaySize = ImVec2((float)cx, (float)cy);
+		io.DisplaySize = ImVec2((float)window->cx, (float)window->cy);
 		io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
 		io.DeltaTime = (float)(1.0f / 60.0f);
 
-		io.MousePos = ImVec2((float)mouseX, (float)mouseY);
+		io.MousePos = ImVec2((float)window->mouseX, (float)window->mouseY);
 
-		io.MouseDown[0] = leftPressing;
-		io.MouseDown[1] = rightPressing;
-		io.MouseDown[2] = middlePressing;
+		io.MouseDown[0] = window->leftPressing;
+		io.MouseDown[1] = window->rightPressing;
+		io.MouseDown[2] = window->middlePressing;
 
-		io.MouseWheel = mouseScroll / 120;
+		io.MouseWheel = window->mouseScroll / 120;
 
 		ImGui::NewFrame();
 	}
 
-	void GuiWindow::endUi()
+	void GuiComponent::end()
 	{
 		ImGui::Render();
 
 		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
 		uiAcceptedKey = ImGui::IsAnyItemActive();
+	}
+
+	void guiPushIcon(Image *image)
+	{
+		_icons.push_back(image);
 	}
 }

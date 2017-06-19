@@ -256,7 +256,7 @@ void GameExplorer::on_item_dbClicked(QTreeWidgetItem *item, int column)
 	}
 }
 
-struct MonitorWindow : tke::GuiWindow
+struct MonitorWindow : tke::Window
 {
 	MonitorWidget *widget;
 
@@ -266,7 +266,7 @@ struct MonitorWindow : tke::GuiWindow
 	VkCommandBuffer cmd[2];
 
 	MonitorWindow(MonitorWidget *_widget, HWND _hWnd)
-		:GuiWindow(tke::resCx, tke::resCy, _hWnd)
+		:Window(tke::resCx, tke::resCy, _hWnd, true)
 	{
 		widget = _widget;
 
@@ -367,13 +367,13 @@ struct MonitorWindow : tke::GuiWindow
 
 		beginFrame();
 
-		beginUi();
+		ui->begin();
 		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Text("FPS:%d", getFPS());
 		ImGui::End();
-		endUi();
+		ui->end();
 
-		VkCommandBuffer cmds[2] = { cmd[imageIndex], uiCmd };
+		VkCommandBuffer cmds[2] = { cmd[imageIndex], ui->cmd };
 		tke::graphicsQueue.submitFence(imageAvailable, 2, cmds, frameDone);
 
 		endFrame();

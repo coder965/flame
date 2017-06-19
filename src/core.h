@@ -6,6 +6,7 @@
 
 #include "math.h"
 #include "render.h"
+#include "gui.h"
 
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)
@@ -144,7 +145,8 @@ namespace tke
 	extern thread_local int startUpTime;
 	extern thread_local int nowTime;
 
-	extern VkRenderPass windowRenderPass;
+	extern VkRenderPass plainRenderPass;
+	extern VkRenderPass plainRenderPass_clear;
 
 	struct Window
 	{
@@ -166,12 +168,13 @@ namespace tke
 		VkSwapchainKHR swapchain;
 		Image *images = nullptr;
 		Framebuffer *framebuffers[2];
-		CommandPool commandPool;
 
 		VkSemaphore imageAvailable;
 		unsigned int imageIndex = 0;
 		VkEvent renderFinished;
 		VkFence frameDone;
+
+		GuiComponent *ui = nullptr;
 
 		bool dead = false;
 
@@ -190,9 +193,11 @@ namespace tke
 
 		void update();
 
-		Window(int _cx, int _cy, HWND _hWnd);
-		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true);
+		Window(int _cx, int _cy, HWND _hWnd, bool hasUi = false);
+		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true, bool hasUi = false, unsigned int windowStyle = 0);
 		~Window();
+		void createSwapchain();
+		void destroySwapchain();
 		int getFPS();
 		void beginFrame();
 		void endFrame();

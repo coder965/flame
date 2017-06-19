@@ -603,6 +603,26 @@ namespace tke
 		return info;
 	}
 
+	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy)
+	{
+		VkViewport viewport;
+		viewport.width = (float)cx;
+		viewport.height = (float)cy;
+		viewport.minDepth = (float)0.0f;
+		viewport.maxDepth = (float)1.0f;
+		viewport.x = 0;
+		viewport.y = 0;
+
+		VkRect2D scissor;
+		scissor.extent.width = cx;
+		scissor.extent.height = cy;
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+	}
+
 	static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location,
 		int32_t messageCode,
 		const char* pLayerPrefix,

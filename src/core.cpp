@@ -155,6 +155,9 @@ namespace tke
 	int thread_local startUpTime = 0;
 	int thread_local nowTime = 0;
 
+	VkRenderPass plainRenderPass;
+	VkRenderPass plainRenderPass_clear;
+
 	Err init(const std::string &path, int rcx, int rcy)
 	{
 		enginePath = path;
@@ -219,7 +222,8 @@ namespace tke
 
 		{
 			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			windowRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
+			plainRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
+			plainRenderPass_clear = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpassDesc(1, &ref), 0, nullptr);
 		}
 
 		initPhysics();
@@ -261,71 +265,22 @@ namespace tke
 		return Err::eNoErr;
 	}
 
-	VkRenderPass windowRenderPass;
-
-	static void _create_window(Window *p)
+	static void _create_window(Window *p, bool hasUi)
 	{
-		VkResult res;
-
-		inst.cs.lock();
-		device.cs.lock();
-
-		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
-		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		surfaceInfo.hinstance = hInst;
-		surfaceInfo.hwnd = p->hWnd;
-		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &p->surface);
-		assert(res == VK_SUCCESS);
-
-		VkSwapchainCreateInfoKHR swapchainInfo = {};
-		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapchainInfo.surface = p->surface;
-		swapchainInfo.minImageCount = 2;
-		swapchainInfo.imageFormat = swapchainFormat;
-		swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		swapchainInfo.imageExtent.width = p->cx;
-		swapchainInfo.imageExtent.height = p->cy;
-		swapchainInfo.imageArrayLayers = 1;
-		swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
-		swapchainInfo.clipped = true;
-		res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &p->swapchain);
-		assert(res == VK_SUCCESS);
-
-		VkImage vkImages[2];
-		uint32_t swapchainImageCount = 0;
-		vkGetSwapchainImagesKHR(device.v, p->swapchain, &swapchainImageCount, nullptr);
-		vkGetSwapchainImagesKHR(device.v, p->swapchain, &swapchainImageCount, vkImages);
-
-		device.cs.unlock();
-		inst.cs.unlock();
-
-		p->images = (Image*)malloc(sizeof(Image) * 2);
-
-		for (int i = 0; i < 2; i++)
-		{
-			new (&p->images[i]) Image(Image::eSwapchain, vkImages[i], p->cx, p->cy, swapchainFormat);
-
-			std::vector<VkImageView> views;
-			views.push_back(p->images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
-			p->framebuffers[i] = createFramebuffer(p->cx, p->cy, windowRenderPass, views);
-		}
-
-		p->commandPool.create();
+		p->createSwapchain();
 
 		p->imageAvailable = createSemaphore();
 		p->renderFinished = createEvent();
 		p->frameDone = createFence();
+
+		if (hasUi)
+			p->ui = new GuiComponent(p);
 	}
 
-	Window::Window(int _cx, int _cy, HWND _hWnd)
+	Window::Window(int _cx, int _cy, HWND _hWnd, bool hasUi)
 		:cx(_cx), cy(_cy), hWnd(_hWnd)
 	{
-		_create_window(this);
+		_create_window(this, hasUi);
 	}
 
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -375,6 +330,19 @@ namespace tke
 			case WM_CHAR:
 				p->charEvent(wParam);
 				break;
+			case WM_SIZE:
+			{
+				auto cx = LOWORD(lParam);
+				auto cy = HIWORD(lParam);
+				if (cx != p->cx || cy != p->cy)
+				{
+					p->cx = cx;
+					p->cy = cy;
+					p->destroySwapchain();
+					p->createSwapchain();
+				}
+			}
+				break;
 			case WM_DESTROY:
 				p->dead = true;
 				break;
@@ -384,7 +352,7 @@ namespace tke
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame)
+	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame, bool hasUi, unsigned int windowStyle)
 		:cx(_cx), cy(_cy)
 	{
 		static bool first = true;
@@ -402,7 +370,6 @@ namespace tke
 			RegisterClassExA(&wcex);
 		}
 
-		unsigned int windowStyle;
 		if (hasFrame)
 		{
 			RECT rect = { 0, 0, _cx, _cy };
@@ -410,16 +377,16 @@ namespace tke
 			_cx = rect.right - rect.left;
 			_cy = rect.bottom - rect.top;
 
-			windowStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+			windowStyle |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 		}
 		else
 		{
-			windowStyle = WS_POPUP;
+			windowStyle |= WS_POPUP;
 		}
 		hWnd = CreateWindowA("tke_wnd", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
 		SetWindowLongPtr(hWnd, 0, (LONG_PTR)this);
 
-		_create_window(this);
+		_create_window(this, hasUi);
 	}
 
 	Window::~Window()
@@ -430,6 +397,65 @@ namespace tke
 		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
 			releaseFramebuffer(framebuffers[i]);
+		destroySwapchain();
+	}
+
+	void Window::createSwapchain()
+	{
+
+		VkResult res;
+
+		inst.cs.lock();
+		device.cs.lock();
+
+		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
+		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		surfaceInfo.hinstance = hInst;
+		surfaceInfo.hwnd = hWnd;
+		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
+		assert(res == VK_SUCCESS);
+
+		VkSwapchainCreateInfoKHR swapchainInfo = {};
+		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchainInfo.surface = surface;
+		swapchainInfo.minImageCount = 2;
+		swapchainInfo.imageFormat = swapchainFormat;
+		swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+		swapchainInfo.imageExtent.width = cx;
+		swapchainInfo.imageExtent.height = cy;
+		swapchainInfo.imageArrayLayers = 1;
+		swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+		swapchainInfo.clipped = true;
+		res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
+		assert(res == VK_SUCCESS);
+
+		VkImage vkImages[2];
+		uint32_t swapchainImageCount = 0;
+		vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, nullptr);
+		vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, vkImages);
+
+		device.cs.unlock();
+		inst.cs.unlock();
+
+		images = (Image*)malloc(sizeof(Image) * 2);
+
+		for (int i = 0; i < 2; i++)
+		{
+			new (&images[i]) Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
+
+			std::vector<VkImageView> views;
+			views.push_back(images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
+			framebuffers[i] = createFramebuffer(cx, cy, plainRenderPass, views);
+		}
+	}
+
+	void Window::destroySwapchain()
+	{
 		delete images;
 		inst.cs.lock();
 		device.cs.lock();
@@ -439,9 +465,23 @@ namespace tke
 		inst.cs.unlock();
 	}
 
-	void Window::keyDownEvent(int wParam) {}
-	void Window::keyUpEvent(int wParam) {}
-	void Window::charEvent(int wParam) {}
+	void Window::keyDownEvent(int wParam) 
+	{
+		if (ui)
+			ui->onKeyDown(wParam);
+	}
+
+	void Window::keyUpEvent(int wParam) 
+	{
+		if (ui)
+			ui->onKeyUp(wParam);
+	}
+
+	void Window::charEvent(int wParam) 
+	{
+		if (ui)
+			ui->onChar(wParam);
+	}
 
 	void Window::mouseLeftDownEvent(int x, int y)
 	{

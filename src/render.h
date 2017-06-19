@@ -242,6 +242,8 @@ namespace tke
 	void destroyRenderPass(VkRenderPass rp);
 	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues);
 
+	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy);
+
 	Err initRender(bool debug);
 
 	REFLECTABLE enum class Format : int

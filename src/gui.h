@@ -4,7 +4,7 @@
 #include <vector>
 #include "..\..\..\imgui-master\imgui.h"
 
-#include "core.h"
+#include "math.h"
 #include "render.h"
 
 namespace tke
@@ -106,19 +106,21 @@ namespace tke
 	extern bool uiAcceptedMouse;
 	extern bool uiAcceptedKey;
 
-	struct GuiWindow : Window
+	struct Window;
+	struct GuiComponent
 	{
-		ImGuiContext *uiContext = nullptr;
-		VkCommandBuffer uiCmd;
+		Window *window;
 
-		virtual void keyDownEvent(int) override;
-		virtual void keyUpEvent(int) override;
-		virtual void charEvent(int) override;
+		ImGuiContext *context = nullptr;
+		VkCommandBuffer cmd;
+		glm::vec3 bkColor = glm::vec3(0.69f, 0.76f, 0.79f);
 
-		GuiWindow(int _cx, int _cy, HWND _hWnd);
-		GuiWindow(int _cx, int _cy, const std::string &title, bool hasFrame = true);
-		void beginUi();
-		void endUi();
+		GuiComponent(Window *_window);
+		void onKeyDown(int);
+		void onKeyUp(int);
+		void onChar(int);
+		void begin(bool _need_wait_event = true, bool _need_clear = false);
+		void end();
 	};
 
 	void guiPushIcon(Image *image);
