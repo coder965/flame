@@ -4,9 +4,13 @@
 #include "game.h"
 #include "monitor.h"
 
+tke::Image *titleImage = nullptr;
+
 EditorWindow::EditorWindow()
 	:Window(800, 600, "TK Engine Editor", true, true, WS_THICKFRAME)
 {
+	titleImage = tke::createImage("../misc/title.jpg", true);
+
 	game.load();
 }
 
@@ -101,6 +105,9 @@ void EditorWindow::renderEvent()
 
 	if (gameExplorer)
 		gameExplorer->show();
+
+	for (auto m : monitors)
+		m->show();
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
 	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);

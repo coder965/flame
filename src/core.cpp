@@ -262,6 +262,8 @@ namespace tke
 			constantBuffer->update(&stru, *stagingBuffer);
 		}
 
+		initGeneralModels();
+
 		return Err::eNoErr;
 	}
 
@@ -727,6 +729,7 @@ namespace tke
 					descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
 				}
 				descriptorPool.update();
+				tke::needRedraw = true;
 				needUpdateTexture = false;
 			}
 		}

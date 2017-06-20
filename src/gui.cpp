@@ -640,6 +640,9 @@ namespace tke
 
 	void GuiComponent::begin(bool _need_clear)
 	{
+		static int last_time = 0;
+		if (last_time == 0) last_time = nowTime;
+
 		current_window = window;
 		need_clear = _need_clear;
 
@@ -651,7 +654,8 @@ namespace tke
 		io.DisplaySize = ImVec2((float)window->cx, (float)window->cy);
 		io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
-		io.DeltaTime = (float)(1.0f / 60.0f);
+		io.DeltaTime = (float)((nowTime - last_time) / 1000.f);
+		last_time = nowTime;
 
 		io.MousePos = ImVec2((float)window->mouseX, (float)window->mouseY);
 

@@ -706,7 +706,6 @@ namespace tke
 
 				if (panoramaPipeline)
 				{ // update Atmospheric Scattering
-
 					{
 						float fScaleDepth = 0.25;// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
 
@@ -741,7 +740,6 @@ namespace tke
 
 						if (deferredPipeline)
 						{ // update IBL
-
 							static int defe_envr_position = -1;
 							if (defe_envr_position == -1) defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 

@@ -5,7 +5,6 @@
 int main(int argc, char *argv[])
 {
 	tke::init("../", 1280, 720);
-	tke::initGeneralModels();
 
 	QApplication a(argc, argv);
 	WorldEditor w;

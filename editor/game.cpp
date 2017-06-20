@@ -2,6 +2,7 @@
 #include "../src/model.h"
 
 #include "game.h"
+#include "monitor.h"
 
 void Game::load()
 {
@@ -64,9 +65,13 @@ void GameExplorer::show()
 	{
 		for (auto m : game.models)
 		{
-			if (ImGui::Selectable(m->filename.c_str()))
+			if (ImGui::Selectable(m->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
-
+				if (ImGui::IsMouseDoubleClicked(0))
+				{
+					auto monitor = new MonitorWidget("../renderer/master.xml", m->p);
+					monitors.push_back(monitor);
+				}
 			}
 		}
 		ImGui::TreePop();

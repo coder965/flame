@@ -17,10 +17,9 @@ struct MonitorWidget
 
 	bool opened = true;
 
-	MonitorWidget();
-
+	MonitorWidget(const std::string _renderer_filename, tke::Model *_model);
 	~MonitorWidget();
-
+	void makeCmd();
 	void show();
 };
 

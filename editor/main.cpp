@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv)
 {
-	tke::init("../", 800, 600);
+	tke::init("../", 800, 450);
 
 	mainWindow = new EditorWindow;
 	mainWindow->addToList();
