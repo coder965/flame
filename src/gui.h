@@ -119,11 +119,12 @@ namespace tke
 		void onKeyDown(int);
 		void onKeyUp(int);
 		void onChar(int);
-		void begin(bool _need_wait_event = true, bool _need_clear = false);
+		void begin(bool _need_clear = false);
 		void end();
 	};
 
-	void guiPushIcon(Image *image);
+	void addGuiImage(Image *image);
+	void removeGuiImage(Image *image);
 }
 
 #endif

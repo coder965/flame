@@ -6,7 +6,6 @@
 namespace tke
 {
 	static thread_local Window *current_window;
-	static bool need_wait_event = true;
 	static bool need_clear = false;
 
 	bool uiAcceptedMouse = false;
@@ -404,6 +403,7 @@ namespace tke
 	}
 
 	static Pipeline *pipeline = nullptr;
+	static int texture_position = -1;
 
 	static void _gui_renderer(ImDrawData* draw_data)
 	{
@@ -459,8 +459,8 @@ namespace tke
 		vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 		beginCommandBuffer(cmd);
 
-		if (need_wait_event)
-			vkCmdWaitEvents(cmd, 1, &current_window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+		if (current_window->events.size() > 0)
+			vkCmdWaitEvents(cmd, current_window->events.size(), current_window->events.data(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
 		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(need_clear ? plainRenderPass_clear : plainRenderPass, 
@@ -507,8 +507,8 @@ namespace tke
 
 		vkCmdEndRenderPass(cmd);
 
-		if (need_wait_event)
-			vkCmdResetEvent(cmd, current_window->renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		for (auto &e : current_window->events)
+			vkCmdResetEvent(cmd, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 		vkEndCommandBuffer(cmd);
 	}
@@ -522,8 +522,6 @@ namespace tke
 	{
 		return getClipBoard();
 	}
-
-	static std::vector<Image*> _icons;
 
 	GuiComponent::GuiComponent(Window *_window)
 		:window(_window)
@@ -566,16 +564,12 @@ namespace tke
 			auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
-			static int texture_position = -1;
 			if (texture_position == -1) texture_position = pipeline->descriptorPosition("sTexture");
 
 			descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
 
-			auto imageID = 1;
-			for (int index = 0; index < _icons.size(); index++)
-				descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _icons[index]->getInfo(colorSampler), index);
-
 			descriptorPool.update();
+
 		}
 		else
 		{
@@ -644,10 +638,9 @@ namespace tke
 			io.AddInputCharacter((unsigned short)c);
 	}
 
-	void GuiComponent::begin(bool _need_wait_event, bool _need_clear)
+	void GuiComponent::begin(bool _need_clear)
 	{
 		current_window = window;
-		need_wait_event = _need_wait_event;
 		need_clear = _need_clear;
 
 		uiAcceptedMouse = false;
@@ -679,8 +672,37 @@ namespace tke
 		uiAcceptedKey = ImGui::IsAnyItemActive();
 	}
 
-	void guiPushIcon(Image *image)
+	static std::vector<Image*> _images;
+
+	static void _update_descriptor_set()
 	{
-		_icons.push_back(image);
+		for (int index = 0; index < _images.size(); index++)
+		{
+			_images[index]->index = index + 1;
+			descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+		}
+
+		descriptorPool.update();
+	}
+
+	void addGuiImage(Image *image)
+	{
+		_images.push_back(image);
+
+		_update_descriptor_set();
+	}
+
+	void removeGuiImage(Image *image)
+	{
+		for (auto it = _images.begin(); it != _images.end(); it++)
+		{
+			if (*it == image)
+			{
+				_images.erase(it);
+				break;
+			}
+		}
+
+		_update_descriptor_set();
 	}
 }

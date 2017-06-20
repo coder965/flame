@@ -1237,20 +1237,6 @@ namespace tke
 		return h;
 	}
 
-	unsigned char Image::getPixel(int x, int y, int off) const
-	{
-		//if (!m_data || x >= m_width || y >= m_height)
-		//	return 0;
-
-		//int pixelLength = 4;
-		//int lineLength = PITCH(m_width);
-		//lineLength = PITCH(m_width * pixelLength);
-
-		//return m_data[x * pixelLength + y * lineLength + off];
-
-		return 0;
-	}
-
 	static VkBlendFactor _vkBlendFactor(BlendFactor f) 
 	{
 		switch (f)
@@ -3063,60 +3049,52 @@ namespace tke
 
 #include <FreeImage.h>
 
-	struct _ImageData
+	ImageData::~ImageData()
 	{
-		FREE_IMAGE_FORMAT fif;
-		size_t m_bpp;
-		size_t m_channel;
-		size_t m_cx;
-		size_t m_cy;
-		size_t m_pitch;
-		size_t m_size;
-		unsigned char *m_data;
-		~_ImageData()
-		{
-			delete[]m_data;
-		}
-		void swapChannel(size_t channel0, size_t channel1)
-		{
-			for (int i = 0; i < m_cy; i++)
-			{
-				for (int j = 0; j < m_cx; j++)
-					std::swap(m_data[i * m_pitch + j * m_channel + channel0], m_data[i * m_pitch + j * m_channel + channel1]);
-			}
-		}
-		void format()
-		{
-			if (m_channel == 4)
-			{
-				if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
-					fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
-					fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
-					fif == FREE_IMAGE_FORMAT::FIF_PNG)
-					swapChannel(0, 2);
-			}
-		}
-		VkFormat getVkFormat(bool sRGB)
-		{
-			switch (m_channel)
-			{
-			case 1:
-				switch (m_bpp)
-				{
-				case 16:
-					return VK_FORMAT_R16_UNORM;
-				}
-				break;
-			case 4:
-				if (sRGB) return VK_FORMAT_R8G8B8A8_SRGB;
-				else  return VK_FORMAT_R8G8B8A8_UNORM;
-			}
+		delete[]data;
+	}
 
-			return VK_FORMAT_UNDEFINED;
+	void ImageData::swapChannel(size_t channel0, size_t channel1)
+	{
+		for (int i = 0; i < cy; i++)
+		{
+			for (int j = 0; j < cx; j++)
+				std::swap(data[i * pitch + j * channel + channel0], data[i * pitch + j * channel + channel1]);
 		}
-	};
+	}
 
-	_ImageData *createImageData(const std::string &filename)
+	void ImageData::format()
+	{
+		if (channel == 4)
+		{
+			if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
+				fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
+				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
+				fif == FREE_IMAGE_FORMAT::FIF_PNG)
+				swapChannel(0, 2);
+		}
+	}
+
+	VkFormat ImageData::getVkFormat(bool sRGB)
+	{
+		switch (channel)
+		{
+		case 1:
+			switch (bpp)
+			{
+			case 16:
+				return VK_FORMAT_R16_UNORM;
+			}
+			break;
+		case 4:
+			if (sRGB) return VK_FORMAT_R8G8B8A8_SRGB;
+			else  return VK_FORMAT_R8G8B8A8_UNORM;
+		}
+
+		return VK_FORMAT_UNDEFINED;
+	}
+
+	ImageData *createImageData(const std::string &filename)
 	{
 		auto fif = FIF_UNKNOWN;
 		fif = FreeImage_GetFileType(filename.c_str());
@@ -3127,33 +3105,33 @@ namespace tke
 		if (!dib) return nullptr;
 		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			FreeImage_FlipVertical(dib);
-		auto pData = new _ImageData;
+		auto pData = new ImageData;
 		auto colorType = FreeImage_GetColorType(dib);
 		pData->fif = fif;
 		switch (colorType)
 		{
 		case FIC_MINISBLACK: case FIC_MINISWHITE:
-			pData->m_channel = 1;
+			pData->channel = 1;
 			break;
 		case FIC_RGB:
 		{
 			auto newDib = FreeImage_ConvertTo32Bits(dib);
 			FreeImage_Unload(dib);
 			dib = newDib;
-			pData->m_channel = 4;
+			pData->channel = 4;
 		}
 		break;
 		case FIC_RGBALPHA:
-			pData->m_channel = 4;
+			pData->channel = 4;
 			break;
 		}
-		pData->m_cx = FreeImage_GetWidth(dib);
-		pData->m_cy = FreeImage_GetHeight(dib);
-		pData->m_bpp = FreeImage_GetBPP(dib);
-		pData->m_pitch = FreeImage_GetPitch(dib);
-		pData->m_size = pData->m_pitch * pData->m_cy;
-		pData->m_data = new unsigned char[pData->m_size];
-		memcpy(pData->m_data, FreeImage_GetBits(dib), pData->m_size);
+		pData->cx = FreeImage_GetWidth(dib);
+		pData->cy = FreeImage_GetHeight(dib);
+		pData->bpp = FreeImage_GetBPP(dib);
+		pData->pitch = FreeImage_GetPitch(dib);
+		pData->size = pData->pitch * pData->cy;
+		pData->data = new unsigned char[pData->size];
+		memcpy(pData->data, FreeImage_GetBits(dib), pData->size);
 		FreeImage_Unload(dib);
 		return pData;
 	}
@@ -3167,9 +3145,9 @@ namespace tke
 
 		auto vkFormat = pData->getVkFormat(sRGB);
 
-		auto pImage = new Image(pData->m_cx, pData->m_cy, vkFormat, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pData->m_data, pData->m_size);
+		auto pImage = new Image(pData->cx, pData->cy, vkFormat, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pData->data, pData->size);
 		pImage->filename = filename;
-		pImage->m_sRGB = sRGB;
+		pImage->sRGB = sRGB;
 
 		delete pData;
 

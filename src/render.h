@@ -144,11 +144,9 @@ namespace tke
 
 		std::string filename;
 
-		bool m_sRGB = false;
+		bool sRGB = false;
 
 		int index = -1;
-
-		unsigned char *m_data = nullptr;
 
 		Image(int w, int h, VkFormat format, VkImageUsageFlags usage, int mipmapLevels = 1, void *data = nullptr, size_t size = 0, VkImageAspectFlags aspect = 0);
 		Image(Type _type, VkImage _image, int w, int h, VkFormat format);
@@ -159,7 +157,6 @@ namespace tke
 		void fillData(int level, void *data, size_t size, VkImageAspectFlags aspect);
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
-		unsigned char getPixel(int x, int y, int off) const;
 	};
 
 	Image *createImage(const std::string &filename, bool sRGB, bool saveData = false);
@@ -1047,6 +1044,25 @@ namespace tke
 		void updateDescriptors();
 		void execute(VkCommandBuffer cmd, int index = 0);
 	};
+
+	struct ImageData
+	{
+		int fif;
+		size_t bpp;
+		size_t channel;
+		size_t cx;
+		size_t cy;
+		size_t pitch;
+		size_t size;
+		unsigned char *data;
+
+		~ImageData();
+		void swapChannel(size_t channel0, size_t channel1);
+		void format();
+		VkFormat getVkFormat(bool sRGB);
+	};
+
+	ImageData *createImageData(const std::string &filename);
 }
 
 #endif

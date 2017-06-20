@@ -270,7 +270,6 @@ namespace tke
 		p->createSwapchain();
 
 		p->imageAvailable = createSemaphore();
-		p->renderFinished = createEvent();
 		p->frameDone = createFence();
 
 		if (hasUi)
@@ -359,15 +358,21 @@ namespace tke
 		if (first)
 		{
 			first = false;
+
+			auto iconData = createImageData(enginePath + "misc/ico.ico");
+
 			WNDCLASSEXA wcex = {};
 			wcex.cbSize = sizeof(WNDCLASSEXA);
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.hInstance = hInst;
+			wcex.hIcon = CreateIcon(hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->data);
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			wcex.cbWndExtra = sizeof(LONG_PTR);
 			RegisterClassExA(&wcex);
+
+			delete iconData;
 		}
 
 		if (hasFrame)
@@ -392,7 +397,8 @@ namespace tke
 	Window::~Window()
 	{
 		destroyFence(frameDone);
-		destroyEvent(renderFinished);
+		for (auto &e : events)
+			destroyEvent(e);
 		destroySemaphore(imageAvailable);
 		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
@@ -463,6 +469,23 @@ namespace tke
 		vkDestroySurfaceKHR(inst.v, surface, nullptr);
 		device.cs.unlock();
 		inst.cs.unlock();
+	}
+
+	void Window::addEvent(VkEvent e)
+	{
+		events.push_back(e);
+	}
+
+	void Window::removeEvent(VkEvent e)
+	{
+		for (auto it = events.begin(); it != events.end(); it++)
+		{
+			if (*it == e)
+			{
+				events.erase(it);
+				break;
+			}
+		}
 	}
 
 	void Window::keyDownEvent(int wParam) 

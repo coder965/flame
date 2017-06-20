@@ -1868,7 +1868,7 @@ namespace tke
 			for (auto pImage : m->pImages)
 			{
 				file << pImage->filename;
-				file << pImage->m_sRGB;
+				file << pImage->sRGB;
 				if (copyTexture)
 				{
 					std::string srcFilename = m->filepath + "/" + pImage->filename;

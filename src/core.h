@@ -171,7 +171,7 @@ namespace tke
 
 		VkSemaphore imageAvailable;
 		unsigned int imageIndex = 0;
-		VkEvent renderFinished;
+		std::vector<VkEvent> events;
 		VkFence frameDone;
 
 		GuiComponent *ui = nullptr;
@@ -198,6 +198,8 @@ namespace tke
 		~Window();
 		void createSwapchain();
 		void destroySwapchain();
+		void addEvent(VkEvent);
+		void removeEvent(VkEvent);
 		int getFPS();
 		void beginFrame();
 		void endFrame();
