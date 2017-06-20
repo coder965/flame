@@ -99,11 +99,6 @@ void RendererEditorStruct::setItemText()
 		item->setText(0, QString(filename.c_str()));
 }
 
-RendererEditorStruct::~RendererEditorStruct()
-{
-	delete item;
-}
-
 void ModelEditorStruct::setItemText()
 {
 	if (item)
@@ -263,6 +258,7 @@ struct MonitorWindow : tke::Window
 	tke::Object *obj;
 	tke::Light *lit;
 
+	VkEvent renderFinished;
 	VkCommandBuffer cmd[2];
 
 	MonitorWindow(MonitorWidget *_widget, HWND _hWnd)
@@ -280,6 +276,8 @@ struct MonitorWindow : tke::Window
 
 		setRenderer();
 
+		renderFinished = tke::createEvent();
+		addEvent(renderFinished);
 		for (int i = 0; i < 2; i++)
 			cmd[i] = tke::commandPool.allocate();
 

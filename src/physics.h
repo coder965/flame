@@ -1,5 +1,4 @@
-#ifndef __TKE_PHYSICS__
-#define __TKE_PHYSICS__
+#pragma once
 
 #include <PxPhysicsAPI.h>
 
@@ -14,5 +13,3 @@ namespace tke
 
 	void initPhysics();
 }
-
-#endif

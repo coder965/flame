@@ -1,5 +1,4 @@
-#ifndef __TK_MATH__
-#define __TK_MATH__
+#pragma once
 
 #include <fstream>
 
@@ -74,5 +73,3 @@ namespace tke
 	float noise2d(glm::vec2 v);
 	float fbm2d(glm::vec2 v);
 }
-
-#endif

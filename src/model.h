@@ -1,5 +1,4 @@
-#ifndef __TKE_MODEL__
-#define __TKE_MODEL__
+#pragma once
 
 #include <vector>
 #include <string>
@@ -311,5 +310,3 @@ namespace tke
 
 	Animation *createAnimation(const std::string &filename);
 }
-
-#endif

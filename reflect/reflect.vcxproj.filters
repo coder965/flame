@@ -33,9 +33,4 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="1.l">
-      <Filter>头文件</Filter>
-    </None>
-  </ItemGroup>
 </Project>

@@ -57,7 +57,6 @@ struct RendererEditorStruct
 	MonitorWidget *monitor = nullptr;
 
 	void setItemText();
-	~RendererEditorStruct();
 };
 
 struct ModelEditorStruct

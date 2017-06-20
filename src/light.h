@@ -1,5 +1,4 @@
-#ifndef __TKE_LIGHT__
-#define __TKE_LIGHT__
+#pragma once
 
 #include "transformer.h"
 
@@ -28,5 +27,3 @@ namespace tke
 		Light(LightType _type);
 	};
 }
-
-#endif

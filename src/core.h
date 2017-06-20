@@ -1,5 +1,4 @@
-#ifndef __TKE__
-#define __TKE__
+#pragma once
 
 #include <atomic>
 #include <Windows.h>
@@ -209,5 +208,3 @@ namespace tke
 	void update();
 	void run();
 }
-
-#endif

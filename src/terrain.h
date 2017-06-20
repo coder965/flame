@@ -1,5 +1,4 @@
-#ifndef __TKE_TERRAIN__
-#define __TKE_TERRAIN__
+#pragma once
 
 #include "transformer.h"
 
@@ -19,5 +18,3 @@ namespace tke
 		float roughness = 1.f;
 	};
 }
-
-#endif

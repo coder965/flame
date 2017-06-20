@@ -1,5 +1,4 @@
-#ifndef __TKE_RENDER__
-#define __TKE_RENDER__
+#pragma once
 
 #include <vector>
 #include <list>
@@ -1064,5 +1063,3 @@ namespace tke
 
 	ImageData *createImageData(const std::string &filename);
 }
-
-#endif

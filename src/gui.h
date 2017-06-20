@@ -1,5 +1,4 @@
-#ifndef __TKE_GUI__
-#define __TKE_GUI__
+#pragma once
 
 #include <vector>
 #include "..\..\..\imgui-master\imgui.h"
@@ -126,5 +125,3 @@ namespace tke
 	void addGuiImage(Image *image);
 	void removeGuiImage(Image *image);
 }
-
-#endif

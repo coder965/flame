@@ -1,5 +1,4 @@
-#ifndef __TKE_TRANSFORMER__
-#define __TKE_TRANSFORMER__
+#pragma once
 
 #include "math.h"
 
@@ -110,5 +109,3 @@ namespace tke
 		void updateQuat();
 	};
 }
-
-#endif

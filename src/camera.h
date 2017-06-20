@@ -1,5 +1,4 @@
-#ifndef __TKE_CAMERA__
-#define __TKE_CAMERA__
+#pragma once
 
 #include <fstream>
 
@@ -36,5 +35,3 @@ namespace tke
 		void move();
 	};
 }
-
-#endif

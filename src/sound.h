@@ -1,5 +1,4 @@
-#ifndef __TK_SOUND__
-#define __TK_SOUND__
+#pragma once
 
 #include <vector>
 //#include <al.h>  
@@ -29,5 +28,3 @@
 //
 //	void initSound();
 //}
-
-#endif

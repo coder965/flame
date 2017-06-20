@@ -1,5 +1,4 @@
-#ifndef __TKE_UTILS__
-#define __TKE_UTILS__
+#pragma once
 
 #include <memory>
 #include <fstream>
@@ -214,6 +213,7 @@ namespace tke
 		std::vector<AttributeTreeNode*> children;
 
 		AttributeTreeNode(const std::string &_name);
+		AttributeTreeNode(const std::string &_name, const std::string &_filename);
 		~AttributeTreeNode();
 		AttributeTreeNode *firstNode(const std::string &_name);
 		std::pair<Variable*, std::string> *firstAttribute(const std::string &_name);
@@ -315,5 +315,3 @@ namespace tke
 		void removeObserver(Observer*);
 	};
 }
-
-#endif

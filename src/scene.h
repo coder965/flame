@@ -1,5 +1,4 @@
-#ifndef __TKE_SCENE__
-#define __TKE_SCENE__
+#pragma once
 
 #include <vector>
 
@@ -212,5 +211,3 @@ namespace tke
 
 	void loadScene(char *s);
 }
-
-#endif

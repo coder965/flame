@@ -240,6 +240,12 @@ namespace tke
 		: name(_name)
 	{}
 
+	AttributeTreeNode::AttributeTreeNode(const std::string &_name, const std::string &_filename)
+		: name(_name)
+	{
+		loadXML(_filename);
+	}
+
 	AttributeTreeNode::~AttributeTreeNode()
 	{
 		for (auto c : children) delete c;

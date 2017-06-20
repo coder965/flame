@@ -1,5 +1,4 @@
-#ifndef __TKE_OBJECT__
-#define __TKE_OBJECT__
+#pragma once
 
 #include "transformer.h"
 #include "controler.h"
@@ -42,5 +41,3 @@ namespace tke
 		~Object();
 	};
 }
-
-#endif

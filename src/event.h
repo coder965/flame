@@ -1,5 +1,4 @@
-#ifndef __TKE_EVENT__
-#define __TKE_EVENT__
+#pragma once
 
 #include <vector>
 
@@ -28,5 +27,3 @@ namespace tke
 	void removeEventList(EventList *);
 	void processEvents();
 }
-
-#endif

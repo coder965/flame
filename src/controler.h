@@ -1,5 +1,4 @@
-#ifndef __TKE_CONTROLER__
-#define __TKE_CONTROLER__
+#pragma once
 
 #include "math.h"
 
@@ -19,5 +18,3 @@ namespace tke
 		bool keyUp(int key);
 	};
 }
-
-#endif
