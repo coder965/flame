@@ -30,6 +30,9 @@
     <ClCompile Include="monitor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="attribute.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editor.h">
@@ -39,6 +42,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="monitor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="attribute.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

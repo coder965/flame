@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#define NOMINMAX
 #include <Windows.h>
 
 #include "math.h"

@@ -3047,6 +3047,7 @@ namespace tke
 		currentDescriptorSet = 0;
 	}
 
+#define NOMINMAX
 #include <FreeImage.h>
 
 	ImageData::~ImageData()

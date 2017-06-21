@@ -4,8 +4,6 @@
 #include "../src/scene.h"
 
 #include "editor.h"
-#include "game.h"
-#include "monitor.h"
 
 int main(int argc, char** argv)
 {

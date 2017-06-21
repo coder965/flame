@@ -7,7 +7,8 @@
 #include <memory>
 #include <experimental/filesystem>
 
-#define VK_USE_PLATFORM_WIN32_KHR 1
+#define NOMINMAX
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
 
 #include "utils.h"

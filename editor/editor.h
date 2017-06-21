@@ -1,9 +1,7 @@
 #pragma once
 
 #include "../src/core.h"
-
-#include "game.h"
-#include "monitor.h"
+#include "../src/scene.h"
 
 extern tke::Image *titleImage;
 

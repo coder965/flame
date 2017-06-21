@@ -3,6 +3,7 @@
 #include "editor.h"
 #include "game.h"
 #include "monitor.h"
+#include "attribute.h"
 
 tke::Image *titleImage = nullptr;
 
@@ -122,6 +123,8 @@ void EditorWindow::renderEvent()
 		}
 		if (ImGui::MenuItem("Attribute"))
 		{
+			if (!attributeWidget)
+				attributeWidget = new AttributeWidget;
 		}
 		ImGui::EndMenu();
 	}
@@ -143,6 +146,9 @@ void EditorWindow::renderEvent()
 
 	if (gameExplorer)
 		gameExplorer->show();
+
+	if (attributeWidget)
+		attributeWidget->show();
 
 	for (auto m : monitors)
 		m->show();

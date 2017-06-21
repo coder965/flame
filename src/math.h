@@ -1,13 +1,12 @@
 #pragma once
 
 #include <fstream>
-
-#include "../../../glm/glm.hpp"
-#include "../../../glm/gtc/matrix_transform.hpp"
-#include "../../../glm/gtx/transform2.hpp"
-
 #define _USE_MATH_DEFINES
 #include <math.h>
+
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtx/transform2.hpp>
 
 bool inline operator < (glm::vec3 &a, glm::vec3 &b)
 {

@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "..\..\..\imgui-master\imgui.h"
-#include "..\..\..\imgui-master\imgui_internal.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
 
 inline ImVec2 operator+(const ImVec2 &a, const ImVec2 &b)
 {
