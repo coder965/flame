@@ -45,8 +45,7 @@ Game game;
 
 void GameExplorer::show()
 {
-	tke::guiBeginDock("Game Explorer", &opened);
-	//ImGui::Begin("Game Explorer", &opened);
+	ImGui::BeginDock("Game Explorer", &opened);
 	if (ImGui::TreeNode("Renderers"))
 	{
 		for (auto r : game.renderers)
@@ -77,8 +76,7 @@ void GameExplorer::show()
 		}
 		ImGui::TreePop();
 	}
-	tke::guiEndDock();
-	//ImGui::End();
+	ImGui::EndDock();
 
 	if (!opened)
 	{

@@ -754,21 +754,10 @@ namespace tke
 
 		_update_descriptor_set();
 	}
+}
 
-	ImVec2 operator+(const ImVec2 &a, const ImVec2 &b)
-	{
-		return ImVec2(a.x + b.x, a.y + b.y);
-	}
-
-	ImVec2 operator-(const ImVec2 &a, const ImVec2 &b)
-	{
-		return ImVec2(a.x - b.x, a.y - b.y);
-	}
-
-	ImVec2 operator*(const ImVec2 &a, float b)
-	{
-		return ImVec2(a.x * b, a.y * b);
-	}
+namespace ImGui
+{
 
 	struct DockContext
 	{
@@ -819,7 +808,7 @@ namespace tke
 
 			ImVec2 getMinSize() const
 			{
-				if (!children[0]) return ImVec2(16, 16 + ImGui::GetTextLineHeightWithSpacing());
+				if (!children[0]) return ImVec2(16, 16 + GetTextLineHeightWithSpacing());
 
 				ImVec2 s0 = children[0]->getMinSize();
 				ImVec2 s1 = children[1]->getMinSize();
@@ -827,9 +816,9 @@ namespace tke
 					: ImVec2(ImMax(s0.x, s1.x), s0.y + s1.y);
 			}
 
-			bool isHorizontal() const 
-			{ 
-				return children[0]->pos.x < children[1]->pos.x; 
+			bool isHorizontal() const
+			{
+				return children[0]->pos.x < children[1]->pos.x;
 			}
 
 			void setParent(Dock* dock)
@@ -939,7 +928,8 @@ namespace tke
 			ImU32 id = ImHash(label, 0);
 			for (int i = 0; i < m_docks.size(); ++i)
 			{
-				if (m_docks[i]->id == id) return *m_docks[i];
+				if (m_docks[i]->id == id)
+					return *m_docks[i];
 			}
 
 			Dock* new_dock = new Dock;
@@ -951,8 +941,8 @@ namespace tke
 			new_dock->setActive();
 			new_dock->status = Status_Float;
 			new_dock->pos = ImVec2(0, 0);
-			new_dock->size.x = default_size.x < 0 ? ImGui::GetIO().DisplaySize.x : default_size.x;
-			new_dock->size.y = default_size.y < 0 ? ImGui::GetIO().DisplaySize.y : default_size.y;
+			new_dock->size.x = default_size.x < 0 ? GetIO().DisplaySize.x : default_size.x;
+			new_dock->size.y = default_size.y < 0 ? GetIO().DisplaySize.y : default_size.y;
 			new_dock->opened = opened;
 			new_dock->first = true;
 			new_dock->last_frame = 0;
@@ -963,7 +953,7 @@ namespace tke
 
 		void putInBackground()
 		{
-			ImGuiWindow* win = ImGui::GetCurrentWindow();
+			ImGuiWindow* win = GetCurrentWindow();
 			ImGuiContext& g = *GImGui;
 			if (g.Windows[0] == win) return;
 
@@ -983,38 +973,38 @@ namespace tke
 
 		void splits()
 		{
-			if (ImGui::GetFrameCount() == m_last_frame) return;
-			m_last_frame = ImGui::GetFrameCount();
+			if (GetFrameCount() == m_last_frame) return;
+			m_last_frame = GetFrameCount();
 
 			putInBackground();
 
-			ImU32 color = ImGui::GetColorU32(ImGuiCol_Button);
-			ImU32 color_hovered = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-			ImDrawList* draw_list = ImGui::GetWindowDrawList();
-			ImGuiIO& io = ImGui::GetIO();
+			ImU32 color = GetColorU32(ImGuiCol_Button);
+			ImU32 color_hovered = GetColorU32(ImGuiCol_ButtonHovered);
+			ImDrawList* draw_list = GetWindowDrawList();
+			ImGuiIO& io = GetIO();
 			for (int i = 0; i < m_docks.size(); ++i)
 			{
 				Dock& dock = *m_docks[i];
 				if (!dock.isContainer()) continue;
 
-				ImGui::PushID(i);
-				if (!ImGui::IsMouseDown(0)) dock.status = Status_Docked;
+				PushID(i);
+				if (!IsMouseDown(0)) dock.status = Status_Docked;
 
 				ImVec2 size = dock.children[0]->size;
 				ImVec2 dsize(0, 0);
-				ImGui::SetCursorScreenPos(dock.children[1]->pos);
+				SetCursorScreenPos(dock.children[1]->pos);
 				ImVec2 min_size0 = dock.children[0]->getMinSize();
 				ImVec2 min_size1 = dock.children[1]->getMinSize();
 				if (dock.isHorizontal())
 				{
-					ImGui::InvisibleButton("split", ImVec2(3, dock.size.y));
+					InvisibleButton("split", ImVec2(3, dock.size.y));
 					if (dock.status == Status_Dragged) dsize.x = io.MouseDelta.x;
 					dsize.x = -ImMin(-dsize.x, dock.children[0]->size.x - min_size0.x);
 					dsize.x = ImMin(dsize.x, dock.children[1]->size.x - min_size1.x);
 				}
 				else
 				{
-					ImGui::InvisibleButton("split", ImVec2(dock.size.x, 3));
+					InvisibleButton("split", ImVec2(dock.size.x, 3));
 					if (dock.status == Status_Dragged) dsize.y = io.MouseDelta.y;
 					dsize.y = -ImMin(-dsize.y, dock.children[0]->size.y - min_size0.y);
 					dsize.y = ImMin(dsize.y, dock.children[1]->size.y - min_size1.y);
@@ -1025,14 +1015,12 @@ namespace tke
 				dock.children[0]->setPosSize(dock.children[0]->pos, new_size0);
 				dock.children[1]->setPosSize(new_pos1, new_size1);
 
-				if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0))
-				{
+				if (IsItemHovered() && IsMouseClicked(0))
 					dock.status = Status_Dragged;
-				}
 
 				draw_list->AddRectFilled(
-					ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImGui::IsItemHovered() ? color_hovered : color);
-				ImGui::PopID();
+					GetItemRectMin(), GetItemRectMax(), IsItemHovered() ? color_hovered : color);
+				PopID();
 			}
 		}
 
@@ -1046,23 +1034,23 @@ namespace tke
 			Dock* root = getRootDock();
 			if (root)
 			{
-				ImGui::SetNextWindowPos(root->pos);
-				ImGui::SetNextWindowSize(root->size);
+				SetNextWindowPos(root->pos);
+				SetNextWindowSize(root->size);
 			}
 			else
 			{
-				ImGui::SetNextWindowPos(ImVec2(0, 0));
-				ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+				SetNextWindowPos(ImVec2(0, 0));
+				SetNextWindowSize(GetIO().DisplaySize);
 			}
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-			ImGui::Begin("###DockPanel", nullptr, flags);
+			PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+			Begin("###DockPanel", nullptr, flags);
 			splits();
 		}
 
 		void endPanel()
 		{
-			ImGui::End();
-			ImGui::PopStyleVar();
+			End();
+			PopStyleVar();
 		}
 
 		Dock* getDockAt(const ImVec2& pos) const
@@ -1072,10 +1060,8 @@ namespace tke
 				Dock& dock = *m_docks[i];
 				if (dock.isContainer()) continue;
 				if (dock.status != Status_Docked) continue;
-				if (ImGui::IsMouseHoveringRect(dock.pos, dock.pos + dock.size, false))
-				{
+				if (IsMouseHoveringRect(dock.pos, dock.pos + dock.size, false))
 					return &dock;
-				}
 			}
 
 			return nullptr;
@@ -1147,10 +1133,10 @@ namespace tke
 
 		bool dockSlots(Dock& dock, Dock* dest_dock, const ImRect& rect, bool on_border)
 		{
-			ImDrawList* canvas = ImGui::GetWindowDrawList();
-			ImU32 color = ImGui::GetColorU32(ImGuiCol_Button);
-			ImU32 color_hovered = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-			ImVec2 mouse_pos = ImGui::GetIO().MousePos;
+			ImDrawList* canvas = GetWindowDrawList();
+			ImU32 color = GetColorU32(ImGuiCol_Button);
+			ImU32 color_hovered = GetColorU32(ImGuiCol_ButtonHovered);
+			ImVec2 mouse_pos = GetIO().MousePos;
 			for (int i = 0; i < (on_border ? 4 : 5); ++i)
 			{
 				ImRect r =
@@ -1159,22 +1145,22 @@ namespace tke
 				canvas->AddRectFilled(r.Min, r.Max, hovered ? color_hovered : color);
 				if (!hovered) continue;
 
-				if (!ImGui::IsMouseDown(0))
+				if (!IsMouseDown(0))
 				{
 					doDock(dock, dest_dock ? dest_dock : getRootDock(), (Slot_)i);
 					return true;
 				}
 				ImRect docked_rect = getDockedRect(rect, (Slot_)i);
-				canvas->AddRectFilled(docked_rect.Min, docked_rect.Max, ImGui::GetColorU32(ImGuiCol_Button));
+				canvas->AddRectFilled(docked_rect.Min, docked_rect.Max, GetColorU32(ImGuiCol_Button));
 			}
 			return false;
 		}
 
 		void handleDrag(Dock& dock)
 		{
-			Dock* dest_dock = getDockAt(ImGui::GetIO().MousePos);
+			Dock* dest_dock = getDockAt(GetIO().MousePos);
 
-			ImGui::Begin("##Overlay",
+			Begin("##Overlay",
 				NULL,
 				ImVec2(0, 0),
 				0.f,
@@ -1185,9 +1171,9 @@ namespace tke
 
 			canvas->PushClipRectFullScreen();
 
-			ImU32 docked_color = ImGui::GetColorU32(ImGuiCol_FrameBg);
+			ImU32 docked_color = GetColorU32(ImGuiCol_FrameBg);
 			docked_color = (docked_color & 0x00ffFFFF) | 0x80000000;
-			dock.pos = ImGui::GetIO().MousePos - m_drag_offset;
+			dock.pos = GetIO().MousePos - m_drag_offset;
 			if (dest_dock)
 			{
 				if (dockSlots(dock,
@@ -1196,27 +1182,27 @@ namespace tke
 					false))
 				{
 					canvas->PopClipRect();
-					ImGui::End();
+					End();
 					return;
 				}
 			}
 			if (dockSlots(dock, nullptr, ImRect(ImVec2(0, 0), ImGui::GetIO().DisplaySize), true))
 			{
 				canvas->PopClipRect();
-				ImGui::End();
+				End();
 				return;
 			}
 			canvas->AddRectFilled(dock.pos, dock.pos + dock.size, docked_color);
 			canvas->PopClipRect();
 
-			if (!ImGui::IsMouseDown(0))
+			if (!IsMouseDown(0))
 			{
 				dock.status = Status_Float;
 				dock.location[0] = 0;
 				dock.setActive();
 			}
 
-			ImGui::End();
+			End();
 		}
 
 		void fillLocation(Dock& dock)
@@ -1302,32 +1288,28 @@ namespace tke
 		{
 			if (!dock.next_tab) return;
 
-			ImDrawList* draw_list = ImGui::GetWindowDrawList();
-			if (ImGui::InvisibleButton("list", ImVec2(16, 16)))
-			{
-				ImGui::OpenPopup("tab_list_popup");
-			}
-			if (ImGui::BeginPopup("tab_list_popup"))
+			ImDrawList* draw_list = GetWindowDrawList();
+			if (InvisibleButton("list", ImVec2(16, 16)))
+				OpenPopup("tab_list_popup");
+			if (BeginPopup("tab_list_popup"))
 			{
 				Dock* tmp = &dock;
 				while (tmp)
 				{
 					bool dummy = false;
-					if (ImGui::Selectable(tmp->label.c_str(), &dummy))
-					{
+					if (Selectable(tmp->label.c_str(), &dummy))
 						tmp->setActive();
-					}
 					tmp = tmp->next_tab;
 				}
-				ImGui::EndPopup();
+				EndPopup();
 			}
 
-			bool hovered = ImGui::IsItemHovered();
-			ImVec2 min = ImGui::GetItemRectMin();
-			ImVec2 max = ImGui::GetItemRectMax();
+			bool hovered = IsItemHovered();
+			ImVec2 min = GetItemRectMin();
+			ImVec2 max = GetItemRectMax();
 			ImVec2 center = (min + max) * 0.5f;
-			ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
-			ImU32 color_active = ImGui::GetColorU32(ImGuiCol_FrameBgActive);
+			ImU32 text_color = GetColorU32(ImGuiCol_Text);
+			ImU32 color_active = GetColorU32(ImGuiCol_FrameBgActive);
 			draw_list->AddRectFilled(ImVec2(center.x - 4, min.y + 3),
 				ImVec2(center.x + 4, min.y + 5),
 				hovered ? color_active : text_color);
@@ -1339,53 +1321,51 @@ namespace tke
 
 		bool tabbar(Dock& dock, bool close_button)
 		{
-			float tabbar_height = 2 * ImGui::GetTextLineHeightWithSpacing();
+			float tabbar_height = 2 * GetTextLineHeightWithSpacing();
 			ImVec2 size(dock.size.x, tabbar_height);
 			bool tab_closed = false;
 
-			ImGui::SetCursorScreenPos(dock.pos);
+			SetCursorScreenPos(dock.pos);
 			char tmp[20];
 			ImFormatString(tmp, IM_ARRAYSIZE(tmp), "tabs%d", (int)dock.id);
-			if (ImGui::BeginChild(tmp, size, true))
+			if (BeginChild(tmp, size, true))
 			{
 				Dock* dock_tab = &dock;
 
-				ImDrawList* draw_list = ImGui::GetWindowDrawList();
-				ImU32 color = ImGui::GetColorU32(ImGuiCol_FrameBg);
-				ImU32 color_active = ImGui::GetColorU32(ImGuiCol_FrameBgActive);
-				ImU32 color_hovered = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);
-				ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
-				float line_height = ImGui::GetTextLineHeightWithSpacing();
+				ImDrawList* draw_list = GetWindowDrawList();
+				ImU32 color = GetColorU32(ImGuiCol_FrameBg);
+				ImU32 color_active = GetColorU32(ImGuiCol_FrameBgActive);
+				ImU32 color_hovered = GetColorU32(ImGuiCol_FrameBgHovered);
+				ImU32 text_color = GetColorU32(ImGuiCol_Text);
+				float line_height = GetTextLineHeightWithSpacing();
 				float tab_base;
 
 				drawTabbarListButton(dock);
 
 				while (dock_tab)
 				{
-					ImGui::SameLine(0, 15);
+					SameLine(0, 15);
 
-					const char* text_end = ImGui::FindRenderedTextEnd(dock_tab->label.c_str());
-					ImVec2 size(ImGui::CalcTextSize(dock_tab->label.c_str(), text_end).x, line_height);
-					if (ImGui::InvisibleButton(dock_tab->label.c_str(), size))
-					{
+					const char* text_end = FindRenderedTextEnd(dock_tab->label.c_str());
+					ImVec2 size(CalcTextSize(dock_tab->label.c_str(), text_end).x, line_height);
+					if (InvisibleButton(dock_tab->label.c_str(), size))
 						dock_tab->setActive();
-					}
 
-					if (ImGui::IsItemActive() && ImGui::IsMouseDragging())
+					if (IsItemActive() && IsMouseDragging())
 					{
-						m_drag_offset = ImGui::GetMousePos() - dock_tab->pos;
+						m_drag_offset = GetMousePos() - dock_tab->pos;
 						doUndock(*dock_tab);
 						dock_tab->status = Status_Dragged;
 					}
 
-					bool hovered = ImGui::IsItemHovered();
-					ImVec2 pos = ImGui::GetItemRectMin();
+					bool hovered = IsItemHovered();
+					ImVec2 pos = GetItemRectMin();
 					if (dock_tab->active && close_button)
 					{
-						size.x += 16 + ImGui::GetStyle().ItemSpacing.x;
-						ImGui::SameLine();
-						tab_closed = ImGui::InvisibleButton("close", ImVec2(16, 16));
-						ImVec2 center = (ImGui::GetItemRectMin() + ImGui::GetItemRectMax()) * 0.5f;
+						size.x += 16 + GetStyle().ItemSpacing.x;
+						SameLine();
+						tab_closed = InvisibleButton("close", ImVec2(16, 16));
+						ImVec2 center = (GetItemRectMin() + GetItemRectMax()) * 0.5f;
 						draw_list->AddLine(
 							center + ImVec2(-3.5f, -3.5f), center + ImVec2(3.5f, 3.5f), text_color);
 						draw_list->AddLine(
@@ -1410,7 +1390,7 @@ namespace tke
 				ImVec2 cp(dock.pos.x, tab_base + line_height);
 				draw_list->AddLine(cp, cp + ImVec2(dock.size.x, 0), color);
 			}
-			ImGui::EndChild();
+			EndChild();
 			return tab_closed;
 		}
 
@@ -1464,7 +1444,7 @@ namespace tke
 			if (!dest)
 			{
 				dock.status = Status_Docked;
-				dock.setPosSize(ImVec2(0, ImGui::GetTextLineHeightWithSpacing()), ImGui::GetIO().DisplaySize);
+				dock.setPosSize(ImVec2(0, GetTextLineHeightWithSpacing()), GetIO().DisplaySize);
 			}
 			else if (dock_slot == Slot_Tab)
 			{
@@ -1590,7 +1570,7 @@ namespace tke
 		{
 			Dock& dock = getDock(label, !opened || *opened, default_size);
 			if (!dock.opened && (!opened || *opened)) tryDockToStoredLocation(dock);
-			dock.last_frame = ImGui::GetFrameCount();
+			dock.last_frame = GetFrameCount();
 			dock.label = label;
 
 			m_end_action = EndAction_None;
@@ -1620,22 +1600,22 @@ namespace tke
 
 			if (is_float)
 			{
-				ImGui::SetNextWindowPos(dock.pos);
-				ImGui::SetNextWindowSize(dock.size);
-				bool ret = ImGui::Begin(label,
+				SetNextWindowPos(dock.pos);
+				SetNextWindowSize(dock.size);
+				bool ret = Begin(label,
 					opened,
 					dock.size,
 					-1.0f,
 					ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_ShowBorders | extra_flags);
 				m_end_action = EndAction_End;
-				dock.pos = ImGui::GetWindowPos();
-				dock.size = ImGui::GetWindowSize();
+				dock.pos = GetWindowPos();
+				dock.size = GetWindowSize();
 
 				ImGuiContext& g = *GImGui;
 
-				if (g.ActiveId == ImGui::GetCurrentWindow()->MoveId && g.IO.MouseDown[0])
+				if (g.ActiveId == GetCurrentWindow()->MoveId && g.IO.MouseDown[0])
 				{
-					m_drag_offset = ImGui::GetMousePos() - dock.pos;
+					m_drag_offset = GetMousePos() - dock.pos;
 					doUndock(dock);
 					dock.status = Status_Dragged;
 				}
@@ -1646,9 +1626,9 @@ namespace tke
 
 			m_end_action = EndAction_EndChild;
 
-			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
-			ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(0, 0, 0, 0));
-			float tabbar_height = ImGui::GetTextLineHeightWithSpacing();
+			PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
+			PushStyleColor(ImGuiCol_BorderShadow, ImVec4(0, 0, 0, 0));
+			float tabbar_height = GetTextLineHeightWithSpacing();
 			if (tabbar(dock.getFirstTab(), opened != nullptr))
 			{
 				fillLocation(dock);
@@ -1656,10 +1636,10 @@ namespace tke
 			}
 			ImVec2 pos = dock.pos;
 			ImVec2 size = dock.size;
-			pos.y += tabbar_height + ImGui::GetStyle().WindowPadding.y;
-			size.y -= tabbar_height + ImGui::GetStyle().WindowPadding.y;
+			pos.y += tabbar_height + GetStyle().WindowPadding.y;
+			size.y -= tabbar_height + GetStyle().WindowPadding.y;
 
-			ImGui::SetCursorScreenPos(pos);
+			SetCursorScreenPos(pos);
 			ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
 				ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus |
@@ -1667,9 +1647,9 @@ namespace tke
 			char tmp[256];
 			strcpy(tmp, label);
 			strcat(tmp, "_docked"); // to avoid https://github.com/ocornut/imgui/issues/713
-			bool ret = ImGui::BeginChild(tmp, size, true, flags);
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
+			bool ret = BeginChild(tmp, size, true, flags);
+			PopStyleColor();
+			PopStyleColor();
 			return ret;
 		}
 
@@ -1677,15 +1657,15 @@ namespace tke
 		{
 			if (m_end_action == EndAction_End)
 			{
-				ImGui::End();
+				End();
 			}
 			else if (m_end_action == EndAction_EndChild)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
-				ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(0, 0, 0, 0));
-				ImGui::EndChild();
-				ImGui::PopStyleColor();
-				ImGui::PopStyleColor();
+				PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
+				PushStyleColor(ImGuiCol_BorderShadow, ImVec4(0, 0, 0, 0));
+				EndChild();
+				PopStyleColor();
+				PopStyleColor();
 			}
 			m_current = nullptr;
 			if (m_end_action > EndAction_None) endPanel();
@@ -1709,7 +1689,7 @@ namespace tke
 
 	static DockContext g_dock;
 
-	void guiShutdownDock()
+	void ShutdownDock()
 	{
 		for (int i = 0; i < g_dock.m_docks.size(); ++i)
 		{
@@ -1718,22 +1698,22 @@ namespace tke
 		g_dock.m_docks.clear();
 	}
 
-	void guiRootDock(const ImVec2& pos, const ImVec2& size)
+	void RootDock(const ImVec2& pos, const ImVec2& size)
 	{
 		g_dock.rootDock(pos, size);
 	}
 
-	void guiSetDockActive()
+	void SetDockActive()
 	{
 		g_dock.setDockActive();
 	}
 
-	bool guiBeginDock(const char* label, bool* opened, ImGuiWindowFlags extra_flags, const ImVec2& default_size)
+	bool BeginDock(const char* label, bool* opened, ImGuiWindowFlags extra_flags, const ImVec2& default_size)
 	{
 		return g_dock.begin(label, opened, extra_flags, default_size);
 	}
 
-	void guiEndDock()
+	void EndDock()
 	{
 		g_dock.end();
 	}

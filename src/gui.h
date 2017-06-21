@@ -4,6 +4,21 @@
 #include "..\..\..\imgui-master\imgui.h"
 #include "..\..\..\imgui-master\imgui_internal.h"
 
+inline ImVec2 operator+(const ImVec2 &a, const ImVec2 &b)
+{
+	return ImVec2(a.x + b.x, a.y + b.y);
+}
+
+inline ImVec2 operator-(const ImVec2 &a, const ImVec2 &b)
+{
+	return ImVec2(a.x - b.x, a.y - b.y);
+}
+
+inline ImVec2 operator*(const ImVec2 &a, float b)
+{
+	return ImVec2(a.x * b, a.y * b);
+}
+
 #include "math.h"
 #include "render.h"
 
@@ -125,10 +140,13 @@ namespace tke
 
 	void addGuiImage(Image *image);
 	void removeGuiImage(Image *image);
+}
 
-	void guiShutdownDock();
-	void guiRootDock(const ImVec2& pos, const ImVec2& size);
-	bool guiBeginDock(const char* label, bool* opened = nullptr, ImGuiWindowFlags extra_flags = 0, const ImVec2& default_size = ImVec2(-1, -1));
-	void guiEndDock();
-	void guiSetDockActive();
+namespace ImGui
+{
+	void ShutdownDock();
+	void RootDock(const ImVec2& pos, const ImVec2& size);
+	bool BeginDock(const char* label, bool* opened = nullptr, ImGuiWindowFlags extra_flags = 0, const ImVec2& default_size = ImVec2(-1, -1));
+	void EndDock();
+	void SetDockActive();
 }

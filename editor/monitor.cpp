@@ -69,7 +69,7 @@ void MonitorWidget::show()
 		tke::needRedraw = false;
 	}
 
-	ImGui::Begin("Monitor", &opened);
+	ImGui::BeginDock("Monitor", &opened);
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
 
 	if (ImGui::IsItemHovered())
@@ -100,7 +100,7 @@ void MonitorWidget::show()
 			}
 		}
 	}
-	ImGui::End();
+	ImGui::EndDock();
 
 	if (!opened)
 	{
