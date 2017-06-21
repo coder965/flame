@@ -339,18 +339,18 @@ struct MonitorWindow : tke::Window
 				{
 					if (GetAsyncKeyState(VK_MENU) & 0x8000)
 					{
-						widget->scene->camera.addAngAccrodingToScreen(distX, distY);
+						widget->scene->camera.rotateByCursor(distX, distY);
 					}
 				}
 				else if (middlePressing)
 				{
 					if (GetAsyncKeyState(VK_MENU) & 0x8000)
-						widget->scene->camera.moveAccrodingToScreen(distX, distY);
+						widget->scene->camera.moveByCursor(distX, distY);
 				}
 				else if (rightPressing)
 				{
 					if (GetAsyncKeyState(VK_MENU) & 0x8000)
-						widget->scene->camera.scroll(mouseX - mousePrevX);
+						widget->scene->camera.scroll(distX);
 				}
 			}
 		}

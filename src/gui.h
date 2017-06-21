@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "..\..\..\imgui-master\imgui.h"
+#include "..\..\..\imgui-master\imgui_internal.h"
 
 #include "math.h"
 #include "render.h"
@@ -124,4 +125,10 @@ namespace tke
 
 	void addGuiImage(Image *image);
 	void removeGuiImage(Image *image);
+
+	void guiShutdownDock();
+	void guiRootDock(const ImVec2& pos, const ImVec2& size);
+	bool guiBeginDock(const char* label, bool* opened = nullptr, ImGuiWindowFlags extra_flags = 0, const ImVec2& default_size = ImVec2(-1, -1));
+	void guiEndDock();
+	void guiSetDockActive();
 }

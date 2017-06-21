@@ -117,16 +117,24 @@ namespace tke
 		changed = true;
 	}
 
-	void Camera::addAngAccrodingToScreen(float x, float y)
+	void Camera::rotateByCursor(float x, float y)
 	{
 		addEuler(glm::vec3(-x * 180.f, 0.f, -y * 180.f));
 	}
 
-	void Camera::scroll(short value)
+	void Camera::moveByCursor(float x, float y)
+	{
+		auto l = length / TKE_NEAR;
+		auto cy = tan(glm::radians(TKE_FOVY / 2.f)) * TKE_NEAR * 2.f;
+		target += (-x * cy * aspect * l) * axis[0] + (y * cy * l) * axis[1];
+		lookAtTarget();
+	}
+
+	void Camera::scroll(float value)
 	{
 		if (mode == CameraModeTargeting)
 		{
-			if (value < 0)
+			if (value < 0.f)
 				length = (length + 0.1) * 1.1f;
 			else
 				length = (length / 1.1f) - 0.1f;
@@ -138,14 +146,6 @@ namespace tke
 			needUpdateMat = true;
 			changed = true;
 		}
-	}
-
-	void Camera::moveAccrodingToScreen(float x, float y)
-	{
-		auto l = length / TKE_NEAR;
-		auto cy = tan(glm::radians(TKE_FOVY / 2.f)) * TKE_NEAR * 2.f;
-		target += (-x * cy * aspect * l) * axis[0] + (y * cy * l) * axis[1];
-		lookAtTarget();
 	}
 
 	void Camera::move()

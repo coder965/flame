@@ -29,9 +29,9 @@ namespace tke
 		void lookAtTarget();
 		void updateFrustum();
 		void reset();
-		void addAngAccrodingToScreen(float x, float y);
-		void scroll(short value);
-		void moveAccrodingToScreen(float x, float y);
+		void rotateByCursor(float x, float y);
+		void moveByCursor(float x, float y);
+		void scroll(float value);
 		void move();
 	};
 }
