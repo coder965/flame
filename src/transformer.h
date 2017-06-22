@@ -1,10 +1,11 @@
 #pragma once
 
+#include "utils.h"
 #include "math.h"
 
 namespace tke
 {
-	struct Transformer
+	struct Transformer : ObservedObject
 	{
 		enum class Type
 		{

@@ -1,36 +1,33 @@
-#include "../src/core.h"
+#include "../src/gui.h"
 
 #include "editor.h"
 #include "game.h"
 #include "monitor.h"
 #include "attribute.h"
+#include "bone_motion.h"
 
 tke::Image *titleImage = nullptr;
 
+SelectedItem selectedItem;
+
 void SelectedItem::reset()
 {
-	selected_type = ItemTypeNull;
-	selected_ptr = nullptr;
+	type = ItemTypeNull;
+	ptr = nullptr;
 }
 
 void SelectedItem::select(tke::Object *_obj)
 {
-	if (_obj == selected_ptr) return;
+	if (_obj == ptr) return;
 
-	switch (selected_type)
-	{
-	case ItemTypeObject:
-		((tke::Object*)selected_ptr)->removeObserver(this);
-		break;
-	case ItemTypeLight:
-		//((tke::Light*)selected_ptr)->removeObserver(this);
-		break;
-	}
+	if (ptr)
+		ptr->removeObserver(this);
 
-	selected_type = ItemTypeObject;
-	selected_ptr = _obj;
+	type = ItemTypeObject;
+	ptr = _obj;
 
-	_obj->addObserver(this);
+	if (ptr)
+		ptr->addObserver(this);
 
 	for (auto o : observers)
 		o->listen(this, tke::NotificationTypeChange, _obj);
@@ -38,9 +35,10 @@ void SelectedItem::select(tke::Object *_obj)
 
 void SelectedItem::listen(void *sender, tke::NotificationType type, void *newData)
 {
-	selected_ptr = newData;
+	ptr = (tke::ObservedObject*)newData;
+
 	for (auto o : observers)
-		o->listen(this, tke::NotificationTypeRefresh, selected_ptr);
+		o->listen(this, tke::NotificationTypeRefresh, ptr);
 }
 
 extern SelectedItem selectedItem;
@@ -51,6 +49,33 @@ EditorWindow::EditorWindow()
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	game.load();
+
+	on_view_gameExplorer();
+	on_view_attributeWidget();
+	on_view_boneMotionWidget();
+}
+
+void EditorWindow::on_view_gameExplorer()
+{
+	if (!gameExplorer)
+		gameExplorer = new GameExplorer;
+}
+
+void EditorWindow::on_view_output()
+{
+
+}
+
+void EditorWindow::on_view_attributeWidget()
+{
+	if (!attributeWidget)
+		attributeWidget = new AttributeWidget;
+}
+
+void EditorWindow::on_view_boneMotionWidget()
+{
+	if (!boneMotionWdiget)
+		boneMotionWdiget = new BoneMotionWidget;
 }
 
 void EditorWindow::renderEvent()
@@ -115,16 +140,18 @@ void EditorWindow::renderEvent()
 	{
 		if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
 		{
-			if (!gameExplorer)
-				gameExplorer = new GameExplorer;
+			on_view_gameExplorer();
 		}
 		if (ImGui::MenuItem("Output"))
 		{
 		}
 		if (ImGui::MenuItem("Attribute"))
 		{
-			if (!attributeWidget)
-				attributeWidget = new AttributeWidget;
+			on_view_attributeWidget();
+		}
+		if (ImGui::MenuItem("Motion"))
+		{
+			on_view_boneMotionWidget();
 		}
 		ImGui::EndMenu();
 	}
@@ -149,6 +176,9 @@ void EditorWindow::renderEvent()
 
 	if (attributeWidget)
 		attributeWidget->show();
+
+	if (boneMotionWdiget)
+		boneMotionWdiget->show();
 
 	for (auto m : monitors)
 		m->show();

@@ -103,7 +103,9 @@ namespace tke
 
 	const char *getClipBoard();
 	void setClipBoard(const std::string &);
-	std::string japaneseToChinese(const std::string &str);
+
+	std::string translate(int srcCP, int dstCP, const std::string &src);
+	std::string japaneseToChinese(const std::string &src);
 
 	void saveBitmap24(const std::string &filename, int width, int height, void *data);
 	void saveBitmap32(const std::string &filename, int width, int height, void *data);

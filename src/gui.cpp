@@ -558,8 +558,14 @@ namespace tke
 			context = ImGui::GetCurrentContext();
 
 			ImGuiIO& io = ImGui::GetIO();
-			unsigned char* pixels;
-			int width, height;
+			//ImWchar range[] = {
+			//	32, 255,
+			//	0x3040, 0x31fe,
+			//	19968, 40869,
+			//	0
+			//};
+			io.Fonts->AddFontFromFileTTF("simhei.ttf", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
+			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 			auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
@@ -604,7 +610,7 @@ namespace tke
 		io.KeyMap[ImGuiKey_Z] = 'Z';
 		io.RenderDrawListsFn = _gui_renderer;
 		io.SetClipboardTextFn = _SetClipboardCallback;
-		io.GetClipboardTextFn = _GetClipboardCallback; 
+		io.GetClipboardTextFn = _GetClipboardCallback;
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.Colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);

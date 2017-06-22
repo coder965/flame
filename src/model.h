@@ -253,9 +253,12 @@ namespace tke
 		BoneData *boneData = nullptr;
 		glm::mat4 *boneMatrix = nullptr;
 		UniformBuffer *boneMatrixBuffer = nullptr;
+		bool processedIK = true;
 
 		AnimationComponent(Model *_model);
 		~AnimationComponent();
+		void refreshBone();
+		void refreshBone(int i);
 		void setAnimation(AnimationBinding *animation);
 		void update();
 	};

@@ -11,7 +11,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	scene = new tke::Scene;
 
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	//renderer->resource.setImage(titleImage, "Plain2D.Image");
 	renderer->resource.setImage(image, "Window.Image");
 	tke::addGuiImage(image);
 	tke::ShaderMacro macro;
@@ -21,9 +20,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	renderer->resource.shaderMacros.push_back(macro);
 
 	renderer->setup();
-
-	//auto plain2DBuffer = (tke::UniformBuffer*)renderer->resource.getBuffer("Plain2D.UniformBuffer");
-	//plain2DBuffer->update(&glm::vec4(1.f), *tke::stagingBuffer);
 
 	tke::setMasterRenderer(renderer);
 	scene->setRenderer(renderer);
@@ -39,6 +35,8 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 
 	auto obj = new tke::Object(model);
 	scene->addObject(obj);
+
+	selectedItem.select(obj);
 
 	scene->camera.setMode(tke::CameraModeTargeting);
 	scene->camera.setCoord(0.f, 5.f, 0.f);
