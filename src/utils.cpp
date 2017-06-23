@@ -172,7 +172,11 @@ namespace tke
 	OnceFileBuffer::OnceFileBuffer(const std::string &filename)
 	{
 		auto file = fopen(filename.c_str(), "rb");
-		assert(file);
+		if (!file)
+		{
+			length = -1;
+			return;
+		}
 		fseek(file, 0, SEEK_END);
 		length = ftell(file);
 		fseek(file, 0, SEEK_SET);
@@ -187,6 +191,11 @@ namespace tke
 		delete data;
 	}
 
+	std::type_index Any::type()
+	{
+		return typeIndex;
+	}
+
 	Variable::Variable(What _what, const std::string &_name)
 		: what(_what), name(_name)
 	{}
@@ -196,9 +205,25 @@ namespace tke
 		return (NormalVariable*)this;
 	}
 
+	std::type_index NormalVariable::type()
+	{
+		return v.type();
+	}
+
+	EnumItem::EnumItem() {}
+
+	EnumItem::EnumItem(const std::string &n, int v)
+		:name(n), value(v)
+	{}
+
 	EnumVariable *Variable::toEnu()
 	{
 		return (EnumVariable*)this;
+	}
+
+	void *NormalVariable::ptr(void *p)
+	{
+		return (void*)((LONG_PTR)p + (LONG_PTR)v.ptr);
 	}
 
 	EnumVariable::EnumVariable(const std::string &_name, Enum *_pEnum, int *p)
@@ -241,19 +266,54 @@ namespace tke
 		return _enum;
 	}
 
+	Attribute::Attribute() {}
+
+	Attribute::Attribute(const std::string &n, const std::string &v)
+		:name(n), value(v)
+	{}
+
+	void Attribute::set(const std::type_index &t, void *v)
+	{
+		if (t == typeid(std::string))
+			value = *(std::string*)v;
+		else if (t == typeid(int))
+			value = std::to_string(*(int*)v);
+		else if (t == typeid(float))
+			value = std::to_string(*(float*)v);
+		else if (t == typeid(bool))
+			value = *(bool*)v ? "true" : "false";
+	}
+
+	void Attribute::get(const std::type_index &t, void *v)
+	{
+		if (t == typeid(std::string))
+			*(std::string*)v = value;
+		else if (t == typeid(int))
+			*(int*)v = std::stoi(value);
+		else if (t == typeid(float))
+			*(float*)v = std::stof(value);
+		else if (t == typeid(bool))
+			*(bool*)v = value == "true" ? true : false;
+	}
+
 	AttributeTreeNode::AttributeTreeNode(const std::string &_name)
 		: name(_name)
 	{}
 
-	AttributeTreeNode::AttributeTreeNode(const std::string &_name, const std::string &_filename)
-		: name(_name)
-	{
-		loadXML(_filename);
-	}
-
 	AttributeTreeNode::~AttributeTreeNode()
 	{
+		for (auto a : attributes) delete a;
 		for (auto c : children) delete c;
+	}
+
+	Attribute *AttributeTreeNode::firstAttribute(const std::string &_name)
+	{
+		for (auto a : attributes)
+		{
+			if (a->name == _name)
+				return a;
+		}
+		return nullptr;
 	}
 
 	AttributeTreeNode *AttributeTreeNode::firstNode(const std::string &_name)
@@ -266,67 +326,36 @@ namespace tke
 		return nullptr;
 	}
 
-	std::pair<Variable*, std::string> *AttributeTreeNode::firstAttribute(const std::string &_name)
-	{
-		for (auto &a : attributes)
-		{
-			if (a.first->name == _name)
-				return &a;
-		}
-		return nullptr;
-	}
-
 	void AttributeTreeNode::addAttributes(void *p, ReflectionBank *b)
 	{
 		for (auto r : b->reflectons)
 		{
+			auto a = new Attribute;
+			a->name = r->name;
+
 			if (r->what == Variable::eVariable)
 			{
-				auto v = (NormalVariable*)r;
-				if (v->type() == typeid(std::string))
-				{
-					auto _v = new NormalVariable(v->name, v->ptr<std::string>(p));
-					attributes.emplace_back(_v, std::string());
-				}
-				else if (v->type() == typeid(int))
-				{
-					auto _v = new NormalVariable(v->name, v->ptr<int>(p));
-					attributes.emplace_back(_v, std::string());
-				}
-				else if (v->type() == typeid(float))
-				{
-					auto _v = new NormalVariable(v->name, v->ptr<float>(p));
-					attributes.emplace_back(_v, std::string());
-				}
-				else if (v->type() == typeid(bool))
-				{
-					auto _v = new NormalVariable(v->name, v->ptr<bool>(p));
-					attributes.emplace_back(_v, std::string());
-				}
+				auto v = r->toVar();
+
+				a->set(v->type(), v->ptr(p));
 			}
 			else if (r->what == Variable::eEnum)
 			{
-				auto e = (EnumVariable*)r;
-				auto _e = new EnumVariable(e->name, e->pEnum, e->ptr(p));
-				attributes.emplace_back(_e, std::string());
-			}
-		}
-	}
+				auto e = r->toEnu();
+				auto v = *e->ptr(p);
 
-	static void _obtainVarFromAttributes(const std::string &value, void *p, NormalVariable *v)
-	{
-		if (v->type() == typeid(std::string))
-			*(v->ptr<std::string>(p)) = value;
-		else if (v->type() == typeid(int))
-			*(v->ptr<int>(p)) = std::stoi(value);
-		else if (v->type() == typeid(float))
-			*(v->ptr<float>(p)) = std::stof(value);
-		else if (v->type() == typeid(bool))
-		{
-			if (value == "true")
-				*(v->ptr<bool>(p)) = true;
-			else if (value == "false")
-				*(v->ptr<bool>(p)) = false;
+				for (int i = 0; i < e->pEnum->items.size(); i++)
+				{
+					auto &item = e->pEnum->items[i];
+					if (v & item.value)
+					{
+						if (i != 0)a->value += " ";
+						a->value += item.name;
+					}
+				}
+			}
+
+			attributes.push_back(a);
 		}
 	}
 
@@ -345,9 +374,9 @@ namespace tke
 			auto found = false;
 			for (auto &i : e->pEnum->items)
 			{
-				if (s == i.first)
+				if (s == i.name)
 				{
-					*v |= i.second;
+					*v |= i.value;
 					found = true;
 					break;
 				}
@@ -359,20 +388,23 @@ namespace tke
 
 	void AttributeTreeNode::obtainFromAttributes(void *p, ReflectionBank *b)
 	{
-		for (auto &a : attributes)
+		for (auto a : attributes)
 		{
 			auto found = false;
 			for (auto r : b->reflectons)
 			{
-				if (r->name == a.first->name)
+				if (r->name == a->name)
 				{
 					switch (r->what)
 					{
 					case Variable::eVariable:
-						_obtainVarFromAttributes(a.second, p, (NormalVariable*)r);
+					{
+						auto v = r->toVar();
+						a->get(v->type(), v->ptr(p));
+					}
 						break;
 					case Variable::eEnum:
-						_obtainEnuFromAttributes(a.second, p, (EnumVariable*)r);
+						_obtainEnuFromAttributes(a->value, p, r->toEnu());
 						break;
 					}
 					found = true;
@@ -383,12 +415,24 @@ namespace tke
 		}
 	}
 
+	AttributeTree::AttributeTree(const std::string &_name)
+		: AttributeTreeNode(_name)
+	{}
+
+	AttributeTree::AttributeTree(const std::string &_name, const std::string &_filename)
+		: AttributeTreeNode(_name)
+	{
+		loadXML(_filename);
+	}
+
 	static void _loadXML(rapidxml::xml_node<> *n, AttributeTreeNode *p)
 	{
 		for (auto a = n->first_attribute(); a; a = a->next_attribute())
 		{
-			auto v = new NormalVariable(a->name(), (std::string*)0);
-			p->attributes.emplace_back(v, std::string(a->value()));
+			auto a_ = new Attribute;
+			a_->name = a->name();
+			a_->value = a->value();
+			p->attributes.push_back(a_);
 		}
 
 		for (auto nn = n->first_node(); nn; nn = nn->next_sibling())
@@ -399,9 +443,15 @@ namespace tke
 		}
 	}
 
-	void AttributeTreeNode::loadXML(const std::string &filename)
+	void AttributeTree::loadXML(const std::string &filename)
 	{
 		OnceFileBuffer file(filename);
+		if (file.length == -1)
+		{
+			good = false;
+			return;
+		}
+
 		rapidxml::xml_document<> xmlDoc;
 		xmlDoc.parse<0>(file.data);
 
@@ -412,49 +462,8 @@ namespace tke
 
 	static void _saveXML(rapidxml::xml_document<> &doc, rapidxml::xml_node<> *n, AttributeTreeNode *p)
 	{
-		for (auto &a : p->attributes)
-		{
-			if (a.first->what == Variable::eVariable)
-			{
-				auto v = a.first->toVar();
-				if (v->type() == typeid(std::string))
-				{
-					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (v->ptr<std::string>())->c_str()));
-				}
-				else if (v->type() == typeid(int))
-				{
-					a.second = std::to_string(*(v->ptr<int>()));
-					n->append_attribute(doc.allocate_attribute(v->name.c_str(), a.second.c_str()));
-				}
-				else if (v->type() == typeid(float))
-				{
-					a.second = std::to_string(*(v->ptr<float>()));
-					n->append_attribute(doc.allocate_attribute(v->name.c_str(), a.second.c_str()));
-				}
-				else if (v->type() == typeid(bool))
-				{
-					n->append_attribute(doc.allocate_attribute(v->name.c_str(), (*(v->ptr<bool>())) ? "true" : "false"));
-				}
-			}
-			else if (a.first->what == Variable::eEnum)
-			{
-				auto e = a.first->toEnu();
-				auto v = *e->ptr();
-
-				a.second.clear();
-				bool first = true;
-				for (auto &i : e->pEnum->items)
-				{
-					if (v & i.second)
-					{
-						if (!first)a.second += " ";
-						a.second += i.first;
-						first = false;
-					}
-				}
-				n->append_attribute(doc.allocate_attribute(e->name.c_str(), a.second.c_str()));
-			}
-		}
+		for (auto a : p->attributes)
+			n->append_attribute(doc.allocate_attribute(a->name.c_str(), a->value.c_str()));
 
 		for (auto c : p->children)
 		{
@@ -464,7 +473,7 @@ namespace tke
 		}
 	}
 
-	void AttributeTreeNode::saveXML(const std::string &filename)
+	void AttributeTree::saveXML(const std::string &filename)
 	{
 		rapidxml::xml_document<> xmlDoc;
 		auto rootNode = xmlDoc.allocate_node(rapidxml::node_element, name.c_str());
@@ -476,17 +485,6 @@ namespace tke
 
 		std::ofstream file(filename);
 		file.write(str.data(), str.size());
-	}
-
-	AttributeTree *createAttributeTreeFromXML(const std::string &_name, const std::string &filename)
-	{
-		std::ifstream file(filename);
-		if (!file.good()) return nullptr;
-		file.close();
-
-		auto at = new AttributeTree(_name);
-		at->loadXML(filename);
-		return at;
 	}
 
 	ObservedObject::~ObservedObject()

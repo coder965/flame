@@ -2080,7 +2080,7 @@ namespace tke
 		}
 
 		auto m = new Model;
-		m->filename = p.filename().string();
+		m->filename = filename;
 		m->filepath = p.parent_path().string();
 		if (m->filepath == "")
 			m->filepath = ".";

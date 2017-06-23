@@ -797,7 +797,7 @@ namespace ImGui
 		struct Dock
 		{
 			std::string label;
-			ImU32 id = 0;
+			int id = 0;
 			Dock* next_tab = nullptr;
 			Dock* prev_tab = nullptr;
 			Dock* children[2] = {};
@@ -855,7 +855,6 @@ namespace ImGui
 				for (Dock* tmp = next_tab; tmp; tmp = tmp->next_tab) tmp->active = false;
 			}
 
-
 			bool isContainer() const { return children[0] != nullptr; }
 
 			void setChildrenPosSize(const ImVec2& _pos, const ImVec2& _size)
@@ -867,13 +866,9 @@ namespace ImGui
 					s.x = (float)int(
 						_size.x * children[0]->size.x / (children[0]->size.x + children[1]->size.x));
 					if (s.x < children[0]->getMinSize().x)
-					{
 						s.x = children[0]->getMinSize().x;
-					}
 					else if (_size.x - s.x < children[1]->getMinSize().x)
-					{
 						s.x = _size.x - children[1]->getMinSize().x;
-					}
 					children[0]->setPosSize(_pos, s);
 
 					s.x = _size.x - children[0]->size.x;
@@ -887,13 +882,9 @@ namespace ImGui
 					s.y = (float)int(
 						_size.y * children[0]->size.y / (children[0]->size.y + children[1]->size.y));
 					if (s.y < children[0]->getMinSize().y)
-					{
 						s.y = children[0]->getMinSize().y;
-					}
 					else if (_size.y - s.y < children[1]->getMinSize().y)
-					{
 						s.y = _size.y - children[1]->getMinSize().y;
-					}
 					children[0]->setPosSize(_pos, s);
 
 					s.y = _size.y - children[0]->size.y;
@@ -1239,13 +1230,9 @@ namespace ImGui
 			{
 				Dock& sibling = dock.getSibling();
 				if (container->children[0] == &dock)
-				{
 					container->children[0] = dock.next_tab;
-				}
 				else if (container->children[1] == &dock)
-				{
 					container->children[1] = dock.next_tab;
-				}
 
 				bool remove_container = !container->children[0] || !container->children[1];
 				if (remove_container)
@@ -1280,8 +1267,7 @@ namespace ImGui
 							break;
 						}
 					}
-					container->~Dock();
-					delete(container);
+					delete container;
 				}
 			}
 			if (dock.prev_tab) dock.prev_tab->next_tab = dock.next_tab;
@@ -1456,9 +1442,7 @@ namespace ImGui
 			{
 				Dock* tmp = dest;
 				while (tmp->next_tab)
-				{
 					tmp = tmp->next_tab;
-				}
 
 				tmp->next_tab = &dock;
 				dock.prev_tab = tmp;
@@ -1487,16 +1471,11 @@ namespace ImGui
 				container->label = ImStrdup("");
 
 				if (!dest->parent)
-				{
-				}
+					;
 				else if (&dest->getFirstTab() == dest->parent->children[0])
-				{
 					dest->parent->children[0] = container;
-				}
 				else
-				{
 					dest->parent->children[1] = container;
-				}
 
 				dest->setParent(container);
 				dock.parent = container;
@@ -1698,9 +1677,7 @@ namespace ImGui
 	void ShutdownDock()
 	{
 		for (int i = 0; i < g_dock.m_docks.size(); ++i)
-		{
-			delete(g_dock.m_docks[i]);
-		}
+			delete g_dock.m_docks[i];
 		g_dock.m_docks.clear();
 	}
 
@@ -1722,5 +1699,123 @@ namespace ImGui
 	void EndDock()
 	{
 		g_dock.end();
+	}
+
+	void SaveDock(const std::string &filename)
+	{
+		tke::AttributeTree at("data");
+
+		for (int i = 0; i < g_dock.m_docks.size(); ++i)
+		{
+			DockContext::Dock& dock = *g_dock.m_docks[i];
+
+			auto n = new tke::AttributeTreeNode("dock");
+		//	file << "index = " << i << ",\n";
+		//	file << "label = \"" << dock.label << "\",\n";
+		//	file << "x = " << (int)dock.pos.x << ",\n";
+		//	file << "y = " << (int)dock.pos.y << ",\n";
+		//	file << "location = \"" << dock.location << "\",\n";
+		//	file << "size_x = " << (int)dock.size.x << ",\n";
+		//	file << "size_y = " << (int)dock.size.y << ",\n";
+		//	file << "status = " << (int)dock.status << ",\n";
+		//	file << "active = " << (int)dock.active << ",\n";
+		//	file << "opened = " << (int)dock.opened << ",\n";
+		//	file << "prev = " << (int)getDockIndex(dock.prev_tab) << ",\n";
+		//	file << "next = " << (int)getDockIndex(dock.next_tab) << ",\n";
+		//	file << "child0 = " << (int)getDockIndex(dock.children[0]) << ",\n";
+		//	file << "child1 = " << (int)getDockIndex(dock.children[1]) << ",\n";
+		//	file << "parent = " << (int)getDockIndex(dock.parent) << "\n";
+			at.children.push_back(n);
+		}
+
+		at.saveXML(filename);
+	}
+
+	void LoadDock(const std::string &filename)
+	{
+		for (int i = 0; i < g_dock.m_docks.size(); ++i)
+			delete g_dock.m_docks[i];
+		g_dock.m_docks.clear();
+
+		//if (lua_getglobal(L, "docks") == LUA_TTABLE)
+		//{
+		//	lua_pushnil(L);
+		//	while (lua_next(L, -2) != 0)
+		//	{
+		//		Dock* new_dock = (Dock*)MemAlloc(sizeof(Dock));
+		//		m_docks.push_back(IM_PLACEMENT_NEW(new_dock) Dock());
+		//		lua_pop(L, 1);
+		//	}
+		//}
+		//lua_pop(L, 1);
+
+		//if (lua_getglobal(L, "docks") == LUA_TTABLE)
+		//{
+		//	lua_pushnil(L);
+		//	while (lua_next(L, -2) != 0)
+		//	{
+		//		if (lua_istable(L, -1))
+		//		{
+		//			int idx = 0;
+		//			if (lua_getfield(L, -1, "index") == LUA_TNUMBER)
+		//				idx = (int)lua_tointeger(L, -1);
+		//			Dock& dock = *m_docks[idx];
+		//			dock.last_frame = 0;
+		//			dock.invalid_frames = 0;
+		//			lua_pop(L, 1);
+
+		//			if (lua_getfield(L, -1, "label") == LUA_TSTRING)
+		//			{
+		//				dock.label = ImStrdup(lua_tostring(L, -1));
+		//				dock.id = ImHash(dock.label, 0);
+		//			}
+		//			lua_pop(L, 1);
+
+		//			if (lua_getfield(L, -1, "x") == LUA_TNUMBER)
+		//				dock.pos.x = (float)lua_tonumber(L, -1);
+		//			if (lua_getfield(L, -2, "y") == LUA_TNUMBER)
+		//				dock.pos.y = (float)lua_tonumber(L, -1);
+		//			if (lua_getfield(L, -3, "size_x") == LUA_TNUMBER)
+		//				dock.size.x = (float)lua_tonumber(L, -1);
+		//			if (lua_getfield(L, -4, "size_y") == LUA_TNUMBER)
+		//				dock.size.y = (float)lua_tonumber(L, -1);
+		//			if (lua_getfield(L, -5, "active") == LUA_TNUMBER)
+		//				dock.active = lua_tointeger(L, -1) != 0;
+		//			if (lua_getfield(L, -6, "opened") == LUA_TNUMBER)
+		//				dock.opened = lua_tointeger(L, -1) != 0;
+		//			if (lua_getfield(L, -7, "location") == LUA_TSTRING)
+		//				strcpy(dock.location, lua_tostring(L, -1));
+		//			if (lua_getfield(L, -8, "status") == LUA_TNUMBER)
+		//			{
+		//				dock.status = (Status_)lua_tointeger(L, -1);
+		//			}
+		//			lua_pop(L, 8);
+
+		//			if (lua_getfield(L, -1, "prev") == LUA_TNUMBER)
+		//			{
+		//				dock.prev_tab = getDockByIndex(lua_tointeger(L, -1));
+		//			}
+		//			if (lua_getfield(L, -2, "next") == LUA_TNUMBER)
+		//			{
+		//				dock.next_tab = getDockByIndex(lua_tointeger(L, -1));
+		//			}
+		//			if (lua_getfield(L, -3, "child0") == LUA_TNUMBER)
+		//			{
+		//				dock.children[0] = getDockByIndex(lua_tointeger(L, -1));
+		//			}
+		//			if (lua_getfield(L, -4, "child1") == LUA_TNUMBER)
+		//			{
+		//				dock.children[1] = getDockByIndex(lua_tointeger(L, -1));
+		//			}
+		//			if (lua_getfield(L, -5, "parent") == LUA_TNUMBER)
+		//			{
+		//				dock.parent = getDockByIndex(lua_tointeger(L, -1));
+		//			}
+		//			lua_pop(L, 5);
+		//		}
+		//		lua_pop(L, 1);
+		//	}
+		//}
+		//lua_pop(L, 1);
 	}
 }

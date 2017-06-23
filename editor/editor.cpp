@@ -46,33 +46,46 @@ extern SelectedItem selectedItem;
 EditorWindow::EditorWindow()
 	:Window(800, 600, "TK Engine Editor", true, true, WS_THICKFRAME)
 {
+	mainWindow = this;
+
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	game.load();
 
-	on_view_gameExplorer();
-	on_view_attributeWidget();
-	on_view_boneMotionWidget();
+	loadUi("ui.xml");
+	ImGui::LoadDock("ui_dock.xml");
 }
 
-void EditorWindow::on_view_gameExplorer()
+EditorWindow::~EditorWindow()
+{
+	saveUi("ui.xml");
+	ImGui::SaveDock("ui_dock.xml");
+}
+
+void EditorWindow::openGameExplorer()
 {
 	if (!gameExplorer)
 		gameExplorer = new GameExplorer;
 }
 
-void EditorWindow::on_view_output()
+void EditorWindow::openOutputWidget()
 {
 
 }
 
-void EditorWindow::on_view_attributeWidget()
+void EditorWindow::openMonitorWidget(const std::string &renderer_filename, tke::Model *m)
+{
+	auto monitor = new MonitorWidget(renderer_filename, m);
+	monitors.push_back(monitor);
+}
+
+void EditorWindow::openAttributeWidget()
 {
 	if (!attributeWidget)
 		attributeWidget = new AttributeWidget;
 }
 
-void EditorWindow::on_view_boneMotionWidget()
+void EditorWindow::openBoneMotionWidget()
 {
 	if (!boneMotionWdiget)
 		boneMotionWdiget = new BoneMotionWidget;
@@ -140,18 +153,18 @@ void EditorWindow::renderEvent()
 	{
 		if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
 		{
-			on_view_gameExplorer();
+			openGameExplorer();
 		}
 		if (ImGui::MenuItem("Output"))
 		{
 		}
 		if (ImGui::MenuItem("Attribute"))
 		{
-			on_view_attributeWidget();
+			openAttributeWidget();
 		}
 		if (ImGui::MenuItem("Motion"))
 		{
-			on_view_boneMotionWidget();
+			openBoneMotionWidget();
 		}
 		ImGui::EndMenu();
 	}
@@ -198,6 +211,93 @@ void EditorWindow::renderEvent()
 	tke::graphicsQueue.submitFence(imageAvailable, cmds.size(), cmds.data(), frameDone);
 
 	endFrame();
+}
+
+void EditorWindow::saveUi(const std::string &filename)
+{
+	tke::AttributeTree at("data");
+
+	{
+		auto n = new tke::AttributeTreeNode("GameExplorer");
+		static bool opened = gameExplorer;
+		n->attributes.push_back(new tke::Attribute("opened", &opened));
+		at.children.push_back(n);
+	}
+
+	for (auto m : monitors)
+	{
+		auto n = new tke::AttributeTreeNode("Monitor");
+		n->attributes.push_back(new tke::Attribute("renderer_filename", &m->renderer_filename));
+		n->attributes.push_back(new tke::Attribute("model_filename", &m->model->filename));
+		at.children.push_back(n);
+	}
+
+	{
+		auto n = new tke::AttributeTreeNode("AttributeWidget");
+		static bool opened = attributeWidget;
+		n->attributes.push_back(new tke::Attribute("opened", &opened));
+		at.children.push_back(n);
+	}
+
+	{
+		auto n = new tke::AttributeTreeNode("BoneMotionWidget");
+		static bool opened = boneMotionWdiget;
+		n->attributes.push_back(new tke::Attribute("opened", &opened));
+		at.children.push_back(n);
+	}
+
+	at.saveXML(filename);
+}
+
+void EditorWindow::loadUi(const std::string &filename)
+{
+	tke::AttributeTree at("data", filename);
+
+	if (at.good)
+	{
+		for (auto c : at.children)
+		{
+			if (c->name == "GameExplorer")
+			{
+				auto a = c->firstAttribute("opened");
+				bool opened;
+				a->get<bool>(&opened);
+				if (opened)
+					openGameExplorer();
+			}
+			else if (c->name == "Monitor")
+			{
+				auto a_rdrn = c->firstAttribute("renderer_filename");
+				auto a_mn = c->firstAttribute("model_filename");
+				tke::Model *m = nullptr;
+				for (auto _m : game.models)
+				{
+					if (_m->filename == a_mn->value)
+					{
+						m = _m->p;
+						break;
+					}
+				}
+				openMonitorWidget(a_rdrn->value, m);
+			}
+			else if (c->name == "AttributeWidget")
+			{
+				auto a = c->firstAttribute("opened");
+				bool opened;
+				a->get<bool>(&opened);
+				if (opened)
+					openAttributeWidget();
+			}
+			else if (c->name == "BoneMotionWidget")
+			{
+				auto a = c->firstAttribute("opened");
+				bool opened;
+				a->get<bool>(&opened);
+				if (opened)
+					openBoneMotionWidget();
+			}
+		}
+	}
 }
 
 EditorWindow *mainWindow = nullptr;

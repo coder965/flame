@@ -643,10 +643,10 @@ namespace tke
 				auto ext = path.extension().string();
 				s->type = StageFlagByExt(ext);
 
-				auto at = createAttributeTreeFromXML("stage", p->filepath + "/" + s->filename + ".xml");
-				if (at)
+				AttributeTree at("stage", p->filepath + "/" + s->filename + ".xml");
+				if (at.good)
 				{
-					for (auto c : at->children)
+					for (auto c : at.children)
 					{
 						if (c->name == "descriptor")
 						{

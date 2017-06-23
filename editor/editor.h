@@ -36,11 +36,15 @@ extern SelectedItem selectedItem;
 struct EditorWindow : tke::Window
 {
 	EditorWindow();
-	void on_view_gameExplorer();
-	void on_view_output();
-	void on_view_attributeWidget();
-	void on_view_boneMotionWidget();
+	virtual ~EditorWindow() override;
+	void openGameExplorer();
+	void openOutputWidget();
+	void openMonitorWidget(const std::string &renderer_filename, tke::Model *m);
+	void openAttributeWidget();
+	void openBoneMotionWidget();
 	virtual void renderEvent() override;
+	void saveUi(const std::string &filename);
+	void loadUi(const std::string &filename);
 };
 
 extern EditorWindow *mainWindow;

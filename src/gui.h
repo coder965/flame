@@ -150,4 +150,6 @@ namespace ImGui
 	bool BeginDock(const char* label, bool* opened = nullptr, ImGuiWindowFlags extra_flags = 0, const ImVec2& default_size = ImVec2(-1, -1));
 	void EndDock();
 	void SetDockActive();
+	void SaveDock(const std::string &filename);
+	void LoadDock(const std::string &filename);
 }

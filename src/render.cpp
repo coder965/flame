@@ -3121,7 +3121,7 @@ namespace tke
 			dib = newDib;
 			pData->channel = 4;
 		}
-		break;
+			break;
 		case FIC_RGBALPHA:
 			pData->channel = 4;
 			break;

@@ -195,7 +195,7 @@ namespace tke
 
 		Window(int _cx, int _cy, HWND _hWnd, bool hasUi = false);
 		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true, bool hasUi = false, unsigned int windowStyle = 0);
-		~Window();
+		virtual ~Window();
 		void createSwapchain();
 		void destroySwapchain();
 		void addEvent(VkEvent);

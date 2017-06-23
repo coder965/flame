@@ -2,7 +2,7 @@
 #include "../src/model.h"
 
 #include "game.h"
-#include "monitor.h"
+#include "editor.h"
 
 void Game::load()
 {
@@ -14,7 +14,7 @@ void Game::load()
 			{
 				auto a = c->firstAttribute("filename");
 				auto r = new RendererEditorStruct;
-				r->filename = a->second;
+				r->filename = a->value;
 				renderers.push_back(r);
 			}
 		}
@@ -28,8 +28,8 @@ void Game::load()
 			{
 				auto a = c->firstAttribute("filename");
 				auto m = new ModelEditorStruct;
-				m->filename = a->second;
-				m->p = tke::createModel(a->second);
+				m->filename = a->value;
+				m->p = tke::createModel(a->value);
 				models.push_back(m);
 			}
 		}
@@ -68,10 +68,7 @@ void GameExplorer::show()
 			if (ImGui::Selectable(m->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				if (ImGui::IsMouseDoubleClicked(0))
-				{
-					auto monitor = new MonitorWidget("../renderer/master.xml", m->p);
-					monitors.push_back(monitor);
-				}
+					mainWindow->openMonitorWidget("../renderer/master.xml", m->p);
 			}
 		}
 		ImGui::TreePop();

@@ -114,8 +114,8 @@ namespace tke
 
 	struct OnceFileBuffer
 	{
-		int length;
-		char *data;
+		int length = 0;
+		char *data = nullptr;
 		OnceFileBuffer(const std::string &filename);
 		~OnceFileBuffer();
 	};
@@ -130,10 +130,7 @@ namespace tke
 			: typeIndex(typeid(T)), ptr(p)
 		{}
 
-		std::type_index type()
-		{
-			return typeIndex;
-		}
+		std::type_index type();
 	};
 
 	struct NormalVariable;
@@ -163,22 +160,29 @@ namespace tke
 			: Variable(Variable::eVariable, _name), v(ptr)
 		{}
 
-		std::type_index type()
-		{
-			return v.type();
-		}
+		std::type_index type();
+
+		void *ptr(void *p = nullptr);
 
 		template<class T>
 		T *ptr(void *p = nullptr)
 		{
-			if (!p) return (T*)v.ptr;
-			return (T*)((LONG_PTR)p + (LONG_PTR)v.ptr);
+			return (T*)ptr(p);
 		}
+	};
+
+	struct EnumItem
+	{
+		std::string name;
+		int value;
+
+		EnumItem();
+		EnumItem(const std::string &, int);
 	};
 
 	struct Enum
 	{
-		std::vector<std::pair<std::string, int>> items;
+		std::vector<EnumItem> items;
 	};
 
 	struct EnumVariable : Variable
@@ -187,7 +191,6 @@ namespace tke
 		int *_ptr;
 
 		EnumVariable(const std::string &_name, Enum *_pEnum, int *p);
-
 		int *ptr(void *p = nullptr);
 	};
 
@@ -208,26 +211,69 @@ namespace tke
 	ReflectionBank *addReflectionBank(std::string str);
 	Enum *addReflectEnum(std::string str);
 
+	struct Attribute
+	{
+		std::string name;
+		std::string value;
+
+		Attribute();
+		Attribute(const std::string &, const std::string &);
+
+		template<class T>
+		Attribute(const std::string &n, T *v)
+			:name(n)
+		{
+			set(v);
+		}
+
+		void set(const std::type_index &t, void *v);
+
+		template<class T>
+		inline void set(T *v)
+		{
+			set(typeid(T), v);
+		}
+
+		template<class T>
+		inline void set(const std::string &n, T *v)
+		{
+			name = n;
+
+			set(t);
+		}
+
+		void get(const std::type_index &t, void *v);
+
+		template<class T>
+		inline void get(T *v)
+		{
+			get(typeid(T), v);
+		}
+	};
+
 	struct AttributeTreeNode
 	{
 		std::string name;
-		std::vector<std::pair<Variable*, std::string>> attributes; // first : the var, including the name, second : the value
+		std::vector<Attribute*> attributes;
 		std::vector<AttributeTreeNode*> children;
 
 		AttributeTreeNode(const std::string &_name);
-		AttributeTreeNode(const std::string &_name, const std::string &_filename);
 		~AttributeTreeNode();
+		Attribute *firstAttribute(const std::string &_name);
 		AttributeTreeNode *firstNode(const std::string &_name);
-		std::pair<Variable*, std::string> *firstAttribute(const std::string &_name);
 		void addAttributes(void *p, ReflectionBank *b);
 		void obtainFromAttributes(void *p, ReflectionBank *b);
+	};
+
+	struct AttributeTree : AttributeTreeNode
+	{
+		bool good = true;
+
+		AttributeTree(const std::string &_name);
+		AttributeTree(const std::string &_name, const std::string &_filename);
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
 	};
-
-	typedef AttributeTreeNode AttributeTree;
-
-	AttributeTree *createAttributeTreeFromXML(const std::string &_name, const std::string &filename);
 
 #define REFLECTABLE
 #define REFL_BANK static tke::ReflectionBank *b
