@@ -1,3 +1,4 @@
+#include "select.h"
 #include "editor.h"
 #include "monitor.h"
 

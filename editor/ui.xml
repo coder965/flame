@@ -1,7 +1,7 @@
 <data>
 	<GameExplorer opened="true"/>
 	<Monitor renderer_filename="../renderer/master.xml" model_filename="D:/miku/miku.pmd"/>
-	<AttributeWidget opened="false"/>
-	<BoneMotionWidget opened="false"/>
+	<AttributeWidget opened="true"/>
+	<BoneMotionWidget opened="true"/>
 </data>
 

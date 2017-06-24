@@ -930,7 +930,6 @@ namespace ImGui
 			}
 
 			Dock* new_dock = new Dock;
-			new(new_dock) Dock();
 			m_docks.push_back(new_dock);
 			new_dock->label = label;
 			assert(new_dock->label != "");
@@ -1458,7 +1457,6 @@ namespace ImGui
 			else
 			{
 				Dock* container = new Dock;
-				new(container) Dock();
 				m_docks.push_back(container);
 				container->children[0] = &dest->getFirstTab();
 				container->children[1] = &dock;
@@ -1710,21 +1708,21 @@ namespace ImGui
 			DockContext::Dock& dock = *g_dock.m_docks[i];
 
 			auto n = new tke::AttributeTreeNode("dock");
-		//	file << "index = " << i << ",\n";
-		//	file << "label = \"" << dock.label << "\",\n";
-		//	file << "x = " << (int)dock.pos.x << ",\n";
-		//	file << "y = " << (int)dock.pos.y << ",\n";
-		//	file << "location = \"" << dock.location << "\",\n";
-		//	file << "size_x = " << (int)dock.size.x << ",\n";
-		//	file << "size_y = " << (int)dock.size.y << ",\n";
-		//	file << "status = " << (int)dock.status << ",\n";
-		//	file << "active = " << (int)dock.active << ",\n";
-		//	file << "opened = " << (int)dock.opened << ",\n";
-		//	file << "prev = " << (int)getDockIndex(dock.prev_tab) << ",\n";
-		//	file << "next = " << (int)getDockIndex(dock.next_tab) << ",\n";
-		//	file << "child0 = " << (int)getDockIndex(dock.children[0]) << ",\n";
-		//	file << "child1 = " << (int)getDockIndex(dock.children[1]) << ",\n";
-		//	file << "parent = " << (int)getDockIndex(dock.parent) << "\n";
+			n->addAttribute("index", &i);
+			n->addAttribute("label", &dock.label);
+			n->addAttribute("x", &dock.pos.x);
+			n->addAttribute("y", &dock.pos.y);
+			n->addAttribute("location", std::string(dock.location));
+			n->addAttribute("size_x", &dock.size.x);
+			n->addAttribute("size_y", &dock.size.y);
+			n->addAttribute("status", std::to_string((int)dock.status));
+			n->addAttribute("active", &dock.active);
+			n->addAttribute("opened", &dock.opened);
+			n->addAttribute("prev", std::to_string(g_dock.getDockIndex(dock.prev_tab)));
+			n->addAttribute("next", std::to_string(g_dock.getDockIndex(dock.next_tab)));
+			n->addAttribute("child0", std::to_string(g_dock.getDockIndex(dock.children[0])));
+			n->addAttribute("child1", std::to_string(g_dock.getDockIndex(dock.children[1])));
+			n->addAttribute("parent", std::to_string(g_dock.getDockIndex(dock.parent)));
 			at.children.push_back(n);
 		}
 
@@ -1737,85 +1735,45 @@ namespace ImGui
 			delete g_dock.m_docks[i];
 		g_dock.m_docks.clear();
 
-		//if (lua_getglobal(L, "docks") == LUA_TTABLE)
-		//{
-		//	lua_pushnil(L);
-		//	while (lua_next(L, -2) != 0)
-		//	{
-		//		Dock* new_dock = (Dock*)MemAlloc(sizeof(Dock));
-		//		m_docks.push_back(IM_PLACEMENT_NEW(new_dock) Dock());
-		//		lua_pop(L, 1);
-		//	}
-		//}
-		//lua_pop(L, 1);
+		tke::AttributeTree at("data", "ui_dock.xml");
+		if (at.good)
+		{
+			for (auto c : at.children)
+			{
+				if (c->name == "dock")
+				{
+					auto dock = new DockContext::Dock;
+					g_dock.m_docks.push_back(dock);
+				}
+			}
 
-		//if (lua_getglobal(L, "docks") == LUA_TTABLE)
-		//{
-		//	lua_pushnil(L);
-		//	while (lua_next(L, -2) != 0)
-		//	{
-		//		if (lua_istable(L, -1))
-		//		{
-		//			int idx = 0;
-		//			if (lua_getfield(L, -1, "index") == LUA_TNUMBER)
-		//				idx = (int)lua_tointeger(L, -1);
-		//			Dock& dock = *m_docks[idx];
-		//			dock.last_frame = 0;
-		//			dock.invalid_frames = 0;
-		//			lua_pop(L, 1);
+			for (auto c : at.children)
+			{
+				if (c->name == "dock")
+				{
+					auto idx = std::stoi(c->firstAttribute("index")->value);
 
-		//			if (lua_getfield(L, -1, "label") == LUA_TSTRING)
-		//			{
-		//				dock.label = ImStrdup(lua_tostring(L, -1));
-		//				dock.id = ImHash(dock.label, 0);
-		//			}
-		//			lua_pop(L, 1);
+					DockContext::Dock &dock = *g_dock.m_docks[idx];
+					dock.last_frame = 0;
+					dock.invalid_frames = 0;
+					dock.label = c->firstAttribute("label")->value;
+					dock.id = ImHash(dock.label.c_str(), 0);
+					dock.pos.x = std::stof(c->firstAttribute("x")->value);
+					dock.pos.y = std::stof(c->firstAttribute("y")->value);
+					dock.size.x = std::stof(c->firstAttribute("size_x")->value);
+					dock.size.y = std::stof(c->firstAttribute("size_y")->value);
+					c->firstAttribute("active")->get<bool>(&dock.active);
+					c->firstAttribute("opened")->get<bool>(&dock.opened);
+					strcpy(dock.location, c->firstAttribute("location")->value.c_str());
+					dock.status = (DockContext::Status_)std::stoi(c->firstAttribute("status")->value);
 
-		//			if (lua_getfield(L, -1, "x") == LUA_TNUMBER)
-		//				dock.pos.x = (float)lua_tonumber(L, -1);
-		//			if (lua_getfield(L, -2, "y") == LUA_TNUMBER)
-		//				dock.pos.y = (float)lua_tonumber(L, -1);
-		//			if (lua_getfield(L, -3, "size_x") == LUA_TNUMBER)
-		//				dock.size.x = (float)lua_tonumber(L, -1);
-		//			if (lua_getfield(L, -4, "size_y") == LUA_TNUMBER)
-		//				dock.size.y = (float)lua_tonumber(L, -1);
-		//			if (lua_getfield(L, -5, "active") == LUA_TNUMBER)
-		//				dock.active = lua_tointeger(L, -1) != 0;
-		//			if (lua_getfield(L, -6, "opened") == LUA_TNUMBER)
-		//				dock.opened = lua_tointeger(L, -1) != 0;
-		//			if (lua_getfield(L, -7, "location") == LUA_TSTRING)
-		//				strcpy(dock.location, lua_tostring(L, -1));
-		//			if (lua_getfield(L, -8, "status") == LUA_TNUMBER)
-		//			{
-		//				dock.status = (Status_)lua_tointeger(L, -1);
-		//			}
-		//			lua_pop(L, 8);
-
-		//			if (lua_getfield(L, -1, "prev") == LUA_TNUMBER)
-		//			{
-		//				dock.prev_tab = getDockByIndex(lua_tointeger(L, -1));
-		//			}
-		//			if (lua_getfield(L, -2, "next") == LUA_TNUMBER)
-		//			{
-		//				dock.next_tab = getDockByIndex(lua_tointeger(L, -1));
-		//			}
-		//			if (lua_getfield(L, -3, "child0") == LUA_TNUMBER)
-		//			{
-		//				dock.children[0] = getDockByIndex(lua_tointeger(L, -1));
-		//			}
-		//			if (lua_getfield(L, -4, "child1") == LUA_TNUMBER)
-		//			{
-		//				dock.children[1] = getDockByIndex(lua_tointeger(L, -1));
-		//			}
-		//			if (lua_getfield(L, -5, "parent") == LUA_TNUMBER)
-		//			{
-		//				dock.parent = getDockByIndex(lua_tointeger(L, -1));
-		//			}
-		//			lua_pop(L, 5);
-		//		}
-		//		lua_pop(L, 1);
-		//	}
-		//}
-		//lua_pop(L, 1);
+					dock.prev_tab = g_dock.getDockByIndex(std::stoi(c->firstAttribute("prev")->value));
+					dock.next_tab = g_dock.getDockByIndex(std::stoi(c->firstAttribute("next")->value));
+					dock.children[0] = g_dock.getDockByIndex(std::stoi(c->firstAttribute("child0")->value));
+					dock.children[1] = g_dock.getDockByIndex(std::stoi(c->firstAttribute("child1")->value));
+					dock.parent = g_dock.getDockByIndex(std::stoi(c->firstAttribute("parent")->value));
+				}
+			}
+		}
 	}
 }

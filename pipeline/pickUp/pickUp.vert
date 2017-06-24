@@ -1,9 +1,3 @@
-layout(push_constant) uniform PushConstant
-{
-	uint passIndex;
-	uint index;
-}p_index;
-
 layout(binding = 0) uniform MATRIX
 {
 	mat4 proj;
@@ -16,17 +10,28 @@ layout(binding = 0) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 1) uniform INSTANCE
+layout(binding = 1) uniform OBJECT
 {
 	mat4 matrix[1024];
-}u_instance[2];
+}u_object;
 
 layout(location = 0) in vec3 inVertex;
+layout(location = 1) in vec2 inTexcoord;
+layout(location = 2) in vec3 inNormal;
+layout(location = 3) in vec3 inTangent;
 
-layout(location = 0) out flat uint outIndex;
+layout(location = 0) out flat uint outMaterialID;
+layout(location = 1) out vec2 outTexcoord;
+layout(location = 2) out vec3 outNormal;
+layout(location = 3) out vec3 outTangent;
 
 void main()
 {
-	outIndex = p_index.index;
-	gl_Position = u_matrix.projView * u_instance[p_index.passIndex].matrix[gl_InstanceIndex] * vec4(inVertex, 1);
+	outMaterialID = gl_InstanceIndex & 0xffff;
+	outTexcoord = inTexcoord;
+	mat4 modelMatrix = u_object.matrix[gl_InstanceIndex >> 16];
+	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view * modelMatrix)));
+	outNormal = normalize(normalMatrix * inNormal);
+	outTangent = normalize(normalMatrix * inTangent);
+	gl_Position = u_matrix.projView * modelMatrix * vec4(inVertex, 1);
 }

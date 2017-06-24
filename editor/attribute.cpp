@@ -1,6 +1,6 @@
 #include "..\src\gui.h"
 
-#include "editor.h"
+#include "select.h"
 #include "attribute.h"
 #include "bone_motion.h"
 

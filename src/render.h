@@ -859,14 +859,16 @@ namespace tke
 		DrawAction();
 		DrawAction(Pipeline *pipeline);
 		DrawAction(PF_RenderFunc pRenderFunc);
+
 		template <class... _Valty>
-		Drawcall *addDrawcall(_Valty&&... _Val)
+		inline Drawcall *addDrawcall(_Valty&&... _Val)
 		{
 			drawcalls.emplace_back(_Val...);
 			auto d = &drawcalls.back();
 			d->parent = this;
 			return d;
 		}
+
 		void loadFromAt(AttributeTreeNode *n);
 		void saveToAt(AttributeTreeNode *n);
 		void maintain(int row) override;
@@ -958,30 +960,34 @@ namespace tke
 
 		RenderPass();
 		RenderPass(VkCommandBuffer cmd);
+
 		template <class... _Valty>
-		Attachment *addAttachment(_Valty&&... _Val)
+		inline Attachment *addAttachment(_Valty&&... _Val)
 		{
 			attachments.emplace_back(_Val...);
 			auto p = &attachments.back();
 			p->parent = this;
 			return p;
 		}
+
 		template <class... _Valty>
-		Dependency *addDependency(_Valty&&... _Val)
+		inline Dependency *addDependency(_Valty&&... _Val)
 		{
 			dependencies.emplace_back(_Val...);
 			auto p = &dependencies.back();
 			p->parent = this;
 			return p;
 		}
+
 		template <class... _Valty>
-		DrawAction *addAction(_Valty&&... _Val)
+		inline DrawAction *addAction(_Valty&&... _Val)
 		{
 			actions.emplace_back(_Val...);
 			auto p = &actions.back();
 			p->parent = this;
 			return p;
 		}
+
 		void loadFromAt(AttributeTreeNode *n);
 		void saveToAt(AttributeTreeNode *n);
 		void maintain(int row) override;
@@ -1028,14 +1034,16 @@ namespace tke
 
 		Renderer(int _cx = -1, int _cy = -1);
 		~Renderer();
+
 		template <class... _Valty>
-		RenderPass *addPass(_Valty&&... _Val)
+		inline RenderPass *addPass(_Valty&&... _Val)
 		{
 			passes.emplace_back(_Val...);
 			auto p = &passes.back();
 			p->parent = this;
 			return p;
 		}
+
 		void loadXML(const std::string &_filename);
 		void saveXML();
 		void maintain(int row) override;

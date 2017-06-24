@@ -8,41 +8,6 @@
 
 tke::Image *titleImage = nullptr;
 
-SelectedItem selectedItem;
-
-void SelectedItem::reset()
-{
-	type = ItemTypeNull;
-	ptr = nullptr;
-}
-
-void SelectedItem::select(tke::Object *_obj)
-{
-	if (_obj == ptr) return;
-
-	if (ptr)
-		ptr->removeObserver(this);
-
-	type = ItemTypeObject;
-	ptr = _obj;
-
-	if (ptr)
-		ptr->addObserver(this);
-
-	for (auto o : observers)
-		o->listen(this, tke::NotificationTypeChange, _obj);
-}
-
-void SelectedItem::listen(void *sender, tke::NotificationType type, void *newData)
-{
-	ptr = (tke::ObservedObject*)newData;
-
-	for (auto o : observers)
-		o->listen(this, tke::NotificationTypeRefresh, ptr);
-}
-
-extern SelectedItem selectedItem;
-
 EditorWindow::EditorWindow()
 	:Window(800, 600, "TK Engine Editor", true, true, WS_THICKFRAME)
 {

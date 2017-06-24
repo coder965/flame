@@ -163,6 +163,9 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="monitor.cpp" />
+    <ClCompile Include="select.cpp" />
+    <ClCompile Include="tool.cpp" />
+    <ClCompile Include="transformer_tool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="attribute.h" />
@@ -170,6 +173,9 @@
     <ClInclude Include="editor.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="monitor.h" />
+    <ClInclude Include="select.h" />
+    <ClInclude Include="tool.h" />
+    <ClInclude Include="transformer_tool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -261,6 +261,14 @@ namespace tke
 		~AttributeTreeNode();
 		Attribute *firstAttribute(const std::string &_name);
 		AttributeTreeNode *firstNode(const std::string &_name);
+
+		template <class... _Valty>
+		inline void addAttribute(_Valty&&... _Val)
+		{
+			auto a = new Attribute(_Val...);
+			attributes.push_back(a);
+		}
+
 		void addAttributes(void *p, ReflectionBank *b);
 		void obtainFromAttributes(void *p, ReflectionBank *b);
 	};

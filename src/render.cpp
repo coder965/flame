@@ -1449,7 +1449,7 @@ namespace tke
 			stageText += "#extension GL_ARB_shading_language_420pack : enable\n\n"; lineNum++;
 			for (auto &m : parent->pResource->shaderMacros)
 			{
-				if (m.pipelineName == parent->name && m.stageType == type)
+				if (m.pipelineName == parent->name && ((int)m.stageType & (int)type))
 				{
 					stageText += m.value;
 					lineNum++;
