@@ -2,6 +2,7 @@
 #include <regex>
 #include <assert.h>
 #include <sstream>
+#include <stack>
 
 #include "render.h"
 #include "core.h"
@@ -1408,14 +1409,29 @@ namespace tke
 		parent = _parent;
 	}
 
-#include "glslang_validator_yy.h"
-	extern "C" {
-		extern FILE *glslang_validator_yyin;
-		extern int glslang_validator_yylex();
-		int glslang_validator_yylex_destroy();
-		extern char *glslang_validator_yytext;
+	static bool _findDefine(const std::vector<std::string> &vec, const std::string &def, bool b)
+	{
+		if (b)
+		{
+			for (auto &v : vec)
+			{
+				if (v == def)
+					return true;
+			}
+			return false;
+		}
+		else
+		{
+			for (auto &v : vec)
+			{
+				if (v == def)
+					return false;
+			}
+			return true;
+		}
 	}
 
+	static int _currentUboBinding = 0;
 	void Stage::create()
 	{
 		// format the shader path, so that they can reuse if them refer the same one
@@ -1441,8 +1457,6 @@ namespace tke
 			std::stringstream ss(file.data);
 			std::string stageText = "";
 
-			std::vector<std::tuple<int, int, int>> includeFileDatas;
-			std::string line;
 			int lineNum = 0;
 			stageText += "#version 450 core\n"; lineNum++;
 			stageText += "#extension GL_ARB_separate_shader_objects : enable\n"; lineNum++;
@@ -1456,15 +1470,108 @@ namespace tke
 				}
 			}
 			int fullLineNum = lineNum;
+
+			std::vector<std::string> defines;
+			std::stack<std::pair<bool, bool>> states; // first current accept, second this con accepted
+			states.push({ true, false });
+
+			std::vector<std::tuple<int, int, int>> includeFileDatas;
+
+			//ss.clear();
+			//ss << "#define ABC\n";
+			//ss << "#if defined(ABC)\n";
+			//ss << "#define DEF\n";
+			//ss << "#if !defined(ABC)\n";
+			//ss << "#define NML\n";
+			//ss << "#else\n";
+			//ss << "#define KKK\n";
+			//ss << "#endif\n";
+			//ss << "#elif defined(JKL)\n";
+			//ss << "#if defined(ABC)\n";
+			//ss << "#define RGB\n";
+			//ss << "#endif\n";
+			//ss << "#define XYZ\n";
+			//ss << "#endif\n";
+
+			std::string line;
 			while (!ss.eof())
 			{
 				std::getline(ss, line);
 
-				std::regex pat(R"(#include\s+\"([\w\.\\]+)\")");
-				std::smatch sm;
-				if (std::regex_search(line, sm, pat))
+				std::regex pattern;
+				std::smatch match;
+
+				if (std::regex_search(line, match, pattern = R"(#(el)?if\s+(\!)?defined\(([\w_]*)\)[\s&]*)"))
 				{
-					tke::OnceFileBuffer includeFile(file_path + "/" + sm[1].str());
+					bool ok;
+					if ((match[1].matched && !states.top().second) || (!match[1].matched && states.top().first))
+					{
+						std::vector<std::pair<std::string, bool>> cons;
+						if (match[2].matched)
+							cons.emplace_back(match[3].str(), false);
+						else
+							cons.emplace_back(match[3].str(), true);
+						std::string str = match.suffix();
+						while (std::regex_search(str, match, pattern = R"((\!)?defined\(([\w_]*)\)[\s&]*)"))
+						{
+							if (match[1].matched)
+								cons.emplace_back(match[2].str(), false);
+							else
+								cons.emplace_back(match[2].str(), true);
+							str = match.suffix();
+						}
+
+						ok = true;
+						for (auto &c : cons)
+						{
+							if (!_findDefine(defines, c.first, c.second))
+							{
+								ok = false;
+								break;
+							}
+						}
+					}
+
+					if (match[1].matched)
+					{
+						if (states.top().second)
+						{
+							states.top().first = false;
+						}
+						else
+						{
+							states.top().first = ok;
+							states.top().second = ok;
+						}
+					}
+					else
+					{
+						if (states.top().first)
+							states.push({ ok, ok });
+						else
+							states.push({ false, true });
+					}
+				}
+				else if (std::regex_search(line, match, pattern = R"(#else)"))
+				{
+					states.top().first = !states.top().first;
+					states.top().second = true;
+				}
+				else if (std::regex_search(line, match, pattern = R"(#endif)"))
+				{
+					states.pop();
+				}
+				else if (states.top().first && std::regex_search(line, match, pattern = R"(#define\s+([\w_]*))"))
+				{
+					defines.push_back(match[1].str());
+
+					stageText += line + "\n";
+
+					fullLineNum += 1;
+				}
+				else if (states.top().first && std::regex_search(line, match, pattern = R"(#include\s+\"([\w\.\\]*)\")"))
+				{
+					tke::OnceFileBuffer includeFile(file_path + "/" + match[1].str());
 					stageText += includeFile.data;
 					stageText += "\n";
 
@@ -1473,7 +1580,16 @@ namespace tke
 
 					fullLineNum += includeFileLineNum;
 				}
-				else
+				else if (states.top().first && std::regex_search(line, pattern = R"(TKE_UBO_BINDING)"))
+				{
+					line = std::regex_replace(line, pattern, std::to_string(_currentUboBinding));
+					_currentUboBinding++;
+
+					stageText += line + "\n";
+
+					fullLineNum += 1;
+				}
+				else if (states.top().first)
 				{
 					stageText += line + "\n";
 
@@ -1491,16 +1607,14 @@ namespace tke
 
 			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
 
+			bool error = false;
+
 			std::string output;
 			{
 				tke::OnceFileBuffer outputFile("output.txt");
 				output = outputFile.data;
 				output += "\n";
-			}
 
-			bool error = false;
-
-			{
 				// analyzing the reflection
 
 				enum ReflectionType
@@ -1510,8 +1624,6 @@ namespace tke
 					eUniformBlock = 1,
 					eVertexAttribute = 2
 				};
-
-				ReflectionType currentReflectionType = eNull;
 
 				struct Reflection
 				{
@@ -1525,6 +1637,7 @@ namespace tke
 					int index;
 					int binding;
 				};
+
 				struct ReflectionManager
 				{
 					std::vector<Reflection> rs;
@@ -1544,97 +1657,74 @@ namespace tke
 						rs.push_back(_r);
 					}
 				};
+
 				ReflectionManager reflections;
 				Reflection currentReflection;
 
-				glslang_validator_yylex_destroy();
+				ReflectionType currentReflectionType = eNull;
 
-				glslang_validator_yyin = fopen("output.txt", "rb");
-				int token = glslang_validator_yylex();
-				std::string last_string;
 				int error_count = 0;
-				while (token)
+
+				std::stringstream ss(outputFile.data);
+				std::string line;
+				while (!ss.eof())
 				{
-					switch (token)
-					{
-					case glslang_validator_yy_ERROR_FILE_NOT_FOUND:
-						error = true;
-						break;
-					case glslang_validator_yy_ERROR:
-					{
-						error = true;
-						token = glslang_validator_yylex();
-						if (token == glslang_validator_yy_VALUE)
-						{
-							auto n = std::stoi(glslang_validator_yytext);
+					std::getline(ss, line);
 
-							for (auto it = includeFileDatas.rbegin(); it != includeFileDatas.rend(); it++)
+					std::regex pattern;
+					std::smatch match;
+					if (std::regex_search(line, match, pattern = R"(glslangValidator: Error unable to open input file)"))
+					{
+						error = true;
+					}
+					else if (std::regex_search(line, match, pattern = R"(ERROR: temp.glsl:([-0-9][-a-zA-Z0-9]*))"))
+					{
+						error = true;
+
+						auto n = std::stoi(match[1].str());
+
+						for (auto it = includeFileDatas.rbegin(); it != includeFileDatas.rend(); it++)
+						{
+							if (n > std::get<1>(*it) + std::get<2>(*it))
 							{
-								if (n > std::get<1>(*it) + std::get<2>(*it))
-								{
-									n = n - std::get<1>(*it) + std::get<0>(*it) - std::get<2>(*it) - 1;
-									break;
-								}
-								else if (n > std::get<1>(*it))
-								{
-									n = std::get<0>(*it);
-									break;
-								}
+								n = n - std::get<1>(*it) + std::get<0>(*it) - std::get<2>(*it) - 1;
+								break;
 							}
+							else if (n > std::get<1>(*it))
+							{
+								n = std::get<0>(*it);
+								break;
+							}
+						}
 
-							error_count++;
-							output += std::string("The ") + std::to_string(error_count) + "th Error, redirect line num:" + std::to_string(n) + "\n";
-						}
+						error_count++;
+						output += std::string("The ") + std::to_string(error_count) + "th Error, redirect line num:" + std::to_string(n) + "\n";
 					}
-						break;
-					case glslang_validator_yy_COLON:
-						if (currentReflectionType != eNull)
-						{
-							if (currentReflection.name != "") reflections.add(currentReflection);
-							currentReflection.reflectionType = currentReflectionType;
-							currentReflection.name = last_string;
-							last_string = "";
-						}
-						break;
-					case glslang_validator_yy_IDENTIFIER:
+					else if (std::regex_search(line, match, pattern = R"(Uniform reflection:)"))
 					{
-						std::string string(glslang_validator_yytext);
-						last_string = string;
-					}
-						break;
-					case glslang_validator_yy_VALUE:
-					{
-						std::string string(glslang_validator_yytext);
-						if (currentReflectionType != eNull)
-						{
-							if (last_string == "offset")
-								currentReflection.offset = std::stoi(string);
-							else if (last_string == "type")
-								currentReflection.type = string;
-							else if (last_string == "size")
-								currentReflection.size = std::stoi(string);
-							else if (last_string == "index")
-								currentReflection.index = std::stoi(string);
-							else if (last_string == "binding")
-								currentReflection.binding = std::stoi(string);
-						}
-					}
-						break;
-					case glslang_validator_yy_UR_MK:
 						currentReflectionType = eUniform;
-						break;
-					case glslang_validator_yy_UBR_MK:
-						currentReflectionType = eUniformBlock;
-						break;
-					case glslang_validator_yy_VAR_MK:
-						currentReflectionType = eVertexAttribute;
-						break;
 					}
-					token = glslang_validator_yylex();
+					else if (std::regex_search(line, match, pattern = R"(Uniform block reflection:)"))
+					{
+						currentReflectionType = eUniformBlock;
+					}
+					else if (std::regex_search(line, match, pattern = R"(Vertex attribute reflection:)"))
+					{
+						currentReflectionType = eVertexAttribute;
+					}
+					else if (std::regex_search(line, match, pattern = R"(([_a-zA-Z][_a-zA-Z0-9.]*)[\[\]0-9]*: offset ([-0-9][-a-zA-Z0-9]*), type ([_a-zA-Z0-9.]*), size ([-0-9][-a-zA-Z0-9]*), index ([-0-9][-a-zA-Z0-9]*), binding ([-0-9][-a-zA-Z0-9]*))"))
+					{
+						Reflection reflection;
+						reflection.reflectionType = currentReflectionType;
+						reflection.name = match[1].str();
+						reflection.offset = std::stoi(match[2].str());
+						reflection.type = match[3].str();
+						reflection.size = std::stoi(match[4].str());
+						reflection.index = std::stoi(match[5].str());
+						reflection.binding = std::stoi(match[6].str());
+						reflections.add(reflection);
+					}
 				}
-				if (currentReflection.name != "") reflections.add(currentReflection);
-				fclose(glslang_validator_yyin);
-				glslang_validator_yyin = NULL;
 
 				for (auto &r : reflections.rs)
 				{
@@ -1748,29 +1838,29 @@ namespace tke
 		pipelineLoadXML<Pipeline, Stage>(this, _filename);
 	}
 
-	void Pipeline::setup(VkRenderPass renderPass, std::uint32_t subpassIndex)
+	void Pipeline::setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex)
 	{
-		if (!m_pVertexInputState)
+		if (!pVertexInputState)
 		{
 			switch (vertex_input_type)
 			{
 			case VertexInputType::zero:
-				m_pVertexInputState = &zeroVertexInputState;
+				pVertexInputState = &zeroVertexInputState;
 				break;
 			case VertexInputType::normal:
-				m_pVertexInputState = &vertexInputState;
+				pVertexInputState = &vertexInputState;
 				break;
 			case VertexInputType::line:
-				m_pVertexInputState = &lineVertexInputState;
+				pVertexInputState = &lineVertexInputState;
 				break;
 			case VertexInputType::animated:
-				m_pVertexInputState = &animatedVertexInputState;
+				pVertexInputState = &animatedVertexInputState;
 				break;
 			}
 		}
 
-		m_renderPass = renderPass;
-		m_subpassIndex = subpassIndex;
+		renderPass = _renderPass;
+		subpassIndex = _subpassIndex;
 
 		if (cx == -1)
 			cx = tke::resCx;
@@ -1779,8 +1869,8 @@ namespace tke
 
 		if (cx == 0 && cy == 0)
 		{
-			m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-			m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+			dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+			dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 		}
 
 		switch (primitive_topology)
@@ -1841,6 +1931,8 @@ namespace tke
 			s.dstAlphaBlendFactor = _vkBlendFactor(b.dst_alpha);
 			vkBlendAttachments.push_back(s);
 		}
+
+		_currentUboBinding = 0;
 
 		for (auto s : stages)
 		{
@@ -1917,7 +2009,7 @@ namespace tke
 					}
 					if (same)
 					{
-						m_descriptorSetLayout = d;
+						descriptorSetLayout = d;
 						found = true;
 						break;
 					}
@@ -1941,17 +2033,17 @@ namespace tke
 
 				descriptorSetLayouts.push_back(d);
 
-				m_descriptorSetLayout = d;
+				descriptorSetLayout = d;
 			}
 		}
 
-		m_descriptorSet = descriptorPool.allocate(&m_descriptorSetLayout->v);
+		descriptorSet = descriptorPool.allocate(&descriptorSetLayout->v);
 
 		{
 			bool found = false;
 			for (auto p : pipelineLayouts)
 			{
-				if (p->descriptorLayout == m_descriptorSetLayout->v && p->pushConstantRanges.size() == vkPushConstantRanges.size())
+				if (p->descriptorLayout == descriptorSetLayout->v && p->pushConstantRanges.size() == vkPushConstantRanges.size())
 				{
 					bool same = true;
 					for (auto i = 0; i < p->pushConstantRanges.size(); i++)
@@ -1966,7 +2058,7 @@ namespace tke
 					}
 					if (same)
 					{
-						m_pipelineLayout = p;
+						pipelineLayout = p;
 						found = true;
 						break;
 					}
@@ -1976,13 +2068,13 @@ namespace tke
 			if (!found)
 			{
 				auto p = new PipelineLayout;
-				p->descriptorLayout = m_descriptorSetLayout->v;
+				p->descriptorLayout = descriptorSetLayout->v;
 				p->pushConstantRanges.insert(p->pushConstantRanges.begin(), vkPushConstantRanges.begin(), vkPushConstantRanges.end());
 
 				VkPipelineLayoutCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 				info.setLayoutCount = 1;
-				info.pSetLayouts = &m_descriptorSetLayout->v;
+				info.pSetLayouts = &descriptorSetLayout->v;
 				info.pushConstantRangeCount = p->pushConstantRanges.size();
 				info.pPushConstantRanges = p->pushConstantRanges.data();
 
@@ -1993,7 +2085,7 @@ namespace tke
 
 				pipelineLayouts.push_back(p);
 
-				m_pipelineLayout = p;
+				pipelineLayout = p;
 			}
 		}
 
@@ -2064,15 +2156,15 @@ namespace tke
 
 		VkPipelineDynamicStateCreateInfo dynamicState = {};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicState.dynamicStateCount = m_dynamics.size();
-		dynamicState.pDynamicStates = m_dynamics.data();
+		dynamicState.dynamicStateCount = dynamicStates.size();
+		dynamicState.pDynamicStates = dynamicStates.data();
 
 		VkGraphicsPipelineCreateInfo pipelineInfo = {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.layout = m_pipelineLayout->v;
+		pipelineInfo.layout = pipelineLayout->v;
 		pipelineInfo.stageCount = vkStages.size();
 		pipelineInfo.pStages = vkStages.data();
-		pipelineInfo.pVertexInputState = m_pVertexInputState;
+		pipelineInfo.pVertexInputState = pVertexInputState;
 		pipelineInfo.pInputAssemblyState = &assemblyState;
 		pipelineInfo.pTessellationState = patch_control_points ? &tessState : nullptr;
 		pipelineInfo.pDepthStencilState = &depthStencilState;
@@ -2082,10 +2174,10 @@ namespace tke
 		pipelineInfo.renderPass = renderPass;
 		pipelineInfo.subpass = subpassIndex;
 		pipelineInfo.pMultisampleState = &multisampleState;
-		pipelineInfo.pDynamicState = m_dynamics.size() ? &dynamicState : nullptr;
+		pipelineInfo.pDynamicState = dynamicStates.size() ? &dynamicState : nullptr;
 
 		device.cs.lock();
-		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &m_pipeline);
+		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 
@@ -2094,36 +2186,36 @@ namespace tke
 
 	Pipeline::~Pipeline()
 	{
-		m_pipelineLayout->refCount--;
-		if (m_pipelineLayout->refCount == 0)
+		pipelineLayout->refCount--;
+		if (pipelineLayout->refCount == 0)
 		{
 			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); it++)
 			{
-				if (*it == m_pipelineLayout)
+				if (*it == pipelineLayout)
 				{
 					pipelineLayouts.erase(it);
-					delete m_pipelineLayout;
+					delete pipelineLayout;
 					break;
 				}
 			}
 		}
 
-		m_descriptorSetLayout->refCount--;
-		if (m_descriptorSetLayout->refCount == 0)
+		descriptorSetLayout->refCount--;
+		if (descriptorSetLayout->refCount == 0)
 		{
 			for (auto it = descriptorSetLayouts.begin(); it != descriptorSetLayouts.end(); it++)
 			{
-				if (*it == m_descriptorSetLayout)
+				if (*it == descriptorSetLayout)
 				{
 					descriptorSetLayouts.erase(it);
-					delete m_descriptorSetLayout;
+					delete descriptorSetLayout;
 					break;
 				}
 			}
 		}
 
 		device.cs.lock();
-		vkDestroyPipeline(device.v, m_pipeline, nullptr);
+		vkDestroyPipeline(device.v, pipeline, nullptr);
 		device.cs.unlock();
 
 		for (int i = 0; i < 5; i++)
@@ -2183,7 +2275,7 @@ namespace tke
 			{
 				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pUniformBuffer)
-					descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element);
+					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2192,7 +2284,7 @@ namespace tke
 			{
 				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pStorageBuffer)
-					descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element);
+					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2201,7 +2293,7 @@ namespace tke
 			{
 				auto pStorageImage = pResource->getImage(link.resource_name);
 				if (pStorageImage)
-					descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element);
+					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2229,7 +2321,7 @@ namespace tke
 						sampler = colorBorderSampler;
 						break;
 					}
-					descriptorPool.addWrite(m_descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element);
+					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
@@ -2340,7 +2432,7 @@ namespace tke
 
 	DrawAction::DrawAction(Pipeline *pipeline)
 	{
-		m_pipeline = pipeline;
+		pipeline = pipeline;
 		type = DrawActionType::draw_action;
 	}
 
@@ -2389,17 +2481,17 @@ namespace tke
 
 	void DrawAction::preprocess(Pipeline* &currentPipeline)
 	{
-		if (m_pipeline)
+		if (pipeline)
 		{
-			if (!m_descriptorSet)
+			if (!descriptorSet)
 			{
-				if (m_pipeline->m_descriptorSet)
-					m_descriptorSet = m_pipeline->m_descriptorSet;
+				if (pipeline->descriptorSet)
+					descriptorSet = pipeline->descriptorSet;
 			}
 		}
 
-		if (m_pipeline && m_pipeline != currentPipeline)
-			currentPipeline = m_pipeline;
+		if (pipeline && pipeline != currentPipeline)
+			currentPipeline = pipeline;
 	}
 
 	Attachment::Attachment() {}
@@ -2873,8 +2965,8 @@ namespace tke
 							action.m_indexBuffer = (IndexBuffer*)resource.getBuffer(action.index_buffer_name);
 						if (action.pipeline_name != "")
 						{
-							action.m_pipeline = resource.getPipeline(action.pipeline_name.c_str());
-							if (action.m_pipeline)
+							action.pipeline = resource.getPipeline(action.pipeline_name.c_str());
+							if (action.pipeline)
 							{
 								for (auto &p : resource.privatePipelines)
 								{
@@ -2975,10 +3067,10 @@ namespace tke
 					switch (action.type)
 					{
 					case DrawActionType::draw_action:
-						if (action.m_pipeline && action.m_pipeline != currentPipeline)
+						if (action.pipeline && action.pipeline != currentPipeline)
 						{
-							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipeline);
-							currentPipeline = action.m_pipeline;
+							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.pipeline->pipeline);
+							currentPipeline = action.pipeline;
 						}
 						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
 						{
@@ -2990,10 +3082,10 @@ namespace tke
 							action.m_indexBuffer->bind(cmd);
 							currentIndexBuffer = action.m_indexBuffer;
 						}
-						if (action.m_descriptorSet && action.m_descriptorSet != currentDescriptorSet)
+						if (action.descriptorSet && action.descriptorSet != currentDescriptorSet)
 						{
-							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.m_pipeline->m_pipelineLayout->v, 0, 1, &action.m_descriptorSet, 0, nullptr);
-							currentDescriptorSet = action.m_descriptorSet;
+							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.pipeline->pipelineLayout->v, 0, 1, &action.descriptorSet, 0, nullptr);
+							currentDescriptorSet = action.descriptorSet;
 						}
 
 						for (auto &drawcall : action.drawcalls)
@@ -3019,7 +3111,7 @@ namespace tke
 								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
 								break;
 							case DrawcallType::push_constant:
-								vkCmdPushConstants(cmd, currentPipeline->m_pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
+								vkCmdPushConstants(cmd, currentPipeline->pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
 								break;
 							}
 						}

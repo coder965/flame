@@ -1,14 +1,16 @@
 #include <stdio.h>
-#include <string>
-
 #include <windows.h>
+#include <string>
 #include <experimental\filesystem>
+#include <regex>
 
 #include "def.h"
 
 #define EXTRA \
-"#include \"utils.h\"\n \
-#include \"render.h\"\n"
+"\
+#include \"utils.h\"\n\
+#include \"render.h\"\n\
+"
 
 #define INPUT "../src/render.h"
 
@@ -196,9 +198,7 @@ int main(int argc, char **argv)
 	fprintf(fout, EXTRA);
 	fprintf(fout, "#include <string>\n");
 	fprintf(fout, "namespace tke{\n");
-
 	fprintf(fout, declString.c_str());
-
 	fprintf(fout, "struct ReflectInit{ReflectInit(){\n");
 	fprintf(fout, "tke::Enum *currentEnum = nullptr;\n");
 	fprintf(fout, "tke::ReflectionBank *currentBank = nullptr;\n");

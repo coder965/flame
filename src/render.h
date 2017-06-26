@@ -484,11 +484,13 @@ namespace tke
 		int subpassIndex = -1;
 	};
 
-	struct ShaderMacro
+	REFLECTABLE struct ShaderMacro
 	{
-		std::string pipelineName;
-		StageType stageType = StageType::null;
-		std::string value;
+		REFL_BANK;
+
+		REFLv std::string pipelineName;
+		REFLe StageType stageType = StageType::null;
+		REFLv std::string value;
 	};
 
 	struct Model;
@@ -743,20 +745,19 @@ namespace tke
 		std::vector<VkPushConstantRange> vkPushConstantRanges;
 		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 
-		VkPipelineVertexInputStateCreateInfo *m_pVertexInputState = nullptr;
-		VkRenderPass m_renderPass;
-		int m_subpassIndex;
-		std::vector<VkDynamicState> m_dynamics;
-
-		DescriptorSetLayout *m_descriptorSetLayout = nullptr;
-		PipelineLayout *m_pipelineLayout = nullptr;
-		VkPipeline m_pipeline = 0;
-		VkDescriptorSet m_descriptorSet = 0;
+		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
+		VkRenderPass renderPass;
+		int subpassIndex;
+		std::vector<VkDynamicState> dynamicStates;
+		DescriptorSetLayout *descriptorSetLayout = nullptr;
+		PipelineLayout *pipelineLayout = nullptr;
+		VkPipeline pipeline = 0;
+		VkDescriptorSet descriptorSet = 0;
 
 		Pipeline();
 		~Pipeline();
 		void loadXML(const std::string &filename);
-		void setup(VkRenderPass renderPass, std::uint32_t subpassIndex);
+		void setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex);
 		void updateDescriptors();
 		int descriptorPosition(const std::string &name);
 	};
@@ -846,9 +847,9 @@ namespace tke
 
 		VertexBuffer *m_vertexBuffer = nullptr;
 		IndexBuffer *m_indexBuffer = nullptr;
-		Pipeline *m_pipeline = nullptr;
+		Pipeline *pipeline = nullptr;
 
-		VkDescriptorSet m_descriptorSet = 0;
+		VkDescriptorSet descriptorSet = 0;
 
 		PF_RenderFunc m_pRenderFunc = nullptr;
 

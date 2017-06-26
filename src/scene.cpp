@@ -654,15 +654,15 @@ namespace tke
 
 					downsamplePipeline.name = "Downsample.Pipeline";
 					downsamplePipeline.loadXML(enginePath + "pipeline/sky/downsample.xml");
-					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-					downsamplePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+					downsamplePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+					downsamplePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 					downsamplePipeline.setup(postRenderPass, 0);
 					globalResource.setPipeline(&downsamplePipeline);
 
 					convolvePipeline.name = "Convolve.Pipeline";
 					convolvePipeline.loadXML(enginePath + "pipeline/sky/convolve.xml");
-					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-					convolvePipeline.m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+					convolvePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+					convolvePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 					convolvePipeline.setup(postRenderPass, 0);
 					globalResource.setPipeline(&convolvePipeline);
 
@@ -682,13 +682,13 @@ namespace tke
 						envrDownsampleFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), postRenderPass, views);
 					}
 
-					convolveDescriptorSetLevel[0] = convolvePipeline.m_descriptorSet;
-					convolveDescriptorSetLevel[1] = descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout->v);
-					convolveDescriptorSetLevel[2] = descriptorPool.allocate(&convolvePipeline.m_descriptorSetLayout->v);
+					convolveDescriptorSetLevel[0] = convolvePipeline.descriptorSet;
+					convolveDescriptorSetLevel[1] = descriptorPool.allocate(&convolvePipeline.descriptorSetLayout->v);
+					convolveDescriptorSetLevel[2] = descriptorPool.allocate(&convolvePipeline.descriptorSetLayout->v);
 
-					downsampleDescriptorSetLevel[0] = downsamplePipeline.m_descriptorSet;
-					downsampleDescriptorSetLevel[1] = descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout->v);
-					downsampleDescriptorSetLevel[2] = descriptorPool.allocate(&downsamplePipeline.m_descriptorSetLayout->v);
+					downsampleDescriptorSetLevel[0] = downsamplePipeline.descriptorSet;
+					downsampleDescriptorSetLevel[1] = descriptorPool.allocate(&downsamplePipeline.descriptorSetLayout->v);
+					downsampleDescriptorSetLevel[2] = descriptorPool.allocate(&downsamplePipeline.descriptorSetLayout->v);
 
 					static int source_position = -1;
 					if (source_position == -1) source_position = downsamplePipeline.descriptorPosition("source");
@@ -729,14 +729,14 @@ namespace tke
 						vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[0]->v,
 							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
-						vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scatteringPipeline.m_pipeline);
+						vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scatteringPipeline.pipeline);
 						vkCmdDraw(cmd, 3, 1, 0, 0);
 
 						vkCmdEndRenderPass(cmd);
 
 						commandPool.endOnce(cmd);
 
-						descriptorPool.addWrite(panoramaPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
+						descriptorPool.addWrite(panoramaPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
 
 						if (deferredPipeline)
 						{ // update IBL
@@ -752,7 +752,7 @@ namespace tke
 									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrDownsampleFramebuffer[i]->v,
 										TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
-									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.m_pipeline);
+									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.pipeline);
 
 									VkViewport viewport;
 									viewport.x = 0.f;
@@ -771,9 +771,9 @@ namespace tke
 									vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 									auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
-									vkCmdPushConstants(cmd, downsamplePipeline.m_pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
+									vkCmdPushConstants(cmd, downsamplePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
 
-									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.m_pipelineLayout->v, 0, 1, &downsampleDescriptorSetLevel[i], 0, nullptr);
+									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.pipelineLayout->v, 0, 1, &downsampleDescriptorSetLevel[i], 0, nullptr);
 									vkCmdDraw(cmd, 3, 1, 0, 0);
 
 									vkCmdEndRenderPass(cmd);
@@ -788,10 +788,10 @@ namespace tke
 									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[i]->v,
 										TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
-									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.m_pipeline);
+									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.pipeline);
 
 									auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-									vkCmdPushConstants(cmd, convolvePipeline.m_pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
+									vkCmdPushConstants(cmd, convolvePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 
 									VkViewport viewport;
 									viewport.x = 0.f;
@@ -809,7 +809,7 @@ namespace tke
 									scissor.extent.height = TKE_ENVR_SIZE_CY >> i;
 									vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.m_pipelineLayout->v, 0, 1, &convolveDescriptorSetLevel[i - 1], 0, nullptr);
+									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.pipelineLayout->v, 0, 1, &convolveDescriptorSetLevel[i - 1], 0, nullptr);
 									vkCmdDraw(cmd, 3, 1, 0, 0);
 
 									vkCmdEndRenderPass(cmd);
@@ -817,7 +817,7 @@ namespace tke
 									commandPool.endOnce(cmd);
 								}
 
-								descriptorPool.addWrite(deferredPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->m_mipmapLevels));
+								descriptorPool.addWrite(deferredPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->m_mipmapLevels));
 
 								AmbientBufferShaderStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -995,7 +995,7 @@ namespace tke
 						}
 
 						if (bone_position != -1)
-							descriptorPool.addWrite(mrtAnimPipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bone_position, &pObject->animationComponent->boneMatrixBuffer->m_info, animatedIndex);
+							descriptorPool.addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bone_position, &pObject->animationComponent->boneMatrixBuffer->m_info, animatedIndex);
 
 						animatedIndex++;
 					}

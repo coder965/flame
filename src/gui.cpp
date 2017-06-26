@@ -472,10 +472,10 @@ namespace tke
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
 		vkCmdBindIndexBuffer(cmd, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdPushConstants(cmd, pipeline->m_pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		vkCmdPushConstants(cmd, pipeline->pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout->v, 0, 1, &pipeline->m_descriptorSet, 0, NULL);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipelineLayout->v, 0, 1, &pipeline->descriptorSet, 0, NULL);
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -551,8 +551,8 @@ namespace tke
 
 			pipeline = new Pipeline;
 			pipeline->loadXML(enginePath + "pipeline/ui/ui.xml");
-			pipeline->m_pVertexInputState = &vertex_info;
-			pipeline->m_dynamics.push_back(VK_DYNAMIC_STATE_SCISSOR);
+			pipeline->pVertexInputState = &vertex_info;
+			pipeline->dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 			pipeline->setup(plainRenderPass, 0);
 
 			context = ImGui::GetCurrentContext();
@@ -572,7 +572,7 @@ namespace tke
 
 			if (texture_position == -1) texture_position = pipeline->descriptorPosition("sTexture");
 
-			descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
+			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
 
 			descriptorPool.update();
 
@@ -734,7 +734,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool.addWrite(pipeline->m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
 		}
 
 		descriptorPool.update();

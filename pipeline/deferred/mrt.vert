@@ -1,4 +1,4 @@
-layout(binding = 0) uniform MATRIX
+layout(binding = TKE_UBO_BINDING) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;

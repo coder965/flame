@@ -180,7 +180,6 @@
     <ClCompile Include="..\src\core.cpp" />
     <ClCompile Include="..\src\event.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
-    <ClCompile Include="..\src\lex.glslang_validator_yy.c" />
     <ClCompile Include="..\src\light.cpp" />
     <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\model.cpp" />
