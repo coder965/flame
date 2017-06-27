@@ -33,9 +33,6 @@
     <ClCompile Include="attribute.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="bone_motion.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="transformer_tool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -57,9 +54,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="attribute.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="bone_motion.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="transformer_tool.h">

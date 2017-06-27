@@ -100,19 +100,6 @@ void MonitorWidget::show()
 		}
 	}
 	ImGui::EndDock();
-
-	if (!opened)
-	{
-		for (auto it = monitors.begin(); it != monitors.end(); it++)
-		{
-			if (*it == this)
-			{
-				monitors.erase(it);
-				break;
-			}
-		}
-		delete this;
-	}
 }
 
 std::vector<MonitorWidget*> monitors;

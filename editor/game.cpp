@@ -74,12 +74,6 @@ void GameExplorer::show()
 		ImGui::TreePop();
 	}
 	ImGui::EndDock();
-
-	if (!opened)
-	{
-		gameExplorer = nullptr;
-		delete this;
-	}
 }
 
 GameExplorer *gameExplorer = nullptr;

@@ -3279,13 +3279,20 @@ namespace tke
 		case 1:
 			switch (bpp)
 			{
+			case 8:
+				return VK_FORMAT_R8_UNORM;
 			case 16:
 				return VK_FORMAT_R16_UNORM;
 			}
 			break;
 		case 4:
-			if (sRGB) return VK_FORMAT_R8G8B8A8_SRGB;
-			else  return VK_FORMAT_R8G8B8A8_UNORM;
+			switch (bpp)
+			{
+			case 32:
+				if (sRGB) return VK_FORMAT_R8G8B8A8_SRGB;
+				else  return VK_FORMAT_R8G8B8A8_UNORM;
+				break;
+			}
 		}
 
 		return VK_FORMAT_UNDEFINED;

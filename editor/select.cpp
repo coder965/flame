@@ -18,17 +18,11 @@ void SelectedItem::select(tke::Object *_obj)
 
 	if (ptr)
 		ptr->addObserver(this);
-
-	for (auto o : observers)
-		o->listen(this, tke::NotificationTypeChange, _obj);
 }
 
 void SelectedItem::listen(void *sender, tke::NotificationType type, void *newData)
 {
 	ptr = (tke::ObservedObject*)newData;
-
-	for (auto o : observers)
-		o->listen(this, tke::NotificationTypeRefresh, ptr);
 }
 
 SelectedItem selectedItem;

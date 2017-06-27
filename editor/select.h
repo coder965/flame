@@ -10,7 +10,7 @@ enum ItemType
 	ItemTypeLight
 };
 
-struct SelectedItem : tke::Observer, tke::ObservedObject
+struct SelectedItem : tke::Observer
 {
 	ItemType type = ItemTypeNull;
 	tke::ObservedObject *ptr = nullptr;

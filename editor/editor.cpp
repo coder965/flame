@@ -4,7 +4,6 @@
 #include "game.h"
 #include "monitor.h"
 #include "attribute.h"
-#include "bone_motion.h"
 
 tke::Image *titleImage = nullptr;
 
@@ -48,12 +47,6 @@ void EditorWindow::openAttributeWidget()
 {
 	if (!attributeWidget)
 		attributeWidget = new AttributeWidget;
-}
-
-void EditorWindow::openBoneMotionWidget()
-{
-	if (!boneMotionWdiget)
-		boneMotionWdiget = new BoneMotionWidget;
 }
 
 void EditorWindow::renderEvent()
@@ -123,13 +116,9 @@ void EditorWindow::renderEvent()
 		if (ImGui::MenuItem("Output"))
 		{
 		}
-		if (ImGui::MenuItem("Attribute"))
+		if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
 		{
 			openAttributeWidget();
-		}
-		if (ImGui::MenuItem("Motion"))
-		{
-			openBoneMotionWidget();
 		}
 		ImGui::EndMenu();
 	}
@@ -150,16 +139,39 @@ void EditorWindow::renderEvent()
 	ImGui::EndMainMenuBar();
 
 	if (gameExplorer)
+	{
 		gameExplorer->show();
+		if (!gameExplorer->opened)
+		{
+			delete gameExplorer;
+			gameExplorer = nullptr;
+		}
+	}
 
 	if (attributeWidget)
+	{
 		attributeWidget->show();
-
-	if (boneMotionWdiget)
-		boneMotionWdiget->show();
+		if (!attributeWidget->opened)
+		{
+			delete attributeWidget;
+			attributeWidget = nullptr;
+		}
+	}
 
 	for (auto m : monitors)
 		m->show();
+	for (auto it = monitors.begin(); it != monitors.end(); )
+	{
+		if (!(*it)->opened)
+		{
+			delete *it;
+			it = monitors.erase(it);
+		}
+		else
+		{
+			it++;
+		}
+	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
 	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
@@ -200,13 +212,6 @@ void EditorWindow::saveUi(const std::string &filename)
 	{
 		auto n = new tke::AttributeTreeNode("AttributeWidget");
 		static bool opened = attributeWidget;
-		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		at.children.push_back(n);
-	}
-
-	{
-		auto n = new tke::AttributeTreeNode("BoneMotionWidget");
-		static bool opened = boneMotionWdiget;
 		n->attributes.push_back(new tke::Attribute("opened", &opened));
 		at.children.push_back(n);
 	}
@@ -252,14 +257,6 @@ void EditorWindow::loadUi(const std::string &filename)
 				a->get<bool>(&opened);
 				if (opened)
 					openAttributeWidget();
-			}
-			else if (c->name == "BoneMotionWidget")
-			{
-				auto a = c->firstAttribute("opened");
-				bool opened;
-				a->get<bool>(&opened);
-				if (opened)
-					openBoneMotionWidget();
 			}
 		}
 	}

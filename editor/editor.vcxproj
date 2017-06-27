@@ -158,7 +158,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="attribute.cpp" />
-    <ClCompile Include="bone_motion.cpp" />
     <ClCompile Include="editor.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
@@ -169,7 +168,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="attribute.h" />
-    <ClInclude Include="bone_motion.h" />
     <ClInclude Include="editor.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="monitor.h" />
