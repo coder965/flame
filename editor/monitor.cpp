@@ -15,9 +15,9 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	renderer->resource.setImage(image, "Window.Image");
 	tke::addGuiImage(image);
 	tke::ShaderMacro macro;
-	macro.pipelineName = "Deferred.Pipeline";
-	macro.stageType = tke::StageType::frag;
-	macro.value = "#define USE_PBR\n";
+	macro.pipeline_name = "Deferred.Pipeline";
+	macro.stage = tke::StageType::frag;
+	macro.value = "USE_PBR\n";
 	renderer->resource.shaderMacros.push_back(macro);
 
 	renderer->setup();

@@ -247,7 +247,8 @@ namespace tke
 	{
 		null,
 		REFLe R8G8B8A8 = 1 << 0,
-		REFLe R16G16B16A16 = 1 << 1
+		REFLe R16G16B16A16 = 1 << 1,
+		REFLe R32G32B32A32 = 1 << 2
 	};
 
 	inline VkFormat vkFormat(Format f)
@@ -258,6 +259,8 @@ namespace tke
 			return VK_FORMAT_R8G8B8A8_UNORM;
 		case Format::R16G16B16A16:
 			return VK_FORMAT_R16G16B16A16_SFLOAT;
+		case Format::R32G32B32A32:
+			return VK_FORMAT_R32G32B32A32_SFLOAT;
 		}
 		return VK_FORMAT_UNDEFINED;
 	}
@@ -488,8 +491,8 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLv std::string pipelineName;
-		REFLe StageType stageType = StageType::null;
+		REFLv std::string pipeline_name;
+		REFLe StageType stage = StageType::null;
 		REFLv std::string value;
 	};
 
@@ -530,7 +533,17 @@ namespace tke
 
 	extern ResourceBank globalResource;
 
-	REFLECTABLE struct StageArchive
+	struct ShaderModule
+	{
+		std::string filename;
+		std::vector<std::string> defines;
+		VkShaderModule v;
+		int refCount = 1;
+
+		~ShaderModule();
+	};
+
+	REFLECTABLE struct Stage
 	{
 		REFL_BANK;
 
@@ -540,19 +553,7 @@ namespace tke
 
 		std::vector<Descriptor> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
-	};
 
-	struct ShaderModule
-	{
-		std::string filename;
-		VkShaderModule v;
-		int refCount = 1;
-
-		~ShaderModule();
-	};
-
-	struct Stage : StageArchive
-	{
 		Pipeline *parent;
 		ShaderModule *module = nullptr;
 
@@ -582,7 +583,27 @@ namespace tke
 		REFLe SamplerType sampler = SamplerType::none;
 	};
 
-	REFLECTABLE struct PipelineArchive
+	struct DescriptorSetLayout
+	{
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		VkDescriptorSetLayout v;
+		int refCount = 1;
+
+		~DescriptorSetLayout();
+	};
+
+	struct PipelineLayout
+	{
+		VkDescriptorSetLayout descriptorLayout;
+		std::vector<VkPushConstantRange> pushConstantRanges;
+		VkPipelineLayout v;
+		int refCount = 1;
+
+		~PipelineLayout();
+	};
+
+	struct ResourceBank;
+	REFLECTABLE struct Pipeline
 	{
 		REFL_BANK;
 
@@ -605,137 +626,11 @@ namespace tke
 
 		std::vector<BlendAttachment> blendAttachments;
 		std::vector<LinkResource> links;
-	};
-
-	template<class PipelineType, class StageType>
-	void pipelineLoadXML(PipelineType *p, const std::string &_filename)
-	{
-		p->filename = _filename;
-		std::experimental::filesystem::path path(p->filename);
-		p->filepath = path.parent_path().string();
-		if (p->filepath == "")
-			p->filepath = ".";
-
-		AttributeTree at("pipeline");
-		at.loadXML(p->filename);
-		at.obtainFromAttributes(p, p->b);
-
-		for (auto c : at.children)
-		{
-			if (c->name == "blend_attachment")
-			{
-				BlendAttachment ba;
-				c->obtainFromAttributes(&ba, ba.b);
-				p->blendAttachments.push_back(ba);
-			}
-			else if (c->name == "link")
-			{
-				LinkResource l;
-				c->obtainFromAttributes(&l, l.b);
-				p->links.push_back(l);
-			}
-			else if (c->name == "stage")
-			{
-				auto s = new StageType(p);
-				c->obtainFromAttributes(s, s->b);
-				std::experimental::filesystem::path path(s->filename);
-				s->filepath = path.parent_path().string();
-				if (s->filepath == "")
-					s->filepath = ".";
-				auto ext = path.extension().string();
-				s->type = StageFlagByExt(ext);
-
-				AttributeTree at("stage", p->filepath + "/" + s->filename + ".xml");
-				if (at.good)
-				{
-					for (auto c : at.children)
-					{
-						if (c->name == "descriptor")
-						{
-							Descriptor d;
-							c->obtainFromAttributes(&d, d.b);
-							s->descriptors.push_back(d);
-						}
-						else if (c->name == "push_constant")
-						{
-							PushConstantRange pc;
-							c->obtainFromAttributes(&pc, pc.b);
-							s->pushConstantRanges.push_back(pc);
-						}
-					}
-				}
-
-				p->stages[StageIndexByType(s->type)] = s;
-			}
-		}
-	}
-
-	template<class PipelineType>
-	void pipelineSaveXML(PipelineType *p)
-	{
-		AttributeTree at("pipeline");
-		at.addAttributes(p, p->b);
-		for (auto &b : p->blendAttachments)
-		{
-			auto n = new AttributeTreeNode("blend_attachment");
-			n->addAttributes(&b, b.b);
-			at.children.push_back(n);
-		}
-		for (auto &l : p->links)
-		{
-			auto n = new AttributeTreeNode("link");
-			n->addAttributes(&l, l.b);
-			at.children.push_back(n);
-		}
-		for (int i = 0; i < 5; i++)
-		{
-			auto s = p->stages[i];
-			if (!s) continue;
-
-			auto n = new AttributeTreeNode("stage");
-			n->addAttributes(s, s->b);
-			at.children.push_back(n);
-		}
-
-		at.saveXML(p->filename);
-	}
-
-	template<class PipelineType>
-	bool isFullOfStage(PipelineType *p)
-	{
-		for (int i = 0; i < 5; i++)
-		{
-			if (p->stages[i])
-				return false;
-		}
-		return true;
-	}
-
-	struct DescriptorSetLayout
-	{
-		std::vector<VkDescriptorSetLayoutBinding> bindings;
-		VkDescriptorSetLayout v;
-		int refCount = 1;
-
-		~DescriptorSetLayout();
-	};
-
-	struct PipelineLayout
-	{
-		VkDescriptorSetLayout descriptorLayout;
-		std::vector<VkPushConstantRange> pushConstantRanges;
-		VkPipelineLayout v;
-		int refCount = 1;
-
-		~PipelineLayout();
-	};
-
-	struct ResourceBank;
-	struct Pipeline : PipelineArchive
-	{
 		Stage *stages[5] = {};
 
 		ResourceBank *pResource = nullptr;
+
+		std::vector<ShaderMacro> shaderMacros;
 
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
@@ -757,6 +652,7 @@ namespace tke
 		Pipeline();
 		~Pipeline();
 		void loadXML(const std::string &filename);
+		void saveXML(const std::string &filename);
 		void setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex);
 		void updateDescriptors();
 		int descriptorPosition(const std::string &name);

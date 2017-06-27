@@ -1434,19 +1434,49 @@ namespace tke
 	static int _currentUboBinding = 0;
 	void Stage::create()
 	{
+		std::vector<std::string> defines;
+		for (auto &m : parent->shaderMacros)
+		{
+			if (((int)m.stage & (int)type))
+				defines.push_back(m.value);
+		}
+		for (auto &m : parent->pResource->shaderMacros)
+		{
+			if (m.pipeline_name == parent->name && ((int)m.stage & (int)type))
+				defines.push_back(m.value);
+		}
+
 		// format the shader path, so that they can reuse if them refer the same one
 		auto path = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
 		for (auto m : shaderModules)
 		{
 			if (m->filename == path)
 			{
-				module = m;
-				return;
+				if (defines.size() != m->defines.size()) continue;
+
+				bool same = true;
+				for (int i = 0; i < defines.size(); i++)
+				{
+					if (defines[i] != m->defines[i])
+					{
+						same = false;
+						break;
+					}
+				}
+
+				if (same)
+				{
+					m->refCount++;
+					module = m;
+					return;
+				}
 			}
 		}
 
-		auto m = new ShaderModule;
-		m->filename = path;
+		module = new ShaderModule;
+		module->filename = path;
+		module->defines.insert(module->defines.begin(), defines.begin(), defines.end());
+		shaderModules.push_back(module);
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
@@ -1461,37 +1491,17 @@ namespace tke
 			stageText += "#version 450 core\n"; lineNum++;
 			stageText += "#extension GL_ARB_separate_shader_objects : enable\n"; lineNum++;
 			stageText += "#extension GL_ARB_shading_language_420pack : enable\n\n"; lineNum++;
-			for (auto &m : parent->pResource->shaderMacros)
+			for (auto &m : defines)
 			{
-				if (m.pipelineName == parent->name && ((int)m.stageType & (int)type))
-				{
-					stageText += m.value;
-					lineNum++;
-				}
+				stageText += "#define " + m + "\n";
+				lineNum++;
 			}
 			int fullLineNum = lineNum;
 
-			std::vector<std::string> defines;
 			std::stack<std::pair<bool, bool>> states; // first current accept, second this con accepted
 			states.push({ true, false });
 
 			std::vector<std::tuple<int, int, int>> includeFileDatas;
-
-			//ss.clear();
-			//ss << "#define ABC\n";
-			//ss << "#if defined(ABC)\n";
-			//ss << "#define DEF\n";
-			//ss << "#if !defined(ABC)\n";
-			//ss << "#define NML\n";
-			//ss << "#else\n";
-			//ss << "#define KKK\n";
-			//ss << "#endif\n";
-			//ss << "#elif defined(JKL)\n";
-			//ss << "#if defined(ABC)\n";
-			//ss << "#define RGB\n";
-			//ss << "#endif\n";
-			//ss << "#define XYZ\n";
-			//ss << "#endif\n";
 
 			std::string line;
 			while (!ss.eof())
@@ -1772,7 +1782,7 @@ namespace tke
 				shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
 
 				device.cs.lock();
-				auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &m->v);
+				auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &module->v);
 				assert(res == VK_SUCCESS);
 				device.cs.unlock();
 
@@ -1787,10 +1797,6 @@ namespace tke
 			DeleteFileA("output.txt");
 			DeleteFileA("temp.glsl");
 		}
-
-		shaderModules.push_back(m);
-
-		module = m;
 	}
 
 	Stage::~Stage()
@@ -1835,7 +1841,105 @@ namespace tke
 
 	void Pipeline::loadXML(const std::string &_filename)
 	{
-		pipelineLoadXML<Pipeline, Stage>(this, _filename);
+		filename = _filename;
+		std::experimental::filesystem::path path(filename);
+		filepath = path.parent_path().string();
+		if (filepath == "")
+			filepath = ".";
+
+		AttributeTree at("pipeline");
+		at.loadXML(filename);
+		at.obtainFromAttributes(this, b);
+
+		for (auto c : at.children)
+		{
+			if (c->name == "blend_attachment")
+			{
+				BlendAttachment ba;
+				c->obtainFromAttributes(&ba, ba.b);
+				blendAttachments.push_back(ba);
+			}
+			else if (c->name == "link")
+			{
+				LinkResource l;
+				c->obtainFromAttributes(&l, l.b);
+				links.push_back(l);
+			}
+			else if (c->name == "stage")
+			{
+				auto s = new Stage(this);
+				c->obtainFromAttributes(s, s->b);
+				std::experimental::filesystem::path path(s->filename);
+				s->filepath = path.parent_path().string();
+				if (s->filepath == "")
+					s->filepath = ".";
+				auto ext = path.extension().string();
+				s->type = StageFlagByExt(ext);
+
+				AttributeTree at("stage", filepath + "/" + s->filename + ".xml");
+				if (at.good)
+				{
+					for (auto c : at.children)
+					{
+						if (c->name == "descriptor")
+						{
+							Descriptor d;
+							c->obtainFromAttributes(&d, d.b);
+							s->descriptors.push_back(d);
+						}
+						else if (c->name == "push_constant")
+						{
+							PushConstantRange pc;
+							c->obtainFromAttributes(&pc, pc.b);
+							s->pushConstantRanges.push_back(pc);
+						}
+					}
+				}
+
+				stages[StageIndexByType(s->type)] = s;
+			}
+			else if (c->name == "macro")
+			{
+				ShaderMacro m;
+				c->obtainFromAttributes(&m, m.b);
+				shaderMacros.push_back(m);
+			}
+		}
+	}
+
+	void Pipeline::saveXML(const std::string &filename)
+	{
+		AttributeTree at("pipeline");
+		at.addAttributes(this, b);
+		for (auto &b : blendAttachments)
+		{
+			auto n = new AttributeTreeNode("blend_attachment");
+			n->addAttributes(&b, b.b);
+			at.children.push_back(n);
+		}
+		for (auto &l : links)
+		{
+			auto n = new AttributeTreeNode("link");
+			n->addAttributes(&l, l.b);
+			at.children.push_back(n);
+		}
+		for (int i = 0; i < 5; i++)
+		{
+			auto s = stages[i];
+			if (!s) continue;
+
+			auto n = new AttributeTreeNode("stage");
+			n->addAttributes(s, s->b);
+			at.children.push_back(n);
+		}
+		for (auto &m : shaderMacros)
+		{
+			auto n = new AttributeTreeNode("macro");
+			n->addAttributes(&m, m.b);
+			at.children.push_back(n);
+		}
+
+		at.saveXML(filename);
 	}
 
 	void Pipeline::setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex)
@@ -3193,11 +3297,14 @@ namespace tke
 		fif = FreeImage_GetFileType(filename.c_str());
 		if (fif == FIF_UNKNOWN)
 			fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		if (fif == FIF_UNKNOWN) return nullptr;
+		if (fif == FIF_UNKNOWN) 
+			return nullptr;
 		auto dib = FreeImage_Load(fif, filename.c_str());
-		if (!dib) return nullptr;
+		if (!dib) 
+			return nullptr;
 		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			FreeImage_FlipVertical(dib);
+
 		auto pData = new ImageData;
 		auto colorType = FreeImage_GetColorType(dib);
 		pData->fif = fif;
@@ -3236,9 +3343,7 @@ namespace tke
 
 		pData->format();
 
-		auto vkFormat = pData->getVkFormat(sRGB);
-
-		auto pImage = new Image(pData->cx, pData->cy, vkFormat, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pData->data, pData->size);
+		auto pImage = new Image(pData->cx, pData->cy, pData->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pData->data, pData->size);
 		pImage->filename = filename;
 		pImage->sRGB = sRGB;
 

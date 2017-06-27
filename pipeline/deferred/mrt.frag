@@ -8,12 +8,12 @@ struct Material
 	uint dummy;
 };
 
-layout(binding = 2) uniform MATERIAL
+layout(binding = TKE_UBO_BINDING) uniform MATERIAL
 {
 	Material material[256];
 }u_material;
 
-layout(binding = 3) uniform sampler2D mapSamplers[256];
+layout(binding = TKE_UBO_BINDING) uniform sampler2D mapSamplers[256];
 
 layout(location = 0) in flat uint inMaterialID;
 layout(location = 1) in vec2 inTexcoord;
