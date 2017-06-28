@@ -523,6 +523,7 @@ namespace tke
 		return getClipBoard();
 	}
 
+	static Image *fontImage;
 	GuiComponent::GuiComponent(Window *_window)
 		:window(_window)
 	{
@@ -567,10 +568,10 @@ namespace tke
 			io.Fonts->AddFontFromFileTTF("simhei.ttf", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);
+			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
-			if (texture_position == -1) texture_position = pipeline->descriptorPosition("sTexture");
+			if (texture_position == -1) texture_position = pipeline->descriptorPosition("images");
 
 			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
 
@@ -731,6 +732,12 @@ namespace tke
 
 	static void _update_descriptor_set()
 	{
+	}
+
+	void addGuiImage(Image *image)
+	{
+		_images.push_back(image);
+
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
@@ -738,13 +745,6 @@ namespace tke
 		}
 
 		descriptorPool.update();
-	}
-
-	void addGuiImage(Image *image)
-	{
-		_images.push_back(image);
-
-		_update_descriptor_set();
 	}
 
 	void removeGuiImage(Image *image)
@@ -758,7 +758,14 @@ namespace tke
 			}
 		}
 
-		_update_descriptor_set();
+		for (int index = 0; index < _images.size(); index++)
+		{
+			_images[index]->index = index + 1;
+			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+		}
+		descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), _images.size() + 1);
+
+		descriptorPool.update();
 	}
 }
 
@@ -1372,7 +1379,7 @@ namespace ImGui
 						pos + ImVec2(size.x + 10, size.y),
 						pos + ImVec2(size.x + 15, size.y),
 						10);
-					draw_list->PathFill(
+					draw_list->PathFillConvex(
 						hovered ? color_hovered : (dock_tab->active ? color_active : color));
 					draw_list->AddText(pos, text_color, dock_tab->label.c_str(), text_end);
 

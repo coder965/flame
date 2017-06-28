@@ -158,8 +158,6 @@ void EditorWindow::renderEvent()
 		}
 	}
 
-	for (auto m : monitors)
-		m->show();
 	for (auto it = monitors.begin(); it != monitors.end(); )
 	{
 		if (!(*it)->opened)
@@ -172,6 +170,8 @@ void EditorWindow::renderEvent()
 			it++;
 		}
 	}
+	for (auto m : monitors)
+		m->show();
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
 	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);

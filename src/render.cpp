@@ -2770,6 +2770,7 @@ namespace tke
 	Renderer::~Renderer()
 	{
 		releaseFramebuffer(vkFramebuffer[0]);
+		if (vkFramebuffer[1])
 		releaseFramebuffer(vkFramebuffer[1]);
 		destroyRenderPass(vkRenderPass);
 	}

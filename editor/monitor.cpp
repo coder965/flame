@@ -47,6 +47,12 @@ MonitorWidget::~MonitorWidget()
 {
 	mainWindow->removeEvent(renderFinished);
 	tke::destroyEvent(renderFinished);
+
+	delete renderer;
+	delete scene;
+	tke::removeGuiImage(image);
+	delete image;
+	tke::commandPool.free(cmd);
 }
 
 void MonitorWidget::makeCmd()
@@ -69,36 +75,37 @@ void MonitorWidget::show()
 	}
 
 	ImGui::BeginDock("Monitor", &opened);
-	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
 
-	if (ImGui::IsItemHovered())
-	{
-		float distX = mainWindow->mouseX - mainWindow->mousePrevX;
-		float distY = mainWindow->mouseY - mainWindow->mousePrevY;
+	//ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
+	//if (ImGui::IsItemHovered())
+	//{
+	//	float distX = mainWindow->mouseX - mainWindow->mousePrevX;
+	//	float distY = mainWindow->mouseY - mainWindow->mousePrevY;
 
-		if (distX != 0 || distY != 0)
-		{
-			distX /= tke::resCx;
-			distY /= tke::resCy;
-			if (mainWindow->leftPressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-				{
-					scene->camera.rotateByCursor(distX, distY);
-				}
-			}
-			else if (mainWindow->middlePressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					scene->camera.moveByCursor(distX, distY);
-			}
-			else if (mainWindow->rightPressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-					scene->camera.scroll(distX);
-			}
-		}
-	}
+	//	if (distX != 0 || distY != 0)
+	//	{
+	//		distX /= tke::resCx;
+	//		distY /= tke::resCy;
+	//		if (mainWindow->leftPressing)
+	//		{
+	//			if (GetAsyncKeyState(VK_MENU) & 0x8000)
+	//			{
+	//				scene->camera.rotateByCursor(distX, distY);
+	//			}
+	//		}
+	//		else if (mainWindow->middlePressing)
+	//		{
+	//			if (GetAsyncKeyState(VK_MENU) & 0x8000)
+	//				scene->camera.moveByCursor(distX, distY);
+	//		}
+	//		else if (mainWindow->rightPressing)
+	//		{
+	//			if (GetAsyncKeyState(VK_MENU) & 0x8000)
+	//				scene->camera.scroll(distX);
+	//		}
+	//	}
+	//}
+
 	ImGui::EndDock();
 }
 

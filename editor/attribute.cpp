@@ -15,7 +15,8 @@ void AttributeWidget::show()
 		{
 			auto o = selectedItem.toObject();
 
-			ImGui::Text(o->model->name.c_str());
+			auto str = tke::translate(936, CP_UTF8, o->model->name.c_str());
+			ImGui::Text(str.c_str());
 			
 			auto coord = o->getCoord();
 			if (ImGui::DragFloat3("coord", &coord[0]))
@@ -57,7 +58,7 @@ void AttributeWidget::show()
 				ImGui::BeginChild("child2", ImVec2(0, 0), true);
 				if (boneID != -1)
 				{
-					if (ImGui::DragFloat("Coord X", &o->animationComponent->boneData[boneID].coord.x))
+					if (ImGui::DragFloat3("coord", &o->animationComponent->boneData[boneID].coord[0]))
 						o->animationComponent->refreshBone(boneID);
 				}
 				ImGui::EndChild();
