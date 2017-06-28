@@ -156,11 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\utils.cpp" />
-    <ClCompile Include="lex.yy.c" />
     <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="def.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

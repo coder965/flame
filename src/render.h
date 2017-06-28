@@ -726,7 +726,7 @@ namespace tke
 
 		REFL_BANK;
 
-		REFLv std::string  name;
+		REFLv std::string name;
 
 		REFLe DrawActionType type = DrawActionType::draw_action;
 
