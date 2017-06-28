@@ -4,10 +4,7 @@
 
 struct Tool
 {
-	VkCommandBuffer cmd;
-
-	Tool();
-	virtual void show() = 0;
+	virtual void show(VkCommandBuffer) = 0;
 	virtual ~Tool();
 };
 

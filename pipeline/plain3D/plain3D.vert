@@ -1,15 +1,24 @@
-layout(binding = 0) uniform sampler2D tex;
-
-layout(binding = 1) uniform COLOR
+layout(push_constant) uniform PushConstant
 {
-	vec4 v;
-}u_color;
+	mat4 modelMatrix;
+	vec4 color;
+}pc;
 
-layout(location = 0) in vec2 inTexcoord;
+layout(binding = TKE_UBO_BINDING) uniform MATRIX
+{
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
+	vec4 frustumPlanes[6];
+	vec2 viewportDim;
+}u_matrix;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) in vec3 inVertex;
 		
 void main()
 {
-	outColor = texture(tex, inTexcoord) * u_color.v;
+	gl_Position = u_matrix.projView * pc.modelMatrix * vec4(inVertex, 1);
 }

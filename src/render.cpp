@@ -1480,12 +1480,12 @@ namespace tke
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
+		std::string stageText = "";
 		{
 			auto file_path = std::experimental::filesystem::path(path).parent_path().string();
 			tke::OnceFileBuffer file(path);
 
 			std::stringstream ss(file.data);
-			std::string stageText = "";
 
 			int lineNum = 0;
 			stageText += "#version 450 core\n"; lineNum++;
@@ -1513,8 +1513,9 @@ namespace tke
 
 				if (std::regex_search(line, match, pattern = R"(#(el)?if\s+(\!)?defined\(([\w_]*)\)[\s&]*)"))
 				{
+					bool isElse = match[1].matched;
 					bool ok;
-					if ((match[1].matched && !states.top().second) || (!match[1].matched && states.top().first))
+					if ((isElse && !states.top().second) || (!isElse && states.top().first))
 					{
 						std::vector<std::pair<std::string, bool>> cons;
 						if (match[2].matched)
@@ -1542,7 +1543,7 @@ namespace tke
 						}
 					}
 
-					if (match[1].matched)
+					if (isElse)
 					{
 						if (states.top().second)
 						{
@@ -1578,6 +1579,7 @@ namespace tke
 					stageText += line + "\n";
 
 					fullLineNum += 1;
+					lineNum++;
 				}
 				else if (states.top().first && std::regex_search(line, match, pattern = R"(#include\s+\"([\w\.\\]*)\")"))
 				{
@@ -1589,6 +1591,7 @@ namespace tke
 					includeFileDatas.emplace_back(lineNum, fullLineNum, includeFileLineNum);
 
 					fullLineNum += includeFileLineNum;
+					lineNum++;
 				}
 				else if (states.top().first && std::regex_search(line, pattern = R"(TKE_UBO_BINDING)"))
 				{
@@ -1598,15 +1601,15 @@ namespace tke
 					stageText += line + "\n";
 
 					fullLineNum += 1;
+					lineNum++;
 				}
 				else if (states.top().first)
 				{
 					stageText += line + "\n";
 
 					fullLineNum += 1;
+					lineNum++;
 				}
-
-				lineNum++;
 			}
 
 			{
@@ -1790,6 +1793,7 @@ namespace tke
 			}
 			else
 			{
+				assert(false);
 				MessageBox(NULL, output.c_str(), path.c_str(), 0);
 				exit(1);
 			}

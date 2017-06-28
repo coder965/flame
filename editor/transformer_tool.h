@@ -4,5 +4,5 @@
 
 struct TransformerTool : Tool
 {
-	virtual void show() override;
+	virtual void show(VkCommandBuffer) override;
 };

@@ -3,6 +3,7 @@ layout(push_constant) uniform PushConstant
 	uint passIndex;
 	vec4 color;
 }pc;
+
 layout(binding = 0) uniform MATRIX
 {
 	mat4 proj;
