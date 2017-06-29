@@ -613,14 +613,13 @@ namespace tke
 		viewport.maxDepth = (float)1.0f;
 		viewport.x = 0;
 		viewport.y = 0;
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
 
 		VkRect2D scissor;
 		scissor.extent.width = cx;
 		scissor.extent.height = cy;
 		scissor.offset.x = 0;
 		scissor.offset.y = 0;
-
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 	}
 
@@ -1863,6 +1862,12 @@ namespace tke
 				c->obtainFromAttributes(&ba, ba.b);
 				blendAttachments.push_back(ba);
 			}
+			else if (c->name == "dynamic")
+			{
+				DynamicState s;
+				c->obtainFromAttributes(&s, s.b);
+				dynamicStates.push_back(s);
+			}
 			else if (c->name == "link")
 			{
 				LinkResource l;
@@ -1921,6 +1926,12 @@ namespace tke
 			n->addAttributes(&b, b.b);
 			at.children.push_back(n);
 		}
+		for (auto &s : dynamicStates)
+		{
+			auto n = new AttributeTreeNode("dynamic");
+			n->addAttributes(&s, s.b);
+			at.children.push_back(n);
+		}
 		for (auto &l : links)
 		{
 			auto n = new AttributeTreeNode("link");
@@ -1955,6 +1966,9 @@ namespace tke
 			case VertexInputType::zero:
 				pVertexInputState = &zeroVertexInputState;
 				break;
+			case VertexInputType::plain2d:
+				pVertexInputState = &plain2dVertexInputState;
+				break;
 			case VertexInputType::normal:
 				pVertexInputState = &vertexInputState;
 				break;
@@ -1977,8 +1991,20 @@ namespace tke
 
 		if (cx == 0 && cy == 0)
 		{
-			dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-			dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+			vkDynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+			vkDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+		}
+		for (auto &s : dynamicStates)
+		{
+			switch (s.type)
+			{
+			case DynamicStateType::viewport:
+				vkDynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+				break;
+			case DynamicStateType::scissor:
+				vkDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+				break;
+			}
 		}
 
 		switch (primitive_topology)
@@ -2264,8 +2290,8 @@ namespace tke
 
 		VkPipelineDynamicStateCreateInfo dynamicState = {};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicState.dynamicStateCount = dynamicStates.size();
-		dynamicState.pDynamicStates = dynamicStates.data();
+		dynamicState.dynamicStateCount = vkDynamicStates.size();
+		dynamicState.pDynamicStates = vkDynamicStates.data();
 
 		VkGraphicsPipelineCreateInfo pipelineInfo = {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -2282,7 +2308,7 @@ namespace tke
 		pipelineInfo.renderPass = renderPass;
 		pipelineInfo.subpass = subpassIndex;
 		pipelineInfo.pMultisampleState = &multisampleState;
-		pipelineInfo.pDynamicState = dynamicStates.size() ? &dynamicState : nullptr;
+		pipelineInfo.pDynamicState = vkDynamicStates.size() ? &dynamicState : nullptr;
 
 		device.cs.lock();
 		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);

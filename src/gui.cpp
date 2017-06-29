@@ -463,7 +463,7 @@ namespace tke
 			vkCmdWaitEvents(cmd, current_window->events.size(), current_window->events.data(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(need_clear ? plainRenderPass_clear : plainRenderPass, 
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(need_clear ? plainRenderPass_window_clear : plainRenderPass_window, 
 			current_window->framebuffers[current_window->imageIndex]->v, current_window->cx, current_window->cy, need_clear ? 1 : 0, need_clear ? &clear_value : nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		cmdSetViewportAndScissor(cmd, current_window->cx, current_window->cy);
@@ -472,10 +472,10 @@ namespace tke
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
 		vkCmdBindIndexBuffer(cmd, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdPushConstants(cmd, pipeline->pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
-
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipelineLayout->v, 0, 1, &pipeline->descriptorSet, 0, NULL);
+
+		vkCmdPushConstants(cmd, pipeline->pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -532,29 +532,10 @@ namespace tke
 		{
 			first = false;
 
-			static VkVertexInputBindingDescription binding_desc[] = {
-				{ 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX }
-			};
-			static VkVertexInputAttributeDescription attribute_desc[3] = {
-				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
-				{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
-			};
-			static VkPipelineVertexInputStateCreateInfo vertex_info = {
-				VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-				nullptr,
-				0,
-				ARRAYSIZE(binding_desc),
-				binding_desc,
-				ARRAYSIZE(attribute_desc),
-				attribute_desc
-			};
-
 			pipeline = new Pipeline;
 			pipeline->loadXML(enginePath + "pipeline/plain2D/plain2D.xml");
-			pipeline->pVertexInputState = &vertex_info;
-			pipeline->dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-			pipeline->setup(plainRenderPass, 0);
+			//pipeline->dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+			pipeline->setup(plainRenderPass_window, 0);
 
 			context = ImGui::GetCurrentContext();
 

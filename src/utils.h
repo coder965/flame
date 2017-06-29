@@ -183,6 +183,7 @@ namespace tke
 	struct Enum
 	{
 		std::vector<EnumItem> items;
+		void get(const std::string &src, int *dst);
 	};
 
 	struct EnumVariable : Variable

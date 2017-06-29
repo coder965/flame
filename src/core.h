@@ -66,8 +66,9 @@ namespace tke
 	};
 
 	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	extern VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
+	extern VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
+	extern VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	extern StagingBuffer *stagingBuffer;
@@ -145,8 +146,15 @@ namespace tke
 	extern thread_local int startUpTime;
 	extern thread_local int nowTime;
 
-	extern VkRenderPass plainRenderPass;
-	extern VkRenderPass plainRenderPass_clear;
+	extern VkRenderPass plainRenderPass_window;
+	extern VkRenderPass plainRenderPass_window_clear;
+	extern VkRenderPass plainRenderPass_image8;
+	extern VkRenderPass plainRenderPass_image8_clear;
+	extern VkRenderPass plainRenderPass_image16;
+	extern VkRenderPass plainRenderPass_image16_clear;
+
+	extern Pipeline *plain2dPipeline;
+	extern Pipeline *plain3dPipeline;
 
 	struct Window
 	{

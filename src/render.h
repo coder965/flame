@@ -478,9 +478,24 @@ namespace tke
 	{
 		null,
 		REFLe zero = 1 << 0,
-		REFLe normal = 1 << 1,
-		REFLe line = 1 << 2,
-		REFLe animated = 1 << 3
+		REFLe plain2d = 1 << 1,
+		REFLe normal = 1 << 2,
+		REFLe animated = 1 << 3,
+		REFLe line = 1 << 4
+	};
+
+	REFLECTABLE enum class DynamicStateType : int
+	{
+		null,
+		REFLe viewport = 1 << 0,
+		REFLe scissor = 1 << 1
+	};
+
+	REFLECTABLE struct DynamicState
+	{
+		REFL_BANK;
+
+		REFLe DynamicStateType type = DynamicStateType::null;
 	};
 
 	REFLECTABLE struct PipelineInfo
@@ -631,6 +646,7 @@ namespace tke
 		REFLe CullMode cull_mode = CullMode::back;
 
 		std::vector<BlendAttachment> blendAttachments;
+		std::vector<DynamicState> dynamicStates;
 		std::vector<LinkResource> links;
 		Stage *stages[5] = {};
 
@@ -649,7 +665,7 @@ namespace tke
 		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
 		VkRenderPass renderPass;
 		int subpassIndex;
-		std::vector<VkDynamicState> dynamicStates;
+		std::vector<VkDynamicState> vkDynamicStates;
 		DescriptorSetLayout *descriptorSetLayout = nullptr;
 		PipelineLayout *pipelineLayout = nullptr;
 		VkPipeline pipeline = 0;

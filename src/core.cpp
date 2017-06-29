@@ -39,9 +39,10 @@ namespace tke
 	}
 
 	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+	VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
 	VkPipelineVertexInputStateCreateInfo vertexInputState;
-	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 	VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
+	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	StagingBuffer *stagingBuffer = nullptr;
 
@@ -155,8 +156,15 @@ namespace tke
 	int thread_local startUpTime = 0;
 	int thread_local nowTime = 0;
 
-	VkRenderPass plainRenderPass;
-	VkRenderPass plainRenderPass_clear;
+	VkRenderPass plainRenderPass_window;
+	VkRenderPass plainRenderPass_window_clear;
+	VkRenderPass plainRenderPass_image8;
+	VkRenderPass plainRenderPass_image8_clear;
+	VkRenderPass plainRenderPass_image16;
+	VkRenderPass plainRenderPass_image16_clear;
+
+	Pipeline *plain2dPipeline = nullptr;
+	Pipeline *plain3dPipeline = nullptr;
 
 	Err init(const std::string &path, int rcx, int rcy)
 	{
@@ -186,35 +194,53 @@ namespace tke
 		{
 			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
 
-			static VkVertexInputBindingDescription bindings0 = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX };
 
-			static VkVertexInputAttributeDescription attributes0[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
-				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
-				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
-			};
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
+					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
+					{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
+				};
 
-			vertexInputState = vertexStateInfo(1, &bindings0, ARRAYSIZE(attributes0), attributes0);
+				plain2dVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			}
 
-			static VkVertexInputBindingDescription bindings1 = { 0, sizeof(AnimatedVertex), VK_VERTEX_INPUT_RATE_VERTEX };
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
 
-			static VkVertexInputAttributeDescription attributes1[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, position) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(AnimatedVertex, uv) },
-				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
-				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
-				{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
-				{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneID) }
-			};
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
+					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
+					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
+					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
+				};
 
-			animatedVertexInputState = vertexStateInfo(1, &bindings1, ARRAYSIZE(attributes1), attributes1);
+				vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			}
 
-			static VkVertexInputBindingDescription bindings2 = { 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX };
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(AnimatedVertex), VK_VERTEX_INPUT_RATE_VERTEX };
 
-			static VkVertexInputAttributeDescription attributes2 = { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 };
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, position) },
+					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(AnimatedVertex, uv) },
+					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
+					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
+					{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
+					{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneID) }
+				};
 
-			lineVertexInputState = vertexStateInfo(1, &bindings2, 1, &attributes2);
+				animatedVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			}
+
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX };
+
+				static VkVertexInputAttributeDescription attributes = { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 };
+
+				lineVertexInputState = vertexStateInfo(1, &bindings, 1, &attributes);
+			}
 		}
 
 		// this kind of depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
@@ -222,8 +248,13 @@ namespace tke
 
 		{
 			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			plainRenderPass = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpassDesc(1, &ref), 0, nullptr);
-			plainRenderPass_clear = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpassDesc(1, &ref), 0, nullptr);
+			VkSubpassDescription subpass = subpassDesc(1, &ref);
+			plainRenderPass_window = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
+			plainRenderPass_window_clear = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
+			plainRenderPass_image8 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
+			plainRenderPass_image8_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
+			plainRenderPass_image16 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
+			plainRenderPass_image16_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 		}
 
 		initPhysics();
@@ -410,7 +441,6 @@ namespace tke
 
 	void Window::createSwapchain()
 	{
-
 		VkResult res;
 
 		inst.cs.lock();
@@ -458,7 +488,7 @@ namespace tke
 
 			std::vector<VkImageView> views;
 			views.push_back(images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
-			framebuffers[i] = createFramebuffer(cx, cy, plainRenderPass, views);
+			framebuffers[i] = createFramebuffer(cx, cy, plainRenderPass_window, views);
 		}
 	}
 

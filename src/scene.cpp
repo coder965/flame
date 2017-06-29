@@ -649,21 +649,17 @@ namespace tke
 
 					scatteringPipeline.name = "Scattering.Pipeline";
 					scatteringPipeline.loadXML(enginePath + "pipeline/sky/scattering.xml");
-					scatteringPipeline.setup(postRenderPass, 0);
+					scatteringPipeline.setup(plainRenderPass_image16, 0);
 					globalResource.setPipeline(&scatteringPipeline);
 
 					downsamplePipeline.name = "Downsample.Pipeline";
 					downsamplePipeline.loadXML(enginePath + "pipeline/sky/downsample.xml");
-					downsamplePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-					downsamplePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-					downsamplePipeline.setup(postRenderPass, 0);
+					downsamplePipeline.setup(plainRenderPass_image16, 0);
 					globalResource.setPipeline(&downsamplePipeline);
 
 					convolvePipeline.name = "Convolve.Pipeline";
 					convolvePipeline.loadXML(enginePath + "pipeline/sky/convolve.xml");
-					convolvePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-					convolvePipeline.dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-					convolvePipeline.setup(postRenderPass, 0);
+					convolvePipeline.setup(plainRenderPass_image16, 0);
 					globalResource.setPipeline(&convolvePipeline);
 
 					envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
@@ -671,7 +667,7 @@ namespace tke
 					for (int i = 0; i < 4; i++)
 					{
 						std::vector<VkImageView> views = { envrImage->getView(0, i) };
-						envrFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, postRenderPass, views);
+						envrFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, plainRenderPass_image16, views);
 					}
 
 					for (int i = 0; i < 3; i++)
@@ -679,7 +675,7 @@ namespace tke
 						envrImageDownsample[i]= new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 						std::vector<VkImageView> views = { envrImageDownsample[i]->getView() };
-						envrDownsampleFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), postRenderPass, views);
+						envrDownsampleFramebuffer[i] = createFramebuffer(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), plainRenderPass_image16, views);
 					}
 
 					convolveDescriptorSetLevel[0] = convolvePipeline.descriptorSet;
@@ -726,7 +722,7 @@ namespace tke
 					{
 						auto cmd = commandPool.begineOnce();
 
-						vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[0]->v,
+						vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(plainRenderPass_image16, envrFramebuffer[0]->v,
 							TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 						vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scatteringPipeline.pipeline);
@@ -749,26 +745,12 @@ namespace tke
 								{
 									auto cmd = commandPool.begineOnce();
 
-									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrDownsampleFramebuffer[i]->v,
+									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(plainRenderPass_image16, envrDownsampleFramebuffer[i]->v,
 										TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.pipeline);
 
-									VkViewport viewport;
-									viewport.x = 0.f;
-									viewport.y = 0.f;
-									viewport.width = TKE_ENVR_SIZE_CX >> (i + 1);
-									viewport.height = TKE_ENVR_SIZE_CY >> (i + 1);
-									viewport.minDepth = 0.0f;
-									viewport.maxDepth = 1.0f;
-									vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-									VkRect2D scissor;
-									scissor.offset.x = 0;
-									scissor.offset.y = 0;
-									scissor.extent.width = TKE_ENVR_SIZE_CX >> (i + 1);
-									scissor.extent.height = TKE_ENVR_SIZE_CY >> (i + 1);
-									vkCmdSetScissor(cmd, 0, 1, &scissor);
+									cmdSetViewportAndScissor(cmd, TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 
 									auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 									vkCmdPushConstants(cmd, downsamplePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
@@ -785,7 +767,7 @@ namespace tke
 								{
 									auto cmd = commandPool.begineOnce();
 
-									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(postRenderPass, envrFramebuffer[i]->v,
+									vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(plainRenderPass_image16, envrFramebuffer[i]->v,
 										TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i, 0, nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 									vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.pipeline);
@@ -793,21 +775,7 @@ namespace tke
 									auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 									vkCmdPushConstants(cmd, convolvePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 
-									VkViewport viewport;
-									viewport.x = 0.f;
-									viewport.y = 0.f;
-									viewport.width = TKE_ENVR_SIZE_CX >> i;
-									viewport.height = TKE_ENVR_SIZE_CY >> i;
-									viewport.minDepth = 0.0f;
-									viewport.maxDepth = 1.0f;
-									vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-									VkRect2D scissor;
-									scissor.offset.x = 0;
-									scissor.offset.y = 0;
-									scissor.extent.width = TKE_ENVR_SIZE_CX >> i;
-									scissor.extent.height = TKE_ENVR_SIZE_CY >> i;
-									vkCmdSetScissor(cmd, 0, 1, &scissor);
+									cmdSetViewportAndScissor(cmd, TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
 
 									vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.pipelineLayout->v, 0, 1, &convolveDescriptorSetLevel[i - 1], 0, nullptr);
 									vkCmdDraw(cmd, 3, 1, 0, 0);

@@ -226,6 +226,32 @@ namespace tke
 		return (void*)((LONG_PTR)p + (LONG_PTR)v.ptr);
 	}
 
+	void Enum::get(const std::string &src, int *dst)
+	{
+		*dst = 0;
+
+		std::regex pat(R"(([\w_]+))");
+		std::string string(src);
+
+		std::smatch sm;
+		while (std::regex_search(string, sm, pat))
+		{
+			auto s = sm[1].str();
+			auto found = false;
+			for (auto &i : items)
+			{
+				if (s == i.name)
+				{
+					*dst |= i.value;
+					found = true;
+					break;
+				}
+			}
+			assert(found);
+			string = sm.suffix();
+		}
+	}
+
 	EnumVariable::EnumVariable(const std::string &_name, Enum *_pEnum, int *p)
 		: Variable(Variable::eEnum, _name), pEnum(_pEnum), _ptr(p)
 	{}
@@ -359,33 +385,6 @@ namespace tke
 		}
 	}
 
-	static void _obtainEnuFromAttributes(const std::string &value, void *p, EnumVariable *e)
-	{
-		auto v = e->ptr(p);
-		*v = 0;
-
-		std::regex pat(R"(\w+)");
-		std::string string(value);
-
-		std::smatch sm;
-		while (std::regex_search(string, sm, pat))
-		{
-			auto s = sm[0].str();
-			auto found = false;
-			for (auto &i : e->pEnum->items)
-			{
-				if (s == i.name)
-				{
-					*v |= i.value;
-					found = true;
-					break;
-				}
-			}
-			assert(found);
-			string = sm.suffix();
-		}
-	}
-
 	void AttributeTreeNode::obtainFromAttributes(void *p, ReflectionBank *b)
 	{
 		for (auto a : attributes)
@@ -404,7 +403,7 @@ namespace tke
 					}
 						break;
 					case Variable::eEnum:
-						_obtainEnuFromAttributes(a->value, p, r->toEnu());
+						r->toEnu()->pEnum->get(a->value, r->toEnu()->ptr(p));
 						break;
 					}
 					found = true;
