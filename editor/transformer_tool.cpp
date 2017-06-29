@@ -7,9 +7,9 @@ void TransformerTool::show(VkCommandBuffer cmd, VkEvent waitEvent, VkEvent signa
 	vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	tke::beginCommandBuffer(cmd);
 
-	vkCmdWaitEvents(cmd, 1, &waitEvent, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+	tke::waitEvent(cmd, waitEvent);
 
-	vkCmdBeginRenderPass(cmd, &tke::renderPassBeginInfo(tke::plainRenderPass_image8, fb), VK_SUBPASS_CONTENTS_INLINE);
+	tke::beginRenderPass(cmd, tke::plainRenderPass_image8, fb);
 
 	tke::staticVertexBuffer->bind(cmd);
 	tke::staticIndexBuffer->bind(cmd);
@@ -17,8 +17,8 @@ void TransformerTool::show(VkCommandBuffer cmd, VkEvent waitEvent, VkEvent signa
 
 	vkCmdEndRenderPass(cmd);
 
-	vkCmdResetEvent(cmd, waitEvent, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-	vkCmdSetEvent(cmd, signalEvent, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	tke::resetEvent(cmd, waitEvent);
+	tke::setEvent(cmd, signalEvent);
 
 	vkEndCommandBuffer(cmd);
 }

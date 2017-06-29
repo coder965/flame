@@ -257,6 +257,14 @@ namespace tke
 			plainRenderPass_image16_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 		}
 
+		plain2dPipeline = new Pipeline;
+		plain2dPipeline->loadXML(enginePath + "pipeline/plain2D/plain2D.xml");
+		plain2dPipeline->setup(plainRenderPass_window, 0);
+
+		plain3dPipeline = new Pipeline;
+		plain3dPipeline->loadXML(enginePath + "pipeline/plain3D/plain3D.xml");
+		plain3dPipeline->setup(plainRenderPass_window, 0);
+
 		initPhysics();
 
 		//initSound();

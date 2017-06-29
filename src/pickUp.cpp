@@ -23,7 +23,7 @@ namespace tke
 			{ 0.f, 0.f, 0.f, 0.f },
 			{ 1.f, 0 }
 		};
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(renderPass, framebuffer, ARRAYSIZE(clearValue), clearValue), VK_SUBPASS_CONTENTS_INLINE);
+		beginRenderPass(cmd, renderPass, framebuffer, ARRAYSIZE(clearValue), clearValue);
 		
 		drawCallback(cmd);
 

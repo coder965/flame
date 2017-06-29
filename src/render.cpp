@@ -457,6 +457,26 @@ namespace tke
 		device.cs.unlock();
 	}
 
+	void waitEvent(VkCommandBuffer cmd, VkEvent e)
+	{
+		vkCmdWaitEvents(cmd, 1, &e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+	}
+
+	void waitEvents(VkCommandBuffer cmd, size_t count, VkEvent *e)
+	{
+		vkCmdWaitEvents(cmd, count, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+	}
+
+	void setEvent(VkCommandBuffer cmd, VkEvent e)
+	{
+		vkCmdSetEvent(cmd, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	}
+
+	void resetEvent(VkCommandBuffer cmd, VkEvent e)
+	{
+		vkCmdResetEvent(cmd, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	}
+
 	VkSemaphore createSemaphore()
 	{
 		VkSemaphore semaphore;
@@ -599,7 +619,7 @@ namespace tke
 		device.cs.unlock();
 	}
 
-	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount, VkClearValue *pClearValues)
+	void beginRenderPass(VkCommandBuffer cmd, VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr)
 	{
 		VkRenderPassBeginInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -610,7 +630,7 @@ namespace tke
 		info.clearValueCount = clearValueCount;
 		info.pClearValues = pClearValues;
 
-		return info;
+		vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy)
@@ -3171,7 +3191,7 @@ namespace tke
 		currentPipeline = initPipeline;
 		currentDescriptorSet = initDescriptorSet;
 
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index], vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
+		beginRenderPass(cmd, vkRenderPass, vkFramebuffer[index], vkClearValues.size(), vkClearValues.data());
 
 		if (currentVertexBuffer)
 			currentVertexBuffer->bind(cmd);
@@ -3213,7 +3233,7 @@ namespace tke
 					case DrawActionType::draw_action:
 						if (action.pipeline && action.pipeline != currentPipeline)
 						{
-							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.pipeline->pipeline);
+							action.pipeline->bind(cmd);
 							currentPipeline = action.pipeline;
 						}
 						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
@@ -3228,7 +3248,7 @@ namespace tke
 						}
 						if (action.descriptorSet && action.descriptorSet != currentDescriptorSet)
 						{
-							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, action.pipeline->pipelineLayout->v, 0, 1, &action.descriptorSet, 0, nullptr);
+							action.pipeline->bindDescriptorSet(cmd, action.descriptorSet);
 							currentDescriptorSet = action.descriptorSet;
 						}
 

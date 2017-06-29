@@ -58,7 +58,7 @@ void MonitorWidget::makeCmd()
 	vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	tke::beginCommandBuffer(cmd);
 	renderer->execute(cmd);
-	vkCmdSetEvent(cmd, renderFinished, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	tke::setEvent(cmd, renderFinished);
 	vkEndCommandBuffer(cmd);
 }
 

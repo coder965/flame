@@ -676,8 +676,8 @@ namespace tke
 						auto cmd = commandPool.begineOnce();
 						fb = getFramebuffer(envrImage, plainRenderPass_image16);
 
-						vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(plainRenderPass_image16, fb), VK_SUBPASS_CONTENTS_INLINE);
-						vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, scatteringPipeline.pipeline);
+						beginRenderPass(cmd, plainRenderPass_image16, fb);
+						scatteringPipeline.bind(cmd);
 						vkCmdDraw(cmd, 3, 1, 0, 0);
 						vkCmdEndRenderPass(cmd);
 
@@ -702,14 +702,14 @@ namespace tke
 										auto cmd = commandPool.begineOnce();
 										fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
 
-										vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(plainRenderPass_image16, fb), VK_SUBPASS_CONTENTS_INLINE);
-										vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.pipeline);
+										beginRenderPass(cmd, plainRenderPass_image16, fb);
+										downsamplePipeline.bind(cmd);
 										cmdSetViewportAndScissor(cmd, TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										vkCmdPushConstants(cmd, downsamplePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
 										descriptorPool.addWrite(downsamplePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, down_source_position, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler));
 										descriptorPool.update();
-										vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, downsamplePipeline.pipelineLayout->v, 0, 1, &downsamplePipeline.descriptorSet, 0, nullptr);
+										downsamplePipeline.bindDescriptorSet(cmd);
 										vkCmdDraw(cmd, 3, 1, 0, 0);
 										vkCmdEndRenderPass(cmd);
 
@@ -727,14 +727,14 @@ namespace tke
 										auto cmd = commandPool.begineOnce();
 										fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
 
-										vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(plainRenderPass_image16, fb), VK_SUBPASS_CONTENTS_INLINE);
-										vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.pipeline);
+										beginRenderPass(cmd, plainRenderPass_image16, fb);
+										convolvePipeline.bind(cmd);
 										auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 										vkCmdPushConstants(cmd, convolvePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 										cmdSetViewportAndScissor(cmd, TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
 										descriptorPool.addWrite(convolvePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, con_source_position, envrImageDownsample[i - 1]->getInfo(plainSampler));
 										descriptorPool.update();
-										vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, convolvePipeline.pipelineLayout->v, 0, 1, &convolvePipeline.descriptorSet, 0, nullptr);
+										convolvePipeline.bindDescriptorSet(cmd);
 										vkCmdDraw(cmd, 3, 1, 0, 0);
 										vkCmdEndRenderPass(cmd);
 

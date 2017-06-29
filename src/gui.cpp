@@ -402,7 +402,6 @@ namespace tke
 		saveFileDialog.show();
 	}
 
-	static Pipeline *pipeline = nullptr;
 	static int texture_position = -1;
 
 	static void _gui_renderer(ImDrawData* draw_data)
@@ -460,11 +459,10 @@ namespace tke
 		beginCommandBuffer(cmd);
 
 		if (current_window->events.size() > 0)
-			vkCmdWaitEvents(cmd, current_window->events.size(), current_window->events.data(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+			waitEvents(cmd, current_window->events.size(), current_window->events.data());
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(need_clear ? plainRenderPass_window_clear : plainRenderPass_window, 
-			current_window->framebuffers[current_window->imageIndex], need_clear ? 1 : 0, need_clear ? &clear_value : nullptr), VK_SUBPASS_CONTENTS_INLINE);
+		beginRenderPass(cmd, need_clear ? plainRenderPass_window_clear : plainRenderPass_window, current_window->framebuffers[current_window->imageIndex], need_clear ? 1 : 0, need_clear ? &clear_value : nullptr);
 
 		cmdSetViewportAndScissor(cmd, current_window->cx, current_window->cy);
 
@@ -472,10 +470,10 @@ namespace tke
 		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
 		vkCmdBindIndexBuffer(cmd, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipelineLayout->v, 0, 1, &pipeline->descriptorSet, 0, NULL);
+		plain2dPipeline->bind(cmd);
+		plain2dPipeline->bindDescriptorSet(cmd);
 
-		vkCmdPushConstants(cmd, pipeline->pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		vkCmdPushConstants(cmd, plain2dPipeline->pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -508,7 +506,7 @@ namespace tke
 		vkCmdEndRenderPass(cmd);
 
 		for (auto &e : current_window->events)
-			vkCmdResetEvent(cmd, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			resetEvent(cmd, e);
 
 		vkEndCommandBuffer(cmd);
 	}
@@ -532,11 +530,6 @@ namespace tke
 		{
 			first = false;
 
-			pipeline = new Pipeline;
-			pipeline->loadXML(enginePath + "pipeline/plain2D/plain2D.xml");
-			//pipeline->dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-			pipeline->setup(plainRenderPass_window, 0);
-
 			context = ImGui::GetCurrentContext();
 
 			ImGuiIO& io = ImGui::GetIO();
@@ -552,9 +545,9 @@ namespace tke
 			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
-			if (texture_position == -1) texture_position = pipeline->descriptorPosition("images");
+			if (texture_position == -1) texture_position = plain2dPipeline->descriptorPosition("images");
 
-			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
+			descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
 
 			descriptorPool.update();
 
@@ -722,7 +715,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
 		}
 
 		descriptorPool.update();
@@ -742,9 +735,9 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
 		}
-		descriptorPool.addWrite(pipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), _images.size() + 1);
+		descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), _images.size() + 1);
 
 		descriptorPool.update();
 	}

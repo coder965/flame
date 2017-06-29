@@ -231,6 +231,10 @@ namespace tke
 
 	VkEvent createEvent();
 	void destroyEvent(VkEvent event);
+	void waitEvent(VkCommandBuffer cmd, VkEvent e);
+	void waitEvents(VkCommandBuffer cmd, size_t count, VkEvent *e);
+	void setEvent(VkCommandBuffer cmd, VkEvent e);
+	void resetEvent(VkCommandBuffer cmd, VkEvent e);
 
 	VkSemaphore createSemaphore();
 	void destroySemaphore(VkSemaphore semaphore);
@@ -246,7 +250,7 @@ namespace tke
 	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
 	VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies);
 	void destroyRenderPass(VkRenderPass rp);
-	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr);
+	void beginRenderPass(VkCommandBuffer cmd, VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr);
 
 	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy);
 
@@ -681,6 +685,21 @@ namespace tke
 		void setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex);
 		void updateDescriptors();
 		int descriptorPosition(const std::string &name);
+
+		inline void bind(VkCommandBuffer cmd)
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		}
+
+		inline void bindDescriptorSet(VkCommandBuffer cmd)
+		{
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->v, 0, 1, &descriptorSet, 0, nullptr);
+		}
+
+		inline void bindDescriptorSet(VkCommandBuffer cmd, VkDescriptorSet set)
+		{
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->v, 0, 1, &set, 0, nullptr);
+		}
 	};
 
 	struct Drawcall;
