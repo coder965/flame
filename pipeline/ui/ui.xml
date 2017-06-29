@@ -1,6 +1,0 @@
-<pipeline name="Ui.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<blend_attachment enable="true" src_color="src_alpha" dst_color="one_minus_src_alpha" src_alpha="zero" dst_alpha="one_minus_src_alpha"/>
-	<stage filename="ui.vert"/>
-	<stage filename="ui.frag"/>
-</pipeline>
-

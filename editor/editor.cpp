@@ -53,6 +53,9 @@ void EditorWindow::renderEvent()
 {
 	beginFrame();
 
+	for (auto m : monitors)
+		pushCB(m->cmd, m->renderFinished);
+
 	ui->begin(true);
 
 	ImGui::BeginMainMenuBar();
@@ -180,12 +183,7 @@ void EditorWindow::renderEvent()
 
 	ui->end();
 
-	std::vector<VkCommandBuffer> cmds;
-	for (auto m : monitors)
-		cmds.push_back(m->cmd);
-	cmds.push_back(ui->cmd);
-
-	tke::graphicsQueue.submitFence(imageAvailable, cmds.size(), cmds.data(), frameDone);
+	pushCB(ui->cmd, 0);
 
 	endFrame();
 }

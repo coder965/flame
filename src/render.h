@@ -182,6 +182,12 @@ namespace tke
 	};
 	extern CommandPool commandPool;
 
+	struct RenderCB
+	{
+		VkCommandBuffer cmd;
+		VkEvent finished;
+	};
+
 	struct DescriptrPool
 	{
 		VkDescriptorPool pool;

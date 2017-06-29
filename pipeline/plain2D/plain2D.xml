@@ -1,8 +1,6 @@
-<pipeline name="Plain2D.Pipeline" cx="-1" cy="-1" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<blend_attachment enable="true" src_color="src_alpha" dst_color="one_minus_src_alpha" src_alpha="one" dst_alpha="zero"/>
-	<link binding="-1" array_element="0" descriptor_name="tex" resource_name="Plain2D.Image" sampler="plain"/>
-	<link binding="-1" array_element="0" descriptor_name="COLOR" resource_name="Plain2D.UniformBuffer" sampler="none"/>
-	<stage filename="../fullscreenUv.vert"/>
+<pipeline name="Plain2D.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
+	<blend_attachment enable="true" src_color="src_alpha" dst_color="one_minus_src_alpha" src_alpha="zero" dst_alpha="one_minus_src_alpha"/>
+	<stage filename="plain2D.vert"/>
 	<stage filename="plain2D.frag"/>
 </pipeline>
 

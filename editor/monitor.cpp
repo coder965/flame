@@ -30,7 +30,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	scene->needUpdateSky = true;
 
 	renderFinished = tke::createEvent();
-	mainWindow->addEvent(renderFinished);
 
 	cmd = tke::commandPool.allocate();
 
@@ -45,7 +44,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 
 MonitorWidget::~MonitorWidget()
 {
-	mainWindow->removeEvent(renderFinished);
 	tke::destroyEvent(renderFinished);
 
 	delete renderer;

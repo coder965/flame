@@ -551,7 +551,7 @@ namespace tke
 			};
 
 			pipeline = new Pipeline;
-			pipeline->loadXML(enginePath + "pipeline/ui/ui.xml");
+			pipeline->loadXML(enginePath + "pipeline/plain2D/plain2D.xml");
 			pipeline->pVertexInputState = &vertex_info;
 			pipeline->dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 			pipeline->setup(plainRenderPass, 0);

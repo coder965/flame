@@ -473,23 +473,6 @@ namespace tke
 		inst.cs.unlock();
 	}
 
-	void Window::addEvent(VkEvent e)
-	{
-		events.push_back(e);
-	}
-
-	void Window::removeEvent(VkEvent e)
-	{
-		for (auto it = events.begin(); it != events.end(); it++)
-		{
-			if (*it == e)
-			{
-				events.erase(it);
-				break;
-			}
-		}
-	}
-
 	void Window::keyDownEvent(int wParam) 
 	{
 		if (ui)
@@ -592,6 +575,12 @@ namespace tke
 		mouseScroll = 0;
 	}
 
+	void Window::pushCB(VkCommandBuffer cb, VkEvent e)
+	{
+		cbs.push_back(cb);
+		events.push_back(e);
+	}
+
 	int Window::getFPS()
 	{
 		static auto FPS = 0;
@@ -617,6 +606,8 @@ namespace tke
 
 	void Window::endFrame()
 	{
+		tke::graphicsQueue.submitFence(imageAvailable, cbs.size(), cbs.data(), frameDone);
+
 		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
@@ -629,6 +620,9 @@ namespace tke
 		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
 		assert(res == VK_SUCCESS);
 		graphicsQueue.cs.unlock();
+
+		cbs.clear();
+		events.clear();
 	}
 
 	static std::vector<Window*> window_list;
