@@ -253,8 +253,8 @@ namespace tke
 			plainRenderPass_window_clear = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 			plainRenderPass_image8 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
 			plainRenderPass_image8_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
-			plainRenderPass_image16 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
-			plainRenderPass_image16_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
+			plainRenderPass_image16 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
+			plainRenderPass_image16_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 		}
 
 		initPhysics();
@@ -485,10 +485,7 @@ namespace tke
 		for (int i = 0; i < 2; i++)
 		{
 			new (&images[i]) Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
-
-			std::vector<VkImageView> views;
-			views.push_back(images[i].getView(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1));
-			framebuffers[i] = createFramebuffer(cx, cy, plainRenderPass_window, views);
+			framebuffers[i] = getFramebuffer(&images[i], plainRenderPass_window);
 		}
 	}
 

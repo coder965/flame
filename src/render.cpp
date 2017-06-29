@@ -327,7 +327,14 @@ namespace tke
 	}
 
 	std::vector<Framebuffer*> framebuffers;
-	Framebuffer *createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
+
+	Framebuffer *getFramebuffer(Image *i, VkRenderPass renderPass, int level)
+	{
+		std::vector<VkImageView> views = { i->getView(0, level) };
+		return getFramebuffer(i->getWidth(level), i->getHeight(level), renderPass, views);
+	}
+
+	Framebuffer *getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
 	{
 		for (auto f : framebuffers)
 		{
@@ -351,6 +358,8 @@ namespace tke
 		}
 
 		auto f = new Framebuffer;
+		f->cx = cx;
+		f->cy = cy;
 		f->views.insert(f->views.begin(), views.begin(), views.end());
 
 		VkFramebufferCreateInfo info = {};
@@ -590,14 +599,14 @@ namespace tke
 		device.cs.unlock();
 	}
 
-	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues)
+	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount, VkClearValue *pClearValues)
 	{
 		VkRenderPassBeginInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		info.renderPass = renderPass;
-		info.framebuffer = framebuffer;
-		info.renderArea.extent.width = cx;
-		info.renderArea.extent.height = cy;
+		info.framebuffer = fb->v;
+		info.renderArea.extent.width = fb->cx;
+		info.renderArea.extent.height = fb->cy;
 		info.clearValueCount = clearValueCount;
 		info.pClearValues = pClearValues;
 
@@ -1001,48 +1010,48 @@ namespace tke
 	{
 	}
 
-	void Image::transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout)
+	void Image::transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout)
 	{
 		auto commandBuffer = commandPool.begineOnce();
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = m_layout;
-		barrier.newLayout = layout;
+		barrier.oldLayout = layout;
+		barrier.newLayout = _layout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = m_image;
+		barrier.image = image;
 		barrier.subresourceRange.aspectMask = aspect;
-		barrier.subresourceRange.baseMipLevel = level;
+		barrier.subresourceRange.baseMipLevel = _level;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
 
-		if (m_layout == VK_IMAGE_LAYOUT_PREINITIALIZED) barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-		else if (m_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		else if (m_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		else if (m_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		if (layout == VK_IMAGE_LAYOUT_PREINITIALIZED) barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		else if (layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-		if (layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		else if (layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		else if (layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		if (_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		else if (_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		else if (_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		else if (_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 		commandPool.endOnce(commandBuffer);
 
-		m_layout = layout;
+		layout = _layout;
 	}
 
-	void Image::fillData(int level, void *data, size_t size, VkImageAspectFlags aspect)
+	void Image::fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect)
 	{
-		transitionLayout(level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		StagingBuffer stagingBuffer(size);
+		StagingBuffer stagingBuffer(_size);
 
-		void* map = stagingBuffer.map(0, size);
-		memcpy(map, data, size);
+		void* map = stagingBuffer.map(0, _size);
+		memcpy(map, data, _size);
 		stagingBuffer.unmap();
 
 		VkBufferImageCopy region = {};
@@ -1050,22 +1059,22 @@ namespace tke
 		region.imageSubresource.mipLevel = 0;
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = getWidth(level);
-		region.imageExtent.height = getHeight(level);
+		region.imageExtent.width = getWidth(_level);
+		region.imageExtent.height = getHeight(_level);
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
 		auto cmd = commandPool.begineOnce();
-		vkCmdCopyBufferToImage(cmd, stagingBuffer.m_buffer, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(cmd, stagingBuffer.m_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		commandPool.endOnce(cmd);
 	}
 
-	Image::Image(int w, int h, VkFormat format, VkImageUsageFlags usage, int mipmapLevels, void *data, size_t size, VkImageAspectFlags aspect)
+	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level , void *data, size_t _size, VkImageAspectFlags aspect)
 	{
-		m_width = w;
-		m_height = h;
-		m_mipmapLevels = mipmapLevels;
-		m_format = format;
+		width = w;
+		height = h;
+		level = _level;
+		format = _format;
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
 			type = eDepth;
 		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
@@ -1089,8 +1098,8 @@ namespace tke
 		imageInfo.extent.width = w;
 		imageInfo.extent.height = h;
 		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = m_mipmapLevels;
-		imageInfo.arrayLayers = m_arrayLayers;
+		imageInfo.mipLevels = level;
+		imageInfo.arrayLayers = layer;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
@@ -1100,42 +1109,42 @@ namespace tke
 
 		device.cs.lock();
 
-		res = vkCreateImage(device.v, &imageInfo, nullptr, &m_image);
+		res = vkCreateImage(device.v, &imageInfo, nullptr, &image);
 		assert(res == VK_SUCCESS);
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device.v, m_image, &memRequirements);
+		vkGetImageMemoryRequirements(device.v, image, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &m_memory);
+		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &memory);
 		assert(res == VK_SUCCESS);
 
-		res = vkBindImageMemory(device.v, m_image, m_memory, 0);
+		res = vkBindImageMemory(device.v, image, memory, 0);
 		assert(res == VK_SUCCESS);
 
 		device.cs.unlock();
 
-		m_size = memRequirements.size;
+		size = memRequirements.size;
 
-		if (data && size)
+		if (data && _size)
 		{
-			assert(size <= m_size);
-			fillData(0, data, size, aspect);
+			assert(_size <= size);
+			fillData(0, data, _size, aspect);
 		}
 		transitionLayout(0, aspect, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	Image::Image(Type _type, VkImage _image, int w, int h, VkFormat format)
+	Image::Image(Type _type, VkImage _image, int w, int h, VkFormat _format)
 	{
 		type = _type;
-		m_image = _image;
-		m_width = w;
-		m_height = h;
-		m_format = format;
+		image = _image;
+		width = w;
+		height = h;
+		format = _format;
 	}
 
 	Image::~Image()
@@ -1145,8 +1154,8 @@ namespace tke
 			vkDestroyImageView(device.v, v.view, nullptr);
 		if (type != Type::eSwapchain)
 		{
-			vkFreeMemory(device.v, m_memory, nullptr);
-			vkDestroyImage(device.v, m_image, nullptr);
+			vkFreeMemory(device.v, memory, nullptr);
+			vkDestroyImage(device.v, image, nullptr);
 		}
 		device.cs.unlock();
 	}
@@ -1177,9 +1186,9 @@ namespace tke
 
 		VkImageViewCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		info.image = m_image;
-		info.viewType = m_viewType;
-		info.format = m_format;
+		info.image = image;
+		info.viewType = viewType;
+		info.format = format;
 		info.subresourceRange.aspectMask = aspect;
 		info.subresourceRange.baseMipLevel = baseLevel;
 		info.subresourceRange.levelCount = levelCount;
@@ -1211,27 +1220,27 @@ namespace tke
 		return &infos.back();
 	}
 
-	int Image::getWidth(int mipmapLevel) const
+	int Image::getWidth(int _level) const
 	{
-		int w = m_width;
+		int w = width;
 		for (;;)
 		{
-			if (mipmapLevel <= 0 || w < 2)
+			if (_level <= 0 || w < 2)
 				break;
-			mipmapLevel--;
+			_level--;
 			w >>= 1;
 		}
 		return w;
 	}
 
-	int Image::getHeight(int mipmapLevel) const
+	int Image::getHeight(int _level) const
 	{
-		int h = m_height;
+		int h = height;
 		for (;;)
 		{
-			if (mipmapLevel <= 0 || h < 2)
+			if (_level <= 0 || h < 2)
 				break;
-			mipmapLevel--;
+			_level--;
 			h >>= 1;
 		}
 		return h;
@@ -2937,13 +2946,13 @@ namespace tke
 		switch (ai->image->type)
 		{
 		case Image::eColor:
-			attachment = colorAttachmentDesc(ai->image->m_format, ai->loadOp);
+			attachment = colorAttachmentDesc(ai->image->format, ai->loadOp);
 			break;
 		case Image::eSwapchain:
 			attachment = swapchainAttachmentDesc(ai->loadOp);
 			break;
 		case Image::eDepth:
-			attachment = depthAttachmentDesc(ai->image->m_format, ai->loadOp);
+			attachment = depthAttachmentDesc(ai->image->format, ai->loadOp);
 			break;
 		case Image::eDepthStencil:
 			assert(0);
@@ -3139,9 +3148,9 @@ namespace tke
 		vkRenderPass = createRenderPass(vkAttachments.size(), vkAttachments.data(),
 			vkSubpasses.size(), vkSubpasses.data(), vkDependencies.size(), vkDependencies.data());
 
-		vkFramebuffer[0] = createFramebuffer(cx, cy, vkRenderPass, vkViews[0]);
+		vkFramebuffer[0] = getFramebuffer(cx, cy, vkRenderPass, vkViews[0]);
 		if (containSwapchain)
-			vkFramebuffer[1] = createFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
+			vkFramebuffer[1] = getFramebuffer(cx, cy, vkRenderPass, vkViews[1]);
 
 		for (auto &p : resource.privatePipelines)
 			p.p->setup(vkRenderPass, p.subpassIndex);
@@ -3162,7 +3171,7 @@ namespace tke
 		currentPipeline = initPipeline;
 		currentDescriptorSet = initDescriptorSet;
 
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index]->v, cx, cy, vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(vkRenderPass, vkFramebuffer[index], vkClearValues.size(), vkClearValues.data()), VK_SUBPASS_CONTENTS_INLINE);
 
 		if (currentVertexBuffer)
 			currentVertexBuffer->bind(cmd);

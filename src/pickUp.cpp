@@ -12,18 +12,18 @@ namespace tke
 
 	unsigned int pickUp(int x, int y, int cx, int cy, void(*drawCallback)(VkCommandBuffer))
 	{
-		if (x + cx > image->m_width || y + cy > image->m_height)
+		if (x + cx > image->width || y + cy > image->height)
 			return 0;
 
 		graphicsQueue.waitIdle();
 
 		auto cmd = commandPool.begineOnce();
 
-		VkClearValue clearValue[2] = {
+		VkClearValue clearValue[] = {
 			{ 0.f, 0.f, 0.f, 0.f },
 			{ 1.f, 0 }
 		};
-		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(renderPass, framebuffer->v, resCx, resCy, 2, clearValue), VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(renderPass, framebuffer, ARRAYSIZE(clearValue), clearValue), VK_SUBPASS_CONTENTS_INLINE);
 		
 		drawCallback(cmd);
 
@@ -42,7 +42,7 @@ namespace tke
 		range.imageExtent.height = cy;
 		range.imageExtent.depth = 1;
 
-		vkCmdCopyImageToBuffer(cmd, image->m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->m_buffer, 1, &range);
+		vkCmdCopyImageToBuffer(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->m_buffer, 1, &range);
 
 		commandPool.endOnce(cmd);
 
@@ -65,8 +65,8 @@ namespace tke
 		auto pDepthImage = globalResource.getImage("Depth.Image");
 
 		VkAttachmentDescription attachments[] = {
-			colorAttachmentDesc(image->m_format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image
-			depthAttachmentDesc(pDepthImage->m_format, VK_ATTACHMENT_LOAD_OP_CLEAR) // depth
+			colorAttachmentDesc(image->format, VK_ATTACHMENT_LOAD_OP_CLEAR), // pickup image
+			depthAttachmentDesc(pDepthImage->format, VK_ATTACHMENT_LOAD_OP_CLEAR) // depth
 		};
 
 		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
@@ -76,7 +76,7 @@ namespace tke
 		renderPass = createRenderPass(ARRAYSIZE(attachments), attachments, 1, &subpassDesc(1, &colorRef, &depthRef), 0, nullptr);
 
 		std::vector<VkImageView> views = { image->getView(), pDepthImage->getView() };
-		framebuffer = createFramebuffer(resCx, resCy, renderPass, views);
+		framebuffer = getFramebuffer(resCx, resCy, renderPass, views);
 
 		plainPickUpPipeline.loadXML(enginePath + "pipeline/pickUp/pickUp.xml");
 		plainPickUpPipeline.vertex_input_type = VertexInputType::normal;

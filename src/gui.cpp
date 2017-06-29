@@ -464,7 +464,7 @@ namespace tke
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
 		vkCmdBeginRenderPass(cmd, &renderPassBeginInfo(need_clear ? plainRenderPass_window_clear : plainRenderPass_window, 
-			current_window->framebuffers[current_window->imageIndex]->v, current_window->cx, current_window->cy, need_clear ? 1 : 0, need_clear ? &clear_value : nullptr), VK_SUBPASS_CONTENTS_INLINE);
+			current_window->framebuffers[current_window->imageIndex], need_clear ? 1 : 0, need_clear ? &clear_value : nullptr), VK_SUBPASS_CONTENTS_INLINE);
 
 		cmdSetViewportAndScissor(cmd, current_window->cx, current_window->cy);
 

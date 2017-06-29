@@ -4,5 +4,5 @@
 
 struct TransformerTool : Tool
 {
-	virtual void show(VkCommandBuffer cmd, VkEvent waitEvent, VkEvent signalEvent, VkFramebuffer fb) override;
+	virtual void show(VkCommandBuffer cmd, VkEvent waitEvent, VkEvent signalEvent, tke::Framebuffer *fb) override;
 };

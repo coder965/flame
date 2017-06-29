@@ -129,15 +129,15 @@ namespace tke
 			VkImageView view;
 		};
 
-		size_t m_size;
-		int m_width = 1, m_height = 1;
-		int m_mipmapLevels = 1;
-		int m_arrayLayers = 1;
-		VkFormat m_format = VK_FORMAT_R8G8B8A8_UNORM;
-		VkImage m_image = 0;
-		VkDeviceMemory m_memory = 0;
-		VkImageLayout m_layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-		VkImageViewType m_viewType = VK_IMAGE_VIEW_TYPE_2D;
+		size_t size;
+		int width = 1, height = 1;
+		int level = 1;
+		int layer = 1;
+		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+		VkImage image = 0;
+		VkDeviceMemory memory = 0;
+		VkImageLayout layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
 
 		std::vector<View> views;
 		std::list<VkDescriptorImageInfo> infos;
@@ -148,13 +148,13 @@ namespace tke
 
 		int index = -1;
 
-		Image(int w, int h, VkFormat format, VkImageUsageFlags usage, int mipmapLevels = 1, void *data = nullptr, size_t size = 0, VkImageAspectFlags aspect = 0);
-		Image(Type _type, VkImage _image, int w, int h, VkFormat format);
+		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, void *data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
+		Image(Type _type, VkImage _image, int w, int h, VkFormat _format);
 		~Image();
-		int getWidth(int mipmapLevel = 0) const;
-		int getHeight(int mipmapLevel = 0) const;
-		void transitionLayout(int level, VkImageAspectFlags aspect, VkImageLayout layout);
-		void fillData(int level, void *data, size_t size, VkImageAspectFlags aspect);
+		int getWidth(int _level = 0) const;
+		int getHeight(int _level = 0) const;
+		void transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout);
+		void fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect);
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
@@ -204,6 +204,7 @@ namespace tke
 
 	struct Framebuffer
 	{
+		int cx, cy;
 		std::vector<VkImageView> views;
 		VkFramebuffer v;
 		int refCount = 1;
@@ -211,7 +212,9 @@ namespace tke
 		~Framebuffer();
 	};
 
-	Framebuffer *createFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
+	Framebuffer *getFramebuffer(Image *i, VkRenderPass renderPass, int level = 0);
+
+	Framebuffer *getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
 
 	void releaseFramebuffer(Framebuffer *f);
 
@@ -243,7 +246,7 @@ namespace tke
 	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
 	VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies);
 	void destroyRenderPass(VkRenderPass rp);
-	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer, std::uint32_t cx, std::uint32_t cy, std::uint32_t clearValueCount, VkClearValue *pClearValues);
+	VkRenderPassBeginInfo renderPassBeginInfo(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr);
 
 	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy);
 
