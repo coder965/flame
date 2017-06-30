@@ -128,7 +128,7 @@ namespace tke
 		Window *window;
 
 		ImGuiContext *context = nullptr;
-		VkCommandBuffer cmd;
+		CommandBuffer *cb;
 		glm::vec3 bkColor = glm::vec3(0.69f, 0.76f, 0.79f);
 
 		GuiComponent(Window *_window);

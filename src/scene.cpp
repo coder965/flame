@@ -673,18 +673,20 @@ namespace tke
 
 					if (pano_tex_position != -1)
 					{
-						auto cmd = commandPool.begineOnce();
-						fb = getFramebuffer(envrImage, plainRenderPass_image16);
+						{
+							auto cb = commandPool->begineOnce();
+							fb = getFramebuffer(envrImage, plainRenderPass_image16);
 
-						beginRenderPass(cmd, plainRenderPass_image16, fb);
-						scatteringPipeline.bind(cmd);
-						vkCmdDraw(cmd, 3, 1, 0, 0);
-						vkCmdEndRenderPass(cmd);
+							cb->beginRenderPass(plainRenderPass_image16, fb);
+							cb->bindPipeline(&scatteringPipeline);
+							cb->draw(3);
+							cb->endRenderPass();
 
-						commandPool.endOnce(cmd);
-						releaseFramebuffer(fb);
+							commandPool->endOnce(cb);
+							releaseFramebuffer(fb);
 
-						descriptorPool.addWrite(panoramaPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
+							descriptorPool->addWrite(panoramaPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
+						}
 
 						if (deferredPipeline)
 						{ // update IBL
@@ -699,21 +701,21 @@ namespace tke
 								{
 									for (int i = 0; i < 3; i++)
 									{
-										auto cmd = commandPool.begineOnce();
+										auto cb = commandPool->begineOnce();
 										fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
 
-										beginRenderPass(cmd, plainRenderPass_image16, fb);
-										downsamplePipeline.bind(cmd);
-										cmdSetViewportAndScissor(cmd, TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
+										cb->beginRenderPass(plainRenderPass_image16, fb);
+										cb->bindPipeline(&downsamplePipeline);
+										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
-										vkCmdPushConstants(cmd, downsamplePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-										descriptorPool.addWrite(downsamplePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, down_source_position, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler));
-										descriptorPool.update();
-										downsamplePipeline.bindDescriptorSet(cmd);
-										vkCmdDraw(cmd, 3, 1, 0, 0);
-										vkCmdEndRenderPass(cmd);
+										cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
+										descriptorPool->addWrite(downsamplePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, down_source_position, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler));
+										descriptorPool->update();
+										cb->bindDescriptorSet();
+										cb->draw(3);
+										cb->endRenderPass();
 
-										commandPool.endOnce(cmd);
+										commandPool->endOnce(cb);
 										releaseFramebuffer(fb);
 									}
 								}
@@ -724,26 +726,26 @@ namespace tke
 								{
 									for (int i = 1; i < envrImage->level; i++)
 									{
-										auto cmd = commandPool.begineOnce();
+										auto cb = commandPool->begineOnce();
 										fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
 
-										beginRenderPass(cmd, plainRenderPass_image16, fb);
-										convolvePipeline.bind(cmd);
+										cb->beginRenderPass(plainRenderPass_image16, fb);
+										cb->bindPipeline(&convolvePipeline);
 										auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-										vkCmdPushConstants(cmd, convolvePipeline.pipelineLayout->v, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
-										cmdSetViewportAndScissor(cmd, TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
-										descriptorPool.addWrite(convolvePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, con_source_position, envrImageDownsample[i - 1]->getInfo(plainSampler));
-										descriptorPool.update();
-										convolvePipeline.bindDescriptorSet(cmd);
-										vkCmdDraw(cmd, 3, 1, 0, 0);
-										vkCmdEndRenderPass(cmd);
+										cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
+										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
+										descriptorPool->addWrite(convolvePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, con_source_position, envrImageDownsample[i - 1]->getInfo(plainSampler));
+										descriptorPool->update();
+										cb->bindDescriptorSet();
+										cb->draw(3);
+										cb->endRenderPass();
 
-										commandPool.endOnce(cmd);
+										commandPool->endOnce(cb);
 										releaseFramebuffer(fb);
 									}
 								}
 
-								descriptorPool.addWrite(deferredPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->level));
+								descriptorPool->addWrite(deferredPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->level));
 
 								AmbientBufferShaderStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -753,7 +755,7 @@ namespace tke
 						}
 					}
 
-					descriptorPool.update();
+					descriptorPool->update();
 				}
 			}
 
@@ -807,8 +809,8 @@ namespace tke
 
 			}
 			stagingBuffer->unmap();
-			if (staticUpdateRanges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, staticObjectMatrixBuffer->m_buffer, staticUpdateRanges.size(), staticUpdateRanges.data());
-			if (animatedUpdateRanges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, animatedObjectMatrixBuffer->m_buffer, animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			if (staticUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, staticObjectMatrixBuffer->buffer, staticUpdateRanges.size(), staticUpdateRanges.data());
+			if (animatedUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, animatedObjectMatrixBuffer->buffer, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 		if (lights.size() > 0)
 		{ // light in editor
@@ -831,7 +833,7 @@ namespace tke
 				lightIndex++;
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, lightMatrixBuffer->m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, lightMatrixBuffer->buffer, ranges.size(), ranges.data());
 		}
 		if (terrains.size() > 0)
 		{
@@ -869,9 +871,9 @@ namespace tke
 			}
 
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, heightMapTerrainBuffer->m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, heightMapTerrainBuffer->buffer, ranges.size(), ranges.data());
 
-			descriptorPool.update();
+			descriptorPool->update();
 		}
 		if (needUpdateIndirectBuffer)
 		{
@@ -921,7 +923,7 @@ namespace tke
 						}
 
 						if (bone_position != -1)
-							descriptorPool.addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bone_position, &pObject->animationComponent->boneMatrixBuffer->m_info, animatedIndex);
+							descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bone_position, &pObject->animationComponent->boneMatrixBuffer->m_info, animatedIndex);
 
 						animatedIndex++;
 					}
@@ -933,7 +935,7 @@ namespace tke
 				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
 				if (animatedCommands.size() > 0) animatedObjectIndirectBuffer->update(animatedCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 
-				descriptorPool.update();
+				descriptorPool->update();
 			}
 			needUpdateIndirectBuffer = false;
 		}
@@ -964,7 +966,7 @@ namespace tke
 				lightIndex++;
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, lightBuffer->m_buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, lightBuffer->buffer, ranges.size(), ranges.data());
 		}
 		if (lights.size() > 0)
 		{ // shadow

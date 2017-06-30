@@ -31,7 +31,7 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 
 	renderFinished = tke::createEvent();
 
-	cmd = tke::commandPool.allocate();
+	cb = new tke::CommandBuffer(tke::commandPool);
 
 	auto obj = new tke::Object(model);
 	scene->addObject(obj);
@@ -50,16 +50,16 @@ MonitorWidget::~MonitorWidget()
 	delete scene;
 	tke::removeGuiImage(image);
 	delete image;
-	tke::commandPool.free(cmd);
+	delete cb;
 }
 
 void MonitorWidget::makeCmd()
 {
-	vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-	tke::beginCommandBuffer(cmd);
-	renderer->execute(cmd);
-	tke::setEvent(cmd, renderFinished);
-	vkEndCommandBuffer(cmd);
+	cb->reset();
+	cb->begin();
+	renderer->execute(cb);
+	cb->setEvent(renderFinished);
+	cb->end();
 }
 
 void MonitorWidget::show()

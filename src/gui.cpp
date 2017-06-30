@@ -413,7 +413,7 @@ namespace tke
 
 		static VertexBuffer	*vertexBuffer = nullptr;
 		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
-		if (!vertexBuffer || vertexBuffer->m_size < vertex_size)
+		if (!vertexBuffer || vertexBuffer->size < vertex_size)
 		{
 			if (vertexBuffer) delete vertexBuffer;
 			vertexBuffer = new VertexBuffer(vertex_size);
@@ -421,7 +421,7 @@ namespace tke
 
 		static IndexBuffer *indexBuffer = nullptr;
 		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-		if (!indexBuffer || indexBuffer->m_size < index_size)
+		if (!indexBuffer || indexBuffer->size < index_size)
 		{
 			if (indexBuffer) delete indexBuffer;
 			indexBuffer = new IndexBuffer(index_size);
@@ -429,7 +429,7 @@ namespace tke
 
 		static StagingBuffer *stagingBuffer = nullptr;
 		auto totalSize = vertex_size + index_size;
-		if (!stagingBuffer || stagingBuffer->m_size < totalSize)
+		if (!stagingBuffer || stagingBuffer->size < totalSize)
 		{
 			if (stagingBuffer) delete stagingBuffer;
 			stagingBuffer = new StagingBuffer(totalSize);
@@ -449,31 +449,30 @@ namespace tke
 			}
 			stagingBuffer->unmap();
 
-			commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, vertexBuffer->m_buffer, vertex_size, 0, 0);
-			commandPool.cmdCopyBuffer(stagingBuffer->m_buffer, indexBuffer->m_buffer, index_size, vertex_size, 0);
+			commandPool->copyBuffer(stagingBuffer->buffer, vertexBuffer->buffer, vertex_size, 0, 0);
+			commandPool->copyBuffer(stagingBuffer->buffer, indexBuffer->buffer, index_size, vertex_size, 0);
 		}
 
-		auto cmd = current_window->ui->cmd;
+		auto cb = current_window->ui->cb;
 
-		vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-		beginCommandBuffer(cmd);
+		cb->reset();
+		cb->begin();
 
 		if (current_window->events.size() > 0)
-			waitEvents(cmd, current_window->events.size(), current_window->events.data());
+			cb->waitEvents(current_window->events.size(), current_window->events.data());
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
-		beginRenderPass(cmd, need_clear ? plainRenderPass_window_clear : plainRenderPass_window, current_window->framebuffers[current_window->imageIndex], need_clear ? 1 : 0, need_clear ? &clear_value : nullptr);
+		cb->beginRenderPass(need_clear ? plainRenderPass_window_clear : plainRenderPass_window, current_window->framebuffers[current_window->imageIndex], need_clear ? 1 : 0, need_clear ? &clear_value : nullptr);
 
-		cmdSetViewportAndScissor(cmd, current_window->cx, current_window->cy);
+		cb->setViewportAndScissor(current_window->cx, current_window->cy);
 
-		VkDeviceSize vertex_offset[1] = { 0 };
-		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->m_buffer, vertex_offset);
-		vkCmdBindIndexBuffer(cmd, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT16);
+		cb->bindVertexBuffer(vertexBuffer);
+		cb->bindIndexBuffer(indexBuffer);
 
-		plain2dPipeline->bind(cmd);
-		plain2dPipeline->bindDescriptorSet(cmd);
+		cb->bindPipeline(plain2dPipeline);
+		cb->bindDescriptorSet();
 
-		vkCmdPushConstants(cmd, plain2dPipeline->pipelineLayout->v, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		cb->pushConstant(StageType::vert, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -490,25 +489,23 @@ namespace tke
 				}
 				else
 				{
-					VkRect2D scissor;
-					scissor.offset.x = ImMax((int32_t)(pcmd->ClipRect.x), 0);
-					scissor.offset.y = ImMax((int32_t)(pcmd->ClipRect.y), 0);
-					scissor.extent.width = ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0);
-					scissor.extent.height = ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0); // TODO: + 1??????
-					vkCmdSetScissor(cmd, 0, 1, &scissor);
-					vkCmdDrawIndexed(cmd, pcmd->ElemCount, 1, idx_offset, vtx_offset, (int)pcmd->TextureId);
+					cb->setScissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
+						ImMax((int32_t)(pcmd->ClipRect.y), 0),
+						ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
+						ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
+					cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 				}
 				idx_offset += pcmd->ElemCount;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
 
-		vkCmdEndRenderPass(cmd);
+		cb->endRenderPass();
 
 		for (auto &e : current_window->events)
-			resetEvent(cmd, e);
+			cb->resetEvent(e);
 
-		vkEndCommandBuffer(cmd);
+		cb->end();
 	}
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
@@ -547,9 +544,10 @@ namespace tke
 
 			if (texture_position == -1) texture_position = plain2dPipeline->descriptorPosition("images");
 
-			descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler));
+			for (int i = 0; i < 128; i++)
+				descriptorPool->addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), i);
 
-			descriptorPool.update();
+			descriptorPool->update();
 
 		}
 		else
@@ -557,9 +555,9 @@ namespace tke
 			context = ImGui::CreateContext();
 		}
 
-		cmd = commandPool.allocate();
-		beginCommandBuffer(cmd);
-		vkEndCommandBuffer(cmd);
+		cb = new CommandBuffer(commandPool);
+		cb->begin();
+		cb->end();
 
 		ImGui::SetCurrentContext(context);
 
@@ -715,10 +713,10 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool->addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
 		}
 
-		descriptorPool.update();
+		descriptorPool->update();
 	}
 
 	void removeGuiImage(Image *image)
@@ -735,11 +733,11 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool->addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
 		}
-		descriptorPool.addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), _images.size() + 1);
+		descriptorPool->addWrite(plain2dPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), _images.size() + 1);
 
-		descriptorPool.update();
+		descriptorPool->update();
 	}
 }
 

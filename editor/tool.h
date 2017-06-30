@@ -4,7 +4,12 @@
 
 struct Tool
 {
-	virtual void show(VkCommandBuffer cmd, VkEvent waitEvent, VkEvent signalEvent, tke::Framebuffer *fb) = 0;
+	tke::CommandBuffer *cb;
+	tke::Framebuffer *fb;
+	VkEvent event;
+
+	Tool(tke::Framebuffer *_fb);
+	virtual void show(VkEvent waitEvent) = 0;
 	virtual ~Tool();
 };
 

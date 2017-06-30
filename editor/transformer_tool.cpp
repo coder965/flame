@@ -2,23 +2,28 @@
 
 #include "transformer_tool.h"
 
-void TransformerTool::show(VkCommandBuffer cmd, VkEvent waitEvent, VkEvent signalEvent, tke::Framebuffer *fb)
+TransformerTool::TransformerTool(tke::Framebuffer *_fb)
+	:Tool(_fb)
 {
-	vkResetCommandBuffer(cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-	tke::beginCommandBuffer(cmd);
+}
 
-	tke::waitEvent(cmd, waitEvent);
+void TransformerTool::show(VkEvent waitEvent)
+{
+	cb->reset();
+	cb->begin();
 
-	tke::beginRenderPass(cmd, tke::plainRenderPass_image8, fb);
+	cb->waitEvents(1, &waitEvent);
 
-	tke::staticVertexBuffer->bind(cmd);
-	tke::staticIndexBuffer->bind(cmd);
+	cb->beginRenderPass(tke::plainRenderPass_image8, fb);
+
+	cb->bindVertexBuffer(tke::staticVertexBuffer);
+	cb->bindIndexBuffer(tke::staticIndexBuffer);
 
 
-	vkCmdEndRenderPass(cmd);
+	cb->endRenderPass();
 
-	tke::resetEvent(cmd, waitEvent);
-	tke::setEvent(cmd, signalEvent);
+	cb->resetEvent(waitEvent);
+	cb->setEvent(event);
 
-	vkEndCommandBuffer(cmd);
+	cb->end();
 }

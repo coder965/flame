@@ -441,7 +441,6 @@ namespace tke
 		for (auto &e : events)
 			destroyEvent(e);
 		destroySemaphore(imageAvailable);
-		commandPool.destroy();
 		for (int i = 0; i < 2; i++)
 			releaseFramebuffer(framebuffers[i]);
 		destroySwapchain();
@@ -641,7 +640,7 @@ namespace tke
 
 	void Window::endFrame()
 	{
-		tke::graphicsQueue.submitFence(imageAvailable, cbs.size(), cbs.data(), frameDone);
+		tke::graphicsQueue.submit(cbs.size(), cbs.data(), imageAvailable, 0, frameDone);
 
 		waitFence(frameDone);
 
@@ -754,10 +753,10 @@ namespace tke
 			{
 				for (int index = 0; index < textures.size(); index++)
 				{
-					descriptorPool.addWrite(mrtPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, textures[index]->getInfo(colorSampler), index);
-					descriptorPool.addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
+					descriptorPool->addWrite(mrtPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, textures[index]->getInfo(colorSampler), index);
+					descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
 				}
-				descriptorPool.update();
+				descriptorPool->update();
 				tke::needRedraw = true;
 				needUpdateTexture = false;
 			}

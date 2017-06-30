@@ -25,54 +25,18 @@ namespace tke
 		cs.unlock();
 	}
 
-	void Queue::submit(VkSemaphore waitSemaphore, VkCommandBuffer cmd, VkSemaphore signalSemaphore)
+	void Queue::submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence)
 	{
 		VkSubmitInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		info.pWaitDstStageMask = &waitStage;
-		info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &waitSemaphore;
-		info.commandBufferCount = 1;
-		info.pCommandBuffers = &cmd;
-		info.signalSemaphoreCount = 1;
-		info.pSignalSemaphores = &signalSemaphore;
-
-		graphicsQueue.cs.lock();
-		auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, VK_NULL_HANDLE);
-		assert(res == VK_SUCCESS);
-		graphicsQueue.cs.unlock();
-	}
-
-	void Queue::submit(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkSemaphore signalSemaphore)
-	{
-		VkSubmitInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		info.pWaitDstStageMask = &waitStage;
-		info.waitSemaphoreCount = 1;
+		info.waitSemaphoreCount = waitSemaphore ? 1 : 0;
 		info.pWaitSemaphores = &waitSemaphore;
 		info.commandBufferCount = count;
 		info.pCommandBuffers = cmds;
-		info.signalSemaphoreCount = 1;
+		info.signalSemaphoreCount = signalSemaphore ? 1 : 0;
 		info.pSignalSemaphores = &signalSemaphore;
-
-		graphicsQueue.cs.lock();
-		auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, VK_NULL_HANDLE);
-		assert(res == VK_SUCCESS);
-		graphicsQueue.cs.unlock();
-	}
-
-	void Queue::submitFence(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkFence fence)
-	{
-		VkSubmitInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		info.pWaitDstStageMask = &waitStage;
-		info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &waitSemaphore;
-		info.commandBufferCount = count;
-		info.pCommandBuffers = cmds;
 
 		graphicsQueue.cs.lock();
 		auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, fence);
@@ -84,155 +48,257 @@ namespace tke
 	Device device;
 	Queue graphicsQueue;
 
-	void CommandPool::create()
+	CommandBuffer::CommandBuffer(CommandPool *_pool, VkCommandBufferLevel level)
+		:pool(_pool)
 	{
-		VkCommandPoolCreateInfo cmdPoolInfo = {};
-		cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		cmdPoolInfo.queueFamilyIndex = 0;
+		VkCommandBufferAllocateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		info.level = level;
+		info.commandPool = pool->v;
+		info.commandBufferCount = 1;
+
 		device.cs.lock();
-		auto res = vkCreateCommandPool(device.v, &cmdPoolInfo, nullptr, &pool);
+		auto res = vkAllocateCommandBuffers(device.v, &info, &v);
+		assert(res == VK_SUCCESS);
+		device.cs.unlock();
+	}
+
+	CommandBuffer::~CommandBuffer()
+	{
+		device.cs.lock();
+		vkFreeCommandBuffers(device.v, pool->v, 1, &v);
+		device.cs.unlock();
+	}
+
+	void CommandBuffer::reset()
+	{
+		vkResetCommandBuffer(v, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	}
+
+	void CommandBuffer::begin(VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
+	{
+		currentPipeline = nullptr;
+
+		VkCommandBufferBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		info.flags = flags;
+		info.pInheritanceInfo = pInheritance;
+		auto res = vkBeginCommandBuffer(v, &info);
+		assert(res == VK_SUCCESS);
+	}
+
+	void CommandBuffer::end()
+	{
+		auto res = vkEndCommandBuffer(v);
+		assert(res == VK_SUCCESS);
+	}
+
+	void CommandBuffer::beginRenderPass(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount, VkClearValue *pClearValues)
+	{
+		VkRenderPassBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.renderPass = renderPass;
+		info.framebuffer = fb->v;
+		info.renderArea.extent.width = fb->cx;
+		info.renderArea.extent.height = fb->cy;
+		info.clearValueCount = clearValueCount;
+		info.pClearValues = pClearValues;
+
+		vkCmdBeginRenderPass(v, &info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void CommandBuffer::nextSubpass(VkSubpassContents contents)
+	{
+		vkCmdNextSubpass(v, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void CommandBuffer::endRenderPass()
+	{
+		vkCmdEndRenderPass(v);
+	}
+
+	void CommandBuffer::setViewportAndScissor(int cx, int cy)
+	{
+		VkViewport viewport;
+		viewport.width = (float)cx;
+		viewport.height = (float)cy;
+		viewport.minDepth = (float)0.0f;
+		viewport.maxDepth = (float)1.0f;
+		viewport.x = 0;
+		viewport.y = 0;
+		vkCmdSetViewport(v, 0, 1, &viewport);
+
+		VkRect2D scissor;
+		scissor.extent.width = cx;
+		scissor.extent.height = cy;
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		vkCmdSetScissor(v, 0, 1, &scissor);
+	}
+
+	void CommandBuffer::setScissor(int x, int y, int cx, int cy)
+	{
+		VkRect2D scissor;
+		scissor.extent.width = cx;
+		scissor.extent.height = cy;
+		scissor.offset.x = x;
+		scissor.offset.y = y;
+		vkCmdSetScissor(v, 0, 1, &scissor);
+	}
+
+	void CommandBuffer::bindVertexBuffer(VertexBuffer *b)
+	{
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(v, 0, 1, &b->buffer, offsets);
+	}
+
+	void CommandBuffer::bindIndexBuffer(IndexBuffer *b)
+	{
+		vkCmdBindIndexBuffer(v, b->buffer, 0, VK_INDEX_TYPE_UINT32);
+	}
+
+	void CommandBuffer::bindPipeline(Pipeline *p)
+	{
+		currentPipeline = p;
+		vkCmdBindPipeline(v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->pipeline);
+	}
+
+	void CommandBuffer::bindDescriptorSet()
+	{
+		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, 0, 1, &currentPipeline->descriptorSet, 0, nullptr);
+	}
+
+	void CommandBuffer::bindDescriptorSet(VkDescriptorSet set)
+	{
+		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, 0, 1, &set, 0, nullptr);
+	}
+
+	void CommandBuffer::execSecondaryCmd(VkCommandBuffer cmd)
+	{
+		vkCmdExecuteCommands(v, 1, &cmd);
+	}
+
+	void CommandBuffer::pushConstant(StageType stage, int offset, int size, void *src)
+	{
+		vkCmdPushConstants(v, currentPipeline->pipelineLayout->v, vkStage(stage), offset, size, src);
+	}
+
+	void CommandBuffer::draw(int vertexCount, int firstVertex, int instanceCount, int firstInstance)
+	{
+		vkCmdDraw(v, vertexCount, instanceCount, firstVertex, firstInstance);
+	}
+
+	void CommandBuffer::drawIndex(int indexCount, int firstIndex, int vertexOffset, int instanceCount, int firstInstance)
+	{
+		vkCmdDrawIndexed(v, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+	}
+
+	void CommandBuffer::drawIndirect(IndirectVertexBuffer *b, int count, int offset)
+	{
+		vkCmdDrawIndirect(v, b->buffer, offset * sizeof VkDrawIndirectCommand, count, sizeof VkDrawIndirectCommand);
+	}
+
+	void CommandBuffer::drawIndirectIndex(IndirectIndexBuffer *b, int count, int offset)
+	{
+		vkCmdDrawIndexedIndirect(v, b->buffer, offset * sizeof VkDrawIndexedIndirectCommand, count, sizeof VkDrawIndexedIndirectCommand);
+	}
+
+	void CommandBuffer::waitEvents(size_t count, VkEvent *e)
+	{
+		vkCmdWaitEvents(v, count, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+	}
+
+	void CommandBuffer::setEvent(VkEvent e)
+	{
+		vkCmdSetEvent(v, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	}
+
+	void CommandBuffer::resetEvent(VkEvent e)
+	{
+		vkCmdResetEvent(v, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	}
+
+	CommandPool::CommandPool()
+	{
+		VkCommandPoolCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		info.queueFamilyIndex = 0;
+		device.cs.lock();
+		auto res = vkCreateCommandPool(device.v, &info, nullptr, &v);
 		device.cs.unlock();
 		assert(res == VK_SUCCESS);
 	}
 
-	void CommandPool::destroy()
+	CommandPool::~CommandPool()
 	{
 		device.cs.lock();
-		vkDestroyCommandPool(device.v, pool, nullptr);
+		vkDestroyCommandPool(device.v, v, nullptr);
 		device.cs.unlock();
 	}
 
-	VkCommandBuffer CommandPool::allocate()
+	CommandBuffer *CommandPool::begineOnce()
 	{
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = pool;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer cmd;
-		device.cs.lock();
-		auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
-		assert(res == VK_SUCCESS);
-		device.cs.unlock();
-
-		return cmd;
+		auto cb = new CommandBuffer(this);
+		cb->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		return cb;
 	}
 
-	VkCommandBuffer CommandPool::allocateSecondary()
+	void CommandPool::endOnce(CommandBuffer *cb)
 	{
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-		allocInfo.commandPool = pool;
-		allocInfo.commandBufferCount = 1;
+		cb->end();
 
-		VkCommandBuffer cmd;
-		device.cs.lock();
-		auto res = vkAllocateCommandBuffers(device.v, &allocInfo, &cmd);
-		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		graphicsQueue.submit(1, &cb->v);
+		graphicsQueue.waitIdle();
 
-		return cmd;
+		delete cb;
 	}
 
-	void CommandPool::free(VkCommandBuffer cmd)
+	void CommandPool::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
 	{
-		device.cs.lock();
-		vkFreeCommandBuffers(device.v, pool, 1, &cmd);
-		device.cs.unlock();
-	}
-
-	VkCommandBuffer CommandPool::begineOnce()
-	{
-		auto cmd = allocate();
-		beginCommandBuffer(cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		return cmd;
-	}
-
-	void CommandPool::endOnce(VkCommandBuffer cmd)
-	{
-		VkResult res;
-
-		res = vkEndCommandBuffer(cmd);
-		assert(res == VK_SUCCESS);
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &cmd;
-
-		device.cs.lock();
-		graphicsQueue.cs.lock();
-		res = vkQueueSubmit(graphicsQueue.v, 1, &submitInfo, VK_NULL_HANDLE);
-		assert(res == VK_SUCCESS);
-		res = vkQueueWaitIdle(graphicsQueue.v);
-		assert(res == VK_SUCCESS);
-		graphicsQueue.cs.unlock();
-		device.cs.unlock();
-
-		free(cmd);
-	}
-
-	void CommandPool::cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
-	{
-		auto commandBuffer = begineOnce();
-
+		auto cb = begineOnce();
 		VkBufferCopy region = {};
 		region.size = size;
 		region.srcOffset = srcOffset;
 		region.dstOffset = dstOffset;
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &region);
-
-		endOnce(commandBuffer);
+		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, 1, &region);
+		endOnce(cb);
 	}
 
-	void CommandPool::cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
+	void CommandPool::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
 	{
-		auto commandBuffer = begineOnce();
-
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, count, ranges);
-
-		endOnce(commandBuffer);
+		auto cb = begineOnce();
+		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, count, ranges);
+		endOnce(cb);
 	}
 
-	void CommandPool::cmdUpdateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &Buffer)
+	void CommandPool::updateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &Buffer)
 	{
 		void* map = stagingBuffer.map(0, size);
 		memcpy(map, data, size);
 		stagingBuffer.unmap();
 
-		cmdCopyBuffer(stagingBuffer.m_buffer, Buffer, size);
+		copyBuffer(stagingBuffer.buffer, Buffer, size);
 	}
 
-	void CommandPool::cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
+	void CommandPool::copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
 	{
-		auto commandBuffer = begineOnce();
-
-		VkImageSubresourceLayers subResource = {};
-		subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subResource.baseArrayLayer = 0;
-		subResource.mipLevel = 0;
-		subResource.layerCount = 1;
-
+		auto cb = begineOnce();
 		VkImageCopy region = {};
-		region.srcSubresource = subResource;
-		region.dstSubresource = subResource;
-		region.srcOffset = { 0, 0, 0 };
-		region.dstOffset = { 0, 0, 0 };
+		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.srcSubresource.layerCount = 1;
+		region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.dstSubresource.layerCount = 1;
 		region.extent.width = width;
 		region.extent.height = height;
 		region.extent.depth = 1;
-
-		vkCmdCopyImage(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-		endOnce(commandBuffer);
+		vkCmdCopyImage(cb->v, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		endOnce(cb);
 	}
 
-	CommandPool commandPool;
+	CommandPool *commandPool = nullptr;
 
-	void DescriptrPool::create()
+	DescriptorPool::DescriptorPool()
 	{
 		VkDescriptorPoolSize descriptorPoolSizes[] = {
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10000 },
@@ -248,16 +314,21 @@ namespace tke
 		descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
 		descriptorPoolInfo.maxSets = 256;
 		device.cs.lock();
-		auto res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &pool);
+		auto res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &v);
 		device.cs.unlock();
 		assert(res == VK_SUCCESS);
 	}
 
-	VkDescriptorSet DescriptrPool::allocate(VkDescriptorSetLayout *pLayout)
+	DescriptorPool::~DescriptorPool()
+	{
+		vkDestroyDescriptorPool(device.v, v, nullptr);
+	}
+
+	VkDescriptorSet DescriptorPool::allocate(VkDescriptorSetLayout *pLayout)
 	{
 		VkDescriptorSetAllocateInfo descriptorSetInfo = {};
 		descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorSetInfo.descriptorPool = pool;
+		descriptorSetInfo.descriptorPool = v;
 		descriptorSetInfo.descriptorSetCount = 1;
 		descriptorSetInfo.pSetLayouts = pLayout;
 
@@ -270,15 +341,15 @@ namespace tke
 		return descriptorSet;
 	}
 
-	void DescriptrPool::free(VkDescriptorSet set)
+	void DescriptorPool::free(VkDescriptorSet set)
 	{
 		device.cs.lock();
-		auto res = vkFreeDescriptorSets(device.v, pool, 1, &set);
+		auto res = vkFreeDescriptorSets(device.v, v, 1, &set);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 	}
 
-	void DescriptrPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement)
+	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -292,7 +363,7 @@ namespace tke
 		writes.push_back(write);
 	}
 
-	void DescriptrPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement)
+	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -306,7 +377,7 @@ namespace tke
 		writes.push_back(write);
 	}
 
-	void DescriptrPool::update()
+	void DescriptorPool::update()
 	{
 		if (writes.size() == 0) 
 			return;
@@ -317,7 +388,7 @@ namespace tke
 		device.cs.unlock();
 	}
 
-	DescriptrPool descriptorPool;
+	DescriptorPool *descriptorPool = nullptr;
 
 	Framebuffer::~Framebuffer()
 	{
@@ -403,16 +474,6 @@ namespace tke
 	VkSampler colorSampler;
 	VkSampler colorBorderSampler;
 
-	void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
-	{
-		VkCommandBufferBeginInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		info.flags = flags;
-		info.pInheritanceInfo = pInheritance;
-		auto res = vkBeginCommandBuffer(cmd, &info);
-		assert(res == VK_SUCCESS);
-	}
-
 	VkFence createFence()
 	{
 		VkFence fence;
@@ -455,26 +516,6 @@ namespace tke
 		device.cs.lock();
 		vkDestroyEvent(device.v, event, nullptr);
 		device.cs.unlock();
-	}
-
-	void waitEvent(VkCommandBuffer cmd, VkEvent e)
-	{
-		vkCmdWaitEvents(cmd, 1, &e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-	}
-
-	void waitEvents(VkCommandBuffer cmd, size_t count, VkEvent *e)
-	{
-		vkCmdWaitEvents(cmd, count, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-	}
-
-	void setEvent(VkCommandBuffer cmd, VkEvent e)
-	{
-		vkCmdSetEvent(cmd, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-	}
-
-	void resetEvent(VkCommandBuffer cmd, VkEvent e)
-	{
-		vkCmdResetEvent(cmd, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 
 	VkSemaphore createSemaphore()
@@ -619,58 +660,25 @@ namespace tke
 		device.cs.unlock();
 	}
 
-	void beginRenderPass(VkCommandBuffer cmd, VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr)
-	{
-		VkRenderPassBeginInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.renderPass = renderPass;
-		info.framebuffer = fb->v;
-		info.renderArea.extent.width = fb->cx;
-		info.renderArea.extent.height = fb->cy;
-		info.clearValueCount = clearValueCount;
-		info.pClearValues = pClearValues;
-
-		vkCmdBeginRenderPass(cmd, &info, VK_SUBPASS_CONTENTS_INLINE);
-	}
-
-	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy)
-	{
-		VkViewport viewport;
-		viewport.width = (float)cx;
-		viewport.height = (float)cy;
-		viewport.minDepth = (float)0.0f;
-		viewport.maxDepth = (float)1.0f;
-		viewport.x = 0;
-		viewport.y = 0;
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-		VkRect2D scissor;
-		scissor.extent.width = cx;
-		scissor.extent.height = cy;
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
-	}
-
 	static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location,
 		int32_t messageCode,
 		const char* pLayerPrefix,
 		const char* pMessage,
 		void* pUserData)
 	{
+		if (messageCode == 1922 || messageCode == 341838316) return VK_FALSE; // vkCreateSwapChainKHR(): pCreateInfo->surface is not known at this time to be supported for presentation by this device. The vkGetPhysicalDeviceSurfaceSupportKHR() must be called beforehand, and it must return VK_TRUE support with this surface for at least one queue family of this device
+		if (messageCode == 15) return VK_FALSE; // Shader requires VkPhysicalDeviceFeatures::tessellationShader but is not enabled on the device, never mind
+		if (messageCode == 100) return VK_FALSE; // vkCreateSwapChainKHR(): surface capabilities not retrieved for this physical device
+		if (messageCode == 101) return VK_FALSE; // vkQueuePresentKHR: Presenting image without calling vkGetPhysicalDeviceSurfaceSupportKHR
+		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
+		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
+		if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
+		if (messageCode == 54 || messageCode == 113246970) return VK_FALSE; // vkCreateDevice: pCreateInfo->pQueueCreateInfos[0].queueFamilyIndex (= 0) is not less than any previously obtained pQueueFamilyPropertyCount from vkGetPhysicalDeviceQueueFamilyProperties (the pQueueFamilyPropertyCount was never obtained)
 		if (messageCode == 1) return VK_FALSE; // THREADING ERROR, 0.0 what is this
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
 		if (messageCode == 5) return VK_FALSE; // SPIR-V module not valid: Operand 4 of MemberDecorate requires one of these capabilities: MultiViewport 
-		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
-		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
 		if (messageCode == 13) return VK_FALSE; // Shader expects at least n descriptors but only less provided, never mind
-		if (messageCode == 15) return VK_FALSE; // Shader requires VkPhysicalDeviceFeatures::tessellationShader but is not enabled on the device, never mind
-		if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
-		if (messageCode == 54 || messageCode == 113246970) return VK_FALSE; // vkCreateDevice: pCreateInfo->pQueueCreateInfos[0].queueFamilyIndex (= 0) is not less than any previously obtained pQueueFamilyPropertyCount from vkGetPhysicalDeviceQueueFamilyProperties (the pQueueFamilyPropertyCount was never obtained)
 		if (messageCode == 61) return VK_FALSE; // Some descriptor maybe used before any update, never mind
-		if (messageCode == 100) return VK_FALSE; // vkCreateSwapChainKHR(): surface capabilities not retrieved for this physical device
-		if (messageCode == 101) return VK_FALSE; // vkQueuePresentKHR: Presenting image without calling vkGetPhysicalDeviceSurfaceSupportKHR
-		if (messageCode == 1922 || messageCode == 341838316) return VK_FALSE; // vkCreateSwapChainKHR(): pCreateInfo->surface is not known at this time to be supported for presentation by this device. The vkGetPhysicalDeviceSurfaceSupportKHR() must be called beforehand, and it must return VK_TRUE support with this surface for at least one queue family of this device
 
 												  // ignore above
 		
@@ -758,9 +766,9 @@ namespace tke
 
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
-		commandPool.create();
+		commandPool = new CommandPool;
 
-		descriptorPool.create();
+		descriptorPool = new DescriptorPool;
 
 		swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
@@ -877,29 +885,29 @@ namespace tke
 
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = p->m_size;
+		bufferInfo.size = p->size;
 		bufferInfo.usage = p->usage;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		device.cs.lock();
 
-		res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &p->m_buffer);
+		res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &p->buffer);
 		assert(res == VK_SUCCESS);
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device.v, p->m_buffer, &memRequirements);
+		vkGetBufferMemoryRequirements(device.v, p->buffer, &memRequirements);
 
-		assert(p->m_size <= memRequirements.size);
+		assert(p->size <= memRequirements.size);
 
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, p->memoryProperty);
 
-		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &p->m_memory);
+		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &p->memory);
 		assert(res == VK_SUCCESS);
 
-		res = vkBindBufferMemory(device.v, p->m_buffer, p->m_memory, 0);
+		res = vkBindBufferMemory(device.v, p->buffer, p->memory, 0);
 		assert(res == VK_SUCCESS);
 
 		device.cs.unlock();
@@ -908,14 +916,14 @@ namespace tke
 	static void buffer_destroy(Buffer *p)
 	{
 		device.cs.lock();
-		vkFreeMemory(device.v, p->m_memory, nullptr);
-		vkDestroyBuffer(device.v, p->m_buffer, nullptr);
+		vkFreeMemory(device.v, p->memory, nullptr);
+		vkDestroyBuffer(device.v, p->buffer, nullptr);
 		device.cs.unlock();
 	}
 
-	Buffer::Buffer(size_t size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty)
+	Buffer::Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty)
 	{
-		m_size = size;
+		size = _size;
 		usage = _usage;
 		memoryProperty = _memoryProperty;
 
@@ -927,23 +935,23 @@ namespace tke
 		buffer_destroy(this);
 	}
 
-	void Buffer::recreate(size_t size)
+	void Buffer::recreate(size_t _size)
 	{
 		buffer_destroy(this);
-		m_size = size;
+		size = _size;
 		buffer_create(this);
 	}
 
-	StagingBuffer::StagingBuffer(size_t size)
-		:Buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	StagingBuffer::StagingBuffer(size_t _size)
+		:Buffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 	{
 	}
 
-	void *StagingBuffer::map(size_t offset, size_t size)
+	void *StagingBuffer::map(size_t offset, size_t _size)
 	{
 		void *map;
 		device.cs.lock();
-		auto res = vkMapMemory(device.v, m_memory, offset, size, 0, &map);
+		auto res = vkMapMemory(device.v, memory, offset, _size, 0, &map);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 		return map;
@@ -952,87 +960,76 @@ namespace tke
 	void StagingBuffer::unmap()
 	{
 		device.cs.lock();
-		vkUnmapMemory(device.v, m_memory);
+		vkUnmapMemory(device.v, memory);
 		device.cs.unlock();
 	}
 
 	static void buffer_copy(NonStagingBufferAbstract *p, void *data)
 	{
-		StagingBuffer stagingBuffer(p->m_size);
+		StagingBuffer stagingBuffer(p->size);
 
-		void* map = stagingBuffer.map(0, p->m_size);
-		memcpy(map, data, p->m_size);
+		void* map = stagingBuffer.map(0, p->size);
+		memcpy(map, data, p->size);
 		stagingBuffer.unmap();
-		commandPool.cmdCopyBuffer(stagingBuffer.m_buffer, p->m_buffer, p->m_size);
+		commandPool->copyBuffer(stagingBuffer.buffer, p->buffer, p->size);
 	}
 
-	NonStagingBufferAbstract::NonStagingBufferAbstract(size_t size, VkBufferUsageFlags usage, void *data)
-		:Buffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	NonStagingBufferAbstract::NonStagingBufferAbstract(size_t _size, VkBufferUsageFlags usage, void *data)
+		:Buffer(_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
 		if (data)
 			buffer_copy(this, data);
 	}
 
-	void NonStagingBufferAbstract::recreate(size_t size, void *data)
+	void NonStagingBufferAbstract::recreate(size_t _size, void *data)
 	{
-		Buffer::recreate(size);
+		Buffer::recreate(_size);
 		if (data)
 			buffer_copy(this, data);
 	}
 
-	void NonStagingBufferAbstract::update(void *data, StagingBuffer &stagingBuffer, size_t size)
+	void NonStagingBufferAbstract::update(void *data, StagingBuffer &stagingBuffer, size_t _size)
 	{
-		if (size == 0) size = m_size;
-		commandPool.cmdUpdateBuffer(data, size, stagingBuffer, m_buffer);
+		if (_size == 0) _size = size;
+		commandPool->updateBuffer(data, _size, stagingBuffer, buffer);
 	}
 
-	ShaderManipulatableBufferAbstract::ShaderManipulatableBufferAbstract(size_t size, VkBufferUsageFlags usage)
-		:NonStagingBufferAbstract(size, usage)
+	ShaderManipulatableBufferAbstract::ShaderManipulatableBufferAbstract(size_t _size, VkBufferUsageFlags usage)
+		:NonStagingBufferAbstract(_size, usage)
 	{
 		m_info = {};
-		m_info.buffer = m_buffer;
-		m_info.range = m_size;
+		m_info.buffer = buffer;
+		m_info.range = size;
 	}
 
-	UniformBuffer::UniformBuffer(size_t size)
-		:ShaderManipulatableBufferAbstract(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+	UniformBuffer::UniformBuffer(size_t _size)
+		:ShaderManipulatableBufferAbstract(_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{
 	}
 
-	VertexBuffer::VertexBuffer(size_t size, void *data)
-		: NonStagingBufferAbstract(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data)
+	VertexBuffer::VertexBuffer(size_t _size, void *data)
+		: NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data)
 	{
 	}
 
-	void VertexBuffer::bind(VkCommandBuffer cmd)
-	{
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(cmd, 0, 1, &m_buffer, offsets);
-	}
-
-	IndexBuffer::IndexBuffer(size_t size, void *data)
-		:NonStagingBufferAbstract(size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data)
+	IndexBuffer::IndexBuffer(size_t _size, void *data)
+		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data)
 	{
 	}
 
-	void IndexBuffer::bind(VkCommandBuffer cmd)
-	{
-		vkCmdBindIndexBuffer(cmd, m_buffer, 0, VK_INDEX_TYPE_UINT32);
-	}
-
-	IndirectVertexBuffer::IndirectVertexBuffer(size_t size)
-		:NonStagingBufferAbstract(size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+	IndirectVertexBuffer::IndirectVertexBuffer(size_t _size)
+		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
 	{
 	}
 
-	IndirectIndexBuffer::IndirectIndexBuffer(size_t size)
-		: NonStagingBufferAbstract(size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+	IndirectIndexBuffer::IndirectIndexBuffer(size_t _size)
+		: NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
 	{
 	}
 
 	void Image::transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout)
 	{
-		auto commandBuffer = commandPool.begineOnce();
+		auto cb = commandPool->begineOnce();
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1057,9 +1054,9 @@ namespace tke
 		else if (_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		else if (_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-		commandPool.endOnce(commandBuffer);
+		commandPool->endOnce(cb);
 
 		layout = _layout;
 	}
@@ -1084,9 +1081,9 @@ namespace tke
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
-		auto cmd = commandPool.begineOnce();
-		vkCmdCopyBufferToImage(cmd, stagingBuffer.m_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		commandPool.endOnce(cmd);
+		auto cb = commandPool->begineOnce();
+		vkCmdCopyBufferToImage(cb->v, stagingBuffer.buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		commandPool->endOnce(cb);
 	}
 
 	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level , void *data, size_t _size, VkImageAspectFlags aspect)
@@ -2200,7 +2197,7 @@ namespace tke
 			}
 		}
 
-		descriptorSet = descriptorPool.allocate(&descriptorSetLayout->v);
+		descriptorSet = descriptorPool->allocate(&descriptorSetLayout->v);
 
 		{
 			bool found = false;
@@ -2409,6 +2406,8 @@ namespace tke
 						}
 					}
 				}
+				if (!found)
+					int cut = 1;
 				//assert(found);
 			}
 			else
@@ -2428,7 +2427,8 @@ namespace tke
 						}
 					}
 				}
-				if (!found) continue;
+				if (!found)
+					int cut = 1;
 				//assert(found);
 			}
 
@@ -2438,7 +2438,7 @@ namespace tke
 			{
 				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pUniformBuffer)
-					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element);
+					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2447,7 +2447,7 @@ namespace tke
 			{
 				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pStorageBuffer)
-					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element);
+					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2456,7 +2456,7 @@ namespace tke
 			{
 				auto pStorageImage = pResource->getImage(link.resource_name);
 				if (pStorageImage)
-					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element);
+					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2484,7 +2484,7 @@ namespace tke
 						sampler = colorBorderSampler;
 						break;
 					}
-					descriptorPool.addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element);
+					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
@@ -2493,7 +2493,7 @@ namespace tke
 			}
 		}
 
-		descriptorPool.update();
+		descriptorPool->update();
 	}
 
 	int Pipeline::descriptorPosition(const std::string &name)
@@ -3184,20 +3184,20 @@ namespace tke
 			p.p->updateDescriptors();
 	}
 
-	void Renderer::execute(VkCommandBuffer cmd, int index)
+	void Renderer::execute(CommandBuffer *cb, int index)
 	{
 		currentVertexBuffer = initVertexBuffer;
 		currentIndexBuffer = initIndexBuffer;
 		currentPipeline = initPipeline;
 		currentDescriptorSet = initDescriptorSet;
 
-		beginRenderPass(cmd, vkRenderPass, vkFramebuffer[index], vkClearValues.size(), vkClearValues.data());
+		cb->beginRenderPass(vkRenderPass, vkFramebuffer[index], vkClearValues.size(), vkClearValues.data());
 
 		if (currentVertexBuffer)
-			currentVertexBuffer->bind(cmd);
+			cb->bindVertexBuffer(currentVertexBuffer);
 
 		if (currentIndexBuffer)
-			currentIndexBuffer->bind(cmd);
+			cb->bindIndexBuffer(currentIndexBuffer);
 
 		bool firstPass = true;
 		for (auto &pass : passes)
@@ -3205,50 +3205,35 @@ namespace tke
 			switch (pass.type)
 			{
 			case RenderPassType::draw_action:
-				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+				if (!firstPass) cb->nextSubpass();
 				for (auto &action : pass.actions)
 				{
 					if (!action.show) continue;
 
 					if (action.cx || action.cy)
-					{
-						VkViewport viewport;
-						viewport.x = 0;
-						viewport.y = 0;
-						viewport.width = action.cx;
-						viewport.height = action.cy;
-						viewport.minDepth = 0.0f;
-						viewport.maxDepth = 1.0f;
-						vkCmdSetViewport(cmd, 0, 1, &viewport);
+						cb->setViewportAndScissor(action.cx, action.cy);
 
-						VkRect2D scissor;
-						scissor.offset.x = 0;
-						scissor.offset.y = 0;
-						scissor.extent.width = action.cx;
-						scissor.extent.height = action.cy;
-						vkCmdSetScissor(cmd, 0, 1, &scissor);
-					}
 					switch (action.type)
 					{
 					case DrawActionType::draw_action:
-						if (action.pipeline && action.pipeline != currentPipeline)
-						{
-							action.pipeline->bind(cmd);
-							currentPipeline = action.pipeline;
-						}
 						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
 						{
-							action.m_vertexBuffer->bind(cmd);
+							cb->bindVertexBuffer(action.m_vertexBuffer);
 							currentVertexBuffer = action.m_vertexBuffer;
 						}
 						if (action.m_indexBuffer && action.m_indexBuffer != currentIndexBuffer)
 						{
-							action.m_indexBuffer->bind(cmd);
+							cb->bindIndexBuffer(action.m_indexBuffer);
 							currentIndexBuffer = action.m_indexBuffer;
+						}
+						if (action.pipeline && action.pipeline != currentPipeline)
+						{
+							cb->bindPipeline(action.pipeline);
+							currentPipeline = action.pipeline;
 						}
 						if (action.descriptorSet && action.descriptorSet != currentDescriptorSet)
 						{
-							action.pipeline->bindDescriptorSet(cmd, action.descriptorSet);
+							cb->bindDescriptorSet(action.descriptorSet);
 							currentDescriptorSet = action.descriptorSet;
 						}
 
@@ -3263,39 +3248,39 @@ namespace tke
 							switch (drawcall.type)
 							{
 							case DrawcallType::vertex:
-								vkCmdDraw(cmd, drawcall.vertex_count, drawcall.instance_count, drawcall.first_vertex, drawcall.first_instance);
+								cb->draw(drawcall.vertex_count, drawcall.first_vertex, drawcall.instance_count, drawcall.first_instance);
 								break;
 							case DrawcallType::index:
-								vkCmdDrawIndexed(cmd, drawcall.index_count, drawcall.instance_count, drawcall.first_index, drawcall.vertex_offset, drawcall.first_instance);
+								cb->drawIndex(drawcall.index_count, drawcall.first_index, drawcall.vertex_offset, drawcall.instance_count, drawcall.first_instance);
 								break;
 							case DrawcallType::indirect_vertex:
-								vkCmdDrawIndirect(cmd, drawcall.m_indirectVertexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndirectCommand);
+								cb->drawIndirect(drawcall.m_indirectVertexBuffer, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, drawcall.first_indirect);
 								break;
 							case DrawcallType::indirect_index:
-								vkCmdDrawIndexedIndirect(cmd, drawcall.m_indirectIndexBuffer->m_buffer, drawcall.first_indirect * sizeof VkDrawIndexedIndirectCommand, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, sizeof VkDrawIndexedIndirectCommand);
+								cb->drawIndirectIndex(drawcall.m_indirectIndexBuffer, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, drawcall.first_indirect);
 								break;
 							case DrawcallType::push_constant:
-								vkCmdPushConstants(cmd, currentPipeline->pipelineLayout->v, vkStage(drawcall.push_constant_stage), drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
+								cb->pushConstant(drawcall.push_constant_stage, drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
 								break;
 							}
 						}
 						break;
 					case DrawActionType::call_fuction:
 						if (action.m_pRenderFunc)
-							action.m_pRenderFunc(cmd);
+							action.m_pRenderFunc(cb->v);
 						break;
 					}
 				}
 				break;
 			case RenderPassType::call_secondary_cmd:
-				if (!firstPass) vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-				if (pass.secondaryCmd) vkCmdExecuteCommands(cmd, 1, &pass.secondaryCmd);
+				if (!firstPass) cb->nextSubpass(VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+				if (pass.secondaryCmd) cb->execSecondaryCmd(pass.secondaryCmd);
 				break;
 			}
 			firstPass = false;
 		}
 
-		vkCmdEndRenderPass(cmd);
+		cb->endRenderPass();
 
 		currentVertexBuffer = nullptr;
 		currentIndexBuffer = nullptr;

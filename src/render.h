@@ -15,6 +15,29 @@
 
 namespace tke
 {
+	REFLECTABLE enum class StageType : int
+	{
+		null,
+		REFLe vert = 1 << 0,
+		REFLe tesc = 1 << 1,
+		REFLe tese = 1 << 2,
+		REFLe geom = 1 << 3,
+		REFLe frag = 1 << 4
+	};
+
+	struct VertexBuffer;
+	struct IndexBuffer;
+	struct IndirectVertexBuffer;
+	struct IndirectIndexBuffer;
+	struct Framebuffer;
+	struct Pipeline;
+	struct Drawcall;
+	struct Dependency;
+	struct Attachment;
+	struct DrawAction;
+	struct RenderPass;
+	struct Renderer;
+
 	struct Instance
 	{
 		VkInstance v;
@@ -35,9 +58,7 @@ namespace tke
 		CriticalSection cs;
 
 		void waitIdle();
-		void submit(VkSemaphore waitSemaphore, VkCommandBuffer cmd, VkSemaphore signalSemaphore);
-		void submit(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkSemaphore signalSemaphore);
-		void submitFence(VkSemaphore waitSemaphore, int count, VkCommandBuffer *cmds, VkFence fence);
+		void submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
 	};
 
 	extern Instance inst;
@@ -46,28 +67,28 @@ namespace tke
 
 	struct Buffer
 	{
-		size_t m_size = 0;
-		VkBuffer m_buffer = 0;
-		VkDeviceMemory m_memory = 0;
+		size_t size = 0;
+		VkBuffer buffer = 0;
+		VkDeviceMemory memory = 0;
 
 		VkBufferUsageFlags usage;
 		VkMemoryPropertyFlags memoryProperty;
 
-		Buffer(size_t size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		~Buffer();
-		void recreate(size_t size);
+		void recreate(size_t _size);
 	};
 
 	struct StagingBuffer : Buffer
 	{
-		StagingBuffer(size_t size);
-		void *map(size_t offset, size_t size);
+		StagingBuffer(size_t _size);
+		void *map(size_t offset, size_t _size);
 		void unmap();
 	};
 
 	struct NonStagingBufferAbstract : Buffer
 	{
-		NonStagingBufferAbstract(size_t size, VkBufferUsageFlags usage, void *data = nullptr);
+		NonStagingBufferAbstract(size_t _size, VkBufferUsageFlags usage, void *data = nullptr);
 		void recreate(size_t size, void *data = nullptr);
 		void update(void *data, StagingBuffer &stagingBuffer, size_t size = 0);
 	};
@@ -76,34 +97,32 @@ namespace tke
 	{
 		VkDescriptorBufferInfo m_info;
 
-		ShaderManipulatableBufferAbstract(size_t size, VkBufferUsageFlags usage);
+		ShaderManipulatableBufferAbstract(size_t _size, VkBufferUsageFlags usage);
 	};
 
 	struct UniformBuffer : ShaderManipulatableBufferAbstract
 	{
-		UniformBuffer(size_t size);
+		UniformBuffer(size_t _size);
 	};
 
 	struct VertexBuffer : NonStagingBufferAbstract
 	{
-		VertexBuffer(size_t size = 16, void *data = nullptr);
-		void bind(VkCommandBuffer cmd);
+		VertexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
 	struct IndexBuffer : NonStagingBufferAbstract
 	{
-		IndexBuffer(size_t size = 16, void *data = nullptr);
-		void bind(VkCommandBuffer cmd);
+		IndexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
 	struct IndirectVertexBuffer : NonStagingBufferAbstract
 	{
-		IndirectVertexBuffer(size_t size = sizeof VkDrawIndirectCommand);
+		IndirectVertexBuffer(size_t _size = sizeof VkDrawIndirectCommand);
 	};
 
 	struct IndirectIndexBuffer : NonStagingBufferAbstract
 	{
-		IndirectIndexBuffer(size_t size = sizeof VkDrawIndexedIndirectCommand);
+		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
 
 	struct Image
@@ -161,26 +180,54 @@ namespace tke
 
 	Image *createImage(const std::string &filename, bool sRGB, bool saveData = false);
 
+	struct CommandPool;
+
+	struct CommandBuffer
+	{
+		CommandPool *pool;
+		VkCommandBuffer v;
+		Pipeline *currentPipeline = nullptr;
+
+		CommandBuffer(CommandPool *_pool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+		~CommandBuffer();
+		void reset();
+		void begin(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
+		void end();
+		void beginRenderPass(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr);
+		void nextSubpass(VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+		void endRenderPass();
+		void setViewportAndScissor(int cx, int cy);
+		void setScissor(int x, int y, int cx, int cy);
+		void bindVertexBuffer(VertexBuffer *b);
+		void bindIndexBuffer(IndexBuffer *b);
+		void bindPipeline(Pipeline *p);
+		void bindDescriptorSet();
+		void bindDescriptorSet(VkDescriptorSet set);
+		void execSecondaryCmd(VkCommandBuffer cmd);
+		void pushConstant(StageType stage, int offset, int size, void *src);
+		void draw(int vertexCount, int firstVertex = 0, int instanceCount = 1, int firstInstance = 0);
+		void drawIndex(int indexCount, int firstIndex = 0, int vertexOffset = 0, int instanceCount = 1, int firstInstance = 0);
+		void drawIndirect(IndirectVertexBuffer *b, int count, int offset = 0);
+		void drawIndirectIndex(IndirectIndexBuffer *b, int count, int offset = 0);
+		void waitEvents(size_t count, VkEvent *e);
+		void setEvent(VkEvent e);
+		void resetEvent(VkEvent e);
+	};
+
 	struct CommandPool
 	{
-		VkCommandPool pool;
+		VkCommandPool v;
 
-		void create();
-		void destroy();
-		VkCommandBuffer allocate();
-		VkCommandBuffer allocateSecondary();
-		void free(VkCommandBuffer cmd);
-
-		VkCommandBuffer begineOnce();
-		void endOnce(VkCommandBuffer cmd);
-
-		void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
-		void cmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
-		void cmdUpdateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &uniformBuffer);
-
-		void cmdCopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+		CommandPool();
+		~CommandPool();
+		CommandBuffer *begineOnce();
+		void endOnce(CommandBuffer *cb);
+		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
+		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
+		void updateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &uniformBuffer);
+		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 	};
-	extern CommandPool commandPool;
+	extern CommandPool *commandPool;
 
 	struct RenderCB
 	{
@@ -188,19 +235,20 @@ namespace tke
 		VkEvent finished;
 	};
 
-	struct DescriptrPool
+	struct DescriptorPool
 	{
-		VkDescriptorPool pool;
+		VkDescriptorPool v;
 		std::vector<VkWriteDescriptorSet> writes;
 
-		void create();
+		DescriptorPool();
+		~DescriptorPool();
 		VkDescriptorSet allocate(VkDescriptorSetLayout *pLayout);
 		void free(VkDescriptorSet set);
 		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement = 0);
 		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement = 0);
 		void update();
 	};
-	extern DescriptrPool descriptorPool;
+	extern DescriptorPool *descriptorPool;
 
 	struct Framebuffer
 	{
@@ -224,17 +272,11 @@ namespace tke
 	extern VkSampler colorSampler;
 	extern VkSampler colorBorderSampler;
 
-	void beginCommandBuffer(VkCommandBuffer cmd, VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
-
 	VkFence createFence();
 	void destroyFence(VkFence fence);
 
 	VkEvent createEvent();
 	void destroyEvent(VkEvent event);
-	void waitEvent(VkCommandBuffer cmd, VkEvent e);
-	void waitEvents(VkCommandBuffer cmd, size_t count, VkEvent *e);
-	void setEvent(VkCommandBuffer cmd, VkEvent e);
-	void resetEvent(VkCommandBuffer cmd, VkEvent e);
 
 	VkSemaphore createSemaphore();
 	void destroySemaphore(VkSemaphore semaphore);
@@ -250,9 +292,6 @@ namespace tke
 	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
 	VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies);
 	void destroyRenderPass(VkRenderPass rp);
-	void beginRenderPass(VkCommandBuffer cmd, VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr);
-
-	void cmdSetViewportAndScissor(VkCommandBuffer cmd, int cx, int cy);
 
 	Err initRender(bool debug);
 
@@ -277,16 +316,6 @@ namespace tke
 		}
 		return VK_FORMAT_UNDEFINED;
 	}
-
-	REFLECTABLE enum class StageType : int
-	{
-		null,
-		REFLe vert = 1 << 0,
-		REFLe tesc = 1 << 1,
-		REFLe tese = 1 << 2,
-		REFLe geom = 1 << 3,
-		REFLe frag = 1 << 4
-	};
 
 	const int StageTypes[] = {
 		(int)StageType::vert,
@@ -454,8 +483,6 @@ namespace tke
 		REFLv int count = 0;
 		REFLv std::string name;
 	};
-
-	struct Pipeline;
 
 	REFLECTABLE struct UniformBufferInfo
 	{
@@ -685,29 +712,7 @@ namespace tke
 		void setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex);
 		void updateDescriptors();
 		int descriptorPosition(const std::string &name);
-
-		inline void bind(VkCommandBuffer cmd)
-		{
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		}
-
-		inline void bindDescriptorSet(VkCommandBuffer cmd)
-		{
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->v, 0, 1, &descriptorSet, 0, nullptr);
-		}
-
-		inline void bindDescriptorSet(VkCommandBuffer cmd, VkDescriptorSet set)
-		{
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->v, 0, 1, &set, 0, nullptr);
-		}
 	};
-
-	struct Drawcall;
-	struct Dependency;
-	struct Attachment;
-	struct DrawAction;
-	struct RenderPass;
-	struct Renderer;
 
 	struct Model;
 	REFLECTABLE struct Drawcall : Element
@@ -991,7 +996,7 @@ namespace tke
 		void getDescriptorSets();
 		void setup();
 		void updateDescriptors();
-		void execute(VkCommandBuffer cmd, int index = 0);
+		void execute(CommandBuffer *cb, int index = 0);
 	};
 
 	struct ImageData

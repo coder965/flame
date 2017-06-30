@@ -53,9 +53,6 @@ void EditorWindow::renderEvent()
 {
 	beginFrame();
 
-	for (auto m : monitors)
-		pushCB(m->cmd, m->renderFinished);
-
 	ui->begin(true);
 
 	ImGui::BeginMainMenuBar();
@@ -175,6 +172,8 @@ void EditorWindow::renderEvent()
 	}
 	for (auto m : monitors)
 		m->show();
+	for (auto m : monitors)
+		pushCB(m->cb->v, m->renderFinished);
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
 	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
@@ -183,7 +182,7 @@ void EditorWindow::renderEvent()
 
 	ui->end();
 
-	pushCB(ui->cmd, 0);
+	pushCB(ui->cb->v, 0);
 
 	endFrame();
 }

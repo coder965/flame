@@ -13,7 +13,7 @@ struct MonitorWidget
 
 	VkEvent renderFinished;
 
-	VkCommandBuffer cmd;
+	tke::CommandBuffer *cb;
 
 	bool opened = true;
 

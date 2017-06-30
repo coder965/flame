@@ -17,21 +17,19 @@ namespace tke
 
 		graphicsQueue.waitIdle();
 
-		auto cmd = commandPool.begineOnce();
+		auto cb = commandPool->begineOnce();
 
 		VkClearValue clearValue[] = {
 			{ 0.f, 0.f, 0.f, 0.f },
 			{ 1.f, 0 }
 		};
-		beginRenderPass(cmd, renderPass, framebuffer, ARRAYSIZE(clearValue), clearValue);
-		
-		drawCallback(cmd);
+		cb->beginRenderPass(renderPass, framebuffer, ARRAYSIZE(clearValue), clearValue);
+		drawCallback(cb->v);
+		cb->endRenderPass();
 
-		vkCmdEndRenderPass(cmd);
+		commandPool->endOnce(cb);
 
-		commandPool.endOnce(cmd);
-
-		cmd = commandPool.begineOnce();
+		cb = commandPool->begineOnce();
 
 		VkBufferImageCopy range = {};
 		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -42,9 +40,9 @@ namespace tke
 		range.imageExtent.height = cy;
 		range.imageExtent.depth = 1;
 
-		vkCmdCopyImageToBuffer(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->m_buffer, 1, &range);
+		vkCmdCopyImageToBuffer(cb->v, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->buffer, 1, &range);
 
-		commandPool.endOnce(cmd);
+		commandPool->endOnce(cb);
 
 		auto pixel = (unsigned char*)stagingBuffer->map(0, cx * cy * 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
