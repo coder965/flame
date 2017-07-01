@@ -1,5 +1,6 @@
 #include "..\src\gui.h"
 
+#include "editor.h"
 #include "select.h"
 #include "attribute.h"
 
@@ -7,71 +8,78 @@ void AttributeWidget::show()
 {
 	ImGui::BeginDock("Attribute", &opened);
 	
-	if (selectedItem)
+	if (lastWindowType == LastWindowTypeMonitor)
 	{
-		switch (selectedItem.type)
+		ImGui::BeginTabBar("##tab");
+		if (ImGui::AddTab("Model"))
 		{
-		case ItemTypeObject:
+
+		}
+		if (ImGui::AddTab("Scene"))
 		{
-			auto o = selectedItem.toObject();
 
-			auto str = tke::translate(936, CP_UTF8, o->model->name.c_str());
-			ImGui::Text(str.c_str());
-			
-			auto coord = o->getCoord();
-			if (ImGui::DragFloat3("coord", &coord[0]))
-				o->setCoord(coord);
-			auto euler = o->getEuler();
-			if (ImGui::DragFloat3("euler", &euler[0]))
-				o->setEuler(euler);
-			auto scale = o->getScale();
-			if (ImGui::DragFloat3("scale", &scale[0]))
-				o->setScale(scale);
-
-			if (o->model->animated)
+		}
+		static int boneID = -1;
+		tke::Object *o = nullptr;
+		if (ImGui::AddTab("Select Item"))
+		{
+			if (selectedItem)
 			{
-				static int boneID = -1;
-				if (boneID >= o->model->bones.size()) boneID = -1;
-
-				static float height = 400.f;
-
-				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-
-				ImGui::BeginChild("child1", ImVec2(0, height), true);
-				if (ImGui::TreeNode("Bones"))
+				switch (selectedItem.type)
 				{
-					for (int i = 0; i < o->model->bones.size(); i++)
+				case ItemTypeObject:
+				{
+					o = selectedItem.toObject();
+
+					auto str = tke::translate(936, CP_UTF8, o->model->name.c_str());
+					ImGui::Text(str.c_str());
+
+					auto coord = o->getCoord();
+					if (ImGui::DragFloat3("coord", &coord[0]))
+						o->setCoord(coord);
+					auto euler = o->getEuler();
+					if (ImGui::DragFloat3("euler", &euler[0]))
+						o->setEuler(euler);
+					auto scale = o->getScale();
+					if (ImGui::DragFloat3("scale", &scale[0]))
+						o->setScale(scale);
+
+					if (o->model->animated)
 					{
-						auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
-						if (ImGui::Selectable(str.c_str(), i == boneID))
-							boneID = i;
+						if (boneID >= o->model->bones.size()) boneID = -1;
+
+						static float height = 400.f;
+
+						if (ImGui::TreeNode("Bones"))
+						{
+							for (int i = 0; i < o->model->bones.size(); i++)
+							{
+								auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
+								if (ImGui::Selectable(str.c_str(), i == boneID))
+									boneID = i;
+							}
+
+							ImGui::TreePop();
+						}
 					}
-
-					ImGui::TreePop();
 				}
-				ImGui::EndChild(); 
-
-				ImGui::InvisibleButton("hsplitter", ImVec2(-1, 8.0f));
-				if (ImGui::IsItemActive())
-					height += ImGui::GetIO().MouseDelta.y;
-
-				ImGui::BeginChild("child2", ImVec2(0, 0), true);
-				if (boneID != -1)
-				{
-					if (ImGui::DragFloat3("coord", &o->animationComponent->boneData[boneID].coord[0]))
-						o->animationComponent->refreshBone(boneID);
+				break;
 				}
-				ImGui::EndChild();
-
-				ImGui::PopStyleVar();
+			}
+			else
+			{
+				ImGui::TextWrapped("Select Something");
 			}
 		}
-			break;
+		if (ImGui::AddTab("Sub Select Item"))
+		{
+			if (boneID != -1)
+			{
+				if (ImGui::DragFloat3("coord", &o->animationComponent->boneData[boneID].coord[0]))
+					o->animationComponent->refreshBone(boneID);
+			}
 		}
-	}
-	else
-	{
-		ImGui::TextWrapped("Select Something");
+		ImGui::EndTabBar();
 	}
 
 	ImGui::EndDock();

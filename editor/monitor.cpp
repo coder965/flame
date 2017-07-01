@@ -76,6 +76,11 @@ void MonitorWidget::show()
 	}
 
 	ImGui::BeginDock("Monitor", &opened);
+	if (ImGui::IsWindowFocused())
+	{
+		lastWindowType = LastWindowTypeMonitor;
+		lastMonitor = this;
+	}
 
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
 	if (ImGui::IsItemHovered())

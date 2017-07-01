@@ -676,6 +676,8 @@ namespace tke
 		if (messageCode == 13) return VK_FALSE; // Shader expects at least n descriptors but only less provided, never mind
 		if (messageCode == 61) return VK_FALSE; // Some descriptor maybe used before any update, never mind
 
+		if (messageCode == 52) return VK_FALSE; // At Draw time the active render pass is incompatible w/ gfx pipeline
+
 												  // ignore above
 
 		if (messageCode == 101) return VK_FALSE; // vkQueuePresentKHR: Presenting image without calling vkGetPhysicalDeviceSurfaceSupportKHR

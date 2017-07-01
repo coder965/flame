@@ -5,6 +5,9 @@
 #include "monitor.h"
 #include "attribute.h"
 
+LastWindowType lastWindowType = LastWindowTypeNull;
+MonitorWidget *lastMonitor = nullptr;
+
 tke::Image *titleImage = nullptr;
 
 EditorWindow::EditorWindow()
@@ -16,13 +19,79 @@ EditorWindow::EditorWindow()
 
 	game.load();
 
-	loadUi("ui.xml");
+	{
+		tke::AttributeTree at("data", "ui.xml");
+
+		if (at.good)
+		{
+			for (auto c : at.children)
+			{
+				if (c->name == "GameExplorer")
+				{
+					auto a = c->firstAttribute("opened");
+					bool opened;
+					a->get<bool>(&opened);
+					if (opened)
+						openGameExplorer();
+				}
+				else if (c->name == "Monitor")
+				{
+					auto a_rdrn = c->firstAttribute("renderer_filename");
+					auto a_mn = c->firstAttribute("model_filename");
+					tke::Model *m = nullptr;
+					for (auto _m : game.models)
+					{
+						if (_m->filename == a_mn->value)
+						{
+							m = _m->p;
+							break;
+						}
+					}
+					openMonitorWidget(a_rdrn->value, m);
+				}
+				else if (c->name == "AttributeWidget")
+				{
+					auto a = c->firstAttribute("opened");
+					bool opened;
+					a->get<bool>(&opened);
+					if (opened)
+						openAttributeWidget();
+				}
+			}
+		}
+	}
 	ImGui::LoadDock("ui_dock.xml");
 }
 
 EditorWindow::~EditorWindow()
 {
-	saveUi("ui.xml");
+	{
+		tke::AttributeTree at("data");
+
+		{
+			auto n = new tke::AttributeTreeNode("GameExplorer");
+			static bool opened = gameExplorer;
+			n->attributes.push_back(new tke::Attribute("opened", &opened));
+			at.children.push_back(n);
+		}
+
+		for (auto m : monitors)
+		{
+			auto n = new tke::AttributeTreeNode("Monitor");
+			n->attributes.push_back(new tke::Attribute("renderer_filename", &m->renderer_filename));
+			n->attributes.push_back(new tke::Attribute("model_filename", &m->model->filename));
+			at.children.push_back(n);
+		}
+
+		{
+			auto n = new tke::AttributeTreeNode("AttributeWidget");
+			static bool opened = attributeWidget;
+			n->attributes.push_back(new tke::Attribute("opened", &opened));
+			at.children.push_back(n);
+		}
+
+		at.saveXML("ui.xml");
+	}
 	ImGui::SaveDock("ui_dock.xml");
 }
 
@@ -188,78 +257,6 @@ void EditorWindow::renderEvent()
 	pushCB(ui->cb->v, 0);
 
 	endFrame();
-}
-
-void EditorWindow::saveUi(const std::string &filename)
-{
-	tke::AttributeTree at("data");
-
-	{
-		auto n = new tke::AttributeTreeNode("GameExplorer");
-		static bool opened = gameExplorer;
-		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		at.children.push_back(n);
-	}
-
-	for (auto m : monitors)
-	{
-		auto n = new tke::AttributeTreeNode("Monitor");
-		n->attributes.push_back(new tke::Attribute("renderer_filename", &m->renderer_filename));
-		n->attributes.push_back(new tke::Attribute("model_filename", &m->model->filename));
-		at.children.push_back(n);
-	}
-
-	{
-		auto n = new tke::AttributeTreeNode("AttributeWidget");
-		static bool opened = attributeWidget;
-		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		at.children.push_back(n);
-	}
-
-	at.saveXML(filename);
-}
-
-void EditorWindow::loadUi(const std::string &filename)
-{
-	tke::AttributeTree at("data", filename);
-
-	if (at.good)
-	{
-		for (auto c : at.children)
-		{
-			if (c->name == "GameExplorer")
-			{
-				auto a = c->firstAttribute("opened");
-				bool opened;
-				a->get<bool>(&opened);
-				if (opened)
-					openGameExplorer();
-			}
-			else if (c->name == "Monitor")
-			{
-				auto a_rdrn = c->firstAttribute("renderer_filename");
-				auto a_mn = c->firstAttribute("model_filename");
-				tke::Model *m = nullptr;
-				for (auto _m : game.models)
-				{
-					if (_m->filename == a_mn->value)
-					{
-						m = _m->p;
-						break;
-					}
-				}
-				openMonitorWidget(a_rdrn->value, m);
-			}
-			else if (c->name == "AttributeWidget")
-			{
-				auto a = c->firstAttribute("opened");
-				bool opened;
-				a->get<bool>(&opened);
-				if (opened)
-					openAttributeWidget();
-			}
-		}
-	}
 }
 
 EditorWindow *mainWindow = nullptr;

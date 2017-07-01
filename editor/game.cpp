@@ -46,6 +46,9 @@ Game game;
 void GameExplorer::show()
 {
 	ImGui::BeginDock("Game Explorer", &opened);
+	if (ImGui::IsWindowFocused())
+		lastWindowType = LastWindowTypeGameExplorer;
+
 	if (ImGui::TreeNode("Renderers"))
 	{
 		for (auto r : game.renderers)
@@ -73,6 +76,7 @@ void GameExplorer::show()
 		}
 		ImGui::TreePop();
 	}
+
 	ImGui::EndDock();
 }
 

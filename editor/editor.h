@@ -2,6 +2,18 @@
 
 #include "../src/scene.h"
 
+#include "game.h"
+#include "monitor.h"
+
+enum LastWindowType
+{
+	LastWindowTypeNull,
+	LastWindowTypeGameExplorer,
+	LastWindowTypeMonitor
+};
+extern LastWindowType lastWindowType;
+extern MonitorWidget *lastMonitor;
+
 extern tke::Image *titleImage;
 
 struct EditorWindow : tke::Window
@@ -13,8 +25,6 @@ struct EditorWindow : tke::Window
 	void openMonitorWidget(const std::string &renderer_filename, tke::Model *m);
 	void openAttributeWidget();
 	virtual void renderEvent() override;
-	void saveUi(const std::string &filename);
-	void loadUi(const std::string &filename);
 };
 
 extern EditorWindow *mainWindow;
