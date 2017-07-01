@@ -146,16 +146,19 @@ namespace tke
 	extern thread_local int startUpTime;
 	extern thread_local int nowTime;
 
-	extern VkRenderPass plainRenderPass_window;
-	extern VkRenderPass plainRenderPass_window_clear;
 	extern VkRenderPass plainRenderPass_image8;
 	extern VkRenderPass plainRenderPass_image8_clear;
 	extern VkRenderPass plainRenderPass_image16;
 	extern VkRenderPass plainRenderPass_image16_clear;
 	extern VkRenderPass plainRenderPass_depth_clear_image8;
+	extern VkRenderPass plainRenderPass_window;
+	extern VkRenderPass plainRenderPass_window_clear;
 
 	extern Pipeline *plainPipeline_2d;
 	extern Pipeline *plainPipeline_3d;
+	extern Pipeline *plainPipeline_3d_normal;
+	extern Pipeline *plainPipeline_3d_depth;
+	extern Pipeline *plainPipeline_3d_wire;
 
 	struct Window
 	{

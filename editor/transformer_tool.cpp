@@ -27,14 +27,16 @@ void TransformerTool::show(glm::mat4 &matProj, VkEvent waitEvent)
 
 			cb->bindVertexBuffer(tke::staticVertexBuffer);
 			cb->bindIndexBuffer(tke::staticIndexBuffer);
-			cb->bindPipeline(tke::plain3dPipeline);
+			cb->bindPipeline(tke::plainPipeline_3d);
 			cb->bindDescriptorSet();
 			struct
 			{
-				glm::mat4 matrix;
+				glm::mat4 modelview;
+				glm::mat4 proj;
 				glm::vec4 color;
 			}data;
-			data.matrix = matProj * glm::translate(0.f, 0.f, -5.f);
+			data.modelview = glm::translate(0.f, 0.f, -5.f);
+			data.proj = matProj;
 			data.color = glm::vec4(1.f);
 			cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, 80, &data);
 			cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);

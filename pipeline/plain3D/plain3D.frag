@@ -1,6 +1,7 @@
 layout(push_constant) uniform PushConstant
 {
-	mat4 matrix;
+	mat4 modelview;
+	mat4 proj;
 	vec4 color;
 }pc;
 

@@ -156,16 +156,19 @@ namespace tke
 	int thread_local startUpTime = 0;
 	int thread_local nowTime = 0;
 
-	VkRenderPass plainRenderPass_window;
-	VkRenderPass plainRenderPass_window_clear;
 	VkRenderPass plainRenderPass_image8;
 	VkRenderPass plainRenderPass_image8_clear;
 	VkRenderPass plainRenderPass_image16;
 	VkRenderPass plainRenderPass_image16_clear;
 	VkRenderPass plainRenderPass_depth_clear_image8;
+	VkRenderPass plainRenderPass_window;
+	VkRenderPass plainRenderPass_window_clear;
 
 	Pipeline *plainPipeline_2d = nullptr;
 	Pipeline *plainPipeline_3d = nullptr;
+	Pipeline *plainPipeline_3d_normal = nullptr;
+	Pipeline *plainPipeline_3d_depth = nullptr;
+	Pipeline *plainPipeline_3d_wire = nullptr;
 
 	Err init(const std::string &path, int rcx, int rcy)
 	{
@@ -250,21 +253,21 @@ namespace tke
 		{
 			VkAttachmentReference ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
 			VkSubpassDescription subpass = subpassDesc(1, &ref);
-			plainRenderPass_window = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
-			plainRenderPass_window_clear = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 			plainRenderPass_image8 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
 			plainRenderPass_image8_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 			plainRenderPass_image16 = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
 			plainRenderPass_image16_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
+			plainRenderPass_window = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE), 1, &subpass, 0, nullptr);
+			plainRenderPass_window_clear = createRenderPass(1, &swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 		}
 
 		plainPipeline_2d = new Pipeline;
 		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
-		plainPipeline_2d->setup(plainRenderPass_window, 0);
+		plainPipeline_2d->setup(plainRenderPass_image8, 0);
 
 		plainPipeline_3d = new Pipeline;
 		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
-		plainPipeline_3d->setup(plainRenderPass_window, 0);
+		plainPipeline_3d->setup(plainRenderPass_image8, 0);
 
 		initPhysics();
 
