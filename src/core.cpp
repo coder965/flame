@@ -162,9 +162,10 @@ namespace tke
 	VkRenderPass plainRenderPass_image8_clear;
 	VkRenderPass plainRenderPass_image16;
 	VkRenderPass plainRenderPass_image16_clear;
+	VkRenderPass plainRenderPass_depth_clear_image8;
 
-	Pipeline *plain2dPipeline = nullptr;
-	Pipeline *plain3dPipeline = nullptr;
+	Pipeline *plainPipeline_2d = nullptr;
+	Pipeline *plainPipeline_3d = nullptr;
 
 	Err init(const std::string &path, int rcx, int rcy)
 	{
@@ -257,13 +258,13 @@ namespace tke
 			plainRenderPass_image16_clear = createRenderPass(1, &colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR), 1, &subpass, 0, nullptr);
 		}
 
-		plain2dPipeline = new Pipeline;
-		plain2dPipeline->loadXML(enginePath + "pipeline/plain2D/plain2D.xml");
-		plain2dPipeline->setup(plainRenderPass_window, 0);
+		plainPipeline_2d = new Pipeline;
+		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
+		plainPipeline_2d->setup(plainRenderPass_window, 0);
 
-		plain3dPipeline = new Pipeline;
-		plain3dPipeline->loadXML(enginePath + "pipeline/plain3D/plain3D.xml");
-		plain3dPipeline->setup(plainRenderPass_window, 0);
+		plainPipeline_3d = new Pipeline;
+		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
+		plainPipeline_3d->setup(plainRenderPass_window, 0);
 
 		initPhysics();
 

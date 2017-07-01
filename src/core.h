@@ -152,9 +152,10 @@ namespace tke
 	extern VkRenderPass plainRenderPass_image8_clear;
 	extern VkRenderPass plainRenderPass_image16;
 	extern VkRenderPass plainRenderPass_image16_clear;
+	extern VkRenderPass plainRenderPass_depth_clear_image8;
 
-	extern Pipeline *plain2dPipeline;
-	extern Pipeline *plain3dPipeline;
+	extern Pipeline *plainPipeline_2d;
+	extern Pipeline *plainPipeline_3d;
 
 	struct Window
 	{

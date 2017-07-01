@@ -8,8 +8,6 @@ namespace tke
 	static VkRenderPass renderPass;
 	static Framebuffer *framebuffer;
 
-	Pipeline plainPickUpPipeline;
-
 	unsigned int pickUp(int x, int y, int cx, int cy, void(*drawCallback)(VkCommandBuffer))
 	{
 		if (x + cx > image->width || y + cy > image->height)
@@ -57,9 +55,6 @@ namespace tke
 		image = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		globalResource.setImage(image, "PickUp.Image");
 
-		plainPickUpPipeline.name = "PickUp.Pipeline";
-		globalResource.setPipeline(&plainPickUpPipeline);
-
 		auto pDepthImage = globalResource.getImage("Depth.Image");
 
 		VkAttachmentDescription attachments[] = {
@@ -75,9 +70,5 @@ namespace tke
 
 		std::vector<VkImageView> views = { image->getView(), pDepthImage->getView() };
 		framebuffer = getFramebuffer(resCx, resCy, renderPass, views);
-
-		plainPickUpPipeline.loadXML(enginePath + "pipeline/pickUp/pickUp.xml");
-		plainPickUpPipeline.vertex_input_type = VertexInputType::normal;
-		plainPickUpPipeline.setup(renderPass, 0);
 	}
 }

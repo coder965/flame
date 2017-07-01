@@ -689,6 +689,8 @@ namespace tke
 		if (messageCode == 63) return VK_FALSE; // vkBeginCommandBuffer(): Secondary Command Buffers may perform better if a valid framebuffer parameter is specified.
 		if (messageCode == 14) return VK_FALSE;
 		if (messageCode == 12) return VK_FALSE; // Push constant range covering variable starting at offset not accessible from stage
+		if (messageCode == 4) return VK_TRUE; //Pipeline needs renderpass information
+
 		return VK_FALSE;
 	}
 
@@ -728,9 +730,7 @@ namespace tke
 			VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
 			callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
 			callbackCreateInfo.pNext = nullptr;
-			callbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT |
-				VK_DEBUG_REPORT_WARNING_BIT_EXT |
-				VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			callbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 			callbackCreateInfo.pfnCallback = &_vkDebugCallback;
 			callbackCreateInfo.pUserData = nullptr;
 
@@ -2963,30 +2963,30 @@ namespace tke
 		maintainList(passes);
 	}
 
-	void renderer_pushImage(Renderer *r, Attachment *ai)
+	void renderer_pushImage(Renderer *r, Attachment *a)
 	{
-		auto view = ai->image->getView(VkImageAspectFlags(ai->aspect), ai->level, 1, ai->layer, 1);
+		auto view = a->image->getView(VkImageAspectFlags(a->aspect), a->level, 1, a->layer, 1);
 
 		auto index = 0;
 		for (; index < r->vkViews[0].size(); index++)
 		{
 			if (r->vkViews[0][index] == view)
 			{
-				ai->index = index;
+				a->index = index;
 				return;
 			}
 		}
 		VkAttachmentDescription attachment;
-		switch (ai->image->type)
+		switch (a->image->type)
 		{
 		case Image::eColor:
-			attachment = colorAttachmentDesc(ai->image->format, ai->loadOp);
+			attachment = colorAttachmentDesc(a->image->format, a->loadOp);
 			break;
 		case Image::eSwapchain:
-			attachment = swapchainAttachmentDesc(ai->loadOp);
+			attachment = swapchainAttachmentDesc(a->loadOp);
 			break;
 		case Image::eDepth:
-			attachment = depthAttachmentDesc(ai->image->format, ai->loadOp);
+			attachment = depthAttachmentDesc(a->image->format, a->loadOp);
 			break;
 		case Image::eDepthStencil:
 			assert(0);
@@ -2997,12 +2997,12 @@ namespace tke
 		r->vkViews[0].push_back(view);
 		if (r->containSwapchain)
 		{
-			if (ai->image->type == Image::eSwapchain)
-				view = ai->image[1].getView(VkImageAspectFlags(ai->aspect), ai->layer, 1, ai->layer, 1);
+			if (a->image->type == Image::eSwapchain)
+				view = a->image[1].getView(VkImageAspectFlags(a->aspect), a->layer, 1, a->layer, 1);
 			r->vkViews[1].push_back(view);
 		}
-		r->vkClearValues.push_back(ai->clearValue);
-		ai->index = index;
+		r->vkClearValues.push_back(a->clearValue);
+		a->index = index;
 	}
 
 	void Renderer::getDescriptorSets()
@@ -3091,18 +3091,18 @@ namespace tke
 		std::vector<std::vector<VkAttachmentReference>> vkRefLists(passes.size());
 
 		int subpassIndex = 0;
-		for (auto &pass : passes)
+		for (auto &p : passes)
 		{
-			pass.index = subpassIndex;
+			p.index = subpassIndex;
 
-			for (auto &a : pass.attachments)
+			for (auto &a : p.attachments)
 				renderer_pushImage(this, &a);
 
 			VkSubpassDescription desc = {};
 			desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
 			bool hasDepthStencil = false;
-			for (auto &a : pass.attachments)
+			for (auto &a : p.attachments)
 			{
 				if (a.image->isColorType())
 				{
@@ -3123,46 +3123,46 @@ namespace tke
 
 			vkSubpasses.push_back(desc);
 
-			for (auto &dependency : pass.dependencies)
+			for (auto &dependency : p.dependencies)
 			{
 				auto pass = (RenderPass*)dependency.target;
 				vkDependencies.push_back(subpassDependency(pass->index, subpassIndex));
 			}
 
-			switch (pass.type)
+			switch (p.type)
 			{
 			case RenderPassType::draw_action:
-				for (auto &action : pass.actions)
+				for (auto &a : p.actions)
 				{
-					switch (action.type)
+					switch (a.type)
 					{
 					case DrawActionType::draw_action:
-						if (action.vertex_buffer_name != "")
-							action.m_vertexBuffer = (VertexBuffer*)resource.getBuffer(action.vertex_buffer_name);
-						if (action.index_buffer_name != "")
-							action.m_indexBuffer = (IndexBuffer*)resource.getBuffer(action.index_buffer_name);
-						if (action.pipeline_name != "")
+						if (a.vertex_buffer_name != "")
+							a.m_vertexBuffer = (VertexBuffer*)resource.getBuffer(a.vertex_buffer_name);
+						if (a.index_buffer_name != "")
+							a.m_indexBuffer = (IndexBuffer*)resource.getBuffer(a.index_buffer_name);
+						if (a.pipeline_name != "")
 						{
-							action.pipeline = resource.getPipeline(action.pipeline_name.c_str());
-							if (action.pipeline)
+							a.pipeline = resource.getPipeline(a.pipeline_name.c_str());
+							if (a.pipeline)
 							{
 								for (auto &p : resource.privatePipelines)
 								{
-									if (p.p->name == action.pipeline_name)
+									if (p.p->name == a.pipeline_name)
 										p.subpassIndex = subpassIndex;
 								}
 							}
 						}
-						for (auto &drawcall : action.drawcalls)
+						for (auto &d : a.drawcalls)
 						{
-							if (drawcall.indirect_vertex_buffer_name != "")
-								drawcall.m_indirectVertexBuffer = (IndirectVertexBuffer*)resource.getBuffer(drawcall.indirect_vertex_buffer_name);
-							if (drawcall.indirect_index_buffer_name != "")
-								drawcall.m_indirectIndexBuffer = (IndirectIndexBuffer*)resource.getBuffer(drawcall.indirect_index_buffer_name);
-							if (drawcall.model_name != "")
-								drawcall.model = resource.getModel(drawcall.model_name);
-							if (drawcall.indirect_count_name != "")
-								drawcall.p_indirect_count = resource.getInt(drawcall.indirect_count_name);
+							if (d.indirect_vertex_buffer_name != "")
+								d.m_indirectVertexBuffer = (IndirectVertexBuffer*)resource.getBuffer(d.indirect_vertex_buffer_name);
+							if (d.indirect_index_buffer_name != "")
+								d.m_indirectIndexBuffer = (IndirectIndexBuffer*)resource.getBuffer(d.indirect_index_buffer_name);
+							if (d.model_name != "")
+								d.model = resource.getModel(d.model_name);
+							if (d.indirect_count_name != "")
+								d.p_indirect_count = resource.getInt(d.indirect_count_name);
 						}
 						break;
 					case DrawActionType::call_fuction:
@@ -3171,8 +3171,8 @@ namespace tke
 				}
 				break;
 			case RenderPassType::call_secondary_cmd:
-				if (pass.secondary_cmd_name != "")
-					pass.secondaryCmd = resource.getCmd(pass.secondary_cmd_name.c_str());
+				if (p.secondary_cmd_name != "")
+					p.secondaryCmd = resource.getCmd(p.secondary_cmd_name.c_str());
 				break;
 			}
 
@@ -3214,81 +3214,81 @@ namespace tke
 			cb->bindIndexBuffer(currentIndexBuffer);
 
 		bool firstPass = true;
-		for (auto &pass : passes)
+		for (auto &p : passes)
 		{
-			switch (pass.type)
+			switch (p.type)
 			{
 			case RenderPassType::draw_action:
 				if (!firstPass) cb->nextSubpass();
-				for (auto &action : pass.actions)
+				for (auto &a : p.actions)
 				{
-					if (!action.show) continue;
+					if (!a.show) continue;
 
-					if (action.cx || action.cy)
-						cb->setViewportAndScissor(action.cx, action.cy);
+					if (a.cx || a.cy)
+						cb->setViewportAndScissor(a.cx, a.cy);
 
-					switch (action.type)
+					switch (a.type)
 					{
 					case DrawActionType::draw_action:
-						if (action.m_vertexBuffer && action.m_vertexBuffer != currentVertexBuffer)
+						if (a.m_vertexBuffer && a.m_vertexBuffer != currentVertexBuffer)
 						{
-							cb->bindVertexBuffer(action.m_vertexBuffer);
-							currentVertexBuffer = action.m_vertexBuffer;
+							cb->bindVertexBuffer(a.m_vertexBuffer);
+							currentVertexBuffer = a.m_vertexBuffer;
 						}
-						if (action.m_indexBuffer && action.m_indexBuffer != currentIndexBuffer)
+						if (a.m_indexBuffer && a.m_indexBuffer != currentIndexBuffer)
 						{
-							cb->bindIndexBuffer(action.m_indexBuffer);
-							currentIndexBuffer = action.m_indexBuffer;
+							cb->bindIndexBuffer(a.m_indexBuffer);
+							currentIndexBuffer = a.m_indexBuffer;
 						}
-						if (action.pipeline && action.pipeline != currentPipeline)
+						if (a.pipeline && a.pipeline != currentPipeline)
 						{
-							cb->bindPipeline(action.pipeline);
-							currentPipeline = action.pipeline;
+							cb->bindPipeline(a.pipeline);
+							currentPipeline = a.pipeline;
 						}
-						if (action.descriptorSet && action.descriptorSet != currentDescriptorSet)
+						if (a.descriptorSet && a.descriptorSet != currentDescriptorSet)
 						{
-							cb->bindDescriptorSet(action.descriptorSet);
-							currentDescriptorSet = action.descriptorSet;
+							cb->bindDescriptorSet(a.descriptorSet);
+							currentDescriptorSet = a.descriptorSet;
 						}
 
-						for (auto &drawcall : action.drawcalls)
+						for (auto &d : a.drawcalls)
 						{
-							if (drawcall.model)
+							if (d.model)
 							{
-								drawcall.index_count = drawcall.model->indices.size();
-								drawcall.first_index = drawcall.model->indiceBase;
-								drawcall.vertex_offset = drawcall.model->vertexBase;
+								d.index_count = d.model->indices.size();
+								d.first_index = d.model->indiceBase;
+								d.vertex_offset = d.model->vertexBase;
 							}
-							switch (drawcall.type)
+							switch (d.type)
 							{
 							case DrawcallType::vertex:
-								cb->draw(drawcall.vertex_count, drawcall.first_vertex, drawcall.instance_count, drawcall.first_instance);
+								cb->draw(d.vertex_count, d.first_vertex, d.instance_count, d.first_instance);
 								break;
 							case DrawcallType::index:
-								cb->drawIndex(drawcall.index_count, drawcall.first_index, drawcall.vertex_offset, drawcall.instance_count, drawcall.first_instance);
+								cb->drawIndex(d.index_count, d.first_index, d.vertex_offset, d.instance_count, d.first_instance);
 								break;
 							case DrawcallType::indirect_vertex:
-								cb->drawIndirect(drawcall.m_indirectVertexBuffer, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, drawcall.first_indirect);
+								cb->drawIndirect(d.m_indirectVertexBuffer, d.p_indirect_count ? *d.p_indirect_count : d.indirect_count, d.first_indirect);
 								break;
 							case DrawcallType::indirect_index:
-								cb->drawIndirectIndex(drawcall.m_indirectIndexBuffer, drawcall.p_indirect_count ? *drawcall.p_indirect_count : drawcall.indirect_count, drawcall.first_indirect);
+								cb->drawIndirectIndex(d.m_indirectIndexBuffer, d.p_indirect_count ? *d.p_indirect_count : d.indirect_count, d.first_indirect);
 								break;
 							case DrawcallType::push_constant:
-								cb->pushConstant(drawcall.push_constant_stage, drawcall.push_constant_offset, drawcall.push_constant_size, drawcall.push_constant_value);
+								cb->pushConstant(d.push_constant_stage, d.push_constant_offset, d.push_constant_size, d.push_constant_value);
 								break;
 							}
 						}
 						break;
 					case DrawActionType::call_fuction:
-						if (action.m_pRenderFunc)
-							action.m_pRenderFunc(cb->v);
+						if (a.m_pRenderFunc)
+							a.m_pRenderFunc(cb->v);
 						break;
 					}
 				}
 				break;
 			case RenderPassType::call_secondary_cmd:
 				if (!firstPass) cb->nextSubpass(VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-				if (pass.secondaryCmd) cb->execSecondaryCmd(pass.secondaryCmd);
+				if (p.secondaryCmd) cb->execSecondaryCmd(p.secondaryCmd);
 				break;
 			}
 			firstPass = false;

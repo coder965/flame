@@ -26,7 +26,7 @@ void AttributeWidget::show()
 				ImGui::TreePop();
 			}
 		}
-		if (ImGui::AddTab("Select Item"))
+		if (ImGui::AddTab("Select"))
 		{
 			if (selectedItem)
 			{
@@ -77,7 +77,7 @@ void AttributeWidget::show()
 				ImGui::TextWrapped("Select Something");
 			}
 		}
-		if (ImGui::AddTab("Sub Select Item"))
+		if (ImGui::AddTab("Sub Select"))
 		{
 			//if (boneID != -1)
 			//{
