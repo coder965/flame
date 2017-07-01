@@ -1,6 +1,6 @@
 <data>
-	<dock index="0" label="Game Explorer" x="0.000000" y="20.000000" location="" size_x="31.000000" size_y="1001.000000" status="0" active="true" opened="true" prev="-1" next="-1" child0="-1" child1="-1" parent="2"/>
-	<dock index="1" label="Monitor" x="31.000000" y="20.000000" location="0" size_x="1276.000000" size_y="1001.000000" status="0" active="true" opened="true" prev="-1" next="-1" child0="-1" child1="-1" parent="2"/>
+	<dock index="0" label="Game Explorer" x="0.000000" y="20.000000" location="" size_x="371.000000" size_y="1001.000000" status="0" active="true" opened="true" prev="-1" next="-1" child0="-1" child1="-1" parent="2"/>
+	<dock index="1" label="Monitor" x="371.000000" y="20.000000" location="0" size_x="936.000000" size_y="1001.000000" status="0" active="true" opened="true" prev="-1" next="-1" child0="-1" child1="-1" parent="2"/>
 	<dock index="2" label="" x="0.000000" y="20.000000" location="" size_x="1307.000000" size_y="1001.000000" status="0" active="true" opened="false" prev="-1" next="-1" child0="0" child1="1" parent="4"/>
 	<dock index="3" label="Attribute" x="1307.000000" y="20.000000" location="" size_x="613.000000" size_y="1001.000000" status="0" active="true" opened="true" prev="-1" next="-1" child0="-1" child1="-1" parent="4"/>
 	<dock index="4" label="" x="0.000000" y="20.000000" location="" size_x="1920.000000" size_y="1001.000000" status="0" active="true" opened="false" prev="-1" next="-1" child0="2" child1="3" parent="-1"/>

@@ -118,8 +118,6 @@ namespace tke
 		UniformBuffer *lightBuffer = nullptr;
 		UniformBuffer *ambientBuffer = nullptr;
 
-		UniformBuffer *lightMatrixBuffer = nullptr; // remove ??
-
 		std::vector<CollisionGroup*> pCollisionGroups;
 
 		int shadowCount = 0;

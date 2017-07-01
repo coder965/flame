@@ -7,14 +7,6 @@ namespace tke
 {
 	struct Transformer : ObservedObject
 	{
-		enum class Type
-		{
-			eMove,
-			eEulerSet,
-			eScale,
-			eAsixRotate
-		};
-
 		enum class Axis
 		{
 			eNull = -1,
@@ -52,8 +44,6 @@ namespace tke
 		glm::mat3 getAxis();
 		glm::mat4 getMat();
 		glm::mat4 getMatInv();
-
-		glm::vec3 getTrans(Transformer::Type type);
 
 		void setCoord(const glm::vec3 &_coord);
 		inline void setCoord(float x, float y, float z) { setCoord(glm::vec3(x, y, z)); }

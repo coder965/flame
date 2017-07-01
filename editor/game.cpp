@@ -60,10 +60,6 @@ void GameExplorer::show()
 		}
 		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("Scenes"))
-	{
-		ImGui::TreePop();
-	}
 	if (ImGui::TreeNode("Models"))
 	{
 		for (auto m : game.models)
@@ -74,6 +70,10 @@ void GameExplorer::show()
 					mainWindow->openMonitorWidget("../renderer/master.xml", m->p);
 			}
 		}
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Scenes"))
+	{
 		ImGui::TreePop();
 	}
 

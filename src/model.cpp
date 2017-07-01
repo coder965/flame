@@ -15,15 +15,19 @@ namespace tke
 			delete t;
 	}
 
-	char *shapeNames[] = {
-		"Box",
-		"Sphere",
-		"Capsule",
-		"Plane",
-		"Convex Mesh",
-		"Triangle Mesh",
-		"Height Field"
-	};
+	std::string shapeTypeName(ShapeType t)
+	{
+		char *names[] = {
+			"Box",
+			"Sphere",
+			"Capsule",
+			"Plane",
+			"Convex Mesh",
+			"Triangle Mesh",
+			"Height Field"
+		};
+		return names[(int)t];
+	}
 
 	Shape::Shape()
 	{
@@ -32,16 +36,6 @@ namespace tke
 	Shape::Shape(ShapeType _type)
 		:type(_type)
 	{
-	}
-
-	char *Shape::getTypeName(Type _type)
-	{
-		return shapeNames[(int)_type];
-	}
-
-	char *Shape::getTypeName()
-	{
-		return shapeNames[(int)type];
 	}
 
 	float Shape::getVolume() const

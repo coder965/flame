@@ -113,6 +113,8 @@ namespace tke
 		ShapeTypeLast
 	};
 
+	std::string shapeTypeName(ShapeType t);
+
 	struct Shape : Transformer
 	{
 		int id;
@@ -121,8 +123,6 @@ namespace tke
 
 		Shape();
 		Shape(ShapeType _type);
-		static char *getTypeName(Type _type);
-		char *getTypeName();
 		float getVolume() const;
 	};
 

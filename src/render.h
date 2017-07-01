@@ -29,6 +29,8 @@ namespace tke
 	struct IndexBuffer;
 	struct IndirectVertexBuffer;
 	struct IndirectIndexBuffer;
+	struct Image;
+	struct ImageView;
 	struct Framebuffer;
 	struct Pipeline;
 	struct Drawcall;
@@ -127,6 +129,19 @@ namespace tke
 		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
 
+	struct ImageView
+	{
+		Image *image;
+		VkImageAspectFlags aspect;
+		int baseLevel;
+		int levelCount;
+		int baseLayer;
+		int layerCount;
+		VkImageView v;
+
+		ImageView(Image *_image);
+	};
+
 	struct Image
 	{
 		enum Type
@@ -140,16 +155,6 @@ namespace tke
 		inline bool isColorType() { return type == eColor || type == eSwapchain; }
 		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 
-		struct View
-		{
-			VkImageAspectFlags aspect;
-			int baseLevel;
-			int levelCount;
-			int baseLayer;
-			int layerCount;
-			VkImageView view;
-		};
-
 		size_t size;
 		int width = 1, height = 1;
 		int level = 1;
@@ -160,7 +165,7 @@ namespace tke
 		VkImageLayout layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-		std::vector<View> views;
+		std::vector<ImageView*> views;
 		std::list<VkDescriptorImageInfo> infos;
 
 		std::string filename;

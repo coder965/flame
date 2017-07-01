@@ -611,6 +611,9 @@ namespace tke
 
 	void Window::update()
 	{
+		mouseDispX = mouseX - mousePrevX;
+		mouseDispY = mouseY - mousePrevY;
+
 		renderEvent();
 		frameCount++;
 

@@ -1034,63 +1034,9 @@ namespace tke
 	{
 	}
 
-	void Image::transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout)
+	ImageView::ImageView(Image *_image)
+		:image(_image)
 	{
-		auto cb = commandPool->begineOnce();
-
-		VkImageMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = layout;
-		barrier.newLayout = _layout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
-		barrier.subresourceRange.aspectMask = aspect;
-		barrier.subresourceRange.baseMipLevel = _level;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		if (layout == VK_IMAGE_LAYOUT_PREINITIALIZED) barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		else if (layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		if (_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		else if (_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		else if (_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		else if (_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-		commandPool->endOnce(cb);
-
-		layout = _layout;
-	}
-
-	void Image::fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect)
-	{
-		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		StagingBuffer stagingBuffer(_size);
-
-		void* map = stagingBuffer.map(0, _size);
-		memcpy(map, data, _size);
-		stagingBuffer.unmap();
-
-		VkBufferImageCopy region = {};
-		region.imageSubresource.aspectMask = aspect;
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = getWidth(_level);
-		region.imageExtent.height = getHeight(_level);
-		region.imageExtent.depth = 1;
-		region.bufferOffset = 0;
-
-		auto cb = commandPool->begineOnce();
-		vkCmdCopyBufferToImage(cb->v, stagingBuffer.buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		commandPool->endOnce(cb);
 	}
 
 	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level , void *data, size_t _size, VkImageAspectFlags aspect)
@@ -1174,14 +1120,73 @@ namespace tke
 	Image::~Image()
 	{
 		device.cs.lock();
-		for (auto &v : views)
-			vkDestroyImageView(device.v, v.view, nullptr);
+		for (auto v : views)
+			vkDestroyImageView(device.v, v->v, nullptr);
 		if (type != Type::eSwapchain)
 		{
 			vkFreeMemory(device.v, memory, nullptr);
 			vkDestroyImage(device.v, image, nullptr);
 		}
 		device.cs.unlock();
+	}
+
+	void Image::transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout)
+	{
+		auto cb = commandPool->begineOnce();
+
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = layout;
+		barrier.newLayout = _layout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = image;
+		barrier.subresourceRange.aspectMask = aspect;
+		barrier.subresourceRange.baseMipLevel = _level;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		if (layout == VK_IMAGE_LAYOUT_PREINITIALIZED) barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		else if (layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		if (_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		else if (_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		else if (_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		else if (_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		commandPool->endOnce(cb);
+
+		layout = _layout;
+	}
+
+	void Image::fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect)
+	{
+		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		StagingBuffer stagingBuffer(_size);
+
+		void* map = stagingBuffer.map(0, _size);
+		memcpy(map, data, _size);
+		stagingBuffer.unmap();
+
+		VkBufferImageCopy region = {};
+		region.imageSubresource.aspectMask = aspect;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageExtent.width = getWidth(_level);
+		region.imageExtent.height = getHeight(_level);
+		region.imageExtent.depth = 1;
+		region.bufferOffset = 0;
+
+		auto cb = commandPool->begineOnce();
+		vkCmdCopyBufferToImage(cb->v, stagingBuffer.buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		commandPool->endOnce(cb);
 	}
 
 	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -1194,19 +1199,19 @@ namespace tke
 				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 		}
 
-		for (auto &view : views)
+		for (auto view : views)
 		{
-			if (view.aspect == aspect && view.baseLevel == baseLevel && view.levelCount == levelCount &&
-				view.baseLayer == baseLayer && view.layerCount == layerCount)
-				return view.view;
+			if (view->aspect == aspect && view->baseLevel == baseLevel && view->levelCount == levelCount &&
+				view->baseLayer == baseLayer && view->layerCount == layerCount)
+				return view->v;
 		}
 
-		View view;
-		view.aspect = aspect;
-		view.baseLevel = baseLevel;
-		view.levelCount = levelCount;
-		view.baseLayer = baseLayer;
-		view.layerCount = layerCount;
+		auto view = new ImageView(this);
+		view->aspect = aspect;
+		view->baseLevel = baseLevel;
+		view->levelCount = levelCount;
+		view->baseLayer = baseLayer;
+		view->layerCount = layerCount;
 
 		VkImageViewCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1220,12 +1225,12 @@ namespace tke
 		info.subresourceRange.layerCount = layerCount;
 
 		device.cs.lock();
-		auto res = vkCreateImageView(device.v, &info, nullptr, &view.view);
+		auto res = vkCreateImageView(device.v, &info, nullptr, &view->v);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 
 		views.push_back(view);
-		return view.view;
+		return view->v;
 	}
 
 	VkDescriptorImageInfo *Image::getInfo(VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)

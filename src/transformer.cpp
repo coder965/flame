@@ -123,20 +123,6 @@ namespace tke
 		return matInv;
 	}
 
-	glm::vec3 Transformer::getTrans(Transformer::Type type)
-	{
-		switch (type)
-		{
-		case Type::eMove:
-			return getCoord();
-		case Type::eEulerSet:
-			return getEuler();
-		case Type::eScale:
-			return getScale();
-		}
-		return glm::vec3(0);
-	}
-
 	void Transformer::setCoord(const glm::vec3 &_coord)
 	{
 		coord = _coord;

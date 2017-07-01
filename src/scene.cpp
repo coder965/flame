@@ -33,8 +33,6 @@ namespace tke
 		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
 		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
 
-		lightMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_LIGHT_COUNT); // remove ?? 
-
 		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 
@@ -45,8 +43,6 @@ namespace tke
 		globalResource.setBuffer(proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
 		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
 		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
-
-		globalResource.setBuffer(lightMatrixBuffer, "LightMatrix.UniformBuffer"); // remove ??
 
 		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
 		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
@@ -68,7 +64,6 @@ namespace tke
 		delete matrixBuffer;
 		delete staticObjectMatrixBuffer;
 		delete animatedObjectMatrixBuffer;
-		delete lightMatrixBuffer;
 		delete materialBuffer;
 		delete heightMapTerrainBuffer;
 		delete proceduralTerrainBuffer;
@@ -811,29 +806,6 @@ namespace tke
 			stagingBuffer->unmap();
 			if (staticUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, staticObjectMatrixBuffer->buffer, staticUpdateRanges.size(), staticUpdateRanges.data());
 			if (animatedUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, animatedObjectMatrixBuffer->buffer, animatedUpdateRanges.size(), animatedUpdateRanges.data());
-		}
-		if (lights.size() > 0)
-		{ // light in editor
-			int lightIndex = 0;
-			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * lights.size());
-			for (auto pLight : lights)
-			{
-				if (pLight->changed)
-				{
-					auto srcOffset = sizeof(glm::mat4) * ranges.size();
-					memcpy(map + srcOffset, &pLight->getMat(), sizeof(glm::mat4));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(glm::mat4) * lightIndex;
-					range.size = sizeof(glm::mat4);
-					ranges.push_back(range);
-				}
-				pLight->sceneIndex = lightIndex;
-				lightIndex++;
-			}
-			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, lightMatrixBuffer->buffer, ranges.size(), ranges.data());
 		}
 		if (terrains.size() > 0)
 		{

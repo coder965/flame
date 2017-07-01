@@ -17,10 +17,15 @@ void AttributeWidget::show()
 		}
 		if (ImGui::AddTab("Scene"))
 		{
-
+			if (ImGui::TreeNode("Lights"))
+			{
+				ImGui::TreePop();
+			}
+			if (ImGui::TreeNode("Objects"))
+			{
+				ImGui::TreePop();
+			}
 		}
-		static int boneID = -1;
-		tke::Object *o = nullptr;
 		if (ImGui::AddTab("Select Item"))
 		{
 			if (selectedItem)
@@ -29,7 +34,7 @@ void AttributeWidget::show()
 				{
 				case ItemTypeObject:
 				{
-					o = selectedItem.toObject();
+					auto o = selectedItem.toObject();
 
 					auto str = tke::translate(936, CP_UTF8, o->model->name.c_str());
 					ImGui::Text(str.c_str());
@@ -46,11 +51,12 @@ void AttributeWidget::show()
 
 					if (o->model->animated)
 					{
+						static int boneID = -1;
 						if (boneID >= o->model->bones.size()) boneID = -1;
 
 						static float height = 400.f;
 
-						if (ImGui::TreeNode("Bones"))
+						if (ImGui::TreeNode("Bones Motion"))
 						{
 							for (int i = 0; i < o->model->bones.size(); i++)
 							{
@@ -73,11 +79,11 @@ void AttributeWidget::show()
 		}
 		if (ImGui::AddTab("Sub Select Item"))
 		{
-			if (boneID != -1)
-			{
-				if (ImGui::DragFloat3("coord", &o->animationComponent->boneData[boneID].coord[0]))
-					o->animationComponent->refreshBone(boneID);
-			}
+			//if (boneID != -1)
+			//{
+			//	if (ImGui::DragFloat3("coord", &o->animationComponent->boneData[boneID].coord[0]))
+			//		o->animationComponent->refreshBone(boneID);
+			//}
 		}
 		ImGui::EndTabBar();
 	}

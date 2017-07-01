@@ -166,6 +166,7 @@ namespace tke
 		bool leftPressing = false, middlePressing = false, rightPressing = false;
 		int mouseX = 0, mouseY = 0;
 		int mousePrevX = 0, mousePrevY = 0;
+		int mouseDispX = 0, mouseDispY = 0;
 		int mouseScroll = 0;
 
 		HWND hWnd = nullptr;
