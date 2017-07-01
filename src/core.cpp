@@ -460,6 +460,18 @@ namespace tke
 		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
 		assert(res == VK_SUCCESS);
 
+		VkBool32 supported;
+		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, surface, &supported);
+
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+
+		unsigned int physicalDeviceSurfaceFormatCount = 0;
+		std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &physicalDeviceSurfaceFormatCount, nullptr);
+		physicalDeviceSurfaceFormats.resize(physicalDeviceSurfaceFormatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &physicalDeviceSurfaceFormatCount, physicalDeviceSurfaceFormats.data());
+
 		VkSwapchainCreateInfoKHR swapchainInfo = {};
 		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainInfo.surface = surface;
@@ -480,9 +492,9 @@ namespace tke
 		assert(res == VK_SUCCESS);
 
 		VkImage vkImages[2];
-		uint32_t swapchainImageCount = 0;
-		vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, nullptr);
-		vkGetSwapchainImagesKHR(device.v, swapchain, &swapchainImageCount, vkImages);
+		uint32_t imageCount = 0;
+		vkGetSwapchainImagesKHR(device.v, swapchain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(device.v, swapchain, &imageCount, vkImages);
 
 		device.cs.unlock();
 		inst.cs.unlock();

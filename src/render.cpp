@@ -45,6 +45,8 @@ namespace tke
 	}
 
 	Instance inst;
+	VkPhysicalDevice physicalDevice;
+	VkPhysicalDeviceProperties physicalDeviceProperties;
 	Device device;
 	Queue graphicsQueue;
 
@@ -257,10 +259,7 @@ namespace tke
 	void CommandPool::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
 	{
 		auto cb = begineOnce();
-		VkBufferCopy region = {};
-		region.size = size;
-		region.srcOffset = srcOffset;
-		region.dstOffset = dstOffset;
+		VkBufferCopy region = { srcOffset, dstOffset, size};
 		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, 1, &region);
 		endOnce(cb);
 	}
@@ -666,22 +665,23 @@ namespace tke
 		const char* pMessage,
 		void* pUserData)
 	{
-		if (messageCode == 1922 || messageCode == 341838316) return VK_FALSE; // vkCreateSwapChainKHR(): pCreateInfo->surface is not known at this time to be supported for presentation by this device. The vkGetPhysicalDeviceSurfaceSupportKHR() must be called beforehand, and it must return VK_TRUE support with this surface for at least one queue family of this device
-		if (messageCode == 15) return VK_FALSE; // Shader requires VkPhysicalDeviceFeatures::tessellationShader but is not enabled on the device, never mind
-		if (messageCode == 100) return VK_FALSE; // vkCreateSwapChainKHR(): surface capabilities not retrieved for this physical device
-		if (messageCode == 101) return VK_FALSE; // vkQueuePresentKHR: Presenting image without calling vkGetPhysicalDeviceSurfaceSupportKHR
-		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
 		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
-		if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
-		if (messageCode == 54 || messageCode == 113246970) return VK_FALSE; // vkCreateDevice: pCreateInfo->pQueueCreateInfos[0].queueFamilyIndex (= 0) is not less than any previously obtained pQueueFamilyPropertyCount from vkGetPhysicalDeviceQueueFamilyProperties (the pQueueFamilyPropertyCount was never obtained)
-		if (messageCode == 1) return VK_FALSE; // THREADING ERROR, 0.0 what is this
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
+		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
+		if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
+		if (messageCode == 1) return VK_FALSE; // THREADING ERROR, 0.0 what is this
+
+		if (messageCode == 54 || messageCode == 113246970) return VK_FALSE; // vkCreateDevice: pCreateInfo->pQueueCreateInfos[0].queueFamilyIndex (= 0) is not less than any previously obtained pQueueFamilyPropertyCount from vkGetPhysicalDeviceQueueFamilyProperties (the pQueueFamilyPropertyCount was never obtained)
 		if (messageCode == 5) return VK_FALSE; // SPIR-V module not valid: Operand 4 of MemberDecorate requires one of these capabilities: MultiViewport 
 		if (messageCode == 13) return VK_FALSE; // Shader expects at least n descriptors but only less provided, never mind
 		if (messageCode == 61) return VK_FALSE; // Some descriptor maybe used before any update, never mind
 
 												  // ignore above
-		
+
+		if (messageCode == 101) return VK_FALSE; // vkQueuePresentKHR: Presenting image without calling vkGetPhysicalDeviceSurfaceSupportKHR
+		if (messageCode == 100) return VK_FALSE; // vkCreateSwapChainKHR(): surface capabilities not retrieved for this physical device
+		if (messageCode == 15) return VK_FALSE; // Shader requires VkPhysicalDeviceFeatures::tessellationShader but is not enabled on the device, never mind
+		if (messageCode == 1922 || messageCode == 341838316) return VK_FALSE; // vkCreateSwapChainKHR(): pCreateInfo->surface is not known at this time to be supported for presentation by this device. The vkGetPhysicalDeviceSurfaceSupportKHR() must be called beforehand, and it must return VK_TRUE support with this surface for at least one queue family of this device
 		if (messageCode == 24) return VK_FALSE; // Vertex buffers are bound to command buffer but no vertex buffers are attached to this Pipeline State Object.
 		if (messageCode == 59) return VK_FALSE; // Descriptor set encountered the following validation error at vkCmdDrawIndexed() time: Descriptor is being used in draw but has not been updated.
 		if (messageCode == 63) return VK_FALSE; // vkBeginCommandBuffer(): Secondary Command Buffers may perform better if a valid framebuffer parameter is specified.
@@ -737,10 +737,16 @@ namespace tke
 			assert(res == VK_SUCCESS);
 		}
 
-		VkPhysicalDevice physicalDevice;
 		uint32_t gpuCount = 1;
 		res = vkEnumeratePhysicalDevices(inst.v, &gpuCount, &physicalDevice);
 		if (res != VkResult::VK_SUCCESS) { return Err::eContextLost; }
+
+		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+		unsigned int queueFamilyPropertyCount = 0;
+		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertyCount, nullptr);
+		queueFamilyProperties.resize(queueFamilyPropertyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertyCount, queueFamilyProperties.data());
 
 		float queuePriorities[1] = { 0.0 };
 		VkDeviceQueueCreateInfo queueInfo = {};
@@ -767,7 +773,6 @@ namespace tke
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
 		commandPool = new CommandPool;
-
 		descriptorPool = new DescriptorPool;
 
 		swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
@@ -1008,7 +1013,7 @@ namespace tke
 	}
 
 	VertexBuffer::VertexBuffer(size_t _size, void *data)
-		: NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data)
+		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data)
 	{
 	}
 
@@ -1023,7 +1028,7 @@ namespace tke
 	}
 
 	IndirectIndexBuffer::IndirectIndexBuffer(size_t _size)
-		: NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
 	{
 	}
 
