@@ -14,6 +14,8 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	renderer->resource.setImage(image, "Window.Image");
 	tke::addGuiImage(image);
+	fb = tke::getFramebuffer(image, tke::plainRenderPass_image8);
+
 	tke::ShaderMacro macro;
 	macro.pipeline_name = "Deferred.Pipeline";
 	macro.stage = tke::StageType::frag;
@@ -29,9 +31,10 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	tke::needUpdateTexture = true;
 	scene->needUpdateSky = true;
 
+	cb = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
 
-	cb = new tke::CommandBuffer(tke::commandPool);
+	transformerTool = new TransformerTool(fb);
 
 	auto obj = new tke::Object(model);
 	scene->addObject(obj);
@@ -105,6 +108,8 @@ void MonitorWidget::show()
 	}
 
 	ImGui::EndDock();
+
+	transformerTool->show(*tke::pMatProj, renderFinished);
 }
 
 std::vector<MonitorWidget*> monitors;

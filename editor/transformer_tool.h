@@ -5,5 +5,5 @@
 struct TransformerTool : Tool
 {
 	TransformerTool(tke::Framebuffer *_fb);
-	virtual void show(VkEvent waitEvent) override;
+	virtual void show(glm::mat4 &matProj, VkEvent waitEvent) override;
 };

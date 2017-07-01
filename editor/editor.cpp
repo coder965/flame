@@ -173,7 +173,10 @@ void EditorWindow::renderEvent()
 	for (auto m : monitors)
 		m->show();
 	for (auto m : monitors)
+	{
 		pushCB(m->cb->v, m->renderFinished);
+		pushCB(m->transformerTool->cb->v, m->transformerTool->renderFinished);
+	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
 	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);

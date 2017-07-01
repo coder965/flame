@@ -3,17 +3,22 @@
 #include "../src/core.h"
 #include "../src/scene.h"
 
+#include "transformer_tool.h"
+
 struct MonitorWidget
 {
 	std::string renderer_filename;
 	tke::Renderer *renderer;
 	tke::Scene *scene;
 	tke::Model *model;
-	tke::Image *image;
 
-	VkEvent renderFinished;
+	tke::Image *image;
+	tke::Framebuffer *fb;
 
 	tke::CommandBuffer *cb;
+	VkEvent renderFinished;
+
+	TransformerTool *transformerTool;
 
 	bool opened = true;
 

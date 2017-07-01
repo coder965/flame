@@ -1461,6 +1461,7 @@ namespace tke
 		}
 	}
 
+	static std::string _last_compiled_stage_text;
 	static int _currentUboBinding = 0;
 	void Stage::create()
 	{
@@ -1510,7 +1511,6 @@ namespace tke
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
-		std::string stageText = "";
 		{
 			auto file_path = std::experimental::filesystem::path(path).parent_path().string();
 			tke::OnceFileBuffer file(path);
@@ -1518,6 +1518,7 @@ namespace tke
 			std::stringstream ss(file.data);
 
 			int lineNum = 0;
+			std::string stageText = "";
 			stageText += "#version 450 core\n"; lineNum++;
 			stageText += "#extension GL_ARB_separate_shader_objects : enable\n"; lineNum++;
 			stageText += "#extension GL_ARB_shading_language_420pack : enable\n\n"; lineNum++;
@@ -1643,6 +1644,7 @@ namespace tke
 			}
 
 			{
+				_last_compiled_stage_text = stageText;
 				std::ofstream file("temp.glsl");
 				file.write(stageText.c_str(), stageText.size());
 				file.close();
