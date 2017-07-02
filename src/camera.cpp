@@ -73,7 +73,7 @@ namespace tke
 			}
 		}
 
-		auto matrix = (*pMatProj) * mat;
+		auto matrix = matPerspective * mat;
 
 		frustumPlanes[0].x = matrix[0].w + matrix[0].x;
 		frustumPlanes[0].y = matrix[1].w + matrix[1].x;

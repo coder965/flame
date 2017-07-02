@@ -36,15 +36,6 @@ namespace tke
 	extern glm::mat4 matOrthoInv;
 	extern glm::mat4 matPerspective;
 	extern glm::mat4 matPerspectiveInv;
-	extern glm::mat4 *pMatProj;
-	extern glm::mat4 *pMatProjInv;
-
-	enum ProjectType
-	{
-		ProjectTypeOrtho,
-		ProjectTypePerspective
-	};
-	void changeProjMat(ProjectType type);
 
 	struct Vertex
 	{
@@ -72,17 +63,6 @@ namespace tke
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	extern StagingBuffer *stagingBuffer;
-
-	void setReporter(void(*_reporter)(const std::string &));
-	void report(const std::string &str);
-	void reportMajorProgress(int progress);
-	void reportMinorProgress(int progress);
-	void setMajorProgressText(const std::string &str);
-	void setMinorProgressText(const std::string &str);
-	int majorProgress();
-	int minorProgress();
-	std::string majorProgressText();
-	std::string minorProgressText();
 
 	extern Pipeline *scatteringPipeline;
 	extern Pipeline *downsamplePipeline;

@@ -21,22 +21,6 @@ namespace tke
 	glm::mat4 matOrthoInv;
 	glm::mat4 matPerspective;
 	glm::mat4 matPerspectiveInv;
-	glm::mat4 *pMatProj;
-	glm::mat4 *pMatProjInv;
-
-	void changeProjMat(ProjectType type)
-	{
-		if (type == ProjectTypeOrtho)
-		{
-			pMatProj = &matOrtho;
-			pMatProjInv = &matOrthoInv;
-		}
-		else
-		{
-			pMatProj = &matPerspective;
-			pMatProjInv = &matPerspectiveInv;
-		}
-	}
 
 	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
@@ -45,88 +29,6 @@ namespace tke
 	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	StagingBuffer *stagingBuffer = nullptr;
-
-	void(*reporter)(const std::string &) = nullptr;
-	void setReporter(void(*_reporter)(const std::string &))
-	{
-		reporter = _reporter;
-	}
-
-	void report(const std::string &str)
-	{
-		printf(str.c_str());
-		if (reporter) reporter(str);
-	}
-
-	int _majorProgress;
-	int _minorProgress;
-	std::string _majorProgressText;
-	std::string _minorProgressText;
-	CriticalSection progress_cs;
-
-	void reportMajorProgress(int progress)
-	{
-		progress_cs.lock();
-		printf("major progress:%d\n", progress);
-		_majorProgress = progress;
-		progress_cs.unlock();
-	}
-
-	void reportMinorProgress(int progress)
-	{
-		progress_cs.lock();
-		printf("minor progress:%d\n", progress);
-		_minorProgress = progress;
-		progress_cs.unlock();
-	}
-
-	void setMajorProgressText(const std::string &str)
-	{
-		progress_cs.lock();
-		printf("%s\n", str.c_str());
-		_majorProgressText = str;
-		progress_cs.unlock();
-	}
-
-	void setMinorProgressText(const std::string &str)
-	{
-		progress_cs.lock();
-		printf("%s\n", str.c_str());
-		_minorProgressText = str;
-		progress_cs.unlock();
-	}
-
-	int majorProgress()
-	{
-		progress_cs.lock();
-		auto progress = _majorProgress;
-		progress_cs.unlock();
-		return progress;
-	}
-
-	int minorProgress()
-	{
-		progress_cs.lock();
-		auto progress = _minorProgress;
-		progress_cs.unlock();
-		return progress;
-	}
-
-	std::string majorProgressText()
-	{
-		progress_cs.lock();
-		auto text = _majorProgressText;
-		progress_cs.unlock();
-		return text;
-	}
-
-	std::string minorProgressText()
-	{
-		progress_cs.lock();
-		auto text = _minorProgressText;
-		progress_cs.unlock();
-		return text;
-	}
 
 	Pipeline *scatteringPipeline = nullptr;
 	Pipeline *downsamplePipeline = nullptr;
@@ -187,8 +89,6 @@ namespace tke
 		aspect = (float)resCx / resCy;
 		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, aspect, TKE_NEAR, TKE_FAR);
 		matPerspectiveInv = glm::inverse(matPerspective);
-
-		changeProjMat(ProjectTypePerspective);
 
 		initRender( 
 #if defined(_DEBUG)

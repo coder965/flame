@@ -114,7 +114,7 @@ void MonitorWidget::show()
 
 	ImGui::EndDock();
 
-	transformerTool->show(*tke::pMatProj, renderFinished);
+	transformerTool->show(tke::matPerspective, renderFinished);
 }
 
 std::vector<MonitorWidget*> monitors;

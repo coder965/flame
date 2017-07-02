@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <experimental/filesystem>
 #include <sstream>
+#include <iostream>
 
 #include "core.h"
 #include "scene.h"
@@ -1027,8 +1028,6 @@ namespace tke
 
 		void load(Model *m, std::ifstream &file)
 		{
-			reportMinorProgress(0);
-
 			int currentIndex = 0;
 			Material *pmt = nullptr;
 
@@ -1036,8 +1035,6 @@ namespace tke
 			std::vector<glm::vec2> rawTexcoords;
 			std::vector<glm::vec3> rawNormals;
 			std::vector<glm::ivec3> rawIndexs;
-
-			reportMinorProgress(10);
 
 			while (!file.eof())
 			{
@@ -1197,11 +1194,7 @@ namespace tke
 				}
 			}
 
-			reportMinorProgress(50);
-
 			_model_after_process(m);
-
-			reportMinorProgress(100);
 		}
 	}
 
@@ -1315,8 +1308,6 @@ namespace tke
 			static_assert(sizeof(MorphData) == 16, "");
 			static_assert(sizeof(RigidData) == 83, "");
 			static_assert(sizeof(JointData) == 124, "");
-
-			reportMinorProgress(0);
 
 			m->animated = true;
 
@@ -1575,8 +1566,6 @@ namespace tke
 			}
 
 			_model_after_process(m);
-
-			reportMinorProgress(100);
 		}
 	}
 
@@ -1645,8 +1634,6 @@ namespace tke
 
 		void load(Model *m, std::ifstream &file)
 		{
-			reportMinorProgress(0);
-
 			int textureCount = 0;
 			file >> textureCount;
 			for (int i = 0; i < textureCount; i++)
@@ -1660,8 +1647,6 @@ namespace tke
 			}
 
 			file >> m->animated;
-
-			reportMinorProgress(30);
 
 			int vertexCount;
 			int indiceCount;
@@ -1692,8 +1677,6 @@ namespace tke
 				file.read((char*)m->indices.data(), indiceCount * sizeof(int));
 			}
 
-			reportMinorProgress(50);
-
 			int materialCount;
 			file >> materialCount;
 			for (int i = 0; i < materialCount; i++)
@@ -1722,8 +1705,6 @@ namespace tke
 
 				m->materials.push_back(pmt);
 			}
-
-			reportMinorProgress(80);
 
 			int boneCount;
 			file >> boneCount;
@@ -1842,8 +1823,6 @@ namespace tke
 			file >> m->eyePosition;
 
 			_model_after_process(m);
-
-			reportMinorProgress(100);
 		}
 
 		static void _saveAnimation(std::ofstream &file, Model *pModel, AnimationBinding *pAnim)
@@ -2049,7 +2028,7 @@ namespace tke
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.good())
 		{
-			report("Model File Lost:" + filename);
+			std::cout << "Model File Lost:" << filename;
 			return nullptr;
 		}
 
@@ -2069,7 +2048,7 @@ namespace tke
 			load_func = &TKM::load;
 		else
 		{
-			report("Model Format Not Support:" + ext);
+			std::cout << "Model Format Not Support:" << ext;
 			return nullptr;
 		}
 
@@ -2090,7 +2069,7 @@ namespace tke
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.good())
 		{
-			report("Animation File Lost:" + filename);
+			std::cout << "Animation File Lost:" << filename;
 			return nullptr;
 		}
 
@@ -2103,7 +2082,7 @@ namespace tke
 			load_func = &TKA::load;
 		else
 		{
-			report("Animation Format Not Support:%s" + ext);
+			std::cout << "Animation Format Not Support:%s" << ext;
 			return nullptr;
 		}
 		auto a = new Animation;

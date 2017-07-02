@@ -589,8 +589,8 @@ namespace tke
 		}
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
-			stru.proj = *pMatProj;
-			stru.projInv = *pMatProjInv;
+			stru.proj = matPerspective;
+			stru.projInv = matPerspective;
 			stru.view = camera.getMatInv();
 			stru.viewInv = camera.getMat();
 			stru.projView = stru.proj * stru.view;
@@ -990,127 +990,5 @@ namespace tke
 			pTerrain->changed = false;
 
 		last_time = nowTime;
-	}
-
-	//Scene *scene;
-
-	//LightSave::LightSave(Light &light)
-	//	: Transformer(light),
-	//	type(light.type),
-	//	color(light.color),
-	//	decayFactor(light.decayFactor),
-	//	shadow(light.shadow) {}
-
-	//ObjectSave::ObjectSave(Object &object)
-	//	: Transformer(object),
-	//	pModel(object.pModel),
-	//	phyx(object.phyx),
-	//	moveType(object.moveType),
-	//	upMethod(object.upMethod) {}
-
-	//TerrainSave::TerrainSave(Terrain &terrain)
-	//	: Transformer(terrain),
-	//	size(terrain.size),
-	//	height(terrain.height),
-	//	heightMap(terrain.heightMap),
-	//	colorMap(terrain.colorMap),
-	//	spec(terrain.spec),
-	//	roughness(terrain.roughness) {}
-
-	void SceneSave::push(Scene *pScene)
-	{
-		//EnterCriticalSection(&pScene->cs);
-
-		//pScene->atmosphere = atmosphere;
-		////pScene->hdr = hdr;
-		////pScene->ambient = ambient;
-		//pScene->fogThickness = fogThickness;
-
-		//pScene->clearActors();
-
-		//for (auto &lightSave : lightSaves)
-		//{
-		//	auto pLight = new Light;
-		//	pLight->type = lightSave.type;
-		//	memcpy(pLight, &lightSave, sizeof(Transformer));
-
-		//	pLight->color = lightSave.color;
-		//	pLight->decayFactor = lightSave.decayFactor;
-		//	pLight->shadow = lightSave.shadow;
-
-		//	scene->addLight(pLight, lightSave.m_id);
-		//}
-
-		//int objID = 0;
-		//for (auto &objectSave : objectSaves)
-		//{
-		//	auto pObject = new Object;
-		//	memcpy(pObject, &objectSave, sizeof(Transformer));
-		//	pObject->pModel = objectSave.pModel;
-
-		//	pObject->phyx = objectSave.phyx;
-		//	pObject->moveType = objectSave.moveType;
-		//	pObject->upMethod = objectSave.upMethod;
-
-		//	pScene->addObject(pObject, objectSave.m_id);
-
-		//	if (objID == controlingID)
-		//		controllingObject = pObject;
-		//}
-
-		////for (auto &terrainSave : terrainSaves)
-		////{
-		////	auto pTerrain = new Terrain;
-		////	memcpy(pTerrain, &terrainSave, sizeof(Transformer));
-
-		////	pTerrain->size = terrainSave.size;
-		////	pTerrain->height = terrainSave.height;
-		////	pTerrain->heightMap = terrainSave.heightMap;
-		////	pTerrain->colorMap = terrainSave.colorMap;
-		////	pTerrain->spec = terrainSave.spec;
-		////	pTerrain->roughness = terrainSave.roughness;
-
-		////	pScene->addTerrain(pTerrain, terrainSave.m_id);
-		////}
-
-		//LeaveCriticalSection(&pScene->cs);
-	}
-
-	void SceneSave::pull(Scene *pScene)
-	{
-		//EnterCriticalSection(&pScene->cs);
-
-		//atmosphere = pScene->atmosphere;
-		////hdr = pScene->hdr;
-		////ambient = pScene->ambient;
-		//fogThickness = pScene->fogThickness;
-
-		//lightSaves.clear();
-		//for (auto pLight : pScene->pLights)
-		//	lightSaves.push_back(LightSave(*pLight));
-
-		//objectSaves.clear();
-		//controlingID = -1;
-		//int objID = 0;
-		//for (auto pObject : pScene->pObjects)
-		//{
-		//	if (controllingObject == pObject)
-		//		controlingID = objID;
-		//	objectSaves.push_back(ObjectSave(*pObject));
-		//	objID++;
-		//}
-
-		////terrainSaves.clear();
-		////for (auto pTerrain : pScene->pTerrains)
-		////	terrainSaves.push_back(TerrainSave(*pTerrain));
-
-		//LeaveCriticalSection(&pScene->cs);
-	}
-
-	void loadScene(char *s)
-	{
-		//scene->clear();
-
-		//scene->load(s);
 	}
 }
