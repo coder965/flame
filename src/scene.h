@@ -57,6 +57,7 @@ namespace tke
 	extern VkRenderPass sceneRenderPass;
 
 	extern Pipeline *panoramaPipeline;
+	extern Pipeline *deferredPipeline;
 
 	struct Scene
 	{
@@ -75,11 +76,16 @@ namespace tke
 		float atmosphereKm = 0.0025f;
 		float atmosphereKr = 0.001f;
 		std::string skyFilename;
+
+		ResourceBank resource;
+
 		Image *skyImage = nullptr;
 		Image *envrImage = nullptr;
 		Image *envrImageDownsample[3] = {};
 
 		Image *mainImage = nullptr;
+
+		DescriptorSet *pano_ds = nullptr;
 
 		float exposure = 0.01f;
 		float white = 1.f;
@@ -144,8 +150,9 @@ namespace tke
 
 		void clear();
 
-		void setRenderer(Renderer *r);
-		void update();
+		Framebuffer *createFramebuffer(Image *dst);
+
+		void show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent);
 	};
 
 	void initScene();

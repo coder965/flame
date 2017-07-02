@@ -11,7 +11,7 @@
     <pipeline file_name="pipeline/deferred/mrt.xml"/>
     <pipeline file_name="pipeline/deferred/mrt_anim.xml"/>
     <pipeline file_name="pipeline/deferred/deferred.xml"/>
-    <pipeline file_name="pipeline/combine/combine.xml"/>
+    <pipeline file_name="pipeline/compose/compose.xml"/>
   </pipelines>
   
 	<passes>
@@ -63,7 +63,7 @@
         </action>
       </actions>
     </pass>
-    <pass type="draw_action" name="combine">
+    <pass type="draw_action" name="compose">
       <attachments>
         <attachment name="1" image_name="Window.Image" aspect="color" />
       </attachments>
@@ -71,7 +71,7 @@
         <dependency pass_name="deferred"/>
       </dependencies>
       <actions>
-        <action name="1" type="draw_action" pipeline_name="Combine.Pipeline">
+        <action name="1" type="draw_action" pipeline_name="compose.Pipeline">
           <drawcalls>
             <drawcall name="1" instance_count="1" first_instance="0" type="vertex" vertex_count="3"/>
           </drawcalls>

@@ -14,7 +14,9 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	renderer->resource.setImage(image, "Window.Image");
 	tke::addGuiImage(image);
-	fb = tke::getFramebuffer(image, tke::plainRenderPass_image8);
+
+	fb_one = tke::getFramebuffer(image, tke::plainRenderPass_image8);
+	fb_scene = scene->createFramebuffer(image);
 
 	tke::ShaderMacro macro;
 	macro.pipeline_name = "Deferred.Pipeline";
@@ -25,12 +27,11 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	renderer->setup();
 
 	tke::setMasterRenderer(renderer);
-	scene->setRenderer(renderer);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
 
-	transformerTool = new TransformerTool(fb);
+	transformerTool = new TransformerTool(fb_one);
 
 	auto obj = new tke::Object(model);
 	scene->addObject(obj);
@@ -49,6 +50,8 @@ MonitorWidget::~MonitorWidget()
 	delete scene;
 	tke::removeGuiImage(image);
 	delete image;
+	tke::releaseFramebuffer(fb_one);
+	tke::releaseFramebuffer(fb_scene);
 	delete cb;
 }
 
@@ -63,7 +66,7 @@ void MonitorWidget::makeCmd()
 
 void MonitorWidget::show()
 {
-	scene->update();
+	scene->show(cb, fb_scene, renderFinished);
 
 	makeCmd();
 

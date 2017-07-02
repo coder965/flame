@@ -13,7 +13,8 @@ struct MonitorWidget
 	tke::Model *model;
 
 	tke::Image *image;
-	tke::Framebuffer *fb;
+	tke::Framebuffer *fb_one;
+	tke::Framebuffer *fb_scene;
 
 	tke::CommandBuffer *cb;
 	VkEvent renderFinished;

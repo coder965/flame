@@ -10,8 +10,12 @@ namespace tke
 
 	Pipeline *panoramaPipeline = nullptr;
 	static int pano_matrix_pos = -1;
+
+	Pipeline *deferredPipeline = nullptr;
+	static int defe_envr_position = -1;
 	 
 	Scene::Scene()
+		:resource(&globalResource)
 	{
 		InitializeCriticalSection(&cs);
 
@@ -29,6 +33,10 @@ namespace tke
 		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
 		for (int i = 0; i < 3; i++)
 			envrImageDownsample[i] = new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		pano_ds = new DescriptorSet(descriptorPool, panoramaPipeline->descriptorSetLayout);
 
 		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
 		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
@@ -67,6 +75,10 @@ namespace tke
 		delete envrImage;
 		for (int i = 0; i < 3; i++)
 			delete envrImageDownsample[i];
+
+		delete mainImage;
+
+		delete pano_ds;
 
 		delete staticVertexBuffer;
 		delete staticIndexBuffer;
@@ -436,13 +448,15 @@ namespace tke
 		LeaveCriticalSection(&cs);
 	}
 
-	static Pipeline *deferredPipeline = nullptr;
-	void Scene::setRenderer(Renderer *r)
+	Framebuffer *Scene::createFramebuffer(Image *dst)
 	{
-		deferredPipeline = r->resource.getPipeline("Deferred.Pipeline");
+		std::vector<VkImageView> views;
+		views.push_back(mainImage->getView());
+		views.push_back(dst->getView());
+		return getFramebuffer(resCx, resCy, sceneRenderPass, views);
 	}
 
-	void Scene::update()
+	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
 	{
 		if (pano_matrix_pos != -1)
 		{
@@ -643,9 +657,6 @@ namespace tke
 
 						if (deferredPipeline)
 						{ // update IBL
-							static int defe_envr_position = -1;
-							if (defe_envr_position == -1) defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
-
 							if (defe_envr_position != -1)
 							{
 								static int down_source_position = -1;
@@ -969,6 +980,15 @@ namespace tke
 			pObject->changed = false;
 		for (auto pTerrain : terrains)
 			pTerrain->changed = false;
+
+		//cb->reset();
+		//cb->begin();
+
+		//cb->beginRenderPass(sceneRenderPass, fb);
+		//cb->endRenderPass();
+
+		//cb->setEvent(signalEvent);
+		//cb->end();
 	}
 
 	//struct MasterRenderer
@@ -1019,5 +1039,11 @@ namespace tke
 		panoramaPipeline->setup(sceneRenderPass, 0);
 		globalResource.setPipeline(panoramaPipeline);
 		pano_matrix_pos = panoramaPipeline->descriptorPosition("MATRIX");
+
+		deferredPipeline = new Pipeline;
+		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
+		deferredPipeline->setup(sceneRenderPass, 0);
+		//globalResource.setPipeline(deferredPipeline);
+		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 	}
 }
