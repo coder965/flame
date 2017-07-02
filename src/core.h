@@ -158,6 +158,7 @@ namespace tke
 	extern Pipeline *plainPipeline_3d;
 	extern Pipeline *plainPipeline_3d_normal;
 	extern Pipeline *plainPipeline_3d_depth;
+	extern Pipeline *plainPipeline_3d_normal_depth;
 	extern Pipeline *plainPipeline_3d_wire;
 
 	struct Window

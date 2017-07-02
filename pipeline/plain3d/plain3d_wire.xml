@@ -1,5 +1,4 @@
-<pipeline name="Plain3d.Pipeline" cx="-1" cy="-1" vertex_input_type="normal" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<blend_attachment enable="true" src_color="src_alpha" dst_color="one_minus_src_alpha" src_alpha="one" dst_alpha="zero"/>
+<pipeline name="Plain3d.Pipeline" cx="-1" cy="-1" vertex_input_type="normal" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="line" cull_mode="none">
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<stage filename="plain3d.vert"/>
 	<stage filename="plain3d.frag"/>

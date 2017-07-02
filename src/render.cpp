@@ -1925,26 +1925,6 @@ namespace tke
 				auto ext = path.extension().string();
 				s->type = StageFlagByExt(ext);
 
-				AttributeTree at("stage", filepath + "/" + s->filename + ".xml");
-				if (at.good)
-				{
-					for (auto c : at.children)
-					{
-						if (c->name == "descriptor")
-						{
-							Descriptor d;
-							c->obtainFromAttributes(&d, d.b);
-							s->descriptors.push_back(d);
-						}
-						else if (c->name == "push_constant")
-						{
-							PushConstantRange pc;
-							c->obtainFromAttributes(&pc, pc.b);
-							s->pushConstantRanges.push_back(pc);
-						}
-					}
-				}
-
 				stages[StageIndexByType(s->type)] = s;
 			}
 			else if (c->name == "macro")

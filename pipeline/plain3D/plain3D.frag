@@ -5,9 +5,17 @@ layout(push_constant) uniform PushConstant
 	vec4 color;
 }pc;
 
+#if defined(USE_NORMAL)
+layout(location = 0) in vec3 inNormal;
+#endif
+
 layout(location = 0) out vec4 outColor;
 		
 void main()
 {
-	outColor = pc.color;
+	outColor = vec4(pc.color.rgb
+#if defined(USE_NORMAL)
+	* dot(inNormal, vec3(0, 0, 1))
+#endif
+	, pc.color.a);
 }
