@@ -319,10 +319,6 @@ namespace tke
 		convolvePipeline->setup(plainRenderPass_image16, 0);
 		globalResource.setPipeline(convolvePipeline);
 
-		initPhysics();
-
-		//initSound();
-
 		staticVertexBuffer = new VertexBuffer();
 		staticIndexBuffer = new IndexBuffer();
 
@@ -356,6 +352,10 @@ namespace tke
 		}
 
 		initGeneralModels();
+
+		initPhysics();
+
+		//initSound();
 
 		return Err::eNoErr;
 	}
