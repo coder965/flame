@@ -31,6 +31,9 @@ namespace tke
 	struct IndirectIndexBuffer;
 	struct Image;
 	struct ImageView;
+	struct DescriptorPool;
+	struct DescriptorSetLayout;
+	struct DescriptorSet;
 	struct Framebuffer;
 	struct Pipeline;
 	struct Drawcall;
@@ -236,6 +239,16 @@ namespace tke
 	};
 	extern CommandPool *commandPool;
 
+	struct DescriptorSet
+	{
+		DescriptorPool *pool;
+		DescriptorSetLayout *layout;
+		VkDescriptorSet v;
+
+		DescriptorSet(DescriptorPool *_pool, DescriptorSetLayout *_layout);
+		~DescriptorSet();
+	};
+
 	struct DescriptorPool
 	{
 		VkDescriptorPool v;
@@ -243,8 +256,7 @@ namespace tke
 
 		DescriptorPool();
 		~DescriptorPool();
-		VkDescriptorSet allocate(VkDescriptorSetLayout *pLayout);
-		void free(VkDescriptorSet set);
+		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type);
 		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 		void update();
@@ -704,7 +716,7 @@ namespace tke
 		DescriptorSetLayout *descriptorSetLayout = nullptr;
 		PipelineLayout *pipelineLayout = nullptr;
 		VkPipeline pipeline = 0;
-		VkDescriptorSet descriptorSet = 0;
+		DescriptorSet *descriptorSet = nullptr;
 
 		Pipeline();
 		~Pipeline();

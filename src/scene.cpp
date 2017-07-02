@@ -9,6 +9,7 @@ namespace tke
 	VkRenderPass sceneRenderPass;
 
 	Pipeline *panoramaPipeline = nullptr;
+	static int pano_matrix_pos = -1;
 	 
 	Scene::Scene()
 	{
@@ -438,14 +439,14 @@ namespace tke
 	static Pipeline *deferredPipeline = nullptr;
 	void Scene::setRenderer(Renderer *r)
 	{
-		//panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
 		deferredPipeline = r->resource.getPipeline("Deferred.Pipeline");
 	}
 
 	void Scene::update()
 	{
+		if (pano_matrix_pos != -1)
 		{
-			descriptorPool->addWrite(panoramaPipeline->descriptorSet, &matrixBuffer->m_info, 0, 0);
+			descriptorPool->addWrite(panoramaPipeline->descriptorSet->v, &matrixBuffer->m_info, pano_matrix_pos, 0);
 			descriptorPool->update();
 		}
 
@@ -637,7 +638,7 @@ namespace tke
 							commandPool->endOnce(cb);
 							releaseFramebuffer(fb);
 
-							descriptorPool->addWrite(panoramaPipeline->descriptorSet, envrImage->getInfo(colorSampler), pano_tex_position, 0);
+							descriptorPool->addWrite(panoramaPipeline->descriptorSet->v, envrImage->getInfo(colorSampler), pano_tex_position, 0);
 						}
 
 						if (deferredPipeline)
@@ -661,7 +662,7 @@ namespace tke
 										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
-										descriptorPool->addWrite(downsamplePipeline->descriptorSet, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler), down_source_position, 0);
+										descriptorPool->addWrite(downsamplePipeline->descriptorSet->v, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler), down_source_position, 0);
 										descriptorPool->update();
 										cb->bindDescriptorSet();
 										cb->draw(3);
@@ -686,7 +687,7 @@ namespace tke
 										auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 										cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
 										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
-										descriptorPool->addWrite(convolvePipeline->descriptorSet, envrImageDownsample[i - 1]->getInfo(plainSampler), con_source_position, 0);
+										descriptorPool->addWrite(convolvePipeline->descriptorSet->v, envrImageDownsample[i - 1]->getInfo(plainSampler), con_source_position, 0);
 										descriptorPool->update();
 										cb->bindDescriptorSet();
 										cb->draw(3);
@@ -697,7 +698,7 @@ namespace tke
 									}
 								}
 
-								descriptorPool->addWrite(deferredPipeline->descriptorSet, envrImage->getInfo(colorSampler, 0, 0, envrImage->level), defe_envr_position, 0);
+								descriptorPool->addWrite(deferredPipeline->descriptorSet->v, envrImage->getInfo(colorSampler, 0, 0, envrImage->level), defe_envr_position, 0);
 
 								AmbientBufferShaderStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -852,7 +853,7 @@ namespace tke
 						}
 
 						if (bone_position != -1)
-							descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, &pObject->animationComponent->boneMatrixBuffer->m_info, bone_position, animatedIndex);
+							descriptorPool->addWrite(mrtAnimPipeline->descriptorSet->v, &pObject->animationComponent->boneMatrixBuffer->m_info, bone_position, animatedIndex);
 
 						animatedIndex++;
 					}
@@ -1017,5 +1018,6 @@ namespace tke
 		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");
 		panoramaPipeline->setup(sceneRenderPass, 0);
 		globalResource.setPipeline(panoramaPipeline);
+		pano_matrix_pos = panoramaPipeline->descriptorPosition("MATRIX");
 	}
 }
