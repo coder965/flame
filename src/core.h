@@ -71,8 +71,7 @@ namespace tke
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;
 	void setMasterRenderer(Renderer *r);
-
-	extern bool needRedraw;
+	
 	extern bool needUpdateVertexBuffer;
 	extern bool needUpdateMaterialBuffer;
 	extern bool needUpdateTexture;

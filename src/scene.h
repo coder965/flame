@@ -13,17 +13,6 @@
 
 namespace tke
 {
-	//struct MasterRenderer
-	//
-
-	//	Pipeline heightMapTerrainPipeline;
-	//	Pipeline proceduralTerrainPipeline;
-
-	//	DrawAction *mrtHeightMapTerrainAction;
-
-	//};
-
-	struct Animation;
 	struct CollisionGroup;
 
 	enum SkyType
@@ -65,6 +54,10 @@ namespace tke
 		glm::vec4 fogcolor;
 	};
 
+	extern VkRenderPass sceneRenderPass;
+
+	extern Pipeline *panoramaPipeline;
+
 	struct Scene
 	{
 		CRITICAL_SECTION cs;
@@ -85,6 +78,8 @@ namespace tke
 		Image *skyImage = nullptr;
 		Image *envrImage = nullptr;
 		Image *envrImageDownsample[3] = {};
+
+		Image *mainImage = nullptr;
 
 		float exposure = 0.01f;
 		float white = 1.f;
@@ -152,4 +147,6 @@ namespace tke
 		void setRenderer(Renderer *r);
 		void update();
 	};
+
+	void initScene();
 }

@@ -42,7 +42,6 @@ namespace tke
 		mrtAnimPipeline = r->resource.getPipeline("Mrt_Anim.Pipeline");
 	}
 
-	bool needRedraw = true;
 	bool needUpdateVertexBuffer = true;
 	bool needUpdateMaterialBuffer = true;
 	bool needUpdateTexture = true;
@@ -157,14 +156,6 @@ namespace tke
 		globalResource.setImage(new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), "Depth.Image");
 
 		{
-			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference refs[] = {
-				col_ref,
-				dep_ref
-			};
-			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-			VkSubpassDescription subpass1 = subpassDesc(1, &col_ref, &dep_ref);
 			auto att0 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
@@ -172,6 +163,10 @@ namespace tke
 			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att6 = depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
+			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
+			VkSubpassDescription subpass1 = subpassDesc(1, &col_ref, &dep_ref);
 			VkAttachmentDescription atts[] = {
 				att0,
 				att6
@@ -252,10 +247,9 @@ namespace tke
 			constantBuffer->update(&stru, *stagingBuffer);
 		}
 
+		initScene();
 		initGeneralModels();
-
 		initPhysics();
-
 		//initSound();
 
 		return Err::eNoErr;
@@ -710,7 +704,6 @@ namespace tke
 			if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
 			if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
 
-			tke::needRedraw = true;
 			needUpdateVertexBuffer = false;
 		}
 		if (needUpdateTexture)
@@ -727,7 +720,6 @@ namespace tke
 					descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
 				}
 				descriptorPool->update();
-				tke::needRedraw = true;
 				needUpdateTexture = false;
 			}
 		}

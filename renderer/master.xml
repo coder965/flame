@@ -7,7 +7,7 @@
   </images>
   
   <pipelines>
-    <pipeline file_name="pipeline/sky/panorama.xml"/>
+    <pipeline1 file_name="pipeline/sky/panorama.xml"/>
     <pipeline file_name="pipeline/deferred/mrt.xml"/>
     <pipeline file_name="pipeline/deferred/mrt_anim.xml"/>
     <pipeline file_name="pipeline/deferred/deferred.xml"/>

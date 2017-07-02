@@ -27,10 +27,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	tke::setMasterRenderer(renderer);
 	scene->setRenderer(renderer);
 
-	tke::needRedraw = true;
-	tke::needUpdateTexture = true;
-	scene->needUpdateSky = true;
-
 	cb = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
 
@@ -69,11 +65,7 @@ void MonitorWidget::show()
 {
 	scene->update();
 
-	if (tke::needRedraw)
-	{
-		makeCmd();
-		tke::needRedraw = false;
-	}
+	makeCmd();
 
 	ImGui::BeginDock("Monitor", &opened);
 	if (ImGui::IsWindowFocused())

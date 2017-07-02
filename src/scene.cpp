@@ -4,22 +4,11 @@
 
 namespace tke
 {
-	//MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
-	//{
-	//	_resources.setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
-	//	_resources.setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
-
-	//	mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
-	//	// TODO : FIX PROCEDURAL TERRAIN
-	//	//auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
-	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
-
-	//	heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-	//	proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-
-	//}
-
 	static const float gravity = 9.81f;
+
+	VkRenderPass sceneRenderPass;
+
+	Pipeline *panoramaPipeline = nullptr;
 	 
 	Scene::Scene()
 	{
@@ -452,16 +441,20 @@ namespace tke
 		LeaveCriticalSection(&cs);
 	}
 
-	static Pipeline *panoramaPipeline = nullptr;
 	static Pipeline *deferredPipeline = nullptr;
 	void Scene::setRenderer(Renderer *r)
 	{
-		panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
+		//panoramaPipeline = r->resource.getPipeline("Panorama.Pipeline");
 		deferredPipeline = r->resource.getPipeline("Deferred.Pipeline");
 	}
 
 	void Scene::update()
 	{
+		{
+			descriptorPool->addWrite(panoramaPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrixBuffer->m_info);
+			descriptorPool->update();
+		}
+
 		// update animation and bones
 		for (auto object : objects)
 		{
@@ -981,5 +974,54 @@ namespace tke
 			pObject->changed = false;
 		for (auto pTerrain : terrains)
 			pTerrain->changed = false;
+	}
+
+	//struct MasterRenderer
+	//
+
+	//	Pipeline heightMapTerrainPipeline;
+	//	Pipeline proceduralTerrainPipeline;
+
+	//	DrawAction *mrtHeightMapTerrainAction;
+
+	//};
+
+	//MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
+	//{
+	//	_resources.setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
+	//	_resources.setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
+
+	//	mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
+	//	// TODO : FIX PROCEDURAL TERRAIN
+	//	//auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
+	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
+
+	//	heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+	//	proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
+
+	//}
+
+	void initScene()
+	{
+		auto att0 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+		auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+		VkAttachmentReference col_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
+		VkAttachmentReference col_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
+		VkSubpassDescription subpass0 = subpassDesc(1, &col_ref0);
+		VkSubpassDescription subpass1 = subpassDesc(1, &col_ref1);
+		VkAttachmentDescription atts[] = {
+			att0,
+			att1
+		};
+		VkSubpassDescription subpasses[] = {
+			subpass0,
+			subpass1
+		};
+		sceneRenderPass = createRenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, 0, nullptr);
+
+		panoramaPipeline = new Pipeline;
+		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");
+		panoramaPipeline->setup(sceneRenderPass, 0);
+		globalResource.setPipeline(panoramaPipeline);
 	}
 }
