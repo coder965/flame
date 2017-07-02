@@ -127,8 +127,9 @@ namespace tke
 
 	Err init(const std::string &path, int rcx, int rcy);
 
-	extern thread_local int startUpTime;
-	extern thread_local int nowTime;
+	extern int lastTime;
+	extern int nowTime;
+	extern int timeDisp;
 
 	extern VkRenderPass plainRenderPass_image8;
 	extern VkRenderPass plainRenderPass_image8_clear;

@@ -45,15 +45,13 @@ namespace tke
 			}
 
 			Event &e = list->events[list->currentEventIndex];
-			auto _t = nowTime - e.startTime;
-			if (e.tickFunc) e.tickFunc(_t);
+			e.currentTime += timeDisp;
+			if (e.tickFunc) e.tickFunc(e.currentTime);
 
-			if (_t >= e.duration)
+			if (e.currentTime >= e.duration)
 			{
 				if (e.execFunc) e.execFunc();
 				list->currentEventIndex++;
-				if (list->currentEventIndex < list->events.size())
-					list->events[list->currentEventIndex].startTime = nowTime;
 			}
 
 			it++;

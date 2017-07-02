@@ -129,8 +129,6 @@ namespace tke
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
 
-		bool firstUpdate = true;
-
 		Scene();
 		~Scene();
 

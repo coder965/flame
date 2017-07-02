@@ -462,13 +462,6 @@ namespace tke
 
 	void Scene::update()
 	{
-		static int last_time = 0;
-		if (firstUpdate)
-		{
-			firstUpdate = false;
-			last_time = nowTime;
-		}
-
 		// update animation and bones
 		for (auto object : objects)
 		{
@@ -477,7 +470,7 @@ namespace tke
 		}
 
 		// update physics (controller should move first, then simulate, and then get the result coord)
-		auto dist = (nowTime - last_time) / 1000.f;
+		auto dist = (timeDisp) / 1000.f;
 		if (dist > 0.f)
 		{
 			for (auto object : objects) // set controller coord
@@ -988,7 +981,5 @@ namespace tke
 			pObject->changed = false;
 		for (auto pTerrain : terrains)
 			pTerrain->changed = false;
-
-		last_time = nowTime;
 	}
 }

@@ -59,8 +59,9 @@ namespace tke
 	UniformBuffer *constantBuffer = nullptr;
 	UniformBuffer *materialBuffer = nullptr;
 
-	int thread_local startUpTime = 0;
-	int thread_local nowTime = 0;
+	int lastTime = 0;
+	int nowTime = 0;
+	int timeDisp;
 
 	VkRenderPass plainRenderPass_image8;
 	VkRenderPass plainRenderPass_image8_clear;
@@ -756,11 +757,12 @@ namespace tke
 
 	void run()
 	{
-		startUpTime = GetTickCount();
+		lastTime = GetTickCount();
 
 		for (;;)
 		{
-			nowTime = GetTickCount() - startUpTime;
+			nowTime = GetTickCount();
+			timeDisp = nowTime - lastTime;
 			processEvents();
 
 			MSG msg;
@@ -776,6 +778,8 @@ namespace tke
 
 			if (window_list.size() == 0)
 				return;
+
+			lastTime = nowTime;
 		}
 	}
 }

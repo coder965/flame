@@ -85,19 +85,14 @@ void MonitorWidget::show()
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
 	if (ImGui::IsItemHovered())
 	{
-		float distX = mainWindow->mouseX - mainWindow->mousePrevX;
-		float distY = mainWindow->mouseY - mainWindow->mousePrevY;
-
-		if (distX != 0 || distY != 0)
+		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
 		{
-			distX /= tke::resCx;
-			distY /= tke::resCy;
+			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
+			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
 			if (mainWindow->leftPressing)
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
-				{
 					scene->camera.rotateByCursor(distX, distY);
-				}
 			}
 			else if (mainWindow->middlePressing)
 			{

@@ -13,7 +13,7 @@ namespace tke
 		int duration = 1;
 		PF_EXEC execFunc = nullptr;
 
-		int startTime = 0;
+		int currentTime = 0;
 	};
 
 	struct EventList
