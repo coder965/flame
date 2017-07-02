@@ -593,6 +593,9 @@ namespace tke
 	{
 		std::string filename;
 		std::vector<std::string> defines;
+
+		std::vector<Descriptor> descriptors;
+		std::vector<PushConstantRange> pushConstantRanges;
 		VkShaderModule v;
 		int refCount = 1;
 
@@ -606,9 +609,6 @@ namespace tke
 		REFLv std::string filename;
 		std::string filepath;
 		StageType type;
-
-		std::vector<Descriptor> descriptors;
-		std::vector<PushConstantRange> pushConstantRanges;
 
 		Pipeline *parent;
 		ShaderModule *module = nullptr;

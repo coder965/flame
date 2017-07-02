@@ -1790,7 +1790,7 @@ namespace tke
 							d.name = r.name;
 							d.binding = r.binding;
 							d.count = r.size;
-							descriptors.push_back(d);
+							module->descriptors.push_back(d);
 						}
 						break;
 					case eUniformBlock:
@@ -1801,14 +1801,14 @@ namespace tke
 							d.name = r.name;
 							d.binding = r.binding;
 							d.count = r.COUNT;
-							descriptors.push_back(d);
+							module->descriptors.push_back(d);
 						}
 						else // PC
 						{
 							tke::PushConstantRange p;
 							p.offset = 0; // 0 always
 							p.size = r.size;
-							pushConstantRanges.push_back(p);
+							module->pushConstantRanges.push_back(p);
 						}
 						break;
 					}
@@ -2101,7 +2101,7 @@ namespace tke
 			i.module = s->module->v;
 			vkStages.push_back(i);
 
-			for (auto &d : s->descriptors)
+			for (auto &d : s->module->descriptors)
 			{
 				auto found = false;
 				for (auto &b : vkDescriptors)
@@ -2122,7 +2122,7 @@ namespace tke
 				b.stageFlags = vkStage(s->type);
 				vkDescriptors.push_back(b);
 			}
-			for (auto &p : s->pushConstantRanges)
+			for (auto &p : s->module->pushConstantRanges)
 			{
 				auto found = false;
 				for (auto &r : vkPushConstantRanges)
@@ -2389,7 +2389,7 @@ namespace tke
 				{
 					if (found) break;
 					if (!s) continue;
-					for (auto &d : s->descriptors)
+					for (auto &d : s->module->descriptors)
 					{
 						if (d.name == link.descriptor_name)
 						{
@@ -2411,7 +2411,7 @@ namespace tke
 				{
 					if (found) break;
 					if (!s) continue;
-					for (auto &d : s->descriptors)
+					for (auto &d : s->module->descriptors)
 					{
 						if (d.binding == link.binding)
 						{
@@ -2496,7 +2496,7 @@ namespace tke
 		{
 			if (!s) continue;
 
-			for (auto &d : s->descriptors)
+			for (auto &d : s->module->descriptors)
 			{
 				if (d.name == name)
 					return d.binding;

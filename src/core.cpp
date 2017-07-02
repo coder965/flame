@@ -290,15 +290,15 @@ namespace tke
 		plainPipeline_3d_normal = new Pipeline;
 		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
 		plainPipeline_3d_normal->setup(plainRenderPass_image8, 0);
-		//plainPipeline_3d_depth = new Pipeline;
-		//plainPipeline_3d_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_depth.xml");
-		//plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0);
-		//plainPipeline_3d_normal_depth = new Pipeline;
-		//plainPipeline_3d_normal_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_normal_depth.xml");
-		//plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0);
-		//plainPipeline_3d_wire = new Pipeline;
-		//plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
-		//plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_depth = new Pipeline;
+		plainPipeline_3d_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_depth.xml");
+		plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_normal_depth = new Pipeline;
+		plainPipeline_3d_normal_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_normal_depth.xml");
+		plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_wire = new Pipeline;
+		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
+		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
 
 		initPhysics();
 

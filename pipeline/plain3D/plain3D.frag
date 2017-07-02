@@ -15,7 +15,7 @@ void main()
 {
 	outColor = vec4(pc.color.rgb
 #if defined(USE_NORMAL)
-	* dot(inNormal, vec3(0, 0, 1))
+	* dot(inNormal, vec3(0, 0, -1))
 #endif
 	, pc.color.a);
 }
