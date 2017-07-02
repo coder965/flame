@@ -545,7 +545,7 @@ namespace tke
 			if (texture_position == -1) texture_position = plainPipeline_2d->descriptorPosition("images");
 
 			for (int i = 0; i < 128; i++)
-				descriptorPool->addWrite(plainPipeline_2d->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), i);
+				descriptorPool->addWrite(plainPipeline_2d->descriptorSet, fontImage->getInfo(colorSampler), texture_position, i);
 
 			descriptorPool->update();
 
@@ -709,7 +709,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool->addWrite(plainPipeline_2d->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool->addWrite(plainPipeline_2d->descriptorSet, _images[index]->getInfo(colorSampler), texture_position, _images[index]->index);
 		}
 
 		descriptorPool->update();
@@ -729,9 +729,9 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool->addWrite(plainPipeline_2d->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, _images[index]->getInfo(colorSampler), _images[index]->index);
+			descriptorPool->addWrite(plainPipeline_2d->descriptorSet, _images[index]->getInfo(colorSampler), texture_position, _images[index]->index);
 		}
-		descriptorPool->addWrite(plainPipeline_2d->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texture_position, fontImage->getInfo(colorSampler), _images.size() + 1);
+		descriptorPool->addWrite(plainPipeline_2d->descriptorSet, fontImage->getInfo(colorSampler), texture_position, _images.size() + 1);
 
 		descriptorPool->update();
 	}

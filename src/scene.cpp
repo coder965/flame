@@ -147,7 +147,6 @@ namespace tke
 	{
 		EnterCriticalSection(&cs);
 		lights.push_back(pLight);
-		tke::needRedraw = true;
 		lightCountChanged = true;
 		LeaveCriticalSection(&cs);
 	}
@@ -180,7 +179,6 @@ namespace tke
 				break;
 			}
 		}
-		tke::needRedraw = true;
 		lightCountChanged = true;
 		LeaveCriticalSection(&cs);
 		return pLight;
@@ -333,7 +331,6 @@ namespace tke
 
 		objects.push_back(o);
 
-		tke::needRedraw = true;
 		needUpdateIndirectBuffer = true;
 		LeaveCriticalSection(&cs);
 	}
@@ -359,7 +356,6 @@ namespace tke
 				break;
 			}
 		}
-		tke::needRedraw = true;
 		needUpdateIndirectBuffer = true;
 		LeaveCriticalSection(&cs);
 		return pObject;
@@ -391,8 +387,6 @@ namespace tke
 		EnterCriticalSection(&cs);
 
 		terrains.push_back(pTerrain);
-
-		tke::needRedraw = true;
 
 		LeaveCriticalSection(&cs);
 	}
@@ -451,7 +445,7 @@ namespace tke
 	void Scene::update()
 	{
 		{
-			descriptorPool->addWrite(panoramaPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrixBuffer->m_info);
+			descriptorPool->addWrite(panoramaPipeline->descriptorSet, &matrixBuffer->m_info, 0, 0);
 			descriptorPool->update();
 		}
 
@@ -643,7 +637,7 @@ namespace tke
 							commandPool->endOnce(cb);
 							releaseFramebuffer(fb);
 
-							descriptorPool->addWrite(panoramaPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pano_tex_position, envrImage->getInfo(colorSampler));
+							descriptorPool->addWrite(panoramaPipeline->descriptorSet, envrImage->getInfo(colorSampler), pano_tex_position, 0);
 						}
 
 						if (deferredPipeline)
@@ -667,7 +661,7 @@ namespace tke
 										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
-										descriptorPool->addWrite(downsamplePipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, down_source_position, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler));
+										descriptorPool->addWrite(downsamplePipeline->descriptorSet, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler), down_source_position, 0);
 										descriptorPool->update();
 										cb->bindDescriptorSet();
 										cb->draw(3);
@@ -692,7 +686,7 @@ namespace tke
 										auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 										cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
 										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
-										descriptorPool->addWrite(convolvePipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, con_source_position, envrImageDownsample[i - 1]->getInfo(plainSampler));
+										descriptorPool->addWrite(convolvePipeline->descriptorSet, envrImageDownsample[i - 1]->getInfo(plainSampler), con_source_position, 0);
 										descriptorPool->update();
 										cb->bindDescriptorSet();
 										cb->draw(3);
@@ -703,7 +697,7 @@ namespace tke
 									}
 								}
 
-								descriptorPool->addWrite(deferredPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, defe_envr_position, envrImage->getInfo(colorSampler, 0, 0, envrImage->level));
+								descriptorPool->addWrite(deferredPipeline->descriptorSet, envrImage->getInfo(colorSampler, 0, 0, envrImage->level), defe_envr_position, 0);
 
 								AmbientBufferShaderStruct stru;
 								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -858,7 +852,7 @@ namespace tke
 						}
 
 						if (bone_position != -1)
-							descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, bone_position, &pObject->animationComponent->boneMatrixBuffer->m_info, animatedIndex);
+							descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, &pObject->animationComponent->boneMatrixBuffer->m_info, bone_position, animatedIndex);
 
 						animatedIndex++;
 					}

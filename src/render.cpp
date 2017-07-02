@@ -348,21 +348,7 @@ namespace tke
 		device.cs.unlock();
 	}
 
-	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement)
-	{
-		VkWriteDescriptorSet write = {};
-		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet = descriptorSet;
-		write.dstBinding = binding;
-		write.dstArrayElement = dstArrayElement;
-		write.descriptorType = type;
-		write.descriptorCount = 1;
-		write.pImageInfo = pImageInfo;
-
-		writes.push_back(write);
-	}
-
-	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement)
+	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -372,6 +358,20 @@ namespace tke
 		write.descriptorType = type;
 		write.descriptorCount = 1;
 		write.pBufferInfo = pBufferInfo;
+
+		writes.push_back(write);
+	}
+
+	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type)
+	{
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = descriptorSet;
+		write.dstBinding = binding;
+		write.dstArrayElement = dstArrayElement;
+		write.descriptorType = type;
+		write.descriptorCount = 1;
+		write.pImageInfo = pImageInfo;
 
 		writes.push_back(write);
 	}
@@ -2432,7 +2432,7 @@ namespace tke
 			{
 				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pUniformBuffer)
-					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pUniformBuffer->m_info, link.array_element);
+					descriptorPool->addWrite(descriptorSet, &pUniformBuffer->m_info, link.binding, link.array_element, _vkDescriptorType(type));
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2441,7 +2441,7 @@ namespace tke
 			{
 				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
 				if (pStorageBuffer)
-					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, &pStorageBuffer->m_info, link.array_element);
+					descriptorPool->addWrite(descriptorSet, &pStorageBuffer->m_info, link.binding, link.array_element, _vkDescriptorType(type));
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2450,7 +2450,7 @@ namespace tke
 			{
 				auto pStorageImage = pResource->getImage(link.resource_name);
 				if (pStorageImage)
-					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pStorageImage->getInfo(0), link.array_element);
+					descriptorPool->addWrite(descriptorSet, pStorageImage->getInfo(0), link.binding, link.array_element, _vkDescriptorType(type));
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
@@ -2478,7 +2478,7 @@ namespace tke
 						sampler = colorBorderSampler;
 						break;
 					}
-					descriptorPool->addWrite(descriptorSet, _vkDescriptorType(type), link.binding, pTexture->getInfo(sampler), link.array_element);
+					descriptorPool->addWrite(descriptorSet, pTexture->getInfo(sampler), link.binding, link.array_element, _vkDescriptorType(type));
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);

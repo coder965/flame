@@ -245,8 +245,8 @@ namespace tke
 		~DescriptorPool();
 		VkDescriptorSet allocate(VkDescriptorSetLayout *pLayout);
 		void free(VkDescriptorSet set);
-		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorImageInfo *pImageInfo, uint32_t dstArrayElement = 0);
-		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo *pBufferInfo, uint32_t dstArrayElement = 0);
+		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 		void update();
 	};
 	extern DescriptorPool *descriptorPool;

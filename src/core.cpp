@@ -716,8 +716,8 @@ namespace tke
 			{
 				for (int index = 0; index < textures.size(); index++)
 				{
-					descriptorPool->addWrite(mrtPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position0, textures[index]->getInfo(colorSampler), index);
-					descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_position1, textures[index]->getInfo(colorSampler), index);
+					descriptorPool->addWrite(mrtPipeline->descriptorSet, textures[index]->getInfo(colorSampler), map_position0, index);
+					descriptorPool->addWrite(mrtAnimPipeline->descriptorSet, textures[index]->getInfo(colorSampler), map_position1, index);
 				}
 				descriptorPool->update();
 				needUpdateTexture = false;
