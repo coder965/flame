@@ -128,6 +128,10 @@ namespace tke
 		return text;
 	}
 
+	Pipeline *scatteringPipeline = nullptr;
+	Pipeline *downsamplePipeline = nullptr;
+	Pipeline *convolvePipeline = nullptr;
+
 	Pipeline *mrtPipeline = nullptr;
 	Pipeline *mrtAnimPipeline = nullptr;
 	void setMasterRenderer(Renderer *r)
@@ -299,6 +303,21 @@ namespace tke
 		plainPipeline_3d_wire = new Pipeline;
 		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
 		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
+
+		scatteringPipeline = new Pipeline;
+		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
+		scatteringPipeline->setup(plainRenderPass_image16, 0);
+		globalResource.setPipeline(scatteringPipeline);
+
+		downsamplePipeline = new Pipeline;
+		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
+		downsamplePipeline->setup(plainRenderPass_image16, 0);
+		globalResource.setPipeline(downsamplePipeline);
+
+		convolvePipeline = new Pipeline;
+		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
+		convolvePipeline->setup(plainRenderPass_image16, 0);
+		globalResource.setPipeline(convolvePipeline);
 
 		initPhysics();
 

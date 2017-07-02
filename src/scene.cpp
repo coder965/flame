@@ -36,6 +36,10 @@ namespace tke
 		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 
+		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
+		for (int i = 0; i < 3; i++)
+			envrImageDownsample[i] = new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
 		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
 		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
 		globalResource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
@@ -69,6 +73,10 @@ namespace tke
 		delete proceduralTerrainBuffer;
 		delete lightBuffer;
 		delete ambientBuffer;
+
+		delete envrImage;
+		for (int i = 0; i < 3; i++)
+			delete envrImageDownsample[i];
 
 		delete staticVertexBuffer;
 		delete staticIndexBuffer;
@@ -617,37 +625,6 @@ namespace tke
 			}
 			else if (skyType == SkyTypeAtmosphereScattering)
 			{
-				static Image *envrImage = nullptr;
-				static Image *envrImageDownsample[3] = {};
-
-				static Framebuffer *fb = nullptr;
-
-				static Pipeline scatteringPipeline;
-				static Pipeline downsamplePipeline;
-				static Pipeline convolvePipeline;
-
-				static bool first = true;
-				if (first)
-				{
-					first = false;
-
-					scatteringPipeline.loadXML(enginePath + "pipeline/sky/scattering.xml");
-					scatteringPipeline.setup(plainRenderPass_image16, 0);
-					globalResource.setPipeline(&scatteringPipeline);
-
-					downsamplePipeline.loadXML(enginePath + "pipeline/sky/downsample.xml");
-					downsamplePipeline.setup(plainRenderPass_image16, 0);
-					globalResource.setPipeline(&downsamplePipeline);
-
-					convolvePipeline.loadXML(enginePath + "pipeline/sky/convolve.xml");
-					convolvePipeline.setup(plainRenderPass_image16, 0);
-					globalResource.setPipeline(&convolvePipeline);
-
-					envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
-					for (int i = 0; i < 3; i++)
-						envrImageDownsample[i]= new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				}
-
 				if (panoramaPipeline)
 				{ // update Atmospheric Scattering
 					{
@@ -670,10 +647,10 @@ namespace tke
 					{
 						{
 							auto cb = commandPool->begineOnce();
-							fb = getFramebuffer(envrImage, plainRenderPass_image16);
+							auto fb = getFramebuffer(envrImage, plainRenderPass_image16);
 
 							cb->beginRenderPass(plainRenderPass_image16, fb);
-							cb->bindPipeline(&scatteringPipeline);
+							cb->bindPipeline(scatteringPipeline);
 							cb->draw(3);
 							cb->endRenderPass();
 
@@ -691,20 +668,20 @@ namespace tke
 							if (defe_envr_position != -1)
 							{
 								static int down_source_position = -1;
-								if (down_source_position == -1) down_source_position = downsamplePipeline.descriptorPosition("source");
+								if (down_source_position == -1) down_source_position = downsamplePipeline->descriptorPosition("source");
 								if (down_source_position != -1)
 								{
 									for (int i = 0; i < 3; i++)
 									{
 										auto cb = commandPool->begineOnce();
-										fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
+										auto fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
 
 										cb->beginRenderPass(plainRenderPass_image16, fb);
-										cb->bindPipeline(&downsamplePipeline);
+										cb->bindPipeline(downsamplePipeline);
 										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 										cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
-										descriptorPool->addWrite(downsamplePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, down_source_position, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler));
+										descriptorPool->addWrite(downsamplePipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, down_source_position, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler));
 										descriptorPool->update();
 										cb->bindDescriptorSet();
 										cb->draw(3);
@@ -716,20 +693,20 @@ namespace tke
 								}
 
 								static int con_source_position = -1;
-								if (con_source_position == -1) con_source_position = convolvePipeline.descriptorPosition("source");
+								if (con_source_position == -1) con_source_position = convolvePipeline->descriptorPosition("source");
 								if (con_source_position != -1)
 								{
 									for (int i = 1; i < envrImage->level; i++)
 									{
 										auto cb = commandPool->begineOnce();
-										fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
+										auto fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
 
 										cb->beginRenderPass(plainRenderPass_image16, fb);
-										cb->bindPipeline(&convolvePipeline);
+										cb->bindPipeline(convolvePipeline);
 										auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 										cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
 										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
-										descriptorPool->addWrite(convolvePipeline.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, con_source_position, envrImageDownsample[i - 1]->getInfo(plainSampler));
+										descriptorPool->addWrite(convolvePipeline->descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, con_source_position, envrImageDownsample[i - 1]->getInfo(plainSampler));
 										descriptorPool->update();
 										cb->bindDescriptorSet();
 										cb->draw(3);

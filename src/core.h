@@ -84,6 +84,10 @@ namespace tke
 	std::string majorProgressText();
 	std::string minorProgressText();
 
+	extern Pipeline *scatteringPipeline;
+	extern Pipeline *downsamplePipeline;
+	extern Pipeline *convolvePipeline;
+
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;
 	void setMasterRenderer(Renderer *r);

@@ -83,6 +83,8 @@ namespace tke
 		float atmosphereKr = 0.001f;
 		std::string skyFilename;
 		Image *skyImage = nullptr;
+		Image *envrImage = nullptr;
+		Image *envrImageDownsample[3] = {};
 
 		float exposure = 0.01f;
 		float white = 1.f;
