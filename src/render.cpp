@@ -151,12 +151,12 @@ namespace tke
 	void CommandBuffer::bindVertexBuffer(VertexBuffer *b)
 	{
 		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(v, 0, 1, &b->buffer, offsets);
+		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
 	}
 
 	void CommandBuffer::bindIndexBuffer(IndexBuffer *b)
 	{
-		vkCmdBindIndexBuffer(v, b->buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(v, b->v, 0, VK_INDEX_TYPE_UINT32);
 	}
 
 	void CommandBuffer::bindPipeline(Pipeline *p)
@@ -197,12 +197,12 @@ namespace tke
 
 	void CommandBuffer::drawIndirect(IndirectVertexBuffer *b, int count, int offset)
 	{
-		vkCmdDrawIndirect(v, b->buffer, offset * sizeof VkDrawIndirectCommand, count, sizeof VkDrawIndirectCommand);
+		vkCmdDrawIndirect(v, b->v, offset * sizeof VkDrawIndirectCommand, count, sizeof VkDrawIndirectCommand);
 	}
 
 	void CommandBuffer::drawIndirectIndex(IndirectIndexBuffer *b, int count, int offset)
 	{
-		vkCmdDrawIndexedIndirect(v, b->buffer, offset * sizeof VkDrawIndexedIndirectCommand, count, sizeof VkDrawIndexedIndirectCommand);
+		vkCmdDrawIndexedIndirect(v, b->v, offset * sizeof VkDrawIndexedIndirectCommand, count, sizeof VkDrawIndexedIndirectCommand);
 	}
 
 	void CommandBuffer::waitEvents(size_t count, VkEvent *e)
@@ -277,7 +277,7 @@ namespace tke
 		memcpy(map, data, size);
 		stagingBuffer.unmap();
 
-		copyBuffer(stagingBuffer.buffer, Buffer, size);
+		copyBuffer(stagingBuffer.v, Buffer, size);
 	}
 
 	void CommandPool::copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
@@ -320,6 +320,42 @@ namespace tke
 		device.cs.unlock();
 	}
 
+	void DescriptorSet::setBuffer(int binding, int index, Buffer *buffer)
+	{
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = v;
+		write.dstBinding = binding;
+		write.dstArrayElement = index;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		write.descriptorCount = 1;
+		VkDescriptorBufferInfo info;
+		info.offset = 0;
+		info.buffer = buffer->v;
+		info.range = buffer->size;
+		write.pBufferInfo = &info;
+
+		device.cs.lock();
+		vkUpdateDescriptorSets(device.v, 1, &write, 0, nullptr);
+		device.cs.unlock();
+	}
+
+	void DescriptorSet::setImage(int binding, int index, Image *image, VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	{
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = v;
+		write.dstBinding = binding;
+		write.dstArrayElement = index;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		write.descriptorCount = 1;
+		VkDescriptorImageInfo info;
+		info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		info.imageView = image->getView(aspect, baseLevel, levelCount, baseLayer, layerCount);
+		info.sampler = sampler;
+		write.pImageInfo = &info;
+	}
+
 	DescriptorPool::DescriptorPool()
 	{
 		VkDescriptorPoolSize descriptorPoolSizes[] = {
@@ -344,42 +380,6 @@ namespace tke
 	DescriptorPool::~DescriptorPool()
 	{
 		vkDestroyDescriptorPool(device.v, v, nullptr);
-	}
-
-	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type)
-	{
-		VkWriteDescriptorSet write = {};
-		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet = descriptorSet;
-		write.dstBinding = binding;
-		write.dstArrayElement = dstArrayElement;
-		write.descriptorType = type;
-		write.descriptorCount = 1;
-		write.pBufferInfo = pBufferInfo;
-		write.pImageInfo = pImageInfo;
-
-		writes.push_back(write);
-	}
-
-	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type)
-	{
-		addWrite(descriptorSet, pBufferInfo, nullptr, binding, dstArrayElement, type);
-	}
-
-	void DescriptorPool::addWrite(VkDescriptorSet descriptorSet, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type)
-	{
-		addWrite(descriptorSet, nullptr, pImageInfo, binding, dstArrayElement, type);
-	}
-
-	void DescriptorPool::update()
-	{
-		if (writes.size() == 0) 
-			return;
-
-		device.cs.lock();
-		vkUpdateDescriptorSets(device.v, writes.size(), writes.data(), 0, nullptr);
-		writes.clear();
-		device.cs.unlock();
 	}
 
 	DescriptorPool *descriptorPool = nullptr;
@@ -893,11 +893,11 @@ namespace tke
 
 		device.cs.lock();
 
-		res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &p->buffer);
+		res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &p->v);
 		assert(res == VK_SUCCESS);
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device.v, p->buffer, &memRequirements);
+		vkGetBufferMemoryRequirements(device.v, p->v, &memRequirements);
 
 		assert(p->size <= memRequirements.size);
 
@@ -909,7 +909,7 @@ namespace tke
 		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &p->memory);
 		assert(res == VK_SUCCESS);
 
-		res = vkBindBufferMemory(device.v, p->buffer, p->memory, 0);
+		res = vkBindBufferMemory(device.v, p->v, p->memory, 0);
 		assert(res == VK_SUCCESS);
 
 		device.cs.unlock();
@@ -919,7 +919,7 @@ namespace tke
 	{
 		device.cs.lock();
 		vkFreeMemory(device.v, p->memory, nullptr);
-		vkDestroyBuffer(device.v, p->buffer, nullptr);
+		vkDestroyBuffer(device.v, p->v, nullptr);
 		device.cs.unlock();
 	}
 
@@ -973,7 +973,7 @@ namespace tke
 		void* map = stagingBuffer.map(0, p->size);
 		memcpy(map, data, p->size);
 		stagingBuffer.unmap();
-		commandPool->copyBuffer(stagingBuffer.buffer, p->buffer, p->size);
+		commandPool->copyBuffer(stagingBuffer.v, p->v, p->size);
 	}
 
 	NonStagingBufferAbstract::NonStagingBufferAbstract(size_t _size, VkBufferUsageFlags usage, void *data)
@@ -993,15 +993,12 @@ namespace tke
 	void NonStagingBufferAbstract::update(void *data, StagingBuffer &stagingBuffer, size_t _size)
 	{
 		if (_size == 0) _size = size;
-		commandPool->updateBuffer(data, _size, stagingBuffer, buffer);
+		commandPool->updateBuffer(data, _size, stagingBuffer, v);
 	}
 
 	ShaderManipulatableBufferAbstract::ShaderManipulatableBufferAbstract(size_t _size, VkBufferUsageFlags usage)
 		:NonStagingBufferAbstract(_size, usage)
 	{
-		m_info = {};
-		m_info.buffer = buffer;
-		m_info.range = size;
 	}
 
 	UniformBuffer::UniformBuffer(size_t _size)
@@ -1180,7 +1177,7 @@ namespace tke
 		region.bufferOffset = 0;
 
 		auto cb = commandPool->begineOnce();
-		vkCmdCopyBufferToImage(cb->v, stagingBuffer.buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		commandPool->endOnce(cb);
 	}
 
@@ -1226,22 +1223,6 @@ namespace tke
 
 		views.push_back(view);
 		return view->v;
-	}
-
-	VkDescriptorImageInfo *Image::getInfo(VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
-	{
-		auto view = getView(aspect, baseLevel, levelCount, baseLayer, layerCount);
-		for (auto &info : infos)
-		{
-			if (info.imageView == view && info.sampler == sampler)
-				return &info;
-		}
-		VkDescriptorImageInfo info;
-		info.imageView = view;
-		info.sampler = sampler;
-		info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		infos.push_back(info);
-		return &infos.back();
 	}
 
 	int Image::getWidth(int _level) const
@@ -1291,14 +1272,8 @@ namespace tke
 		{
 		case DescriptorType::uniform_buffer:
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		case DescriptorType::storage_buffer:
-			return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		case DescriptorType::storage_image:
-			return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		case DescriptorType::image_n_sampler:
 			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		case DescriptorType::input_attachment:
-			return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 		}
 	}
 
@@ -2330,7 +2305,7 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
 
-		updateDescriptors();
+		linkDescriptors(descriptorSet);
 	}
 
 	Pipeline::~Pipeline()
@@ -2373,12 +2348,10 @@ namespace tke
 			delete stages[i];
 	}
 
-	void Pipeline::updateDescriptors()
+	void Pipeline::linkDescriptors(DescriptorSet *set)
 	{
 		for (auto &link : links)
 		{
-			DescriptorType type = DescriptorType::null;
-
 			if (link.binding == -1)
 			{
 				bool found = false;
@@ -2391,7 +2364,7 @@ namespace tke
 						if (d.name == link.descriptor_name)
 						{
 							link.binding = d.binding;
-							type = d.type;
+							link.type = d.type;
 							found = true;
 							break;
 						}
@@ -2401,7 +2374,7 @@ namespace tke
 					int cut = 1;
 				//assert(found);
 			}
-			else
+			if (link.type == DescriptorType::null)
 			{
 				bool found = false;
 				for (auto s : stages)
@@ -2412,7 +2385,7 @@ namespace tke
 					{
 						if (d.binding == link.binding)
 						{
-							type = d.type;
+							link.type = d.type;
 							found = true;
 							break;
 						}
@@ -2423,59 +2396,45 @@ namespace tke
 				//assert(found);
 			}
 
-			switch (type)
+			switch (link.type)
 			{
 			case DescriptorType::uniform_buffer:
 			{
-				auto pUniformBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
-				if (pUniformBuffer)
-					descriptorPool->addWrite(descriptorSet->v, &pUniformBuffer->m_info, link.binding, link.array_element, _vkDescriptorType(type));
+				if (!link.buffer)
+					link.buffer = pResource->getBuffer(link.resource_name);
+				if (link.buffer)
+					set->setBuffer(link.binding, link.array_element, link.buffer);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
 				break;
-			case DescriptorType::storage_buffer:
-			{
-				auto pStorageBuffer = (UniformBuffer*)pResource->getBuffer(link.resource_name);
-				if (pStorageBuffer)
-					descriptorPool->addWrite(descriptorSet->v, &pStorageBuffer->m_info, link.binding, link.array_element, _vkDescriptorType(type));
-				else
-					printf("%s: unable to link resource %s (binding:%d, type:storage buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
-			}
-				break;
-			case DescriptorType::storage_image:
-			{
-				auto pStorageImage = pResource->getImage(link.resource_name);
-				if (pStorageImage)
-					descriptorPool->addWrite(descriptorSet->v, pStorageImage->getInfo(0), link.binding, link.array_element, _vkDescriptorType(type));
-				else
-					printf("%s: unable to link resource %s (binding:%d, type:storage image)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
-			}
-				break;
 			case DescriptorType::image_n_sampler:
 			{
-				auto pTexture = pResource->getImage(link.resource_name);
-				if (pTexture)
+				if (!link.image)
+					link.image = pResource->getImage(link.resource_name);
+				if (link.image)
 				{
-					VkSampler sampler = 0;
-					switch (link.sampler)
+					if (link.vkSampler == 0)
 					{
-					case SamplerType::none:
-						break;
-					case SamplerType::plain:
-						sampler = plainSampler;
-						break;
-					case SamplerType::plain_unnormalized:
-						sampler = plainUnnormalizedSampler;
-						break;
-					case SamplerType::color:
-						sampler = colorSampler;
-						break;
-					case SamplerType::color_border:
-						sampler = colorBorderSampler;
-						break;
+						switch (link.sampler)
+						{
+						case SamplerType::none:
+							break;
+						case SamplerType::plain:
+							link.vkSampler = plainSampler;
+							break;
+						case SamplerType::plain_unnormalized:
+							link.vkSampler = plainUnnormalizedSampler;
+							break;
+						case SamplerType::color:
+							link.vkSampler = colorSampler;
+							break;
+						case SamplerType::color_border:
+							link.vkSampler = colorBorderSampler;
+							break;
+						}
 					}
-					descriptorPool->addWrite(descriptorSet->v, pTexture->getInfo(sampler), link.binding, link.array_element, _vkDescriptorType(type));
+					set->setImage(link.binding, link.array_element, link.image, link.vkSampler);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
@@ -2483,8 +2442,6 @@ namespace tke
 				break;
 			}
 		}
-
-		descriptorPool->update();
 	}
 
 	int Pipeline::descriptorPosition(const std::string &name)
@@ -3172,7 +3129,7 @@ namespace tke
 	void Renderer::updateDescriptors()
 	{
 		for (auto &p : resource.privatePipelines)
-			p.p->updateDescriptors();
+			p.p->linkDescriptors(p.p->descriptorSet);
 	}
 
 	void Renderer::execute(CommandBuffer *cb, int index)

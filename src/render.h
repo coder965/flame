@@ -75,7 +75,7 @@ namespace tke
 	struct Buffer
 	{
 		size_t size = 0;
-		VkBuffer buffer = 0;
+		VkBuffer v = 0;
 		VkDeviceMemory memory = 0;
 
 		VkBufferUsageFlags usage;
@@ -102,8 +102,6 @@ namespace tke
 
 	struct ShaderManipulatableBufferAbstract : NonStagingBufferAbstract
 	{
-		VkDescriptorBufferInfo m_info;
-
 		ShaderManipulatableBufferAbstract(size_t _size, VkBufferUsageFlags usage);
 	};
 
@@ -169,7 +167,6 @@ namespace tke
 		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
 
 		std::vector<ImageView*> views;
-		std::list<VkDescriptorImageInfo> infos;
 
 		std::string filename;
 
@@ -185,7 +182,6 @@ namespace tke
 		void transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout);
 		void fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect);
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
-		VkDescriptorImageInfo *getInfo(VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
 	Image *createImage(const std::string &filename, bool sRGB, bool saveData = false);
@@ -247,19 +243,16 @@ namespace tke
 
 		DescriptorSet(DescriptorPool *_pool, DescriptorSetLayout *_layout);
 		~DescriptorSet();
+		void setBuffer(int binding, int index, Buffer *buffer);
+		void setImage(int binding, int index, Image *image, VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
 	struct DescriptorPool
 	{
 		VkDescriptorPool v;
-		std::vector<VkWriteDescriptorSet> writes;
 
 		DescriptorPool();
 		~DescriptorPool();
-		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type);
-		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *pBufferInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-		void addWrite(VkDescriptorSet descriptorSet, VkDescriptorImageInfo *pImageInfo, uint32_t binding, uint32_t dstArrayElement, VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-		void update();
 	};
 	extern DescriptorPool *descriptorPool;
 
@@ -481,10 +474,7 @@ namespace tke
 	{
 		null,
 		REFLe uniform_buffer = 1 << 0,
-		REFLe storage_buffer = 1 << 1,
-		REFLe storage_image = 1 << 2,
-		REFLe image_n_sampler = 1 << 3,
-		REFLe input_attachment = 1 << 4
+		REFLe image_n_sampler = 1 << 1
 	};
 
 	REFLECTABLE struct Descriptor
@@ -649,6 +639,11 @@ namespace tke
 		REFLv std::string descriptor_name;
 		REFLv std::string resource_name;
 		REFLe SamplerType sampler = SamplerType::none;
+
+		DescriptorType type = DescriptorType::null;
+		Buffer *buffer = nullptr;
+		Image *image = nullptr;
+		VkSampler vkSampler = 0;
 	};
 
 	struct DescriptorSetLayout
@@ -723,7 +718,7 @@ namespace tke
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
 		void setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex);
-		void updateDescriptors();
+		void linkDescriptors(DescriptorSet *set);
 		int descriptorPosition(const std::string &name);
 	};
 

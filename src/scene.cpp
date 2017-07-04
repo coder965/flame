@@ -6,51 +6,37 @@ namespace tke
 {
 	static const float gravity = 9.81f;
 
+	UniformBuffer *matrixBuffer = nullptr;
+	UniformBuffer *staticObjectMatrixBuffer = nullptr;
+	UniformBuffer *animatedObjectMatrixBuffer = nullptr;
+	IndirectIndexBuffer *staticObjectIndirectBuffer = nullptr;
+	IndirectIndexBuffer *animatedObjectIndirectBuffer = nullptr;
+	UniformBuffer *heightMapTerrainBuffer = nullptr;
+	UniformBuffer *proceduralTerrainBuffer = nullptr;
+	UniformBuffer *lightBuffer = nullptr;
+	UniformBuffer *ambientBuffer = nullptr;
+
+	Image *envrImage = nullptr;
+	Image *envrImageDownsample[3] = {};
+
+	Image *mainImage = nullptr;
+	Image *albedoAlphaImage = nullptr;
+	Image *normalHeightImage = nullptr;
+	Image *specRoughnessImage = nullptr;
+
 	VkRenderPass sceneRenderPass;
 
 	Pipeline *panoramaPipeline = nullptr;
-	static int pano_matrix_pos = -1;
 
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
+
+	Pipeline *composePipeline = nullptr;
 	 
 	Scene::Scene()
-		:resource(&globalResource)
 	{
 		InitializeCriticalSection(&cs);
 
-		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
-		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
-		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
-		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
-		proceduralTerrainBuffer = new UniformBuffer(sizeof(glm::vec2));
-		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
-		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
-
-		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
-		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
-
-		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
-		for (int i = 0; i < 3; i++)
-			envrImageDownsample[i] = new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-
-		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-
-		pano_ds = new DescriptorSet(descriptorPool, panoramaPipeline->descriptorSetLayout);
-
-		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
-		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
-		globalResource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
-		globalResource.setBuffer(heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
-		globalResource.setBuffer(proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
-		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
-		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
-
-		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
-		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
-
-		globalResource.setInt(&staticIndirectCount, "Scene.Static.IndirectCount");
-		globalResource.setInt(&animatedIndirectCount, "Scene.Animated.IndirectCount");
 
 		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
 		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
@@ -62,31 +48,6 @@ namespace tke
 
 	Scene::~Scene()
 	{
-		delete constantBuffer;
-		delete matrixBuffer;
-		delete staticObjectMatrixBuffer;
-		delete animatedObjectMatrixBuffer;
-		delete materialBuffer;
-		delete heightMapTerrainBuffer;
-		delete proceduralTerrainBuffer;
-		delete lightBuffer;
-		delete ambientBuffer;
-
-		delete envrImage;
-		for (int i = 0; i < 3; i++)
-			delete envrImageDownsample[i];
-
-		delete mainImage;
-
-		delete pano_ds;
-
-		delete staticVertexBuffer;
-		delete staticIndexBuffer;
-		delete animatedVertexBuffer;
-		delete animatedIndexBuffer;
-		delete staticObjectIndirectBuffer;
-		delete animatedObjectIndirectBuffer;
-
 		for (auto pLight : lights)
 			delete pLight;
 
@@ -458,12 +419,6 @@ namespace tke
 
 	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
 	{
-		if (pano_matrix_pos != -1)
-		{
-			descriptorPool->addWrite(panoramaPipeline->descriptorSet->v, &matrixBuffer->m_info, pano_matrix_pos, 0);
-			descriptorPool->update();
-		}
-
 		// update animation and bones
 		for (auto object : objects)
 		{
@@ -607,16 +562,16 @@ namespace tke
 			else if (skyType == SkyTypePanorama)
 			{
 				// TODO : FIX SKY FROM FILE
-				if (skyImage)
-				{
-					//writes.push_back(vk->writeDescriptorSet(engine->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(engine->colorSampler), 0));
-					//writes.push_back(vk->writeDescriptorSet(engine->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(engine->colorSampler), 0));
+				//if (skyImage)
+				//{
+				//	//writes.push_back(vk->writeDescriptorSet(engine->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(engine->colorSampler), 0));
+				//	//writes.push_back(vk->writeDescriptorSet(engine->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(engine->colorSampler), 0));
 
-					AmbientBufferShaderStruct stru;
-					stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->level - 1);
-					stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-					ambientBuffer->update(&stru, *stagingBuffer);
-				}
+				//	AmbientBufferShaderStruct stru;
+				//	stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->level - 1);
+				//	stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+				//	ambientBuffer->update(&stru, *stagingBuffer);
+				//}
 			}
 			else if (skyType == SkyTypeAtmosphereScattering)
 			{
@@ -635,91 +590,79 @@ namespace tke
 						float fScaleOverScaleDepth = fScale / fScaleDepth;	// fScale / fScaleDepth
 					}
 
-					static int pano_tex_position = -1;
-					if (pano_tex_position == -1) pano_tex_position = panoramaPipeline->descriptorPosition("tex");
-
-					if (pano_tex_position != -1)
 					{
-						{
-							auto cb = commandPool->begineOnce();
-							auto fb = getFramebuffer(envrImage, plainRenderPass_image16);
+						auto cb = commandPool->begineOnce();
+						auto fb = getFramebuffer(envrImage, plainRenderPass_image16);
 
-							cb->beginRenderPass(plainRenderPass_image16, fb);
-							cb->bindPipeline(scatteringPipeline);
-							cb->draw(3);
-							cb->endRenderPass();
+						cb->beginRenderPass(plainRenderPass_image16, fb);
+						cb->bindPipeline(scatteringPipeline);
+						cb->draw(3);
+						cb->endRenderPass();
 
-							commandPool->endOnce(cb);
-							releaseFramebuffer(fb);
-
-							descriptorPool->addWrite(panoramaPipeline->descriptorSet->v, envrImage->getInfo(colorSampler), pano_tex_position, 0);
-						}
-
-						if (deferredPipeline)
-						{ // update IBL
-							if (defe_envr_position != -1)
-							{
-								static int down_source_position = -1;
-								if (down_source_position == -1) down_source_position = downsamplePipeline->descriptorPosition("source");
-								if (down_source_position != -1)
-								{
-									for (int i = 0; i < 3; i++)
-									{
-										auto cb = commandPool->begineOnce();
-										auto fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
-
-										cb->beginRenderPass(plainRenderPass_image16, fb);
-										cb->bindPipeline(downsamplePipeline);
-										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
-										auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
-										cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
-										descriptorPool->addWrite(downsamplePipeline->descriptorSet->v, i == 0 ? envrImage->getInfo(plainSampler) : envrImageDownsample[i - 1]->getInfo(plainSampler), down_source_position, 0);
-										descriptorPool->update();
-										cb->bindDescriptorSet();
-										cb->draw(3);
-										cb->endRenderPass();
-
-										commandPool->endOnce(cb);
-										releaseFramebuffer(fb);
-									}
-								}
-
-								static int con_source_position = -1;
-								if (con_source_position == -1) con_source_position = convolvePipeline->descriptorPosition("source");
-								if (con_source_position != -1)
-								{
-									for (int i = 1; i < envrImage->level; i++)
-									{
-										auto cb = commandPool->begineOnce();
-										auto fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
-
-										cb->beginRenderPass(plainRenderPass_image16, fb);
-										cb->bindPipeline(convolvePipeline);
-										auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-										cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
-										cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
-										descriptorPool->addWrite(convolvePipeline->descriptorSet->v, envrImageDownsample[i - 1]->getInfo(plainSampler), con_source_position, 0);
-										descriptorPool->update();
-										cb->bindDescriptorSet();
-										cb->draw(3);
-										cb->endRenderPass();
-
-										commandPool->endOnce(cb);
-										releaseFramebuffer(fb);
-									}
-								}
-
-								descriptorPool->addWrite(deferredPipeline->descriptorSet->v, envrImage->getInfo(colorSampler, 0, 0, envrImage->level), defe_envr_position, 0);
-
-								AmbientBufferShaderStruct stru;
-								stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
-								stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-								ambientBuffer->update(&stru, *stagingBuffer);
-							}
-						}
+						commandPool->endOnce(cb);
+						releaseFramebuffer(fb);
 					}
 
-					descriptorPool->update();
+					if (deferredPipeline)
+					{ // update IBL
+						if (defe_envr_position != -1)
+						{
+							static int down_source_position = -1;
+							if (down_source_position == -1) down_source_position = downsamplePipeline->descriptorPosition("source");
+							if (down_source_position != -1)
+							{
+								for (int i = 0; i < 3; i++)
+								{
+									auto cb = commandPool->begineOnce();
+									auto fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
+
+									cb->beginRenderPass(plainRenderPass_image16, fb);
+									cb->bindPipeline(downsamplePipeline);
+									cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
+									auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
+									cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
+									downsamplePipeline->descriptorSet->setImage(down_source_position, 0, i == 0 ? envrImage : envrImageDownsample[i - 1], plainSampler);
+									cb->bindDescriptorSet();
+									cb->draw(3);
+									cb->endRenderPass();
+
+									commandPool->endOnce(cb);
+									releaseFramebuffer(fb);
+								}
+							}
+
+							static int con_source_position = -1;
+							if (con_source_position == -1) con_source_position = convolvePipeline->descriptorPosition("source");
+							if (con_source_position != -1)
+							{
+								for (int i = 1; i < envrImage->level; i++)
+								{
+									auto cb = commandPool->begineOnce();
+									auto fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
+
+									cb->beginRenderPass(plainRenderPass_image16, fb);
+									cb->bindPipeline(convolvePipeline);
+									auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
+									cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
+									cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
+									convolvePipeline->descriptorSet->setImage(con_source_position, 0, envrImageDownsample[i - 1], plainSampler);
+									cb->bindDescriptorSet();
+									cb->draw(3);
+									cb->endRenderPass();
+
+									commandPool->endOnce(cb);
+									releaseFramebuffer(fb);
+								}
+							}
+
+							deferredPipeline->descriptorSet->setImage(defe_envr_position, 0, envrImage, colorSampler, 0, 0, envrImage->level);
+
+							AmbientBufferShaderStruct stru;
+							stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
+							stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+							ambientBuffer->update(&stru, *stagingBuffer);
+						}
+					}
 				}
 			}
 
@@ -773,8 +716,8 @@ namespace tke
 
 			}
 			stagingBuffer->unmap();
-			if (staticUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, staticObjectMatrixBuffer->buffer, staticUpdateRanges.size(), staticUpdateRanges.data());
-			if (animatedUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, animatedObjectMatrixBuffer->buffer, animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			if (staticUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
+			if (animatedUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 		if (terrains.size() > 0)
 		{
@@ -812,9 +755,7 @@ namespace tke
 			}
 
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, heightMapTerrainBuffer->buffer, ranges.size(), ranges.data());
-
-			descriptorPool->update();
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, heightMapTerrainBuffer->v, ranges.size(), ranges.data());
 		}
 		if (needUpdateIndirectBuffer)
 		{
@@ -864,7 +805,7 @@ namespace tke
 						}
 
 						if (bone_position != -1)
-							descriptorPool->addWrite(mrtAnimPipeline->descriptorSet->v, &pObject->animationComponent->boneMatrixBuffer->m_info, bone_position, animatedIndex);
+							mrtAnimPipeline->descriptorSet->setBuffer(bone_position, animatedIndex, pObject->animationComponent->boneMatrixBuffer);
 
 						animatedIndex++;
 					}
@@ -875,8 +816,6 @@ namespace tke
 
 				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
 				if (animatedCommands.size() > 0) animatedObjectIndirectBuffer->update(animatedCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
-
-				descriptorPool->update();
 			}
 			needUpdateIndirectBuffer = false;
 		}
@@ -907,7 +846,7 @@ namespace tke
 				lightIndex++;
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->buffer, lightBuffer->buffer, ranges.size(), ranges.data());
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, lightBuffer->v, ranges.size(), ranges.data());
 		}
 		if (lights.size() > 0)
 		{ // shadow
@@ -981,14 +920,23 @@ namespace tke
 		for (auto pTerrain : terrains)
 			pTerrain->changed = false;
 
-		//cb->reset();
-		//cb->begin();
+		cb->reset();
+		cb->begin();
 
-		//cb->beginRenderPass(sceneRenderPass, fb);
-		//cb->endRenderPass();
+		cb->beginRenderPass(sceneRenderPass, fb);
+		cb->bindVertexBuffer(staticVertexBuffer);
+		cb->bindIndexBuffer(staticIndexBuffer);
+		cb->bindPipeline(panoramaPipeline);
+		cb->bindDescriptorSet();
+		cb->drawIndex(sphereModel->indices.size(), sphereModel->indiceBase, sphereModel->vertexBase);
+		cb->nextSubpass();
+		cb->bindPipeline(composePipeline);
+		cb->bindDescriptorSet();
+		cb->draw(3);
+		cb->endRenderPass();
 
-		//cb->setEvent(signalEvent);
-		//cb->end();
+		cb->setEvent(signalEvent);
+		cb->end();
 	}
 
 	//struct MasterRenderer
@@ -1018,19 +966,63 @@ namespace tke
 
 	void initScene()
 	{
-		auto att0 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-		auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-		VkAttachmentReference col_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
-		VkAttachmentReference col_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
-		VkSubpassDescription subpass0 = subpassDesc(1, &col_ref0);
-		VkSubpassDescription subpass1 = subpassDesc(1, &col_ref1);
+		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
+		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
+		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
+		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
+		proceduralTerrainBuffer = new UniformBuffer(sizeof(glm::vec2));
+		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
+		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
+
+		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+
+		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
+		for (int i = 0; i < 3; i++)
+			envrImageDownsample[i] = new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		globalResource.setImage(envrImage, "Envr.Image");
+
+		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		globalResource.setImage(mainImage, "Main.Image");
+		globalResource.setImage(albedoAlphaImage, "AlbedoAlpha.Image");
+		globalResource.setImage(normalHeightImage, "NormalHeight.Image");
+		globalResource.setImage(specRoughnessImage, "SpecRoughness.Image");
+
+		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
+		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
+		globalResource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
+		globalResource.setBuffer(heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
+		globalResource.setBuffer(proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
+		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
+		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
+
+		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
+		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
+
 		VkAttachmentDescription atts[] = {
-			att0,
-			att1
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), // main
+			depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR),				 // depth
+			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // albedo alpha
+			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // normal height
+			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // spec roughness
+			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE)		 // dst
 		};
+		VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+		VkAttachmentReference mrt_col_ref[] = { 
+			{ 2, VK_IMAGE_LAYOUT_GENERAL },
+			{ 3, VK_IMAGE_LAYOUT_GENERAL },
+			{ 4, VK_IMAGE_LAYOUT_GENERAL }
+		};
+		VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
+		VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_GENERAL };
 		VkSubpassDescription subpasses[] = {
-			subpass0,
-			subpass1
+			subpassDesc(1, &main_col_ref), // sky
+			subpassDesc(1, mrt_col_ref, &dep_ref), // mrt
+			subpassDesc(1, &main_col_ref), // deferred
+			subpassDesc(1, &dst_col_ref)  // compose
 		};
 		sceneRenderPass = createRenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, 0, nullptr);
 
@@ -1038,12 +1030,26 @@ namespace tke
 		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");
 		panoramaPipeline->setup(sceneRenderPass, 0);
 		globalResource.setPipeline(panoramaPipeline);
-		pano_matrix_pos = panoramaPipeline->descriptorPosition("MATRIX");
+
+		mrtPipeline = new Pipeline;
+		mrtPipeline->loadXML(enginePath + "pipeline/deferred/mrt.xml");
+		mrtPipeline->setup(sceneRenderPass, 1);
+		//globalResource.setPipeline(mrtPipeline);
+
+		mrtAnimPipeline = new Pipeline;
+		mrtAnimPipeline->loadXML(enginePath + "pipeline/deferred/mrt_anim.xml");
+		mrtAnimPipeline->setup(sceneRenderPass, 1);
+		//globalResource.setPipeline(mrtAnimPipeline);
 
 		deferredPipeline = new Pipeline;
 		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
-		deferredPipeline->setup(sceneRenderPass, 0);
+		deferredPipeline->setup(sceneRenderPass, 2);
 		//globalResource.setPipeline(deferredPipeline);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
+
+		composePipeline = new Pipeline;
+		composePipeline->loadXML(enginePath + "pipeline/compose/compose.xml");
+		composePipeline->setup(sceneRenderPass, 3);
+		//globalResource.setPipeline(composePipeline);
 	}
 }

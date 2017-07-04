@@ -55,20 +55,9 @@ MonitorWidget::~MonitorWidget()
 	delete cb;
 }
 
-void MonitorWidget::makeCmd()
-{
-	cb->reset();
-	cb->begin();
-	renderer->execute(cb);
-	cb->setEvent(renderFinished);
-	cb->end();
-}
-
 void MonitorWidget::show()
 {
 	scene->show(cb, fb_scene, renderFinished);
-
-	makeCmd();
 
 	ImGui::BeginDock("Monitor", &opened);
 	if (ImGui::IsWindowFocused())

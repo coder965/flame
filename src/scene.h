@@ -54,10 +54,31 @@ namespace tke
 		glm::vec4 fogcolor;
 	};
 
+	extern Image *envrImage;
+	extern Image *envrImageDownsample[3];
+
+	extern Image *mainImage;
+	extern Image *albedoAlphaImage;
+	extern Image *normalHeightImage;
+	extern Image *specRoughnessImage;
+
 	extern VkRenderPass sceneRenderPass;
 
 	extern Pipeline *panoramaPipeline;
+	extern Pipeline *mrtPipeline;
+	extern Pipeline *mrtAnimPipeline;
 	extern Pipeline *deferredPipeline;
+	extern Pipeline *composePipeline;
+
+	extern UniformBuffer *matrixBuffer;
+	extern UniformBuffer *staticObjectMatrixBuffer;
+	extern UniformBuffer *animatedObjectMatrixBuffer;
+	extern IndirectIndexBuffer *staticObjectIndirectBuffer;
+	extern IndirectIndexBuffer *animatedObjectIndirectBuffer;
+	extern UniformBuffer *heightMapTerrainBuffer;
+	extern UniformBuffer *proceduralTerrainBuffer;
+	extern UniformBuffer *lightBuffer;
+	extern UniformBuffer *ambientBuffer;
 
 	struct Scene
 	{
@@ -76,16 +97,6 @@ namespace tke
 		float atmosphereKm = 0.0025f;
 		float atmosphereKr = 0.001f;
 		std::string skyFilename;
-
-		ResourceBank resource;
-
-		Image *skyImage = nullptr;
-		Image *envrImage = nullptr;
-		Image *envrImageDownsample[3] = {};
-
-		Image *mainImage = nullptr;
-
-		DescriptorSet *pano_ds = nullptr;
 
 		float exposure = 0.01f;
 		float white = 1.f;
@@ -110,16 +121,6 @@ namespace tke
 		bool needUpdateSky = true;
 		bool needUpdateIndirectBuffer = true;
 		bool lightCountChanged = true;
-
-		UniformBuffer *matrixBuffer = nullptr;
-		UniformBuffer *staticObjectMatrixBuffer = nullptr;
-		UniformBuffer *animatedObjectMatrixBuffer = nullptr;
-		IndirectIndexBuffer *staticObjectIndirectBuffer = nullptr;
-		IndirectIndexBuffer *animatedObjectIndirectBuffer = nullptr;
-		UniformBuffer *heightMapTerrainBuffer = nullptr;
-		UniformBuffer *proceduralTerrainBuffer = nullptr;
-		UniformBuffer *lightBuffer = nullptr;
-		UniformBuffer *ambientBuffer = nullptr;
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 

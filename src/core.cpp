@@ -34,14 +34,6 @@ namespace tke
 	Pipeline *downsamplePipeline = nullptr;
 	Pipeline *convolvePipeline = nullptr;
 
-	Pipeline *mrtPipeline = nullptr;
-	Pipeline *mrtAnimPipeline = nullptr;
-	void setMasterRenderer(Renderer *r)
-	{
-		mrtPipeline = r->resource.getPipeline("Mrt.Pipeline");
-		mrtAnimPipeline = r->resource.getPipeline("Mrt_Anim.Pipeline");
-	}
-
 	bool needUpdateVertexBuffer = true;
 	bool needUpdateMaterialBuffer = true;
 	bool needUpdateTexture = true;
