@@ -10,7 +10,11 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	tke::addGuiImage(image);
 
-	fb_one = tke::getFramebuffer(image, tke::plainRenderPass_image8);
+	VkImageView views[] = {
+		image->getView(),
+		tke::depthImage->getView()
+	};
+	fb_tool = tke::getFramebuffer(image->width, image->height, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	fb_scene = scene->createFramebuffer(image);
 
 	tke::ShaderMacro macro;
@@ -22,7 +26,7 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 	cb = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
 
-	transformerTool = new TransformerTool(fb_one);
+	transformerTool = new TransformerTool(fb_tool);
 
 	auto obj = new tke::Object(model);
 	scene->addObject(obj);
@@ -40,7 +44,7 @@ MonitorWidget::~MonitorWidget()
 	delete scene;
 	tke::removeGuiImage(image);
 	delete image;
-	tke::releaseFramebuffer(fb_one);
+	tke::releaseFramebuffer(fb_tool);
 	tke::releaseFramebuffer(fb_scene);
 	delete cb;
 }
@@ -81,7 +85,17 @@ void MonitorWidget::show()
 		}
 	}
 
-	ImGui::Button(ICON_FA_FILE "  File");
+	if (ImGui::Button("S"))
+		transformerTool->mode = TransformerTool::ModeNull;
+	ImGui::SameLine();
+	if (ImGui::Button("M"))
+		transformerTool->mode = TransformerTool::ModeMove;
+	ImGui::SameLine();
+	if (ImGui::Button("R"))
+		transformerTool->mode = TransformerTool::ModeRotate;
+	ImGui::SameLine();
+	if (ImGui::Button("C"))
+		transformerTool->mode = TransformerTool::ModeScale;
 
 	ImGui::EndDock();
 
@@ -93,7 +107,7 @@ void MonitorWidget::show()
 			transformerTool->transformer = selectedItem.toObject();
 			break;
 		}
-		transformerTool->show(scene->camera.getMat(), renderFinished);
+		transformerTool->show(scene->camera.getMatInv(), renderFinished);
 	}
 }
 

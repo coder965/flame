@@ -11,7 +11,7 @@ struct MonitorWidget
 	tke::Model *model;
 
 	tke::Image *image;
-	tke::Framebuffer *fb_one;
+	tke::Framebuffer *fb_tool;
 	tke::Framebuffer *fb_scene;
 
 	tke::CommandBuffer *cb;
@@ -23,7 +23,6 @@ struct MonitorWidget
 
 	MonitorWidget(tke::Model *_model);
 	~MonitorWidget();
-	void makeCmd();
 	void show();
 };
 

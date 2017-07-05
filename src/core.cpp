@@ -52,13 +52,13 @@ namespace tke
 
 	Image *depthImage = nullptr;
 
-	VkRenderPass plainRenderPass_image8;
-	VkRenderPass plainRenderPass_image8_clear;
-	VkRenderPass plainRenderPass_image16;
-	VkRenderPass plainRenderPass_image16_clear;
-	VkRenderPass plainRenderPass_depth_clear_image8;
-	VkRenderPass plainRenderPass_window;
-	VkRenderPass plainRenderPass_window_clear;
+	RenderPass *plainRenderPass_image8;
+	RenderPass *plainRenderPass_image8_clear;
+	RenderPass *plainRenderPass_image16;
+	RenderPass *plainRenderPass_image16_clear;
+	RenderPass *plainRenderPass_depth_clear_image8;
+	RenderPass *plainRenderPass_window;
+	RenderPass *plainRenderPass_window_clear;
 
 	Pipeline *plainPipeline_2d = nullptr;
 	Pipeline *plainPipeline_3d = nullptr;
@@ -534,13 +534,13 @@ namespace tke
 				att0,
 				att6
 			};
-			plainRenderPass_image8 = createRenderPass(1, &att0, 1, &subpass0, 0, nullptr);
-			plainRenderPass_image8_clear = createRenderPass(1, &att1, 1, &subpass0, 0, nullptr);
-			plainRenderPass_image16 = createRenderPass(1, &att2, 1, &subpass0, 0, nullptr);
-			plainRenderPass_image16_clear = createRenderPass(1, &att3, 1, &subpass0, 0, nullptr);
-			plainRenderPass_depth_clear_image8 = createRenderPass(ARRAYSIZE(atts), atts, 1, &subpass1, 0, nullptr);
-			plainRenderPass_window = createRenderPass(1, &att4, 1, &subpass0, 0, nullptr);
-			plainRenderPass_window_clear = createRenderPass(1, &att5, 1, &subpass0, 0, nullptr);
+			plainRenderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
+			plainRenderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
+			plainRenderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
+			plainRenderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
+			plainRenderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts), atts, 1, &subpass1);
+			plainRenderPass_window = new RenderPass(1, &att4, 1, &subpass0);
+			plainRenderPass_window_clear = new RenderPass(1, &att5, 1, &subpass0);
 		}
 
 		plainPipeline_2d = new Pipeline;

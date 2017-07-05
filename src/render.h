@@ -35,6 +35,7 @@ namespace tke
 	struct DescriptorSetLayout;
 	struct DescriptorSet;
 	struct Framebuffer;
+	struct RenderPass;
 	struct Pipeline;
 
 	struct Instance
@@ -193,7 +194,7 @@ namespace tke
 		void reset();
 		void begin(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
 		void end();
-		void beginRenderPass(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount = 0, VkClearValue *pClearValues = nullptr);
+		void beginRenderPass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue = nullptr);
 		void nextSubpass(VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 		void endRenderPass();
 		void setViewportAndScissor(int cx, int cy);
@@ -260,9 +261,9 @@ namespace tke
 		~Framebuffer();
 	};
 
-	Framebuffer *getFramebuffer(Image *i, VkRenderPass renderPass, int level = 0);
+	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level = 0);
 
-	Framebuffer *getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views);
+	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views);
 
 	void releaseFramebuffer(Framebuffer *f);
 
@@ -290,8 +291,15 @@ namespace tke
 	VkAttachmentDescription swapchainAttachmentDesc(VkAttachmentLoadOp loadOp);
 	VkSubpassDescription subpassDesc(int colorCount, VkAttachmentReference *pColors, VkAttachmentReference *pDepth = nullptr, int inputCount = 0, VkAttachmentReference *pInputs = nullptr);
 	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
-	VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies);
-	void destroyRenderPass(VkRenderPass rp);
+
+	struct RenderPass
+	{
+		VkRenderPass v;
+		std::vector<VkClearValue> clearValues;
+
+		RenderPass(int attachmentCount, VkAttachmentDescription *pAttachments, int subpassCount, VkSubpassDescription *pSubpasses, int dependencyCount = 0, VkSubpassDependency *pDependencies = nullptr);
+		~RenderPass();
+	};
 
 	Err initRender(bool debug);
 
@@ -375,40 +383,6 @@ namespace tke
 		REFLe color = 1 << 0,
 		REFLe depth = 1 << 1,
 		REFLe stencil = 1 << 2,
-	};
-
-	REFLECTABLE enum class RenderPassType : int
-	{
-		null,
-		REFLe draw_action = 1 << 0,
-		REFLe call_secondary_cmd = 1 << 1
-	};
-
-	REFLECTABLE enum class DrawActionType : int
-	{
-		null,
-		REFLe draw_action = 1 << 0,
-		REFLe call_fuction = 1 << 1
-	};
-
-	REFLECTABLE enum class DrawcallType : int
-	{
-		null,
-		REFLe vertex = 1 << 0,
-		REFLe index = 1 << 1,
-		REFLe indirect_vertex = 1 << 2,
-		REFLe indirect_index = 1 << 3,
-		REFLe push_constant = 1 << 4
-	};
-
-	REFLECTABLE enum class PushConstantType : int
-	{
-		null,
-		REFLe int_t = 1 << 0,
-		REFLe float_t = 1 << 1,
-		REFLe vec2_t = 1 << 2,
-		REFLe vec3_t = 1 << 3,
-		REFLe vec4_t = 1 << 4
 	};
 
 	REFLECTABLE struct PushConstantRange
@@ -699,7 +673,7 @@ namespace tke
 		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 
 		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
-		VkRenderPass renderPass;
+		RenderPass *renderPass;
 		int subpassIndex;
 		std::vector<VkDynamicState> vkDynamicStates;
 		DescriptorSetLayout *descriptorSetLayout = nullptr;
@@ -711,7 +685,7 @@ namespace tke
 		~Pipeline();
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
-		void setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex);
+		void setup(RenderPass *_renderPass, std::uint32_t _subpassIndex);
 		void linkDescriptors(DescriptorSet *set);
 		int descriptorPosition(const std::string &name);
 	};

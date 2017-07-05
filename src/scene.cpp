@@ -24,7 +24,7 @@ namespace tke
 	Image *normalHeightImage = nullptr;
 	Image *specRoughnessImage = nullptr;
 
-	VkRenderPass sceneRenderPass;
+	RenderPass *sceneRenderPass = nullptr;
 
 	Pipeline *scatteringPipeline = nullptr;
 
@@ -421,14 +421,15 @@ namespace tke
 
 	Framebuffer *Scene::createFramebuffer(Image *dst)
 	{
-		std::vector<VkImageView> views;
-		views.push_back(mainImage->getView());
-		views.push_back(depthImage->getView());
-		views.push_back(albedoAlphaImage->getView());
-		views.push_back(normalHeightImage->getView());
-		views.push_back(specRoughnessImage->getView());
-		views.push_back(dst->getView());
-		return getFramebuffer(resCx, resCy, sceneRenderPass, views);
+		VkImageView views[] = {
+			mainImage->getView(),
+			depthImage->getView(),
+			albedoAlphaImage->getView(),
+			normalHeightImage->getView(),
+			specRoughnessImage->getView(),
+			dst->getView(),
+		};
+		return getFramebuffer(resCx, resCy, sceneRenderPass, ARRAYSIZE(views), views);
 	}
 
 	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
@@ -937,16 +938,7 @@ namespace tke
 		cb->reset();
 		cb->begin();
 
-		VkClearValue clearValue[] = {
-			{},
-			{ 1.f, 0 },
-			{},
-			{},
-			{},
-			{}
-		};
-
-		cb->beginRenderPass(sceneRenderPass, fb, ARRAYSIZE(clearValue), clearValue);
+		cb->beginRenderPass(sceneRenderPass, fb);
 
 		// sky
 		cb->bindVertexBuffer(staticVertexBuffer);
@@ -1078,7 +1070,7 @@ namespace tke
 			subpassDependency(2, 3)
 		};
 
-		sceneRenderPass = createRenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
+		sceneRenderPass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
 
 		scatteringPipeline = new Pipeline;
 		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");

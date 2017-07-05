@@ -95,16 +95,16 @@ namespace tke
 		assert(res == VK_SUCCESS);
 	}
 
-	void CommandBuffer::beginRenderPass(VkRenderPass renderPass, Framebuffer *fb, int clearValueCount, VkClearValue *pClearValues)
+	void CommandBuffer::beginRenderPass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue)
 	{
 		VkRenderPassBeginInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.renderPass = renderPass;
+		info.renderPass = renderPass->v;
 		info.framebuffer = fb->v;
 		info.renderArea.extent.width = fb->cx;
 		info.renderArea.extent.height = fb->cy;
-		info.clearValueCount = clearValueCount;
-		info.pClearValues = pClearValues;
+		info.clearValueCount = renderPass->clearValues.size();
+		info.pClearValues = pClearValue ? pClearValue : renderPass->clearValues.data();
 
 		vkCmdBeginRenderPass(v, &info, VK_SUBPASS_CONTENTS_INLINE);
 	}
@@ -397,17 +397,17 @@ namespace tke
 
 	std::vector<Framebuffer*> framebuffers;
 
-	Framebuffer *getFramebuffer(Image *i, VkRenderPass renderPass, int level)
+	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
-		std::vector<VkImageView> views = { i->getView(0, level) };
-		return getFramebuffer(i->getWidth(level), i->getHeight(level), renderPass, views);
+		auto view = i->getView(0, level);
+		return getFramebuffer(i->getWidth(level), i->getHeight(level), renderPass, 1, &view);
 	}
 
-	Framebuffer *getFramebuffer(int cx, int cy, VkRenderPass renderPass, std::vector<VkImageView> &views)
+	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
 	{
 		for (auto f : framebuffers)
 		{
-			if (f->views.size() == views.size())
+			if (f->views.size() == viewCount)
 			{
 				bool same = true;
 				for (auto i = 0; i < f->views.size(); i++)
@@ -429,16 +429,17 @@ namespace tke
 		auto f = new Framebuffer;
 		f->cx = cx;
 		f->cy = cy;
-		f->views.insert(f->views.begin(), views.begin(), views.end());
+		for (int i = 0; i < viewCount; i++)
+			f->views.push_back(views[i]);
 
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		info.width = cx;
 		info.height = cy;
 		info.layers = 1;
-		info.renderPass = renderPass;
-		info.attachmentCount = views.size();
-		info.pAttachments = views.data();
+		info.renderPass = renderPass->v;
+		info.attachmentCount = viewCount;
+		info.pAttachments = views;
 
 		device.cs.lock();
 		auto res = vkCreateFramebuffer(device.v, &info, nullptr, &f->v);
@@ -630,9 +631,16 @@ namespace tke
 		return dependency;
 	}
 
-	VkRenderPass createRenderPass(std::uint32_t attachmentCount, VkAttachmentDescription *pAttachments, std::uint32_t subpassCount, VkSubpassDescription *pSubpasses, std::uint32_t dependencyCount, VkSubpassDependency *pDependencies)
+	RenderPass::RenderPass(int attachmentCount, VkAttachmentDescription *pAttachments, int subpassCount, VkSubpassDescription *pSubpasses, int dependencyCount, VkSubpassDependency *pDependencies)
 	{
-		VkRenderPass renderPass;
+		for (int i = 0; i < attachmentCount; i++)
+		{
+			if (pAttachments[i].finalLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ||
+				pAttachments[i].finalLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+				clearValues.push_back({});
+			else
+				clearValues.push_back({ 1, 0.f });
+		}
 
 		VkRenderPassCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -644,17 +652,15 @@ namespace tke
 		info.pDependencies = pDependencies;
 
 		device.cs.lock();
-		auto res = vkCreateRenderPass(device.v, &info, nullptr, &renderPass);
+		auto res = vkCreateRenderPass(device.v, &info, nullptr, &v);
 		assert(res == VK_SUCCESS);
 		device.cs.unlock();
-
-		return renderPass;
 	}
 
-	void destroyRenderPass(VkRenderPass rp)
+	RenderPass::~RenderPass()
 	{
 		device.cs.lock();
-		vkDestroyRenderPass(device.v, rp, nullptr);
+		vkDestroyRenderPass(device.v, v, nullptr);
 		device.cs.unlock();
 	}
 
@@ -1951,7 +1957,7 @@ namespace tke
 		at.saveXML(filename);
 	}
 
-	void Pipeline::setup(VkRenderPass _renderPass, std::uint32_t _subpassIndex)
+	void Pipeline::setup(RenderPass *_renderPass, std::uint32_t _subpassIndex)
 	{
 		if (!pVertexInputState)
 		{
@@ -2299,7 +2305,7 @@ namespace tke
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterState;
 		pipelineInfo.pColorBlendState = &blendState;
-		pipelineInfo.renderPass = renderPass;
+		pipelineInfo.renderPass = renderPass->v;
 		pipelineInfo.subpass = subpassIndex;
 		pipelineInfo.pMultisampleState = &multisampleState;
 		pipelineInfo.pDynamicState = vkDynamicStates.size() ? &dynamicState : nullptr;

@@ -122,13 +122,13 @@ namespace tke
 
 	extern Image *depthImage;
 
-	extern VkRenderPass plainRenderPass_image8;
-	extern VkRenderPass plainRenderPass_image8_clear;
-	extern VkRenderPass plainRenderPass_image16;
-	extern VkRenderPass plainRenderPass_image16_clear;
-	extern VkRenderPass plainRenderPass_depth_clear_image8;
-	extern VkRenderPass plainRenderPass_window;
-	extern VkRenderPass plainRenderPass_window_clear;
+	extern RenderPass *plainRenderPass_image8;
+	extern RenderPass *plainRenderPass_image8_clear;
+	extern RenderPass *plainRenderPass_image16;
+	extern RenderPass *plainRenderPass_image16_clear;
+	extern RenderPass *plainRenderPass_depth_clear_image8;
+	extern RenderPass *plainRenderPass_window;
+	extern RenderPass *plainRenderPass_window_clear;
 
 	extern Pipeline *plainPipeline_2d;
 	extern Pipeline *plainPipeline_3d;

@@ -62,7 +62,7 @@ namespace tke
 	extern Image *normalHeightImage;
 	extern Image *specRoughnessImage;
 
-	extern VkRenderPass sceneRenderPass;
+	extern RenderPass *sceneRenderPass;
 
 	extern Pipeline *scatteringPipeline;
 	extern Pipeline *downsamplePipeline;
