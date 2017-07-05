@@ -81,6 +81,8 @@ void MonitorWidget::show()
 		}
 	}
 
+	ImGui::Button(ICON_FA_FILE "  File");
+
 	ImGui::EndDock();
 
 	if (selectedItem)

@@ -7,6 +7,7 @@
 #include <imgui_operator.h>
 #include <imgui_tab.h>
 #include <imgui_dock.h>
+#include <IconsFontAwesome.h>
 
 #include "math.h"
 #include "render.h"
