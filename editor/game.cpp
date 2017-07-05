@@ -7,20 +7,6 @@
 void Game::load()
 {
 	{
-		tke::AttributeTree at("data", "renderers.xml");
-		for (auto c : at.children)
-		{
-			if (c->name == "renderer")
-			{
-				auto a = c->firstAttribute("filename");
-				auto r = new RendererEditorStruct;
-				r->filename = a->value;
-				renderers.push_back(r);
-			}
-		}
-	}
-
-	{
 		tke::AttributeTree at("data", "models.xml");
 		for (auto c : at.children)
 		{
@@ -49,23 +35,15 @@ void GameExplorer::show()
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeGameExplorer;
 
-	if (ImGui::TreeNode("Renderers"))
-	{
-		for (auto r : game.renderers)
-		{
-			if (ImGui::Selectable(r->filename.c_str()))
-			{
-
-			}
-		}
-		ImGui::TreePop();
-	}
 	if (ImGui::TreeNode("Models"))
 	{
-		for (auto m : game.models)
+		for (int i = 0; i < game.models.size(); i++)
 		{
+			auto m = game.models[i];
 			if (ImGui::Selectable(m->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
+				lastItemType = lastItemTypeModel;
+				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
 					mainWindow->openMonitorWidget(m->p);
 			}

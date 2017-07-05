@@ -46,6 +46,7 @@ EditorWindow::EditorWindow()
 							break;
 						}
 					}
+					openMonitorWidget(m);
 				}
 				else if (c->name == "AttributeWidget")
 				{

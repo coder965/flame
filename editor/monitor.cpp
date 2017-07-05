@@ -83,7 +83,16 @@ void MonitorWidget::show()
 
 	ImGui::EndDock();
 
-	transformerTool->show(tke::matPerspective, renderFinished);
+	if (selectedItem)
+	{
+		switch (selectedItem.type)
+		{
+		case ItemTypeObject:
+			transformerTool->transformer = selectedItem.toObject();
+			break;
+		}
+		transformerTool->show(scene->camera.getMat(), renderFinished);
+	}
 }
 
 std::vector<MonitorWidget*> monitors;

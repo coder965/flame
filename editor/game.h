@@ -4,12 +4,6 @@
 
 struct MonitorWidget;
 
-struct RendererEditorStruct
-{
-	std::string filename;
-	MonitorWidget *monitor = nullptr;
-};
-
 struct ModelEditorStruct
 {
 	std::string filename;
@@ -19,7 +13,6 @@ struct ModelEditorStruct
 
 struct Game
 {
-	std::vector<RendererEditorStruct*> renderers;
 	std::vector<ModelEditorStruct*> models;
 
 	void load();
@@ -30,6 +23,15 @@ extern Game game;
 
 struct GameExplorer
 {
+	enum LastItemType
+	{
+		lastItemTypeNull,
+		lastItemTypeModel,
+		lastItemTypeScene
+	};
+
+	LastItemType lastItemType = lastItemTypeNull;
+	int itemIndex = -1;
 	bool opened = true;
 
 	void show();

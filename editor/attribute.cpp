@@ -7,14 +7,24 @@
 void AttributeWidget::show()
 {
 	ImGui::BeginDock("Attribute", &opened);
-	
-	if (lastWindowType == LastWindowTypeMonitor)
-	{
-		ImGui::BeginTabBar("##tab");
-		if (ImGui::AddTab("Model"))
-		{
 
+	switch (lastWindowType)
+	{
+	case LastWindowTypeGameExplorer:
+		switch (gameExplorer->lastItemType)
+		{
+		case GameExplorer::lastItemTypeModel:
+			ImGui::BeginTabBar("##tab");
+			if (ImGui::AddTab("Model"))
+			{
+
+			}
+			ImGui::EndTabBar();
+			break;
 		}
+		break;
+	case LastWindowTypeMonitor:
+		ImGui::BeginTabBar("##tab");
 		if (ImGui::AddTab("Scene"))
 		{
 			if (ImGui::TreeNode("Lights"))
@@ -86,6 +96,7 @@ void AttributeWidget::show()
 			//}
 		}
 		ImGui::EndTabBar();
+		break;
 	}
 
 	ImGui::EndDock();

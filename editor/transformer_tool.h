@@ -18,5 +18,5 @@ struct TransformerTool : Tool
 	Mode mode = ModeNull;
 
 	TransformerTool(tke::Framebuffer *_fb);
-	virtual void show(glm::mat4 &matProj, VkEvent waitEvent) override;
+	virtual void show(const glm::mat4 &matView, VkEvent waitEvent) override;
 };

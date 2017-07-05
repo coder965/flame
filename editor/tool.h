@@ -10,7 +10,7 @@ struct Tool
 	VkEvent renderFinished;
 
 	Tool(tke::Framebuffer *_fb);
-	virtual void show(glm::mat4 &matProj, VkEvent waitEvent) = 0;
+	virtual void show(const glm::mat4 &matView, VkEvent waitEvent) = 0;
 	virtual ~Tool();
 };
 
