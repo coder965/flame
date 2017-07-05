@@ -2,16 +2,12 @@
 #include "editor.h"
 #include "monitor.h"
 
-MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_model)
-	:renderer_filename(_renderer_filename), model(_model)
+MonitorWidget::MonitorWidget(tke::Model *_model)
+	:model(_model)
 {
-	renderer = new tke::Renderer;
-	renderer->loadXML(renderer_filename);
-
 	scene = new tke::Scene;
 
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	renderer->resource.setImage(image, "Window.Image");
 	tke::addGuiImage(image);
 
 	fb_one = tke::getFramebuffer(image, tke::plainRenderPass_image8);
@@ -21,9 +17,7 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	macro.pipeline_name = "Deferred.Pipeline";
 	macro.stage = tke::StageType::frag;
 	macro.value = "USE_PBR";
-	renderer->resource.shaderMacros.push_back(macro);
-
-	renderer->setup();
+	tke::globalResource.shaderMacros.push_back(macro);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
@@ -43,7 +37,6 @@ MonitorWidget::~MonitorWidget()
 {
 	tke::destroyEvent(renderFinished);
 
-	delete renderer;
 	delete scene;
 	tke::removeGuiImage(image);
 	delete image;

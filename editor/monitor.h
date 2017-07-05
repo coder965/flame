@@ -7,8 +7,6 @@
 
 struct MonitorWidget
 {
-	std::string renderer_filename;
-	tke::Renderer *renderer;
 	tke::Scene *scene;
 	tke::Model *model;
 
@@ -23,7 +21,7 @@ struct MonitorWidget
 
 	bool opened = true;
 
-	MonitorWidget(const std::string _renderer_filename, tke::Model *_model);
+	MonitorWidget(tke::Model *_model);
 	~MonitorWidget();
 	void makeCmd();
 	void show();

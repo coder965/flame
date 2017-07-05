@@ -36,18 +36,16 @@ EditorWindow::EditorWindow()
 				}
 				else if (c->name == "Monitor")
 				{
-					auto a_rdrn = c->firstAttribute("renderer_filename");
-					auto a_mn = c->firstAttribute("model_filename");
+					auto a = c->firstAttribute("model_filename");
 					tke::Model *m = nullptr;
 					for (auto _m : game.models)
 					{
-						if (_m->filename == a_mn->value)
+						if (_m->filename == a->value)
 						{
 							m = _m->p;
 							break;
 						}
 					}
-					openMonitorWidget(a_rdrn->value, m);
 				}
 				else if (c->name == "AttributeWidget")
 				{
@@ -78,7 +76,6 @@ EditorWindow::~EditorWindow()
 		for (auto m : monitors)
 		{
 			auto n = new tke::AttributeTreeNode("Monitor");
-			n->attributes.push_back(new tke::Attribute("renderer_filename", &m->renderer_filename));
 			n->attributes.push_back(new tke::Attribute("model_filename", &m->model->filename));
 			at.children.push_back(n);
 		}
@@ -106,9 +103,9 @@ void EditorWindow::openOutputWidget()
 
 }
 
-void EditorWindow::openMonitorWidget(const std::string &renderer_filename, tke::Model *m)
+void EditorWindow::openMonitorWidget(tke::Model *m)
 {
-	auto monitor = new MonitorWidget(renderer_filename, m);
+	auto monitor = new MonitorWidget(m);
 	monitors.push_back(monitor);
 }
 

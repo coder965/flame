@@ -67,7 +67,7 @@ void GameExplorer::show()
 			if (ImGui::Selectable(m->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				if (ImGui::IsMouseDoubleClicked(0))
-					mainWindow->openMonitorWidget("../renderer/master.xml", m->p);
+					mainWindow->openMonitorWidget(m->p);
 			}
 		}
 		ImGui::TreePop();

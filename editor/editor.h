@@ -22,7 +22,7 @@ struct EditorWindow : tke::Window
 	virtual ~EditorWindow() override;
 	void openGameExplorer();
 	void openOutputWidget();
-	void openMonitorWidget(const std::string &renderer_filename, tke::Model *m);
+	void openMonitorWidget(tke::Model *m);
 	void openAttributeWidget();
 	virtual void renderEvent() override;
 };
