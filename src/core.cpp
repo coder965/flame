@@ -67,6 +67,8 @@ namespace tke
 	Pipeline *plainPipeline_3d_normal_depth = nullptr;
 	Pipeline *plainPipeline_3d_wire = nullptr;
 
+	static Window* current_window = nullptr;
+
 	static void _create_window(Window *p, bool hasUi)
 	{
 		p->createSwapchain();
@@ -86,66 +88,64 @@ namespace tke
 
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		auto p = (Window*)GetWindowLongPtr(hWnd, 0);
-
-		if (p)
+		if (current_window)
 		{
 			switch (message)
 			{
 			case WM_LBUTTONDOWN:
-				p->mouseLeftDownEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseLeftDownEvent(LOWORD(lParam), HIWORD(lParam));
 				SetCapture(hWnd);
 				break;
 			case WM_LBUTTONUP:
-				p->mouseLeftUpEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseLeftUpEvent(LOWORD(lParam), HIWORD(lParam));
 				ReleaseCapture();
 				break;
 			case WM_MBUTTONDOWN:
-				p->mouseMiddleDownEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseMiddleDownEvent(LOWORD(lParam), HIWORD(lParam));
 				SetCapture(hWnd);
 				break;
 			case WM_MBUTTONUP:
-				p->mouseMiddleUpEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseMiddleUpEvent(LOWORD(lParam), HIWORD(lParam));
 				ReleaseCapture();
 				break;
 			case WM_RBUTTONDOWN:
-				p->mouseRightDownEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseRightDownEvent(LOWORD(lParam), HIWORD(lParam));
 				SetCapture(hWnd);
 				break;
 			case WM_RBUTTONUP:
-				p->mouseRightUpEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseRightUpEvent(LOWORD(lParam), HIWORD(lParam));
 				ReleaseCapture();
 				break;
 			case WM_MOUSEMOVE:
-				p->mouseMoveEvent(LOWORD(lParam), HIWORD(lParam));
+				current_window->mouseMoveEvent(LOWORD(lParam), HIWORD(lParam));
 				break;
 			case WM_MOUSEWHEEL:
-				p->mouseWheelEvent((short)HIWORD(wParam));
+				current_window->mouseWheelEvent((short)HIWORD(wParam));
 				break;
 			case WM_KEYDOWN:
-				p->keyDownEvent(wParam);
+				current_window->keyDownEvent(wParam);
 				break;
 			case WM_KEYUP:
-				p->keyUpEvent(wParam);
+				current_window->keyUpEvent(wParam);
 				break;
 			case WM_CHAR:
-				p->charEvent(wParam);
+				current_window->charEvent(wParam);
 				break;
 			case WM_SIZE:
 			{
 				auto cx = LOWORD(lParam);
 				auto cy = HIWORD(lParam);
-				if (cx != p->cx || cy != p->cy)
+				if (cx != current_window->cx || cy != current_window->cy)
 				{
-					p->cx = cx;
-					p->cy = cy;
-					p->destroySwapchain();
-					p->createSwapchain();
+					current_window->cx = cx;
+					current_window->cy = cy;
+					current_window->destroySwapchain();
+					current_window->createSwapchain();
 				}
 			}
 				break;
 			case WM_DESTROY:
-				p->dead = true;
+				current_window->dead = true;
 				break;
 			}
 		}
@@ -171,7 +171,6 @@ namespace tke
 			wcex.hIcon = CreateIcon(hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->data);
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
-			wcex.cbWndExtra = sizeof(LONG_PTR);
 			RegisterClassExA(&wcex);
 
 			delete iconData;
@@ -191,7 +190,6 @@ namespace tke
 			windowStyle |= WS_POPUP;
 		}
 		hWnd = CreateWindowA("tke_wnd", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
-		SetWindowLongPtr(hWnd, 0, (LONG_PTR)this);
 
 		_create_window(this, hasUi);
 	}
@@ -435,12 +433,10 @@ namespace tke
 		events.clear();
 	}
 
-	static std::vector<Window*> window_list;
-
-	void Window::addToList()
+	void Window::show()
 	{
 		ShowWindow(hWnd, SW_NORMAL);
-		window_list.push_back(this);
+		current_window = this;
 	}
 
 	Err init(const std::string &path, int rcx, int rcy)
@@ -607,121 +603,6 @@ namespace tke
 		return Err::eNoErr;
 	}
 
-	void update()
-	{
-		if (needUpdateVertexBuffer)
-		{
-			std::vector<Vertex> staticVertexs;
-			std::vector<int> staticIndices;
-
-			std::vector<AnimatedVertex> animatedVertexs;
-			std::vector<int> animatedIndices;
-
-			for (auto pModel : models)
-			{
-				if (!pModel->animated)
-				{
-					pModel->vertexBase = staticVertexs.size();
-					pModel->indiceBase = staticIndices.size();
-
-					for (int i = 0; i < pModel->positions.size(); i++)
-					{
-						Vertex vertex;
-						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-						else vertex.position = glm::vec3(0.f);
-						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-						else vertex.uv = glm::vec2(0.f);
-						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-						else vertex.normal = glm::vec3(0.f);
-						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-						else vertex.tangent = glm::vec3(0.f);
-
-						staticVertexs.push_back(vertex);
-					}
-					for (int i = 0; i < pModel->indices.size(); i++)
-					{
-						staticIndices.push_back(pModel->indices[i]);
-					}
-				}
-				else
-				{
-					pModel->vertexBase = animatedVertexs.size();
-					pModel->indiceBase = animatedIndices.size();
-
-					for (int i = 0; i < pModel->positions.size(); i++)
-					{
-						AnimatedVertex vertex;
-						if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-						else vertex.position = glm::vec3(0.f);
-						if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-						else vertex.uv = glm::vec2(0.f);
-						if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-						else vertex.normal = glm::vec3(0.f);
-						if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-						else vertex.tangent = glm::vec3(0.f);
-
-						if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
-						else vertex.boneWeight = glm::vec4(0.f);
-						if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
-						else vertex.boneID = glm::vec4(0.f);
-
-						animatedVertexs.push_back(vertex);
-					}
-					for (int i = 0; i < pModel->indices.size(); i++)
-					{
-						animatedIndices.push_back(pModel->indices[i]);
-					}
-				}
-			}
-
-			if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
-			if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
-
-			if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
-			if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
-
-			needUpdateVertexBuffer = false;
-		}
-		if (needUpdateTexture)
-		{
-			static int map_position0 = -1;
-			static int map_position1 = -1;
-			if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
-			if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
-			if (map_position0 != -1 && map_position1 != -1)
-			{
-				for (int index = 0; index < textures.size(); index++)
-				{
-					mrtPipeline->descriptorSet->setImage(map_position0, index, textures[index], colorSampler);
-					mrtAnimPipeline->descriptorSet->setImage(map_position1, index, textures[index], colorSampler);
-				}
-				needUpdateTexture = false;
-			}
-		}
-		if (needUpdateMaterialBuffer)
-		{
-			if (materials.size() > 0)
-				materialBuffer->update(materials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * materials.size());
-			needUpdateMaterialBuffer = false;
-		}
-
-		for (auto it = window_list.begin(); it != window_list.end(); )
-		{
-			auto w = *it;
-			if (w->dead)
-			{
-				delete w;
-				it = window_list.erase(it);
-			}
-			else
-			{
-				w->update();
-
-				it++;
-			}
-		}
-	}
-
 	void run()
 	{
 		lastTime = GetTickCount();
@@ -740,12 +621,112 @@ namespace tke
 			}
 			else
 			{
-				update();
+				if (needUpdateVertexBuffer)
+				{
+					std::vector<Vertex> staticVertexs;
+					std::vector<int> staticIndices;
+
+					std::vector<AnimatedVertex> animatedVertexs;
+					std::vector<int> animatedIndices;
+
+					for (auto pModel : models)
+					{
+						if (!pModel->animated)
+						{
+							pModel->vertexBase = staticVertexs.size();
+							pModel->indiceBase = staticIndices.size();
+
+							for (int i = 0; i < pModel->positions.size(); i++)
+							{
+								Vertex vertex;
+								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+								else vertex.position = glm::vec3(0.f);
+								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+								else vertex.uv = glm::vec2(0.f);
+								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+								else vertex.normal = glm::vec3(0.f);
+								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+								else vertex.tangent = glm::vec3(0.f);
+
+								staticVertexs.push_back(vertex);
+							}
+							for (int i = 0; i < pModel->indices.size(); i++)
+							{
+								staticIndices.push_back(pModel->indices[i]);
+							}
+						}
+						else
+						{
+							pModel->vertexBase = animatedVertexs.size();
+							pModel->indiceBase = animatedIndices.size();
+
+							for (int i = 0; i < pModel->positions.size(); i++)
+							{
+								AnimatedVertex vertex;
+								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
+								else vertex.position = glm::vec3(0.f);
+								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
+								else vertex.uv = glm::vec2(0.f);
+								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
+								else vertex.normal = glm::vec3(0.f);
+								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
+								else vertex.tangent = glm::vec3(0.f);
+
+								if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
+								else vertex.boneWeight = glm::vec4(0.f);
+								if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
+								else vertex.boneID = glm::vec4(0.f);
+
+								animatedVertexs.push_back(vertex);
+							}
+							for (int i = 0; i < pModel->indices.size(); i++)
+							{
+								animatedIndices.push_back(pModel->indices[i]);
+							}
+						}
+					}
+
+					if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
+					if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
+
+					if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
+					if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
+
+					needUpdateVertexBuffer = false;
+				}
+				if (needUpdateTexture)
+				{
+					static int map_position0 = -1;
+					static int map_position1 = -1;
+					if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
+					if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
+					if (map_position0 != -1 && map_position1 != -1)
+					{
+						for (int index = 0; index < textures.size(); index++)
+						{
+							mrtPipeline->descriptorSet->setImage(map_position0, index, textures[index], colorSampler);
+							mrtAnimPipeline->descriptorSet->setImage(map_position1, index, textures[index], colorSampler);
+						}
+						needUpdateTexture = false;
+					}
+				}
+				if (needUpdateMaterialBuffer)
+				{
+					if (materials.size() > 0)
+						materialBuffer->update(materials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * materials.size());
+					needUpdateMaterialBuffer = false;
+				}
+
+				if (current_window->dead)
+				{
+					delete current_window;
+					return;
+				}
+				else
+				{
+					current_window->update();
+				}
 			}
-
-			if (window_list.size() == 0)
-				return;
-
 			lastTime = nowTime;
 		}
 	}

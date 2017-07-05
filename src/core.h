@@ -193,11 +193,10 @@ namespace tke
 		int getFPS();
 		void beginFrame();
 		void endFrame();
-		void addToList();
+		void show();
 	};
 
 
 	Err init(const std::string &path, int rcx, int rcy);
-	void update();
 	void run();
 }

@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 	tke::init("../", 1280, 720);
 
 	new EditorWindow;
-	mainWindow->addToList();
+	mainWindow->show();
 	ShowWindow(mainWindow->hWnd, SW_SHOWMAXIMIZED);
 	tke::run();
 

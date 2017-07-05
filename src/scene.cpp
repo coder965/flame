@@ -947,25 +947,39 @@ namespace tke
 		};
 
 		cb->beginRenderPass(sceneRenderPass, fb, ARRAYSIZE(clearValue), clearValue);
-		cb->bindVertexBuffer(staticVertexBuffer);
-		cb->bindIndexBuffer(staticIndexBuffer);
 
 		// sky
+		cb->bindVertexBuffer(staticVertexBuffer);
+		cb->bindIndexBuffer(staticIndexBuffer);
 		cb->bindPipeline(panoramaPipeline);
 		cb->bindDescriptorSet();
 		cb->drawIndex(sphereModel->indices.size(), sphereModel->indiceBase, sphereModel->vertexBase);
 
 		// mrt
 		cb->nextSubpass();
+		cb->bindVertexBuffer(staticVertexBuffer);
+		cb->bindIndexBuffer(staticIndexBuffer);
+		cb->bindPipeline(mrtPipeline);
+		cb->bindDescriptorSet();
+		cb->drawIndirectIndex(staticObjectIndirectBuffer, staticIndirectCount);
+		cb->bindVertexBuffer(animatedVertexBuffer);
+		cb->bindIndexBuffer(animatedIndexBuffer);
+		cb->bindPipeline(mrtAnimPipeline);
+		cb->bindDescriptorSet();
+		cb->drawIndirectIndex(animatedObjectIndirectBuffer, animatedIndirectCount);
 
 		// deferred
 		cb->nextSubpass();
+		cb->bindPipeline(deferredPipeline);
+		cb->bindDescriptorSet();
+		cb->draw(3);
 
 		// compose
 		cb->nextSubpass();
 		cb->bindPipeline(composePipeline);
 		cb->bindDescriptorSet();
 		cb->draw(3);
+
 		cb->endRenderPass();
 
 		cb->setEvent(signalEvent);
@@ -1060,6 +1074,7 @@ namespace tke
 
 		VkSubpassDependency dependencies[] = {
 			subpassDependency(0, 2),
+			subpassDependency(1, 2),
 			subpassDependency(2, 3)
 		};
 
