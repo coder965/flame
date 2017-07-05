@@ -449,8 +449,8 @@ namespace tke
 			}
 			stagingBuffer->unmap();
 
-			commandPool->copyBuffer(stagingBuffer->buffer, vertexBuffer->buffer, vertex_size, 0, 0);
-			commandPool->copyBuffer(stagingBuffer->buffer, indexBuffer->buffer, index_size, vertex_size, 0);
+			commandPool->copyBuffer(stagingBuffer->v, vertexBuffer->v, vertex_size, 0, 0);
+			commandPool->copyBuffer(stagingBuffer->v, indexBuffer->v, index_size, vertex_size, 0);
 		}
 
 		auto cb = current_window->ui->cb;
@@ -545,9 +545,7 @@ namespace tke
 			if (texture_position == -1) texture_position = plainPipeline_2d->descriptorPosition("images");
 
 			for (int i = 0; i < 128; i++)
-				descriptorPool->addWrite(plainPipeline_2d->descriptorSet->v, fontImage->getInfo(colorSampler), texture_position, i);
-
-			descriptorPool->update();
+				plainPipeline_2d->descriptorSet->setImage(texture_position, i, fontImage, colorSampler);
 
 		}
 		else
@@ -709,10 +707,8 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool->addWrite(plainPipeline_2d->descriptorSet->v, _images[index]->getInfo(colorSampler), texture_position, _images[index]->index);
+			plainPipeline_2d->descriptorSet->setImage(texture_position, _images[index]->index, _images[index], colorSampler);
 		}
-
-		descriptorPool->update();
 	}
 
 	void removeGuiImage(Image *image)
@@ -729,11 +725,8 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			descriptorPool->addWrite(plainPipeline_2d->descriptorSet->v, _images[index]->getInfo(colorSampler), texture_position, _images[index]->index);
+			plainPipeline_2d->descriptorSet->setImage(texture_position, _images[index]->index, _images[index], colorSampler);
 		}
-		descriptorPool->addWrite(plainPipeline_2d->descriptorSet->v, fontImage->getInfo(colorSampler), texture_position, _images.size() + 1);
-
-		descriptorPool->update();
 	}
 
 	void saveGuiDock(const std::string &filename)

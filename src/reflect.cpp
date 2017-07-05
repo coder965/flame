@@ -83,10 +83,7 @@ currentBank->addE("BlendFactor", "src_alpha", offsetof(BlendAttachment, src_alph
 currentBank->addE("BlendFactor", "dst_alpha", offsetof(BlendAttachment, dst_alpha));
 currentEnum = tke::addReflectEnum("DescriptorType");
 currentEnum->items.emplace_back("uniform_buffer", (int)DescriptorType::uniform_buffer);
-currentEnum->items.emplace_back("storage_buffer", (int)DescriptorType::storage_buffer);
-currentEnum->items.emplace_back("storage_image", (int)DescriptorType::storage_image);
 currentEnum->items.emplace_back("image_n_sampler", (int)DescriptorType::image_n_sampler);
-currentEnum->items.emplace_back("input_attachment", (int)DescriptorType::input_attachment);
 currentBank = Descriptor::b;
 currentBank->addE("DescriptorType", "type", offsetof(Descriptor, type));
 currentBank->addV<int>("binding", offsetof(Descriptor, binding));

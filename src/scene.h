@@ -64,6 +64,10 @@ namespace tke
 
 	extern VkRenderPass sceneRenderPass;
 
+	extern Pipeline *scatteringPipeline;
+	extern Pipeline *downsamplePipeline;
+	extern Pipeline *convolvePipeline;
+
 	extern Pipeline *panoramaPipeline;
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;

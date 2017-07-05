@@ -26,7 +26,17 @@ namespace tke
 
 	VkRenderPass sceneRenderPass;
 
+	Pipeline *scatteringPipeline = nullptr;
+
+	Pipeline *downsamplePipeline = nullptr;
+
+	Pipeline *convolvePipeline = nullptr;
+
 	Pipeline *panoramaPipeline = nullptr;
+
+	Pipeline *mrtPipeline;
+
+	Pipeline *mrtAnimPipeline;
 
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
@@ -413,6 +423,10 @@ namespace tke
 	{
 		std::vector<VkImageView> views;
 		views.push_back(mainImage->getView());
+		views.push_back(depthImage->getView());
+		views.push_back(albedoAlphaImage->getView());
+		views.push_back(normalHeightImage->getView());
+		views.push_back(specRoughnessImage->getView());
 		views.push_back(dst->getView());
 		return getFramebuffer(resCx, resCy, sceneRenderPass, views);
 	}
@@ -923,12 +937,31 @@ namespace tke
 		cb->reset();
 		cb->begin();
 
-		cb->beginRenderPass(sceneRenderPass, fb);
+		VkClearValue clearValue[] = {
+			{},
+			{ 1.f, 0 },
+			{},
+			{},
+			{},
+			{}
+		};
+
+		cb->beginRenderPass(sceneRenderPass, fb, ARRAYSIZE(clearValue), clearValue);
 		cb->bindVertexBuffer(staticVertexBuffer);
 		cb->bindIndexBuffer(staticIndexBuffer);
+
+		// sky
 		cb->bindPipeline(panoramaPipeline);
 		cb->bindDescriptorSet();
 		cb->drawIndex(sphereModel->indices.size(), sphereModel->indiceBase, sphereModel->vertexBase);
+
+		// mrt
+		cb->nextSubpass();
+
+		// deferred
+		cb->nextSubpass();
+
+		// compose
 		cb->nextSubpass();
 		cb->bindPipeline(composePipeline);
 		cb->bindDescriptorSet();
@@ -1019,12 +1052,33 @@ namespace tke
 		VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
 		VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_GENERAL };
 		VkSubpassDescription subpasses[] = {
-			subpassDesc(1, &main_col_ref), // sky
-			subpassDesc(1, mrt_col_ref, &dep_ref), // mrt
-			subpassDesc(1, &main_col_ref), // deferred
-			subpassDesc(1, &dst_col_ref)  // compose
+			subpassDesc(1, &main_col_ref),                              // sky
+			subpassDesc(ARRAYSIZE(mrt_col_ref), mrt_col_ref, &dep_ref), // mrt
+			subpassDesc(1, &main_col_ref),                              // deferred
+			subpassDesc(1, &dst_col_ref)                                // compose
 		};
-		sceneRenderPass = createRenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, 0, nullptr);
+
+		VkSubpassDependency dependencies[] = {
+			subpassDependency(0, 2),
+			subpassDependency(2, 3)
+		};
+
+		sceneRenderPass = createRenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
+
+		scatteringPipeline = new Pipeline;
+		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
+		scatteringPipeline->setup(plainRenderPass_image16, 0);
+		globalResource.setPipeline(scatteringPipeline);
+
+		downsamplePipeline = new Pipeline;
+		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
+		downsamplePipeline->setup(plainRenderPass_image16, 0);
+		globalResource.setPipeline(downsamplePipeline);
+
+		convolvePipeline = new Pipeline;
+		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
+		convolvePipeline->setup(plainRenderPass_image16, 0);
+		globalResource.setPipeline(convolvePipeline);
 
 		panoramaPipeline = new Pipeline;
 		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");

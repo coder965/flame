@@ -10,6 +10,10 @@
 
 namespace tke
 {
+	int lastTime = 0;
+	int nowTime = 0;
+	int timeDisp;
+
 	std::string enginePath;
 
 	int resCx;
@@ -30,10 +34,6 @@ namespace tke
 
 	StagingBuffer *stagingBuffer = nullptr;
 
-	Pipeline *scatteringPipeline = nullptr;
-	Pipeline *downsamplePipeline = nullptr;
-	Pipeline *convolvePipeline = nullptr;
-
 	bool needUpdateVertexBuffer = true;
 	bool needUpdateMaterialBuffer = true;
 	bool needUpdateTexture = true;
@@ -50,9 +50,7 @@ namespace tke
 	UniformBuffer *constantBuffer = nullptr;
 	UniformBuffer *materialBuffer = nullptr;
 
-	int lastTime = 0;
-	int nowTime = 0;
-	int timeDisp;
+	Image *depthImage = nullptr;
 
 	VkRenderPass plainRenderPass_image8;
 	VkRenderPass plainRenderPass_image8_clear;
@@ -68,184 +66,6 @@ namespace tke
 	Pipeline *plainPipeline_3d_depth = nullptr;
 	Pipeline *plainPipeline_3d_normal_depth = nullptr;
 	Pipeline *plainPipeline_3d_wire = nullptr;
-
-	Err init(const std::string &path, int rcx, int rcy)
-	{
-		enginePath = path;
-
-		resCx = rcx;
-		resCy = rcy;
-
-		matOrtho = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR * 2);
-		matOrthoInv = glm::inverse(matOrtho);
-		aspect = (float)resCx / resCy;
-		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, aspect, TKE_NEAR, TKE_FAR);
-		matPerspectiveInv = glm::inverse(matPerspective);
-
-		initRender( 
-#if defined(_DEBUG)
-			true
-#else
-			false
-#endif
-		);
-
-		stagingBuffer = new StagingBuffer(65536);
-
-		{
-			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
-					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
-					{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
-				};
-
-				plain2dVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
-					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
-					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
-					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
-				};
-
-				vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(AnimatedVertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, position) },
-					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(AnimatedVertex, uv) },
-					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
-					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
-					{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
-					{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneID) }
-				};
-
-				animatedVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes = { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 };
-
-				lineVertexInputState = vertexStateInfo(1, &bindings, 1, &attributes);
-			}
-		}
-
-		// this kind of depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
-		globalResource.setImage(new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), "Depth.Image");
-
-		{
-			auto att0 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att6 = depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
-			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-			VkSubpassDescription subpass1 = subpassDesc(1, &col_ref, &dep_ref);
-			VkAttachmentDescription atts[] = {
-				att0,
-				att6
-			};
-			plainRenderPass_image8 = createRenderPass(1, &att0, 1, &subpass0, 0, nullptr);
-			plainRenderPass_image8_clear = createRenderPass(1, &att1, 1, &subpass0, 0, nullptr);
-			plainRenderPass_image16 = createRenderPass(1, &att2, 1, &subpass0, 0, nullptr);
-			plainRenderPass_image16_clear = createRenderPass(1, &att3, 1, &subpass0, 0, nullptr);
-			plainRenderPass_depth_clear_image8 = createRenderPass(ARRAYSIZE(atts), atts, 1, &subpass1, 0, nullptr);
-			plainRenderPass_window = createRenderPass(1, &att4, 1, &subpass0, 0, nullptr);
-			plainRenderPass_window_clear = createRenderPass(1, &att5, 1, &subpass0, 0, nullptr);
-		}
-
-		plainPipeline_2d = new Pipeline;
-		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
-		plainPipeline_2d->setup(plainRenderPass_image8, 0);
-
-		plainPipeline_3d = new Pipeline;
-		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
-		plainPipeline_3d->setup(plainRenderPass_image8, 0);
-		plainPipeline_3d_normal = new Pipeline;
-		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
-		plainPipeline_3d_normal->setup(plainRenderPass_image8, 0);
-		plainPipeline_3d_depth = new Pipeline;
-		plainPipeline_3d_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_depth.xml");
-		plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0);
-		plainPipeline_3d_normal_depth = new Pipeline;
-		plainPipeline_3d_normal_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_normal_depth.xml");
-		plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0);
-		plainPipeline_3d_wire = new Pipeline;
-		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
-		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
-
-		scatteringPipeline = new Pipeline;
-		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
-		scatteringPipeline->setup(plainRenderPass_image16, 0);
-		globalResource.setPipeline(scatteringPipeline);
-
-		downsamplePipeline = new Pipeline;
-		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
-		downsamplePipeline->setup(plainRenderPass_image16, 0);
-		globalResource.setPipeline(downsamplePipeline);
-
-		convolvePipeline = new Pipeline;
-		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
-		convolvePipeline->setup(plainRenderPass_image16, 0);
-		globalResource.setPipeline(convolvePipeline);
-
-		staticVertexBuffer = new VertexBuffer();
-		staticIndexBuffer = new IndexBuffer();
-
-		animatedVertexBuffer = new VertexBuffer();
-		animatedIndexBuffer = new IndexBuffer();
-
-		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
-
-		globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
-		globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
-
-		globalResource.setBuffer(animatedVertexBuffer, "Animated.VertexBuffer");
-		globalResource.setBuffer(animatedIndexBuffer, "Animated.IndexBuffer");
-
-		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
-		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
-
-		{
-			ConstantBufferStruct stru;
-			stru.depth_near = TKE_NEAR;
-			stru.depth_far = TKE_FAR;
-			stru.cx = resCx;
-			stru.cy = resCy;
-			stru.aspect = aspect;
-			stru.fovy = TKE_FOVY;
-			stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
-			stru.envrCx = TKE_ENVR_SIZE_CX;
-			stru.envrCy = TKE_ENVR_SIZE_CY;
-			constantBuffer->update(&stru, *stagingBuffer);
-		}
-
-		initScene();
-		initGeneralModels();
-		initPhysics();
-		//initSound();
-
-		return Err::eNoErr;
-	}
 
 	static void _create_window(Window *p, bool hasUi)
 	{
@@ -623,6 +443,170 @@ namespace tke
 		window_list.push_back(this);
 	}
 
+	Err init(const std::string &path, int rcx, int rcy)
+	{
+		enginePath = path;
+
+		resCx = rcx;
+		resCy = rcy;
+
+		matOrtho = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR * 2);
+		matOrthoInv = glm::inverse(matOrtho);
+		aspect = (float)resCx / resCy;
+		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, aspect, TKE_NEAR, TKE_FAR);
+		matPerspectiveInv = glm::inverse(matPerspective);
+
+		initRender(
+#if defined(_DEBUG)
+			true
+#else
+			false
+#endif
+		);
+
+		stagingBuffer = new StagingBuffer(65536);
+
+		{
+			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
+
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX };
+
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
+					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
+					{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
+				};
+
+				plain2dVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			}
+
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
+
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
+					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
+					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
+					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
+				};
+
+				vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			}
+
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(AnimatedVertex), VK_VERTEX_INPUT_RATE_VERTEX };
+
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, position) },
+					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(AnimatedVertex, uv) },
+					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
+					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
+					{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
+					{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneID) }
+				};
+
+				animatedVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			}
+
+			{
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX };
+
+				static VkVertexInputAttributeDescription attributes = { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 };
+
+				lineVertexInputState = vertexStateInfo(1, &bindings, 1, &attributes);
+			}
+		}
+
+		// this kind of depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
+		depthImage = new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		globalResource.setImage(depthImage, "Depth.Image");
+
+		{
+			auto att0 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+			auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+			auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att6 = depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
+			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
+			VkSubpassDescription subpass1 = subpassDesc(1, &col_ref, &dep_ref);
+			VkAttachmentDescription atts[] = {
+				att0,
+				att6
+			};
+			plainRenderPass_image8 = createRenderPass(1, &att0, 1, &subpass0, 0, nullptr);
+			plainRenderPass_image8_clear = createRenderPass(1, &att1, 1, &subpass0, 0, nullptr);
+			plainRenderPass_image16 = createRenderPass(1, &att2, 1, &subpass0, 0, nullptr);
+			plainRenderPass_image16_clear = createRenderPass(1, &att3, 1, &subpass0, 0, nullptr);
+			plainRenderPass_depth_clear_image8 = createRenderPass(ARRAYSIZE(atts), atts, 1, &subpass1, 0, nullptr);
+			plainRenderPass_window = createRenderPass(1, &att4, 1, &subpass0, 0, nullptr);
+			plainRenderPass_window_clear = createRenderPass(1, &att5, 1, &subpass0, 0, nullptr);
+		}
+
+		plainPipeline_2d = new Pipeline;
+		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
+		plainPipeline_2d->setup(plainRenderPass_image8, 0);
+
+		plainPipeline_3d = new Pipeline;
+		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
+		plainPipeline_3d->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_normal = new Pipeline;
+		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
+		plainPipeline_3d_normal->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_depth = new Pipeline;
+		plainPipeline_3d_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_depth.xml");
+		plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_normal_depth = new Pipeline;
+		plainPipeline_3d_normal_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_normal_depth.xml");
+		plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_wire = new Pipeline;
+		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
+		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
+
+		staticVertexBuffer = new VertexBuffer();
+		staticIndexBuffer = new IndexBuffer();
+
+		animatedVertexBuffer = new VertexBuffer();
+		animatedIndexBuffer = new IndexBuffer();
+
+		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
+		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
+
+		globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
+		globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
+
+		globalResource.setBuffer(animatedVertexBuffer, "Animated.VertexBuffer");
+		globalResource.setBuffer(animatedIndexBuffer, "Animated.IndexBuffer");
+
+		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
+		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
+
+		{
+			ConstantBufferStruct stru;
+			stru.depth_near = TKE_NEAR;
+			stru.depth_far = TKE_FAR;
+			stru.cx = resCx;
+			stru.cy = resCy;
+			stru.aspect = aspect;
+			stru.fovy = TKE_FOVY;
+			stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
+			stru.envrCx = TKE_ENVR_SIZE_CX;
+			stru.envrCy = TKE_ENVR_SIZE_CY;
+			constantBuffer->update(&stru, *stagingBuffer);
+		}
+
+		initScene();
+		initGeneralModels();
+		initPhysics();
+		//initSound();
+
+		return Err::eNoErr;
+	}
+
 	void update()
 	{
 		if (needUpdateVertexBuffer)
@@ -708,10 +692,9 @@ namespace tke
 			{
 				for (int index = 0; index < textures.size(); index++)
 				{
-					descriptorPool->addWrite(mrtPipeline->descriptorSet->v, textures[index]->getInfo(colorSampler), map_position0, index);
-					descriptorPool->addWrite(mrtAnimPipeline->descriptorSet->v, textures[index]->getInfo(colorSampler), map_position1, index);
+					mrtPipeline->descriptorSet->setImage(map_position0, index, textures[index], colorSampler);
+					mrtAnimPipeline->descriptorSet->setImage(map_position1, index, textures[index], colorSampler);
 				}
-				descriptorPool->update();
 				needUpdateTexture = false;
 			}
 		}

@@ -25,6 +25,10 @@
 
 namespace tke
 {
+	extern int lastTime;
+	extern int nowTime;
+	extern int timeDisp;
+
 	extern std::string enginePath;
 
 	extern int resCx;
@@ -63,10 +67,6 @@ namespace tke
 	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	extern StagingBuffer *stagingBuffer;
-
-	extern Pipeline *scatteringPipeline;
-	extern Pipeline *downsamplePipeline;
-	extern Pipeline *convolvePipeline;
 	
 	extern bool needUpdateVertexBuffer;
 	extern bool needUpdateMaterialBuffer;
@@ -120,11 +120,7 @@ namespace tke
 	extern UniformBuffer *constantBuffer;
 	extern UniformBuffer *materialBuffer;
 
-	Err init(const std::string &path, int rcx, int rcy);
-
-	extern int lastTime;
-	extern int nowTime;
-	extern int timeDisp;
+	extern Image *depthImage;
 
 	extern VkRenderPass plainRenderPass_image8;
 	extern VkRenderPass plainRenderPass_image8_clear;
@@ -200,6 +196,8 @@ namespace tke
 		void addToList();
 	};
 
+
+	Err init(const std::string &path, int rcx, int rcy);
 	void update();
 	void run();
 }

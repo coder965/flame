@@ -38,7 +38,7 @@ namespace tke
 		range.imageExtent.height = cy;
 		range.imageExtent.depth = 1;
 
-		vkCmdCopyImageToBuffer(cb->v, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->buffer, 1, &range);
+		vkCmdCopyImageToBuffer(cb->v, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->v, 1, &range);
 
 		commandPool->endOnce(cb);
 

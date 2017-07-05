@@ -354,6 +354,10 @@ namespace tke
 		info.imageView = image->getView(aspect, baseLevel, levelCount, baseLayer, layerCount);
 		info.sampler = sampler;
 		write.pImageInfo = &info;
+
+		device.cs.lock();
+		vkUpdateDescriptorSets(device.v, 1, &write, 0, nullptr);
+		device.cs.unlock();
 	}
 
 	DescriptorPool::DescriptorPool()

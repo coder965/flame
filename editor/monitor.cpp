@@ -7,7 +7,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 {
 	renderer = new tke::Renderer;
 	renderer->loadXML(renderer_filename);
-	tke::setMasterRenderer(renderer);
 
 	scene = new tke::Scene;
 
@@ -25,8 +24,6 @@ MonitorWidget::MonitorWidget(const std::string _renderer_filename, tke::Model *_
 	renderer->resource.shaderMacros.push_back(macro);
 
 	renderer->setup();
-
-	tke::setMasterRenderer(renderer);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
