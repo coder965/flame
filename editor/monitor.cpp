@@ -51,8 +51,6 @@ MonitorWidget::~MonitorWidget()
 
 void MonitorWidget::show()
 {
-	scene->show(cb, fb_scene, renderFinished);
-
 	ImGui::BeginDock("Monitor", &opened);
 	if (ImGui::IsWindowFocused())
 	{
@@ -99,6 +97,8 @@ void MonitorWidget::show()
 
 	ImGui::EndDock();
 
+	scene->show(cb, fb_scene, renderFinished);
+
 	if (selectedItem)
 	{
 		switch (selectedItem.type)
@@ -107,7 +107,7 @@ void MonitorWidget::show()
 			transformerTool->transformer = selectedItem.toObject();
 			break;
 		}
-		transformerTool->show(scene->camera.getMatInv(), renderFinished);
+		transformerTool->show(&scene->camera, renderFinished);
 	}
 }
 

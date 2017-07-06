@@ -2,6 +2,7 @@
 
 #include "../src/math.h"
 #include "../src/render.h"
+#include "../src/camera.h"
 
 struct Tool
 {
@@ -10,7 +11,7 @@ struct Tool
 	VkEvent renderFinished;
 
 	Tool(tke::Framebuffer *_fb);
-	virtual void show(const glm::mat4 &matView, VkEvent waitEvent) = 0;
+	virtual void show(tke::Camera *camera, VkEvent waitEvent) = 0;
 	virtual ~Tool();
 };
 
