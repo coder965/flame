@@ -15,7 +15,9 @@ struct MonitorWidget
 	tke::Framebuffer *fb_scene;
 
 	tke::CommandBuffer *cb;
+	tke::CommandBuffer *cb_wireframe;
 	VkEvent renderFinished;
+	VkEvent wireframe_renderFinished;
 
 	TransformerTool *transformerTool;
 
@@ -26,4 +28,4 @@ struct MonitorWidget
 	void show();
 };
 
-extern std::vector<MonitorWidget*> monitors;
+extern MonitorWidget* monitorWidget;

@@ -458,8 +458,8 @@ namespace tke
 		cb->reset();
 		cb->begin();
 
-		if (current_window->events.size() > 0)
-			cb->waitEvents(current_window->events.size(), current_window->events.data());
+		if (current_window->ui->waitEvents.size() > 0)
+			cb->waitEvents(current_window->ui->waitEvents.size(), current_window->ui->waitEvents.data());
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
 		cb->beginRenderPass(need_clear ? plainRenderPass_window_clear : plainRenderPass_window, current_window->framebuffers[current_window->imageIndex], need_clear ? &clear_value : nullptr);
@@ -502,7 +502,7 @@ namespace tke
 
 		cb->endRenderPass();
 
-		for (auto &e : current_window->events)
+		for (auto &e : current_window->ui->waitEvents)
 			cb->resetEvent(e);
 
 		cb->end();

@@ -201,8 +201,6 @@ namespace tke
 	Window::~Window()
 	{
 		destroyFence(frameDone);
-		for (auto &e : events)
-			destroyEvent(e);
 		destroySemaphore(imageAvailable);
 		for (int i = 0; i < 2; i++)
 			releaseFramebuffer(framebuffers[i]);
@@ -371,12 +369,6 @@ namespace tke
 
 	void Window::renderEvent() {}
 
-	void Window::pushCB(VkCommandBuffer cb, VkEvent e)
-	{
-		cbs.push_back(cb);
-		events.push_back(e);
-	}
-
 	int Window::getFPS()
 	{
 		static auto FPS = 0;
@@ -416,9 +408,6 @@ namespace tke
 		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
 		assert(res == VK_SUCCESS);
 		graphicsQueue.cs.unlock();
-
-		cbs.clear();
-		events.clear();
 	}
 
 	void Window::show()

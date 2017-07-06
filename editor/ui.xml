@@ -1,6 +1,6 @@
 <data>
 	<GameExplorer opened="true"/>
-	<Monitor model_filename="D:/miku/miku.pmd"/>
+	<MonitorWidget opened="true" model_filename="D:/miku/miku.pmd"/>
 	<AttributeWidget opened="true"/>
 </data>
 

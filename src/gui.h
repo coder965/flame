@@ -118,6 +118,7 @@ namespace tke
 
 		ImGuiContext *context = nullptr;
 		CommandBuffer *cb;
+		std::vector<VkEvent> waitEvents;
 		glm::vec3 bkColor = glm::vec3(0.69f, 0.76f, 0.79f);
 
 		GuiComponent(Window *_window);

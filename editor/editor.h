@@ -12,7 +12,6 @@ enum LastWindowType
 	LastWindowTypeMonitor
 };
 extern LastWindowType lastWindowType;
-extern MonitorWidget *lastMonitor;
 
 extern tke::Image *titleImage;
 

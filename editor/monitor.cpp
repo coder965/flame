@@ -24,7 +24,9 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 	tke::globalResource.shaderMacros.push_back(macro);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
+	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
 	renderFinished = tke::createEvent();
+	wireframe_renderFinished = tke::createEvent();
 
 	transformerTool = new TransformerTool(fb_tool);
 
@@ -40,23 +42,21 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 MonitorWidget::~MonitorWidget()
 {
 	tke::destroyEvent(renderFinished);
-
+	tke::destroyEvent(wireframe_renderFinished);
 	delete scene;
 	tke::removeGuiImage(image);
 	delete image;
 	tke::releaseFramebuffer(fb_tool);
 	tke::releaseFramebuffer(fb_scene);
 	delete cb;
+	delete cb_wireframe;
 }
 
 void MonitorWidget::show()
 {
 	ImGui::BeginDock("Monitor", &opened);
 	if (ImGui::IsWindowFocused())
-	{
 		lastWindowType = LastWindowTypeMonitor;
-		lastMonitor = this;
-	}
 
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
 	ImVec2 image_pos = ImGui::GetItemRectMin();
@@ -82,7 +82,7 @@ void MonitorWidget::show()
 					scene->camera.scroll(distX);
 			}
 		}
-		if (mainWindow->leftJustDown)
+		if (mainWindow->leftJustDown && !(GetAsyncKeyState(VK_MENU) & 0x8000))
 		{
 			auto x = mainWindow->mouseX - image_pos.x;
 			auto y = mainWindow->mouseY - image_pos.y;
@@ -93,21 +93,41 @@ void MonitorWidget::show()
 		}
 	}
 
-	if (ImGui::Button("S"))
-		transformerTool->mode = TransformerTool::ModeNull;
-	ImGui::SameLine();
-	if (ImGui::Button("M"))
-		transformerTool->mode = TransformerTool::ModeMove;
-	ImGui::SameLine();
-	if (ImGui::Button("R"))
-		transformerTool->mode = TransformerTool::ModeRotate;
-	ImGui::SameLine();
-	if (ImGui::Button("C"))
-		transformerTool->mode = TransformerTool::ModeScale;
+	{
+		char *names[] = {
+			"S", "M", "R", "C"
+		};
+		for (int i = 0; i < 4; i++)
+		{
+			auto needPopup = false;
+			if (transformerTool->mode == TransformerTool::Mode(i))
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(0.f, 0.6f, 0.6f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(0.f, 0.7f, 0.7f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(0.f, 0.8f, 0.8f));
+				needPopup = true;
+			}
+			if (ImGui::Button(names[i])) transformerTool->mode = TransformerTool::Mode(i);
+			if (needPopup) ImGui::PopStyleColor(3);
+			if (i < 3) ImGui::SameLine();
+		}
+	}
 
 	ImGui::EndDock();
 
 	scene->show(cb, fb_scene, renderFinished);
+
+	{ // draw wireframe
+		//cb->reset();
+		//cb->begin();
+
+		//cb->waitEvents(1, &renderFinished);
+
+		//cb->resetEvent(renderFinished);
+		//cb->setEvent(wireframe_renderFinished);
+
+		//cb->end();
+	}
 
 	if (selectedItem)
 	{
@@ -121,4 +141,4 @@ void MonitorWidget::show()
 	}
 }
 
-std::vector<MonitorWidget*> monitors;
+MonitorWidget* monitorWidget = nullptr;

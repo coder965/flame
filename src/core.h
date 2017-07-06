@@ -166,7 +166,6 @@ namespace tke
 		VkSemaphore imageAvailable;
 		unsigned int imageIndex = 0;
 		std::vector<VkCommandBuffer> cbs;
-		std::vector<VkEvent> events;
 		VkFence frameDone;
 
 		GuiComponent *ui = nullptr;
@@ -191,7 +190,6 @@ namespace tke
 		virtual ~Window();
 		void createSwapchain();
 		void destroySwapchain();
-		void pushCB(VkCommandBuffer, VkEvent);
 		int getFPS();
 		void beginFrame();
 		void endFrame();

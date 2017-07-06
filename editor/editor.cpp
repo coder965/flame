@@ -34,19 +34,25 @@ EditorWindow::EditorWindow()
 					if (opened)
 						openGameExplorer();
 				}
-				else if (c->name == "Monitor")
+				else if (c->name == "MonitorWidget")
 				{
-					auto a = c->firstAttribute("model_filename");
-					tke::Model *m = nullptr;
-					for (auto _m : game.models)
+					auto a0 = c->firstAttribute("opened");
+					bool opened;
+					a0->get<bool>(&opened);
+					if (opened)
 					{
-						if (_m->filename == a->value)
+						auto a1 = c->firstAttribute("model_filename");
+						tke::Model *m = nullptr;
+						for (auto _m : game.models)
 						{
-							m = _m->p;
-							break;
+							if (_m->filename == a1->value)
+							{
+								m = _m->p;
+								break;
+							}
 						}
+						openMonitorWidget(m);
 					}
-					openMonitorWidget(m);
 				}
 				else if (c->name == "AttributeWidget")
 				{
@@ -60,36 +66,37 @@ EditorWindow::EditorWindow()
 		}
 	}
 	tke::loadGuiDock("ui_dock.xml");
+
+	cbs.push_back(ui->cb->v);
 }
 
 EditorWindow::~EditorWindow()
 {
+	tke::AttributeTree at("data");
+
 	{
-		tke::AttributeTree at("data");
-
-		{
-			auto n = new tke::AttributeTreeNode("GameExplorer");
-			static bool opened = gameExplorer;
-			n->attributes.push_back(new tke::Attribute("opened", &opened));
-			at.children.push_back(n);
-		}
-
-		for (auto m : monitors)
-		{
-			auto n = new tke::AttributeTreeNode("Monitor");
-			n->attributes.push_back(new tke::Attribute("model_filename", &m->model->filename));
-			at.children.push_back(n);
-		}
-
-		{
-			auto n = new tke::AttributeTreeNode("AttributeWidget");
-			static bool opened = attributeWidget;
-			n->attributes.push_back(new tke::Attribute("opened", &opened));
-			at.children.push_back(n);
-		}
-
-		at.saveXML("ui.xml");
+		auto n = new tke::AttributeTreeNode("GameExplorer");
+		static bool opened = gameExplorer;
+		n->attributes.push_back(new tke::Attribute("opened", &opened));
+		at.children.push_back(n);
 	}
+
+	{
+		auto n = new tke::AttributeTreeNode("MonitorWidget");
+		static bool opened = monitorWidget;
+		n->attributes.push_back(new tke::Attribute("opened", &opened));
+		n->attributes.push_back(new tke::Attribute("model_filename", &monitorWidget->model->filename));
+		at.children.push_back(n);
+	}
+
+	{
+		auto n = new tke::AttributeTreeNode("AttributeWidget");
+		static bool opened = attributeWidget;
+		n->attributes.push_back(new tke::Attribute("opened", &opened));
+		at.children.push_back(n);
+	}
+
+	at.saveXML("ui.xml");
 	tke::saveGuiDock("ui_dock.xml");
 }
 
@@ -106,8 +113,8 @@ void EditorWindow::openOutputWidget()
 
 void EditorWindow::openMonitorWidget(tke::Model *m)
 {
-	auto monitor = new MonitorWidget(m);
-	monitors.push_back(monitor);
+	if (!monitorWidget)
+		monitorWidget = new MonitorWidget(m);
 }
 
 void EditorWindow::openAttributeWidget()
@@ -225,24 +232,21 @@ void EditorWindow::renderEvent()
 		}
 	}
 
-	for (auto it = monitors.begin(); it != monitors.end(); )
+	if (monitorWidget)
 	{
-		if (!(*it)->opened)
+		monitorWidget->show();
+		if (!monitorWidget->opened)
 		{
-			delete *it;
-			it = monitors.erase(it);
+			delete monitorWidget;
+			monitorWidget = nullptr;
 		}
 		else
 		{
-			it++;
+			cbs.push_back(monitorWidget->cb->v);
+			//cbs.push_back(monitorWidget->transformerTool->cb->v);
+			ui->waitEvents.push_back(monitorWidget->renderFinished);
+			//ui->waitEvents.push_back(monitorWidget->transformerTool->renderFinished);
 		}
-	}
-	for (auto m : monitors)
-		m->show();
-	for (auto m : monitors)
-	{
-		pushCB(m->cb->v, m->renderFinished);
-		pushCB(m->transformerTool->cb->v, m->transformerTool->renderFinished);
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
@@ -252,9 +256,12 @@ void EditorWindow::renderEvent()
 
 	ui->end();
 
-	pushCB(ui->cb->v, 0);
+	cbs.push_back(ui->cb->v);
 
 	endFrame();
+
+	cbs.clear();
+	ui->waitEvents.clear();
 }
 
 EditorWindow *mainWindow = nullptr;
