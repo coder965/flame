@@ -121,14 +121,18 @@ namespace tke
 	extern UniformBuffer *materialBuffer;
 
 	extern Image *depthImage;
+	extern Image *pickUpImage;
 
 	extern RenderPass *plainRenderPass_image8;
 	extern RenderPass *plainRenderPass_image8_clear;
 	extern RenderPass *plainRenderPass_image16;
 	extern RenderPass *plainRenderPass_image16_clear;
 	extern RenderPass *plainRenderPass_depth_clear_image8;
+	extern RenderPass *plainRenderPass_depth_clear_image8_clear;
 	extern RenderPass *plainRenderPass_window;
 	extern RenderPass *plainRenderPass_window_clear;
+
+	extern Framebuffer *pickUpFb;
 
 	extern Pipeline *plainPipeline_2d;
 	extern Pipeline *plainPipeline_3d;
@@ -182,8 +186,6 @@ namespace tke
 		virtual void mouseWheelEvent(int);
 		virtual void renderEvent();
 
-		void update();
-
 		Window(int _cx, int _cy, HWND _hWnd, bool hasUi = false);
 		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true, bool hasUi = false, unsigned int windowStyle = 0);
 		virtual ~Window();
@@ -196,7 +198,7 @@ namespace tke
 		void show();
 	};
 
-
+	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
 	Err init(const std::string &path, int rcx, int rcy);
 	void run();
 }

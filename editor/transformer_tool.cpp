@@ -8,33 +8,29 @@ TransformerTool::TransformerTool(tke::Framebuffer *_fb)
 {
 }
 
-void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent)
+static TransformerTool *currentTransformerTool = nullptr;
+static tke::Camera *currentCamera = nullptr;
+static int currentDrawPolicy = 0;
+static void draw(tke::CommandBuffer *cb)
 {
-	cb->reset();
-	cb->begin();
-
-	cb->waitEvents(1, &waitEvent);
-
-	if (transformer)
+	if (currentTransformerTool->transformer)
 	{
-		switch (mode)
+		switch (currentTransformerTool->mode)
 		{
-		case ModeNull:
+		case TransformerTool::ModeNull:
 			break;
-		case ModeMove:
+		case TransformerTool::ModeMove:
 		{
-			auto dir = transformer->getCoord() - camera->getCoord();
+			auto dir = currentTransformerTool->transformer->getCoord() - currentCamera->getCoord();
 			if (glm::length(dir) > 0.f)
 			{
 				dir = glm::normalize(dir);
 
-				auto coord = camera->getCoord() + dir * 5.f;
-
-				cb->beginRenderPass(tke::plainRenderPass_depth_clear_image8, fb);
+				auto coord = currentCamera->getCoord() + dir * 5.f;
 
 				cb->bindVertexBuffer(tke::staticVertexBuffer);
 				cb->bindIndexBuffer(tke::staticIndexBuffer);
-				cb->bindPipeline(tke::plainPipeline_3d_normal_depth);
+				cb->bindPipeline(currentDrawPolicy == 0 ? tke::plainPipeline_3d_normal_depth : tke::plainPipeline_3d_depth);
 				cb->bindDescriptorSet();
 
 				struct
@@ -44,34 +40,58 @@ void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent)
 					glm::vec4 color;
 				}data;
 
-				data.modelview = camera->getMatInv() * glm::translate(coord);
+				data.modelview = currentCamera->getMatInv() * glm::translate(coord);
 				data.proj = tke::matPerspective;
 				data.color = glm::vec4(1.f, 0.f, 0.f, 1.f);
 				cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 				cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
 
-				data.modelview = camera->getMatInv() * glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
+				data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
 				data.proj = tke::matPerspective;
 				data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 				cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 				cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
 
-				data.modelview = camera->getMatInv() * glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
+				data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
 				data.proj = tke::matPerspective;
 				data.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
 				cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 				cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
-
-				cb->endRenderPass();
 			}
 		}
 			break;
-		case ModeRotate:
+		case TransformerTool::ModeRotate:
 			break;
-		case ModeScale:
+		case TransformerTool::ModeScale:
 			break;
 		}
 	}
+}
+
+bool TransformerTool::leftDown(int x, int y)
+{
+	currentDrawPolicy = 1;
+	auto index = tke::pickUp(x, y, draw);
+
+
+	return false;
+}
+
+void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent)
+{
+	cb->reset();
+	cb->begin();
+
+	cb->waitEvents(1, &waitEvent);
+
+	cb->beginRenderPass(tke::plainRenderPass_depth_clear_image8, fb);
+
+	currentTransformerTool = this;
+	currentCamera = camera;
+	currentDrawPolicy = 0;
+	draw(cb);
+
+	cb->endRenderPass();
 
 	cb->resetEvent(waitEvent);
 	cb->setEvent(renderFinished);

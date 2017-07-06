@@ -9,4 +9,6 @@ Tool::Tool(tke::Framebuffer *_fb)
 
 Tool::~Tool() {}
 
+bool Tool::leftDown(int x, int y) { return false; }
+
 Tool *currentTool = nullptr;

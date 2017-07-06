@@ -51,14 +51,18 @@ namespace tke
 	UniformBuffer *materialBuffer = nullptr;
 
 	Image *depthImage = nullptr;
+	Image *pickUpImage = nullptr;
 
 	RenderPass *plainRenderPass_image8;
 	RenderPass *plainRenderPass_image8_clear;
 	RenderPass *plainRenderPass_image16;
 	RenderPass *plainRenderPass_image16_clear;
 	RenderPass *plainRenderPass_depth_clear_image8;
+	RenderPass *plainRenderPass_depth_clear_image8_clear;
 	RenderPass *plainRenderPass_window;
 	RenderPass *plainRenderPass_window_clear;
+
+	Framebuffer *pickUpFb = nullptr;
 
 	Pipeline *plainPipeline_2d = nullptr;
 	Pipeline *plainPipeline_3d = nullptr;
@@ -367,22 +371,6 @@ namespace tke
 
 	void Window::renderEvent() {}
 
-
-	void Window::update()
-	{
-		mouseDispX = mouseX - mousePrevX;
-		mouseDispY = mouseY - mousePrevY;
-
-		renderEvent();
-		frameCount++;
-
-		leftJustDown = false;
-		leftJustUp = false;
-		mousePrevX = mouseX;
-		mousePrevY = mouseY;
-		mouseScroll = 0;
-	}
-
 	void Window::pushCB(VkCommandBuffer cb, VkEvent e)
 	{
 		cbs.push_back(cb);
@@ -437,6 +425,36 @@ namespace tke
 	{
 		ShowWindow(hWnd, SW_NORMAL);
 		current_window = this;
+	}
+
+	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*))
+	{
+		if (x < 0 || y < 0 || x > pickUpImage->width || y > pickUpImage->height)
+			return 0;
+
+		auto cb = commandPool->begineOnce();
+		cb->beginRenderPass(plainRenderPass_depth_clear_image8_clear, pickUpFb);
+		drawCallback(cb);
+		cb->endRenderPass();
+		commandPool->endOnce(cb);
+
+		cb = commandPool->begineOnce();
+		VkBufferImageCopy range = {};
+		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.imageSubresource.layerCount = 1;
+		range.imageOffset.x = x;
+		range.imageOffset.y = y;
+		range.imageExtent.width = 1;
+		range.imageExtent.height = 1;
+		range.imageExtent.depth = 1;
+		vkCmdCopyImageToBuffer(cb->v, pickUpImage->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->v, 1, &range);
+		commandPool->endOnce(cb);
+
+		auto pixel = (unsigned char*)stagingBuffer->map(0, 4);
+		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
+		stagingBuffer->unmap();
+
+		return index;
 	}
 
 	Err init(const std::string &path, int rcx, int rcy)
@@ -518,6 +536,8 @@ namespace tke
 		depthImage = new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(depthImage, "Depth.Image");
 
+		pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+
 		{
 			auto att0 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -530,17 +550,30 @@ namespace tke
 			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
 			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
 			VkSubpassDescription subpass1 = subpassDesc(1, &col_ref, &dep_ref);
-			VkAttachmentDescription atts[] = {
+			VkAttachmentDescription atts0[] = {
 				att0,
+				att6
+			};
+			VkAttachmentDescription atts1[] = {
+				att1,
 				att6
 			};
 			plainRenderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
 			plainRenderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
 			plainRenderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
 			plainRenderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
-			plainRenderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts), atts, 1, &subpass1);
+			plainRenderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass1);
+			plainRenderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass1);
 			plainRenderPass_window = new RenderPass(1, &att4, 1, &subpass0);
 			plainRenderPass_window_clear = new RenderPass(1, &att5, 1, &subpass0);
+		}
+
+		{
+			VkImageView views[] = {
+				pickUpImage->getView(),
+				depthImage->getView()
+			};
+			pickUpFb = getFramebuffer(resCx, resCy, plainRenderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}
 
 		plainPipeline_2d = new Pipeline;
@@ -724,7 +757,17 @@ namespace tke
 				}
 				else
 				{
-					current_window->update();
+					current_window->mouseDispX = current_window->mouseX - current_window->mousePrevX;
+					current_window->mouseDispY = current_window->mouseY - current_window->mousePrevY;
+
+					current_window->renderEvent();
+					current_window->frameCount++;
+
+					current_window->leftJustDown = false;
+					current_window->leftJustUp = false;
+					current_window->mousePrevX = current_window->mouseX;
+					current_window->mousePrevY = current_window->mouseY;
+					current_window->mouseScroll = 0;
 				}
 			}
 			lastTime = nowTime;

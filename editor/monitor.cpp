@@ -59,6 +59,7 @@ void MonitorWidget::show()
 	}
 
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
+	ImVec2 image_pos = ImGui::GetItemRectMin();
 	if (ImGui::IsItemHovered())
 	{
 		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
@@ -79,6 +80,15 @@ void MonitorWidget::show()
 			{
 				if (GetAsyncKeyState(VK_MENU) & 0x8000)
 					scene->camera.scroll(distX);
+			}
+		}
+		if (mainWindow->leftJustDown)
+		{
+			auto x = mainWindow->mouseX - image_pos.x;
+			auto y = mainWindow->mouseY - image_pos.y;
+			if (!transformerTool->leftDown(x, y))
+			{
+
 			}
 		}
 	}
