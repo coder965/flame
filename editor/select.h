@@ -22,12 +22,12 @@ struct SelectedItem : tke::Observer
 
 	inline tke::Object *toObject() const
 	{
-		return (tke::Object*)ptr;
+		if (type == ItemTypeObject)
+			return (tke::Object*)ptr;
+		return nullptr;
 	}
 
 	void reset();
 	void select(tke::Object *_obj);
 	virtual void listen(void *sender, tke::NotificationType type, void *newData) override;
 };
-
-extern SelectedItem selectedItem;

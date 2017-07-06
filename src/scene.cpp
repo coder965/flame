@@ -37,6 +37,7 @@ namespace tke
 	Pipeline *mrtPipeline;
 
 	Pipeline *mrtAnimPipeline;
+	static int mrt_bone_position = -1;
 
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
@@ -776,9 +777,6 @@ namespace tke
 		{
 			if (objects.size() > 0)
 			{
-				static int bone_position = -1;
-				if (bone_position == -1 && mrtAnimPipeline) bone_position = mrtAnimPipeline->descriptorPosition("BONE");
-
 				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
 				std::vector<VkDrawIndexedIndirectCommand> animatedCommands;
 
@@ -819,8 +817,8 @@ namespace tke
 							animatedCommands.push_back(command);
 						}
 
-						if (bone_position != -1)
-							mrtAnimPipeline->descriptorSet->setBuffer(bone_position, animatedIndex, pObject->animationComponent->boneMatrixBuffer);
+						if (mrt_bone_position != -1)
+							mrtAnimPipeline->descriptorSet->setBuffer(mrt_bone_position, animatedIndex, pObject->animationComponent->boneMatrixBuffer);
 
 						animatedIndex++;
 					}
@@ -1101,6 +1099,7 @@ namespace tke
 		mrtAnimPipeline->loadXML(enginePath + "pipeline/deferred/mrt_anim.xml");
 		mrtAnimPipeline->setup(sceneRenderPass, 1);
 		//globalResource.setPipeline(mrtAnimPipeline);
+		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
 		deferredPipeline = new Pipeline;
 		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");

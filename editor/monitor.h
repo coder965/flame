@@ -10,14 +10,19 @@ struct MonitorWidget
 	tke::Scene *scene;
 	tke::Model *model;
 
+	SelectedItem selectedItem;
+
 	tke::Image *image;
-	tke::Framebuffer *fb_tool;
 	tke::Framebuffer *fb_scene;
+	tke::Framebuffer *fb_wireframe;
+	tke::Framebuffer *fb_tool;
 
 	tke::CommandBuffer *cb;
 	tke::CommandBuffer *cb_wireframe;
-	VkEvent renderFinished;
+	tke::DescriptorSet *ds_wireframe;
+	VkEvent scene_renderFinished;
 	VkEvent wireframe_renderFinished;
+	VkEvent renderFinished;
 
 	TransformerTool *transformerTool;
 

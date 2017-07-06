@@ -70,6 +70,8 @@ namespace tke
 	Pipeline *plainPipeline_3d_depth = nullptr;
 	Pipeline *plainPipeline_3d_normal_depth = nullptr;
 	Pipeline *plainPipeline_3d_wire = nullptr;
+	Pipeline *plainPipeline_3d_anim_wire = nullptr;
+	int plain3d_bone_pos = -1;
 
 	static Window* current_window = nullptr;
 
@@ -395,7 +397,6 @@ namespace tke
 	void Window::endFrame()
 	{
 		tke::graphicsQueue.submit(cbs.size(), cbs.data(), imageAvailable, 0, frameDone);
-
 		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
@@ -584,6 +585,10 @@ namespace tke
 		plainPipeline_3d_wire = new Pipeline;
 		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
 		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_anim_wire = new Pipeline;
+		plainPipeline_3d_anim_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml");
+		plainPipeline_3d_anim_wire->setup(plainRenderPass_image8, 0);
+		plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 		staticVertexBuffer = new VertexBuffer();
 		staticIndexBuffer = new IndexBuffer();

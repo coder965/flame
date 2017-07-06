@@ -10,12 +10,13 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	tke::addGuiImage(image);
 
+	fb_scene = scene->createFramebuffer(image);
+	fb_wireframe = tke::getFramebuffer(image, tke::plainRenderPass_image8);
 	VkImageView views[] = {
 		image->getView(),
 		tke::depthImage->getView()
 	};
 	fb_tool = tke::getFramebuffer(image->width, image->height, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
-	fb_scene = scene->createFramebuffer(image);
 
 	tke::ShaderMacro macro;
 	macro.pipeline_name = "Deferred.Pipeline";
@@ -25,8 +26,9 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
-	renderFinished = tke::createEvent();
+	scene_renderFinished = tke::createEvent();
 	wireframe_renderFinished = tke::createEvent();
+	renderFinished = tke::createEvent();
 
 	transformerTool = new TransformerTool(fb_tool);
 
@@ -41,8 +43,6 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 
 MonitorWidget::~MonitorWidget()
 {
-	tke::destroyEvent(renderFinished);
-	tke::destroyEvent(wireframe_renderFinished);
 	delete scene;
 	tke::removeGuiImage(image);
 	delete image;
@@ -50,6 +50,9 @@ MonitorWidget::~MonitorWidget()
 	tke::releaseFramebuffer(fb_scene);
 	delete cb;
 	delete cb_wireframe;
+	tke::destroyEvent(scene_renderFinished);
+	tke::destroyEvent(wireframe_renderFinished);
+	tke::destroyEvent(renderFinished);
 }
 
 void MonitorWidget::show()
@@ -115,18 +118,37 @@ void MonitorWidget::show()
 
 	ImGui::EndDock();
 
-	scene->show(cb, fb_scene, renderFinished);
+	scene->show(cb, fb_scene, scene_renderFinished);
 
 	{ // draw wireframe
-		//cb->reset();
-		//cb->begin();
+		cb_wireframe->reset();
+		cb_wireframe->begin();
 
-		//cb->waitEvents(1, &renderFinished);
+		cb_wireframe->waitEvents(1, &scene_renderFinished);
 
-		//cb->resetEvent(renderFinished);
-		//cb->setEvent(wireframe_renderFinished);
+		cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_wireframe);
+		cb_wireframe->bindVertexBuffer(tke::animatedVertexBuffer);
+		cb_wireframe->bindIndexBuffer(tke::animatedIndexBuffer);
+		cb_wireframe->bindPipeline(tke::plainPipeline_3d_anim_wire);
+		tke::plainPipeline_3d_anim_wire->descriptorSet->setBuffer(0, 0, scene->objects[0]->animationComponent->boneMatrixBuffer);
+		cb_wireframe->bindDescriptorSet();
+		struct
+		{
+			glm::mat4 modelview;
+			glm::mat4 proj;
+			glm::vec4 color;
+		}data;
+		data.proj = tke::matPerspective;
+		data.modelview = scene->camera.getMatInv();
+		data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+		cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
+		cb_wireframe->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+		cb_wireframe->endRenderPass();
 
-		//cb->end();
+		cb_wireframe->resetEvent(scene_renderFinished);
+		cb_wireframe->setEvent(wireframe_renderFinished);
+
+		cb_wireframe->end();
 	}
 
 	if (selectedItem)
@@ -137,7 +159,7 @@ void MonitorWidget::show()
 			transformerTool->transformer = selectedItem.toObject();
 			break;
 		}
-		transformerTool->show(&scene->camera, renderFinished);
+		transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
 	}
 }
 

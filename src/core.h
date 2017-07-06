@@ -140,6 +140,8 @@ namespace tke
 	extern Pipeline *plainPipeline_3d_depth;
 	extern Pipeline *plainPipeline_3d_normal_depth;
 	extern Pipeline *plainPipeline_3d_wire;
+	extern Pipeline *plainPipeline_3d_anim_wire;
+	extern int plain3d_bone_pos;
 
 	struct Window
 	{

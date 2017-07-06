@@ -24,5 +24,3 @@ void SelectedItem::listen(void *sender, tke::NotificationType type, void *newDat
 {
 	ptr = (tke::ObservedObject*)newData;
 }
-
-SelectedItem selectedItem;

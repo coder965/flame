@@ -66,8 +66,6 @@ EditorWindow::EditorWindow()
 		}
 	}
 	tke::loadGuiDock("ui_dock.xml");
-
-	cbs.push_back(ui->cb->v);
 }
 
 EditorWindow::~EditorWindow()
@@ -243,9 +241,9 @@ void EditorWindow::renderEvent()
 		else
 		{
 			cbs.push_back(monitorWidget->cb->v);
-			//cbs.push_back(monitorWidget->transformerTool->cb->v);
-			ui->waitEvents.push_back(monitorWidget->renderFinished);
-			//ui->waitEvents.push_back(monitorWidget->transformerTool->renderFinished);
+			cbs.push_back(monitorWidget->cb_wireframe->v);
+			cbs.push_back(monitorWidget->transformerTool->cb->v);
+			ui->waitEvent = monitorWidget->renderFinished;
 		}
 	}
 
@@ -261,7 +259,7 @@ void EditorWindow::renderEvent()
 	endFrame();
 
 	cbs.clear();
-	ui->waitEvents.clear();
+	ui->waitEvent = 0;
 }
 
 EditorWindow *mainWindow = nullptr;

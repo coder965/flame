@@ -39,7 +39,6 @@ static void draw(tke::CommandBuffer *cb)
 					glm::mat4 proj;
 					glm::vec4 color;
 				}data;
-
 				data.proj = tke::matPerspective;
 
 				data.modelview = currentCamera->getMatInv() * glm::translate(coord);
@@ -75,7 +74,7 @@ bool TransformerTool::leftDown(int x, int y)
 	return index != 0;
 }
 
-void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent)
+void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent, VkEvent signalEvent)
 {
 	cb->reset();
 	cb->begin();
@@ -92,7 +91,7 @@ void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent)
 	cb->endRenderPass();
 
 	cb->resetEvent(waitEvent);
-	cb->setEvent(renderFinished);
+	cb->setEvent(signalEvent);
 
 	cb->end();
 }
