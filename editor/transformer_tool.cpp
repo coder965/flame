@@ -40,21 +40,20 @@ static void draw(tke::CommandBuffer *cb)
 					glm::vec4 color;
 				}data;
 
-				data.modelview = currentCamera->getMatInv() * glm::translate(coord);
 				data.proj = tke::matPerspective;
-				data.color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
+				data.modelview = currentCamera->getMatInv() * glm::translate(coord);
+				data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
 				cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 				cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
 
 				data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
-				data.proj = tke::matPerspective;
-				data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+				data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
 				cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 				cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
 
 				data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
-				data.proj = tke::matPerspective;
-				data.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
+				data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
 				cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 				cb->drawIndex(tke::arrowModel->indices.size(), tke::arrowModel->indiceBase, tke::arrowModel->vertexBase);
 			}
@@ -72,9 +71,8 @@ bool TransformerTool::leftDown(int x, int y)
 {
 	currentDrawPolicy = 1;
 	auto index = tke::pickUp(x, y, draw);
-
-
-	return false;
+	selectedAxis = index - 1;
+	return index != 0;
 }
 
 void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent)

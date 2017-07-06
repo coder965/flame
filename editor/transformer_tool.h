@@ -16,6 +16,7 @@ struct TransformerTool : Tool
 
 	tke::Transformer *transformer = nullptr;
 	Mode mode = ModeNull;
+	int selectedAxis = -1;
 
 	TransformerTool(tke::Framebuffer *_fb);
 	virtual bool TransformerTool::leftDown(int x, int y) override;

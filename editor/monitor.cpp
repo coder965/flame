@@ -82,7 +82,7 @@ void MonitorWidget::show()
 					scene->camera.scroll(distX);
 			}
 		}
-		if (mainWindow->leftJustDown)
+		if (mainWindow->leftJustDown && !(GetAsyncKeyState(VK_MENU) & 0x8000))
 		{
 			auto x = mainWindow->mouseX - image_pos.x;
 			auto y = mainWindow->mouseY - image_pos.y;
