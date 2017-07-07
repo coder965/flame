@@ -125,6 +125,25 @@ namespace tke
 		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
 
+	struct ImageData
+	{
+		int fif;
+		size_t bpp;
+		size_t channel;
+		size_t cx;
+		size_t cy;
+		size_t pitch;
+		size_t size;
+		unsigned char *data;
+
+		~ImageData();
+		void swapChannel(size_t channel0, size_t channel1);
+		void format();
+		VkFormat getVkFormat(bool sRGB);
+	};
+
+	ImageData *createImageData(const std::string &filename);
+
 	struct ImageView
 	{
 		Image *image;
@@ -455,30 +474,6 @@ namespace tke
 		REFLv std::string name;
 	};
 
-	REFLECTABLE struct UniformBufferInfo
-	{
-		REFL_BANK;
-
-		REFLv std::string name;
-		REFLv int size = 0;
-
-		UniformBuffer *p = nullptr;
-	};
-
-	REFLECTABLE struct ImageInfo
-	{
-		REFL_BANK;
-
-		REFLv std::string name;
-		REFLv std::string file_name;
-		REFLv bool sRGB = true;
-		REFLv int cx = 0;
-		REFLv int cy = 0;
-		REFLe Format format = Format::null;
-
-		Image *p = nullptr;
-	};
-
 	REFLECTABLE enum class VertexInputType : int
 	{
 		null,
@@ -503,21 +498,10 @@ namespace tke
 		REFLe DynamicStateType type = DynamicStateType::null;
 	};
 
-	REFLECTABLE struct PipelineInfo
-	{
-		REFL_BANK;
-
-		REFLv std::string file_name;
-
-		Pipeline *p = nullptr;
-		int subpassIndex = -1;
-	};
-
 	REFLECTABLE struct ShaderMacro
 	{
 		REFL_BANK;
 
-		REFLv std::string pipeline_name;
 		REFLe StageType stage = StageType::null;
 		REFLv std::string value;
 	};
@@ -526,11 +510,6 @@ namespace tke
 	struct ResourceBank
 	{
 		ResourceBank *parent;
-
-		std::vector<UniformBufferInfo> privateBuffers;
-		std::vector<ImageInfo> privateImages;
-		std::vector<PipelineInfo> privatePipelines;
-		std::vector<ShaderMacro> shaderMacros;
 
 		std::map<std::string, Buffer*> bufferResources;
 		std::map<std::string, Image*> imageResources;
@@ -554,7 +533,6 @@ namespace tke
 		int *getInt(const std::string &str);
 
 		ResourceBank(ResourceBank *_parent);
-		~ResourceBank();
 	};
 
 	extern ResourceBank globalResource;
@@ -689,23 +667,4 @@ namespace tke
 		void linkDescriptors(DescriptorSet *set);
 		int descriptorPosition(const std::string &name);
 	};
-
-	struct ImageData
-	{
-		int fif;
-		size_t bpp;
-		size_t channel;
-		size_t cx;
-		size_t cy;
-		size_t pitch;
-		size_t size;
-		unsigned char *data;
-
-		~ImageData();
-		void swapChannel(size_t channel0, size_t channel1);
-		void format();
-		VkFormat getVkFormat(bool sRGB);
-	};
-
-	ImageData *createImageData(const std::string &filename);
 }

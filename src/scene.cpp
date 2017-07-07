@@ -970,10 +970,12 @@ namespace tke
 
 	void Scene::load(const std::string &filename)
 	{
+
 	}
 
 	void Scene::save(const std::string &filename)
 	{
+
 	}
 
 	//struct MasterRenderer

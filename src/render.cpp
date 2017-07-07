@@ -1400,16 +1400,6 @@ namespace tke
 		parent = _parent;
 	}
 
-	ResourceBank::~ResourceBank()
-	{
-		for (auto &b : privateBuffers)
-			delete b.p;
-		for (auto &i : privateImages)
-			delete i.p;
-		for (auto &p : privatePipelines)
-			delete p.p;
-	}
-
 	ResourceBank globalResource(nullptr);
 
 	ShaderModule::~ShaderModule()
@@ -1456,11 +1446,6 @@ namespace tke
 		for (auto &m : parent->shaderMacros)
 		{
 			if (((int)m.stage & (int)type))
-				defines.push_back(m.value);
-		}
-		for (auto &m : parent->pResource->shaderMacros)
-		{
-			if (m.pipeline_name == parent->name && ((int)m.stage & (int)type))
 				defines.push_back(m.value);
 		}
 

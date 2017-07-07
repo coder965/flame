@@ -19,10 +19,9 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 	fb_tool = tke::getFramebuffer(image->width, image->height, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 
 	tke::ShaderMacro macro;
-	macro.pipeline_name = "Deferred.Pipeline";
 	macro.stage = tke::StageType::frag;
 	macro.value = "USE_PBR";
-	tke::globalResource.shaderMacros.push_back(macro);
+	tke::deferredPipeline->shaderMacros.push_back(macro);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
