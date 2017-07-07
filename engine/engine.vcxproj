@@ -176,7 +176,6 @@
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\controler.cpp" />
     <ClCompile Include="..\src\core.cpp" />
-    <ClCompile Include="..\src\event.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
     <ClCompile Include="..\src\light.cpp" />
     <ClCompile Include="..\src\math.cpp" />
@@ -196,7 +195,6 @@
     <ClInclude Include="..\src\camera.h" />
     <ClInclude Include="..\src\controler.h" />
     <ClInclude Include="..\src\core.h" />
-    <ClInclude Include="..\src\event.h" />
     <ClInclude Include="..\src\gui.h" />
     <ClInclude Include="..\src\light.h" />
     <ClInclude Include="..\src\math.h" />

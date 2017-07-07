@@ -27,9 +27,6 @@
     <ClCompile Include="..\src\core.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\event.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -81,9 +78,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\core.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\event.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gui.h">

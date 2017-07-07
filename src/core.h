@@ -199,6 +199,28 @@ namespace tke
 		void show();
 	};
 
+	typedef void(*PF_TICK)(int);
+	typedef void(*PF_EXEC)();
+
+	struct Event
+	{
+		PF_TICK tickFunc = nullptr;
+		int duration = 1;
+		PF_EXEC execFunc = nullptr;
+
+		int currentTime = 0;
+	};
+
+	struct EventList
+	{
+		std::vector<Event> events;
+		bool repeat = false;
+		int currentEventIndex = 0;
+	};
+
+	void addEventList(EventList *);
+	void removeEventList(EventList *);
+	void processEvents();
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
 	Err init(const std::string &path, int rcx, int rcy);
 	void run();

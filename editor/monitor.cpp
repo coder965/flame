@@ -68,7 +68,7 @@ void draw_wireframe(tke::CommandBuffer *cb)
 		}data;
 		data.proj = tke::matPerspective;
 		data.modelview = currentScene->camera.getMatInv();
-		data.color = glm::vec4(i / 255.f, 0.f, 0.f, 0.f);
+		data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 		cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 		cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
 	}
