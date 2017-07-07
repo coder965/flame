@@ -120,14 +120,6 @@ namespace tke
 		needUpdateSky = true;
 	}
 
-	void Scene::load(char *file)
-	{
-	}
-
-	void Scene::save(char *file)
-	{
-	}
-
 	void Scene::addLight(Light *pLight) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
 		EnterCriticalSection(&cs);
@@ -974,6 +966,14 @@ namespace tke
 
 		cb->setEvent(signalEvent);
 		cb->end();
+	}
+
+	void Scene::load(const std::string &filename)
+	{
+	}
+
+	void Scene::save(const std::string &filename)
+	{
 	}
 
 	//struct MasterRenderer

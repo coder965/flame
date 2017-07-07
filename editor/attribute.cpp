@@ -38,13 +38,13 @@ void AttributeWidget::show()
 		}
 		if (ImGui::AddTab("Select"))
 		{
-			if (selectedItem)
+			if (monitorWidget->selectedItem)
 			{
-				switch (selectedItem.type)
+				switch (monitorWidget->selectedItem.type)
 				{
 				case ItemTypeObject:
 				{
-					auto o = selectedItem.toObject();
+					auto o = monitorWidget->selectedItem.toObject();
 
 					auto str = tke::translate(936, CP_UTF8, o->model->name.c_str());
 					ImGui::Text(str.c_str());

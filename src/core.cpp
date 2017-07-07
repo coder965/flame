@@ -68,6 +68,7 @@ namespace tke
 	Pipeline *plainPipeline_3d = nullptr;
 	Pipeline *plainPipeline_3d_normal = nullptr;
 	Pipeline *plainPipeline_3d_depth = nullptr;
+	Pipeline *plainPipeline_3d_anim_depth = nullptr;
 	Pipeline *plainPipeline_3d_normal_depth = nullptr;
 	Pipeline *plainPipeline_3d_wire = nullptr;
 	Pipeline *plainPipeline_3d_anim_wire = nullptr;
@@ -579,6 +580,9 @@ namespace tke
 		plainPipeline_3d_depth = new Pipeline;
 		plainPipeline_3d_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_depth.xml");
 		plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_anim_depth = new Pipeline;
+		plainPipeline_3d_anim_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_depth.xml");
+		plainPipeline_3d_anim_depth->setup(plainRenderPass_depth_clear_image8, 0);
 		plainPipeline_3d_normal_depth = new Pipeline;
 		plainPipeline_3d_normal_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_normal_depth.xml");
 		plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0);

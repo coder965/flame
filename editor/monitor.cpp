@@ -26,6 +26,7 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
+	ds_wireframe = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_wire->descriptorSetLayout);
 	scene_renderFinished = tke::createEvent();
 	wireframe_renderFinished = tke::createEvent();
 	renderFinished = tke::createEvent();
@@ -50,9 +51,38 @@ MonitorWidget::~MonitorWidget()
 	tke::releaseFramebuffer(fb_scene);
 	delete cb;
 	delete cb_wireframe;
+	delete ds_wireframe;
 	tke::destroyEvent(scene_renderFinished);
 	tke::destroyEvent(wireframe_renderFinished);
 	tke::destroyEvent(renderFinished);
+}
+
+static tke::Scene *currentScene = nullptr;
+void draw_wireframe(tke::CommandBuffer *cb) 
+{
+	for (int i = 0; i < currentScene->objects.size(); i++)
+	{
+		auto object = currentScene->objects[i];
+		auto model = object->model;
+		auto animated = model->animated;
+		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
+		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
+		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim_depth : tke::plainPipeline_3d_depth);
+		if (animated)
+			tke::plainPipeline_3d_anim_depth->descriptorSet->setBuffer(tke::plain3d_bone_pos, 0, object->animationComponent->boneMatrixBuffer);
+		cb->bindDescriptorSet();
+		struct
+		{
+			glm::mat4 modelview;
+			glm::mat4 proj;
+			glm::vec4 color;
+		}data;
+		data.proj = tke::matPerspective;
+		data.modelview = currentScene->camera.getMatInv();
+		data.color = glm::vec4(i / 255.f, 0.f, 0.f, 0.f);
+		cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
+		cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+	}
 }
 
 void MonitorWidget::show()
@@ -91,7 +121,12 @@ void MonitorWidget::show()
 			auto y = mainWindow->mouseY - image_pos.y;
 			if (!transformerTool->leftDown(x, y))
 			{
-
+				currentScene = scene;
+				auto index = tke::pickUp(x, y, draw_wireframe);
+				if (index == 0)
+					selectedItem.reset();
+				else
+					selectedItem.select(scene->objects[index - 1]);
 			}
 		}
 	}
@@ -121,29 +156,44 @@ void MonitorWidget::show()
 	scene->show(cb, fb_scene, scene_renderFinished);
 
 	{ // draw wireframe
+		static tke::Object *last_obj = nullptr;
+
 		cb_wireframe->reset();
 		cb_wireframe->begin();
 
 		cb_wireframe->waitEvents(1, &scene_renderFinished);
 
-		cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_wireframe);
-		cb_wireframe->bindVertexBuffer(tke::animatedVertexBuffer);
-		cb_wireframe->bindIndexBuffer(tke::animatedIndexBuffer);
-		cb_wireframe->bindPipeline(tke::plainPipeline_3d_anim_wire);
-		tke::plainPipeline_3d_anim_wire->descriptorSet->setBuffer(0, 0, scene->objects[0]->animationComponent->boneMatrixBuffer);
-		cb_wireframe->bindDescriptorSet();
-		struct
+		auto obj = selectedItem.toObject();
+		if (obj)
 		{
-			glm::mat4 modelview;
-			glm::mat4 proj;
-			glm::vec4 color;
-		}data;
-		data.proj = tke::matPerspective;
-		data.modelview = scene->camera.getMatInv();
-		data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-		cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
-		cb_wireframe->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
-		cb_wireframe->endRenderPass();
+			auto model = obj->model;
+			auto animated = model->animated;
+
+			if (last_obj != obj && animated)
+				ds_wireframe->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
+
+			cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_wireframe);
+			cb_wireframe->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
+			cb_wireframe->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
+			cb_wireframe->bindPipeline(animated ? tke::plainPipeline_3d_anim_wire : tke::plainPipeline_3d_wire);
+			if (animated)
+				cb_wireframe->bindDescriptorSet(ds_wireframe->v);
+			else
+				cb_wireframe->bindDescriptorSet();
+			struct
+			{
+				glm::mat4 modelview;
+				glm::mat4 proj;
+				glm::vec4 color;
+			}data;
+			data.proj = tke::matPerspective;
+			data.modelview = scene->camera.getMatInv();
+			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+			cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
+			cb_wireframe->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+			cb_wireframe->endRenderPass();
+		}
+		last_obj = obj;
 
 		cb_wireframe->resetEvent(scene_renderFinished);
 		cb_wireframe->setEvent(wireframe_renderFinished);

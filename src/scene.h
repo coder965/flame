@@ -139,25 +139,18 @@ namespace tke
 		~Scene();
 
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
-		void load(char *file);
-		void save(char *file);
-
 		void addLight(Light *pLight);
 		Light *deleteLight(Light *pLight);
-
 		void addObject(Object *pObject);
 		Object *deleteObject(Object *pObject);
-
 		int getCollisionGroupID(int ID, unsigned int mask);
-
 		void addTerrain(Terrain *pTerrain);
 		Terrain *deleteTerrain(Terrain *pTerrain);
-
 		void clear();
-
 		Framebuffer *createFramebuffer(Image *dst);
-
 		void show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent);
+		void load(const std::string &filename);
+		void save(const std::string &filename);
 	};
 
 	void initScene();

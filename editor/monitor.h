@@ -3,6 +3,7 @@
 #include "../src/core.h"
 #include "../src/scene.h"
 
+#include "select.h"
 #include "transformer_tool.h"
 
 struct MonitorWidget
