@@ -1,48 +1,39 @@
 layout(binding = 0) uniform MATRIX
 {
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
 
-struct Terrain
+layout(binding = 1) uniform TERRAIN
 {
+	mat4 projMatrix;
+	mat4 viewMatrix;
+	mat4 modelMatrix;
 	uint patchSize;
 	float ext;
 	float height;
 	float tessFactor;
 	float mapDim;
-};
-
-layout(binding = 1) uniform TERRAIN
-{
-	Terrain data[8];
 }u_terrain;
 
-layout (binding = 2) uniform sampler2D displacementMap[8]; 
+layout (binding = 2) uniform sampler2D displacementMap;
 
-layout (location = 0) in flat uint inIndex;
-layout (location = 1) in vec2 inUV;
+layout (location = 0) in vec2 inUV;
 
 layout(location = 0) out vec4 outAlbedoSpec;
 layout(location = 1) out vec4 outNormalRoughness;
 
 float getHeight(vec2 UV)
 {
-	return -texture(displacementMap[inIndex], UV).r * u_terrain.data[inIndex].height;
+	return -texture(displacementMap, UV).r * u_terrain.height;
 }
 
 void main()
 {
 	mat3 normalMatrix = mat3(u_matrix.view);
 	
-	vec2 step = vec2(1.0 / u_terrain.data[inIndex].mapDim, 0);
-	float eps = (u_terrain.data[inIndex].patchSize * u_terrain.data[inIndex].ext) * step.x;
+	vec2 step = vec2(1.0 / u_terrain.mapDim, 0);
+	float eps = (u_terrain.patchSize * u_terrain.ext) * step.x;
 	
 	float L  = getHeight(inUV - step.xy);
 	float R  = getHeight(inUV + step.xy);

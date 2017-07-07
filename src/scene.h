@@ -71,6 +71,8 @@ namespace tke
 	extern Pipeline *panoramaPipeline;
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;
+	extern Pipeline *heightMapTerrainPipeline;
+	extern Pipeline *proceduralTerrainPipeline;
 	extern Pipeline *deferredPipeline;
 	extern Pipeline *composePipeline;
 
@@ -121,6 +123,8 @@ namespace tke
 		std::vector<Object*> objects;
 
 		std::vector<Terrain*> terrains;
+
+		bool showProceduralTerrain = false;
 
 		bool needUpdateSky = true;
 		bool needUpdateIndirectBuffer = true;

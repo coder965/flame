@@ -80,6 +80,12 @@ void MonitorWidget::show()
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeMonitor;
 
+	if (ImGui::Button("load"))
+		;
+	ImGui::SameLine();
+	if (ImGui::Button("save"))
+		scene->save(scene->filename);
+
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
 	ImVec2 image_pos = ImGui::GetItemRectMin();
 	if (ImGui::IsItemHovered())

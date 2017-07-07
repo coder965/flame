@@ -1,10 +1,10 @@
 #pragma once
 
 #include "transformer.h"
+#include "render.h"
 
 namespace tke
 {
-	struct Image;
 	struct Terrain : Transformer
 	{
 		int patchSize = 64;

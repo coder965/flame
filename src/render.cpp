@@ -1596,8 +1596,11 @@ namespace tke
 					fullLineNum += includeFileLineNum;
 					lineNum++;
 				}
-				else if (states.top().first && std::regex_search(line, pattern = R"(TKE_UBO_BINDING)"))
+				//else if (states.top().first && std::regex_search(line, pattern = R"(layout\s*\(binding)"))
+				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\(\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+))"))
 				{
+					
+
 					line = std::regex_replace(line, pattern, std::to_string(_currentUboBinding));
 					_currentUboBinding++;
 

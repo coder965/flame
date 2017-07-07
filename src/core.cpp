@@ -1,7 +1,6 @@
 #include <map>
 
 #include "core.h"
-#include "event.h"
 #include "render.h"
 #include "scene.h"
 #include "gui.h"

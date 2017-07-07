@@ -50,13 +50,13 @@ void AttributeWidget::show()
 					ImGui::Text(str.c_str());
 
 					auto coord = o->getCoord();
-					if (ImGui::DragFloat3("coord", &coord[0]))
+					if (ImGui::InputFloat3("coord", &coord[0]))
 						o->setCoord(coord);
 					auto euler = o->getEuler();
-					if (ImGui::DragFloat3("euler", &euler[0]))
+					if (ImGui::InputFloat3("euler", &euler[0]))
 						o->setEuler(euler);
 					auto scale = o->getScale();
-					if (ImGui::DragFloat3("scale", &scale[0]))
+					if (ImGui::InputFloat3("scale", &scale[0]))
 						o->setScale(scale);
 
 					if (o->model->animated)
