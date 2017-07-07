@@ -41,17 +41,17 @@ EditorWindow::EditorWindow()
 					a0->get<bool>(&opened);
 					if (opened)
 					{
-						auto a1 = c->firstAttribute("model_filename");
-						tke::Model *m = nullptr;
-						for (auto _m : game.models)
+						auto a1 = c->firstAttribute("scene_filename");
+						tke::Scene *s = nullptr;
+						for (auto _s : game.scenes)
 						{
-							if (_m->filename == a1->value)
+							if (_s->filename == a1->value)
 							{
-								m = _m->p;
+								s = _s;
 								break;
 							}
 						}
-						openMonitorWidget(m);
+						openMonitorWidget(s);
 					}
 				}
 				else if (c->name == "AttributeWidget")
@@ -83,7 +83,7 @@ EditorWindow::~EditorWindow()
 		auto n = new tke::AttributeTreeNode("MonitorWidget");
 		static bool opened = monitorWidget;
 		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		n->attributes.push_back(new tke::Attribute("model_filename", &monitorWidget->model->filename));
+		n->attributes.push_back(new tke::Attribute("scene_filename", &monitorWidget->scene->filename));
 		at.children.push_back(n);
 	}
 
@@ -109,10 +109,10 @@ void EditorWindow::openOutputWidget()
 
 }
 
-void EditorWindow::openMonitorWidget(tke::Model *m)
+void EditorWindow::openMonitorWidget(tke::Scene *s)
 {
 	if (!monitorWidget)
-		monitorWidget = new MonitorWidget(m);
+		monitorWidget = new MonitorWidget(s);
 }
 
 void EditorWindow::openAttributeWidget()

@@ -6,18 +6,22 @@
 
 void Game::load()
 {
+	tke::AttributeTree at("data", "data.xml");
+	for (auto c : at.children)
 	{
-		tke::AttributeTree at("data", "models.xml");
-		for (auto c : at.children)
+		if (c->name == "model")
 		{
-			if (c->name == "model")
-			{
-				auto a = c->firstAttribute("filename");
-				auto m = new ModelEditorStruct;
-				m->filename = a->value;
-				m->p = tke::createModel(a->value);
-				models.push_back(m);
-			}
+			auto a = c->firstAttribute("filename");
+			tke::createModel(a->value);
+		}
+		else if (c->name == "scene")
+		{
+			auto a = c->firstAttribute("filename");
+			auto scene = new tke::Scene;
+			scene->load(a->value);
+			scene->camera.setMode(tke::CameraModeTargeting);
+			scene->camera.setCoord(0.f, 5.f, 0.f);
+			scenes.push_back(scene);
 		}
 	}
 }
@@ -37,21 +41,30 @@ void GameExplorer::show()
 
 	if (ImGui::TreeNode("Models"))
 	{
-		for (int i = 0; i < game.models.size(); i++)
+		for (int i = 0; i < tke::models.size(); i++)
 		{
-			auto m = game.models[i];
+			auto m = tke::models[i];
 			if (ImGui::Selectable(m->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;
-				if (ImGui::IsMouseDoubleClicked(0))
-					mainWindow->openMonitorWidget(m->p);
 			}
 		}
 		ImGui::TreePop();
 	}
 	if (ImGui::TreeNode("Scenes"))
 	{
+		for (int i = 0; i < game.scenes.size(); i++)
+		{
+			auto s = game.scenes[i];
+			if (ImGui::Selectable(s->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+			{
+				lastItemType = lastItemTypeScene;
+				itemIndex = i;
+				if (ImGui::IsMouseDoubleClicked(0))
+					mainWindow->openMonitorWidget(s);
+			}
+		}
 		ImGui::TreePop();
 	}
 

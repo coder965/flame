@@ -2,18 +2,13 @@
 
 #include <vector>
 
-struct MonitorWidget;
+#include "..\src\scene.h"
 
-struct ModelEditorStruct
-{
-	std::string filename;
-	tke::Model *p = nullptr;
-	MonitorWidget *monitor = nullptr;
-};
+struct MonitorWidget;
 
 struct Game
 {
-	std::vector<ModelEditorStruct*> models;
+	std::vector<tke::Scene*> scenes;
 
 	void load();
 	void save();

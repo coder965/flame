@@ -9,7 +9,6 @@
 struct MonitorWidget
 {
 	tke::Scene *scene;
-	tke::Model *model;
 
 	SelectedItem selectedItem;
 
@@ -29,7 +28,7 @@ struct MonitorWidget
 
 	bool opened = true;
 
-	MonitorWidget(tke::Model *_model);
+	MonitorWidget(tke::Scene *scene);
 	~MonitorWidget();
 	void show();
 };

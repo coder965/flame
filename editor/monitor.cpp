@@ -2,11 +2,9 @@
 #include "editor.h"
 #include "monitor.h"
 
-MonitorWidget::MonitorWidget(tke::Model *_model)
-	:model(_model)
+MonitorWidget::MonitorWidget(tke::Scene *_scene)
+	:scene(_scene)
 {
-	scene = new tke::Scene;
-
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	tke::addGuiImage(image);
 
@@ -31,19 +29,10 @@ MonitorWidget::MonitorWidget(tke::Model *_model)
 	renderFinished = tke::createEvent();
 
 	transformerTool = new TransformerTool(fb_tool);
-
-	auto obj = new tke::Object(model);
-	scene->addObject(obj);
-
-	selectedItem.select(obj);
-
-	scene->camera.setMode(tke::CameraModeTargeting);
-	scene->camera.setCoord(0.f, 5.f, 0.f);
 }
 
 MonitorWidget::~MonitorWidget()
 {
-	delete scene;
 	tke::removeGuiImage(image);
 	delete image;
 	tke::releaseFramebuffer(fb_tool);
@@ -51,6 +40,7 @@ MonitorWidget::~MonitorWidget()
 	delete cb;
 	delete cb_wireframe;
 	delete ds_wireframe;
+	delete transformerTool;
 	tke::destroyEvent(scene_renderFinished);
 	tke::destroyEvent(wireframe_renderFinished);
 	tke::destroyEvent(renderFinished);
@@ -208,8 +198,12 @@ void MonitorWidget::show()
 			transformerTool->transformer = selectedItem.toObject();
 			break;
 		}
-		transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
 	}
+	else
+	{
+		transformerTool->transformer = nullptr;
+	}
+	transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
 }
 
 MonitorWidget* monitorWidget = nullptr;

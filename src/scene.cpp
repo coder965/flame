@@ -968,9 +968,36 @@ namespace tke
 		cb->end();
 	}
 
-	void Scene::load(const std::string &filename)
+	void Scene::load(const std::string &_filename)
 	{
+		filename = _filename;
 
+		tke::AttributeTree at("scene", filename);
+		for (auto c : at.children)
+		{
+			if (c->name == "object")
+			{
+				auto n = c->firstAttribute("model");
+				tke::Model *m = nullptr;
+				for (auto _m : models)
+				{
+					if (_m->filename == n->value)
+					{
+						m = _m;
+						break;
+					}
+				}
+				if (m)
+				{
+					auto object = new tke::Object(m);
+					addObject(object);
+				}
+			}
+			else if (c->name == "light")
+			{
+				;
+			}
+		}
 	}
 
 	void Scene::save(const std::string &filename)
