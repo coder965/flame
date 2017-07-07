@@ -27,6 +27,13 @@ struct SelectedItem : tke::Observer
 		return nullptr;
 	}
 
+	inline tke::Transformer *toTransformer() const
+	{
+		if (type == ItemTypeNull)
+			return nullptr;
+		return (tke::Transformer*)ptr;
+	}
+
 	void reset();
 	void select(tke::Object *_obj);
 	virtual void listen(void *sender, tke::NotificationType type, void *newData) override;

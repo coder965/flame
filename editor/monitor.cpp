@@ -190,19 +190,7 @@ void MonitorWidget::show()
 		cb_wireframe->end();
 	}
 
-	if (selectedItem)
-	{
-		switch (selectedItem.type)
-		{
-		case ItemTypeObject:
-			transformerTool->transformer = selectedItem.toObject();
-			break;
-		}
-	}
-	else
-	{
-		transformerTool->transformer = nullptr;
-	}
+	transformerTool->transformer = selectedItem.toTransformer();
 	transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
 }
 

@@ -973,6 +973,8 @@ namespace tke
 		filename = _filename;
 
 		tke::AttributeTree at("scene", filename);
+		auto n = at.firstAttribute("name");
+		name = n->value;
 		for (auto c : at.children)
 		{
 			if (c->name == "object")

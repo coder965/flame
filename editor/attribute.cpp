@@ -14,7 +14,7 @@ void AttributeWidget::show()
 		switch (gameExplorer->lastItemType)
 		{
 		case GameExplorer::lastItemTypeModel:
-			ImGui::BeginTabBar("##tab");
+			ImGui::BeginTabBar("##tab_game_explorer_model");
 			if (ImGui::AddTab("Model"))
 			{
 
@@ -24,7 +24,7 @@ void AttributeWidget::show()
 		}
 		break;
 	case LastWindowTypeMonitor:
-		ImGui::BeginTabBar("##tab");
+		ImGui::BeginTabBar("##tab_monitor");
 		if (ImGui::AddTab("Scene"))
 		{
 			if (ImGui::TreeNode("Lights"))
@@ -79,7 +79,7 @@ void AttributeWidget::show()
 						}
 					}
 				}
-				break;
+					break;
 				}
 			}
 			else

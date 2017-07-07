@@ -44,7 +44,7 @@ void GameExplorer::show()
 		for (int i = 0; i < tke::models.size(); i++)
 		{
 			auto m = tke::models[i];
-			if (ImGui::Selectable(m->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+			if (ImGui::Selectable(m->name.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;
@@ -57,7 +57,7 @@ void GameExplorer::show()
 		for (int i = 0; i < game.scenes.size(); i++)
 		{
 			auto s = game.scenes[i];
-			if (ImGui::Selectable(s->filename.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+			if (ImGui::Selectable(s->name.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				lastItemType = lastItemTypeScene;
 				itemIndex = i;
