@@ -70,4 +70,5 @@ void main()
 	
 	outAlbedoAlpha = vec4(albedo, alpha);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
+	outSpecRoughness = vec4(spec, roughness, 0.0, 0.0);
 }

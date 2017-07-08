@@ -27,6 +27,10 @@ void AttributeWidget::show()
 		ImGui::BeginTabBar("##tab_monitor");
 		if (ImGui::AddTab("Scene"))
 		{
+			auto scene = monitorWidget->scene;
+
+			ImGui::Checkbox("Procedural Terrain", &scene->showProceduralTerrain);
+
 			if (ImGui::TreeNode("Lights"))
 			{
 				ImGui::TreePop();

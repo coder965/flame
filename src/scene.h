@@ -41,7 +41,6 @@ namespace tke
 
 	struct HeightMapTerrainShaderStruct
 	{
-		unsigned int patchSize;
 		float ext;
 		float height;
 		float tessFactor;
@@ -122,7 +121,7 @@ namespace tke
 
 		std::vector<Object*> objects;
 
-		std::vector<Terrain*> terrains;
+		Terrain *terrain = nullptr;
 
 		bool showProceduralTerrain = false;
 
@@ -148,8 +147,8 @@ namespace tke
 		void addObject(Object *pObject);
 		Object *deleteObject(Object *pObject);
 		int getCollisionGroupID(int ID, unsigned int mask);
-		void addTerrain(Terrain *pTerrain);
-		Terrain *deleteTerrain(Terrain *pTerrain);
+		void setTerrain(Terrain *pTerrain);
+		void removeTerrain();
 		void clear();
 		Framebuffer *createFramebuffer(Image *dst);
 		void show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent);

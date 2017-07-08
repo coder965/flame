@@ -40,6 +40,8 @@ namespace tke
 	static int mrt_bone_position = -1;
 
 	Pipeline *heightMapTerrainPipeline = nullptr;
+	static int heightMapTerr_map_position = -1;
+
 	Pipeline *proceduralTerrainPipeline = nullptr;
 
 	Pipeline *deferredPipeline = nullptr;
@@ -68,8 +70,7 @@ namespace tke
 		for (auto pObject : objects)
 			delete pObject;
 
-		for (auto pTerrain : terrains)
-			delete pTerrain;
+		delete terrain;
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
@@ -362,36 +363,23 @@ namespace tke
 		return count;
 	}
 
-	void Scene::addTerrain(Terrain *pTerrain) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
+	void Scene::setTerrain(Terrain *pTerrain) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
 		EnterCriticalSection(&cs);
 
-		terrains.push_back(pTerrain);
+		terrain = pTerrain;
 
 		LeaveCriticalSection(&cs);
 	}
 
-	Terrain *Scene::deleteTerrain(Terrain *pTerrain)
+	void Scene::removeTerrain()
 	{
 		EnterCriticalSection(&cs);
 
-		for (auto it = terrains.begin(); it != terrains.end(); it++)
-		{
-			if (*it == pTerrain)
-			{
-				delete pTerrain;
-				if (it > terrains.begin())
-					pTerrain = *(it - 1);
-				else
-					pTerrain = nullptr;
-				terrains.erase(it);
-				break;
-			}
-		}
+		delete terrain;
+		terrain = nullptr;
 
 		LeaveCriticalSection(&cs);
-
-		return pTerrain;
 	}
 
 	void Scene::clear()
@@ -408,9 +396,8 @@ namespace tke
 			delete pObject;
 		objects.clear();
 
-		for (auto pTerrain : terrains)
-			delete pTerrain;
-		terrains.clear();
+		delete terrain;
+		terrain = nullptr;
 
 		LeaveCriticalSection(&cs);
 	}
@@ -730,43 +717,21 @@ namespace tke
 			if (staticUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
 			if (animatedUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
-		if (terrains.size() > 0)
+		if (terrain)
 		{
-			std::vector<VkBufferCopy> ranges;
-
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(HeightMapTerrainShaderStruct) * terrains.size());
-
-			auto terrainIndex = 0;
-			for (auto pTerrain : terrains)
+			if (terrain->changed)
 			{
-				if (pTerrain->changed)
-				{
-					HeightMapTerrainShaderStruct stru;
-					stru.patchSize = pTerrain->patchSize;
-					stru.ext = pTerrain->ext;
-					stru.height = pTerrain->height;
-					stru.tessFactor = pTerrain->tessFactor;
-					stru.mapDim = pTerrain->heightMap->width;
+				HeightMapTerrainShaderStruct stru;
+				stru.ext = terrain->ext;
+				stru.height = terrain->height;
+				stru.tessFactor = terrain->tessFactor;
+				stru.mapDim = terrain->heightMap->width;
 
-					auto srcOffset = sizeof(HeightMapTerrainShaderStruct) * ranges.size();
-					memcpy(map + srcOffset, &stru, sizeof(HeightMapTerrainShaderStruct));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(HeightMapTerrainShaderStruct) * terrainIndex;
-					range.size = sizeof(HeightMapTerrainShaderStruct);
-					ranges.push_back(range);
+				heightMapTerrainBuffer->update(&stru, *stagingBuffer);
 
-					static int position = -1;
-					// TODO : FIX TERRAIN
-					//if (position == -1) position = masterRenderer->heightMapTerrainPipeline.descriptorPosition("samplerHeight");
-					//vk::descriptorPool.addWrite(masterRenderer->heightMapTerrainPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, position, pTerrain->heightMap->getInfo(vk::colorBorderSampler), terrainIndex);
-				}
-
-				terrainIndex++;
+				if (heightMapTerr_map_position != -1)
+					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_map_position, 0, terrain->heightMap, colorBorderSampler);
 			}
-
-			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, heightMapTerrainBuffer->v, ranges.size(), ranges.data());
 		}
 		if (needUpdateIndirectBuffer)
 		{
@@ -925,8 +890,7 @@ namespace tke
 			pLight->changed = false;
 		for (auto pObject : objects)
 			pObject->changed = false;
-		for (auto pTerrain : terrains)
-			pTerrain->changed = false;
+		terrain->changed = false;
 
 		cb->reset();
 		cb->begin();
@@ -1176,12 +1140,13 @@ namespace tke
 		//globalResource.setPipeline(mrtAnimPipeline);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
-		//heightMapTerrainPipeline = new Pipeline;
-		//heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain/terrain.xml");
-		//heightMapTerrainPipeline->setup(sceneRenderPass, 1);
+		heightMapTerrainPipeline = new Pipeline;
+		heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain.xml");
+		heightMapTerrainPipeline->setup(sceneRenderPass, 1);
+		heightMapTerr_map_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
 
 		//proceduralTerrainPipeline = new Pipeline;
-		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain/terrain.xml");
+		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain.xml");
 		//proceduralTerrainPipeline->setup(sceneRenderPass, 1);
 
 		deferredPipeline = new Pipeline;

@@ -5,9 +5,14 @@
 
 namespace tke
 {
+	enum TerrainType
+	{
+		TerrainTypeHeightMap,
+		TerrainTypeProcedural
+	};
+
 	struct Terrain : Transformer
 	{
-		int patchSize = 64;
 		float ext = 10.f;
 		float height = 10.f;
 		float tessFactor = 0.75f;
