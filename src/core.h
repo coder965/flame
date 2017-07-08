@@ -22,25 +22,6 @@ namespace tke
 	extern glm::mat4 matPerspective;
 	extern glm::mat4 matPerspectiveInv;
 
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-	};
-
-	struct AnimatedVertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-
-		glm::vec4 boneWeight;
-		glm::vec4 boneID;
-	};
-
 	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
@@ -52,31 +33,6 @@ namespace tke
 	extern bool needUpdateVertexBuffer;
 	extern bool needUpdateMaterialBuffer;
 	extern bool needUpdateTexture;
-
-	struct ConstantBufferStruct
-	{
-		float depth_near;
-		float depth_far;
-		float cx;
-		float cy;
-		float aspect;
-		float fovy;
-		float tanHfFovy;
-		float envrCx;
-		float envrCy;
-	};
-
-	struct MatrixBufferShaderStruct
-	{
-		glm::mat4 proj;
-		glm::mat4 projInv;
-		glm::mat4 view;
-		glm::mat4 viewInv;
-		glm::mat4 projView;
-		glm::mat4 projViewRotate;
-		glm::vec4 frustumPlanes[6];
-		glm::vec2 viewportDim;
-	};
 
 	struct MaterialShaderStruct
 	{

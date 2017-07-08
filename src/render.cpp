@@ -13,16 +13,16 @@ namespace tke
 {
 	void Device::waitIdle()
 	{
-		cs.lock();
+		mtx.lock();
 		vkDeviceWaitIdle(v);
-		cs.unlock();
+		mtx.unlock();
 	}
 
 	void Queue::waitIdle()
 	{
-		cs.lock();
+		mtx.lock();
 		vkQueueWaitIdle(v);
-		cs.unlock();
+		mtx.unlock();
 	}
 
 	void Queue::submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence)
@@ -38,10 +38,10 @@ namespace tke
 		info.signalSemaphoreCount = signalSemaphore ? 1 : 0;
 		info.pSignalSemaphores = &signalSemaphore;
 
-		graphicsQueue.cs.lock();
+		graphicsQueue.mtx.lock();
 		auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, fence);
 		assert(res == VK_SUCCESS);
-		graphicsQueue.cs.unlock();
+		graphicsQueue.mtx.unlock();
 	}
 
 	Instance inst;
@@ -59,17 +59,17 @@ namespace tke
 		info.commandPool = pool->v;
 		info.commandBufferCount = 1;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkAllocateCommandBuffers(device.v, &info, &v);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	CommandBuffer::~CommandBuffer()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkFreeCommandBuffers(device.v, pool->v, 1, &v);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	void CommandBuffer::reset()
@@ -226,17 +226,17 @@ namespace tke
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		info.queueFamilyIndex = 0;
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateCommandPool(device.v, &info, nullptr, &v);
-		device.cs.unlock();
+		device.mtx.unlock();
 		assert(res == VK_SUCCESS);
 	}
 
 	CommandPool::~CommandPool()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyCommandPool(device.v, v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	CommandBuffer *CommandPool::begineOnce()
@@ -306,18 +306,18 @@ namespace tke
 		descriptorSetInfo.descriptorSetCount = 1;
 		descriptorSetInfo.pSetLayouts = &layout->v;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkAllocateDescriptorSets(device.v, &descriptorSetInfo, &v);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	DescriptorSet::~DescriptorSet()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkFreeDescriptorSets(device.v, pool->v, 1, &v);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	void DescriptorSet::setBuffer(int binding, int index, Buffer *buffer)
@@ -335,9 +335,9 @@ namespace tke
 		info.range = buffer->size;
 		write.pBufferInfo = &info;
 
-		device.cs.lock();
+		device.mtx.lock();
 		vkUpdateDescriptorSets(device.v, 1, &write, 0, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	void DescriptorSet::setImage(int binding, int index, Image *image, VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -355,9 +355,9 @@ namespace tke
 		info.sampler = sampler;
 		write.pImageInfo = &info;
 
-		device.cs.lock();
+		device.mtx.lock();
 		vkUpdateDescriptorSets(device.v, 1, &write, 0, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	DescriptorPool::DescriptorPool()
@@ -375,9 +375,9 @@ namespace tke
 		descriptorPoolInfo.poolSizeCount = ARRAYSIZE(descriptorPoolSizes);
 		descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
 		descriptorPoolInfo.maxSets = 256;
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &v);
-		device.cs.unlock();
+		device.mtx.unlock();
 		assert(res == VK_SUCCESS);
 	}
 
@@ -390,9 +390,9 @@ namespace tke
 
 	Framebuffer::~Framebuffer()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyFramebuffer(device.v, v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	std::vector<Framebuffer*> framebuffers;
@@ -441,10 +441,10 @@ namespace tke
 		info.attachmentCount = viewCount;
 		info.pAttachments = views;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateFramebuffer(device.v, &info, nullptr, &f->v);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		framebuffers.push_back(f);
 		return f;
@@ -480,19 +480,19 @@ namespace tke
 		VkFenceCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateFence(device.v, &info, nullptr, &fence);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		return fence;
 	}
 
 	void destroyFence(VkFence fence)
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyFence(device.v, fence, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	VkEvent createEvent()
@@ -502,19 +502,19 @@ namespace tke
 		VkEventCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateEvent(device.v, &info, nullptr, &event);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		return event;
 	}
 
 	void destroyEvent(VkEvent event)
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyEvent(device.v, event, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	VkSemaphore createSemaphore()
@@ -524,30 +524,30 @@ namespace tke
 		VkSemaphoreCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateSemaphore(device.v, &info, nullptr, &semaphore);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		return semaphore;
 	}
 
 	void destroySemaphore(VkSemaphore semaphore)
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroySemaphore(device.v, semaphore, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	void waitFence(VkFence fence)
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		VkResult res;
 		res = vkWaitForFences(device.v, 1, &fence, true, UINT64_MAX);
 		assert(res == VK_SUCCESS);
 		res = vkResetFences(device.v, 1, &fence);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static VkPhysicalDeviceMemoryProperties memProperties;
@@ -651,17 +651,17 @@ namespace tke
 		info.dependencyCount = dependencyCount;
 		info.pDependencies = pDependencies;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateRenderPass(device.v, &info, nullptr, &v);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	RenderPass::~RenderPass()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyRenderPass(device.v, v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location,
@@ -901,7 +901,7 @@ namespace tke
 		bufferInfo.usage = p->usage;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		device.cs.lock();
+		device.mtx.lock();
 
 		res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &p->v);
 		assert(res == VK_SUCCESS);
@@ -922,15 +922,15 @@ namespace tke
 		res = vkBindBufferMemory(device.v, p->v, p->memory, 0);
 		assert(res == VK_SUCCESS);
 
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static void buffer_destroy(Buffer *p)
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkFreeMemory(device.v, p->memory, nullptr);
 		vkDestroyBuffer(device.v, p->v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	Buffer::Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty)
@@ -962,18 +962,18 @@ namespace tke
 	void *StagingBuffer::map(size_t offset, size_t _size)
 	{
 		void *map;
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkMapMemory(device.v, memory, offset, _size, 0, &map);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 		return map;
 	}
 
 	void StagingBuffer::unmap()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkUnmapMemory(device.v, memory);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static void buffer_copy(NonStagingBufferAbstract *p, void *data)
@@ -1079,7 +1079,7 @@ namespace tke
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		device.cs.lock();
+		device.mtx.lock();
 
 		res = vkCreateImage(device.v, &imageInfo, nullptr, &image);
 		assert(res == VK_SUCCESS);
@@ -1098,7 +1098,7 @@ namespace tke
 		res = vkBindImageMemory(device.v, image, memory, 0);
 		assert(res == VK_SUCCESS);
 
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		size = memRequirements.size;
 
@@ -1121,7 +1121,7 @@ namespace tke
 
 	Image::~Image()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		for (auto v : views)
 			vkDestroyImageView(device.v, v->v, nullptr);
 		if (type != Type::eSwapchain)
@@ -1129,7 +1129,7 @@ namespace tke
 			vkFreeMemory(device.v, memory, nullptr);
 			vkDestroyImage(device.v, image, nullptr);
 		}
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	void Image::transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout)
@@ -1226,10 +1226,10 @@ namespace tke
 		info.subresourceRange.baseArrayLayer = baseLayer;
 		info.subresourceRange.layerCount = layerCount;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateImageView(device.v, &info, nullptr, &view->v);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		views.push_back(view);
 		return view->v;
@@ -1404,9 +1404,9 @@ namespace tke
 
 	ShaderModule::~ShaderModule()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyShaderModule(device.v, v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static std::vector<ShaderModule*> shaderModules;
@@ -1816,10 +1816,10 @@ namespace tke
 				shaderModuleCreateInfo.codeSize = file.length;
 				shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
 
-				device.cs.lock();
+				device.mtx.lock();
 				auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &module->v);
 				assert(res == VK_SUCCESS);
-				device.cs.unlock();
+				device.mtx.unlock();
 
 				DeleteFileA("temp.spv");
 			}
@@ -1854,18 +1854,18 @@ namespace tke
 
 	DescriptorSetLayout::~DescriptorSetLayout()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyDescriptorSetLayout(device.v, v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static std::vector<DescriptorSetLayout*> descriptorSetLayouts;
 
 	PipelineLayout::~PipelineLayout()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyPipelineLayout(device.v, v, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	static std::vector<PipelineLayout*> pipelineLayouts;
@@ -2173,10 +2173,10 @@ namespace tke
 				info.bindingCount = vkDescriptors.size();
 				info.pBindings = vkDescriptors.data();
 
-				device.cs.lock();
+				device.mtx.lock();
 				auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &d->v);
 				assert(res == VK_SUCCESS);
-				device.cs.unlock();
+				device.mtx.unlock();
 
 				descriptorSetLayouts.push_back(d);
 
@@ -2225,10 +2225,10 @@ namespace tke
 				info.pushConstantRangeCount = p->pushConstantRanges.size();
 				info.pPushConstantRanges = p->pushConstantRanges.data();
 
-				device.cs.lock();
+				device.mtx.lock();
 				auto res = vkCreatePipelineLayout(device.v, &info, nullptr, &p->v);
 				assert(res == VK_SUCCESS);
-				device.cs.unlock();
+				device.mtx.unlock();
 
 				pipelineLayouts.push_back(p);
 
@@ -2323,10 +2323,10 @@ namespace tke
 		pipelineInfo.pMultisampleState = &multisampleState;
 		pipelineInfo.pDynamicState = vkDynamicStates.size() ? &dynamicState : nullptr;
 
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		linkDescriptors(descriptorSet);
 	}
@@ -2363,9 +2363,9 @@ namespace tke
 
 		delete descriptorSet;
 
-		device.cs.lock();
+		device.mtx.lock();
 		vkDestroyPipeline(device.v, pipeline, nullptr);
-		device.cs.unlock();
+		device.mtx.unlock();
 
 		for (int i = 0; i < 5; i++)
 			delete stages[i];

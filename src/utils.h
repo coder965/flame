@@ -6,8 +6,6 @@
 #include <list>
 #include <string>
 #include <typeindex>
-#define NOMINMAX
-#include <Windows.h>
 
 template<class T>
 inline std::ifstream& operator>>(std::ifstream &file, T &v)
@@ -65,23 +63,6 @@ struct EnsureConst
 
 namespace tke
 {
-	struct CriticalSection
-	{
-		CRITICAL_SECTION v;
-		inline CriticalSection()
-		{
-			InitializeCriticalSection(&v);
-		}
-		inline void lock()
-		{
-			EnterCriticalSection(&v);
-		}
-		inline void unlock()
-		{
-			LeaveCriticalSection(&v);
-		}
-	};
-
 	int lineNumber(const char *str);
 
 	enum class Err
@@ -97,7 +78,7 @@ namespace tke
 
 	const char *getErrorString(Err errNum);
 
-	extern HINSTANCE hInst;
+	extern void *hInst;
 	extern int screenCx;
 	extern int screenCy;
 	extern std::string exePath;

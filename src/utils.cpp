@@ -55,7 +55,7 @@ namespace tke
 		}
 	}
 
-	HINSTANCE hInst;
+	void *hInst;
 	int screenCx;
 	int screenCy;
 	std::string exePath;

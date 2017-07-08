@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+
 #include "define.h"
 #include "render.h"
 #include "camera.h"
@@ -160,7 +162,7 @@ namespace tke
 
 	struct Scene
 	{
-		CRITICAL_SECTION cs;
+		std::mutex mtx;
 
 		std::string name;
 		std::string filename;

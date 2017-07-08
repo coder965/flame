@@ -80,9 +80,6 @@ namespace tke
 
 	Scene::Scene()
 	{
-		InitializeCriticalSection(&cs);
-
-
 		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
 		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
 		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
@@ -155,15 +152,15 @@ namespace tke
 
 	void Scene::addLight(Light *pLight) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
-		EnterCriticalSection(&cs);
+		mtx.lock();
 		lights.push_back(pLight);
 		lightCountChanged = true;
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 	}
 
 	Light *Scene::removeLight(Light *pLight)
 	{
-		EnterCriticalSection(&cs);
+		mtx.lock();
 		for (auto it = lights.begin(); it != lights.end(); it++)
 		{
 			if (*it == pLight)
@@ -190,7 +187,7 @@ namespace tke
 			}
 		}
 		lightCountChanged = true;
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 		return pLight;
 	}
 
@@ -199,7 +196,7 @@ namespace tke
 	{
 		auto m = o->model;
 
-		EnterCriticalSection(&cs);
+		mtx.lock();
 
 		// since object can move to somewhere first, we create physics component here
 		if (o->physicsType & ObjectPhysicsTypeStatic || o->physicsType & ObjectPhysicsTypeDynamic)
@@ -342,12 +339,12 @@ namespace tke
 		objects.push_back(o);
 
 		needUpdateIndirectBuffer = true;
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 	}
 
 	Object *Scene::removeObject(Object *pObject)
 	{
-		EnterCriticalSection(&cs);
+		mtx.lock();
 		for (auto it = objects.begin(); it != objects.end(); it++)
 		{
 			if (*it == pObject)
@@ -367,7 +364,7 @@ namespace tke
 			}
 		}
 		needUpdateIndirectBuffer = true;
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 		return pObject;
 	}
 
@@ -394,26 +391,26 @@ namespace tke
 
 	void Scene::addTerrain(Terrain *pTerrain) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
-		EnterCriticalSection(&cs);
+		mtx.lock();
 
 		terrain = pTerrain;
 
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 	}
 
 	void Scene::removeTerrain()
 	{
-		EnterCriticalSection(&cs);
+		mtx.lock();
 
 		delete terrain;
 		terrain = nullptr;
 
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 	}
 
 	void Scene::clear()
 	{
-		EnterCriticalSection(&cs);
+		mtx.lock();
 
 		pSunLight = nullptr;
 
@@ -428,7 +425,7 @@ namespace tke
 		delete terrain;
 		terrain = nullptr;
 
-		LeaveCriticalSection(&cs);
+		mtx.unlock();
 	}
 
 	Framebuffer *Scene::createFramebuffer(Image *dst)
@@ -443,6 +440,18 @@ namespace tke
 		};
 		return getFramebuffer(resCx, resCy, sceneRenderPass, ARRAYSIZE(views), views);
 	}
+
+	struct MatrixBufferShaderStruct
+	{
+		glm::mat4 proj;
+		glm::mat4 projInv;
+		glm::mat4 view;
+		glm::mat4 viewInv;
+		glm::mat4 projView;
+		glm::mat4 projViewRotate;
+		glm::vec4 frustumPlanes[6];
+		glm::vec2 viewportDim;
+	};
 
 	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
 	{

@@ -223,7 +223,7 @@ namespace tke
 		for (auto src : m->pImages)
 		{
 			bool found = false;
-			for (auto i : textures)
+			for (auto i : modelTextures)
 			{
 				if (i == src)
 				{
@@ -233,8 +233,8 @@ namespace tke
 			}
 			if (!found)
 			{
-				src->index = textures.size();
-				textures.push_back(src);
+				src->index = modelTextures.size();
+				modelTextures.push_back(src);
 			}
 		}
 		for (auto mt : m->materials)
@@ -249,7 +249,7 @@ namespace tke
 
 			int sameIndex = -1;
 			int materialIndex = 0;
-			for (auto &mt : materials)
+			for (auto &mt : modelMaterials)
 			{
 				auto storeAlbedoAlphaMapIndex = mt.mapIndex & 0xff;
 				auto storeNormalHeightMapIndex = (mt.mapIndex >> 8) & 0xff;
@@ -282,9 +282,9 @@ namespace tke
 			}
 			if (sameIndex == -1)
 			{
-				mt->sceneIndex = materials.size();
+				mt->sceneIndex = modelMaterials.size();
 				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 8) + (specRoughnessMapIndex << 16);
-				materials.push_back(stru);
+				modelMaterials.push_back(stru);
 			}
 			else
 			{

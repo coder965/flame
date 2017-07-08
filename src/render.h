@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <experimental/filesystem>
+#include <mutex>
 
 #define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -41,13 +42,13 @@ namespace tke
 	struct Instance
 	{
 		VkInstance v;
-		CriticalSection cs;
+		std::mutex mtx;
 	};
 
 	struct Device
 	{
 		VkDevice v;
-		CriticalSection cs;
+		std::mutex mtx;
 
 		void waitIdle();
 	};
@@ -55,7 +56,7 @@ namespace tke
 	struct Queue
 	{
 		VkQueue v;
-		CriticalSection cs;
+		std::mutex mtx;
 
 		void waitIdle();
 		void submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);

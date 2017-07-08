@@ -175,8 +175,8 @@ namespace tke
 			wcex.cbSize = sizeof(WNDCLASSEXA);
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
-			wcex.hInstance = hInst;
-			wcex.hIcon = CreateIcon(hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->data);
+			wcex.hInstance = (HINSTANCE)hInst;
+			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->data);
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			RegisterClassExA(&wcex);
@@ -197,7 +197,7 @@ namespace tke
 		{
 			windowStyle |= WS_POPUP;
 		}
-		hWnd = CreateWindowA("tke_wnd", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, hInst, NULL);
+		hWnd = CreateWindowA("tke_wnd", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, (HINSTANCE)hInst, NULL);
 
 		_create_window(this, hasUi);
 	}
@@ -215,12 +215,12 @@ namespace tke
 	{
 		VkResult res;
 
-		inst.cs.lock();
-		device.cs.lock();
+		inst.mtx.lock();
+		device.mtx.lock();
 
 		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
 		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		surfaceInfo.hinstance = hInst;
+		surfaceInfo.hinstance = (HINSTANCE)hInst;
 		surfaceInfo.hwnd = (HWND)hWnd;
 		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
 		assert(res == VK_SUCCESS);
@@ -261,8 +261,8 @@ namespace tke
 		vkGetSwapchainImagesKHR(device.v, swapchain, &imageCount, nullptr);
 		vkGetSwapchainImagesKHR(device.v, swapchain, &imageCount, vkImages);
 
-		device.cs.unlock();
-		inst.cs.unlock();
+		device.mtx.unlock();
+		inst.mtx.unlock();
 
 		images = (Image*)malloc(sizeof(Image) * 2);
 
@@ -276,12 +276,12 @@ namespace tke
 	void Window::destroySwapchain()
 	{
 		delete images;
-		inst.cs.lock();
-		device.cs.lock();
+		inst.mtx.lock();
+		device.mtx.lock();
 		vkDestroySwapchainKHR(device.v, swapchain, nullptr);
 		vkDestroySurfaceKHR(inst.v, surface, nullptr);
-		device.cs.unlock();
-		inst.cs.unlock();
+		device.mtx.unlock();
+		inst.mtx.unlock();
 	}
 
 	void Window::keyDownEvent(int wParam) 
@@ -390,10 +390,10 @@ namespace tke
 
 	void Window::beginFrame()
 	{
-		device.cs.lock();
+		device.mtx.lock();
 		auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &imageIndex);
 		assert(res == VK_SUCCESS);
-		device.cs.unlock();
+		device.mtx.unlock();
 	}
 
 	void Window::endFrame()
@@ -407,10 +407,10 @@ namespace tke
 		info.pSwapchains = &swapchain;
 		info.pImageIndices = &imageIndex;
 
-		graphicsQueue.cs.lock();
+		graphicsQueue.mtx.lock();
 		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
 		assert(res == VK_SUCCESS);
-		graphicsQueue.cs.unlock();
+		graphicsQueue.mtx.unlock();
 	}
 
 	void Window::show()
@@ -502,6 +502,38 @@ namespace tke
 
 		return index;
 	}
+
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+	};
+
+	struct AnimatedVertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+
+		glm::vec4 boneWeight;
+		glm::vec4 boneID;
+	};
+
+	struct ConstantBufferStruct
+	{
+		float depth_near;
+		float depth_far;
+		float cx;
+		float cy;
+		float aspect;
+		float fovy;
+		float tanHfFovy;
+		float envrCx;
+		float envrCy;
+	};
 
 	Err init(const std::string &path, int rcx, int rcy)
 	{
