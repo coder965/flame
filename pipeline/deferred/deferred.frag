@@ -172,6 +172,7 @@ void main()
 	color += u_ambient.v.rgb * albedo;
 #endif
 	
-	float fog = clamp(exp2( -0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
-	outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
+	float fog = clamp(exp2(-0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
+	//outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
+	outColor = vec4(mix(u_ambient.fogColor.rgb, color, 1), 1.0);
 }

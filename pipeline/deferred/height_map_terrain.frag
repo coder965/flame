@@ -20,7 +20,9 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout (binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
+
+layout(binding = TKE_UBO_BINDING) uniform sampler2D colorMap;
 
 layout (location = 0) in vec2 inUV;
 
@@ -47,7 +49,7 @@ void main()
 	
 	vec3 normal = normalMatrix * normalize(vec3(L - R, 2.0 * eps, T - B));
 	
-	outAlbedoAlpha = vec4(vec3(1.0), 1.0);
+	outAlbedoAlpha = vec4(texture(colorMap, inUV).rgb, 1.0);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
 	outSpecRoughness = vec4(0.05, 1.0, 0.0, 0.0);
 }

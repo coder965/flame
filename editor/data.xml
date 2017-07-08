@@ -1,5 +1,6 @@
 <data>
   <texture filename="heightmap.jpg" />
+  <texture filename="heightmap_color.jpg" />
 	<model filename="D:/miku/miku.pmd"/>
   <scene filename="scene.xml" />
 </data>

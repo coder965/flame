@@ -29,6 +29,10 @@ void AttributeWidget::show()
 		{
 			auto scene = monitorWidget->scene;
 
+			if (ImGui::TreeNode("Sky"))
+			{
+				ImGui::TreePop();
+			}
 			if (ImGui::TreeNode("Lights"))
 			{
 				ImGui::TreePop();
@@ -39,10 +43,12 @@ void AttributeWidget::show()
 			}
 			if (ImGui::TreeNode("Terrain"))
 			{
-				if (scene->terrain)
+				auto terrain = scene->terrain;
+
+				if (terrain)
 				{
-					static int index = 0;
-					if (ImGui::Combo("Height Map", &index, [](void *data, int idx, const char **out_text) {
+					static int height_map_index = 0;
+					if (ImGui::Combo("Height Map", &height_map_index, [](void *data, int idx, const char **out_text) {
 						if (idx == 0)
 							*out_text = "[NULL]";
 						else
@@ -50,12 +56,29 @@ void AttributeWidget::show()
 						return true;
 					}, nullptr, tke::textures.size() + 1))
 					{
-						if (index > 0)
-							scene->terrain->heightMap = tke::textures[index - 1];
+						if (height_map_index > 0)
+							terrain->heightMap = tke::textures[height_map_index - 1];
 						else
-							scene->terrain->heightMap = nullptr;
-						scene->terrain->changed = true;
+							terrain->heightMap = nullptr;
+						terrain->changed = true;
 					}
+					static int color_map_index = 0;
+					if (ImGui::Combo("Color Map", &color_map_index, [](void *data, int idx, const char **out_text) {
+						if (idx == 0)
+							*out_text = "[NULL]";
+						else
+							*out_text = tke::textures[idx - 1]->filename.c_str();
+						return true;
+					}, nullptr, tke::textures.size() + 1))
+					{
+						if (color_map_index > 0)
+							terrain->colorMap = tke::textures[color_map_index - 1];
+						else
+							terrain->colorMap = nullptr;
+						terrain->changed = true;
+					}
+					if (ImGui::DragFloat("Height", &terrain->height))
+						terrain->changed = true;
 					if (ImGui::Button("Remove Terrain"))
 						scene->removeTerrain();
 				}

@@ -69,7 +69,8 @@ namespace tke
 	static int mrt_bone_position = -1;
 
 	Pipeline *heightMapTerrainPipeline = nullptr;
-	static int heightMapTerr_map_position = -1;
+	static int heightMapTerr_heightMap_position = -1;
+	static int heightMapTerr_colorMap_position = -1;
 
 	Pipeline *proceduralTerrainPipeline = nullptr;
 
@@ -767,8 +768,10 @@ namespace tke
 
 				heightMapTerrainBuffer->update(&stru, *stagingBuffer);
 
-				if (heightMapTerr_map_position != -1 && terrain->heightMap)
-					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_map_position, 0, terrain->heightMap, colorBorderSampler);
+				if (heightMapTerr_heightMap_position != -1 && terrain->heightMap)
+					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
+				if (heightMapTerr_colorMap_position != -1 && terrain->colorMap)
+					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_colorMap_position, 0, terrain->colorMap, colorBorderSampler);
 			}
 		}
 		if (needUpdateIndirectBuffer)
@@ -1197,7 +1200,8 @@ namespace tke
 		heightMapTerrainPipeline = new Pipeline;
 		heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain.xml");
 		heightMapTerrainPipeline->setup(sceneRenderPass, 1);
-		heightMapTerr_map_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
+		heightMapTerr_heightMap_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
+		heightMapTerr_colorMap_position = heightMapTerrainPipeline->descriptorPosition("colorMap");
 
 		//proceduralTerrainPipeline = new Pipeline;
 		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain.xml");
