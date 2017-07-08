@@ -58,6 +58,11 @@ namespace tke
 	int screenCy;
 	std::string exePath;
 
+	bool atlPressing()
+	{
+		return GetAsyncKeyState(VK_MENU) & 0x8000;
+	}
+
 	const char *getClipBoard()
 	{
 		static std::string str;

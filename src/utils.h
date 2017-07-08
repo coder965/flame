@@ -101,6 +101,8 @@ namespace tke
 	extern int screenCy;
 	extern std::string exePath;
 
+	bool atlPressing();
+
 	const char *getClipBoard();
 	void setClipBoard(const std::string &);
 

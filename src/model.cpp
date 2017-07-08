@@ -732,8 +732,8 @@ namespace tke
 				auto secang = glm::radians(j * 360.f / heightSubdiv);
 				auto index = m->positions.size();
 				indexs[i].push_back(index);
-				m->positions.push_back(center + R * (glm::vec3(cos(secang) * sectionRadius + radius, sin(secang) * sectionRadius, 0.f)));
-				m->normals.push_back(R * glm::vec3(cos(secang), sin(secang), 0.f));
+				m->positions.push_back(rotation * (center + R * (glm::vec3(cos(secang) * sectionRadius + radius, sin(secang) * sectionRadius, 0.f))));
+				m->normals.push_back(rotation * R * glm::vec3(cos(secang), sin(secang), 0.f));
 			}
 		}
 

@@ -67,7 +67,7 @@ void draw_wireframe(tke::CommandBuffer *cb)
 			glm::vec4 color;
 		}data;
 		data.proj = tke::matPerspective;
-		data.modelview = currentScene->camera.getMatInv();
+		data.modelview = currentScene->camera.getMatInv() * object->getMat();
 		data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 		cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 		cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
@@ -80,9 +80,6 @@ void MonitorWidget::show()
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeMonitor;
 
-	if (ImGui::Button("load"))
-		;
-	ImGui::SameLine();
 	if (ImGui::Button("save"))
 		scene->save(scene->filename);
 
@@ -92,43 +89,45 @@ void MonitorWidget::show()
 	{
 		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
 		{
-			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
-			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-			if (mainWindow->leftPressing)
+			if (tke::atlPressing())
 			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
+				auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
+				auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
+				if (mainWindow->leftPressing)
 					scene->camera.rotateByCursor(distX, distY);
-			}
-			else if (mainWindow->middlePressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
+				else if (mainWindow->middlePressing)
 					scene->camera.moveByCursor(distX, distY);
-			}
-			else if (mainWindow->rightPressing)
-			{
-				if (GetAsyncKeyState(VK_MENU) & 0x8000)
+				else if (mainWindow->rightPressing)
 					scene->camera.scroll(distX);
 			}
-		}
-		if (mainWindow->leftJustDown && !(GetAsyncKeyState(VK_MENU) & 0x8000))
-		{
-			auto x = mainWindow->mouseX - image_pos.x;
-			auto y = mainWindow->mouseY - image_pos.y;
-			if (!transformerTool->leftDown(x, y))
+			else
 			{
-				currentScene = scene;
-				auto index = tke::pickUp(x, y, draw_wireframe);
-				if (index == 0)
-					selectedItem.reset();
-				else
-					selectedItem.select(scene->objects[index - 1]);
+				if (mainWindow->leftPressing)
+					transformerTool->mouseMove(mainWindow->mouseDispX, mainWindow->mouseDispY);
+			}
+		}
+		if (mainWindow->leftJustDown)
+		{
+			if (!tke::atlPressing())
+			{
+				auto x = mainWindow->mouseX - image_pos.x;
+				auto y = mainWindow->mouseY - image_pos.y;
+				if (!transformerTool->leftDown(x, y))
+				{
+					currentScene = scene;
+					auto index = tke::pickUp(x, y, draw_wireframe);
+					if (index == 0)
+						selectedItem.reset();
+					else
+						selectedItem.select(scene->objects[index - 1]);
+				}
 			}
 		}
 	}
 
 	{
 		char *names[] = {
-			"S", "M", "R", "C"
+			ICON_FA_MOUSE_POINTER, "M", "R", "S"
 		};
 		for (int i = 0; i < 4; i++)
 		{
@@ -182,7 +181,7 @@ void MonitorWidget::show()
 				glm::vec4 color;
 			}data;
 			data.proj = tke::matPerspective;
-			data.modelview = scene->camera.getMatInv();
+			data.modelview = scene->camera.getMatInv() * obj->getMat();
 			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 			cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
 			cb_wireframe->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
