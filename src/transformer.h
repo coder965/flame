@@ -77,15 +77,15 @@ namespace tke
 		void setScale(const glm::vec3 &_scale);
 		inline void setScale(float x, float y, float z) { setScale(glm::vec3(x, y, z)); }
 		inline void setScale(float v) { setScale(glm::vec3(v)); }
-		inline void setScaleX(float v) { auto p = getEuler();  setCoord(glm::vec3(v, p.y, p.z)); }
-		inline void setScaleY(float v) { auto p = getEuler();  setCoord(glm::vec3(p.x, v, p.z)); }
-		inline void setScaleZ(float v) { auto p = getEuler();  setCoord(glm::vec3(p.x, p.y, v)); }
+		inline void setScaleX(float v) { auto p = getScale();  setScale(glm::vec3(v, p.y, p.z)); }
+		inline void setScaleY(float v) { auto p = getScale();  setScale(glm::vec3(p.x, v, p.z)); }
+		inline void setScaleZ(float v) { auto p = getScale();  setScale(glm::vec3(p.x, p.y, v)); }
 		void addScale(const glm::vec3 &_scale);
 		inline void addScale(float x, float y, float z) { addScale(glm::vec3(x, y, z)); }
 		inline void addScale(float v) { addScale(glm::vec3(v)); }
-		inline void addScaleX(float v) { addEuler(glm::vec3(v, 0.f, 0.f)); }
-		inline void addScaleY(float v) { addEuler(glm::vec3(0.f, v, 0.f)); }
-		inline void addScaleZ(float v) { addEuler(glm::vec3(0.f, 0.f, v)); }
+		inline void addScaleX(float v) { addScale(glm::vec3(v, 0.f, 0.f)); }
+		inline void addScaleY(float v) { addScale(glm::vec3(0.f, v, 0.f)); }
+		inline void addScaleZ(float v) { addScale(glm::vec3(0.f, 0.f, v)); }
 		void setWorldScale(const glm::vec3 &_scale);
 		inline void setWorldScale(float x, float y, float z) { setWorldScale(glm::vec3(x, y, z)); }
 		inline void setWorldScale(float v) { setWorldScale(glm::vec3(v)); }

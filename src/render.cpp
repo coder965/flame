@@ -1596,13 +1596,48 @@ namespace tke
 					fullLineNum += includeFileLineNum;
 					lineNum++;
 				}
-				//else if (states.top().first && std::regex_search(line, pattern = R"(layout\s*\(binding)"))
-				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\(\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+))"))
+				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\(\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+)\s*(\[\s*([0-9]+)\s*\])?)"))
 				{
-					
+					auto name = match[6].str();
+					Descriptor d;
+					d.binding = -1;
+					for (int i = 0; i < 5; i++)
+					{
+						if (parent->stages[i])
+						{
+							auto s = parent->stages[i];
+							if (s->type != type && s->module)
+							{
+								for (auto &_d : s->module->descriptors)
+								{
+									if (_d.name == name)
+									{
+										d.binding = _d.binding;
+										d.type = _d.type;
+										d.count = _d.count;
+										break;
+									}
+								}
+								if (d.binding != -1)
+									break;
+							}
+						}
+					}
 
-					line = std::regex_replace(line, pattern, std::to_string(_currentUboBinding));
-					_currentUboBinding++;
+					d.name = name;
+					if (d.binding == -1)
+					{
+						d.binding = _currentUboBinding;
+						d.type = match[5].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
+						d.count = match[8].matched ? std::stoi(match[8].str()) : 1;
+						module->descriptors.push_back(d);
+						_currentUboBinding++;
+					}
+					else
+					{
+						module->descriptors.push_back(d);
+					}
+					line = std::regex_replace(line, pattern = R"(TKE_UBO_BINDING)", std::to_string(d.binding));
 
 					stageText += line + "\n";
 
@@ -1753,23 +1788,13 @@ namespace tke
 					case eUniform:
 						if (r.binding != -1 && r.type == "8b5e") // SAMPLER
 						{
-							tke::Descriptor d;
-							d.type = tke::DescriptorType::image_n_sampler;
-							d.name = r.name;
-							d.binding = r.binding;
-							d.count = r.size;
-							module->descriptors.push_back(d);
+							// processed above
 						}
 						break;
 					case eUniformBlock:
 						if (r.binding != -1) // UBO
 						{
-							tke::Descriptor d;
-							d.type = tke::DescriptorType::uniform_buffer;
-							d.name = r.name;
-							d.binding = r.binding;
-							d.count = r.COUNT;
-							module->descriptors.push_back(d);
+							// processed above
 						}
 						else // PC
 						{
