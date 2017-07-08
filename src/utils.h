@@ -6,6 +6,7 @@
 #include <list>
 #include <string>
 #include <typeindex>
+#define NOMINMAX
 #include <Windows.h>
 
 template<class T>
@@ -64,12 +65,10 @@ struct EnsureConst
 
 namespace tke
 {
-	int lineNumber(const char *str);
-
 	struct CriticalSection
 	{
 		CRITICAL_SECTION v;
-		inline CriticalSection() 
+		inline CriticalSection()
 		{
 			InitializeCriticalSection(&v);
 		}
@@ -82,6 +81,8 @@ namespace tke
 			LeaveCriticalSection(&v);
 		}
 	};
+
+	int lineNumber(const char *str);
 
 	enum class Err
 	{

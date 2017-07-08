@@ -74,6 +74,8 @@ namespace tke
 
 	struct Terrain : Transformer
 	{
+		TerrainType type;
+
 		float ext = 10.f;
 		float height = 10.f;
 		float tessFactor = 0.75f;
@@ -82,6 +84,8 @@ namespace tke
 		Image *colorMap = nullptr;
 		float spec = 0.04f;
 		float roughness = 1.f;
+
+		Terrain(TerrainType _type);
 	};
 
 	enum SkyType
@@ -192,8 +196,6 @@ namespace tke
 
 		Terrain *terrain = nullptr;
 
-		bool showProceduralTerrain = false;
-
 		bool needUpdateSky = true;
 		bool needUpdateIndirectBuffer = true;
 		bool lightCountChanged = true;
@@ -212,11 +214,11 @@ namespace tke
 
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void addLight(Light *pLight);
-		Light *deleteLight(Light *pLight);
+		Light *removeLight(Light *pLight);
 		void addObject(Object *pObject);
-		Object *deleteObject(Object *pObject);
+		Object *removeObject(Object *pObject);
 		int getCollisionGroupID(int ID, unsigned int mask);
-		void setTerrain(Terrain *pTerrain);
+		void addTerrain(Terrain *pTerrain);
 		void removeTerrain();
 		void clear();
 		Framebuffer *createFramebuffer(Image *dst);

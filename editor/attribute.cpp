@@ -29,8 +29,6 @@ void AttributeWidget::show()
 		{
 			auto scene = monitorWidget->scene;
 
-			ImGui::Checkbox("Procedural Terrain", &scene->showProceduralTerrain);
-
 			if (ImGui::TreeNode("Lights"))
 			{
 				ImGui::TreePop();
@@ -38,6 +36,25 @@ void AttributeWidget::show()
 			if (ImGui::TreeNode("Objects"))
 			{
 				ImGui::TreePop();
+			}
+
+			if (scene->terrain)
+			{
+				if (ImGui::Button("Remove Terrain"))
+					scene->removeTerrain();
+			}
+			else
+			{
+				if (ImGui::Button("Create Height Map Terrain"))
+				{
+					auto t = new tke::Terrain(tke::TerrainTypeHeightMap);
+					scene->addTerrain(t);
+				}
+				if (ImGui::Button("Create Procedural Terrain"))
+				{
+					auto t = new tke::Terrain(tke::TerrainTypeProcedural);
+					scene->addTerrain(t);
+				}
 			}
 		}
 		if (ImGui::AddTab("Select"))

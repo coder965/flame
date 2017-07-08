@@ -1,8 +1,5 @@
 #pragma once
 
-#define NOMINMAX
-#include <Windows.h>
-
 #include "math.h"
 #include "render.h"
 #include "gui.h"
@@ -91,9 +88,8 @@ namespace tke
 		unsigned int dummy;
 	};
 
-	extern std::vector<Image*> textures;
-
-	extern std::vector<MaterialShaderStruct> materials;
+	extern std::vector<Image*> modelTextures;
+	extern std::vector<MaterialShaderStruct> modelMaterials;
 
 	extern VertexBuffer *staticVertexBuffer;
 	extern IndexBuffer *staticIndexBuffer;
@@ -141,7 +137,7 @@ namespace tke
 		int mouseDispX = 0, mouseDispY = 0;
 		int mouseScroll = 0;
 
-		HWND hWnd = nullptr;
+		void *hWnd = nullptr;
 
 		int frameCount = 0;
 

@@ -29,6 +29,10 @@ namespace tke
 		delete animationComponent;
 	}
 
+	Terrain::Terrain(TerrainType _type)
+		:type(_type)
+	{}
+
 	static const float gravity = 9.81f;
 
 	UniformBuffer *matrixBuffer = nullptr;
@@ -157,7 +161,7 @@ namespace tke
 		LeaveCriticalSection(&cs);
 	}
 
-	Light *Scene::deleteLight(Light *pLight)
+	Light *Scene::removeLight(Light *pLight)
 	{
 		EnterCriticalSection(&cs);
 		for (auto it = lights.begin(); it != lights.end(); it++)
@@ -341,7 +345,7 @@ namespace tke
 		LeaveCriticalSection(&cs);
 	}
 
-	Object *Scene::deleteObject(Object *pObject)
+	Object *Scene::removeObject(Object *pObject)
 	{
 		EnterCriticalSection(&cs);
 		for (auto it = objects.begin(); it != objects.end(); it++)
@@ -388,7 +392,7 @@ namespace tke
 		return count;
 	}
 
-	void Scene::setTerrain(Terrain *pTerrain) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
+	void Scene::addTerrain(Terrain *pTerrain) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
 		EnterCriticalSection(&cs);
 
@@ -750,11 +754,11 @@ namespace tke
 				stru.ext = terrain->ext;
 				stru.height = terrain->height;
 				stru.tessFactor = terrain->tessFactor;
-				stru.mapDim = terrain->heightMap->width;
+				stru.mapDim = terrain->heightMap ? terrain->heightMap->width : 1024;
 
 				heightMapTerrainBuffer->update(&stru, *stagingBuffer);
 
-				if (heightMapTerr_map_position != -1)
+				if (heightMapTerr_map_position != -1 && terrain->heightMap)
 					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_map_position, 0, terrain->heightMap, colorBorderSampler);
 			}
 		}
@@ -915,7 +919,8 @@ namespace tke
 			pLight->changed = false;
 		for (auto pObject : objects)
 			pObject->changed = false;
-		terrain->changed = false;
+		if (terrain)
+			terrain->changed = false;
 
 		cb->reset();
 		cb->begin();
@@ -931,16 +936,30 @@ namespace tke
 
 		// mrt
 		cb->nextSubpass();
+			// static
 		cb->bindVertexBuffer(staticVertexBuffer);
 		cb->bindIndexBuffer(staticIndexBuffer);
 		cb->bindPipeline(mrtPipeline);
 		cb->bindDescriptorSet();
 		cb->drawIndirectIndex(staticObjectIndirectBuffer, staticIndirectCount);
+			// animated
 		cb->bindVertexBuffer(animatedVertexBuffer);
 		cb->bindIndexBuffer(animatedIndexBuffer);
 		cb->bindPipeline(mrtAnimPipeline);
 		cb->bindDescriptorSet();
 		cb->drawIndirectIndex(animatedObjectIndirectBuffer, animatedIndirectCount);
+			// terrain
+		if (terrain)
+		{
+			switch (terrain->type)
+			{
+			case TerrainTypeHeightMap:
+				cb->bindPipeline(heightMapTerrainPipeline);
+				cb->bindDescriptorSet();
+				cb->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
+				break;
+			}
+		}
 
 		// deferred
 		cb->nextSubpass();

@@ -1,4 +1,6 @@
 #include <map>
+#define NOMINMAX
+#include <Windows.h>
 
 #include "define.h"
 #include "core.h"
@@ -37,8 +39,8 @@ namespace tke
 	bool needUpdateMaterialBuffer = true;
 	bool needUpdateTexture = true;
 
-	std::vector<Image*> textures;
-	std::vector<MaterialShaderStruct> materials;
+	std::vector<Image*> modelTextures;
+	std::vector<MaterialShaderStruct> modelMaterials;
 
 	VertexBuffer *staticVertexBuffer = nullptr;
 	IndexBuffer *staticIndexBuffer = nullptr;
@@ -219,7 +221,7 @@ namespace tke
 		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
 		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 		surfaceInfo.hinstance = hInst;
-		surfaceInfo.hwnd = hWnd;
+		surfaceInfo.hwnd = (HWND)hWnd;
 		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
 		assert(res == VK_SUCCESS);
 
@@ -413,7 +415,7 @@ namespace tke
 
 	void Window::show()
 	{
-		ShowWindow(hWnd, SW_NORMAL);
+		ShowWindow((HWND)hWnd, SW_NORMAL);
 		current_window = this;
 	}
 	std::vector<EventList*> eventLists;
@@ -786,18 +788,18 @@ namespace tke
 					if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
 					if (map_position0 != -1 && map_position1 != -1)
 					{
-						for (int index = 0; index < textures.size(); index++)
+						for (int index = 0; index < modelTextures.size(); index++)
 						{
-							mrtPipeline->descriptorSet->setImage(map_position0, index, textures[index], colorSampler);
-							mrtAnimPipeline->descriptorSet->setImage(map_position1, index, textures[index], colorSampler);
+							mrtPipeline->descriptorSet->setImage(map_position0, index, modelTextures[index], colorSampler);
+							mrtAnimPipeline->descriptorSet->setImage(map_position1, index, modelTextures[index], colorSampler);
 						}
 						needUpdateTexture = false;
 					}
 				}
 				if (needUpdateMaterialBuffer)
 				{
-					if (materials.size() > 0)
-						materialBuffer->update(materials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * materials.size());
+					if (modelMaterials.size() > 0)
+						materialBuffer->update(modelMaterials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
 					needUpdateMaterialBuffer = false;
 				}
 
