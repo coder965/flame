@@ -4,8 +4,8 @@
 
 #include "define.h"
 #include "core.h"
-#include "entity.h"
 #include "gui.h"
+#include "entity.h"
 #include "physics.h"
 #include "sound.h"
 

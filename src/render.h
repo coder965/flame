@@ -4,8 +4,6 @@
 #include <list>
 #include <string>
 #include <map>
-#include <memory>
-#include <experimental/filesystem>
 #include <mutex>
 
 #define NOMINMAX

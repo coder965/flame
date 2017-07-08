@@ -2,7 +2,6 @@
 
 #include "math.h"
 #include "render.h"
-#include "gui.h"
 
 namespace tke
 {
@@ -80,6 +79,7 @@ namespace tke
 	extern Pipeline *plainPipeline_3d_anim_wire;
 	extern int plain3d_bone_pos;
 
+	struct GuiComponent;
 	struct Window
 	{
 		int cx = 0, cy = 0;

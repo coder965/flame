@@ -6,8 +6,6 @@
 
 #include "render.h"
 #include "core.h"
-#include "gui.h"
-#include "model.h"
 
 namespace tke
 {
