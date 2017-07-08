@@ -33,6 +33,8 @@ namespace tke
 	extern bool needUpdateMaterialBuffer;
 	extern bool needUpdateTexture;
 
+	extern std::vector<Image*> textures;
+
 	struct MaterialShaderStruct
 	{
 		unsigned int albedoAlphaCompress;

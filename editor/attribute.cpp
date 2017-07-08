@@ -37,24 +37,43 @@ void AttributeWidget::show()
 			{
 				ImGui::TreePop();
 			}
+			if (ImGui::TreeNode("Terrain"))
+			{
+				if (scene->terrain)
+				{
+					static int index = 0;
+					if (ImGui::Combo("Height Map", &index, [](void *data, int idx, const char **out_text) {
+						if (idx == 0)
+							*out_text = "[NULL]";
+						else
+							*out_text = tke::textures[idx - 1]->filename.c_str();
+						return true;
+					}, nullptr, tke::textures.size() + 1))
+					{
+						if (index > 0)
+							scene->terrain->heightMap = tke::textures[index - 1];
+						else
+							scene->terrain->heightMap = nullptr;
+						scene->terrain->changed = true;
+					}
+					if (ImGui::Button("Remove Terrain"))
+						scene->removeTerrain();
+				}
+				else
+				{
+					if (ImGui::Button("Create Height Map Terrain"))
+					{
+						auto t = new tke::Terrain(tke::TerrainTypeHeightMap);
+						scene->addTerrain(t);
+					}
+					if (ImGui::Button("Create Procedural Terrain"))
+					{
+						auto t = new tke::Terrain(tke::TerrainTypeProcedural);
+						scene->addTerrain(t);
+					}
+				}
 
-			if (scene->terrain)
-			{
-				if (ImGui::Button("Remove Terrain"))
-					scene->removeTerrain();
-			}
-			else
-			{
-				if (ImGui::Button("Create Height Map Terrain"))
-				{
-					auto t = new tke::Terrain(tke::TerrainTypeHeightMap);
-					scene->addTerrain(t);
-				}
-				if (ImGui::Button("Create Procedural Terrain"))
-				{
-					auto t = new tke::Terrain(tke::TerrainTypeProcedural);
-					scene->addTerrain(t);
-				}
+				ImGui::TreePop();
 			}
 		}
 		if (ImGui::AddTab("Select"))

@@ -9,7 +9,14 @@ void Game::load()
 	tke::AttributeTree at("data", "data.xml");
 	for (auto c : at.children)
 	{
-		if (c->name == "model")
+		if (c->name == "texture")
+		{
+			auto a = c->firstAttribute("filename");
+			auto i = tke::createImage(a->value, false);
+			if (i)
+				tke::textures.push_back(i);
+		}
+		else if (c->name == "model")
 		{
 			auto a = c->firstAttribute("filename");
 			tke::createModel(a->value);

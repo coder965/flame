@@ -121,6 +121,7 @@ void main()
 	
 	vec3 normal = normalize(inNormalHeight.xyz * 2.0 - 1.0);
 	float roughness = inSpecRoughness.g;
+	float smothness = 1.0 - roughness;
 	
 	vec3 lightSumColor = vec3(0.0);
 	for (int i = 0; i < u_light.count; i++)
@@ -165,8 +166,8 @@ void main()
 	float envrMipmaps = u_ambient.v.a;
 	mat3 matrixViewInv3 = mat3(u_matrix.viewInv);
 	vec3 irradiance = albedo * textureLod(envrSampler, panorama(matrixViewInv3 * normal), envrMipmaps).rgb;
-	vec3 radiance = smothness * F_schlick(spec, dotNV) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * envrMipmaps).rgb;
-	color += litColor + u_ambient.v.rgb * (irradiance + radiance);
+	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * envrMipmaps).rgb;
+	color += u_ambient.v.rgb * (irradiance + radiance);
 #else
 	color += u_ambient.v.rgb * albedo;
 #endif

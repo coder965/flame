@@ -18,11 +18,6 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	};
 	fb_tool = tke::getFramebuffer(image->width, image->height, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 
-	tke::ShaderMacro macro;
-	macro.stage = tke::StageType::frag;
-	macro.value = "USE_PBR";
-	tke::deferredPipeline->shaderMacros.push_back(macro);
-
 	cb = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
 	ds_wireframe = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_wire->descriptorSetLayout);

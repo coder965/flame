@@ -39,6 +39,8 @@ namespace tke
 	bool needUpdateMaterialBuffer = true;
 	bool needUpdateTexture = true;
 
+	std::vector<Image*> textures;
+
 	std::vector<Image*> modelTextures;
 	std::vector<MaterialShaderStruct> modelMaterials;
 
