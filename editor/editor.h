@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../src/scene.h"
+#include "../src/entity.h"
 
 #include "game.h"
 #include "monitor.h"

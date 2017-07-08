@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "define.h"
 #include "core.h"
 #include "utils.h"
 

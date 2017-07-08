@@ -1,19 +1,88 @@
 #pragma once
 
-#include <vector>
-
-#include "core.h"
+#include "define.h"
 #include "render.h"
 #include "camera.h"
-#include "light.h"
-#include "object.h"
-#include "terrain.h"
+#include "transformer.h"
+#include "controler.h"
 #include "model.h"
 #include "physics.h"
 
 namespace tke
 {
-	struct CollisionGroup;
+	enum LightType
+	{
+		LightTypeParallax,
+		LightTypePoint,
+		LightTypeSpot
+	};
+
+	std::string getLightTypeName(LightType _type);
+
+	struct Light : Transformer
+	{
+		LightType type;
+		glm::vec3 color = glm::vec3(0.5f);
+		float range = 0.5f;
+
+		bool shadow = false;
+
+		int sceneIndex = -1;
+		int sceneShadowIndex = -1;
+
+		Light(LightType _type);
+	};
+
+	enum ObjectPhysicsType
+	{
+		ObjectPhysicsTypeNull = 0,
+		ObjectPhysicsTypeStatic = 1 << 0, // cannot use with dynamic bit
+		ObjectPhysicsTypeDynamic = 1 << 1, // cannot use with static bit
+		ObjectPhysicsTypeController = 1 << 2
+	};
+
+	struct RigidBodyData
+	{
+		Rigidbody *rigidbody;
+		physx::PxRigidActor *actor;
+		glm::mat3 rotation;
+		glm::vec3 coord;
+	};
+
+	struct Object : Transformer, Controller
+	{
+		Model *model;
+
+		ObjectPhysicsType physicsType; // cannot change
+
+		AnimationComponent *animationComponent = nullptr;
+		std::vector<RigidBodyData> rigidbodyDatas;
+		physx::PxController *pxController = nullptr;
+		float floatingTime = 0.f;
+
+		int sceneIndex = -1;
+
+		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsTypeNull);
+		~Object();
+	};
+
+	enum TerrainType
+	{
+		TerrainTypeHeightMap,
+		TerrainTypeProcedural
+	};
+
+	struct Terrain : Transformer
+	{
+		float ext = 10.f;
+		float height = 10.f;
+		float tessFactor = 0.75f;
+
+		Image *heightMap = nullptr;
+		Image *colorMap = nullptr;
+		float spec = 0.04f;
+		float roughness = 1.f;
+	};
 
 	enum SkyType
 	{

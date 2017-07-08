@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../src/core.h"
-#include "../src/scene.h"
+#include "../src/entity.h"
 
 #include "select.h"
 #include "transformer_tool.h"

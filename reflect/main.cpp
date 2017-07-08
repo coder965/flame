@@ -6,50 +6,39 @@
 
 #include "../src/utils.h"
 
-const std::vector<std::string> defaultSkip = {};
-
-#define INPUT "../src/render.h"
-#define OUTPUT "../src/reflect.cpp"
-
-#ifndef SKIP
-#define SKIP defaultSkip
-#endif
-
-bool needSkip(const std::string &name)
-{
-	for (auto i = 0; i < SKIP.size(); i++)
-	{
-		if (SKIP[i] == name)
-			return true;
-	}
-	return false;
-}
-
 int main(int argc, char **argv)
 {
-	if (!std::experimental::filesystem::exists(INPUT))
-		return 1;
+	auto outputFilename = "../src/reflect.cpp";
 
-	if (std::experimental::filesystem::exists(OUTPUT))
+	char *inputFilenames[] = {
+		"../src/render.h"
+		"../src/entity.h"
+	};
+
+	if (std::experimental::filesystem::exists(outputFilename))
 	{
-		auto input_last_modification_time = std::experimental::filesystem::last_write_time(INPUT);
-		auto output_last_modification_time = std::experimental::filesystem::last_write_time(OUTPUT);
-		if (output_last_modification_time > input_last_modification_time)
+		auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
+		auto up_to_date = true;
+		for (int i = 0; i < ARRAYSIZE(inputFilenames); i++)
+		{
+			if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
+			{
+				up_to_date = false;
+				break;
+			}
+		}
+		if (up_to_date)
 			return 0;
 	}
 
-	std::string declString;
-	std::string implString;
-
 	int current = -1;
-	std::string currentStructName;
-	std::string currentEnumName;
+	std::string declString, implString, currentStructName, currentEnumName;
 
+	for (int i = 0; i < ARRAYSIZE(inputFilenames); i++)
 	{
-		tke::OnceFileBuffer file(INPUT);
+		tke::OnceFileBuffer file(inputFilenames[i]);
 
 		std::stringstream ss(file.data);
-
 		std::string line;
 		while (!ss.eof())
 		{
@@ -64,22 +53,16 @@ int main(int argc, char **argv)
 				{
 					current = 0;
 					currentStructName = match[4].str();
-					if (!needSkip(currentStructName))
-					{
-						printf("current struct: %s\n", currentStructName.c_str());
-						declString += "tke::ReflectionBank *" + currentStructName + "::b = tke::addReflectionBank(\"" + currentStructName + "\");\n";
-						implString += "currentBank = " + currentStructName + "::b;\n";
-					}
+					printf("current struct: %s\n", currentStructName.c_str());
+					declString += "tke::ReflectionBank *" + currentStructName + "::b = tke::addReflectionBank(\"" + currentStructName + "\");\n";
+					implString += "currentBank = " + currentStructName + "::b;\n";
 				}
 				else
 				{
 					current = 1;
 					currentEnumName = match[4].str();
-					if (!needSkip(currentEnumName))
-					{
-						printf("current enum: %s\n", currentEnumName.c_str());
-						implString += "currentEnum = tke::addReflectEnum(\"" + currentEnumName + "\");\n";
-					}
+					printf("current enum: %s\n", currentEnumName.c_str());
+					implString += "currentEnum = tke::addReflectEnum(\"" + currentEnumName + "\");\n";
 				}
 			}
 			else if (std::regex_search(line, match, pattern = R"(REFLv\s+([\w_:]+)\s+([\w_]+))"))
@@ -90,11 +73,8 @@ int main(int argc, char **argv)
 				std::string tName = match[1].str();
 				std::string vName = match[2].str();
 
-				if (!needSkip(currentStructName))
-				{
-					printf("reflect: %s %s\n", tName.c_str(), vName.c_str());
-					implString += "currentBank->addV<" + tName + ">(\"" + vName + "\", offsetof(" + currentStructName + ", " + vName + "));\n";
-				}
+				printf("reflect: %s %s\n", tName.c_str(), vName.c_str());
+				implString += "currentBank->addV<" + tName + ">(\"" + vName + "\", offsetof(" + currentStructName + ", " + vName + "));\n";
 			}
 			else if (std::regex_search(line, match, pattern = R"(REFLe\s+([\w_:]+)(\s+([\w_]+))?)"))
 			{
@@ -105,28 +85,22 @@ int main(int argc, char **argv)
 				{
 					std::string name = match[1].str();
 
-					if (!needSkip(currentEnumName))
-					{
-						printf("reflect: %s\n", name.c_str());
-						implString += "currentEnum->items.emplace_back(\"" + name + "\", (int)" + currentEnumName + "::" + name + ");\n";
-					}
+					printf("reflect: %s\n", name.c_str());
+					implString += "currentEnum->items.emplace_back(\"" + name + "\", (int)" + currentEnumName + "::" + name + ");\n";
 				}
 				else if (current == 0)
 				{
 					std::string eName = match[1].str();
 					std::string name = match[3].str();
 
-					if (!needSkip(currentStructName))
-					{
-						printf("reflect: %s %s\n", eName.c_str(), name.c_str());
-						implString += "currentBank->addE(\"" + eName + "\", \"" + name + "\", offsetof(" + currentStructName + ", " + name + "));\n";
-					}
+					printf("reflect: %s %s\n", eName.c_str(), name.c_str());
+					implString += "currentBank->addE(\"" + eName + "\", \"" + name + "\", offsetof(" + currentStructName + ", " + name + "));\n";
 				}
 			}
 		}
 	}
 
-	auto fout = fopen(OUTPUT, "wb");
+	auto fout = fopen(outputFilename, "wb");
 	fprintf(fout, "#include \"utils.h\"\n");
 	fprintf(fout, "#include \"render.h\"\n");
 	fprintf(fout, "#include <string>\n");

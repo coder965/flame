@@ -30,16 +30,10 @@
     <ClCompile Include="..\src\gui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\light.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\math.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\model.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\object.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\physics.cpp">
@@ -51,13 +45,7 @@
     <ClCompile Include="..\src\render.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\scene.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\script.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\terrain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\transformer.cpp">
@@ -67,6 +55,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\sound.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\entity.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,28 +74,16 @@
     <ClInclude Include="..\src\gui.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\light.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\math.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\model.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\object.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\physics.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\scene.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\script.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\terrain.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\transformer.h">
@@ -117,6 +96,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\sound.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\entity.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\define.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

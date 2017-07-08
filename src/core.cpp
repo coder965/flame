@@ -1,8 +1,8 @@
 #include <map>
 
+#include "define.h"
 #include "core.h"
-#include "render.h"
-#include "scene.h"
+#include "entity.h"
 #include "gui.h"
 #include "physics.h"
 #include "sound.h"

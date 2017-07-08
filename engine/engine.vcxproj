@@ -176,18 +176,15 @@
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\controler.cpp" />
     <ClCompile Include="..\src\core.cpp" />
+    <ClCompile Include="..\src\entity.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
-    <ClCompile Include="..\src\light.cpp" />
     <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\model.cpp" />
-    <ClCompile Include="..\src\object.cpp" />
     <ClCompile Include="..\src\physics.cpp" />
     <ClCompile Include="..\src\reflect.cpp" />
     <ClCompile Include="..\src\render.cpp" />
-    <ClCompile Include="..\src\scene.cpp" />
     <ClCompile Include="..\src\script.cpp" />
     <ClCompile Include="..\src\sound.cpp" />
-    <ClCompile Include="..\src\terrain.cpp" />
     <ClCompile Include="..\src\transformer.cpp" />
     <ClCompile Include="..\src\utils.cpp" />
   </ItemGroup>
@@ -195,17 +192,15 @@
     <ClInclude Include="..\src\camera.h" />
     <ClInclude Include="..\src\controler.h" />
     <ClInclude Include="..\src\core.h" />
+    <ClInclude Include="..\src\define.h" />
+    <ClInclude Include="..\src\entity.h" />
     <ClInclude Include="..\src\gui.h" />
-    <ClInclude Include="..\src\light.h" />
     <ClInclude Include="..\src\math.h" />
     <ClInclude Include="..\src\model.h" />
-    <ClInclude Include="..\src\object.h" />
     <ClInclude Include="..\src\physics.h" />
     <ClInclude Include="..\src\render.h" />
-    <ClInclude Include="..\src\scene.h" />
     <ClInclude Include="..\src\script.h" />
     <ClInclude Include="..\src\sound.h" />
-    <ClInclude Include="..\src\terrain.h" />
     <ClInclude Include="..\src\transformer.h" />
     <ClInclude Include="..\src\utils.h" />
   </ItemGroup>

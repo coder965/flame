@@ -1,9 +1,34 @@
+#include "entity.h"
 #include "core.h"
-#include "scene.h"
-#include "gui.h"
 
 namespace tke
 {
+	Light::Light(LightType _type)
+		:type(_type)
+	{}
+
+	std::string getLightTypeName(LightType _type)
+	{
+		char *typeNames[] = {
+			"parallax light",
+			"point light",
+			"spot light"
+		};
+		return typeNames[_type];
+	}
+
+	Object::Object(Model *_model, ObjectPhysicsType _physicsType)
+		:model(_model), physicsType(_physicsType)
+	{
+		if (model->animated)
+			animationComponent = new AnimationComponent(model);
+	}
+
+	Object::~Object()
+	{
+		delete animationComponent;
+	}
+
 	static const float gravity = 9.81f;
 
 	UniformBuffer *matrixBuffer = nullptr;
@@ -48,7 +73,7 @@ namespace tke
 	static int defe_envr_position = -1;
 
 	Pipeline *composePipeline = nullptr;
-	 
+
 	Scene::Scene()
 	{
 		InitializeCriticalSection(&cs);
@@ -166,7 +191,7 @@ namespace tke
 	}
 
 	void Scene::addObject(Object *o) // when a object is added to scene, the owner is the scene, object cannot be deleted elsewhere
-										   // and, if object has physics componet, it can be only moved by physics
+									 // and, if object has physics componet, it can be only moved by physics
 	{
 		auto m = o->model;
 
@@ -299,7 +324,7 @@ namespace tke
 			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
 			capsuleDesc.height = (m->maxCoord.y - m->minCoord.y) * o->getScale().y;
-			capsuleDesc.radius = glm::max((m->maxCoord.x - m->minCoord.x) * o->getScale().x,  (m->maxCoord.z - m->minCoord.z) * o->getScale().z) * 0.5f;
+			capsuleDesc.radius = glm::max((m->maxCoord.x - m->minCoord.x) * o->getScale().x, (m->maxCoord.z - m->minCoord.z) * o->getScale().z) * 0.5f;
 			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 			capsuleDesc.material = pxDefaultMaterial;
 			capsuleDesc.position.x = centerPos.x;
@@ -993,6 +1018,7 @@ namespace tke
 	void Scene::save(const std::string &filename)
 	{
 		tke::AttributeTree at("scene");
+		at.attributes.push_back(new tke::Attribute("name", &name));
 		for (auto object : objects)
 		{
 			auto n = new AttributeTreeNode("object");
@@ -1087,7 +1113,7 @@ namespace tke
 			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE)		 // dst
 		};
 		VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-		VkAttachmentReference mrt_col_ref[] = { 
+		VkAttachmentReference mrt_col_ref[] = {
 			{ 2, VK_IMAGE_LAYOUT_GENERAL },
 			{ 3, VK_IMAGE_LAYOUT_GENERAL },
 			{ 4, VK_IMAGE_LAYOUT_GENERAL }

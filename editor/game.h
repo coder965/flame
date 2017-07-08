@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "..\src\scene.h"
+#include "..\src\entity.h"
 
 struct MonitorWidget;
 

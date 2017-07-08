@@ -3,8 +3,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "model.h"
 #include "core.h"
-#include "scene.h"
 
 namespace tke
 {
