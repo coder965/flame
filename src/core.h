@@ -159,6 +159,7 @@ namespace tke
 	void addEventList(EventList *);
 	void removeEventList(EventList *);
 	void processEvents();
+	void processCmdLine(const std::string &str, bool record = true);
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
 	Err init(const std::string &path, int rcx, int rcy);
 	void run();

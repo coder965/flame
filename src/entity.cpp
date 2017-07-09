@@ -3,6 +3,524 @@
 
 namespace tke
 {
+	Transformer::Transformer() {}
+
+	Transformer::Transformer(glm::mat3 &rotation, glm::vec3 coord)
+	{
+		axis = rotation;
+		coord = coord;
+
+		needUpdateQuat = true;
+		needUpdateEuler = true;
+		needUpdateMat = true;
+	}
+
+	void Transformer::updateAxis()
+	{
+		if (!needUpdateQuat)
+			quaternionToMatrix(quat, axis);// update by quat
+		else
+			eulerYzxToMatrix(euler, axis);// update by euler
+		needUpdateAxis = false;
+	}
+
+	void Transformer::updateEuler()
+	{
+		if (needUpdateQuat) updateQuat();
+		// updata by quat
+		float heading, attitude, bank;
+
+		auto sqw = quat.w * quat.w;
+		auto sqx = quat.x * quat.x;
+		auto sqy = quat.y * quat.y;
+		auto sqz = quat.z * quat.z;
+
+		auto unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
+		auto test = quat.x * quat.y + quat.z * quat.w;
+		if (test > 0.499f * unit)
+		{ // singularity at north pole
+			heading = 2.f * atan2(quat.x, quat.w);
+			attitude = M_PI / 2.f;
+			bank = 0;
+			return;
+		}
+		if (test < -0.499f * unit)
+		{ // singularity at south pole
+			heading = -2.f * atan2(quat.x, quat.w);
+			attitude = -M_PI / 2.f;
+			bank = 0;
+			return;
+		}
+
+		heading = atan2(2.f * quat.y * quat.w - 2.f * quat.x * quat.z, sqx - sqy - sqz + sqw);
+		attitude = asin(2.f * test / unit);
+		bank = atan2(2.f * quat.x * quat.w - 2.f * quat.y * quat.z, -sqx + sqy - sqz + sqw);
+
+		euler.x = glm::degrees(heading);
+		euler.y = glm::degrees(attitude);
+		euler.z = glm::degrees(bank);
+		needUpdateEuler = false;
+	}
+
+	void Transformer::updateQuat()
+	{
+		if (needUpdateAxis) updateAxis();
+		// update by axis
+		matrixToQuaternion(axis, quat);
+		needUpdateQuat = false;
+	}
+
+	void Transformer::updateMat()
+	{
+		if (needUpdateAxis) updateAxis();
+		mat = glm::translate(coord * worldScale) * glm::mat4(axis) * glm::scale(scale * worldScale);
+		matInv = glm::inverse(mat);
+		needUpdateMat = false;
+	}
+
+	glm::vec3 Transformer::getCoord() const
+	{
+		return coord;
+	}
+
+	glm::mat3 Transformer::getAxis()
+	{
+		if (needUpdateAxis) updateAxis();
+		return axis;
+	}
+
+	glm::vec3 Transformer::getScale() const
+	{
+		return scale;
+	}
+
+	glm::vec3 Transformer::getWorldScale() const
+	{
+		return worldScale;
+	}
+
+	glm::vec3 Transformer::getEuler()
+	{
+		if (needUpdateEuler) updateEuler(); // Y -> Z -> X
+		return euler;
+	}
+
+	glm::vec4 Transformer::getQuat()
+	{
+		if (needUpdateQuat)
+			updateQuat();
+		return quat;
+	}
+
+	glm::mat4 Transformer::getMat()
+	{
+		if (needUpdateMat) updateMat();
+		return mat;
+	}
+
+	glm::mat4 Transformer::getMatInv()
+	{
+		if (needUpdateMat) updateMat();
+		return matInv;
+	}
+
+	void Transformer::setCoord(const glm::vec3 &_coord)
+	{
+		coord = _coord;
+		needUpdateMat = true;
+		changed = true;
+	}
+
+	void Transformer::addCoord(const glm::vec3 &_coord)
+	{
+		setCoord(coord + _coord);
+	}
+
+	void Transformer::setEuler(const glm::vec3 &_euler)
+	{
+		euler = glm::mod(_euler, 360.f);
+
+		needUpdateAxis = true;
+		needUpdateEuler = false;
+		needUpdateQuat = true;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::addEuler(const glm::vec3 &_euler)
+	{
+		setEuler(getEuler() + _euler);
+	}
+
+	void Transformer::setQuat(const glm::vec4 &_quat)
+	{
+		quat = _quat;
+		needUpdateAxis = true;
+		needUpdateEuler = true;
+		needUpdateQuat = false;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::axisRotate(Axis which, float angle)
+	{
+		using namespace glm;
+		switch (which)
+		{
+		case Axis::eX:
+		{
+			auto m = mat3(rotate(angle, axis[0]));
+			axis[1] = normalize(m * axis[1]);
+			axis[2] = normalize(m * axis[2]);
+		}
+		break;
+		case Axis::eY:
+		{
+			auto m = mat3(rotate(angle, axis[1]));
+			axis[0] = normalize(m * axis[0]);
+			axis[2] = normalize(m * axis[2]);
+		}
+		break;
+		case Axis::eZ:
+		{
+			auto m = mat3(rotate(angle, axis[2]));
+			axis[1] = normalize(m * axis[1]);
+			axis[0] = normalize(m * axis[0]);
+		}
+		break;
+		}
+
+		needUpdateAxis = false;
+		needUpdateEuler = true;
+		needUpdateQuat = true;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::leftRotate(const glm::mat3 &left)
+	{
+		axis = left * axis;
+
+		needUpdateAxis = false;
+		needUpdateEuler = true;
+		needUpdateQuat = true;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::rightRotate(const glm::mat3 &right)
+	{
+		axis = axis * right;
+
+		needUpdateAxis = false;
+		needUpdateEuler = true;
+		needUpdateQuat = true;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::setScale(const glm::vec3 &_scale)
+	{
+		scale = _scale;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::addScale(const glm::vec3 &_scale)
+	{
+		setScale(scale + _scale);
+	}
+
+	void Transformer::setWorldScale(const glm::vec3 &_scale)
+	{
+		worldScale = _scale;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::scaleRelate(Transformer *t)
+	{
+		coord *= t->scale;
+		coord *= t->scale;
+		axis = t->axis * axis;
+		coord = t->axis * coord;
+		coord += t->coord;
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Transformer::relate(Transformer *t)
+	{
+		coord -= t->coord;
+		axis *= glm::transpose(t->axis);
+		needUpdateMat = true;
+
+		changed = true;
+	}
+
+	void Controller::reset()
+	{
+		front = back = left = right = up = down = turnLeft = turnRight = false;
+		lastTime = nowTime;
+	}
+
+	bool Controller::move(float inEulerX, glm::vec3 &outCoord, glm::vec3 &outEuler)
+	{
+		float dist = (nowTime - lastTime) / 1000.f;
+		lastTime = nowTime;
+
+		outCoord = glm::vec3();
+		outEuler = glm::vec3();
+
+		inEulerX = glm::radians(inEulerX + baseForwardAng);
+
+		if (front && speed > 0.f)
+		{
+			outCoord.x -= sin(inEulerX) * speed * dist;
+			outCoord.z -= cos(inEulerX) * speed * dist;
+		}
+		if (back && speed > 0.f)
+		{
+			outCoord.x += sin(inEulerX) * speed * dist;
+			outCoord.z += cos(inEulerX) * speed * dist;
+		}
+		if (left && speed > 0.f)
+		{
+			outCoord.x -= cos(inEulerX) * speed * dist;
+			outCoord.z += sin(inEulerX) * speed * dist;
+		}
+		if (right && speed > 0.f)
+		{
+			outCoord.x += cos(inEulerX) * speed * dist;
+			outCoord.z -= sin(inEulerX) * speed * dist;
+		}
+		if (up)
+			outCoord.y += speed * dist;
+		if (down)
+			outCoord.y -= speed * dist;
+
+		if (turnLeft)
+			outEuler.x = turnSpeed * dist;
+		if (turnRight)
+			outEuler.x = -turnSpeed * dist;
+		if (turnUp)
+			outEuler.z = turnSpeed * dist;
+		if (turnDown)
+			outEuler.z = -turnSpeed * dist;
+
+		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler.x != 0.f) || (outEuler.y != 0.f) || (outEuler.z != 0.f);
+	}
+
+	bool Controller::keyDown(int key)
+	{
+		switch (key)
+		{
+		case 'W':
+			front = true;
+			return true;
+		case 'S':
+			back = true;
+			return true;
+		case 'A':
+			left = true;
+			return true;
+		case 'D':
+			right = true;
+			return true;
+		}
+		return false;
+	}
+
+	bool Controller::keyUp(int key)
+	{
+		switch (key)
+		{
+		case 'W':
+			front = false;
+			return true;
+		case 'S':
+			back = false;
+			return true;
+		case 'A':
+			left = false;
+			return true;
+		case 'D':
+			right = false;
+			return true;
+		}
+		return false;
+	}
+
+	Camera::Camera()
+	{
+		baseForwardAng = 90.f;
+	}
+
+	void Camera::setMode(CameraMode _mode)
+	{
+		mode = _mode;
+		needUpdateMat = true;
+		changed = true;
+	}
+
+	void Camera::setLength(float _length)
+	{
+		length = _length;
+		needUpdateMat = true;
+		changed = true;
+	}
+
+	void Camera::setTarget(const glm::vec3 &_target)
+	{
+		target = _target;
+		needUpdateMat = true;
+		changed = true;
+	}
+
+	void Camera::lookAtTarget()
+	{
+		if (mode == CameraModeTargeting)
+		{
+			if (needUpdateAxis) updateAxis();
+			coord = target + axis[2] * length;
+			needUpdateMat = true;
+			changed = true;
+		}
+	}
+
+
+	void Camera::updateFrustum()
+	{
+		auto tanHfFovy = glm::tan(glm::radians(TKE_FOVY * 0.5f));
+
+		auto _y1 = TKE_NEAR * tanHfFovy;
+		auto _z1 = _y1 * aspect;
+		auto _y2 = TKE_FAR * tanHfFovy;
+		auto _z2 = _y2 * aspect;
+		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + TKE_NEAR * axis[0] + coord;
+		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + TKE_NEAR * axis[0] + coord;
+		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + TKE_NEAR * axis[0] + coord;
+		frustumPoints[3] = -_z1 * axis[2] + -_y1 * axis[1] + TKE_NEAR * axis[0] + coord;
+		frustumPoints[4] = -_z2 * axis[2] + _y2 * axis[1] + TKE_FAR * axis[0] + coord;
+		frustumPoints[5] = _z2 * axis[2] + _y2 * axis[1] + TKE_FAR * axis[0] + coord;
+		frustumPoints[6] = _z2 * axis[2] + -_y2 * axis[1] + TKE_FAR * axis[0] + coord;
+		frustumPoints[7] = -_z2 * axis[2] + -_y2 * axis[1] + TKE_FAR * axis[0] + coord;
+		for (int i = 0; i < 4; i++)
+		{
+			auto y = frustumPoints[i + 4].y;
+			if (y < 0.f)
+			{
+				auto py = frustumPoints[i + 4].y - frustumPoints[i].y;
+				if (py != 0.f)
+				{
+					frustumPoints[i + 4].x -= y * ((frustumPoints[i + 4].x - frustumPoints[i].x) / py);
+					frustumPoints[i + 4].z -= y * ((frustumPoints[i + 4].z - frustumPoints[i].z) / py);
+					frustumPoints[i + 4].y = 0.f;
+				}
+			}
+		}
+
+		auto matrix = matPerspective * mat;
+
+		frustumPlanes[0].x = matrix[0].w + matrix[0].x;
+		frustumPlanes[0].y = matrix[1].w + matrix[1].x;
+		frustumPlanes[0].z = matrix[2].w + matrix[2].x;
+		frustumPlanes[0].w = matrix[3].w + matrix[3].x;
+
+		frustumPlanes[1].x = matrix[0].w - matrix[0].x;
+		frustumPlanes[1].y = matrix[1].w - matrix[1].x;
+		frustumPlanes[1].z = matrix[2].w - matrix[2].x;
+		frustumPlanes[1].w = matrix[3].w - matrix[3].x;
+
+		frustumPlanes[2].x = matrix[0].w - matrix[0].y;
+		frustumPlanes[2].y = matrix[1].w - matrix[1].y;
+		frustumPlanes[2].z = matrix[2].w - matrix[2].y;
+		frustumPlanes[2].w = matrix[3].w - matrix[3].y;
+
+		frustumPlanes[3].x = matrix[0].w + matrix[0].y;
+		frustumPlanes[3].y = matrix[1].w + matrix[1].y;
+		frustumPlanes[3].z = matrix[2].w + matrix[2].y;
+		frustumPlanes[3].w = matrix[3].w + matrix[3].y;
+
+		frustumPlanes[4].x = matrix[0].w + matrix[0].z;
+		frustumPlanes[4].y = matrix[1].w + matrix[1].z;
+		frustumPlanes[4].z = matrix[2].w + matrix[2].z;
+		frustumPlanes[4].w = matrix[3].w + matrix[3].z;
+
+		frustumPlanes[5].x = matrix[0].w - matrix[0].z;
+		frustumPlanes[5].y = matrix[1].w - matrix[1].z;
+		frustumPlanes[5].z = matrix[2].w - matrix[2].z;
+		frustumPlanes[5].w = matrix[3].w - matrix[3].z;
+
+		for (auto i = 0; i < 6; i++) frustumPlanes[i] = glm::normalize(frustumPlanes[i]);
+	}
+
+	void Camera::reset()
+	{
+		Controller::reset();
+		coord = glm::vec3(0.f);
+		length = 1.0f;
+		needUpdateMat = true;
+		changed = true;
+	}
+
+	void Camera::rotateByCursor(float x, float y)
+	{
+		addEuler(glm::vec3(-x * 180.f, 0.f, -y * 180.f));
+	}
+
+	void Camera::moveByCursor(float x, float y)
+	{
+		auto l = length / TKE_NEAR;
+		auto cy = tan(glm::radians(TKE_FOVY / 2.f)) * TKE_NEAR * 2.f;
+		target += (-x * cy * aspect * l) * axis[0] + (y * cy * l) * axis[1];
+		lookAtTarget();
+	}
+
+	void Camera::scroll(float value)
+	{
+		if (mode == CameraModeTargeting)
+		{
+			if (value < 0.f)
+				length = (length + 0.1) * 1.1f;
+			else
+				length = (length / 1.1f) - 0.1f;
+			if (length < 1.f)
+			{
+				length = 1.f;
+				coord += glm::normalize(target - coord) * 0.5f;
+			}
+			needUpdateMat = true;
+			changed = true;
+		}
+	}
+
+	void Camera::move()
+	{
+		glm::vec3 coord;
+		glm::vec3 euler;
+		if (!Controller::move(getEuler().x, coord, euler))
+			return;
+		switch (mode)
+		{
+		case CameraModeFree:
+			addCoord(coord);
+			break;
+		case CameraModeTargeting:
+			setTarget(target + coord);
+			break;
+		}
+		addEuler(euler);
+	}
+
 	Light::Light(LightType _type)
 		:type(_type)
 	{}
@@ -1072,28 +1590,13 @@ namespace tke
 		at.saveXML(filename);
 	}
 
-	//struct MasterRenderer
-	//
-
-	//	Pipeline heightMapTerrainPipeline;
 	//	Pipeline proceduralTerrainPipeline;
-
-	//	DrawAction *mrtHeightMapTerrainAction;
-
-	//};
 
 	//MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
 	//{
-	//	_resources.setPipeline(&heightMapTerrainPipeline, "HeightMapTerrain.Pipeline");
-	//	_resources.setPipeline(&proceduralTerrainPipeline, "ProceduralTerrain.Pipeline");
-
-	//	mrtHeightMapTerrainAction = mrtPass->addAction(&heightMapTerrainPipeline);
 	//	// TODO : FIX PROCEDURAL TERRAIN
 	//	//auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
 	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
-
-	//	heightMapTerrainPipeline.create(enginePath + "pipeline/terrain/height_map/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
-	//	proceduralTerrainPipeline.create(enginePath + "pipeline/terrain/procedural/terrain.xml", &zeroVertexInputState, renderer->vkRenderPass, mrtPass->index);
 
 	//}
 
@@ -1116,9 +1619,9 @@ namespace tke
 		globalResource.setImage(envrImage, "Envr.Image");
 
 		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(mainImage, "Main.Image");
 		globalResource.setImage(albedoAlphaImage, "AlbedoAlpha.Image");
 		globalResource.setImage(normalHeightImage, "NormalHeight.Image");
@@ -1138,9 +1641,9 @@ namespace tke
 		VkAttachmentDescription atts[] = {
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), // main
 			depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR),				 // depth
-			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // albedo alpha
-			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // normal height
-			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // spec roughness
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // albedo alpha
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // normal height
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // spec roughness
 			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE)		 // dst
 		};
 		VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
