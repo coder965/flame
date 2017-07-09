@@ -10,7 +10,7 @@
 
 namespace tke
 {
-	struct Transformer : ObservedObject
+	struct Transformer
 	{
 		enum Axis
 		{
@@ -488,7 +488,7 @@ namespace tke
 		glm::vec3 coord;
 	};
 
-	struct Object : Transformer, Controller
+	struct Object : Transformer, Controller, ObservedObject
 	{
 		Model *model;
 

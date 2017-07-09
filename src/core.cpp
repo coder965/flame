@@ -778,14 +778,10 @@ namespace tke
 							for (int i = 0; i < pModel->positions.size(); i++)
 							{
 								Vertex vertex;
-								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-								else vertex.position = glm::vec3(0.f);
-								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-								else vertex.uv = glm::vec2(0.f);
-								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-								else vertex.normal = glm::vec3(0.f);
-								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-								else vertex.tangent = glm::vec3(0.f);
+								vertex.position = i < pModel->positions.size() ? pModel->positions[i] : glm::vec3(0.f);
+								vertex.uv       = i < pModel->uvs.size()       ? pModel->uvs[i]       : glm::vec2(0.f);
+								vertex.normal   = i < pModel->normals.size()   ? pModel->normals[i]   : glm::vec3(0.f);
+								vertex.tangent  = i < pModel->tangents.size()  ? pModel->tangents[i]  : glm::vec3(0.f);
 
 								staticVertexs.push_back(vertex);
 							}
@@ -802,19 +798,12 @@ namespace tke
 							for (int i = 0; i < pModel->positions.size(); i++)
 							{
 								AnimatedVertex vertex;
-								if (i < pModel->positions.size()) vertex.position = pModel->positions[i];
-								else vertex.position = glm::vec3(0.f);
-								if (i < pModel->uvs.size()) vertex.uv = pModel->uvs[i];
-								else vertex.uv = glm::vec2(0.f);
-								if (i < pModel->normals.size()) vertex.normal = pModel->normals[i];
-								else vertex.normal = glm::vec3(0.f);
-								if (i < pModel->tangents.size()) vertex.tangent = pModel->tangents[i];
-								else vertex.tangent = glm::vec3(0.f);
-
-								if (i < pModel->boneWeights.size()) vertex.boneWeight = pModel->boneWeights[i];
-								else vertex.boneWeight = glm::vec4(0.f);
-								if (i < pModel->boneIDs.size()) vertex.boneID = pModel->boneIDs[i];
-								else vertex.boneID = glm::vec4(0.f);
+								vertex.position   = i < pModel->positions.size()   ? pModel->positions[i]   : glm::vec3(0.f);
+								vertex.uv         = i < pModel->uvs.size()         ? pModel->uvs[i]         : glm::vec2(0.f);
+								vertex.normal     = i < pModel->normals.size()     ? pModel->normals[i]     : glm::vec3(0.f);
+								vertex.tangent    = i < pModel->tangents.size()    ? pModel->tangents[i]    : glm::vec3(0.f);
+								vertex.boneWeight = i < pModel->boneWeights.size() ? pModel->boneWeights[i] : glm::vec4(0.f);
+								vertex.boneID     = i < pModel->boneIDs.size()     ? pModel->boneIDs[i]     : glm::vec4(0.f);
 
 								animatedVertexs.push_back(vertex);
 							}

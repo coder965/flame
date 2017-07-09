@@ -2,6 +2,7 @@
 #include <sstream>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 
 #include "entity.h"
 #include "core.h"
@@ -1536,27 +1537,6 @@ namespace tke
 
 	namespace OBJ
 	{
-		struct obj_ctype : std::ctype<char>
-		{
-			mask my_table[table_size];
-			obj_ctype(size_t refs = 0)
-				: std::ctype<char>(my_table, false, refs)
-			{
-				std::copy_n(classic_table(), table_size, my_table);
-				my_table['/'] = (mask)space;
-			}
-		};
-		std::stringstream obj_line_ss;
-		struct Init
-		{
-			Init()
-			{
-				std::locale x(std::locale::classic(), new obj_ctype);
-				obj_line_ss.imbue(x);
-			}
-		};
-		static Init _init;
-
 		void load(Model *m, std::ifstream &file)
 		{
 			int currentIndex = 0;
@@ -1604,14 +1584,14 @@ namespace tke
 					{
 						std::string token;
 						ss >> token;
-						obj_line_ss.clear();
-						obj_line_ss << token;
+
+						std::regex pattern(R"(([0-9]+)?/([0-9]+)?/([0-9]+)?)");
+						std::smatch match;
+						std::regex_search(token, match, pattern);
+
 						glm::ivec3 ids;
 						for (int j = 0; j < 3; j++)
-						{
-							obj_line_ss >> ids[j];
-							ids[j]--;
-						}
+							ids[j] = match[j + 1].matched ? std::stoi(match[j + 1].str()) - 1 : -1;
 
 						int index = -1;
 						for (int i = 0; i < rawIndexs.size(); i++)
@@ -1627,12 +1607,9 @@ namespace tke
 						{
 							index = m->positions.size();
 
-							if (ids[0] < rawPositions.size()) m->positions.push_back(rawPositions[ids[0]]);
-							else m->positions.push_back(glm::vec3(0.f));
-							if (ids[1] != -1 && ids[1] < rawTexcoords.size()) m->uvs.push_back(rawTexcoords[ids[1]]);
-							else m->uvs.push_back(glm::vec2(0.f));
-							if (ids[2] != -1 && ids[2] < rawNormals.size()) m->normals.push_back(rawNormals[ids[2]]);
-							else m->normals.push_back(glm::vec3(0.f));
+							m->positions.push_back(               rawPositions[ids[0]]                 ); 
+							m->uvs.push_back(      ids[1] != -1 ? rawTexcoords[ids[1]] : glm::vec2(0.f));
+							m->normals.push_back(  ids[2] != -1 ? rawNormals[ids[2]]   : glm::vec3(0.f));
 
 							rawIndexs.push_back(ids);
 
