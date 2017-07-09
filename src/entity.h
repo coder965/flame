@@ -12,12 +12,12 @@ namespace tke
 {
 	struct Transformer : ObservedObject
 	{
-		enum class Axis
+		enum Axis
 		{
-			eNull = -1,
-			eX,
-			eY,
-			eZ
+			AxisNull = -1,
+			AxisX,
+			AxisY,
+			AxisZ
 		};
 
 		glm::vec3 coord;
@@ -119,15 +119,15 @@ namespace tke
 		bool keyUp(int key);
 	};
 
-	enum CameraMode
+	enum class CameraMode
 	{
-		CameraModeFree,
-		CameraModeTargeting
+		free = 1 << 0,
+		targeting = 1 << 1
 	};
 
 	struct Camera : Transformer, Controller
 	{
-		CameraMode mode = CameraModeFree;
+		CameraMode mode = CameraMode::free;
 		glm::vec3 target;
 		float length = 1.f;
 
@@ -147,11 +147,11 @@ namespace tke
 		void move();
 	};
 
-	enum LightType
+	enum class LightType
 	{
-		LightTypeParallax,
-		LightTypePoint,
-		LightTypeSpot
+		parallax = 1 << 0,
+		point = 1 << 1,
+		spot = 1 << 2
 	};
 
 	std::string getLightTypeName(LightType _type);
@@ -261,17 +261,15 @@ namespace tke
 		unsigned int originalmask;
 	};
 
-	enum ShapeType
+	enum class ShapeType
 	{
-		ShapeTypeBox,
-		ShapeTypeSphere,
-		ShapeTypeCapsule, // scale: 0 - radius, scale 1 - length
-		ShapeTypePlane,
-		ShapeTypeConvexMesh,
-		ShapeTypeTriangleMesh,
-		ShapeTypeHeightField,
-
-		ShapeTypeLast
+		box = 1 << 0,
+		sphere = 1 << 1,
+		capsule = 1 << 2, // scale: 0 - radius, scale 1 - length
+		plane = 1 << 3,
+		convex_mesh = 1 << 4,
+		triangle_mesh = 1 << 5,
+		height_field = 1 << 6
 	};
 
 	std::string shapeTypeName(ShapeType t);
@@ -280,25 +278,25 @@ namespace tke
 	{
 		int id;
 
-		ShapeType type = ShapeTypeBox;
+		ShapeType type = ShapeType::box;
 
 		Shape();
 		Shape(ShapeType _type);
 		float getVolume() const;
 	};
 
-	enum RigidbodyType
+	enum class RigidbodyType
 	{
-		RigidbodyTypeStatic,
-		RigidbodyTypeDynamic,
-		RigidbodyTypeDynamicButLocation // special for pmd/pmx 
+		static_r = 1 << 0,
+		dynamic = 1 << 1,
+		dynamic_but_location = 1 << 2 // special for pmd/pmx 
 	};
 
 	struct Rigidbody : Transformer
 	{
 		int id;
 
-		RigidbodyType type = RigidbodyTypeStatic;
+		RigidbodyType type = RigidbodyType::static_r;
 
 		std::string name;
 		int boneID = -1;
@@ -474,12 +472,12 @@ namespace tke
 
 	Animation *createAnimation(const std::string &filename);
 
-	enum ObjectPhysicsType
+	enum class ObjectPhysicsType
 	{
-		ObjectPhysicsTypeNull = 0,
-		ObjectPhysicsTypeStatic = 1 << 0, // cannot use with dynamic bit
-		ObjectPhysicsTypeDynamic = 1 << 1, // cannot use with static bit
-		ObjectPhysicsTypeController = 1 << 2
+		null,
+		static_r = 1 << 0, // cannot use with dynamic bit
+		dynamic = 1 << 1, // cannot use with static bit
+		controller = 1 << 2
 	};
 
 	struct RigidBodyData
@@ -503,14 +501,14 @@ namespace tke
 
 		int sceneIndex = -1;
 
-		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsTypeNull);
+		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsType::null);
 		~Object();
 	};
 
-	enum TerrainType
+	enum class TerrainType
 	{
-		TerrainTypeHeightMap,
-		TerrainTypeProcedural
+		height_map = 1 << 0,
+		procedural = 1 << 1
 	};
 
 	struct Terrain : Transformer
@@ -529,11 +527,11 @@ namespace tke
 		Terrain(TerrainType _type);
 	};
 
-	enum SkyType
+	enum class SkyType
 	{
-		SkyTypeNull,
-		SkyTypeAtmosphereScattering,
-		SkyTypePanorama
+		null,
+		atmosphere_scattering = 1 << 0,
+		panorama = 1 << 1
 	};
 
 	struct LightShaderStruct
@@ -599,15 +597,17 @@ namespace tke
 	extern UniformBuffer *lightBuffer;
 	extern UniformBuffer *ambientBuffer;
 
-	struct Scene
+	REFLECTABLE struct Scene
 	{
+		REFL_BANK;
+
 		std::mutex mtx;
 
-		std::string name;
+		REFLv std::string name;
 		std::string filename;
 		std::string filepath;
 
-		SkyType skyType = SkyTypeAtmosphereScattering;
+		SkyType skyType = SkyType::atmosphere_scattering;
 		glm::vec2 atmosphereSunDir = glm::vec2(0.f, -90.f);
 		float atmosphereSunE = 20.f;
 		float atmosphereInnerRadius = 10.f; // The inner (planetary) radius
@@ -617,8 +617,8 @@ namespace tke
 		float atmosphereKr = 0.001f;
 		std::string skyFilename;
 
-		float exposure = 0.01f;
-		float white = 1.f;
+		float hdrExposure = 0.01f;
+		float hdrWhite = 1.f;
 
 		glm::vec3 ambientColor = glm::vec3(0.5f);
 

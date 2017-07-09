@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "render.h"
+#include "entity.h"
 #include <string>
 namespace tke{
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
@@ -10,6 +11,7 @@ tke::ReflectionBank *ShaderMacro::b = tke::addReflectionBank("ShaderMacro");
 tke::ReflectionBank *Stage::b = tke::addReflectionBank("Stage");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *Pipeline::b = tke::addReflectionBank("Pipeline");
+tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 struct ReflectInit{ReflectInit(){
 tke::Enum *currentEnum = nullptr;
 tke::ReflectionBank *currentBank = nullptr;
@@ -102,5 +104,7 @@ currentBank->addV<bool>("depth_clamp", offsetof(Pipeline, depth_clamp));
 currentBank->addE("PrimitiveTopology", "primitive_topology", offsetof(Pipeline, primitive_topology));
 currentBank->addE("PolygonMode", "polygon_mode", offsetof(Pipeline, polygon_mode));
 currentBank->addE("CullMode", "cull_mode", offsetof(Pipeline, cull_mode));
+currentBank = Scene::b;
+currentBank->addV<std::string>("name", offsetof(Scene, name));
 }};static ReflectInit init;
 }

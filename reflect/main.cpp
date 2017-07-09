@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 	auto fout = fopen(outputFilename, "wb");
 	fprintf(fout, "#include \"utils.h\"\n");
 	fprintf(fout, "#include \"render.h\"\n");
+	fprintf(fout, "#include \"entity.h\"\n");
 	fprintf(fout, "#include <string>\n");
 	fprintf(fout, "namespace tke{\n");
 	fprintf(fout, declString.c_str());

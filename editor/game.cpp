@@ -14,7 +14,10 @@ void Game::load()
 			auto a = c->firstAttribute("filename");
 			auto i = tke::createImage(a->value, false);
 			if (i)
+			{
 				tke::textures.push_back(i);
+				tke::addGuiImage(i);
+			}
 		}
 		else if (c->name == "model")
 		{
@@ -26,7 +29,7 @@ void Game::load()
 			auto a = c->firstAttribute("filename");
 			auto scene = new tke::Scene;
 			scene->load(a->value);
-			scene->camera.setMode(tke::CameraModeTargeting);
+			scene->camera.setMode(tke::CameraMode::targeting);
 			scene->camera.setCoord(0.f, 5.f, 0.f);
 			scenes.push_back(scene);
 		}
@@ -46,12 +49,25 @@ void GameExplorer::show()
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeGameExplorer;
 
+	if (ImGui::TreeNode("Textures"))
+	{
+		for (int i = 0; i < tke::textures.size(); i++)
+		{
+			auto t = tke::textures[i];
+			if (ImGui::Selectable(t->filename.c_str(), lastItemType == lastItemTypeTexture && itemIndex == i))
+			{
+				lastItemType = lastItemTypeTexture;
+				itemIndex = i;
+			}
+		}
+		ImGui::TreePop();
+	}
 	if (ImGui::TreeNode("Models"))
 	{
 		for (int i = 0; i < tke::models.size(); i++)
 		{
 			auto m = tke::models[i];
-			if (ImGui::Selectable(m->name.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+			if (ImGui::Selectable(m->name.c_str(), lastItemType == lastItemTypeModel && itemIndex == i))
 			{
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;
@@ -64,7 +80,7 @@ void GameExplorer::show()
 		for (int i = 0; i < game.scenes.size(); i++)
 		{
 			auto s = game.scenes[i];
-			if (ImGui::Selectable(s->name.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+			if (ImGui::Selectable(s->name.c_str(), lastItemType == lastItemTypeScene && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				lastItemType = lastItemTypeScene;
 				itemIndex = i;

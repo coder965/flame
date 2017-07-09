@@ -21,6 +21,7 @@ struct GameExplorer
 	enum LastItemType
 	{
 		lastItemTypeNull,
+		lastItemTypeTexture,
 		lastItemTypeModel,
 		lastItemTypeScene
 	};

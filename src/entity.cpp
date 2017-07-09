@@ -171,30 +171,29 @@ namespace tke
 
 	void Transformer::axisRotate(Axis which, float angle)
 	{
-		using namespace glm;
 		switch (which)
 		{
-		case Axis::eX:
+		case AxisX:
 		{
-			auto m = mat3(rotate(angle, axis[0]));
-			axis[1] = normalize(m * axis[1]);
-			axis[2] = normalize(m * axis[2]);
+			auto m = glm::mat3(glm::rotate(angle, axis[0]));
+			axis[1] = glm::normalize(m * axis[1]);
+			axis[2] = glm::normalize(m * axis[2]);
 		}
-		break;
-		case Axis::eY:
+			break;
+		case AxisY:
 		{
-			auto m = mat3(rotate(angle, axis[1]));
-			axis[0] = normalize(m * axis[0]);
-			axis[2] = normalize(m * axis[2]);
+			auto m = glm::mat3(glm::rotate(angle, axis[1]));
+			axis[0] = glm::normalize(m * axis[0]);
+			axis[2] = glm::normalize(m * axis[2]);
 		}
-		break;
-		case Axis::eZ:
+			break;
+		case AxisZ:
 		{
-			auto m = mat3(rotate(angle, axis[2]));
-			axis[1] = normalize(m * axis[1]);
-			axis[0] = normalize(m * axis[0]);
+			auto m = glm::mat3(glm::rotate(angle, axis[2]));
+			axis[1] = glm::normalize(m * axis[1]);
+			axis[0] = glm::normalize(m * axis[0]);
 		}
-		break;
+			break;
 		}
 
 		needUpdateAxis = false;
@@ -392,7 +391,7 @@ namespace tke
 
 	void Camera::lookAtTarget()
 	{
-		if (mode == CameraModeTargeting)
+		if (mode == CameraMode::targeting)
 		{
 			if (needUpdateAxis) updateAxis();
 			coord = target + axis[2] * length;
@@ -492,7 +491,7 @@ namespace tke
 
 	void Camera::scroll(float value)
 	{
-		if (mode == CameraModeTargeting)
+		if (mode == CameraMode::targeting)
 		{
 			if (value < 0.f)
 				length = (length + 0.1) * 1.1f;
@@ -516,10 +515,10 @@ namespace tke
 			return;
 		switch (mode)
 		{
-		case CameraModeFree:
+		case CameraMode::free:
 			addCoord(coord);
 			break;
-		case CameraModeTargeting:
+		case CameraMode::targeting:
 			setTarget(target + coord);
 			break;
 		}
@@ -537,7 +536,7 @@ namespace tke
 			"point light",
 			"spot light"
 		};
-		return typeNames[_type];
+		return typeNames[(int)_type];
 	}
 
 	std::vector<Animation*> animations;
@@ -576,11 +575,11 @@ namespace tke
 		auto size = getScale();
 		switch (type)
 		{
-		case ShapeTypeBox:
+		case ShapeType::box:
 			return size.x * size.y * size.z * 8.f;
-		case ShapeTypeSphere:
+		case ShapeType::sphere:
 			return 4.f * size.x * size.x * size.x * M_PI / 3.f;
-		case ShapeTypeCapsule:
+		case ShapeType::capsule:
 			return 4.f * size.x * size.x * size.x * M_PI / 3.f + M_PI * size.x * size.x * size.y;
 		}
 		return 0.f;
@@ -1389,9 +1388,9 @@ namespace tke
 			mt->indiceCount = cubeModel->indices.size();
 			cubeModel->materials.push_back(mt);
 
-			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
+			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cubeModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeTypeBox);
+			auto pShape = new Shape(ShapeType::box);
 			pRigidbody->addShape(pShape);
 			pShape->setScale(glm::vec3(0.5f));
 
@@ -1416,9 +1415,9 @@ namespace tke
 			mt1->indiceCount = sphereModel->indices.size() / 2;
 			sphereModel->materials.push_back(mt1);
 
-			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
+			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			sphereModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeTypeSphere);
+			auto pShape = new Shape(ShapeType::sphere);
 			pRigidbody->addShape(pShape);
 			pShape->setScale(glm::vec3(0.5f));
 
@@ -1439,9 +1438,9 @@ namespace tke
 			mt->indiceCount = cylinderModel->indices.size();
 			cylinderModel->materials.push_back(mt);
 
-			auto pRigidbody = new Rigidbody(RigidbodyTypeDynamic);
+			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cylinderModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeTypeCapsule);
+			auto pShape = new Shape(ShapeType::capsule);
 			pRigidbody->addShape(pShape);
 			pShape->setScale(glm::vec3(0.5f));
 
@@ -2050,16 +2049,16 @@ namespace tke
 				p->addShape(q);
 				switch (data.type)
 				{
-				case 0: q->type = ShapeTypeSphere; break;
-				case 1: q->type = ShapeTypeBox; break;
-				case 2: q->type = ShapeTypeCapsule; break;
+				case 0: q->type = ShapeType::sphere; break;
+				case 1: q->type = ShapeType::box; break;
+				case 2: q->type = ShapeType::capsule; break;
 				}
 				switch (q->type)
 				{
-				case ShapeTypeSphere:
+				case ShapeType::sphere:
 					data.size.y = data.size.z = data.size.x;
 					break;
-				case ShapeTypeCapsule:
+				case ShapeType::capsule:
 					data.size.y *= 0.5f;
 					data.size.z = data.size.x;
 					break;
@@ -2783,9 +2782,9 @@ namespace tke
 					(*itt)->sceneIndex--;
 					if ((*itt)->shadow && pLight->shadow)
 					{
-						if (pLight->type == LightTypeParallax)
+						if (pLight->type == LightType::parallax)
 							(*itt)->sceneShadowIndex--;
-						else if (pLight->type == LightTypePoint)
+						else if (pLight->type == LightType::point)
 							(*itt)->sceneShadowIndex -= 6;
 					}
 					(*itt)->changed = true;
@@ -2812,7 +2811,7 @@ namespace tke
 		mtx.lock();
 
 		// since object can move to somewhere first, we create physics component here
-		if (o->physicsType & ObjectPhysicsTypeStatic || o->physicsType & ObjectPhysicsTypeDynamic)
+		if (((int)o->physicsType & (int)ObjectPhysicsType::static_r) || ((int)o->physicsType & (int)ObjectPhysicsType::dynamic))
 		{
 			if (m->rigidbodies.size() > 0)
 			{
@@ -2841,7 +2840,7 @@ namespace tke
 						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
 						physx::PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2]))));
 					rigTrans = objTrans * rigTrans;
-					auto actor = ((o->physicsType & ObjectPhysicsTypeDynamic) && (r->type == RigidbodyTypeDynamic || r->type == RigidbodyTypeDynamicButLocation)) ?
+					auto actor = (((int)o->physicsType & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
 						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
 
 					for (auto s : r->shapes)
@@ -2855,13 +2854,13 @@ namespace tke
 							physx::PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
 						switch (s->type)
 						{
-						case ShapeTypeBox:
+						case ShapeType::box:
 							actor->createShape(physx::PxBoxGeometry(scale[0], scale[1], scale[2]), *pxDefaultMaterial, trans);
 							break;
-						case ShapeTypeSphere:
+						case ShapeType::sphere:
 							actor->createShape(physx::PxSphereGeometry(scale[0]), *pxDefaultMaterial, trans);
 							break;
-						case ShapeTypeCapsule:
+						case ShapeType::capsule:
 							actor->createShape(physx::PxCapsuleGeometry(scale[0], scale[1]), *pxDefaultMaterial, trans * physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
 							break;
 						}
@@ -2933,7 +2932,7 @@ namespace tke
 			//		}
 		}
 
-		if (o->physicsType & ObjectPhysicsTypeController)
+		if ((int)o->physicsType & (int)ObjectPhysicsType::controller)
 		{
 			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
@@ -3081,7 +3080,7 @@ namespace tke
 		{
 			for (auto object : objects) // set controller coord
 			{
-				if (object->physicsType & ObjectPhysicsTypeController)
+				if ((int)object->physicsType & (int)ObjectPhysicsType::controller)
 				{
 					glm::vec3 e, c;
 					object->move(object->getEuler().x, c, e);
@@ -3098,7 +3097,7 @@ namespace tke
 			pxScene->fetchResults(true);
 			for (auto o : objects)
 			{
-				if (o->physicsType & ObjectPhysicsTypeDynamic)
+				if ((int)o->physicsType & (int)ObjectPhysicsType::dynamic)
 				{
 					auto pModel = o->model;
 
@@ -3163,7 +3162,7 @@ namespace tke
 					}
 				}
 
-				if (o->physicsType & ObjectPhysicsTypeController)
+				if ((int)o->physicsType & (int)ObjectPhysicsType::controller)
 				{
 					auto p = o->pxController->getPosition();
 					auto c = glm::vec3(p.x, p.y, p.z) - (o->model->maxCoord + o->model->minCoord) * 0.5f * o->getScale();
@@ -3205,25 +3204,9 @@ namespace tke
 			stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 			ambientBuffer->update(&stru, *stagingBuffer);
 
-			if (skyType == SkyTypeNull)
+			switch (skyType)
 			{
-			}
-			else if (skyType == SkyTypePanorama)
-			{
-				// TODO : FIX SKY FROM FILE
-				//if (skyImage)
-				//{
-				//	//writes.push_back(vk->writeDescriptorSet(engine->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(engine->colorSampler), 0));
-				//	//writes.push_back(vk->writeDescriptorSet(engine->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(engine->colorSampler), 0));
-
-				//	AmbientBufferShaderStruct stru;
-				//	stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->level - 1);
-				//	stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-				//	ambientBuffer->update(&stru, *stagingBuffer);
-				//}
-			}
-			else if (skyType == SkyTypeAtmosphereScattering)
-			{
+			case SkyType::atmosphere_scattering:
 				if (panoramaPipeline)
 				{ // update Atmospheric Scattering
 					{
@@ -3313,6 +3296,20 @@ namespace tke
 						}
 					}
 				}
+				break;
+			case SkyType::panorama:
+				// TODO : FIX SKY FROM FILE
+				//if (skyImage)
+				//{
+				//	//writes.push_back(vk->writeDescriptorSet(engine->panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(engine->colorSampler), 0));
+				//	//writes.push_back(vk->writeDescriptorSet(engine->deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(engine->colorSampler), 0));
+
+				//	AmbientBufferShaderStruct stru;
+				//	stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->level - 1);
+				//	stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+				//	ambientBuffer->update(&stru, *stagingBuffer);
+				//}
+				break;
 			}
 
 			needUpdateSky = false;
@@ -3456,7 +3453,7 @@ namespace tke
 				{
 					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
 					LightShaderStruct stru;
-					if (pLight->type == LightTypeParallax)
+					if (pLight->type == LightType::parallax)
 						stru.coord = glm::vec4(pLight->getAxis()[2], 0.f);
 					else
 						stru.coord = glm::vec4(pLight->getCoord(), pLight->type);
@@ -3483,7 +3480,7 @@ namespace tke
 				if (pLight->shadow)
 				{
 					pLight->sceneShadowIndex = shadowCount;
-					if (pLight->type == LightTypeParallax)
+					if (pLight->type == LightType::parallax)
 					{
 						if (pLight->changed || camera.changed)
 						{
@@ -3510,7 +3507,7 @@ namespace tke
 						}
 						shadowCount++;
 					}
-					else if (pLight->type == LightTypePoint)
+					else if (pLight->type == LightType::point)
 					{
 						if (pLight->changed)
 						{
@@ -3577,7 +3574,7 @@ namespace tke
 		{
 			switch (terrain->type)
 			{
-			case TerrainTypeHeightMap:
+			case TerrainType::height_map:
 				cb->bindPipeline(heightMapTerrainPipeline);
 				cb->bindDescriptorSet();
 				cb->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
