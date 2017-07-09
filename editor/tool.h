@@ -2,7 +2,7 @@
 
 #include "../src/math.h"
 #include "../src/render.h"
-#include "../src/camera.h"
+#include "../src/entity.h"
 
 struct Tool
 {

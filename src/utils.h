@@ -7,6 +7,8 @@
 #include <string>
 #include <typeindex>
 
+#define TK_ARRAYSIZE(_ARR)      ((int)(sizeof(_ARR)/sizeof(*_ARR)))
+
 template<class T>
 inline std::ifstream& operator>>(std::ifstream &file, T &v)
 {

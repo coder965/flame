@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string>
-#include <experimental\filesystem>
+#include <filesystem>
 #include <regex>
 #include <sstream>
 
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	auto outputFilename = "../src/reflect.cpp";
 
 	char *inputFilenames[] = {
-		"../src/render.h"
+		"../src/render.h",
 		"../src/entity.h"
 	};
 
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	{
 		auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
 		auto up_to_date = true;
-		for (int i = 0; i < ARRAYSIZE(inputFilenames); i++)
+		for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
 		{
 			if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
 			{
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	int current = -1;
 	std::string declString, implString, currentStructName, currentEnumName;
 
-	for (int i = 0; i < ARRAYSIZE(inputFilenames); i++)
+	for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
 	{
 		tke::OnceFileBuffer file(inputFilenames[i]);
 

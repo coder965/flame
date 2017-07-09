@@ -6,7 +6,6 @@
 #include "math.h"
 #include "define.h"
 #include "render.h"
-#include "model.h"
 #include "physics.h"
 
 namespace tke

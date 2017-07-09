@@ -1,5 +1,5 @@
 #include "../src/gui.h"
-#include "../src/model.h"
+#include "../src/entity.h"
 
 #include "game.h"
 #include "editor.h"

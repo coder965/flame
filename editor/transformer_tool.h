@@ -1,6 +1,6 @@
 #pragma once
 
-#include "..\src\transformer.h"
+#include "..\src\entity.h"
 
 #include "tool.h"
 
