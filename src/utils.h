@@ -1,11 +1,16 @@
 #pragma once
 
-#include <memory>
 #include <fstream>
 #include <vector>
 #include <list>
 #include <string>
 #include <typeindex>
+
+#if defined(_WIN64)
+typedef __int64 TK_LONG_PTR;
+#else
+typedef _W64 long TK_LONG_PTR;
+#endif
 
 #define TK_ARRAYSIZE(_ARR)      ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
@@ -106,19 +111,6 @@ namespace tke
 		~OnceFileBuffer();
 	};
 
-	struct Any
-	{
-		std::type_index typeIndex;
-		void *ptr;
-
-		template<class T>
-		Any(T *p)
-			: typeIndex(typeid(T)), ptr(p)
-		{}
-
-		std::type_index type();
-	};
-
 	struct NormalVariable;
 	struct EnumVariable;
 
@@ -139,21 +131,23 @@ namespace tke
 
 	struct NormalVariable : Variable
 	{
-		Any v;
+		std::type_index type;
+		void *p;
 
 		template<class T>
-		NormalVariable(const std::string &_name, T *ptr)
-			: Variable(Variable::eVariable, _name), v(ptr)
+		NormalVariable(const std::string &_name, T *_ptr)
+			: Variable(Variable::eVariable, _name), type(typeid(T)), p(_ptr)
 		{}
 
-		std::type_index type();
-
-		void *ptr(void *p = nullptr);
+		void *ptr(void *_p = nullptr)
+		{
+			return (void*)((TK_LONG_PTR)_p + (TK_LONG_PTR)p);
+		}
 
 		template<class T>
-		T *ptr(void *p = nullptr)
+		T *ptr(void *_p = nullptr)
 		{
-			return (T*)ptr(p);
+			return (T*)ptr(_p);
 		}
 	};
 
@@ -168,6 +162,7 @@ namespace tke
 
 	struct Enum
 	{
+		std::string name;
 		std::vector<EnumItem> items;
 		void get(const std::string &src, int *dst);
 	};
@@ -183,16 +178,21 @@ namespace tke
 
 	struct ReflectionBank
 	{
-		std::vector<Variable*> reflectons;
+		std::vector<ReflectionBank*> parents;
+		std::string name;
+		std::vector<Variable*> reflections;
 
 		template<class T>
 		void addV(const std::string &name, size_t offset)
 		{
 			auto v = new NormalVariable(name, (T*)offset);
-			reflectons.push_back(v);
+			reflections.push_back(v);
 		}
 
 		void addE(const std::string &eName, const std::string &name, size_t offset);
+		
+		void enumertateReflections(void(*callback)(Variable*, void*), void *user_data);
+		Variable *findReflection(const std::string &name);
 	};
 
 	ReflectionBank *addReflectionBank(std::string str);
@@ -240,6 +240,7 @@ namespace tke
 
 	struct AttributeTreeNode
 	{
+		void *ptr;
 		std::string name;
 		std::vector<Attribute*> attributes;
 		std::vector<AttributeTreeNode*> children;
@@ -274,69 +275,6 @@ namespace tke
 #define REFL_BANK static tke::ReflectionBank *b
 #define REFLv
 #define REFLe
-
-	struct Element
-	{
-		enum Mark
-		{
-			eDefault,
-			eMarkUp,
-			eMarkDown,
-			eMarkClear
-		};
-		Mark mark = eDefault;
-	};
-
-	struct Container
-	{
-		virtual void maintain(int row) = 0;
-	};
-
-	// one operation a time
-
-	template <class T>
-	void maintainVector(std::vector<T> &v)
-	{
-		for (auto i = 0; i < v.size(); i++)
-		{
-			switch (v[i]->mark)
-			{
-			case Element::eMarkUp:
-				if (i > 0) std::swap(v[i], v[i - 1]);
-				v[i]->mark = Element::eDefault;
-				return;
-			case Element::eMarkDown:
-				if (i < v.size() - 1) std::swap(v[i], v[i + 1]);
-				v[i]->mark = Element::eDefault;
-				return;
-			case Element::eMarkClear:
-				v.erase(v.begin() + i);
-				return;
-			}
-		}
-	}
-
-	template <class T>
-	void maintainList(std::list<T> &l)
-	{
-		for (auto it = l.begin(); it != l.end(); it++)
-		{
-			switch (it->mark)
-			{
-			case Element::eMarkUp:
-				if (it != l.begin()) l.splice(it, l, --it);
-				it->mark = Element::eDefault;
-				return;
-			case Element::eMarkDown:
-				if (it != l.end()) l.splice(it, l, ++it);
-				it->mark = Element::eDefault;
-				return;
-			case Element::eMarkClear:
-				l.erase(it);
-				return;
-			}
-		}
-	}
 
 	enum NotificationType
 	{

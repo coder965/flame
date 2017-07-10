@@ -3582,8 +3582,7 @@ namespace tke
 		filename = _filename;
 
 		tke::AttributeTree at("scene", filename);
-		auto a = at.firstAttribute("name");
-		name = a->value;
+		at.obtainFromAttributes(this, b);
 		for (auto c : at.children)
 		{
 			if (c->name == "object")
@@ -3601,27 +3600,11 @@ namespace tke
 				if (m)
 				{
 					auto object = new tke::Object(m);
-					for (auto a : c->attributes)
-					{
-						if (a->name == "coord_x")
-							object->setCoordX(std::stof(a->value));
-						if (a->name == "coord_y")
-							object->setCoordY(std::stof(a->value));
-						if (a->name == "coord_z")
-							object->setCoordZ(std::stof(a->value));
-						if (a->name == "euler_x")
-							object->setEulerX(std::stof(a->value));
-						if (a->name == "euler_y")
-							object->setEulerY(std::stof(a->value));
-						if (a->name == "euler_z")
-							object->setEulerZ(std::stof(a->value));
-						if (a->name == "scale_x")
-							object->setScaleX(std::stof(a->value));
-						if (a->name == "scale_y")
-							object->setScaleY(std::stof(a->value));
-						if (a->name == "scale_z")
-							object->setScaleZ(std::stof(a->value));
-					}
+					c->obtainFromAttributes(object, object->b);
+					object->needUpdateAxis = true;
+					object->needUpdateQuat = true;
+					object->needUpdateMat = true;
+					object->changed = true;
 					addObject(object);
 				}
 			}
@@ -3635,24 +3618,15 @@ namespace tke
 	void Scene::save(const std::string &filename)
 	{
 		tke::AttributeTree at("scene");
-		at.attributes.push_back(new tke::Attribute("name", &name));
+		at.addAttributes(this, b);
 		for (auto object : objects)
 		{
 			auto n = new AttributeTreeNode("object");
 			n->attributes.push_back(new tke::Attribute("model", &object->model->filename));
-			static glm::vec3 coord, euler, scale;
-			coord = object->getCoord();
-			euler = object->getEuler();
-			scale = object->getScale();
-			n->attributes.push_back(new tke::Attribute("coord_x", &coord.x));
-			n->attributes.push_back(new tke::Attribute("coord_y", &coord.y));
-			n->attributes.push_back(new tke::Attribute("coord_z", &coord.z));
-			n->attributes.push_back(new tke::Attribute("euler_x", &euler.x));
-			n->attributes.push_back(new tke::Attribute("euler_y", &euler.y));
-			n->attributes.push_back(new tke::Attribute("euler_z", &euler.z));
-			n->attributes.push_back(new tke::Attribute("scale_x", &scale.x));
-			n->attributes.push_back(new tke::Attribute("scale_y", &scale.y));
-			n->attributes.push_back(new tke::Attribute("scale_z", &scale.z));
+			object->getCoord();
+			object->getEuler();
+			object->getScale();
+			n->addAttributes(object, object->b);
 			at.children.push_back(n);
 		}
 		at.saveXML(filename);

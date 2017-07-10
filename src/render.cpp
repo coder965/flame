@@ -1448,10 +1448,10 @@ namespace tke
 		}
 
 		// format the shader path, so that they can reuse if them refer the same one
-		auto path = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
+		auto stageFilename = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
 		for (auto m : shaderModules)
 		{
-			if (m->filename == path)
+			if (m->filename == stageFilename)
 			{
 				if (defines.size() != m->defines.size()) continue;
 
@@ -1475,15 +1475,15 @@ namespace tke
 		}
 
 		module = new ShaderModule;
-		module->filename = path;
+		module->filename = stageFilename;
 		module->defines.insert(module->defines.begin(), defines.begin(), defines.end());
 		shaderModules.push_back(module);
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
 		{
-			auto file_path = std::experimental::filesystem::path(path).parent_path().string();
-			tke::OnceFileBuffer file(path);
+			auto file_path = std::experimental::filesystem::path(stageFilename).parent_path().string();
+			tke::OnceFileBuffer file(stageFilename);
 
 			std::stringstream ss(file.data);
 
@@ -1658,6 +1658,7 @@ namespace tke
 				file.close();
 			}
 
+			auto spvFilename = ".spv";
 			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
 
 			bool error = false;
@@ -1824,7 +1825,7 @@ namespace tke
 			else
 			{
 				assert(false);
-				MessageBox(NULL, output.c_str(), path.c_str(), 0);
+				MessageBox(NULL, output.c_str(), stageFilename.c_str(), 0);
 				exit(1);
 			}
 

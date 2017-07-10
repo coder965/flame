@@ -9,6 +9,7 @@
 #include "..\..\..\rapidxml-1.13\rapidxml_utils.hpp"
 #include "..\..\..\rapidxml-1.13\rapidxml_print.hpp"
 
+#include "math.h"
 #include "utils.h"
 
 // hash
@@ -198,11 +199,6 @@ namespace tke
 		delete data;
 	}
 
-	std::type_index Any::type()
-	{
-		return typeIndex;
-	}
-
 	Variable::Variable(What _what, const std::string &_name)
 		: what(_what), name(_name)
 	{}
@@ -210,11 +206,6 @@ namespace tke
 	NormalVariable *Variable::toVar()
 	{
 		return (NormalVariable*)this;
-	}
-
-	std::type_index NormalVariable::type()
-	{
-		return v.type();
 	}
 
 	EnumItem::EnumItem() {}
@@ -226,11 +217,6 @@ namespace tke
 	EnumVariable *Variable::toEnu()
 	{
 		return (EnumVariable*)this;
-	}
-
-	void *NormalVariable::ptr(void *p)
-	{
-		return (void*)((LONG_PTR)p + (LONG_PTR)v.ptr);
 	}
 
 	void Enum::get(const std::string &src, int *dst)
@@ -269,33 +255,58 @@ namespace tke
 		return (int*)((LONG_PTR)p + (LONG_PTR)_ptr);
 	}
 
-	std::vector<std::pair<std::string, ReflectionBank*>> _reflectionBanks;
-	std::vector<std::pair<std::string, Enum*>> _reflectEnums;
+	std::vector<ReflectionBank*> _reflectionBanks;
+	std::vector<Enum*> _reflectEnums;
 
 	void ReflectionBank::addE(const std::string &eName, const std::string &name, size_t offset)
 	{
 		for (auto i = 0; i < _reflectEnums.size(); i++)
 		{
-			if (_reflectEnums[i].first == eName)
+			if (_reflectEnums[i]->name == eName)
 			{
-				auto e = new EnumVariable(name, _reflectEnums[i].second, (int*)offset);
-				reflectons.push_back(e);
+				auto e = new EnumVariable(name, _reflectEnums[i], (int*)offset);
+				reflections.push_back(e);
 				break;
 			}
 		}
 	}
 
+	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, void*), void *user_data)
+	{
+		for (auto r : reflections)
+			callback(r, user_data);
+		for (auto p : parents)
+			p->enumertateReflections(callback, user_data);
+	}
+
+	Variable *ReflectionBank::findReflection(const std::string &name)
+	{
+		for (auto r : reflections)
+		{
+			if (r->name == name)
+				return r;
+		}
+		for (auto p : parents)
+		{
+			auto r = p->findReflection(name);
+			if (r) return r;
+		}
+		return nullptr;
+	}
+
 	ReflectionBank *addReflectionBank(std::string str)
 	{
 		auto bank = new ReflectionBank;
-		_reflectionBanks.emplace_back(str, bank);
+		bank->name = str;
+		_reflectionBanks.push_back(bank);
 		return bank;
 	}
 
 	Enum *addReflectEnum(std::string str)
 	{
 		auto _enum = new Enum;
-		_reflectEnums.emplace_back(str, _enum);
+		_enum->name = str;
+		_reflectEnums.push_back(_enum);
 		return _enum;
 	}
 
@@ -305,28 +316,52 @@ namespace tke
 		:name(n), value(v)
 	{}
 
-	void Attribute::set(const std::type_index &t, void *v)
+	void Attribute::set(const std::type_index &t, void *_v)
 	{
 		if (t == typeid(std::string))
-			value = *(std::string*)v;
+			value = *(std::string*)_v;
 		else if (t == typeid(int))
-			value = std::to_string(*(int*)v);
+			value = std::to_string(*(int*)_v);
 		else if (t == typeid(float))
-			value = std::to_string(*(float*)v);
+		{
+			value = std::to_string(*(float*)_v);
+			value.erase(value.find_last_not_of('0') + 1, std::string::npos);
+		}
 		else if (t == typeid(bool))
-			value = *(bool*)v ? "true" : "false";
+			value = *(bool*)_v ? "true" : "false";
+		else if (t == typeid(glm::vec3))
+		{
+			auto &v = *(glm::vec3*)_v;
+			auto strX = std::to_string(v.x);
+			strX.erase(strX.find_last_not_of('0') + 1, std::string::npos);
+			auto strY = std::to_string(v.y);
+			strY.erase(strY.find_last_not_of('0') + 1, std::string::npos);
+			auto strZ = std::to_string(v.z);
+			strZ.erase(strZ.find_last_not_of('0') + 1, std::string::npos);
+			value = strX + "/" + strY + "/" + strZ;
+		}
 	}
 
-	void Attribute::get(const std::type_index &t, void *v)
+	void Attribute::get(const std::type_index &t, void *_v)
 	{
 		if (t == typeid(std::string))
-			*(std::string*)v = value;
+			*(std::string*)_v = value;
 		else if (t == typeid(int))
-			*(int*)v = std::stoi(value);
+			*(int*)_v = std::stoi(value);
 		else if (t == typeid(float))
-			*(float*)v = std::stof(value);
+			*(float*)_v = std::stof(value);
 		else if (t == typeid(bool))
-			*(bool*)v = value == "true" ? true : false;
+			*(bool*)_v = value == "true" ? true : false;
+		else if (t == typeid(glm::vec3))
+		{
+			auto &v = *(glm::vec3*)_v;
+			std::regex pattern(R"(([\+\-\.0-9]+)/([\+\-\.0-9]+)/([\+\-\.0-9]+))");
+			std::smatch match;
+			std::regex_search(value, match, pattern);
+			v.x = std::stof(match[1].str());
+			v.y = std::stof(match[2].str());
+			v.z = std::stof(match[3].str());
+		}
 	}
 
 	AttributeTreeNode::AttributeTreeNode(const std::string &_name)
@@ -361,8 +396,10 @@ namespace tke
 
 	void AttributeTreeNode::addAttributes(void *p, ReflectionBank *b)
 	{
-		for (auto r : b->reflectons)
-		{
+		ptr = p;
+		b->enumertateReflections([](Variable *r, void *_data) {
+			auto n = (AttributeTreeNode*)_data;
+
 			auto a = new Attribute;
 			a->name = r->name;
 
@@ -370,12 +407,12 @@ namespace tke
 			{
 				auto v = r->toVar();
 
-				a->set(v->type(), v->ptr(p));
+				a->set(v->type, v->ptr(n->ptr));
 			}
 			else if (r->what == Variable::eEnum)
 			{
 				auto e = r->toEnu();
-				auto v = *e->ptr(p);
+				auto v = *e->ptr(n->ptr);
 
 				for (int i = 0; i < e->pEnum->items.size(); i++)
 				{
@@ -388,36 +425,33 @@ namespace tke
 				}
 			}
 
-			attributes.push_back(a);
-		}
+			n->attributes.push_back(a);
+		}, this);
 	}
 
 	void AttributeTreeNode::obtainFromAttributes(void *p, ReflectionBank *b)
 	{
+		ptr = p;
 		for (auto a : attributes)
 		{
-			auto found = false;
-			for (auto r : b->reflectons)
+			auto r = b->findReflection(a->name);
+			if (!r)
 			{
-				if (r->name == a->name)
-				{
-					switch (r->what)
-					{
-					case Variable::eVariable:
-					{
-						auto v = r->toVar();
-						a->get(v->type(), v->ptr(p));
-					}
-						break;
-					case Variable::eEnum:
-						r->toEnu()->pEnum->get(a->value, r->toEnu()->ptr(p));
-						break;
-					}
-					found = true;
-					break;
-				}
+				printf("cannot find \"%s\" reflection from %s", a->name, b->name);
+				continue;
 			}
-			assert(found);
+			switch (r->what)
+			{
+			case Variable::eVariable:
+			{
+				auto v = r->toVar();
+				a->get(v->type, v->ptr(p));
+			}
+				break;
+			case Variable::eEnum:
+				r->toEnu()->pEnum->get(a->value, r->toEnu()->ptr(p));
+				break;
+			}
 		}
 	}
 

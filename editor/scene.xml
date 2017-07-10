@@ -1,4 +1,4 @@
 <scene name="scene">
-	<object model="D:/miku/miku.pmd" coord_x="0.000000" coord_y="0.000000" coord_z="0.000000" euler_x="0.000000" euler_y="0.000000" euler_z="0.000000" scale_x="1.000000" scale_y="1.000000" scale_z="1.000000"/>
+	<object model="D:/miku/miku.pmd" coord="0./0./0." euler="0./0./0." scale_x="1./1./1."/>
 </scene>
 

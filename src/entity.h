@@ -10,8 +10,10 @@
 
 namespace tke
 {
-	struct Transformer
+	REFLECTABLE struct Transformer
 	{
+		REFL_BANK;
+
 		enum Axis
 		{
 			AxisNull = -1,
@@ -20,10 +22,10 @@ namespace tke
 			AxisZ
 		};
 
-		glm::vec3 coord;
-		glm::vec3 euler; // (yaw(y), pitch(z), roll(x))
+		REFLv glm::vec3 coord;
+		REFLv glm::vec3 euler; // (yaw(y), pitch(z), roll(x))
 		glm::vec4 quat = glm::vec4(0.f, 0.f, 0.f, 1.f);
-		glm::vec3 scale = glm::vec3(1.f);
+		REFLv glm::vec3 scale = glm::vec3(1.f);
 		glm::vec3 worldScale = glm::vec3(1.f);
 
 		glm::mat3 axis;
@@ -488,8 +490,10 @@ namespace tke
 		glm::vec3 coord;
 	};
 
-	struct Object : Transformer, Controller, ObservedObject
+	REFLECTABLE struct Object : Transformer, Controller, ObservedObject
 	{
+		REFL_BANK;
+
 		Model *model;
 
 		ObjectPhysicsType physicsType; // cannot change

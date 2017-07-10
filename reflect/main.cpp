@@ -6,6 +6,10 @@
 
 #include "../src/utils.h"
 
+#include "windows.h"
+
+std::vector<std::string> structNames;
+
 int main(int argc, char **argv)
 {
 	auto outputFilename = "../src/reflect.cpp";
@@ -15,24 +19,32 @@ int main(int argc, char **argv)
 		"../src/entity.h"
 	};
 
-	if (std::experimental::filesystem::exists(outputFilename))
-	{
-		auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
-		auto up_to_date = true;
-		for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
-		{
-			if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
-			{
-				up_to_date = false;
-				break;
-			}
-		}
-		if (up_to_date)
-			return 0;
-	}
+	//if (std::experimental::filesystem::exists(outputFilename))
+	//{
+	//	auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
+	//	auto up_to_date = true;
+	//	for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
+	//	{
+	//		if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
+	//		{
+	//			up_to_date = false;
+	//			break;
+	//		}
+	//	}
+	//	if (up_to_date)
+	//		return 0;
+	//}
 
 	int current = -1;
 	std::string declString, implString, currentStructName, currentEnumName;
+	auto structExist = [](const std::string &name){
+		for (auto n : structNames)
+		{
+			if (n == name)
+				return true;
+		}
+		return false;
+	};
 
 	for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
 	{
@@ -47,15 +59,29 @@ int main(int argc, char **argv)
 			std::regex pattern;
 			std::smatch match;
 
-			if (std::regex_search(line, match, pattern = R"(REFLECTABLE\s+((struct)|(enum\s+class))\s+([\w_]+))"))
+			if (std::regex_search(line, match, pattern = R"(REFLECTABLE\s+((struct)|(enum\s+class))\s+([\w_]+)(\s*:\s*([\w_]+))?)"))
 			{
 				if (match[2].matched)
 				{
 					current = 0;
 					currentStructName = match[4].str();
+					structNames.push_back(currentStructName);
 					printf("current struct: %s\n", currentStructName.c_str());
 					declString += "tke::ReflectionBank *" + currentStructName + "::b = tke::addReflectionBank(\"" + currentStructName + "\");\n";
 					implString += "currentBank = " + currentStructName + "::b;\n";
+					if (match[6].matched) // parent
+					{
+						if (structExist(match[6].str()))
+							implString += "currentBank->parents.push_back(" + match[6].str() + "::b);\n";
+						line = match.suffix();
+						while (std::regex_search(line, match, pattern = R"(([\w_]+))"))
+						{
+							if (structExist(match[1].str()))
+								implString += "currentBank->parents.push_back(" + match[1].str() + "::b);\n";
+							line = match.suffix();
+						}
+					}
+
 				}
 				else
 				{
