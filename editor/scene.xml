@@ -1,2 +1,23 @@
 <scene name="scene">
+	<object model_name="cube" physicsType="static_r" coord="-8.678229/0./1.106385" euler="139.179047/0./0." scale="7.955169/1./6.031081"/>
+	<object model_name="cube" physicsType="static_r" coord="-0.350209/0./-2.604929" euler="285.092926/0./0." scale="8.076425/1./7.420802"/>
+	<object model_name="cube" physicsType="static_r" coord="-5.67052/0./6.245617" euler="151.561035/0./0." scale="5.416401/1./3.614356"/>
+	<object model_name="cube" physicsType="static_r" coord="-8.439269/0./-7.109589" euler="262.405457/0./0." scale="2.266891/1./2.426728"/>
+	<object model_name="cube" physicsType="static_r" coord="8.500337/0./-0.944954" euler="85.739929/0./0." scale="1.040156/1./1.076638"/>
+	<object model_name="cube" physicsType="static_r" coord="-2.124885/0./0.550935" euler="51.252766/0./0." scale="6.17517/1./6.221626"/>
+	<object model_name="cube" physicsType="static_r" coord="-5.807523/0./2.836985" euler="324.568024/0./0." scale="4.028255/1./1.490536"/>
+	<object model_name="cube" physicsType="static_r" coord="1.873711/0./4.929744" euler="217.876526/0./0." scale="5.470992/1./3.596771"/>
+	<object model_name="cube" physicsType="static_r" coord="6.541926/0./3.944167" euler="328.248535/0./0." scale="8.961174/1./5.638441"/>
+	<object model_name="cube" physicsType="static_r" coord="-6.223313/0./-0.659795" euler="169.436325/260.812378/150.912796" scale="7.705045/1./8.255423"/>
+	<object model_name="cube" physicsType="static_r" coord="8.644243/0./8.694691" euler="80.279549/282.555023/191.67334" scale="3.556615/1./8.225239"/>
+	<object model_name="cube" physicsType="static_r" coord="-8.286866/0./-2.159932" euler="66.689056/127.588135/40.474884" scale="1.075588/1./8.901596"/>
+	<object model_name="cube" physicsType="static_r" coord="-3.899561/0./-3.951601" euler="63.294167/137.651917/243.079941" scale="7.247841/1./5.170477"/>
+	<object model_name="cube" physicsType="static_r" coord="-5.126753/0./4.241008" euler="337.290588/329.73175/323.392426" scale="7.402167/1./1.931205"/>
+	<object model_name="cube" physicsType="static_r" coord="1.723433/0./-1.996909" euler="169.205597/78.455772/52.131714" scale="4.107517/1./2.303372"/>
+	<object model_name="cube" physicsType="static_r" coord="-4.783182/0./-1.302332" euler="218.07428/12.31606/352.792755" scale="7.46332/1./3.971826"/>
+	<object model_name="cube" physicsType="static_r" coord="-5.759731/0./2.737154" euler="354.166077/45.748474/143.826401" scale="5.341337/1./2.268465"/>
+	<object model_name="cube" physicsType="static_r" coord="7.822752/0./-6.236589" euler="291.684906/138.882416/218.195129" scale="4.668392/1./1.605231"/>
+	<object model_name="cube" physicsType="static_r" coord="8.119062/0./3.18746" euler="110.328079/271.62326/231.609863" scale="6.005622/1./2.645619"/>
+	<object model_name="cube" physicsType="static_r" coord="-5.604673/0./5.519178" euler="342.190613/111.998062/2.823572" scale="7.295346/1./4.488083"/>
 </scene>
+

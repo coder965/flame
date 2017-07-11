@@ -476,10 +476,10 @@ namespace tke
 
 	REFLECTABLE enum class ObjectPhysicsType
 	{
-		null,
-		static_r = 1 << 0, // cannot use with dynamic bit
-		dynamic = 1 << 1, // cannot use with static bit
-		controller = 1 << 2
+		REFLe null,
+		REFLe static_r = 1 << 0, // cannot use with dynamic bit
+		REFLe dynamic = 1 << 1, // cannot use with static bit
+		REFLe controller = 1 << 2
 	};
 
 	struct RigidBodyData
@@ -497,7 +497,7 @@ namespace tke
 		REFLv std::string model_name;
 		Model *model = nullptr;
 
-		ObjectPhysicsType physicsType = ObjectPhysicsType::null; // cannot change
+		REFLe ObjectPhysicsType physicsType = ObjectPhysicsType::null; // cannot change
 
 		AnimationComponent *animationComponent = nullptr;
 		std::vector<RigidBodyData> rigidbodyDatas;

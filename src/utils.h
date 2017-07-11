@@ -205,6 +205,8 @@ namespace tke
 
 		Attribute();
 		Attribute(const std::string &, const std::string &);
+		Attribute(const std::string &, const char *);
+		Attribute(const std::string &, char *);
 
 		template<class T>
 		Attribute(const std::string &n, T *v)

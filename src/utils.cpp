@@ -316,6 +316,14 @@ namespace tke
 		:name(n), value(v)
 	{}
 
+	Attribute::Attribute(const std::string &n, const char *v) 
+		:name(n), value(v)
+	{}
+
+	Attribute::Attribute(const std::string &n, char *v) 
+		:name(n), value(v)
+	{}
+
 	void Attribute::set(const std::type_index &t, void *_v)
 	{
 		if (t == typeid(std::string))

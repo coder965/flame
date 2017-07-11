@@ -27,3 +27,24 @@ struct EditorWindow : tke::Window
 };
 
 extern EditorWindow *mainWindow;
+
+struct ObjectCreationSetting
+{
+	bool use_camera_position = false;
+	bool use_camera_target_position = false;
+	glm::vec3 coord;
+	bool randC[3] = {};
+	float coordRandRange = 1.f;
+	glm::vec3 euler;
+	bool randR[3] = {};
+	float eulerRandRange = 360.f;
+	glm::vec3 scale = glm::vec3(1.f);
+	bool randS[3] = {};
+	float scaleRandRange = 1.f;
+	bool same_scale_rand = false;
+
+	void load_setting(tke::AttributeTreeNode *n);
+	void save_setting(tke::AttributeTreeNode *n);
+};
+
+extern ObjectCreationSetting ocs;

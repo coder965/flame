@@ -2595,6 +2595,7 @@ namespace tke
 	Object::Object(Model *_model, ObjectPhysicsType _physicsType)
 		:model(_model), physicsType(_physicsType)
 	{
+		model_name = model->name;
 		if (model->animated)
 			animationComponent = new AnimationComponent(model);
 	}
@@ -3579,26 +3580,21 @@ namespace tke
 		{
 			if (c->name == "object")
 			{
-				auto a = c->firstAttribute("model");
-				tke::Model *m = nullptr;
-				for (auto _m : models)
+				auto object = new tke::Object;
+				c->obtainFromAttributes(object, object->b);
+				for (auto m : models)
 				{
-					if (_m->name == a->value)
+					if (m->name == object->model_name)
 					{
-						m = _m;
+						object->model = m;
 						break;
 					}
 				}
-				if (m)
-				{
-					auto object = new tke::Object(m);
-					c->obtainFromAttributes(object, object->b);
-					object->needUpdateAxis = true;
-					object->needUpdateQuat = true;
-					object->needUpdateMat = true;
-					object->changed = true;
-					addObject(object);
-				}
+				object->needUpdateAxis = true;
+				object->needUpdateQuat = true;
+				object->needUpdateMat = true;
+				object->changed = true;
+				addObject(object);
 			}
 			else if (c->name == "light")
 			{
@@ -3614,7 +3610,6 @@ namespace tke
 		for (auto object : objects)
 		{
 			auto n = new AttributeTreeNode("object");
-			n->attributes.push_back(new tke::Attribute("model", &object->model->name));
 			object->getCoord();
 			object->getEuler();
 			object->getScale();

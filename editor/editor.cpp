@@ -21,31 +21,28 @@ EditorWindow::EditorWindow()
 
 	{
 		tke::AttributeTree at("data", "ui.xml");
-
 		if (at.good)
 		{
 			for (auto c : at.children)
 			{
 				if (c->name == "GameExplorer")
 				{
-					auto a = c->firstAttribute("opened");
 					bool opened;
-					a->get<bool>(&opened);
+					c->firstAttribute("opened")->get(&opened);
 					if (opened)
 						openGameExplorer();
 				}
 				else if (c->name == "MonitorWidget")
 				{
-					auto a0 = c->firstAttribute("opened");
 					bool opened;
-					a0->get<bool>(&opened);
+					c->firstAttribute("opened")->get(&opened);
 					if (opened)
 					{
-						auto a1 = c->firstAttribute("scene_filename");
+						auto a = c->firstAttribute("scene_filename");
 						tke::Scene *s = nullptr;
 						for (auto _s : game.scenes)
 						{
-							if (_s->filename == a1->value)
+							if (_s->filename == a->value)
 							{
 								s = _s;
 								break;
@@ -56,45 +53,50 @@ EditorWindow::EditorWindow()
 				}
 				else if (c->name == "AttributeWidget")
 				{
-					auto a = c->firstAttribute("opened");
 					bool opened;
-					a->get<bool>(&opened);
+					c->firstAttribute("opened")->get(&opened);
 					if (opened)
 						openAttributeWidget();
+				}
+				else if (c->name == "object_creation_setting")
+				{
+					ocs.load_setting(c);
 				}
 			}
 		}
 	}
+
 	tke::loadGuiDock("ui_dock.xml");
 }
 
 EditorWindow::~EditorWindow()
 {
-	tke::AttributeTree at("data");
-
 	{
-		auto n = new tke::AttributeTreeNode("GameExplorer");
-		static bool opened = gameExplorer;
-		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		at.children.push_back(n);
+		tke::AttributeTree at("data");
+		{
+			auto n = new tke::AttributeTreeNode("GameExplorer");
+			n->addAttribute("opened", gameExplorer ? "true" : "false");
+			at.children.push_back(n);
+		}
+		{
+			auto n = new tke::AttributeTreeNode("MonitorWidget");
+			n->addAttribute("opened", monitorWidget ? "true" : "false");
+			n->addAttribute("scene_filename", monitorWidget->scene->filename);
+			at.children.push_back(n);
+		}
+		{
+			auto n = new tke::AttributeTreeNode("AttributeWidget");
+			n->addAttribute("opened", attributeWidget ? "true" : "false");
+			at.children.push_back(n);
+		}
+		{
+			auto n = new tke::AttributeTreeNode("object_creation_setting");
+			ocs.save_setting(n);
+			at.children.push_back(n);
+		}
+		at.saveXML("ui.xml");
 	}
 
-	{
-		auto n = new tke::AttributeTreeNode("MonitorWidget");
-		static bool opened = monitorWidget;
-		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		n->attributes.push_back(new tke::Attribute("scene_filename", &monitorWidget->scene->filename));
-		at.children.push_back(n);
-	}
-
-	{
-		auto n = new tke::AttributeTreeNode("AttributeWidget");
-		static bool opened = attributeWidget;
-		n->attributes.push_back(new tke::Attribute("opened", &opened));
-		at.children.push_back(n);
-	}
-
-	at.saveXML("ui.xml");
 	tke::saveGuiDock("ui_dock.xml");
 }
 
