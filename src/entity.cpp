@@ -1375,8 +1375,6 @@ namespace tke
 			_model_after_process(triangleModel);
 
 			_add_model(triangleModel);
-
-			globalResource.setModel(triangleModel, "Triangle.Model");
 		}
 
 		{
@@ -1398,8 +1396,6 @@ namespace tke
 			_model_after_process(cubeModel);
 
 			_add_model(cubeModel);
-
-			globalResource.setModel(cubeModel, "Cube.Model");
 		}
 
 		{
@@ -1425,8 +1421,6 @@ namespace tke
 			_model_after_process(sphereModel);
 
 			_add_model(sphereModel);
-
-			globalResource.setModel(sphereModel, "Sphere.Model");
 		}
 
 		{
@@ -1448,8 +1442,6 @@ namespace tke
 			_model_after_process(cylinderModel);
 
 			_add_model(cylinderModel);
-
-			globalResource.setModel(cylinderModel, "Cylinder.Model");
 		}
 
 		{
@@ -1465,8 +1457,6 @@ namespace tke
 			_model_after_process(coneModel);
 
 			_add_model(coneModel);
-
-			globalResource.setModel(coneModel, "Cone.Model");
 		}
 
 		{
@@ -1485,8 +1475,6 @@ namespace tke
 			_model_after_process(arrowModel);
 
 			_add_model(arrowModel);
-
-			globalResource.setModel(arrowModel, "Arrow.Model");
 		}
 
 		{
@@ -1504,8 +1492,6 @@ namespace tke
 			_model_after_process(torusModel);
 
 			_add_model(torusModel);
-
-			globalResource.setModel(torusModel, "Torus.Model");
 		}
 
 		{
@@ -1530,8 +1516,6 @@ namespace tke
 			_model_after_process(hamerModel);
 
 			_add_model(hamerModel);
-
-			globalResource.setModel(hamerModel, "Hamer.Model");
 		}
 	}
 
@@ -2605,6 +2589,9 @@ namespace tke
 		return a;
 	}
 
+
+	Object::Object() {}
+
 	Object::Object(Model *_model, ObjectPhysicsType _physicsType)
 		:model(_model), physicsType(_physicsType)
 	{
@@ -2784,6 +2771,11 @@ namespace tke
 									 // and, if object has physics componet, it can be only moved by physics
 	{
 		auto m = o->model;
+		if (!m)
+		{
+			delete o;
+			return;
+		}
 
 		mtx.lock();
 
@@ -3591,7 +3583,7 @@ namespace tke
 				tke::Model *m = nullptr;
 				for (auto _m : models)
 				{
-					if (_m->filename == a->value)
+					if (_m->name == a->value)
 					{
 						m = _m;
 						break;
@@ -3622,7 +3614,7 @@ namespace tke
 		for (auto object : objects)
 		{
 			auto n = new AttributeTreeNode("object");
-			n->attributes.push_back(new tke::Attribute("model", &object->model->filename));
+			n->attributes.push_back(new tke::Attribute("model", &object->model->name));
 			object->getCoord();
 			object->getEuler();
 			object->getScale();
@@ -3714,32 +3706,26 @@ namespace tke
 		scatteringPipeline = new Pipeline;
 		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
 		scatteringPipeline->setup(plainRenderPass_image16, 0);
-		globalResource.setPipeline(scatteringPipeline);
 
 		downsamplePipeline = new Pipeline;
 		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
 		downsamplePipeline->setup(plainRenderPass_image16, 0);
-		globalResource.setPipeline(downsamplePipeline);
 
 		convolvePipeline = new Pipeline;
 		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
 		convolvePipeline->setup(plainRenderPass_image16, 0);
-		globalResource.setPipeline(convolvePipeline);
 
 		panoramaPipeline = new Pipeline;
 		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");
 		panoramaPipeline->setup(sceneRenderPass, 0);
-		globalResource.setPipeline(panoramaPipeline);
 
 		mrtPipeline = new Pipeline;
 		mrtPipeline->loadXML(enginePath + "pipeline/deferred/mrt.xml");
 		mrtPipeline->setup(sceneRenderPass, 1);
-		//globalResource.setPipeline(mrtPipeline);
 
 		mrtAnimPipeline = new Pipeline;
 		mrtAnimPipeline->loadXML(enginePath + "pipeline/deferred/mrt_anim.xml");
 		mrtAnimPipeline->setup(sceneRenderPass, 1);
-		//globalResource.setPipeline(mrtAnimPipeline);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
 		heightMapTerrainPipeline = new Pipeline;
@@ -3755,12 +3741,10 @@ namespace tke
 		deferredPipeline = new Pipeline;
 		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
 		deferredPipeline->setup(sceneRenderPass, 2);
-		//globalResource.setPipeline(deferredPipeline);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 
 		composePipeline = new Pipeline;
 		composePipeline->loadXML(enginePath + "pipeline/compose/compose.xml");
 		composePipeline->setup(sceneRenderPass, 3);
-		//globalResource.setPipeline(composePipeline);
 	}
 }

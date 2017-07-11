@@ -474,7 +474,7 @@ namespace tke
 
 	Animation *createAnimation(const std::string &filename);
 
-	enum class ObjectPhysicsType
+	REFLECTABLE enum class ObjectPhysicsType
 	{
 		null,
 		static_r = 1 << 0, // cannot use with dynamic bit
@@ -494,9 +494,10 @@ namespace tke
 	{
 		REFL_BANK;
 
-		Model *model;
+		REFLv std::string model_name;
+		Model *model = nullptr;
 
-		ObjectPhysicsType physicsType; // cannot change
+		ObjectPhysicsType physicsType = ObjectPhysicsType::null; // cannot change
 
 		AnimationComponent *animationComponent = nullptr;
 		std::vector<RigidBodyData> rigidbodyDatas;
@@ -505,6 +506,7 @@ namespace tke
 
 		int sceneIndex = -1;
 
+		Object();
 		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsType::null);
 		~Object();
 	};

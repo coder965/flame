@@ -512,24 +512,12 @@ namespace tke
 
 		std::map<std::string, Buffer*> bufferResources;
 		std::map<std::string, Image*> imageResources;
-		std::map<std::string, Model*> modelResources;
-		std::map<std::string, Pipeline*> pipelineResources;
-		std::map<std::string, VkCommandBuffer> cmdResources;
-		std::map<std::string, int*> intResources;
 
 		void setBuffer(Buffer *p, const std::string &str);
 		void setImage(Image *p, const std::string &str);
-		void setModel(Model *p, const std::string &str);
-		void setPipeline(Pipeline *p);
-		void setCmd(VkCommandBuffer p, const std::string &str);
-		void setInt(int *p, const std::string &str);
 
 		Buffer *getBuffer(const std::string &str);
 		Image *getImage(const std::string &str);
-		Model *getModel(const std::string &str);
-		Pipeline *getPipeline(const std::string &str);
-		VkCommandBuffer getCmd(const std::string &str);
-		int *getInt(const std::string &str);
 
 		ResourceBank(ResourceBank *_parent);
 	};

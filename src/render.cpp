@@ -1295,26 +1295,6 @@ namespace tke
 		imageResources[str] = p;
 	}
 
-	void ResourceBank::setModel(Model *p, const std::string &str)
-	{
-		modelResources[str] = p;
-	}
-
-	void ResourceBank::setPipeline(Pipeline *p)
-	{
-		pipelineResources[p->name] = p;
-	}
-
-	void ResourceBank::setCmd(VkCommandBuffer p, const std::string &str)
-	{
-		cmdResources[str] = p;
-	}
-
-	void ResourceBank::setInt(int *p, const std::string &str)
-	{
-		intResources[str] = p;
-	}
-
 	Buffer *ResourceBank::getBuffer(const std::string &str)
 	{
 		auto it = bufferResources.find(str);
@@ -1335,58 +1315,6 @@ namespace tke
 		{
 			if (parent)
 				return parent->getImage(str);
-			else
-				return nullptr;
-		}
-		return it->second;
-	}
-
-	Model *ResourceBank::getModel(const std::string &str)
-	{
-		auto it = modelResources.find(str);
-		if (it == modelResources.end())
-		{
-			if (parent)
-				return parent->getModel(str);
-			else
-				return nullptr;
-		}
-		return it->second;
-	}
-
-	Pipeline *ResourceBank::getPipeline(const std::string &str)
-	{
-		auto it = pipelineResources.find(str);
-		if (it == pipelineResources.end())
-		{
-			if (parent)
-				return parent->getPipeline(str);
-			else
-				return nullptr;
-		}
-		return it->second;
-	}
-
-	VkCommandBuffer ResourceBank::getCmd(const std::string &str)
-	{
-		auto it = cmdResources.find(str);
-		if (it == cmdResources.end())
-		{
-			if (parent)
-				return parent->getCmd(str);
-			else
-				return nullptr;
-		}
-		return it->second;
-	}
-
-	int *ResourceBank::getInt(const std::string &str)
-	{
-		auto it = intResources.find(str);
-		if (it == intResources.end())
-		{
-			if (parent)
-				return parent->getInt(str);
 			else
 				return nullptr;
 		}
@@ -1658,7 +1586,6 @@ namespace tke
 				file.close();
 			}
 
-			auto spvFilename = ".spv";
 			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
 
 			bool error = false;
