@@ -35,6 +35,6 @@ void main()
 	vec4 pos0 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
-	pos.y -= texture(heightMap, outUV).r * u_terrain.height;
+	pos.y += texture(heightMap, outUV).r * u_terrain.height;
 	gl_Position = u_matrix.projView * pos;
 }

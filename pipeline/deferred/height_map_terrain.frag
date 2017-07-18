@@ -32,7 +32,7 @@ layout(location = 2) out vec4 outSpecRoughness;
 
 float getHeight(vec2 UV)
 {
-	return -texture(heightMap, UV).r * u_terrain.height;
+	return texture(heightMap, UV).r * u_terrain.height;
 }
 
 void main()

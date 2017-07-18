@@ -127,17 +127,15 @@ namespace tke
 	struct ImageData
 	{
 		int fif;
-		size_t bpp;
+		size_t byte_per_pixel;
 		size_t channel;
 		size_t cx;
 		size_t cy;
 		size_t pitch;
 		size_t size;
-		unsigned char *data;
+		unsigned char *v;
 
 		~ImageData();
-		void swapChannel(size_t channel0, size_t channel1);
-		void format();
 		VkFormat getVkFormat(bool sRGB);
 	};
 
@@ -169,12 +167,15 @@ namespace tke
 		inline bool isColorType() { return type == eColor || type == eSwapchain; }
 		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 
+		int cx = 1, cy = 1;
+		unsigned char *data = nullptr;
+		size_t bytePerPixel;
+		size_t pitch;
 		size_t size;
-		int width = 1, height = 1;
 		int level = 1;
 		int layer = 1;
 		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-		VkImage image = 0;
+		VkImage v = 0;
 		VkDeviceMemory memory = 0;
 		VkImageLayout layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -187,7 +188,7 @@ namespace tke
 
 		int index = -1;
 
-		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, void *data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
+		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, void *_data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
 		Image(Type _type, VkImage _image, int w, int h, VkFormat _format);
 		~Image();
 		int getWidth(int _level = 0) const;
@@ -197,7 +198,7 @@ namespace tke
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
-	Image *createImage(const std::string &filename, bool sRGB, bool saveData = false);
+	Image *createImage(const std::string &filename, bool sRGB = false, bool saveData = false);
 
 	struct CommandPool;
 

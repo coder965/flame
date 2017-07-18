@@ -530,7 +530,7 @@ namespace tke
 			context = ImGui::GetCurrentContext();
 
 			ImGuiIO& io = ImGui::GetIO();
-			io.Fonts->AddFontFromFileTTF("simhei.ttf", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
+			io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/simhei.ttf", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
 			static const ImWchar icons_ranges[] = { 
 				ICON_MIN_FA, 
 				ICON_MAX_FA, 

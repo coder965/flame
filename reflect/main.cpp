@@ -19,21 +19,21 @@ int main(int argc, char **argv)
 		"../src/entity.h"
 	};
 
-	//if (std::experimental::filesystem::exists(outputFilename))
-	//{
-	//	auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
-	//	auto up_to_date = true;
-	//	for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
-	//	{
-	//		if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
-	//		{
-	//			up_to_date = false;
-	//			break;
-	//		}
-	//	}
-	//	if (up_to_date)
-	//		return 0;
-	//}
+	if (std::experimental::filesystem::exists(outputFilename))
+	{
+		auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
+		auto up_to_date = true;
+		for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
+		{
+			if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
+			{
+				up_to_date = false;
+				break;
+			}
+		}
+		if (up_to_date)
+			return 0;
+	}
 
 	int current = -1;
 	std::string declString, implString, currentStructName, currentEnumName;

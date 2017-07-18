@@ -51,7 +51,7 @@ bool frustumCheck()
 	
 	const float radius = max(u_terrain.ext, u_terrain.height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
-	pos.y -= texture(heightMap, uv).r * u_terrain.height;
+	pos.y += texture(heightMap, uv).r * u_terrain.height;
 	pos = u_matrix.projView * pos;
 	pos = pos / pos.w;
 

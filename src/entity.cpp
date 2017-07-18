@@ -1664,7 +1664,7 @@ namespace tke
 								auto pImage = m->getImage(filename.c_str());
 								if (!pImage)
 								{
-									pImage = createImage(m->filepath + "/" + filename, true, true);
+									pImage = createImage(m->filepath + "/" + filename, true);
 									if (pImage) m->pImages.push_back(pImage);
 								}
 								pmt->albedoAlphaMap = pImage;
@@ -1676,7 +1676,7 @@ namespace tke
 								auto pImage = m->getImage(filename.c_str());
 								if (!pImage)
 								{
-									pImage = createImage(m->filepath + "/" + filename, false, false);
+									pImage = createImage(m->filepath + "/" + filename);
 									if (pImage) m->pImages.push_back(pImage);
 								}
 								pmt->normalHeightMap = pImage;
@@ -1867,7 +1867,7 @@ namespace tke
 				auto pImage = m->getImage(data.mapName);
 				if (!pImage)
 				{
-					pImage = createImage(m->filepath + "/" + data.mapName, true, true);
+					pImage = createImage(m->filepath + "/" + data.mapName, true);
 					if (pImage) m->pImages.push_back(pImage);
 				}
 				pmt->albedoAlphaMap = pImage;
@@ -2134,7 +2134,7 @@ namespace tke
 				file >> filename;
 				bool sRGB;
 				file >> sRGB;
-				auto pImage = createImage(m->filepath + "/" + filename, sRGB, false);
+				auto pImage = createImage(m->filepath + "/" + filename, sRGB);
 				if (pImage) m->pImages.push_back(pImage);
 			}
 
@@ -2593,7 +2593,7 @@ namespace tke
 	Object::Object() {}
 
 	Object::Object(Model *_model, ObjectPhysicsType _physicsType)
-		:model(_model), physicsType(_physicsType)
+		:model(_model), physics_type(_physicsType)
 	{
 		model_name = model->name;
 		if (model->animated)
@@ -2605,8 +2605,8 @@ namespace tke
 		delete animationComponent;
 	}
 
-	Terrain::Terrain(TerrainType _type)
-		:type(_type)
+	Terrain::Terrain(TerrainType _type, bool _use_physx)
+		:type(_type), use_physx(_use_physx)
 	{}
 
 	static const float gravity = 9.81f;
@@ -2781,7 +2781,7 @@ namespace tke
 		mtx.lock();
 
 		// since object can move to somewhere first, we create physics component here
-		if (((int)o->physicsType & (int)ObjectPhysicsType::static_r) || ((int)o->physicsType & (int)ObjectPhysicsType::dynamic))
+		if (((int)o->physics_type & (int)ObjectPhysicsType::static_r) || ((int)o->physics_type & (int)ObjectPhysicsType::dynamic))
 		{
 			if (m->rigidbodies.size() > 0)
 			{
@@ -2810,7 +2810,7 @@ namespace tke
 						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
 						physx::PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2]))));
 					rigTrans = objTrans * rigTrans;
-					auto actor = (((int)o->physicsType & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
+					auto actor = (((int)o->physics_type & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
 						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
 
 					for (auto s : r->shapes)
@@ -2902,7 +2902,7 @@ namespace tke
 			//		}
 		}
 
-		if ((int)o->physicsType & (int)ObjectPhysicsType::controller)
+		if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 		{
 			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
@@ -2924,30 +2924,37 @@ namespace tke
 		mtx.unlock();
 	}
 
-	Object *Scene::removeObject(Object *pObject)
+	Object *Scene::removeObject(Object *o)
 	{
 		mtx.lock();
 		for (auto it = objects.begin(); it != objects.end(); it++)
 		{
-			if (*it == pObject)
+			if (*it == o)
 			{
 				for (auto itt = it + 1; itt != objects.end(); itt++)
 				{
 					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
 				}
-				delete pObject;
+				for (auto &r : o->rigidbodyDatas)
+				{
+					if (r.actor)
+						r.actor->release();
+				}
+				if (o->pxController)
+					o->pxController->release();
+				delete o;
 				if (it > objects.begin())
-					pObject = *(it - 1);
+					o = *(it - 1);
 				else
-					pObject = nullptr;
+					o = nullptr;
 				objects.erase(it);
 				break;
 			}
 		}
 		needUpdateIndirectBuffer = true;
 		mtx.unlock();
-		return pObject;
+		return o;
 	}
 
 	int Scene::getCollisionGroupID(int ID, unsigned int mask)
@@ -2971,11 +2978,42 @@ namespace tke
 		return count;
 	}
 
-	void Scene::addTerrain(Terrain *pTerrain) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
+	void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
 		mtx.lock();
 
-		terrain = pTerrain;
+		if (t->use_physx)
+		{
+			auto m = t->heightMap;
+
+			auto numVerts = m->cx * m->cy;
+
+			auto samples = new physx::PxHeightFieldSample[numVerts];
+			memset(samples, 0, numVerts * sizeof(physx::PxHeightFieldSample));
+
+			for (int y = 0; y < m->cy; y++)
+			{
+				for (int x = 0; x < m->cx; x++)
+					samples[x + y * m->cx].height = m->data[x * m->bytePerPixel + y * m->pitch];
+			}
+
+			physx::PxHeightFieldDesc hfDesc;
+			hfDesc.format = physx::PxHeightFieldFormat::eS16_TM;
+			hfDesc.nbRows = m->cx;
+			hfDesc.nbColumns = m->cy;
+			hfDesc.samples.data = samples;
+			hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
+
+			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->ext * TKE_PATCH_SIZE / m->cx, t->ext * TKE_PATCH_SIZE / m->cy);
+			t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
+			t->actor->createShape(hfGeom, *pxDefaultMaterial);
+
+			pxScene->addActor(*t->actor);
+
+			delete[]samples;
+		}
+
+		terrain = t;
 
 		mtx.unlock();
 	}
@@ -2983,6 +3021,9 @@ namespace tke
 	void Scene::removeTerrain()
 	{
 		mtx.lock();
+
+		if (terrain->actor)
+			terrain->actor->release();
 
 		delete terrain;
 		terrain = nullptr;
@@ -3050,7 +3091,7 @@ namespace tke
 		{
 			for (auto object : objects) // set controller coord
 			{
-				if ((int)object->physicsType & (int)ObjectPhysicsType::controller)
+				if ((int)object->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					glm::vec3 e, c;
 					object->move(object->getEuler().x, c, e);
@@ -3067,7 +3108,7 @@ namespace tke
 			pxScene->fetchResults(true);
 			for (auto o : objects)
 			{
-				if ((int)o->physicsType & (int)ObjectPhysicsType::dynamic)
+				if ((int)o->physics_type & (int)ObjectPhysicsType::dynamic)
 				{
 					auto pModel = o->model;
 
@@ -3132,7 +3173,7 @@ namespace tke
 					}
 				}
 
-				if ((int)o->physicsType & (int)ObjectPhysicsType::controller)
+				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					auto p = o->pxController->getPosition();
 					auto c = glm::vec3(p.x, p.y, p.z) - (o->model->maxCoord + o->model->minCoord) * 0.5f * o->getScale();
@@ -3343,7 +3384,7 @@ namespace tke
 				stru.ext = terrain->ext;
 				stru.height = terrain->height;
 				stru.tessFactor = terrain->tessFactor;
-				stru.mapDim = terrain->heightMap ? terrain->heightMap->width : 1024;
+				stru.mapDim = terrain->heightMap ? terrain->heightMap->cx : 1024;
 
 				heightMapTerrainBuffer->update(&stru, *stagingBuffer);
 
@@ -3614,6 +3655,10 @@ namespace tke
 			object->getEuler();
 			object->getScale();
 			n->addAttributes(object, object->b);
+			at.children.push_back(n);
+		}
+		{
+			auto n = new AttributeTreeNode("terrain");
 			at.children.push_back(n);
 		}
 		at.saveXML(filename);

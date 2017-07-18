@@ -485,7 +485,7 @@ namespace tke
 	struct RigidBodyData
 	{
 		Rigidbody *rigidbody;
-		physx::PxRigidActor *actor;
+		physx::PxRigidActor *actor = nullptr;
 		glm::mat3 rotation;
 		glm::vec3 coord;
 	};
@@ -497,7 +497,7 @@ namespace tke
 		REFLv std::string model_name;
 		Model *model = nullptr;
 
-		REFLe ObjectPhysicsType physicsType = ObjectPhysicsType::null; // cannot change
+		REFLe ObjectPhysicsType physics_type = ObjectPhysicsType::null; // cannot change
 
 		AnimationComponent *animationComponent = nullptr;
 		std::vector<RigidBodyData> rigidbodyDatas;
@@ -511,18 +511,21 @@ namespace tke
 		~Object();
 	};
 
-	enum class TerrainType
+	REFLECTABLE enum class TerrainType
 	{
-		height_map = 1 << 0,
-		procedural = 1 << 1
+		REFLe height_map = 1 << 0,
+		REFLe procedural = 1 << 1
 	};
 
-	struct Terrain : Transformer
+	REFLECTABLE struct Terrain : Transformer
 	{
-		TerrainType type;
+		REFL_BANK;
+
+		REFLe TerrainType type;
+		REFLv bool use_physx = false;
 
 		float ext = 10.f;
-		float height = 10.f;
+		float height = 100.f;
 		float tessFactor = 0.75f;
 
 		Image *heightMap = nullptr;
@@ -530,7 +533,9 @@ namespace tke
 		float spec = 0.04f;
 		float roughness = 1.f;
 
-		Terrain(TerrainType _type);
+		physx::PxRigidActor *actor = nullptr;
+
+		Terrain(TerrainType _type, bool _use_physx);
 	};
 
 	enum class SkyType

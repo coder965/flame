@@ -13,6 +13,7 @@ tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *Pipeline::b = tke::addReflectionBank("Pipeline");
 tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
+tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
 tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 struct ReflectInit{ReflectInit(){
 tke::Enum *currentEnum = nullptr;
@@ -118,7 +119,14 @@ currentEnum->items.emplace_back("controller", (int)ObjectPhysicsType::controller
 currentBank = Object::b;
 currentBank->parents.push_back(Transformer::b);
 currentBank->addV<std::string>("model_name", offsetof(Object, model_name));
-currentBank->addE("ObjectPhysicsType", "physicsType", offsetof(Object, physicsType));
+currentBank->addE("ObjectPhysicsType", "physics_type", offsetof(Object, physics_type));
+currentEnum = tke::addReflectEnum("TerrainType");
+currentEnum->items.emplace_back("height_map", (int)TerrainType::height_map);
+currentEnum->items.emplace_back("procedural", (int)TerrainType::procedural);
+currentBank = Terrain::b;
+currentBank->parents.push_back(Transformer::b);
+currentBank->addE("TerrainType", "type", offsetof(Terrain, type));
+currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
 currentBank = Scene::b;
 currentBank->addV<std::string>("name", offsetof(Scene, name));
 }};static ReflectInit init;

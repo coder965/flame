@@ -16,7 +16,7 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 		image->getView(),
 		tke::depthImage->getView()
 	};
-	fb_tool = tke::getFramebuffer(image->width, image->height, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);

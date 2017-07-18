@@ -30,6 +30,7 @@ extern EditorWindow *mainWindow;
 
 struct ObjectCreationSetting
 {
+	int modelIndex = 0;
 	bool use_camera_position = false;
 	bool use_camera_target_position = false;
 	glm::vec3 coord;
@@ -42,6 +43,7 @@ struct ObjectCreationSetting
 	bool randS[3] = {};
 	float scaleRandRange = 1.f;
 	bool same_scale_rand = false;
+	int physxType = 0;
 
 	void load_setting(tke::AttributeTreeNode *n);
 	void save_setting(tke::AttributeTreeNode *n);

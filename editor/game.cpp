@@ -12,7 +12,7 @@ void Game::load()
 		if (c->name == "texture")
 		{
 			auto a = c->firstAttribute("filename");
-			auto i = tke::createImage(a->value, false);
+			auto i = tke::createImage(a->value, false, true);
 			if (i)
 			{
 				tke::textures.push_back(i);

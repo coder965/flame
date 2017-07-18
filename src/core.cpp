@@ -179,7 +179,7 @@ namespace tke
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.hInstance = (HINSTANCE)hInst;
-			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->data);
+			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->v);
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			RegisterClassExA(&wcex);
@@ -496,7 +496,7 @@ namespace tke
 
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*))
 	{
-		if (x < 0 || y < 0 || x > pickUpImage->width || y > pickUpImage->height)
+		if (x < 0 || y < 0 || x > pickUpImage->cx || y > pickUpImage->cy)
 			return 0;
 
 		auto cb = commandPool->begineOnce();
@@ -514,7 +514,7 @@ namespace tke
 		range.imageExtent.width = 1;
 		range.imageExtent.height = 1;
 		range.imageExtent.depth = 1;
-		vkCmdCopyImageToBuffer(cb->v, pickUpImage->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->v, 1, &range);
+		vkCmdCopyImageToBuffer(cb->v, pickUpImage->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->v, 1, &range);
 		commandPool->endOnce(cb);
 
 		auto pixel = (unsigned char*)stagingBuffer->map(0, 4);

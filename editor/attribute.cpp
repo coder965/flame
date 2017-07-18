@@ -8,7 +8,9 @@ void ObjectCreationSetting::load_setting(tke::AttributeTreeNode *n)
 {
 	for (auto a : n->attributes)
 	{
-		if (a->name == "use_camera_position")
+		if (a->name == "modelIndex")
+			a->get(&modelIndex);
+		else if (a->name == "use_camera_position")
 			a->get(&use_camera_position);
 		else if (a->name == "use_camera_target_position")
 			a->get(&use_camera_target_position);
@@ -44,11 +46,14 @@ void ObjectCreationSetting::load_setting(tke::AttributeTreeNode *n)
 			a->get(&scaleRandRange);
 		else if (a->name == "same_scale_rand")
 			a->get(&same_scale_rand);
+		else if (a->name == "physxType")
+			a->get(&physxType);
 	}
 }
 
 void ObjectCreationSetting::save_setting(tke::AttributeTreeNode *n)
 {
+	n->addAttribute("modelIndex", &modelIndex);
 	n->addAttribute("use_camera_position", &use_camera_position);
 	n->addAttribute("use_camera_target_position", &use_camera_target_position);
 	n->addAttribute("coord", &coord);
@@ -67,6 +72,7 @@ void ObjectCreationSetting::save_setting(tke::AttributeTreeNode *n)
 	n->addAttribute("randSZ", &randS[2]);
 	n->addAttribute("scaleRandRange", &scaleRandRange);
 	n->addAttribute("same_scale_rand", &same_scale_rand);
+	n->addAttribute("physxType", &physxType);
 }
 
 ObjectCreationSetting ocs;
@@ -90,13 +96,13 @@ static void _show_scene(tke::Scene *scene)
 
 		if (ImGui::TreeNode("Create"))
 		{
-			static int modelIndex = 0;
-			if (ImGui::Combo("Model", &modelIndex, [](void *data, int idx, const char **out_text) {
+			if (ocs.modelIndex >= tke::models.size())
+				ocs.modelIndex = 0;
+			if (ImGui::Combo("Model", &ocs.modelIndex, [](void *data, int idx, const char **out_text) {
 				*out_text = tke::models[idx]->name.c_str();
 				return true;
 			}, nullptr, tke::models.size()));
 
-			ImGui::Separator();
 			ImGui::Checkbox("Use Camera Position", &ocs.use_camera_position);
 			if (ocs.use_camera_position)
 				ImGui::Checkbox("Use Camera Target Position", &ocs.use_camera_target_position);
@@ -121,7 +127,6 @@ static void _show_scene(tke::Scene *scene)
 			}
 			ImGui::DragFloat("Coord Rand Range", &ocs.coordRandRange, 0.1f);
 
-			ImGui::Separator();
 			for (int i = 0; i < 3; i++)
 			{
 				char *strs0[] = { "EulerX", "EulerY", "EulerZ" };
@@ -132,7 +137,6 @@ static void _show_scene(tke::Scene *scene)
 			}
 			ImGui::DragFloat("Euler Rand Range", &ocs.eulerRandRange, 1.f, 0.f, 360.f);
 
-			ImGui::Separator();
 			for (int i = 0; i < 3; i++)
 			{
 				char *strs0[] = { "ScaleX", "ScaleY", "ScaleZ" };
@@ -144,29 +148,26 @@ static void _show_scene(tke::Scene *scene)
 			ImGui::DragFloat("Scale Rand Range", &ocs.scaleRandRange, 0.1f);
 			ImGui::Checkbox("Same Scale Rand", &ocs.same_scale_rand);
 
-			ImGui::Separator();
-			static int physxType = 0;
 			static const char *physxTypeNames[] = {
 				"Null",
 				"Static",
 				"Dynamic"
 			};
-			ImGui::Combo("Physx Type", &physxType, physxTypeNames, TK_ARRAYSIZE(physxTypeNames));
+			ImGui::Combo("Physx Type", &ocs.physxType, physxTypeNames, TK_ARRAYSIZE(physxTypeNames));
 			static bool use_controller;
-			if (physxType != 0)
+			if (ocs.physxType != 0)
 				ImGui::Checkbox("Use Controller", &use_controller);
-			ImGui::Separator();
 
 			if (ImGui::Button("Create Object"))
 			{
 				auto _physxType = tke::ObjectPhysicsType::null;
-				if (physxType != 0)
+				if (ocs.physxType != 0)
 				{
-					_physxType = tke::ObjectPhysicsType(1 << (physxType - 1));
+					_physxType = tke::ObjectPhysicsType(1 << (ocs.physxType - 1));
 					if (use_controller)
 						_physxType = tke::ObjectPhysicsType((int)_physxType | (int)tke::ObjectPhysicsType::controller);
 				}
-				auto o = new tke::Object(tke::models[modelIndex], _physxType);
+				auto o = new tke::Object(tke::models[ocs.modelIndex], _physxType);
 
 				glm::vec3 _coord;
 				if (ocs.use_camera_position)
@@ -209,51 +210,47 @@ static void _show_scene(tke::Scene *scene)
 
 		if (terrain)
 		{
-			static int height_map_index = 0;
-			if (ImGui::Combo("Height Map", &height_map_index, [](void *data, int idx, const char **out_text) {
-				if (idx == 0)
-					*out_text = "[NULL]";
-				else
-					*out_text = tke::textures[idx - 1]->filename.c_str();
-				return true;
-			}, nullptr, tke::textures.size() + 1))
-			{
-				if (height_map_index > 0)
-					terrain->heightMap = tke::textures[height_map_index - 1];
-				else
-					terrain->heightMap = nullptr;
-				terrain->changed = true;
-			}
-			static int color_map_index = 0;
-			if (ImGui::Combo("Color Map", &color_map_index, [](void *data, int idx, const char **out_text) {
-				if (idx == 0)
-					*out_text = "[NULL]";
-				else
-					*out_text = tke::textures[idx - 1]->filename.c_str();
-				return true;
-			}, nullptr, tke::textures.size() + 1))
-			{
-				if (color_map_index > 0)
-					terrain->colorMap = tke::textures[color_map_index - 1];
-				else
-					terrain->colorMap = nullptr;
-				terrain->changed = true;
-			}
-			if (ImGui::DragFloat("Height", &terrain->height))
-				terrain->changed = true;
+			ImGui::Text("Height Map:%s", terrain->heightMap->filename.c_str());
+			ImGui::Text("Color Map:%s", terrain->colorMap->filename.c_str());
+			ImGui::Text("Height:%f", terrain->height);
+			ImGui::Text("Use Physx:%s", terrain->use_physx ? "Yse" : "No");
 			if (ImGui::Button("Remove Terrain"))
 				scene->removeTerrain();
 		}
 		else
 		{
-			if (ImGui::Button("Create Height Map Terrain"))
+			static int height_map_index = 0;
+			static int color_map_index = 0;
+			if (tke::textures.size() > 0)
 			{
-				auto t = new tke::Terrain(tke::TerrainType::height_map);
-				scene->addTerrain(t);
+				if (ImGui::Combo("Height Map", &height_map_index, [](void *data, int idx, const char **out_text) {
+					*out_text = tke::textures[idx]->filename.c_str();
+					return true;
+				}, nullptr, tke::textures.size()));
+				if (ImGui::Combo("Color Map", &color_map_index, [](void *data, int idx, const char **out_text) {
+					*out_text = tke::textures[idx]->filename.c_str();
+					return true;
+				}, nullptr, tke::textures.size()));
 			}
+			static float height = 100.f;
+			ImGui::DragFloat("Height", &height);
+			static bool use_physx = false;
+			ImGui::Checkbox("Use Physx", &use_physx);
+			if (tke::textures.size() > 0)
+			{
+				if (ImGui::Button("Create Height Map Terrain"))
+				{
+					auto t = new tke::Terrain(tke::TerrainType::height_map, use_physx);
+					t->heightMap = tke::textures[height_map_index];
+					t->colorMap = tke::textures[color_map_index];
+					t->height = height;
+					scene->addTerrain(t);
+				}
+			}
+			ImGui::Separator();
 			if (ImGui::Button("Create Procedural Terrain"))
 			{
-				auto t = new tke::Terrain(tke::TerrainType::procedural);
+				auto t = new tke::Terrain(tke::TerrainType::procedural, use_physx);
 				scene->addTerrain(t);
 			}
 		}
@@ -275,8 +272,8 @@ void AttributeWidget::show()
 		{
 			auto i = tke::textures[gameExplorer->itemIndex];
 			ImGui::Text("filename:%s", i->filename.c_str());
-			ImGui::Text("size:%d x %d", i->width, i->height);
-			ImGui::Image((ImTextureID)i->index, ImVec2(i->width, i->height));
+			ImGui::Text("size:%d x %d", i->cx, i->cy);
+			ImGui::Image((ImTextureID)i->index, ImVec2(i->cx, i->cy));
 		}
 			break;
 		case GameExplorer::lastItemTypeModel:

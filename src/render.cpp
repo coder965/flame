@@ -1039,10 +1039,10 @@ namespace tke
 	{
 	}
 
-	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level , void *data, size_t _size, VkImageAspectFlags aspect)
+	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level , void *_data, size_t _size, VkImageAspectFlags aspect)
 	{
-		width = w;
-		height = h;
+		cx = w;
+		cy = h;
 		level = _level;
 		format = _format;
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
@@ -1079,11 +1079,11 @@ namespace tke
 
 		device.mtx.lock();
 
-		res = vkCreateImage(device.v, &imageInfo, nullptr, &image);
+		res = vkCreateImage(device.v, &imageInfo, nullptr, &v);
 		assert(res == VK_SUCCESS);
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device.v, image, &memRequirements);
+		vkGetImageMemoryRequirements(device.v, v, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1093,17 +1093,17 @@ namespace tke
 		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &memory);
 		assert(res == VK_SUCCESS);
 
-		res = vkBindImageMemory(device.v, image, memory, 0);
+		res = vkBindImageMemory(device.v, v, memory, 0);
 		assert(res == VK_SUCCESS);
 
 		device.mtx.unlock();
 
 		size = memRequirements.size;
 
-		if (data && _size)
+		if (_data && _size)
 		{
 			assert(_size <= size);
-			fillData(0, data, _size, aspect);
+			fillData(0, _data, _size, aspect);
 		}
 		transitionLayout(0, aspect, VK_IMAGE_LAYOUT_GENERAL);
 	}
@@ -1111,21 +1111,22 @@ namespace tke
 	Image::Image(Type _type, VkImage _image, int w, int h, VkFormat _format)
 	{
 		type = _type;
-		image = _image;
-		width = w;
-		height = h;
+		v = _image;
+		cx = w;
+		cy = h;
 		format = _format;
 	}
 
 	Image::~Image()
 	{
+		delete data;
 		device.mtx.lock();
 		for (auto v : views)
 			vkDestroyImageView(device.v, v->v, nullptr);
 		if (type != Type::eSwapchain)
 		{
 			vkFreeMemory(device.v, memory, nullptr);
-			vkDestroyImage(device.v, image, nullptr);
+			vkDestroyImage(device.v, v, nullptr);
 		}
 		device.mtx.unlock();
 	}
@@ -1140,7 +1141,7 @@ namespace tke
 		barrier.newLayout = _layout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
+		barrier.image = v;
 		barrier.subresourceRange.aspectMask = aspect;
 		barrier.subresourceRange.baseMipLevel = _level;
 		barrier.subresourceRange.levelCount = 1;
@@ -1185,7 +1186,7 @@ namespace tke
 		region.bufferOffset = 0;
 
 		auto cb = commandPool->begineOnce();
-		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		commandPool->endOnce(cb);
 	}
 
@@ -1215,7 +1216,7 @@ namespace tke
 
 		VkImageViewCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		info.image = image;
+		info.image = v;
 		info.viewType = viewType;
 		info.format = format;
 		info.subresourceRange.aspectMask = aspect;
@@ -1235,7 +1236,7 @@ namespace tke
 
 	int Image::getWidth(int _level) const
 	{
-		int w = width;
+		int w = cx;
 		for (;;)
 		{
 			if (_level <= 0 || w < 2)
@@ -1248,7 +1249,7 @@ namespace tke
 
 	int Image::getHeight(int _level) const
 	{
-		int h = height;
+		int h = cy;
 		for (;;)
 		{
 			if (_level <= 0 || h < 2)
@@ -2413,28 +2414,7 @@ namespace tke
 
 	ImageData::~ImageData()
 	{
-		delete[]data;
-	}
-
-	void ImageData::swapChannel(size_t channel0, size_t channel1)
-	{
-		for (int i = 0; i < cy; i++)
-		{
-			for (int j = 0; j < cx; j++)
-				std::swap(data[i * pitch + j * channel + channel0], data[i * pitch + j * channel + channel1]);
-		}
-	}
-
-	void ImageData::format()
-	{
-		if (channel == 4)
-		{
-			if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
-				fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
-				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
-				fif == FREE_IMAGE_FORMAT::FIF_PNG)
-				swapChannel(0, 2);
-		}
+		delete[]v;
 	}
 
 	VkFormat ImageData::getVkFormat(bool sRGB)
@@ -2442,20 +2422,22 @@ namespace tke
 		switch (channel)
 		{
 		case 1:
-			switch (bpp)
+			switch (byte_per_pixel)
 			{
-			case 8:
+			case 1:
 				return VK_FORMAT_R8_UNORM;
-			case 16:
+			case 2:
 				return VK_FORMAT_R16_UNORM;
 			}
 			break;
 		case 4:
-			switch (bpp)
+			switch (byte_per_pixel)
 			{
-			case 32:
-				if (sRGB) return VK_FORMAT_R8G8B8A8_SRGB;
-				else  return VK_FORMAT_R8G8B8A8_UNORM;
+			case 4:
+				if (sRGB)
+					return VK_FORMAT_R8G8B8A8_SRGB;
+				else  
+					return VK_FORMAT_R8G8B8A8_UNORM;
 				break;
 			}
 		}
@@ -2499,28 +2481,52 @@ namespace tke
 		}
 		pData->cx = FreeImage_GetWidth(dib);
 		pData->cy = FreeImage_GetHeight(dib);
-		pData->bpp = FreeImage_GetBPP(dib);
+		pData->byte_per_pixel = FreeImage_GetBPP(dib) / 8;
 		pData->pitch = FreeImage_GetPitch(dib);
 		pData->size = pData->pitch * pData->cy;
-		pData->data = new unsigned char[pData->size];
-		memcpy(pData->data, FreeImage_GetBits(dib), pData->size);
+		pData->v = new unsigned char[pData->size];
+		memcpy(pData->v, FreeImage_GetBits(dib), pData->size);
 		FreeImage_Unload(dib);
+
+		if (pData->channel == 4)
+		{
+			if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
+				fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
+				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
+				fif == FREE_IMAGE_FORMAT::FIF_PNG)
+			{
+				for (int y = 0; y < pData->cy; y++)
+				{
+					for (int x = 0; x < pData->cx; x++)
+					{
+						std::swap(pData->v[y * pData->pitch + x * pData->channel + 0],
+							pData->v[y * pData->pitch + x * pData->channel + 2]);
+					}
+				}
+			}
+		}
+
 		return pData;
 	}
 
 	Image *createImage(const std::string &filename, bool sRGB, bool saveData)
 	{
-		auto pData = createImageData(filename);
-		assert(pData);
+		auto d = createImageData(filename);
+		assert(d);
 
-		pData->format();
+		auto i = new Image(d->cx, d->cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, d->v, d->size);
+		i->filename = filename;
+		i->bytePerPixel = d->byte_per_pixel;
+		i->pitch = d->pitch;
+		i->sRGB = sRGB;
 
-		auto pImage = new Image(pData->cx, pData->cy, pData->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pData->data, pData->size);
-		pImage->filename = filename;
-		pImage->sRGB = sRGB;
+		if (saveData)
+		{
+			i->data = d->v;
+			d->v = nullptr;
+		}
+		delete d;
 
-		delete pData;
-
-		return pImage;
+		return i;
 	}
 }

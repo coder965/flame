@@ -6,7 +6,6 @@ namespace tke
 	physx::PxPhysics *pxPhysics = nullptr;
 	physx::PxMaterial *pxDefaultMaterial = nullptr;
 
-
 	physx::PxRigidActor *createStaticRigidActor(physx::PxTransform &trans)
 	{
 		auto body = pxPhysics->createRigidStatic(trans);
@@ -30,46 +29,6 @@ namespace tke
 		////scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.f);
 		//pxScene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LOCAL_FRAMES, 1.f);
 		////scene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LIMITS, 1.f);
-
-		//	for (auto pTerrain : scene->pTerrains)
-		//	{
-		//		if (pTerrain->heightMap)
-		//		{
-		//			auto m = pTerrain->heightMap;
-
-		//			PxU32 numVerts = pTerrain->blockCx * pTerrain->blockCy;
-
-		//			auto samples = new PxHeightFieldSample[numVerts];
-		//			memset(samples, 0, numVerts * sizeof(PxHeightFieldSample));
-
-		//			int xOffset = m->m_width / pTerrain->blockCx;
-		//			int yOffset = m->m_height / pTerrain->blockCy;
-
-		//			for (PxU32 x = 0; x < pTerrain->blockCx; x++)
-		//			{
-		//				for (PxU32 y = 0; y < pTerrain->blockCy; y++)
-		//					samples[x + y * pTerrain->blockCx].height = m->getPixel(y * yOffset, x * xOffset, 0);
-		//			}
-
-		//			PxHeightFieldDesc hfDesc;
-		//			hfDesc.format = PxHeightFieldFormat::eS16_TM;
-		//			hfDesc.nbColumns = pTerrain->blockCx;
-		//			hfDesc.nbRows = pTerrain->blockCy;
-		//			hfDesc.samples.data = samples;
-		//			hfDesc.samples.stride = sizeof(PxHeightFieldSample);
-
-		//			auto heightField = pxPhysics->createHeightField(hfDesc);
-
-		//			auto hfActor = pxPhysics->createRigidStatic(PxTransform(PxIdentity));
-
-		//			PxHeightFieldGeometry hfGeom(heightField, PxMeshGeometryFlags(), pTerrain->height / 255.f, pTerrain->blockSize, pTerrain->blockSize);
-		//			hfActor->createShape(hfGeom, *pxMaterial);
-
-		//			pxScene->addActor(*hfActor);
-
-		//			delete[]samples;
-		//		}
-		//	}
 
 		//	auto group1ID = 1;
 		//	for (auto g : scene->pCollisionGroups)

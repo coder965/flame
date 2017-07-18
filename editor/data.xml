@@ -1,4 +1,6 @@
 <data>
+  <texture filename="test.jpg" />
+  <texture filename="white.jpg" />
   <texture filename="heightmap.jpg" />
   <texture filename="heightmap_color.jpg" />
 	<model filename="D:/miku/miku.pmd"/>
