@@ -76,6 +76,7 @@ namespace tke
 	Pipeline *plainPipeline_3d_normal_depth = nullptr;
 	Pipeline *plainPipeline_3d_wire = nullptr;
 	Pipeline *plainPipeline_3d_anim_wire = nullptr;
+	Pipeline *plainPipeline_3d_line = nullptr;
 	int plain3d_bone_pos = -1;
 
 	static Window* current_window = nullptr;
@@ -524,25 +525,6 @@ namespace tke
 		return index;
 	}
 
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-	};
-
-	struct AnimatedVertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-
-		glm::vec4 boneWeight;
-		glm::vec4 boneID;
-	};
-
 	struct ConstantBufferStruct
 	{
 		float depth_near;
@@ -577,7 +559,7 @@ namespace tke
 #endif
 		);
 
-		stagingBuffer = new StagingBuffer(65536);
+		stagingBuffer = new StagingBuffer(20000000);
 
 		{
 			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
@@ -623,11 +605,14 @@ namespace tke
 			}
 
 			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX };
+				static VkVertexInputBindingDescription bindings = { 0, sizeof(LineVertex), VK_VERTEX_INPUT_RATE_VERTEX };
 
-				static VkVertexInputAttributeDescription attributes = { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 };
+				static VkVertexInputAttributeDescription attributes[] = {
+					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, position) },
+					{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, color) }
+				};
 
-				lineVertexInputState = vertexStateInfo(1, &bindings, 1, &attributes);
+				lineVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
 			}
 		}
 
@@ -700,6 +685,9 @@ namespace tke
 		plainPipeline_3d_anim_wire = new Pipeline;
 		plainPipeline_3d_anim_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml");
 		plainPipeline_3d_anim_wire->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_line = new Pipeline;
+		plainPipeline_3d_line->loadXML(enginePath + "pipeline/plain3d/plain3d_line.xml");
+		plainPipeline_3d_line->setup(plainRenderPass_image8, 0);
 		plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 		staticVertexBuffer = new VertexBuffer();

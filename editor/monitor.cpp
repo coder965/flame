@@ -11,7 +11,7 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	tke::addGuiImage(image);
 
 	fb_scene = scene->createFramebuffer(image);
-	fb_wireframe = tke::getFramebuffer(image, tke::plainRenderPass_image8);
+	fb_image = tke::getFramebuffer(image, tke::plainRenderPass_image8);
 	VkImageView views[] = {
 		image->getView(),
 		tke::depthImage->getView()
@@ -19,9 +19,11 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 
 	cb = new tke::CommandBuffer(tke::commandPool);
+	cb_physx = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
 	ds_wireframe = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_wire->descriptorSetLayout);
 	scene_renderFinished = tke::createEvent();
+	physx_renderFinished = tke::createEvent();
 	wireframe_renderFinished = tke::createEvent();
 	renderFinished = tke::createEvent();
 
@@ -32,13 +34,16 @@ MonitorWidget::~MonitorWidget()
 {
 	tke::removeGuiImage(image);
 	delete image;
-	tke::releaseFramebuffer(fb_tool);
 	tke::releaseFramebuffer(fb_scene);
+	tke::releaseFramebuffer(fb_image);
+	tke::releaseFramebuffer(fb_tool);
 	delete cb;
+	delete cb_physx;
 	delete cb_wireframe;
 	delete ds_wireframe;
 	delete transformerTool;
 	tke::destroyEvent(scene_renderFinished);
+	tke::destroyEvent(physx_renderFinished);
 	tke::destroyEvent(wireframe_renderFinished);
 	tke::destroyEvent(renderFinished);
 }
@@ -142,9 +147,137 @@ void MonitorWidget::show()
 		}
 	}
 
+	if (ImGui::Button("Target To Selected"))
+	{
+		if (selectedItem)
+		{
+			scene->camera.setTarget(selectedItem.toTransformer()->getCoord());
+			scene->camera.lookAtTarget();
+		}
+	}
+
+	static bool viewPhysx = false;
+	if (ImGui::Checkbox("View Physx", &viewPhysx))
+	{
+		if (viewPhysx)
+		{
+			scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 1.f);
+			////scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1.f);
+			scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.f);
+			//scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.f);
+			//pxScene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LOCAL_FRAMES, 1.f);
+			////scene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LIMITS, 1.f);
+		}
+		else
+		{
+			scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 0.f);
+		}
+	}
+
 	ImGui::EndDock();
 
 	scene->show(cb, fb_scene, scene_renderFinished);
+
+	{ // view physx
+		cb_physx->reset();
+		cb_physx->begin();
+
+		cb_physx->waitEvents(1, &scene_renderFinished);
+
+		if (viewPhysx)
+		{
+			cb_physx->beginRenderPass(tke::plainRenderPass_image8, fb_image);
+
+			auto &rb = scene->pxScene->getRenderBuffer();
+
+			////for (int i = 0; i < rb.getNbPoints(); i++)
+			////{
+			////	p.color = _intToRGB(rb.getPoints()[i].color);
+			////	p.coord = _pxVec3ToVec3(rb.getPoints()[i].pos);
+			////	tke3_debugBuffer.points.push_back(p);
+			////}
+
+			auto lineCount = rb.getNbLines();
+			if (lineCount > 0)
+			{
+				auto vertexSize = lineCount * 2 * sizeof(tke::LineVertex);
+				if (!physxBuffer || physxBuffer->size < vertexSize)
+				{
+					if (physxBuffer) delete physxBuffer;
+					physxBuffer = new tke::VertexBuffer(vertexSize);
+				}
+
+				{
+					auto map = tke::stagingBuffer->map(0, vertexSize);
+					auto vtx_dst = (tke::LineVertex*)map;
+					for (int i = 0; i < lineCount; i++)
+					{
+						auto &line = rb.getLines()[i];
+						vtx_dst[0].position.x = line.pos0.x;
+						vtx_dst[0].position.y = line.pos0.y;
+						vtx_dst[0].position.z = line.pos0.z;
+						vtx_dst[0].color.r = line.color0 % 256;
+						vtx_dst[0].color.g = (line.color0 / 256) % 256;
+						vtx_dst[0].color.b = (line.color0 / 65536) % 256;
+						vtx_dst[1].position.x = line.pos1.x;
+						vtx_dst[1].position.y = line.pos1.y;
+						vtx_dst[1].position.z = line.pos1.z;
+						vtx_dst[1].color.r = line.color1 % 256;
+						vtx_dst[1].color.g = (line.color1 / 256) % 256;
+						vtx_dst[1].color.b = (line.color1 / 65536) % 256;
+						vtx_dst += 2;
+					}
+					tke::stagingBuffer->unmap();
+
+					tke::commandPool->copyBuffer(tke::stagingBuffer->v, physxBuffer->v, vertexSize);
+				}
+				cb_physx->bindVertexBuffer(physxBuffer);
+				cb_physx->bindPipeline(tke::plainPipeline_3d_line);
+
+				glm::mat4 mvp = tke::matPerspective * scene->camera.getMatInv();
+				cb_physx->pushConstant(tke::StageType::vert, 0, sizeof(glm::mat4), &mvp);
+				cb_physx->draw(lineCount * 2);
+			}
+
+			//glNamedBufferSubData(tke_dynamicVertexVBO, 0, sizeof(GLfloat) * 12 * lineCount, tke_dynamicVertexBuffer);
+			//glBindVertexArray(tke3_dynamicVertexVAO);
+			//glDrawArrays(GL_LINES, 0, lineCount * 2);
+
+			//auto triangleCount = rb.getNbTriangles();
+			//for (int i = 0; i < triangleCount; i++)
+			//{
+			//	auto &triangle = rb.getTriangles()[i];
+			//	tke_dynamicVertexBuffer[i * 18 + 0] = triangle.pos0.x;
+			//	tke_dynamicVertexBuffer[i * 18 + 1] = triangle.pos0.y;
+			//	tke_dynamicVertexBuffer[i * 18 + 2] = triangle.pos0.z;
+			//	tke_dynamicVertexBuffer[i * 18 + 3] = triangle.color0 % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 4] = (triangle.color0 / 256) % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 5] = (triangle.color0 / 65536) % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 6] = triangle.pos1.x;
+			//	tke_dynamicVertexBuffer[i * 18 + 7] = triangle.pos1.y;
+			//	tke_dynamicVertexBuffer[i * 18 + 8] = triangle.pos1.z;
+			//	tke_dynamicVertexBuffer[i * 18 + 9] = triangle.color1 % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 10] = (triangle.color1 / 256) % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 11] = (triangle.color1 / 65536) % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 12] = triangle.pos2.x;
+			//	tke_dynamicVertexBuffer[i * 18 + 13] = triangle.pos2.y;
+			//	tke_dynamicVertexBuffer[i * 18 + 14] = triangle.pos2.z;
+			//	tke_dynamicVertexBuffer[i * 18 + 15] = triangle.color2 % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 16] = (triangle.color2 / 256) % 256;
+			//	tke_dynamicVertexBuffer[i * 18 + 17] = (triangle.color2 / 65536) % 256;
+			//}
+			//glNamedBufferSubData(tke_dynamicVertexVBO, 0, sizeof(GLfloat) * 18 * triangleCount, tke_dynamicVertexBuffer);
+			//glBindVertexArray(tke3_dynamicVertexVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, triangleCount * 3);
+
+			cb_physx->endRenderPass();
+		}
+
+		cb_physx->resetEvent(scene_renderFinished);
+		cb_physx->setEvent(physx_renderFinished);
+
+		cb_physx->end();
+	}
 
 	{ // draw wireframe
 		static tke::Object *last_obj = nullptr;
@@ -152,7 +285,7 @@ void MonitorWidget::show()
 		cb_wireframe->reset();
 		cb_wireframe->begin();
 
-		cb_wireframe->waitEvents(1, &scene_renderFinished);
+		cb_wireframe->waitEvents(1, &physx_renderFinished);
 
 		auto obj = selectedItem.toObject();
 		if (obj)
@@ -163,7 +296,7 @@ void MonitorWidget::show()
 			if (last_obj != obj && animated)
 				ds_wireframe->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
 
-			cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_wireframe);
+			cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_image);
 			cb_wireframe->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
 			cb_wireframe->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
 			cb_wireframe->bindPipeline(animated ? tke::plainPipeline_3d_anim_wire : tke::plainPipeline_3d_wire);
@@ -186,7 +319,7 @@ void MonitorWidget::show()
 		}
 		last_obj = obj;
 
-		cb_wireframe->resetEvent(scene_renderFinished);
+		cb_wireframe->resetEvent(physx_renderFinished);
 		cb_wireframe->setEvent(wireframe_renderFinished);
 
 		cb_wireframe->end();

@@ -14,13 +14,18 @@ struct MonitorWidget
 
 	tke::Image *image;
 	tke::Framebuffer *fb_scene;
-	tke::Framebuffer *fb_wireframe;
+	tke::Framebuffer *fb_image;
 	tke::Framebuffer *fb_tool;
 
+	tke::VertexBuffer *physxBuffer = nullptr;
+
 	tke::CommandBuffer *cb;
+	tke::CommandBuffer *cb_physx;
 	tke::CommandBuffer *cb_wireframe;
 	tke::DescriptorSet *ds_wireframe;
+
 	VkEvent scene_renderFinished;
+	VkEvent physx_renderFinished;
 	VkEvent wireframe_renderFinished;
 	VkEvent renderFinished;
 

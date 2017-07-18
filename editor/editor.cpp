@@ -243,6 +243,7 @@ void EditorWindow::renderEvent()
 		else
 		{
 			cbs.push_back(monitorWidget->cb->v);
+			cbs.push_back(monitorWidget->cb_physx->v);
 			cbs.push_back(monitorWidget->cb_wireframe->v);
 			cbs.push_back(monitorWidget->transformerTool->cb->v);
 			ui->waitEvent = monitorWidget->renderFinished;

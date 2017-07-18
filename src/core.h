@@ -21,6 +21,31 @@ namespace tke
 	extern glm::mat4 matPerspective;
 	extern glm::mat4 matPerspectiveInv;
 
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+	};
+
+	struct AnimatedVertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+
+		glm::vec4 boneWeight;
+		glm::vec4 boneID;
+	};
+
+	struct LineVertex
+	{
+		glm::vec3 position;
+		glm::vec3 color;
+	};
+
 	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
 	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
@@ -79,6 +104,7 @@ namespace tke
 	extern Pipeline *plainPipeline_3d_normal_depth;
 	extern Pipeline *plainPipeline_3d_wire;
 	extern Pipeline *plainPipeline_3d_anim_wire;
+	extern Pipeline *plainPipeline_3d_line;
 	extern int plain3d_bone_pos;
 
 	struct GuiComponent;

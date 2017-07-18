@@ -2662,6 +2662,7 @@ namespace tke
 		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 		pxScene = pxPhysics->createScene(pxSceneDesc);
+
 		pxControllerManager = PxCreateControllerManager(*pxScene);
 	}
 
