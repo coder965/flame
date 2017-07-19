@@ -842,7 +842,7 @@ namespace tke
 		boneData = new BoneData[model->bones.size()];
 		boneMatrix = new glm::mat4[model->bones.size()];
 		boneMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * model->bones.size());
-		boneMatrixBuffer->update(boneMatrix, *stagingBuffer, sizeof(glm::mat4) * model->bones.size());
+		boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
 	}
 
 	AnimationComponent::~AnimationComponent()
@@ -884,7 +884,7 @@ namespace tke
 				boneData[i].rotation = glm::mat3();
 				boneMatrix[i] = glm::mat4();
 			}
-			boneMatrixBuffer->update(boneMatrix, *stagingBuffer, sizeof(glm::mat4) * model->bones.size());
+			boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
 		}
 		currentAnimation = animation;
 		currentFrame = 0;
@@ -991,7 +991,7 @@ namespace tke
 		for (int i = 0; i < model->bones.size(); i++)
 			boneMatrix[i] *= glm::translate(-model->bones[i].rootCoord);
 
-		boneMatrixBuffer->update(boneMatrix, *stagingBuffer, sizeof(glm::mat4) * model->bones.size());
+		boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
 	}
 
 	void addTriangleVertex(Model *m, glm::mat3 rotation, glm::vec3 center)
@@ -2987,25 +2987,27 @@ namespace tke
 		{
 			auto m = t->heightMap;
 
-			auto numVerts = m->cx * m->cy;
+			auto scx = m->cx * 1;
+			auto scy = m->cy * 1;
+			auto numVerts = scx * scy;
 
 			auto samples = new physx::PxHeightFieldSample[numVerts];
 			memset(samples, 0, numVerts * sizeof(physx::PxHeightFieldSample));
 
-			for (int y = 0; y < m->cy; y++)
+			for (int y = 0; y < scy; y++)
 			{
-				for (int x = 0; x < m->cx; x++)
-					samples[x + y * m->cx].height = m->data[x * m->bytePerPixel + y * m->pitch];
+				for (int x = 0; x < scx; x++)
+					samples[y + x * scx].height = m->getR((x) - 0.5, (y) - 0.5);
 			}
 
 			physx::PxHeightFieldDesc hfDesc;
 			hfDesc.format = physx::PxHeightFieldFormat::eS16_TM;
-			hfDesc.nbRows = m->cx;
-			hfDesc.nbColumns = m->cy;
+			hfDesc.nbRows = scx;
+			hfDesc.nbColumns = scy;
 			hfDesc.samples.data = samples;
 			hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
 
-			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->ext * TKE_PATCH_SIZE / m->cx, t->ext * TKE_PATCH_SIZE / m->cy);
+			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->ext * TKE_PATCH_SIZE / scx, t->ext * TKE_PATCH_SIZE / scy);
 			t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
 			t->actor->createShape(hfGeom, *pxDefaultMaterial);
 
@@ -3194,7 +3196,7 @@ namespace tke
 				auto pos = camera.getCoord();
 				auto seed = glm::vec2(pos.x - 500.f, pos.z - 500.f);
 				seed /= 1000.f;
-				proceduralTerrainBuffer->update(&seed, *stagingBuffer);
+				proceduralTerrainBuffer->update(&seed, stagingBuffer);
 			}
 		}
 		{ // always update the matrix buffer
@@ -3207,14 +3209,14 @@ namespace tke
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, camera.frustumPlanes, sizeof(glm::vec4) * 6);
 			stru.viewportDim = glm::vec2(resCx, resCy);
-			matrixBuffer->update(&stru, *stagingBuffer);
+			matrixBuffer->update(&stru, stagingBuffer);
 		}
 		if (needUpdateSky)
 		{
 			AmbientBufferShaderStruct stru;
 			stru.v = glm::vec4(ambientColor, 0);
 			stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-			ambientBuffer->update(&stru, *stagingBuffer);
+			ambientBuffer->update(&stru, stagingBuffer);
 
 			switch (skyType)
 			{
@@ -3304,7 +3306,7 @@ namespace tke
 							AmbientBufferShaderStruct stru;
 							stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
 							stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-							ambientBuffer->update(&stru, *stagingBuffer);
+							ambientBuffer->update(&stru, stagingBuffer);
 						}
 					}
 				}
@@ -3387,7 +3389,7 @@ namespace tke
 				stru.tessFactor = terrain->tessFactor;
 				stru.mapDim = terrain->heightMap ? terrain->heightMap->cx : 1024;
 
-				heightMapTerrainBuffer->update(&stru, *stagingBuffer);
+				heightMapTerrainBuffer->update(&stru, stagingBuffer);
 
 				if (heightMapTerr_heightMap_position != -1 && terrain->heightMap)
 					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
@@ -3449,8 +3451,8 @@ namespace tke
 				staticIndirectCount = staticCommands.size();
 				animatedIndirectCount = animatedCommands.size();
 
-				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
-				if (animatedCommands.size() > 0) animatedObjectIndirectBuffer->update(animatedCommands.data(), *stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
+				if (staticCommands.size() > 0) staticObjectIndirectBuffer->update(staticCommands.data(), stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
+				if (animatedCommands.size() > 0) animatedObjectIndirectBuffer->update(animatedCommands.data(), stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 			}
 			needUpdateIndirectBuffer = false;
 		}
@@ -3542,7 +3544,7 @@ namespace tke
 		if (lightCountChanged)
 		{ // light count in light attribute
 			auto count = lights.size();
-			lightBuffer->update(&count, *stagingBuffer, 4);
+			lightBuffer->update(&count, stagingBuffer, 4);
 			lightCountChanged = false;
 		}
 

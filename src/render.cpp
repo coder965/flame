@@ -152,7 +152,18 @@ namespace tke
 		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
 	}
 
+	void CommandBuffer::bindVertexBuffer(OnceVertexBuffer *b)
+	{
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
+	}
+
 	void CommandBuffer::bindIndexBuffer(IndexBuffer *b)
+	{
+		vkCmdBindIndexBuffer(v, b->v, 0, VK_INDEX_TYPE_UINT32);
+	}
+
+	void CommandBuffer::bindIndexBuffer(OnceIndexBuffer *b)
 	{
 		vkCmdBindIndexBuffer(v, b->v, 0, VK_INDEX_TYPE_UINT32);
 	}
@@ -269,13 +280,13 @@ namespace tke
 		endOnce(cb);
 	}
 
-	void CommandPool::updateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &Buffer)
+	void CommandPool::updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &Buffer)
 	{
-		void* map = stagingBuffer.map(0, size);
+		void* map = stagingBuffer->map(0, size);
 		memcpy(map, data, size);
-		stagingBuffer.unmap();
+		stagingBuffer->unmap();
 
-		copyBuffer(stagingBuffer.v, Buffer, size);
+		copyBuffer(stagingBuffer->v, Buffer, size);
 	}
 
 	void CommandPool::copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
@@ -863,7 +874,7 @@ namespace tke
 			info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			info.anisotropyEnable = VK_TRUE;
 			info.maxAnisotropy = 16;
-			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			info.unnormalizedCoordinates = VK_FALSE;
 			info.compareEnable = VK_FALSE;
 			info.compareOp = VK_COMPARE_OP_ALWAYS;
@@ -923,6 +934,16 @@ namespace tke
 		device.mtx.unlock();
 	}
 
+	static void buffer_copy(Buffer *p, void *data)
+	{
+		StagingBuffer stagingBuffer(p->size);
+
+		void* map = stagingBuffer.map(0, p->size);
+		memcpy(map, data, p->size);
+		stagingBuffer.unmap();
+		commandPool->copyBuffer(stagingBuffer.v, p->v, p->size);
+	}
+
 	static void buffer_destroy(Buffer *p)
 	{
 		device.mtx.lock();
@@ -945,19 +966,22 @@ namespace tke
 		buffer_destroy(this);
 	}
 
-	void Buffer::recreate(size_t _size)
+	void Buffer::recreate(size_t _size, void *data)
 	{
 		buffer_destroy(this);
 		size = _size;
 		buffer_create(this);
+		if (data)
+			buffer_copy(this, data);
 	}
 
-	StagingBuffer::StagingBuffer(size_t _size)
-		:Buffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	void Buffer::update(void *data, StagingBuffer *stagingBuffer, size_t _size)
 	{
+		if (_size == 0) _size = size;
+		commandPool->updateBuffer(data, _size, stagingBuffer, v);
 	}
 
-	void *StagingBuffer::map(size_t offset, size_t _size)
+	void *Buffer::map(size_t offset, size_t _size)
 	{
 		void *map;
 		device.mtx.lock();
@@ -967,70 +991,58 @@ namespace tke
 		return map;
 	}
 
-	void StagingBuffer::unmap()
+	void Buffer::unmap()
 	{
 		device.mtx.lock();
 		vkUnmapMemory(device.v, memory);
 		device.mtx.unlock();
 	}
 
-	static void buffer_copy(NonStagingBufferAbstract *p, void *data)
-	{
-		StagingBuffer stagingBuffer(p->size);
-
-		void* map = stagingBuffer.map(0, p->size);
-		memcpy(map, data, p->size);
-		stagingBuffer.unmap();
-		commandPool->copyBuffer(stagingBuffer.v, p->v, p->size);
-	}
-
-	NonStagingBufferAbstract::NonStagingBufferAbstract(size_t _size, VkBufferUsageFlags usage, void *data)
-		:Buffer(_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-	{
-		if (data)
-			buffer_copy(this, data);
-	}
-
-	void NonStagingBufferAbstract::recreate(size_t _size, void *data)
-	{
-		Buffer::recreate(_size);
-		if (data)
-			buffer_copy(this, data);
-	}
-
-	void NonStagingBufferAbstract::update(void *data, StagingBuffer &stagingBuffer, size_t _size)
-	{
-		if (_size == 0) _size = size;
-		commandPool->updateBuffer(data, _size, stagingBuffer, v);
-	}
-
-	ShaderManipulatableBufferAbstract::ShaderManipulatableBufferAbstract(size_t _size, VkBufferUsageFlags usage)
-		:NonStagingBufferAbstract(_size, usage)
+	StagingBuffer::StagingBuffer(size_t _size)
+		:Buffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT/*dst usage for pick up*/, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 	{
 	}
 
 	UniformBuffer::UniformBuffer(size_t _size)
-		:ShaderManipulatableBufferAbstract(_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+		:Buffer(_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
 	}
 
 	VertexBuffer::VertexBuffer(size_t _size, void *data)
-		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data)
+		: Buffer(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
+		if (data)
+			buffer_copy(this, data);
 	}
 
 	IndexBuffer::IndexBuffer(size_t _size, void *data)
-		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data)
+		: Buffer(_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
+		if (data)
+			buffer_copy(this, data);
+	}
+
+	OnceVertexBuffer::OnceVertexBuffer(size_t _size, void *data)
+		: Buffer(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	{
+		if (data)
+			buffer_copy(this, data);
+	}
+
+	OnceIndexBuffer::OnceIndexBuffer(size_t _size, void *data)
+		: Buffer(_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	{
+		if (data)
+			buffer_copy(this, data);
 	}
 
 	IndirectVertexBuffer::IndirectVertexBuffer(size_t _size)
-		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+		: Buffer(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
 	}
 
 	IndirectIndexBuffer::IndirectIndexBuffer(size_t _size)
-		:NonStagingBufferAbstract(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+		: Buffer(_size, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
 	}
 
@@ -1258,6 +1270,21 @@ namespace tke
 			h >>= 1;
 		}
 		return h;
+	}
+
+	unsigned char Image::getR(float _x, float _y)
+	{
+		if (!data || _x < 0.f || _y < 0.f || _x >= cx || _y >= cy)
+			return 0;
+
+		auto x = glm::fract(_x);
+		int X = glm::floor(_x);
+		auto y = glm::fract(_y);
+		int Y = glm::floor(_y);
+
+#define gd(a, b) (float)data[(a) * bytePerPixel + (b) * pitch]
+		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
+#undef gd
 	}
 
 	static VkBlendFactor _vkBlendFactor(BlendFactor f) 

@@ -17,7 +17,7 @@ struct MonitorWidget
 	tke::Framebuffer *fb_image;
 	tke::Framebuffer *fb_tool;
 
-	tke::VertexBuffer *physxBuffer = nullptr;
+	tke::OnceVertexBuffer *physxBuffer = nullptr;
 
 	tke::CommandBuffer *cb;
 	tke::CommandBuffer *cb_physx;

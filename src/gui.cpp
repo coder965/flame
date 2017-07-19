@@ -411,34 +411,27 @@ namespace tke
 			return;
 		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-		static VertexBuffer	*vertexBuffer = nullptr;
+		static OnceVertexBuffer	*vertexBuffer = nullptr;
 		size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 		if (!vertexBuffer || vertexBuffer->size < vertex_size)
 		{
 			if (vertexBuffer) delete vertexBuffer;
-			vertexBuffer = new VertexBuffer(vertex_size);
+			vertexBuffer = new OnceVertexBuffer(vertex_size);
 		}
 
-		static IndexBuffer *indexBuffer = nullptr;
+		static OnceIndexBuffer *indexBuffer = nullptr;
 		size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 		if (!indexBuffer || indexBuffer->size < index_size)
 		{
 			if (indexBuffer) delete indexBuffer;
-			indexBuffer = new IndexBuffer(index_size);
-		}
-
-		static StagingBuffer *stagingBuffer = nullptr;
-		auto totalSize = vertex_size + index_size;
-		if (!stagingBuffer || stagingBuffer->size < totalSize)
-		{
-			if (stagingBuffer) delete stagingBuffer;
-			stagingBuffer = new StagingBuffer(totalSize);
+			indexBuffer = new OnceIndexBuffer(index_size);
 		}
 
 		{
-			auto map = stagingBuffer->map(0, totalSize);
-			auto vtx_dst = (ImDrawVert*)map;
-			auto idx_dst = (ImDrawIdx*)((char*)map + vertex_size);
+			auto vtx_map = vertexBuffer->map(0, vertex_size);
+			auto idx_map = indexBuffer->map(0, index_size);
+			auto vtx_dst = (ImDrawVert*)vtx_map;
+			auto idx_dst = (ImDrawIdx*)idx_map;
 			for (int n = 0; n < draw_data->CmdListsCount; n++)
 			{
 				const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -447,10 +440,8 @@ namespace tke
 				vtx_dst += cmd_list->VtxBuffer.Size;
 				idx_dst += cmd_list->IdxBuffer.Size;
 			}
-			stagingBuffer->unmap();
-
-			commandPool->copyBuffer(stagingBuffer->v, vertexBuffer->v, vertex_size, 0, 0);
-			commandPool->copyBuffer(stagingBuffer->v, indexBuffer->v, index_size, vertex_size, 0);
+			vertexBuffer->unmap();
+			indexBuffer->unmap();
 		}
 
 		auto cb = current_window->ui->cb;
@@ -539,7 +530,7 @@ namespace tke
 			ImFontConfig icons_config; 
 			icons_config.MergeMode = true; 
 			icons_config.PixelSnapH = true;
-			io.Fonts->AddFontFromFileTTF("fontawesome-webfont.ttf", 16.0f, &icons_config, icons_ranges);
+			io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/fontawesome-webfont.ttf", 16.0f, &icons_config, icons_ranges);
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, pixels, width * height * 4);

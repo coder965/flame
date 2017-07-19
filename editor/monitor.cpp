@@ -204,11 +204,11 @@ void MonitorWidget::show()
 				if (!physxBuffer || physxBuffer->size < vertexSize)
 				{
 					if (physxBuffer) delete physxBuffer;
-					physxBuffer = new tke::VertexBuffer(vertexSize);
+					physxBuffer = new tke::OnceVertexBuffer(vertexSize);
 				}
 
 				{
-					auto map = tke::stagingBuffer->map(0, vertexSize);
+					auto map = physxBuffer->map(0, vertexSize);
 					auto vtx_dst = (tke::LineVertex*)map;
 					for (int i = 0; i < lineCount; i++)
 					{
@@ -227,9 +227,7 @@ void MonitorWidget::show()
 						vtx_dst[1].color.b = (line.color1 / 65536) % 256;
 						vtx_dst += 2;
 					}
-					tke::stagingBuffer->unmap();
-
-					tke::commandPool->copyBuffer(tke::stagingBuffer->v, physxBuffer->v, vertexSize);
+					physxBuffer->unmap();
 				}
 				cb_physx->bindVertexBuffer(physxBuffer);
 				cb_physx->bindPipeline(tke::plainPipeline_3d_line);

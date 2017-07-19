@@ -559,7 +559,7 @@ namespace tke
 #endif
 		);
 
-		stagingBuffer = new StagingBuffer(20000000);
+		stagingBuffer = new StagingBuffer(65536);
 
 		{
 			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
@@ -719,7 +719,7 @@ namespace tke
 			stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
 			stru.envrCx = TKE_ENVR_SIZE_CX;
 			stru.envrCy = TKE_ENVR_SIZE_CY;
-			constantBuffer->update(&stru, *stagingBuffer);
+			constantBuffer->update(&stru, stagingBuffer);
 		}
 
 		initScene();
@@ -829,7 +829,7 @@ namespace tke
 				if (needUpdateMaterialBuffer)
 				{
 					if (modelMaterials.size() > 0)
-						materialBuffer->update(modelMaterials.data(), *stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
+						materialBuffer->update(modelMaterials.data(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
 					needUpdateMaterialBuffer = false;
 				}
 

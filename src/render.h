@@ -24,6 +24,8 @@ namespace tke
 		REFLe frag = 1 << 4
 	};
 
+	struct Buffer;
+	struct StagingBuffer;
 	struct VertexBuffer;
 	struct IndexBuffer;
 	struct IndirectVertexBuffer;
@@ -77,49 +79,48 @@ namespace tke
 
 		Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		~Buffer();
-		void recreate(size_t _size);
+		void recreate(size_t _size, void *data = nullptr);
+		void update(void *data, StagingBuffer *stagingBuffer, size_t size = 0);
+		void *map(size_t offset, size_t _size);
+		void unmap();
 	};
 
 	struct StagingBuffer : Buffer
 	{
 		StagingBuffer(size_t _size);
-		void *map(size_t offset, size_t _size);
-		void unmap();
 	};
 
-	struct NonStagingBufferAbstract : Buffer
-	{
-		NonStagingBufferAbstract(size_t _size, VkBufferUsageFlags usage, void *data = nullptr);
-		void recreate(size_t size, void *data = nullptr);
-		void update(void *data, StagingBuffer &stagingBuffer, size_t size = 0);
-	};
-
-	struct ShaderManipulatableBufferAbstract : NonStagingBufferAbstract
-	{
-		ShaderManipulatableBufferAbstract(size_t _size, VkBufferUsageFlags usage);
-	};
-
-	struct UniformBuffer : ShaderManipulatableBufferAbstract
+	struct UniformBuffer : Buffer
 	{
 		UniformBuffer(size_t _size);
 	};
 
-	struct VertexBuffer : NonStagingBufferAbstract
+	struct VertexBuffer : Buffer
 	{
 		VertexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
-	struct IndexBuffer : NonStagingBufferAbstract
+	struct IndexBuffer : Buffer
 	{
 		IndexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
-	struct IndirectVertexBuffer : NonStagingBufferAbstract
+	struct OnceVertexBuffer : Buffer // data use once per frame
+	{
+		OnceVertexBuffer(size_t _size = 16, void *data = nullptr);
+	};
+
+	struct OnceIndexBuffer : Buffer // data use once per frame
+	{
+		OnceIndexBuffer(size_t _size = 16, void *data = nullptr);
+	};
+
+	struct IndirectVertexBuffer : Buffer
 	{
 		IndirectVertexBuffer(size_t _size = sizeof VkDrawIndirectCommand);
 	};
 
-	struct IndirectIndexBuffer : NonStagingBufferAbstract
+	struct IndirectIndexBuffer : Buffer
 	{
 		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
@@ -193,6 +194,7 @@ namespace tke
 		~Image();
 		int getWidth(int _level = 0) const;
 		int getHeight(int _level = 0) const;
+		unsigned char getR(float x, float y);
 		void transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout);
 		void fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect);
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
@@ -219,7 +221,9 @@ namespace tke
 		void setViewportAndScissor(int cx, int cy);
 		void setScissor(int x, int y, int cx, int cy);
 		void bindVertexBuffer(VertexBuffer *b);
+		void bindVertexBuffer(OnceVertexBuffer *b);
 		void bindIndexBuffer(IndexBuffer *b);
+		void bindIndexBuffer(OnceIndexBuffer *b);
 		void bindPipeline(Pipeline *p);
 		void bindDescriptorSet();
 		void bindDescriptorSet(VkDescriptorSet set);
@@ -244,7 +248,7 @@ namespace tke
 		void endOnce(CommandBuffer *cb);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
-		void updateBuffer(void *data, size_t size, StagingBuffer &stagingBuffer, VkBuffer &uniformBuffer);
+		void updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &uniformBuffer);
 		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 	};
 	extern CommandPool *commandPool;
