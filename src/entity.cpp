@@ -2605,9 +2605,14 @@ namespace tke
 		delete animationComponent;
 	}
 
-	Terrain::Terrain(TerrainType _type, bool _use_physx)
-		:type(_type), use_physx(_use_physx)
-	{}
+	Terrain::Terrain() {}
+
+	Terrain::Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap)
+		:type(_type), use_physx(_use_physx), heightMap(_heightMap), colorMap(_colorMap)
+	{
+		height_map_filename = heightMap->filename;
+		color_map_filename = colorMap->filename;
+	}
 
 	static const float gravity = 9.81f;
 
@@ -2981,33 +2986,37 @@ namespace tke
 
 	void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
+		if (!t->heightMap || !t->colorMap)
+		{
+			delete t;
+			return;
+		}
+
 		mtx.lock();
 
 		if (t->use_physx)
 		{
 			auto m = t->heightMap;
 
-			auto scx = m->cx * 1;
-			auto scy = m->cy * 1;
-			auto numVerts = scx * scy;
+			auto numVerts = m->cx * m->cy;
 
 			auto samples = new physx::PxHeightFieldSample[numVerts];
 			memset(samples, 0, numVerts * sizeof(physx::PxHeightFieldSample));
 
-			for (int y = 0; y < scy; y++)
+			for (int y = 0; y < m->cy; y++)
 			{
-				for (int x = 0; x < scx; x++)
-					samples[y + x * scx].height = m->getR((x) - 0.5, (y) - 0.5);
+				for (int x = 0; x < m->cx; x++)
+					samples[y + x * m->cx].height = m->getR(x - 0.5, y - 0.5);
 			}
 
 			physx::PxHeightFieldDesc hfDesc;
 			hfDesc.format = physx::PxHeightFieldFormat::eS16_TM;
-			hfDesc.nbRows = scx;
-			hfDesc.nbColumns = scy;
+			hfDesc.nbRows = m->cx;
+			hfDesc.nbColumns = m->cy;
 			hfDesc.samples.data = samples;
 			hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
 
-			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->ext * TKE_PATCH_SIZE / scx, t->ext * TKE_PATCH_SIZE / scy);
+			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->ext * TKE_PATCH_SIZE / m->cx, t->ext * TKE_PATCH_SIZE / m->cy);
 			t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
 			t->actor->createShape(hfGeom, *pxDefaultMaterial);
 
@@ -3624,25 +3633,30 @@ namespace tke
 		{
 			if (c->name == "object")
 			{
-				auto object = new tke::Object;
-				c->obtainFromAttributes(object, object->b);
-				for (auto m : models)
-				{
-					if (m->name == object->model_name)
-					{
-						object->model = m;
-						break;
-					}
-				}
-				object->needUpdateAxis = true;
-				object->needUpdateQuat = true;
-				object->needUpdateMat = true;
-				object->changed = true;
-				addObject(object);
+				auto o = new Object;
+				c->obtainFromAttributes(o, o->b);
+				o->model = getModel(o->model_name);
+				o->needUpdateAxis = true;
+				o->needUpdateQuat = true;
+				o->needUpdateMat = true;
+				o->changed = true;
+				addObject(o);
 			}
 			else if (c->name == "light")
 			{
 				;
+			}
+			else if (c->name == "terrain")
+			{
+				auto t = new Terrain;
+				c->obtainFromAttributes(t, t->b);
+				t->heightMap = getTexture(t->height_map_filename);
+				t->colorMap = getTexture(t->color_map_filename);
+				t->needUpdateAxis = true;
+				t->needUpdateQuat = true;
+				t->needUpdateMat = true;
+				t->changed = true;
+				addTerrain(t);
 			}
 		}
 	}
@@ -3651,17 +3665,22 @@ namespace tke
 	{
 		tke::AttributeTree at("scene");
 		at.addAttributes(this, b);
-		for (auto object : objects)
+		for (auto o : objects)
 		{
 			auto n = new AttributeTreeNode("object");
-			object->getCoord();
-			object->getEuler();
-			object->getScale();
-			n->addAttributes(object, object->b);
+			o->getCoord();
+			o->getEuler();
+			o->getScale();
+			n->addAttributes(o, o->b);
 			at.children.push_back(n);
 		}
+		if (terrain)
 		{
 			auto n = new AttributeTreeNode("terrain");
+			terrain->getCoord();
+			terrain->getEuler();
+			terrain->getScale();
+			n->addAttributes(terrain, terrain->b);
 			at.children.push_back(n);
 		}
 		at.saveXML(filename);

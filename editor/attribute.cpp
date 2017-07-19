@@ -4,79 +4,6 @@
 #include "select.h"
 #include "attribute.h"
 
-void ObjectCreationSetting::load_setting(tke::AttributeTreeNode *n)
-{
-	for (auto a : n->attributes)
-	{
-		if (a->name == "modelIndex")
-			a->get(&modelIndex);
-		else if (a->name == "use_camera_position")
-			a->get(&use_camera_position);
-		else if (a->name == "use_camera_target_position")
-			a->get(&use_camera_target_position);
-		else if (a->name == "coord")
-			a->get(&coord);
-		else if (a->name == "randCX")
-			a->get(&randC[0]);
-		else if (a->name == "randCY")
-			a->get(&randC[1]);
-		else if (a->name == "randCZ")
-			a->get(&randC[2]);
-		else if (a->name == "coordRandRange")
-			a->get(&coordRandRange);
-		else if (a->name == "euler")
-			a->get(&euler);
-		else if (a->name == "randRX")
-			a->get(&randR[0]);
-		else if (a->name == "randRY")
-			a->get(&randR[1]);
-		else if (a->name == "randRZ")
-			a->get(&randR[2]);
-		else if (a->name == "eulerRandRange")
-			a->get(&eulerRandRange);
-		else if (a->name == "scale")
-			a->get(&scale);
-		else if (a->name == "randSX")
-			a->get(&randS[0]);
-		else if (a->name == "randSY")
-			a->get(&randS[1]);
-		else if (a->name == "randSZ")
-			a->get(&randS[2]);
-		else if (a->name == "scaleRandRange")
-			a->get(&scaleRandRange);
-		else if (a->name == "same_scale_rand")
-			a->get(&same_scale_rand);
-		else if (a->name == "physxType")
-			a->get(&physxType);
-	}
-}
-
-void ObjectCreationSetting::save_setting(tke::AttributeTreeNode *n)
-{
-	n->addAttribute("modelIndex", &modelIndex);
-	n->addAttribute("use_camera_position", &use_camera_position);
-	n->addAttribute("use_camera_target_position", &use_camera_target_position);
-	n->addAttribute("coord", &coord);
-	n->addAttribute("randCX", &randC[0]);
-	n->addAttribute("randCY", &randC[1]);
-	n->addAttribute("randCZ", &randC[2]);
-	n->addAttribute("coordRandRange", &coordRandRange);
-	n->addAttribute("euler", &euler);
-	n->addAttribute("randRX", &randR[0]);
-	n->addAttribute("randRY", &randR[1]);
-	n->addAttribute("randRZ", &randR[2]);
-	n->addAttribute("eulerRandRange", &eulerRandRange);
-	n->addAttribute("scale", &scale);
-	n->addAttribute("randSX", &randS[0]);
-	n->addAttribute("randSY", &randS[1]);
-	n->addAttribute("randSZ", &randS[2]);
-	n->addAttribute("scaleRandRange", &scaleRandRange);
-	n->addAttribute("same_scale_rand", &same_scale_rand);
-	n->addAttribute("physxType", &physxType);
-}
-
-ObjectCreationSetting ocs;
-
 static void _show_scene(tke::Scene *scene)
 {
 	if (ImGui::TreeNode("Sky"))
@@ -219,39 +146,37 @@ static void _show_scene(tke::Scene *scene)
 		}
 		else
 		{
-			static int height_map_index = 0;
-			static int color_map_index = 0;
+			if (tcs.heightMapIndex >= tke::textures.size())
+				tcs.heightMapIndex = 0;
+			if (tcs.colorMapIndex >= tke::textures.size())
+				tcs.colorMapIndex = 0;
 			if (tke::textures.size() > 0)
 			{
-				if (ImGui::Combo("Height Map", &height_map_index, [](void *data, int idx, const char **out_text) {
+				if (ImGui::Combo("Height Map", &tcs.heightMapIndex, [](void *data, int idx, const char **out_text) {
 					*out_text = tke::textures[idx]->filename.c_str();
 					return true;
 				}, nullptr, tke::textures.size()));
-				if (ImGui::Combo("Color Map", &color_map_index, [](void *data, int idx, const char **out_text) {
+				if (ImGui::Combo("Color Map", &tcs.colorMapIndex, [](void *data, int idx, const char **out_text) {
 					*out_text = tke::textures[idx]->filename.c_str();
 					return true;
 				}, nullptr, tke::textures.size()));
 			}
-			static float height = 100.f;
-			ImGui::DragFloat("Height", &height);
-			static bool use_physx = false;
-			ImGui::Checkbox("Use Physx", &use_physx);
+			ImGui::DragFloat("Height", &tcs.height);
+			ImGui::Checkbox("Use Physx", &tcs.usePhysx);
 			if (tke::textures.size() > 0)
 			{
 				if (ImGui::Button("Create Height Map Terrain"))
 				{
-					auto t = new tke::Terrain(tke::TerrainType::height_map, use_physx);
-					t->heightMap = tke::textures[height_map_index];
-					t->colorMap = tke::textures[color_map_index];
-					t->height = height;
+					auto t = new tke::Terrain(tke::TerrainType::height_map, tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMapIndex]);
+					t->height = tcs.height;
 					scene->addTerrain(t);
 				}
 			}
 			ImGui::Separator();
 			if (ImGui::Button("Create Procedural Terrain"))
 			{
-				auto t = new tke::Terrain(tke::TerrainType::procedural, use_physx);
-				scene->addTerrain(t);
+				//auto t = new tke::Terrain(tke::TerrainType::procedural, tcs.usePhysx);
+				//scene->addTerrain(t);
 			}
 		}
 

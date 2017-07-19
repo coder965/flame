@@ -521,8 +521,11 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLe TerrainType type;
+		REFLe TerrainType type = TerrainType::height_map;
 		REFLv bool use_physx = false;
+
+		REFLv std::string height_map_filename;
+		REFLv std::string color_map_filename;
 
 		float ext = 10.f;
 		float height = 100.f;
@@ -535,7 +538,8 @@ namespace tke
 
 		physx::PxRigidActor *actor = nullptr;
 
-		Terrain(TerrainType _type, bool _use_physx);
+		Terrain();
+		Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap);
 	};
 
 	enum class SkyType

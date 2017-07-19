@@ -147,7 +147,13 @@ void MonitorWidget::show()
 		}
 	}
 
+	bool target = false;
 	if (ImGui::Button("Target To Selected"))
+		target = true;
+	ImGui::SameLine();
+	static bool follow = false;
+	ImGui::Checkbox("Follow", &follow);
+	if (target || follow)
 	{
 		if (selectedItem)
 		{

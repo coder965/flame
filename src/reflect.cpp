@@ -127,6 +127,8 @@ currentBank = Terrain::b;
 currentBank->parents.push_back(Transformer::b);
 currentBank->addE("TerrainType", "type", offsetof(Terrain, type));
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
+currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
+currentBank->addV<std::string>("color_map_filename", offsetof(Terrain, color_map_filename));
 currentBank = Scene::b;
 currentBank->addV<std::string>("name", offsetof(Scene, name));
 }};static ReflectInit init;

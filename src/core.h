@@ -59,6 +59,15 @@ namespace tke
 	extern bool needUpdateTexture;
 
 	extern std::vector<Image*> textures;
+	inline Image *getTexture(const std::string &filename)
+	{
+		for (auto i : textures)
+		{
+			if (i->filename == filename)
+				return i;
+		}
+		return nullptr;
+	}
 
 	struct MaterialShaderStruct
 	{

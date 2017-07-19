@@ -45,8 +45,21 @@ struct ObjectCreationSetting
 	bool same_scale_rand = false;
 	int physxType = 0;
 
-	void load_setting(tke::AttributeTreeNode *n);
-	void save_setting(tke::AttributeTreeNode *n);
+	void load(tke::AttributeTreeNode *n);
+	void save(tke::AttributeTreeNode *n);
 };
 
 extern ObjectCreationSetting ocs;
+
+struct TerrainCreationSetting
+{
+	int heightMapIndex = 0;
+	int colorMapIndex = 0;
+	float height = 100;
+	bool usePhysx = false;
+
+	void load(tke::AttributeTreeNode *n);
+	void save(tke::AttributeTreeNode *n);
+};
+
+extern TerrainCreationSetting tcs;

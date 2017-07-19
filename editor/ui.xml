@@ -3,5 +3,6 @@
 	<MonitorWidget opened="true" scene_filename="scene.xml"/>
 	<AttributeWidget opened="true"/>
 	<object_creation_setting modelIndex="2" use_camera_position="true" use_camera_target_position="false" coord="0./21.000002/0." randCX="false" randCY="false" randCZ="false" coordRandRange="8.700001" euler="0./0./0." randRX="false" randRY="false" randRZ="false" eulerRandRange="360." scale="1./1./1." randSX="false" randSY="false" randSZ="false" scaleRandRange="8.6" same_scale_rand="false" physxType="2"/>
+	<terrain_creation_setting heightMapIndex="2" colorMapIndex="3" height="100." usePhysx="true"/>
 </data>
 
