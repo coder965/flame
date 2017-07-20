@@ -5,6 +5,8 @@
 
 namespace tke
 {
+	struct Scene;
+
 	extern int lastTime;
 	extern int nowTime;
 	extern int timeDisp;
@@ -197,5 +199,7 @@ namespace tke
 	void processCmdLine(const std::string &str, bool record = true);
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
 	Err init(const std::string &path, int rcx, int rcy);
+	void addShowingScene(Scene *s);
+	void removeShowingScene(Scene *s);
 	void run();
 }

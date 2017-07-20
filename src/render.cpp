@@ -1933,7 +1933,7 @@ namespace tke
 		at.saveXML(filename);
 	}
 
-	void Pipeline::setup(RenderPass *_renderPass, std::uint32_t _subpassIndex)
+	void Pipeline::setup(RenderPass *_renderPass, std::uint32_t _subpassIndex, bool need_default_ds)
 	{
 		if (!pVertexInputState)
 		{
@@ -2147,8 +2147,6 @@ namespace tke
 			}
 		}
 
-		descriptorSet = new DescriptorSet(descriptorPool, descriptorSetLayout);
-
 		{
 			bool found = false;
 			for (auto p : pipelineLayouts)
@@ -2291,7 +2289,11 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
 
-		linkDescriptors(descriptorSet);
+		if (need_default_ds)
+		{
+			descriptorSet = new DescriptorSet(descriptorPool, descriptorSetLayout);
+			linkDescriptors(descriptorSet);
+		}
 	}
 
 	Pipeline::~Pipeline()
@@ -2332,6 +2334,13 @@ namespace tke
 
 		for (int i = 0; i < 5; i++)
 			delete stages[i];
+	}
+
+	DescriptorSet *Pipeline::createDescriptorSet(DescriptorPool *_pool)
+	{
+		auto s = new DescriptorSet(_pool, descriptorSetLayout);
+		linkDescriptors(s);
+		return s;
 	}
 
 	void Pipeline::linkDescriptors(DescriptorSet *set)

@@ -8,7 +8,7 @@
 
 struct MonitorWidget
 {
-	tke::Scene *scene;
+	tke::Scene *scene = nullptr;
 
 	SelectedItem selectedItem;
 

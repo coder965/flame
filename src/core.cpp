@@ -662,32 +662,32 @@ namespace tke
 
 		plainPipeline_2d = new Pipeline;
 		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
-		plainPipeline_2d->setup(plainRenderPass_image8, 0);
+		plainPipeline_2d->setup(plainRenderPass_image8, 0, true);
 
 		plainPipeline_3d = new Pipeline;
 		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
-		plainPipeline_3d->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d->setup(plainRenderPass_image8, 0, false);
 		plainPipeline_3d_normal = new Pipeline;
 		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
-		plainPipeline_3d_normal->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_normal->setup(plainRenderPass_image8, 0, false);
 		plainPipeline_3d_depth = new Pipeline;
 		plainPipeline_3d_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_depth.xml");
-		plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_depth->setup(plainRenderPass_depth_clear_image8, 0, false);
 		plainPipeline_3d_anim_depth = new Pipeline;
 		plainPipeline_3d_anim_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_depth.xml");
-		plainPipeline_3d_anim_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_anim_depth->setup(plainRenderPass_depth_clear_image8, 0, true);
 		plainPipeline_3d_normal_depth = new Pipeline;
 		plainPipeline_3d_normal_depth->loadXML(enginePath + "pipeline/plain3d/plain3d_normal_depth.xml");
-		plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0);
+		plainPipeline_3d_normal_depth->setup(plainRenderPass_depth_clear_image8, 0, false);
 		plainPipeline_3d_wire = new Pipeline;
 		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
-		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0, false);
 		plainPipeline_3d_anim_wire = new Pipeline;
 		plainPipeline_3d_anim_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml");
-		plainPipeline_3d_anim_wire->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_anim_wire->setup(plainRenderPass_image8, 0, true);
 		plainPipeline_3d_line = new Pipeline;
 		plainPipeline_3d_line->loadXML(enginePath + "pipeline/plain3d/plain3d_line.xml");
-		plainPipeline_3d_line->setup(plainRenderPass_image8, 0);
+		plainPipeline_3d_line->setup(plainRenderPass_image8, 0, false);
 		plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 		staticVertexBuffer = new VertexBuffer();
@@ -728,6 +728,42 @@ namespace tke
 		//initSound();
 
 		return Err::eNoErr;
+	}
+
+	std::vector<Scene*> showing_scenes;
+
+	static void _update_texture_descriptor_set(Scene *s)
+	{
+		static int map_position0 = -1;
+		static int map_position1 = -1;
+		if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
+		if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
+		if (map_position0 == -1 || map_position1 == -1)
+			return;
+
+		for (int index = 0; index < modelTextures.size(); index++)
+		{
+			s->ds_mrt->setImage(map_position0, index, modelTextures[index], colorSampler);
+			s->ds_mrtAnim->setImage(map_position1, index, modelTextures[index], colorSampler);
+		}
+	}
+
+	void addShowingScene(Scene *s)
+	{
+		showing_scenes.push_back(s);
+		_update_texture_descriptor_set(s);
+	}
+
+	void removeShowingScene(Scene *s)
+	{
+		for (auto it = showing_scenes.begin(); it != showing_scenes.end(); it++)
+		{
+			if (*it == s)
+			{
+				showing_scenes.erase(it);
+				return;
+			}
+		}
 	}
 
 	void run()
@@ -812,19 +848,8 @@ namespace tke
 				}
 				if (needUpdateTexture)
 				{
-					static int map_position0 = -1;
-					static int map_position1 = -1;
-					if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
-					if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
-					if (map_position0 != -1 && map_position1 != -1)
-					{
-						for (int index = 0; index < modelTextures.size(); index++)
-						{
-							mrtPipeline->descriptorSet->setImage(map_position0, index, modelTextures[index], colorSampler);
-							mrtAnimPipeline->descriptorSet->setImage(map_position1, index, modelTextures[index], colorSampler);
-						}
-						needUpdateTexture = false;
-					}
+					for (auto s : showing_scenes)
+						_update_texture_descriptor_set(s);
 				}
 				if (needUpdateMaterialBuffer)
 				{

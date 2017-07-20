@@ -7,6 +7,8 @@
 MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	:scene(_scene)
 {
+	tke::addShowingScene(scene);
+
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	tke::addGuiImage(image);
 
@@ -21,7 +23,7 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	cb = new tke::CommandBuffer(tke::commandPool);
 	cb_physx = new tke::CommandBuffer(tke::commandPool);
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
-	ds_wireframe = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_wire->descriptorSetLayout);
+	ds_wireframe = tke::plainPipeline_3d_anim_wire->createDescriptorSet(tke::descriptorPool);
 	scene_renderFinished = tke::createEvent();
 	physx_renderFinished = tke::createEvent();
 	wireframe_renderFinished = tke::createEvent();
@@ -32,16 +34,22 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 
 MonitorWidget::~MonitorWidget()
 {
+	tke::removeShowingScene(scene);
+
 	tke::removeGuiImage(image);
 	delete image;
+
 	tke::releaseFramebuffer(fb_scene);
 	tke::releaseFramebuffer(fb_image);
 	tke::releaseFramebuffer(fb_tool);
+
 	delete cb;
 	delete cb_physx;
 	delete cb_wireframe;
 	delete ds_wireframe;
+
 	delete transformerTool;
+
 	tke::destroyEvent(scene_renderFinished);
 	tke::destroyEvent(physx_renderFinished);
 	tke::destroyEvent(wireframe_renderFinished);
@@ -78,7 +86,8 @@ void draw_frame(tke::CommandBuffer *cb)
 
 void MonitorWidget::show()
 {
-	ImGui::BeginDock("Monitor", &opened);
+	std::string title = "Monitor - " + scene->name;
+	ImGui::BeginDock(title.c_str(), &opened);
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeMonitor;
 
@@ -203,12 +212,12 @@ void MonitorWidget::show()
 
 			auto &rb = scene->pxScene->getRenderBuffer();
 
-			////for (int i = 0; i < rb.getNbPoints(); i++)
-			////{
-			////	p.color = _intToRGB(rb.getPoints()[i].color);
-			////	p.coord = _pxVec3ToVec3(rb.getPoints()[i].pos);
-			////	tke3_debugBuffer.points.push_back(p);
-			////}
+			//for (int i = 0; i < rb.getNbPoints(); i++)
+			//{
+			//	p.color = _intToRGB(rb.getPoints()[i].color);
+			//	p.coord = _pxVec3ToVec3(rb.getPoints()[i].pos);
+			//	tke3_debugBuffer.points.push_back(p);
+			//}
 
 			auto lineCount = rb.getNbLines();
 			if (lineCount > 0)
@@ -325,10 +334,6 @@ void MonitorWidget::show()
 						ds_wireframe->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
 					cb_wireframe->bindDescriptorSet(ds_wireframe->v);
 				}
-				else
-				{
-					cb_wireframe->bindDescriptorSet();
-				}
 				pc.modelview = scene->camera.getMatInv() * obj->getMat();
 				pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
@@ -340,7 +345,6 @@ void MonitorWidget::show()
 				cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
 				cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
 				cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
-				cb_wireframe->bindDescriptorSet();
 				pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
 				{
 					auto c = model->controllerPosition;

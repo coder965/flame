@@ -669,6 +669,13 @@ namespace tke
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
 
+		DescriptorSet *ds_pano;
+		DescriptorSet *ds_mrt;
+		DescriptorSet *ds_mrtAnim;
+		DescriptorSet *ds_heightMapTerrain;
+		DescriptorSet *ds_defe;
+		DescriptorSet *ds_comp;
+
 		Scene();
 		~Scene();
 

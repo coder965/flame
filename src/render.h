@@ -658,7 +658,8 @@ namespace tke
 		~Pipeline();
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
-		void setup(RenderPass *_renderPass, std::uint32_t _subpassIndex);
+		void setup(RenderPass *_renderPass, std::uint32_t _subpassIndex, bool need_default_ds);
+		DescriptorSet *createDescriptorSet(DescriptorPool *_pool);
 		void linkDescriptors(DescriptorSet *set);
 		int descriptorPosition(const std::string &name);
 	};

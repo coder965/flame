@@ -2715,6 +2715,13 @@ namespace tke
 		pxScene = pxPhysics->createScene(pxSceneDesc);
 
 		pxControllerManager = PxCreateControllerManager(*pxScene);
+
+		ds_pano = panoramaPipeline->createDescriptorSet(descriptorPool);
+		ds_mrt = mrtPipeline->createDescriptorSet(descriptorPool);
+		ds_mrtAnim = mrtAnimPipeline->createDescriptorSet(descriptorPool);
+		ds_heightMapTerrain = heightMapTerrainPipeline->createDescriptorSet(descriptorPool);
+		ds_defe = deferredPipeline->createDescriptorSet(descriptorPool);
+		ds_comp = composePipeline->createDescriptorSet(descriptorPool);
 	}
 
 	Scene::~Scene()
@@ -2726,6 +2733,13 @@ namespace tke
 			delete pObject;
 
 		delete terrain;
+
+		delete ds_pano;
+		delete ds_mrt;
+		delete ds_mrtAnim;
+		delete ds_heightMapTerrain;
+		delete ds_defe;
+		delete ds_comp;
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
@@ -2956,15 +2970,15 @@ namespace tke
 
 		if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 		{
-			auto centerPos = m->controllerPosition * o->getScale() + o->getCoord();
+			auto c = m->controllerPosition * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
-			capsuleDesc.radius = m->controllerRadius * o->getScale().x;
-			capsuleDesc.height = m->controllerHeight * o->getScale().y;
+			capsuleDesc.radius = (m->controllerRadius * o->getScale().x) / 0.8f;
+			capsuleDesc.height = (m->controllerHeight * o->getScale().y) / 0.8f;
 			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 			capsuleDesc.material = pxDefaultMaterial;
-			capsuleDesc.position.x = centerPos.x;
-			capsuleDesc.position.y = centerPos.y;
-			capsuleDesc.position.z = centerPos.z;
+			capsuleDesc.position.x = c.x;
+			capsuleDesc.position.y = c.y;
+			capsuleDesc.position.z = c.z;
 			capsuleDesc.stepOffset = capsuleDesc.radius;
 
 			o->pxController = pxControllerManager->createController(capsuleDesc);
@@ -3155,7 +3169,7 @@ namespace tke
 					o->move(o->getEuler().x, c, e);
 					o->addEuler(e);
 
-					physx::PxVec3 disp(c.x, /*-gravity * o->floatingTime * o->floatingTime*/0, c.z);
+					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
 					o->floatingTime += dist;
 
 					if (o->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
@@ -3234,7 +3248,7 @@ namespace tke
 				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					auto p = o->pxController->getPosition();
-					auto c = glm::vec3(p.x, p.y, p.z) - (o->model->maxCoord + o->model->minCoord) * 0.5f * o->getScale();
+					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controllerPosition * o->getScale();
 					o->setCoord(c);
 				}
 			}
@@ -3356,7 +3370,7 @@ namespace tke
 								}
 							}
 
-							deferredPipeline->descriptorSet->setImage(defe_envr_position, 0, envrImage, colorSampler, 0, 0, envrImage->level);
+							ds_defe->setImage(defe_envr_position, 0, envrImage, colorSampler, 0, 0, envrImage->level);
 
 							AmbientBufferShaderStruct stru;
 							stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
@@ -3447,9 +3461,9 @@ namespace tke
 				heightMapTerrainBuffer->update(&stru, stagingBuffer);
 
 				if (heightMapTerr_heightMap_position != -1 && terrain->heightMap)
-					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
+					ds_heightMapTerrain->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
 				if (heightMapTerr_colorMap_position != -1 && terrain->colorMap)
-					heightMapTerrainPipeline->descriptorSet->setImage(heightMapTerr_colorMap_position, 0, terrain->colorMap, colorBorderSampler);
+					ds_heightMapTerrain->setImage(heightMapTerr_colorMap_position, 0, terrain->colorMap, colorBorderSampler);
 			}
 		}
 		if (needUpdateIndirectBuffer)
@@ -3497,7 +3511,7 @@ namespace tke
 						}
 
 						if (mrt_bone_position != -1)
-							mrtAnimPipeline->descriptorSet->setBuffer(mrt_bone_position, animatedIndex, pObject->animationComponent->boneMatrixBuffer);
+							ds_mrtAnim->setBuffer(mrt_bone_position, animatedIndex, pObject->animationComponent->boneMatrixBuffer);
 
 						animatedIndex++;
 					}
@@ -3621,7 +3635,7 @@ namespace tke
 		cb->bindVertexBuffer(staticVertexBuffer);
 		cb->bindIndexBuffer(staticIndexBuffer);
 		cb->bindPipeline(panoramaPipeline);
-		cb->bindDescriptorSet();
+		cb->bindDescriptorSet(ds_pano->v);
 		cb->drawIndex(sphereModel->indices.size(), sphereModel->indiceBase, sphereModel->vertexBase);
 
 		// mrt
@@ -3630,13 +3644,13 @@ namespace tke
 		cb->bindVertexBuffer(staticVertexBuffer);
 		cb->bindIndexBuffer(staticIndexBuffer);
 		cb->bindPipeline(mrtPipeline);
-		cb->bindDescriptorSet();
+		cb->bindDescriptorSet(ds_mrt->v);
 		cb->drawIndirectIndex(staticObjectIndirectBuffer, staticIndirectCount);
 			// animated
 		cb->bindVertexBuffer(animatedVertexBuffer);
 		cb->bindIndexBuffer(animatedIndexBuffer);
 		cb->bindPipeline(mrtAnimPipeline);
-		cb->bindDescriptorSet();
+		cb->bindDescriptorSet(ds_mrtAnim->v);
 		cb->drawIndirectIndex(animatedObjectIndirectBuffer, animatedIndirectCount);
 			// terrain
 		if (terrain)
@@ -3645,7 +3659,7 @@ namespace tke
 			{
 			case TerrainType::height_map:
 				cb->bindPipeline(heightMapTerrainPipeline);
-				cb->bindDescriptorSet();
+				cb->bindDescriptorSet(ds_heightMapTerrain->v);
 				cb->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
 				break;
 			}
@@ -3654,13 +3668,13 @@ namespace tke
 		// deferred
 		cb->nextSubpass();
 		cb->bindPipeline(deferredPipeline);
-		cb->bindDescriptorSet();
+		cb->bindDescriptorSet(ds_defe->v);
 		cb->draw(3);
 
 		// compose
 		cb->nextSubpass();
 		cb->bindPipeline(composePipeline);
-		cb->bindDescriptorSet();
+		cb->bindDescriptorSet(ds_comp->v);
 		cb->draw(3);
 
 		cb->endRenderPass();
@@ -3815,32 +3829,32 @@ namespace tke
 
 		scatteringPipeline = new Pipeline;
 		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
-		scatteringPipeline->setup(plainRenderPass_image16, 0);
+		scatteringPipeline->setup(plainRenderPass_image16, 0, false);
 
 		downsamplePipeline = new Pipeline;
 		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
-		downsamplePipeline->setup(plainRenderPass_image16, 0);
+		downsamplePipeline->setup(plainRenderPass_image16, 0, true);
 
 		convolvePipeline = new Pipeline;
 		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
-		convolvePipeline->setup(plainRenderPass_image16, 0);
+		convolvePipeline->setup(plainRenderPass_image16, 0, true);
 
 		panoramaPipeline = new Pipeline;
 		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");
-		panoramaPipeline->setup(sceneRenderPass, 0);
+		panoramaPipeline->setup(sceneRenderPass, 0, false);
 
 		mrtPipeline = new Pipeline;
 		mrtPipeline->loadXML(enginePath + "pipeline/deferred/mrt.xml");
-		mrtPipeline->setup(sceneRenderPass, 1);
+		mrtPipeline->setup(sceneRenderPass, 1, false);
 
 		mrtAnimPipeline = new Pipeline;
 		mrtAnimPipeline->loadXML(enginePath + "pipeline/deferred/mrt_anim.xml");
-		mrtAnimPipeline->setup(sceneRenderPass, 1);
+		mrtAnimPipeline->setup(sceneRenderPass, 1, false);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
 		heightMapTerrainPipeline = new Pipeline;
 		heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain.xml");
-		heightMapTerrainPipeline->setup(sceneRenderPass, 1);
+		heightMapTerrainPipeline->setup(sceneRenderPass, 1, false);
 		heightMapTerr_heightMap_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
 		heightMapTerr_colorMap_position = heightMapTerrainPipeline->descriptorPosition("colorMap");
 
@@ -3850,11 +3864,11 @@ namespace tke
 
 		deferredPipeline = new Pipeline;
 		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
-		deferredPipeline->setup(sceneRenderPass, 2);
+		deferredPipeline->setup(sceneRenderPass, 2, false);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 
 		composePipeline = new Pipeline;
 		composePipeline->loadXML(enginePath + "pipeline/compose/compose.xml");
-		composePipeline->setup(sceneRenderPass, 3);
+		composePipeline->setup(sceneRenderPass, 3, false);
 	}
 }
