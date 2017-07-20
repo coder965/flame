@@ -1412,7 +1412,7 @@ namespace tke
 				defines.push_back(m.value);
 		}
 
-		// format the shader path, so that they can reuse if them refer the same one
+		// format the shader path, so that they can reuse if they refer the same one
 		auto stageFilename = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
 		for (auto m : shaderModules)
 		{

@@ -8,10 +8,29 @@
 
 struct MonitorWidget
 {
+	enum Mode
+	{
+		ModeScene,
+		ModeModel
+	};
+	Mode mode;
+
+	std::vector<VkCommandBuffer> cbs;
+	VkEvent renderFinished;
+
+	bool opened = true;
+
+	MonitorWidget();
+	virtual ~MonitorWidget();
+	virtual void show() = 0;
+};
+
+struct SceneMonitorWidget : MonitorWidget
+{
 	tke::Image *image;
 	tke::Framebuffer *fb_image;
 
-	tke::Scene *scene = nullptr;
+	tke::Scene *scene;
 	tke::Framebuffer *fb_scene;
 	tke::CommandBuffer *cb_scene;
 	VkEvent scene_renderFinished;
@@ -29,13 +48,21 @@ struct MonitorWidget
 	tke::Framebuffer *fb_tool;
 	TransformerTool *transformerTool;
 
-	VkEvent renderFinished;
+	SceneMonitorWidget(tke::Scene *_scene);
+	virtual ~SceneMonitorWidget() override;
+	virtual void show() override;
+};
 
-	bool opened = true;
+struct ModelMonitorWideget : MonitorWidget
+{
+	tke::Model *model;
 
-	MonitorWidget(tke::Scene *scene);
-	~MonitorWidget();
-	void show();
+	tke::CommandBuffer *cb;
+	tke::DescriptorSet *ds;
+
+	ModelMonitorWideget(tke::Model *_model);
+	virtual ~ModelMonitorWideget() override;
+	virtual void show() override;
 };
 
 extern std::vector<MonitorWidget*> monitorWidgets;

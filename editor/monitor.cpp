@@ -4,9 +4,21 @@
 #include "editor.h"
 #include "monitor.h"
 
-MonitorWidget::MonitorWidget(tke::Scene *_scene)
+MonitorWidget::MonitorWidget()
+{
+	renderFinished = tke::createEvent();
+}
+
+MonitorWidget::~MonitorWidget()
+{
+	tke::destroyEvent(renderFinished);
+}
+
+SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	:scene(_scene)
 {
+	mode = ModeScene;
+
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	fb_image = tke::getFramebuffer(image, tke::plainRenderPass_image8);
 	tke::addGuiImage(image);
@@ -30,10 +42,13 @@ MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool);
 
-	renderFinished = tke::createEvent();
+	cbs.push_back(cb_scene->v);
+	cbs.push_back(cb_physx->v);
+	cbs.push_back(cb_wireframe->v);
+	cbs.push_back(transformerTool->cb->v);
 }
 
-MonitorWidget::~MonitorWidget()
+SceneMonitorWidget::~SceneMonitorWidget()
 {
 	tke::releaseFramebuffer(fb_scene);
 	delete cb_scene;
@@ -53,12 +68,10 @@ MonitorWidget::~MonitorWidget()
 
 	tke::releaseFramebuffer(fb_tool);
 	delete transformerTool;
-
-	tke::destroyEvent(renderFinished);
 }
 
 static tke::Scene *currentScene = nullptr;
-void draw_frame(tke::CommandBuffer *cb)
+void draw_pickup_frame(tke::CommandBuffer *cb)
 {
 	for (int i = 0; i < currentScene->objects.size(); i++)
 	{
@@ -67,9 +80,9 @@ void draw_frame(tke::CommandBuffer *cb)
 		auto animated = model->animated;
 		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
 		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
-		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim_depth : tke::plainPipeline_3d_depth);
+		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim : tke::plainPipeline_3d);
 		if (animated)
-			tke::plainPipeline_3d_anim_depth->descriptorSet->setBuffer(tke::plain3d_bone_pos, 0, object->animationComponent->boneMatrixBuffer);
+			tke::plainPipeline_3d_anim->descriptorSet->setBuffer(tke::plain3d_bone_pos, 0, object->animationComponent->boneMatrixBuffer);
 		cb->bindDescriptorSet();
 		struct
 		{
@@ -85,7 +98,7 @@ void draw_frame(tke::CommandBuffer *cb)
 	}
 }
 
-void MonitorWidget::show()
+void SceneMonitorWidget::show()
 {
 	std::string title = "Monitor - " + scene->name;
 	ImGui::BeginDock(title.c_str(), &opened);
@@ -130,7 +143,7 @@ void MonitorWidget::show()
 				if (!transformerTool->leftDown(x, y))
 				{
 					currentScene = scene;
-					auto index = tke::pickUp(x, y, draw_frame);
+					auto index = tke::pickUp(x, y, draw_pickup_frame);
 					if (index == 0)
 						selectedItem.reset();
 					else
@@ -380,6 +393,24 @@ void MonitorWidget::show()
 
 	transformerTool->transformer = selectedItem.toTransformer();
 	transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
+}
+
+ModelMonitorWideget::ModelMonitorWideget(tke::Model *_model)
+	:model(_model)
+{
+	cb = new tke::CommandBuffer(tke::commandPool);
+
+	cbs.push_back(cb->v);
+}
+
+ModelMonitorWideget::~ModelMonitorWideget()
+{
+
+}
+
+void ModelMonitorWideget::show()
+{
+
 }
 
 std::vector<MonitorWidget*> monitorWidgets;

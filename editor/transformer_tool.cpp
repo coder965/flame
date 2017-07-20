@@ -27,7 +27,7 @@ static void draw(tke::CommandBuffer *cb)
 
 	cb->bindVertexBuffer(tke::staticVertexBuffer);
 	cb->bindIndexBuffer(tke::staticIndexBuffer);
-	cb->bindPipeline(currentDrawPolicy == 0 ? tke::plainPipeline_3d_normal_depth : tke::plainPipeline_3d_depth);
+	cb->bindPipeline(currentDrawPolicy == 0 ? tke::plainPipeline_3d_normal : tke::plainPipeline_3d);
 	cb->bindDescriptorSet();
 
 	struct

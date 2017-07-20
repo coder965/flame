@@ -2,7 +2,9 @@ layout(push_constant) uniform PushConstant
 {
 	mat4 modelview;
 	mat4 proj;
+#if !defined(USE_TEX)
 	vec4 color;
+#endif
 }pc;
 
 #if defined(ANIM)
@@ -13,9 +15,13 @@ layout(binding = TKE_UBO_BINDING) uniform BONE
 #endif
 
 layout(location = 0) in vec3 inVertex;
+#if defined(USE_TEX)
+layout(location = 1) in vec2 inTexcoord;
+layout(location = 0) out vec2 outTexcoord;
+#endif
 #if defined(USE_NORMAL)
 layout(location = 2) in vec3 inNormal;
-layout(location = 0) out vec3 outNormal;
+layout(location = 1) out vec3 outNormal;
 #endif
 #if defined(ANIM)
 layout(location = 4) in vec4 inBoneWeight;
@@ -31,6 +37,9 @@ void main()
 	skinMatrix += inBoneWeight[2] * u_bone.matrix[int(inBoneID[2])];
 	skinMatrix += inBoneWeight[3] * u_bone.matrix[int(inBoneID[3])];
 	modelview = modelview * skinMatrix;
+#endif
+#if defined(USE_TEX)
+	outTexcoord = inTexcoord;
 #endif
 #if defined(USE_NORMAL)
 	mat3 normalMatrix = transpose(inverse(mat3(modelview)));

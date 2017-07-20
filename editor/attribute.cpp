@@ -223,50 +223,55 @@ void AttributeWidget::show()
 		break;
 	case LastWindowTypeMonitor:
 		ImGui::BeginTabBar("##tab_monitor");
-		if (ImGui::AddTab("Scene"))
-			_show_scene(lastMonitorWidget->scene);
-		if (lastMonitorWidget->selectedItem)
+		if (lastMonitorWidget->mode == MonitorWidget::ModeScene)
 		{
-			if (ImGui::AddTab("Select"))
+			auto m = (SceneMonitorWidget*)lastMonitorWidget;
+
+			if (ImGui::AddTab("Scene"))
+				_show_scene(m->scene);
+			if (m->selectedItem)
 			{
-				switch (lastMonitorWidget->selectedItem.type)
+				if (ImGui::AddTab("Select"))
 				{
-				case ItemTypeObject:
-				{
-					auto o = lastMonitorWidget->selectedItem.toObject();
-
-					auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
-					ImGui::Text("model:%s", modelName.c_str());
-
-					auto coord = o->getCoord();
-					if (ImGui::DragFloat3("coord", &coord[0]))
-						o->setCoord(coord);
-					auto euler = o->getEuler();
-					if (ImGui::DragFloat3("euler", &euler[0]))
-						o->setEuler(euler);
-					auto scale = o->getScale();
-					if (ImGui::DragFloat3("scale", &scale[0]))
-						o->setScale(scale);
-
-					if (o->model->animated)
+					switch (m->selectedItem.type)
 					{
-						static int boneID = -1;
-						if (boneID >= o->model->bones.size()) boneID = -1;
+					case ItemTypeObject:
+					{
+						auto o = m->selectedItem.toObject();
 
-						if (ImGui::TreeNode("Bones Motion"))
+						auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
+						ImGui::Text("model:%s", modelName.c_str());
+
+						auto coord = o->getCoord();
+						if (ImGui::DragFloat3("coord", &coord[0]))
+							o->setCoord(coord);
+						auto euler = o->getEuler();
+						if (ImGui::DragFloat3("euler", &euler[0]))
+							o->setEuler(euler);
+						auto scale = o->getScale();
+						if (ImGui::DragFloat3("scale", &scale[0]))
+							o->setScale(scale);
+
+						if (o->model->animated)
 						{
-							for (int i = 0; i < o->model->bones.size(); i++)
-							{
-								auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
-								if (ImGui::Selectable(str.c_str(), i == boneID))
-									boneID = i;
-							}
+							static int boneID = -1;
+							if (boneID >= o->model->bones.size()) boneID = -1;
 
-							ImGui::TreePop();
+							if (ImGui::TreeNode("Bones Motion"))
+							{
+								for (int i = 0; i < o->model->bones.size(); i++)
+								{
+									auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
+									if (ImGui::Selectable(str.c_str(), i == boneID))
+										boneID = i;
+								}
+
+								ImGui::TreePop();
+							}
 						}
 					}
-				}
 					break;
+					}
 				}
 			}
 		}

@@ -80,7 +80,8 @@ EditorWindow::~EditorWindow()
 		for (auto m : monitorWidgets)
 		{
 			auto n = new tke::AttributeTreeNode("MonitorWidget");
-			n->addAttribute("scene_filename", m->scene->filename);
+			if (m->mode == MonitorWidget::ModeScene)
+				n->addAttribute("scene_filename", ((SceneMonitorWidget*)m)->scene->filename);
 			at.children.push_back(n);
 		}
 		{
@@ -110,14 +111,9 @@ void EditorWindow::openGameExplorer()
 		gameExplorer = new GameExplorer;
 }
 
-void EditorWindow::openOutputWidget()
-{
-
-}
-
 void EditorWindow::openMonitorWidget(tke::Scene *s)
 {
-	monitorWidgets.push_back(new MonitorWidget(s));
+	monitorWidgets.push_back(new SceneMonitorWidget(s));
 }
 
 void EditorWindow::openAttributeWidget()
@@ -238,10 +234,7 @@ void EditorWindow::renderEvent()
 	for (auto m : monitorWidgets)
 	{
 		m->show();
-		cbs.push_back(m->cb_scene->v);
-		cbs.push_back(m->cb_physx->v);
-		cbs.push_back(m->cb_wireframe->v);
-		cbs.push_back(m->transformerTool->cb->v);
+		cbs.insert(cbs.begin(), m->cbs.begin(), m->cbs.end());
 		ui->waitEvents.push_back(m->renderFinished);
 	}
 
