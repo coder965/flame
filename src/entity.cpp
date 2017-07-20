@@ -2662,23 +2662,7 @@ namespace tke
 
 	static const float gravity = 9.81f;
 
-	UniformBuffer *matrixBuffer = nullptr;
-	UniformBuffer *staticObjectMatrixBuffer = nullptr;
-	UniformBuffer *animatedObjectMatrixBuffer = nullptr;
-	IndirectIndexBuffer *staticObjectIndirectBuffer = nullptr;
-	IndirectIndexBuffer *animatedObjectIndirectBuffer = nullptr;
-	UniformBuffer *heightMapTerrainBuffer = nullptr;
-	UniformBuffer *proceduralTerrainBuffer = nullptr;
-	UniformBuffer *lightBuffer = nullptr;
-	UniformBuffer *ambientBuffer = nullptr;
-
-	Image *envrImage = nullptr;
 	Image *envrImageDownsample[3] = {};
-
-	Image *mainImage = nullptr;
-	Image *albedoAlphaImage = nullptr;
-	Image *normalHeightImage = nullptr;
-	Image *specRoughnessImage = nullptr;
 
 	RenderPass *sceneRenderPass = nullptr;
 
@@ -2706,7 +2690,20 @@ namespace tke
 
 	Pipeline *composePipeline = nullptr;
 
+	struct MatrixBufferShaderStruct
+	{
+		glm::mat4 proj;
+		glm::mat4 projInv;
+		glm::mat4 view;
+		glm::mat4 viewInv;
+		glm::mat4 projView;
+		glm::mat4 projViewRotate;
+		glm::vec4 frustumPlanes[6];
+		glm::vec2 viewportDim;
+	};
+
 	Scene::Scene()
+		:resource(&globalResource)
 	{
 		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
 		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
@@ -2716,12 +2713,49 @@ namespace tke
 
 		pxControllerManager = PxCreateControllerManager(*pxScene);
 
+		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
+		resource.setImage(envrImage, "Envr.Image");
+
+		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		resource.setImage(mainImage, "Main.Image");
+		resource.setImage(albedoAlphaImage, "AlbedoAlpha.Image");
+		resource.setImage(normalHeightImage, "NormalHeight.Image");
+		resource.setImage(specRoughnessImage, "SpecRoughness.Image");
+
+		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
+		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
+		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
+		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
+		proceduralTerrainBuffer = new UniformBuffer(sizeof(glm::vec2));
+		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
+		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
+		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+		resource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
+		resource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
+		resource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
+		resource.setBuffer(heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
+		resource.setBuffer(proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
+		resource.setBuffer(lightBuffer, "Light.UniformBuffer");
+		resource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
+		resource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
+		resource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
+
 		ds_pano = panoramaPipeline->createDescriptorSet(descriptorPool);
+		panoramaPipeline->linkDescriptors(ds_pano, &resource);
 		ds_mrt = mrtPipeline->createDescriptorSet(descriptorPool);
+		mrtPipeline->linkDescriptors(ds_mrt, &resource);
 		ds_mrtAnim = mrtAnimPipeline->createDescriptorSet(descriptorPool);
+		mrtAnimPipeline->linkDescriptors(ds_mrtAnim, &resource);
 		ds_heightMapTerrain = heightMapTerrainPipeline->createDescriptorSet(descriptorPool);
+		heightMapTerrainPipeline->linkDescriptors(ds_heightMapTerrain, &resource);
 		ds_defe = deferredPipeline->createDescriptorSet(descriptorPool);
+		deferredPipeline->linkDescriptors(ds_defe, &resource);
 		ds_comp = composePipeline->createDescriptorSet(descriptorPool);
+		composePipeline->linkDescriptors(ds_comp, &resource);
 	}
 
 	Scene::~Scene()
@@ -3135,18 +3169,6 @@ namespace tke
 		};
 		return getFramebuffer(resCx, resCy, sceneRenderPass, ARRAYSIZE(views), views);
 	}
-
-	struct MatrixBufferShaderStruct
-	{
-		glm::mat4 proj;
-		glm::mat4 projInv;
-		glm::mat4 view;
-		glm::mat4 viewInv;
-		glm::mat4 projView;
-		glm::mat4 projViewRotate;
-		glm::vec4 frustumPlanes[6];
-		glm::vec2 viewportDim;
-	};
 
 	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
 	{
@@ -3766,48 +3788,15 @@ namespace tke
 
 	void initScene()
 	{
-		matrixBuffer = new UniformBuffer(sizeof MatrixBufferShaderStruct);
-		staticObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
-		animatedObjectMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
-		heightMapTerrainBuffer = new UniformBuffer(sizeof(HeightMapTerrainShaderStruct) * 8);
-		proceduralTerrainBuffer = new UniformBuffer(sizeof(glm::vec2));
-		lightBuffer = new UniformBuffer(sizeof(LightBufferShaderStruct));
-		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
-
-		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
-		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
-
-		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
 		for (int i = 0; i < 3; i++)
 			envrImageDownsample[i] = new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		globalResource.setImage(envrImage, "Envr.Image");
-
-		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		globalResource.setImage(mainImage, "Main.Image");
-		globalResource.setImage(albedoAlphaImage, "AlbedoAlpha.Image");
-		globalResource.setImage(normalHeightImage, "NormalHeight.Image");
-		globalResource.setImage(specRoughnessImage, "SpecRoughness.Image");
-
-		globalResource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
-		globalResource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
-		globalResource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
-		globalResource.setBuffer(heightMapTerrainBuffer, "HeightMapTerrain.UniformBuffer");
-		globalResource.setBuffer(proceduralTerrainBuffer, "ProceduralTerrain.UniformBuffer");
-		globalResource.setBuffer(lightBuffer, "Light.UniformBuffer");
-		globalResource.setBuffer(ambientBuffer, "Ambient.UniformBuffer");
-
-		globalResource.setBuffer(staticObjectIndirectBuffer, "Scene.Static.IndirectBuffer");
-		globalResource.setBuffer(animatedObjectIndirectBuffer, "Scene.Animated.IndirectBuffer");
 
 		VkAttachmentDescription atts[] = {
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), // main
 			depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR),				 // depth
-			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // albedo alpha
-			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // normal height
-			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),			 // spec roughness
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // albedo alpha
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // normal height
+			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // spec roughness
 			colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE)		 // dst
 		};
 		VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };

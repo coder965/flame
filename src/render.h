@@ -582,8 +582,6 @@ namespace tke
 		REFLe SamplerType sampler = SamplerType::none;
 
 		DescriptorType type = DescriptorType::null;
-		Buffer *buffer = nullptr;
-		Image *image = nullptr;
 		VkSampler vkSampler = 0;
 	};
 
@@ -633,8 +631,6 @@ namespace tke
 		std::vector<LinkResource> links;
 		Stage *stages[5] = {};
 
-		ResourceBank *pResource = &globalResource;
-
 		std::vector<ShaderMacro> shaderMacros;
 
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -654,13 +650,12 @@ namespace tke
 		VkPipeline pipeline = 0;
 		DescriptorSet *descriptorSet = nullptr;
 
-		Pipeline();
 		~Pipeline();
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
 		void setup(RenderPass *_renderPass, std::uint32_t _subpassIndex, bool need_default_ds);
 		DescriptorSet *createDescriptorSet(DescriptorPool *_pool);
-		void linkDescriptors(DescriptorSet *set);
+		void linkDescriptors(DescriptorSet *set, ResourceBank *resource);
 		int descriptorPosition(const std::string &name);
 	};
 }

@@ -1833,11 +1833,6 @@ namespace tke
 
 	static std::vector<PipelineLayout*> pipelineLayouts;
 
-	Pipeline::Pipeline()
-	{
-		pResource = &globalResource;
-	}
-
 	void Pipeline::loadXML(const std::string &_filename)
 	{
 		filename = _filename;
@@ -2292,7 +2287,7 @@ namespace tke
 		if (need_default_ds)
 		{
 			descriptorSet = new DescriptorSet(descriptorPool, descriptorSetLayout);
-			linkDescriptors(descriptorSet);
+			linkDescriptors(descriptorSet, &globalResource);
 		}
 	}
 
@@ -2338,12 +2333,10 @@ namespace tke
 
 	DescriptorSet *Pipeline::createDescriptorSet(DescriptorPool *_pool)
 	{
-		auto s = new DescriptorSet(_pool, descriptorSetLayout);
-		linkDescriptors(s);
-		return s;
+		return new DescriptorSet(_pool, descriptorSetLayout);
 	}
 
-	void Pipeline::linkDescriptors(DescriptorSet *set)
+	void Pipeline::linkDescriptors(DescriptorSet *set, ResourceBank *resource)
 	{
 		for (auto &link : links)
 		{
@@ -2395,19 +2388,17 @@ namespace tke
 			{
 			case DescriptorType::uniform_buffer:
 			{
-				if (!link.buffer)
-					link.buffer = pResource->getBuffer(link.resource_name);
-				if (link.buffer)
-					set->setBuffer(link.binding, link.array_element, link.buffer);
+				auto buffer = resource->getBuffer(link.resource_name);
+				if (buffer)
+					set->setBuffer(link.binding, link.array_element, buffer);
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
 				break;
 			case DescriptorType::image_n_sampler:
 			{
-				if (!link.image)
-					link.image = pResource->getImage(link.resource_name);
-				if (link.image)
+				auto image = resource->getImage(link.resource_name);
+				if (image)
 				{
 					if (link.vkSampler == 0)
 					{
@@ -2429,7 +2420,7 @@ namespace tke
 							break;
 						}
 					}
-					set->setImage(link.binding, link.array_element, link.image, link.vkSampler);
+					set->setImage(link.binding, link.array_element, image, link.vkSampler);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);

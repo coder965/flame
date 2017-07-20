@@ -584,13 +584,7 @@ namespace tke
 		glm::vec4 fogcolor;
 	};
 
-	extern Image *envrImage;
 	extern Image *envrImageDownsample[3];
-
-	extern Image *mainImage;
-	extern Image *albedoAlphaImage;
-	extern Image *normalHeightImage;
-	extern Image *specRoughnessImage;
 
 	extern RenderPass *sceneRenderPass;
 
@@ -605,16 +599,6 @@ namespace tke
 	extern Pipeline *proceduralTerrainPipeline;
 	extern Pipeline *deferredPipeline;
 	extern Pipeline *composePipeline;
-
-	extern UniformBuffer *matrixBuffer;
-	extern UniformBuffer *staticObjectMatrixBuffer;
-	extern UniformBuffer *animatedObjectMatrixBuffer;
-	extern IndirectIndexBuffer *staticObjectIndirectBuffer;
-	extern IndirectIndexBuffer *animatedObjectIndirectBuffer;
-	extern UniformBuffer *heightMapTerrainBuffer;
-	extern UniformBuffer *proceduralTerrainBuffer;
-	extern UniformBuffer *lightBuffer;
-	extern UniformBuffer *ambientBuffer;
 
 	REFLECTABLE struct Scene
 	{
@@ -668,6 +652,25 @@ namespace tke
 
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
+
+		ResourceBank resource;
+
+		Image *envrImage;
+
+		Image *mainImage;
+		Image *albedoAlphaImage;
+		Image *normalHeightImage;
+		Image *specRoughnessImage;
+
+		UniformBuffer *matrixBuffer;
+		UniformBuffer *staticObjectMatrixBuffer;
+		UniformBuffer *animatedObjectMatrixBuffer;
+		IndirectIndexBuffer *staticObjectIndirectBuffer;
+		IndirectIndexBuffer *animatedObjectIndirectBuffer;
+		UniformBuffer *heightMapTerrainBuffer;
+		UniformBuffer *proceduralTerrainBuffer;
+		UniformBuffer *lightBuffer;
+		UniformBuffer *ambientBuffer;
 
 		DescriptorSet *ds_pano;
 		DescriptorSet *ds_mrt;

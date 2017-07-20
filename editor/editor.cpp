@@ -235,20 +235,6 @@ void EditorWindow::renderEvent()
 		}
 	}
 
-	for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
-	{
-		auto m = *it;
-		if (!m->opened)
-		{
-			delete m;
-			it = monitorWidgets.erase(it);
-		}
-		else
-		{
-			it++;
-		}
-	}
-
 	for (auto m : monitorWidgets)
 	{
 		m->show();
@@ -269,6 +255,20 @@ void EditorWindow::renderEvent()
 	cbs.push_back(ui->cb->v);
 
 	endFrame();
+
+	for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
+	{
+		auto m = *it;
+		if (!m->opened)
+		{
+			delete m;
+			it = monitorWidgets.erase(it);
+		}
+		else
+		{
+			it++;
+		}
+	}
 
 	cbs.clear();
 	ui->waitEvents.clear();
