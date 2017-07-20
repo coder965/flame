@@ -8,28 +8,28 @@
 
 struct MonitorWidget
 {
+	tke::Image *image;
+	tke::Framebuffer *fb_image;
+
 	tke::Scene *scene = nullptr;
+	tke::Framebuffer *fb_scene;
+	tke::CommandBuffer *cb_scene;
+	VkEvent scene_renderFinished;
 
 	SelectedItem selectedItem;
 
-	tke::Image *image;
-	tke::Framebuffer *fb_scene;
-	tke::Framebuffer *fb_image;
-	tke::Framebuffer *fb_tool;
-
 	tke::OnceVertexBuffer *physxBuffer = nullptr;
-
-	tke::CommandBuffer *cb;
 	tke::CommandBuffer *cb_physx;
+	VkEvent physx_renderFinished;
+
 	tke::CommandBuffer *cb_wireframe;
 	tke::DescriptorSet *ds_wireframe;
-
-	VkEvent scene_renderFinished;
-	VkEvent physx_renderFinished;
 	VkEvent wireframe_renderFinished;
-	VkEvent renderFinished;
 
+	tke::Framebuffer *fb_tool;
 	TransformerTool *transformerTool;
+
+	VkEvent renderFinished;
 
 	bool opened = true;
 
@@ -38,4 +38,4 @@ struct MonitorWidget
 	void show();
 };
 
-extern MonitorWidget* monitorWidget;
+extern std::vector<MonitorWidget*> monitorWidgets;

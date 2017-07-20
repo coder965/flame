@@ -3641,17 +3641,23 @@ namespace tke
 		// mrt
 		cb->nextSubpass();
 			// static
-		cb->bindVertexBuffer(staticVertexBuffer);
-		cb->bindIndexBuffer(staticIndexBuffer);
-		cb->bindPipeline(mrtPipeline);
-		cb->bindDescriptorSet(ds_mrt->v);
-		cb->drawIndirectIndex(staticObjectIndirectBuffer, staticIndirectCount);
+		if (staticIndirectCount > 0)
+		{
+			cb->bindVertexBuffer(staticVertexBuffer);
+			cb->bindIndexBuffer(staticIndexBuffer);
+			cb->bindPipeline(mrtPipeline);
+			cb->bindDescriptorSet(ds_mrt->v);
+			cb->drawIndirectIndex(staticObjectIndirectBuffer, staticIndirectCount);
+		}
 			// animated
-		cb->bindVertexBuffer(animatedVertexBuffer);
-		cb->bindIndexBuffer(animatedIndexBuffer);
-		cb->bindPipeline(mrtAnimPipeline);
-		cb->bindDescriptorSet(ds_mrtAnim->v);
-		cb->drawIndirectIndex(animatedObjectIndirectBuffer, animatedIndirectCount);
+		if (animatedIndirectCount)
+		{
+			cb->bindVertexBuffer(animatedVertexBuffer);
+			cb->bindIndexBuffer(animatedIndexBuffer);
+			cb->bindPipeline(mrtAnimPipeline);
+			cb->bindDescriptorSet(ds_mrtAnim->v);
+			cb->drawIndirectIndex(animatedObjectIndirectBuffer, animatedIndirectCount);
+		}
 			// terrain
 		if (terrain)
 		{

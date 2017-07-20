@@ -7,52 +7,53 @@
 MonitorWidget::MonitorWidget(tke::Scene *_scene)
 	:scene(_scene)
 {
-	tke::addShowingScene(scene);
-
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	fb_image = tke::getFramebuffer(image, tke::plainRenderPass_image8);
 	tke::addGuiImage(image);
 
 	fb_scene = scene->createFramebuffer(image);
-	fb_image = tke::getFramebuffer(image, tke::plainRenderPass_image8);
+	cb_scene = new tke::CommandBuffer(tke::commandPool);
+	scene_renderFinished = tke::createEvent();
+	tke::addShowingScene(scene);
+
+	cb_physx = new tke::CommandBuffer(tke::commandPool);
+	physx_renderFinished = tke::createEvent();
+
+	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
+	ds_wireframe = tke::plainPipeline_3d_anim_wire->createDescriptorSet(tke::descriptorPool);
+	wireframe_renderFinished = tke::createEvent();
+
 	VkImageView views[] = {
 		image->getView(),
 		tke::depthImage->getView()
 	};
 	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
-
-	cb = new tke::CommandBuffer(tke::commandPool);
-	cb_physx = new tke::CommandBuffer(tke::commandPool);
-	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
-	ds_wireframe = tke::plainPipeline_3d_anim_wire->createDescriptorSet(tke::descriptorPool);
-	scene_renderFinished = tke::createEvent();
-	physx_renderFinished = tke::createEvent();
-	wireframe_renderFinished = tke::createEvent();
-	renderFinished = tke::createEvent();
-
 	transformerTool = new TransformerTool(fb_tool);
+
+	renderFinished = tke::createEvent();
 }
 
 MonitorWidget::~MonitorWidget()
 {
+	tke::releaseFramebuffer(fb_scene);
+	delete cb_scene;
+	tke::destroyEvent(scene_renderFinished);
 	tke::removeShowingScene(scene);
 
+	tke::releaseFramebuffer(fb_image);
 	tke::removeGuiImage(image);
 	delete image;
 
-	tke::releaseFramebuffer(fb_scene);
-	tke::releaseFramebuffer(fb_image);
-	tke::releaseFramebuffer(fb_tool);
-
-	delete cb;
 	delete cb_physx;
+	tke::destroyEvent(physx_renderFinished);
+
 	delete cb_wireframe;
 	delete ds_wireframe;
+	tke::destroyEvent(wireframe_renderFinished);
 
+	tke::releaseFramebuffer(fb_tool);
 	delete transformerTool;
 
-	tke::destroyEvent(scene_renderFinished);
-	tke::destroyEvent(physx_renderFinished);
-	tke::destroyEvent(wireframe_renderFinished);
 	tke::destroyEvent(renderFinished);
 }
 
@@ -89,7 +90,10 @@ void MonitorWidget::show()
 	std::string title = "Monitor - " + scene->name;
 	ImGui::BeginDock(title.c_str(), &opened);
 	if (ImGui::IsWindowFocused())
+	{
 		lastWindowType = LastWindowTypeMonitor;
+		lastMonitorWidget = this;
+	}
 
 	if (ImGui::Button("save"))
 		scene->save(scene->filename);
@@ -198,7 +202,7 @@ void MonitorWidget::show()
 
 	ImGui::EndDock();
 
-	scene->show(cb, fb_scene, scene_renderFinished);
+	scene->show(cb_scene, fb_scene, scene_renderFinished);
 
 	{ // view physx
 		cb_physx->reset();
@@ -378,4 +382,4 @@ void MonitorWidget::show()
 	transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
 }
 
-MonitorWidget* monitorWidget = nullptr;
+std::vector<MonitorWidget*> monitorWidgets;

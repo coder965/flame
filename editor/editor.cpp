@@ -6,7 +6,7 @@
 #include "attribute.h"
 
 LastWindowType lastWindowType = LastWindowTypeNull;
-MonitorWidget *lastMonitor = nullptr;
+MonitorWidget *lastMonitorWidget = nullptr;
 
 tke::Image *titleImage = nullptr;
 
@@ -34,22 +34,17 @@ EditorWindow::EditorWindow()
 				}
 				else if (c->name == "MonitorWidget")
 				{
-					bool opened;
-					c->firstAttribute("opened")->get(&opened);
-					if (opened)
+					auto a = c->firstAttribute("scene_filename");
+					tke::Scene *s = nullptr;
+					for (auto _s : game.scenes)
 					{
-						auto a = c->firstAttribute("scene_filename");
-						tke::Scene *s = nullptr;
-						for (auto _s : game.scenes)
+						if (_s->filename == a->value)
 						{
-							if (_s->filename == a->value)
-							{
-								s = _s;
-								break;
-							}
+							s = _s;
+							break;
 						}
-						openMonitorWidget(s);
 					}
+					openMonitorWidget(s);
 				}
 				else if (c->name == "AttributeWidget")
 				{
@@ -82,10 +77,10 @@ EditorWindow::~EditorWindow()
 			n->addAttribute("opened", gameExplorer ? "true" : "false");
 			at.children.push_back(n);
 		}
+		for (auto m : monitorWidgets)
 		{
 			auto n = new tke::AttributeTreeNode("MonitorWidget");
-			n->addAttribute("opened", monitorWidget ? "true" : "false");
-			n->addAttribute("scene_filename", monitorWidget->scene->filename);
+			n->addAttribute("scene_filename", m->scene->filename);
 			at.children.push_back(n);
 		}
 		{
@@ -122,8 +117,7 @@ void EditorWindow::openOutputWidget()
 
 void EditorWindow::openMonitorWidget(tke::Scene *s)
 {
-	if (!monitorWidget)
-		monitorWidget = new MonitorWidget(s);
+	monitorWidgets.push_back(new MonitorWidget(s));
 }
 
 void EditorWindow::openAttributeWidget()
@@ -241,22 +235,28 @@ void EditorWindow::renderEvent()
 		}
 	}
 
-	if (monitorWidget)
+	for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
 	{
-		monitorWidget->show();
-		if (!monitorWidget->opened)
+		auto m = *it;
+		if (!m->opened)
 		{
-			delete monitorWidget;
-			monitorWidget = nullptr;
+			delete m;
+			it = monitorWidgets.erase(it);
 		}
 		else
 		{
-			cbs.push_back(monitorWidget->cb->v);
-			cbs.push_back(monitorWidget->cb_physx->v);
-			cbs.push_back(monitorWidget->cb_wireframe->v);
-			cbs.push_back(monitorWidget->transformerTool->cb->v);
-			ui->waitEvent = monitorWidget->renderFinished;
+			it++;
 		}
+	}
+
+	for (auto m : monitorWidgets)
+	{
+		m->show();
+		cbs.push_back(m->cb_scene->v);
+		cbs.push_back(m->cb_physx->v);
+		cbs.push_back(m->cb_wireframe->v);
+		cbs.push_back(m->transformerTool->cb->v);
+		ui->waitEvents.push_back(m->renderFinished);
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
@@ -271,7 +271,7 @@ void EditorWindow::renderEvent()
 	endFrame();
 
 	cbs.clear();
-	ui->waitEvent = 0;
+	ui->waitEvents.clear();
 }
 
 EditorWindow *mainWindow = nullptr;

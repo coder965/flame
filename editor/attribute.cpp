@@ -224,16 +224,16 @@ void AttributeWidget::show()
 	case LastWindowTypeMonitor:
 		ImGui::BeginTabBar("##tab_monitor");
 		if (ImGui::AddTab("Scene"))
-			_show_scene(monitorWidget->scene);
-		if (monitorWidget->selectedItem)
+			_show_scene(lastMonitorWidget->scene);
+		if (lastMonitorWidget->selectedItem)
 		{
 			if (ImGui::AddTab("Select"))
 			{
-				switch (monitorWidget->selectedItem.type)
+				switch (lastMonitorWidget->selectedItem.type)
 				{
 				case ItemTypeObject:
 				{
-					auto o = monitorWidget->selectedItem.toObject();
+					auto o = lastMonitorWidget->selectedItem.toObject();
 
 					auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
 					ImGui::Text("model:%s", modelName.c_str());
