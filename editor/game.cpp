@@ -67,10 +67,12 @@ void GameExplorer::show()
 		for (int i = 0; i < tke::models.size(); i++)
 		{
 			auto m = tke::models[i];
-			if (ImGui::Selectable(m->filename.c_str(), lastItemType == lastItemTypeModel && itemIndex == i))
+			if (ImGui::Selectable(m->filename.c_str(), lastItemType == lastItemTypeModel && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;
+				if (ImGui::IsMouseDoubleClicked(0))
+					mainWindow->openModelMonitorWidget(m);
 			}
 		}
 		ImGui::TreePop();
@@ -85,7 +87,7 @@ void GameExplorer::show()
 				lastItemType = lastItemTypeScene;
 				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
-					mainWindow->openMonitorWidget(s);
+					mainWindow->openSceneMonitorWidget(s);
 			}
 		}
 		ImGui::TreePop();

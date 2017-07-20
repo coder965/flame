@@ -34,17 +34,28 @@ EditorWindow::EditorWindow()
 				}
 				else if (c->name == "MonitorWidget")
 				{
-					auto a = c->firstAttribute("scene_filename");
-					tke::Scene *s = nullptr;
-					for (auto _s : game.scenes)
+					auto a0 = c->firstAttribute("scene_filename");
+					if (a0)
 					{
-						if (_s->filename == a->value)
+						tke::Scene *s = nullptr;
+						for (auto _s : game.scenes)
 						{
-							s = _s;
-							break;
+							if (_s->filename == a0->value)
+							{
+								s = _s;
+								break;
+							}
 						}
+						if (s)
+							openSceneMonitorWidget(s);
 					}
-					openMonitorWidget(s);
+					auto a1 = c->firstAttribute("model_filename");
+					if (a1)
+					{
+						auto m = tke::getModel(a1->value);
+						if (m)
+							openModelMonitorWidget(m);
+					}
 				}
 				else if (c->name == "AttributeWidget")
 				{
@@ -82,6 +93,8 @@ EditorWindow::~EditorWindow()
 			auto n = new tke::AttributeTreeNode("MonitorWidget");
 			if (m->mode == MonitorWidget::ModeScene)
 				n->addAttribute("scene_filename", ((SceneMonitorWidget*)m)->scene->filename);
+			else if (m->mode == MonitorWidget::ModeModel)
+				n->addAttribute("model_filename", ((ModelMonitorWidget*)m)->model->filename);
 			at.children.push_back(n);
 		}
 		{
@@ -111,9 +124,14 @@ void EditorWindow::openGameExplorer()
 		gameExplorer = new GameExplorer;
 }
 
-void EditorWindow::openMonitorWidget(tke::Scene *s)
+void EditorWindow::openSceneMonitorWidget(tke::Scene *s)
 {
 	monitorWidgets.push_back(new SceneMonitorWidget(s));
+}
+
+void EditorWindow::openModelMonitorWidget(tke::Model *m)
+{
+	monitorWidgets.push_back(new ModelMonitorWidget(m));
 }
 
 void EditorWindow::openAttributeWidget()

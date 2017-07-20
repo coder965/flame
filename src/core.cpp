@@ -72,6 +72,8 @@ namespace tke
 	Pipeline *plainPipeline_3d = nullptr;
 	Pipeline *plainPipeline_3d_anim = nullptr;
 	Pipeline *plainPipeline_3d_normal = nullptr;
+	Pipeline *plainPipeline_3d_tex = nullptr;
+	Pipeline *plainPipeline_3d_anim_tex = nullptr;
 	Pipeline *plainPipeline_3d_wire = nullptr;
 	Pipeline *plainPipeline_3d_anim_wire = nullptr;
 	Pipeline *plainPipeline_3d_line = nullptr;
@@ -671,6 +673,12 @@ namespace tke
 		plainPipeline_3d_normal = new Pipeline;
 		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
 		plainPipeline_3d_normal->setup(plainRenderPass_depth_clear_image8, 0, false);
+		plainPipeline_3d_tex = new Pipeline;
+		plainPipeline_3d_tex->loadXML(enginePath + "pipeline/plain3d/plain3d_tex.xml");
+		plainPipeline_3d_tex->setup(plainRenderPass_depth_clear_image8, 0, false);
+		plainPipeline_3d_anim_tex = new Pipeline;
+		plainPipeline_3d_anim_tex->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml");
+		plainPipeline_3d_anim_tex->setup(plainRenderPass_depth_clear_image8, 0, true);
 		plainPipeline_3d_wire = new Pipeline;
 		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
 		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0, false);

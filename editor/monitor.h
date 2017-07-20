@@ -53,15 +53,18 @@ struct SceneMonitorWidget : MonitorWidget
 	virtual void show() override;
 };
 
-struct ModelMonitorWideget : MonitorWidget
+struct ModelMonitorWidget : MonitorWidget
 {
+	tke::Image *image;
+	tke::Framebuffer *fb;
+
 	tke::Model *model;
 
 	tke::CommandBuffer *cb;
 	tke::DescriptorSet *ds;
 
-	ModelMonitorWideget(tke::Model *_model);
-	virtual ~ModelMonitorWideget() override;
+	ModelMonitorWidget(tke::Model *_model);
+	virtual ~ModelMonitorWidget() override;
 	virtual void show() override;
 };
 

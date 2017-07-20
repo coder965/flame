@@ -31,5 +31,11 @@ void main()
 #if defined(USE_NORMAL)
 	* dot(inNormal, vec3(0, 0, 1))
 #endif
-	, pc.color.a);
+	,
+#if defined(USE_TEX)
+		1.0
+#else
+		pc.color.a
+#endif
+	);
 }

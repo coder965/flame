@@ -395,22 +395,58 @@ void SceneMonitorWidget::show()
 	transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
 }
 
-ModelMonitorWideget::ModelMonitorWideget(tke::Model *_model)
+ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 	:model(_model)
 {
+	mode = ModeModel;
+
+	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	VkImageView views[] = {
+		image->getView(),
+		tke::depthImage->getView()
+	};
+	fb = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	tke::addGuiImage(image);
+
 	cb = new tke::CommandBuffer(tke::commandPool);
 
 	cbs.push_back(cb->v);
 }
 
-ModelMonitorWideget::~ModelMonitorWideget()
+ModelMonitorWidget::~ModelMonitorWidget()
 {
+	tke::releaseFramebuffer(fb);
+	tke::removeGuiImage(image);
+	delete image;
 
+	delete cb;
 }
 
-void ModelMonitorWideget::show()
+void ModelMonitorWidget::show()
 {
+	std::string title = "Monitor - " + model->name;
+	ImGui::BeginDock(title.c_str(), &opened);
+	if (ImGui::IsWindowFocused())
+	{
+		lastWindowType = LastWindowTypeMonitor;
+		lastMonitorWidget = this;
+	}
 
+	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
+
+	ImGui::EndDock();
+
+	cb->reset();
+	cb->begin();
+
+	VkClearValue clearValue = { 0.f, 0.f, 1.f, 1.f };
+	cb->beginRenderPass(tke::plainRenderPass_depth_clear_image8_clear, fb, &clearValue);
+
+	cb->endRenderPass();
+
+	cb->setEvent(renderFinished);
+
+	cb->end();
 }
 
 std::vector<MonitorWidget*> monitorWidgets;

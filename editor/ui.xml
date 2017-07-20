@@ -1,7 +1,8 @@
 <data>
 	<GameExplorer opened="true"/>
-	<MonitorWidget scene_filename="scene_1.xml"/>
-	<AttributeWidget opened="true"/>
+	<MonitorWidget model_filename="D:/miku/miku.pmd"/>
+	<MonitorWidget model_filename="[cube]"/>
+	<AttributeWidget opened="false"/>
 	<object_creation_setting modelIndex="1" use_camera_position="true" use_camera_target_position="true" coord="0./21.000002/0." randCX="false" randCY="false" randCZ="false" coordRandRange="8.700001" euler="0./0./0." randRX="false" randRY="false" randRZ="false" eulerRandRange="360." scale="0.1/0.1/0.1" randSX="false" randSY="false" randSZ="false" scaleRandRange="8.6" same_scale_rand="false" physxType="1"/>
 	<terrain_creation_setting heightMapIndex="2" colorMapIndex="3" height="100." usePhysx="true"/>
 </data>
