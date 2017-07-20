@@ -1,5 +1,5 @@
 <scene name="scene">
-	<object model_name="らぶ塀ミク" physics_type=" dynamic controller" coord="144.49086/90.40731/65.427933" euler="0./0./0." scale="0.1/0.1/0.1"/>
+	<object model_filename="D:/miku/miku.pmd" physics_type="dynamic controller" coord="144.49086/89.754066/65.427933" euler="0./0./0." scale="0.1/0.1/0.1"/>
 	<terrain type="height_map" use_physx="true" height_map_filename="heightmap.jpg" color_map_filename="heightmap_color.jpg" coord="0./0./0." euler="0./0./0." scale="1./1./1."/>
 </scene>
 

@@ -625,33 +625,58 @@ namespace tke
 		return pShape;
 	}
 
-	void Model::loadDat(const std::string &filename)
+	void Model::loadData(bool needRigidbody)
 	{
-		std::ifstream file(filename);
-		if (!file.good()) return;
-		int count;
-		file >> count;
-		for (auto p : rigidbodies) delete p;
-		rigidbodies.clear();
-		for (int i = 0; i < count; i++)
-		{
-			auto rb = new Rigidbody;
-			file.read((char*)rb, sizeof(Rigidbody));
+		AttributeTree at("data", filename + ".xml");
+		if (!at.good)
+			return;
 
-			rigidbodies.push_back(rb);
+		if (needRigidbody)
+		{
+			for (auto r : rigidbodies)
+				delete r;
+			rigidbodies.clear();
 		}
-		file >> eyePosition;
+
+		for (auto a : at.attributes)
+		{
+			if (a->name == "controller_height")
+				a->get(&controllerHeight);
+			if (a->name == "controller_radius")
+				a->get(&controllerRadius);
+			if (a->name == "eye_position")
+				a->get(&eyePosition);
+		}
+
+		for (auto c : at.children)
+		{
+			if (c->name == "rigid_body")
+			{
+				auto r = new Rigidbody;
+
+				rigidbodies.push_back(r);
+			}
+		}
 	}
 
-	void Model::saveDat(const std::string &filename)
+	void Model::saveData(bool needRigidbody)
 	{
-		std::ofstream file(filename);
-		if (!file.good()) return;
-		file << rigidbodies.size();
-		for (int i = 0; i < rigidbodies.size(); i++)
-			file.write((char*)&rigidbodies[i], sizeof(Rigidbody));
+		AttributeTree at("data");
 
-		file << eyePosition;
+		if (needRigidbody)
+		{
+			for (auto r : rigidbodies)
+			{
+				auto n = new AttributeTreeNode("rigid_body");
+				at.children.push_back(n);
+			}
+		}
+
+		at.addAttribute("controller_height", &controllerHeight);
+		at.addAttribute("controller_radius", &controllerRadius);
+		at.addAttribute("eye_position", &eyePosition);
+
+		at.saveXML(filename + ".xml");
 	}
 
 	AnimationBinding *Model::bindAnimation(Animation *pAnimationTemplate)
@@ -1365,6 +1390,7 @@ namespace tke
 		{
 			triangleModel = new Model;
 			triangleModel->name = "triangle";
+			triangleModel->filename = "[triangle]";
 
 			addTriangleVertex(triangleModel, glm::mat3(), glm::vec3());
 
@@ -1380,6 +1406,7 @@ namespace tke
 		{
 			cubeModel = new Model;
 			cubeModel->name = "cube";
+			cubeModel->filename = "[cube]";
 
 			addCubeVertex(cubeModel, glm::mat3(), glm::vec3(), 1.f);
 
@@ -1401,6 +1428,7 @@ namespace tke
 		{
 			sphereModel = new Model;
 			sphereModel->name = "sphere";
+			sphereModel->filename = "[sphere]";
 
 			addSphereVertex(sphereModel, glm::mat3(), glm::vec3(), 0.5f, 32, 32);
 
@@ -1426,6 +1454,7 @@ namespace tke
 		{
 			cylinderModel = new Model;
 			cylinderModel->name = "cylinder";
+			cylinderModel->filename = "[cylinder]";
 
 			addCylinderVertex(cylinderModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
 
@@ -1447,6 +1476,7 @@ namespace tke
 		{
 			coneModel = new Model;
 			coneModel->name = "cone";
+			coneModel->filename = "[cone]";
 
 			addConeVertex(coneModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
 
@@ -1462,6 +1492,7 @@ namespace tke
 		{
 			arrowModel = new Model;
 			arrowModel->name = "arrow";
+			arrowModel->filename = "[arrow]";
 
 			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
 
@@ -1480,6 +1511,7 @@ namespace tke
 		{
 			torusModel = new Model;
 			torusModel->name = "torus";
+			torusModel->filename = "[torus]";
 
 			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
 
@@ -1497,6 +1529,7 @@ namespace tke
 		{
 			hamerModel = new Model;
 			hamerModel->name = "hammer";
+			hamerModel->filename = "[hammer]";
 
 			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
 
@@ -1685,6 +1718,8 @@ namespace tke
 					}
 				}
 			}
+
+			m->loadData(true);
 
 			_model_after_process(m);
 		}
@@ -2057,6 +2092,8 @@ namespace tke
 				m->addJoint(p);
 			}
 
+			m->loadData(false);
+
 			_model_after_process(m);
 		}
 	}
@@ -2312,6 +2349,9 @@ namespace tke
 			file >> m->boundingPosition;
 			file >> m->boundingSize;
 
+			file >> m->controllerHeight;
+			file >> m->controllerRadius;
+
 			file >> m->eyePosition;
 
 			_model_after_process(m);
@@ -2474,6 +2514,9 @@ namespace tke
 			file << m->boundingPosition;
 			file << m->boundingSize;
 
+			file << m->controllerHeight;
+			file << m->controllerRadius;
+
 			file << m->eyePosition;
 		}
 	}
@@ -2595,7 +2638,7 @@ namespace tke
 	Object::Object(Model *_model, ObjectPhysicsType _physicsType)
 		:model(_model), physics_type(_physicsType)
 	{
-		model_name = model->name;
+		model_filename = model->filename;
 		if (model->animated)
 			animationComponent = new AnimationComponent(model);
 	}
@@ -2912,8 +2955,8 @@ namespace tke
 		{
 			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
-			capsuleDesc.radius = glm::max((m->maxCoord.x - m->minCoord.x) * o->getScale().x, (m->maxCoord.z - m->minCoord.z) * o->getScale().z) * 0.5f;
-			capsuleDesc.height = (m->maxCoord.y - m->minCoord.y) * o->getScale().y - capsuleDesc.radius * 2.f;
+			capsuleDesc.radius = m->controllerRadius * o->getScale().x;
+			capsuleDesc.height = m->controllerHeight * o->getScale().y;
 			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 			capsuleDesc.material = pxDefaultMaterial;
 			capsuleDesc.position.x = centerPos.x;
@@ -3101,19 +3144,19 @@ namespace tke
 		auto dist = (timeDisp) / 1000.f;
 		if (dist > 0.f)
 		{
-			for (auto object : objects) // set controller coord
+			for (auto o : objects) // set controller coord
 			{
-				if ((int)object->physics_type & (int)ObjectPhysicsType::controller)
+				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					glm::vec3 e, c;
-					object->move(object->getEuler().x, c, e);
-					object->addEuler(e);
+					o->move(o->getEuler().x, c, e);
+					o->addEuler(e);
 
-					physx::PxVec3 disp(c.x, -gravity * object->floatingTime * object->floatingTime, c.z);
-					object->floatingTime += dist;
+					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
+					o->floatingTime += dist;
 
-					if (object->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
-						object->floatingTime = 0.f;
+					if (o->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
+						o->floatingTime = 0.f;
 				}
 			}
 			pxScene->simulate(dist);
@@ -3346,14 +3389,14 @@ namespace tke
 			int staticObjectIndex = 0;
 			int animatedObjectIndex = 0;
 
-			for (auto pObject : objects)
+			for (auto o : objects)
 			{
-				if (!pObject->model->animated)
+				if (!o->model->animated)
 				{
-					if (pObject->changed)
+					if (o->changed)
 					{
 						auto srcOffset = sizeof(glm::mat4) * updateCount;
-						memcpy(map + srcOffset, &pObject->getMat(), sizeof(glm::mat4));
+						memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
 						VkBufferCopy range = {};
 						range.srcOffset = srcOffset;
 						range.dstOffset = sizeof(glm::mat4) * staticObjectIndex;
@@ -3362,15 +3405,15 @@ namespace tke
 
 						updateCount++;
 					}
-					pObject->sceneIndex = staticObjectIndex;
+					o->sceneIndex = staticObjectIndex;
 					staticObjectIndex++;
 				}
 				else
 				{
-					if (pObject->changed)
+					if (o->changed)
 					{
 						auto srcOffset = sizeof(glm::mat4) * updateCount;
-						memcpy(map + srcOffset, &pObject->getMat(), sizeof(glm::mat4));
+						memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
 						VkBufferCopy range = {};
 						range.srcOffset = srcOffset;
 						range.dstOffset = sizeof(glm::mat4) * animatedObjectIndex;
@@ -3379,7 +3422,7 @@ namespace tke
 
 						updateCount++;
 					}
-					pObject->sceneIndex = animatedObjectIndex;
+					o->sceneIndex = animatedObjectIndex;
 					animatedObjectIndex++;
 				}
 
@@ -3635,7 +3678,7 @@ namespace tke
 			{
 				auto o = new Object;
 				c->obtainFromAttributes(o, o->b);
-				o->model = getModel(o->model_name);
+				o->model = getModel(o->model_filename);
 				if (o->model && o->model->animated)
 					o->animationComponent = new AnimationComponent(o->model);
 				o->needUpdateAxis = true;

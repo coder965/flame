@@ -210,6 +210,10 @@ void AttributeWidget::show()
 			ImGui::Text("indice count:%d", m->indices.size());
 			ImGui::Text("indice base:%d", m->indiceBase);
 			ImGui::Text("vertex base:%d", m->vertexBase);
+			if (ImGui::Button("Save Data"))
+				m->saveData(false);
+			ImGui::DragFloat("Controller Height", &m->controllerHeight, 0.1f, 0.f, 10000.f);
+			ImGui::DragFloat("Controller Radius", &m->controllerRadius, 0.1f, 0.f, 10000.f);
 		}
 			break;
 		case GameExplorer::lastItemTypeScene:

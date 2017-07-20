@@ -5,6 +5,7 @@
 #include <stack>
 
 #include "render.h"
+#include "entity.h"
 #include "core.h"
 
 namespace tke
@@ -202,6 +203,14 @@ namespace tke
 	void CommandBuffer::drawIndex(int indexCount, int firstIndex, int vertexOffset, int instanceCount, int firstInstance)
 	{
 		vkCmdDrawIndexed(v, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+	}
+
+	void CommandBuffer::drawModel(Model *m, int mtIndex)
+	{
+		if (mtIndex == -1)
+			drawIndex(m->indices.size(), m->indiceBase, m->vertexBase);
+		else
+			drawIndex(m->materials[mtIndex]->indiceCount, m->indiceBase + m->materials[mtIndex]->indiceBase, m->vertexBase);
 	}
 
 	void CommandBuffer::drawIndirect(IndirectVertexBuffer *b, int count, int offset)

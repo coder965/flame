@@ -67,7 +67,7 @@ void GameExplorer::show()
 		for (int i = 0; i < tke::models.size(); i++)
 		{
 			auto m = tke::models[i];
-			if (ImGui::Selectable(m->name.c_str(), lastItemType == lastItemTypeModel && itemIndex == i))
+			if (ImGui::Selectable(m->filename.c_str(), lastItemType == lastItemTypeModel && itemIndex == i))
 			{
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;

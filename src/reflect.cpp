@@ -118,7 +118,7 @@ currentEnum->items.emplace_back("dynamic", (int)ObjectPhysicsType::dynamic);
 currentEnum->items.emplace_back("controller", (int)ObjectPhysicsType::controller);
 currentBank = Object::b;
 currentBank->parents.push_back(Transformer::b);
-currentBank->addV<std::string>("model_name", offsetof(Object, model_name));
+currentBank->addV<std::string>("model_filename", offsetof(Object, model_filename));
 currentBank->addE("ObjectPhysicsType", "physics_type", offsetof(Object, physics_type));
 currentEnum = tke::addReflectEnum("TerrainType");
 currentEnum->items.emplace_back("height_map", (int)TerrainType::height_map);

@@ -185,7 +185,7 @@ namespace tke
 		Image *normalHeightMap = nullptr;
 		Image *specRoughnessMap = nullptr;
 
-		int indiceBase = 0;
+		int indiceBase = 0; // offset of model base
 		int indiceCount = 0;
 
 		bool visible = true;
@@ -378,10 +378,13 @@ namespace tke
 		glm::vec3 boundingPosition;
 		float boundingSize = 1.f;
 
+		float controllerHeight = 1.f;
+		float controllerRadius = 0.5f;
+
 		glm::vec3 eyePosition;
 
-		void loadDat(const std::string &filename);
-		void saveDat(const std::string &filename);
+		void loadData(bool needRigidbody);
+		void saveData(bool needRigidbody);
 
 		Image *getImage(const char *name);
 
@@ -394,11 +397,11 @@ namespace tke
 	};
 
 	extern std::vector<Model*> models;
-	inline Model *getModel(const std::string &name)
+	inline Model *getModel(const std::string &filename)
 	{
 		for (auto m : models)
 		{
-			if (m->name == name)
+			if (m->filename == filename)
 				return m;
 		}
 		return nullptr;
@@ -494,7 +497,7 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLv std::string model_name;
+		REFLv std::string model_filename;
 		Model *model = nullptr;
 
 		REFLe ObjectPhysicsType physics_type = ObjectPhysicsType::null; // cannot change

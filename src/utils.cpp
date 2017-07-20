@@ -422,13 +422,15 @@ namespace tke
 				auto e = r->toEnu();
 				auto v = *e->ptr(n->ptr);
 
+				bool first = true;
 				for (int i = 0; i < e->pEnum->items.size(); i++)
 				{
 					auto &item = e->pEnum->items[i];
 					if (v & item.value)
 					{
-						if (i != 0)a->value += " ";
+						if (!first)a->value += " ";
 						a->value += item.name;
+						first = false;
 					}
 				}
 			}

@@ -49,7 +49,7 @@ MonitorWidget::~MonitorWidget()
 }
 
 static tke::Scene *currentScene = nullptr;
-void draw_wireframe(tke::CommandBuffer *cb) 
+void draw_frame(tke::CommandBuffer *cb)
 {
 	for (int i = 0; i < currentScene->objects.size(); i++)
 	{
@@ -117,7 +117,7 @@ void MonitorWidget::show()
 				if (!transformerTool->leftDown(x, y))
 				{
 					currentScene = scene;
-					auto index = tke::pickUp(x, y, draw_wireframe);
+					auto index = tke::pickUp(x, y, draw_frame);
 					if (index == 0)
 						selectedItem.reset();
 					else
@@ -161,6 +161,13 @@ void MonitorWidget::show()
 			scene->camera.lookAtTarget();
 		}
 	}
+
+	static bool showSelectedWireframe = true;
+	ImGui::Checkbox("Show Selected Wire Frame", &showSelectedWireframe);
+	static bool showSelectedController = false;
+	ImGui::Checkbox("Show Selected Controller", &showSelectedController);
+	static bool showSelectedEyePosition = false;
+	ImGui::Checkbox("Show Selected Eye Position", &showSelectedEyePosition);
 
 	static bool viewPhysx = false;
 	if (ImGui::Checkbox("View Physx", &viewPhysx))
@@ -297,28 +304,62 @@ void MonitorWidget::show()
 			auto model = obj->model;
 			auto animated = model->animated;
 
-			if (last_obj != obj && animated)
-				ds_wireframe->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
-
 			cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_image);
-			cb_wireframe->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
-			cb_wireframe->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
-			cb_wireframe->bindPipeline(animated ? tke::plainPipeline_3d_anim_wire : tke::plainPipeline_3d_wire);
-			if (animated)
-				cb_wireframe->bindDescriptorSet(ds_wireframe->v);
-			else
-				cb_wireframe->bindDescriptorSet();
+
 			struct
 			{
 				glm::mat4 modelview;
 				glm::mat4 proj;
 				glm::vec4 color;
-			}data;
-			data.proj = tke::matPerspective;
-			data.modelview = scene->camera.getMatInv() * obj->getMat();
-			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-			cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
-			cb_wireframe->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+			}pc;
+			pc.proj = tke::matPerspective;
+
+			if (showSelectedWireframe)
+			{
+				cb_wireframe->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
+				cb_wireframe->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
+				cb_wireframe->bindPipeline(animated ? tke::plainPipeline_3d_anim_wire : tke::plainPipeline_3d_wire);
+				if (animated)
+				{
+					if (last_obj != obj)
+						ds_wireframe->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
+					cb_wireframe->bindDescriptorSet(ds_wireframe->v);
+				}
+				else
+				{
+					cb_wireframe->bindDescriptorSet();
+				}
+				pc.modelview = scene->camera.getMatInv() * obj->getMat();
+				pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->drawModel(model);
+			}
+
+			if (showSelectedController)
+			{
+				cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
+				cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
+				cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
+				cb_wireframe->bindDescriptorSet();
+				pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
+				{
+					auto c = (model->maxCoord + model->minCoord) * 0.5f;
+					auto r = model->controllerRadius / 0.5f;
+					auto h = model->controllerHeight;
+					auto mv = scene->camera.getMatInv() * obj->getMat();
+					pc.modelview = mv * glm::translate(c) * glm::scale(r, h, r);
+					cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+					cb_wireframe->drawModel(tke::cylinderModel);
+					h *= 0.5f;
+					pc.modelview = mv * glm::translate(c - glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+					cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+					cb_wireframe->drawModel(tke::sphereModel, 0);
+					pc.modelview = mv * glm::translate(c + glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+					cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+					cb_wireframe->drawModel(tke::sphereModel, 1);
+				}
+			}
+
 			cb_wireframe->endRenderPass();
 		}
 		last_obj = obj;
