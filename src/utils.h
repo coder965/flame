@@ -278,23 +278,4 @@ namespace tke
 #define REFLv
 #define REFLe
 
-	enum NotificationType
-	{
-		NotificationTypeChange,
-		NotificationTypeRefresh
-	};
-
-	struct Observer
-	{
-		virtual void listen(void *sender, NotificationType type, void *newData) = 0;
-	};
-
-	struct ObservedObject
-	{
-		std::vector<Observer*> observers;
-
-		~ObservedObject();
-		void addObserver(Observer*);
-		void removeObserver(Observer*);
-	};
 }

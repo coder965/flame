@@ -26,7 +26,7 @@ static void _show_scene(tke::Scene *scene)
 			if (ocs.modelIndex >= tke::models.size())
 				ocs.modelIndex = 0;
 			if (ImGui::Combo("Model", &ocs.modelIndex, [](void *data, int idx, const char **out_text) {
-				*out_text = tke::models[idx]->name.c_str();
+				*out_text = tke::models[idx]->filename.c_str();
 				return true;
 			}, nullptr, tke::models.size()));
 

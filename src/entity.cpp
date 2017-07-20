@@ -2005,7 +2005,7 @@ namespace tke
 				matrixToQuaternion(rotationMat, rotationQuat);
 				p->setQuat(rotationQuat);
 				p->type = (RigidbodyType)data.mode;
-				m->addRigidbody(p);
+				//m->addRigidbody(p); // TODO : FIX
 				auto q = new Shape;
 				p->addShape(q);
 				switch (data.type)
@@ -2912,8 +2912,8 @@ namespace tke
 		{
 			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
-			capsuleDesc.height = (m->maxCoord.y - m->minCoord.y) * o->getScale().y;
 			capsuleDesc.radius = glm::max((m->maxCoord.x - m->minCoord.x) * o->getScale().x, (m->maxCoord.z - m->minCoord.z) * o->getScale().z) * 0.5f;
+			capsuleDesc.height = (m->maxCoord.y - m->minCoord.y) * o->getScale().y - capsuleDesc.radius * 2.f;
 			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 			capsuleDesc.material = pxDefaultMaterial;
 			capsuleDesc.position.x = centerPos.x;
@@ -3636,6 +3636,8 @@ namespace tke
 				auto o = new Object;
 				c->obtainFromAttributes(o, o->b);
 				o->model = getModel(o->model_name);
+				if (o->model && o->model->animated)
+					o->animationComponent = new AnimationComponent(o->model);
 				o->needUpdateAxis = true;
 				o->needUpdateQuat = true;
 				o->needUpdateMat = true;

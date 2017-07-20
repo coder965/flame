@@ -10,10 +10,10 @@ enum ItemType
 	ItemTypeLight
 };
 
-struct SelectedItem : tke::Observer
+struct SelectedItem
 {
 	ItemType type = ItemTypeNull;
-	tke::ObservedObject *ptr = nullptr;
+	void *ptr = nullptr;
 
 	inline explicit operator bool() const noexcept
 	{
@@ -36,5 +36,4 @@ struct SelectedItem : tke::Observer
 
 	void reset();
 	void select(tke::Object *_obj);
-	virtual void listen(void *sender, tke::NotificationType type, void *newData) override;
 };

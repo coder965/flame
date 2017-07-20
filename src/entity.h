@@ -490,7 +490,7 @@ namespace tke
 		glm::vec3 coord;
 	};
 
-	REFLECTABLE struct Object : Transformer, Controller, ObservedObject
+	REFLECTABLE struct Object : Transformer, Controller
 	{
 		REFL_BANK;
 
