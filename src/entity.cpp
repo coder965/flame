@@ -640,6 +640,8 @@ namespace tke
 
 		for (auto a : at.attributes)
 		{
+			if (a->name == "controller_position")
+				a->get(&controllerPosition);
 			if (a->name == "controller_height")
 				a->get(&controllerHeight);
 			if (a->name == "controller_radius")
@@ -672,6 +674,7 @@ namespace tke
 			}
 		}
 
+		at.addAttribute("controller_position", &controllerPosition);
 		at.addAttribute("controller_height", &controllerHeight);
 		at.addAttribute("controller_radius", &controllerRadius);
 		at.addAttribute("eye_position", &eyePosition);
@@ -2953,7 +2956,7 @@ namespace tke
 
 		if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 		{
-			auto centerPos = ((m->maxCoord + m->minCoord) * 0.5f) * o->getScale() + o->getCoord();
+			auto centerPos = m->controllerPosition * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
 			capsuleDesc.radius = m->controllerRadius * o->getScale().x;
 			capsuleDesc.height = m->controllerHeight * o->getScale().y;
@@ -3152,7 +3155,7 @@ namespace tke
 					o->move(o->getEuler().x, c, e);
 					o->addEuler(e);
 
-					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
+					physx::PxVec3 disp(c.x, /*-gravity * o->floatingTime * o->floatingTime*/0, c.z);
 					o->floatingTime += dist;
 
 					if (o->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)

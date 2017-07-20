@@ -10,10 +10,12 @@ enum ItemType
 	ItemTypeLight
 };
 
-struct SelectedItem
+struct SelectedItem : tke::Observer
 {
 	ItemType type = ItemTypeNull;
-	void *ptr = nullptr;
+	tke::Observed *ptr = nullptr;
+
+	virtual void deadCallback() override;
 
 	inline explicit operator bool() const noexcept
 	{
@@ -29,9 +31,13 @@ struct SelectedItem
 
 	inline tke::Transformer *toTransformer() const
 	{
-		if (type == ItemTypeNull)
-			return nullptr;
-		return (tke::Transformer*)ptr;
+		switch (type)
+		{
+		case ItemTypeObject:
+			return (tke::Object*)ptr;
+			break;
+		}
+		return nullptr;
 	}
 
 	void reset();

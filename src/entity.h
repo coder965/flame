@@ -378,6 +378,7 @@ namespace tke
 		glm::vec3 boundingPosition;
 		float boundingSize = 1.f;
 
+		glm::vec3 controllerPosition;
 		float controllerHeight = 1.f;
 		float controllerRadius = 0.5f;
 
@@ -493,7 +494,7 @@ namespace tke
 		glm::vec3 coord;
 	};
 
-	REFLECTABLE struct Object : Transformer, Controller
+	REFLECTABLE struct Object : Transformer, Controller, Observed
 	{
 		REFL_BANK;
 

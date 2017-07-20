@@ -278,4 +278,17 @@ namespace tke
 #define REFLv
 #define REFLe
 
+	struct Observer
+	{
+		virtual void deadCallback() = 0;
+	};
+
+	struct Observed
+	{
+		std::vector<Observer*> observers;
+
+		~Observed();
+		void addObserver(Observer *o);
+		void removeObserver(Observer *o);
+	};
 }

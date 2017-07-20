@@ -343,7 +343,7 @@ void MonitorWidget::show()
 				cb_wireframe->bindDescriptorSet();
 				pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
 				{
-					auto c = (model->maxCoord + model->minCoord) * 0.5f;
+					auto c = model->controllerPosition;
 					auto r = model->controllerRadius / 0.5f;
 					auto h = model->controllerHeight;
 					auto mv = scene->camera.getMatInv() * obj->getMat();

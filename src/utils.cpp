@@ -537,4 +537,26 @@ namespace tke
 		file.write(str.data(), str.size());
 	}
 
+	Observed::~Observed()
+	{
+		for (auto o : observers)
+			o->deadCallback();
+	}
+
+	void Observed::addObserver(Observer *o)
+	{
+		observers.push_back(o);
+	}
+
+	void Observed::removeObserver(Observer *o)
+	{
+		for (auto it = observers.begin(); it != observers.end(); it++)
+		{
+			if (*it == o)
+			{
+				observers.erase(it);
+				return;
+			}
+		}
+	}
 }
