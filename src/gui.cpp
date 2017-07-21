@@ -749,7 +749,7 @@ namespace tke
 			n->addAttribute("next", std::to_string(ImGui::g_dock.getDockIndex(dock.next_tab)));
 			n->addAttribute("child0", std::to_string(ImGui::g_dock.getDockIndex(dock.children[0])));
 			n->addAttribute("child1", std::to_string(ImGui::g_dock.getDockIndex(dock.children[1])));
-			n->addAttribute("parent", std::to_string(ImGui::g_dock.getDockIndex(dock.parent)));
+			n->addAttribute("parent", std::to_string(ImGui::g_dock.getDockIndex(dock.parents)));
 			at.children.push_back(n);
 		}
 
@@ -798,7 +798,7 @@ namespace tke
 					dock.next_tab = ImGui::g_dock.getDockByIndex(std::stoi(c->firstAttribute("next")->value));
 					dock.children[0] = ImGui::g_dock.getDockByIndex(std::stoi(c->firstAttribute("child0")->value));
 					dock.children[1] = ImGui::g_dock.getDockByIndex(std::stoi(c->firstAttribute("child1")->value));
-					dock.parent = ImGui::g_dock.getDockByIndex(std::stoi(c->firstAttribute("parent")->value));
+					dock.parents = ImGui::g_dock.getDockByIndex(std::stoi(c->firstAttribute("parent")->value));
 				}
 			}
 		}

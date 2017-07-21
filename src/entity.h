@@ -107,12 +107,14 @@ namespace tke
 		void updateQuat();
 	};
 
-	struct Controller
+	REFLECTABLE struct Controller
 	{
+		REFL_BANK;
+
 		int lastTime = 0;
-		float baseForwardAng = 0.f;
-		float speed = 1.f;
-		float turnSpeed = 75.f;
+		REFLv float ang_offset = 0.f;
+		REFLv float speed = 1.f;
+		REFLv float turn_speed = 75.f;
 		bool forward = false, backward = false, left = false, right = false, up = false, down = false, turnLeft = false, turnRight = false, turnUp = false, turnDown = false;
 
 		void reset();
@@ -198,7 +200,7 @@ namespace tke
 		std::string name;
 		char type = -1;
 
-		int parent = -1;
+		int parents = -1;
 
 		glm::vec3 rootCoord;
 		glm::vec3 relateCoord;

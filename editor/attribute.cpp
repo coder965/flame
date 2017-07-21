@@ -196,6 +196,7 @@ static void _show_model(tke::Model *m)
 		m->saveData(false);
 	ImGui::DragFloat("Controller Height", &m->controllerHeight, 0.1f, 0.f, 10000.f);
 	ImGui::DragFloat("Controller Radius", &m->controllerRadius, 0.1f, 0.f, 10000.f);
+	ImGui::DragFloat3("Controller Position", &m->controllerPosition[0], 0.1f, 0.f, 10000.f);
 	ImGui::DragFloat3("Eye Position", &m->eyePosition[0]);
 }
 
@@ -255,6 +256,10 @@ void AttributeWidget::show()
 						auto scale = o->getScale();
 						if (ImGui::DragFloat3("scale", &scale[0]))
 							o->setScale(scale);
+
+						ImGui::DragFloat("ang offset", &o->ang_offset);
+						ImGui::DragFloat("speed", &o->speed);
+						ImGui::DragFloat("turn speed", &o->turn_speed);
 
 						if (o->model->animated)
 						{

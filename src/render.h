@@ -516,7 +516,7 @@ namespace tke
 	struct Model;
 	struct ResourceBank
 	{
-		ResourceBank *parent;
+		ResourceBank *parents;
 
 		std::map<std::string, Buffer*> bufferResources;
 		std::map<std::string, Image*> imageResources;
@@ -553,7 +553,7 @@ namespace tke
 		std::string filepath;
 		StageType type;
 
-		Pipeline *parent;
+		Pipeline *parents;
 		ShaderModule *module = nullptr;
 
 		Stage(Pipeline *_parent);

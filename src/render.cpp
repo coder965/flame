@@ -1338,8 +1338,8 @@ namespace tke
 		auto it = bufferResources.find(str);
 		if (it == bufferResources.end())
 		{
-			if (parent)
-				return parent->getBuffer(str);
+			if (parents)
+				return parents->getBuffer(str);
 			else
 				return nullptr;
 		}
@@ -1351,8 +1351,8 @@ namespace tke
 		auto it = imageResources.find(str);
 		if (it == imageResources.end())
 		{
-			if (parent)
-				return parent->getImage(str);
+			if (parents)
+				return parents->getImage(str);
 			else
 				return nullptr;
 		}
@@ -1361,7 +1361,7 @@ namespace tke
 
 	ResourceBank::ResourceBank(ResourceBank *_parent)
 	{
-		parent = _parent;
+		parents = _parent;
 	}
 
 	ResourceBank globalResource(nullptr);
@@ -1377,7 +1377,7 @@ namespace tke
 
 	Stage::Stage(Pipeline *_parent)
 	{
-		parent = _parent;
+		parents = _parent;
 	}
 
 	static bool _findDefine(const std::vector<std::string> &vec, const std::string &def, bool b)
@@ -1407,14 +1407,14 @@ namespace tke
 	void Stage::create()
 	{
 		std::vector<std::string> defines;
-		for (auto &m : parent->shaderMacros)
+		for (auto &m : parents->shaderMacros)
 		{
 			if (((int)m.stage & (int)type))
 				defines.push_back(m.value);
 		}
 
 		// format the shader path, so that they can reuse if they refer the same one
-		auto stageFilename = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
+		auto stageFilename = std::experimental::filesystem::canonical(parents->filepath + "/" + filename).string();
 		for (auto m : shaderModules)
 		{
 			if (m->filename == stageFilename)
@@ -1573,9 +1573,9 @@ namespace tke
 					d.binding = -1;
 					for (int i = 0; i < 5; i++)
 					{
-						if (parent->stages[i])
+						if (parents->stages[i])
 						{
-							auto s = parent->stages[i];
+							auto s = parents->stages[i];
 							if (s->type != type && s->module && s->module->descriptors.size() > set)
 							{
 								for (auto &_d : s->module->descriptors[set])

@@ -461,6 +461,10 @@ void ModelMonitorWidget::show()
 
 	ImGui::EndDock();
 
+	camera.move();
+	if (camera.changed)
+		camera.lookAtTarget();
+
 	{
 		cb->reset();
 		cb->begin();

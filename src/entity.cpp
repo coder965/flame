@@ -285,7 +285,7 @@ namespace tke
 		outCoord = glm::vec3();
 		outEuler = glm::vec3();
 
-		inEulerX = glm::radians(inEulerX + baseForwardAng);
+		inEulerX = glm::radians(inEulerX + ang_offset);
 
 		if (speed > 0.f)
 		{
@@ -316,20 +316,20 @@ namespace tke
 		}
 
 		if (turnLeft)
-			outEuler.x = turnSpeed * dist;
+			outEuler.x = turn_speed * dist;
 		if (turnRight)
-			outEuler.x = -turnSpeed * dist;
+			outEuler.x = -turn_speed * dist;
 		if (turnUp)
-			outEuler.z = turnSpeed * dist;
+			outEuler.z = turn_speed * dist;
 		if (turnDown)
-			outEuler.z = -turnSpeed * dist;
+			outEuler.z = -turn_speed * dist;
 
 		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler.x != 0.f) || (outEuler.y != 0.f) || (outEuler.z != 0.f);
 	}
 
 	Camera::Camera()
 	{
-		baseForwardAng = 90.f;
+		ang_offset = 90.f;
 	}
 
 	void Camera::setMode(CameraMode _mode)
@@ -850,7 +850,7 @@ namespace tke
 		for (int i = 0; i < model->bones.size(); i++)
 		{
 			boneMatrix[i] = glm::translate(model->bones[i].relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
-			if (model->bones[i].parent != -1) boneMatrix[i] = boneMatrix[model->bones[i].parent] * boneMatrix[i];
+			if (model->bones[i].parents != -1) boneMatrix[i] = boneMatrix[model->bones[i].parents] * boneMatrix[i];
 		}
 	}
 
@@ -859,7 +859,7 @@ namespace tke
 		assert(model && i < model->bones.size());
 
 		boneMatrix[i] = glm::translate(model->bones[i].relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
-		if (model->bones[i].parent != -1) boneMatrix[i] = boneMatrix[model->bones[i].parent] * boneMatrix[i];
+		if (model->bones[i].parents != -1) boneMatrix[i] = boneMatrix[model->bones[i].parents] * boneMatrix[i];
 
 		for (auto child : model->bones[i].children)
 			refreshBone(child);
@@ -1342,7 +1342,7 @@ namespace tke
 		for (int i = 0; i < m->bones.size(); i++)
 		{
 			m->bones[i].relateCoord = m->bones[i].rootCoord;
-			int parentID = m->bones[i].parent;
+			int parentID = m->bones[i].parents;
 			if (parentID != -1)
 			{
 				m->bones[i].relateCoord -= m->bones[parentID].rootCoord;
@@ -1728,7 +1728,7 @@ namespace tke
 		struct BoneData
 		{
 			char name[20];
-			short parent;
+			short parents;
 			short boneID;
 			char type;
 			short ik;
@@ -1888,7 +1888,7 @@ namespace tke
 				file.read((char*)&data, sizeof(BoneData));
 
 				m->bones[i].name = japaneseToChinese(data.name);
-				m->bones[i].parent = data.parent;
+				m->bones[i].parents = data.parents;
 				m->bones[i].type = data.type;
 				m->bones[i].rootCoord = data.coord;
 				m->bones[i].rootCoord.z *= -1.f;
@@ -2212,7 +2212,7 @@ namespace tke
 				bone.name = name;
 
 				file >> bone.type;
-				file >> bone.parent;
+				file >> bone.parents;
 				file >> bone.rootCoord;
 
 				m->bones.push_back(bone);
@@ -2407,7 +2407,7 @@ namespace tke
 			{
 				file << bone.name;
 				file << bone.type;
-				file << bone.parent;
+				file << bone.parents;
 				file << bone.rootCoord;
 			}
 

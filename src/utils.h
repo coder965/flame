@@ -13,6 +13,7 @@ typedef _W64 long TK_LONG_PTR;
 #endif
 
 #define TK_ARRAYSIZE(_ARR)      ((int)(sizeof(_ARR)/sizeof(*_ARR)))
+#define TK_STRUCT_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
 
 template<class T>
 inline std::ifstream& operator>>(std::ifstream &file, T &v)
@@ -146,9 +147,9 @@ namespace tke
 			: Variable(Variable::eVariable, _name), type(typeid(T)), p(_ptr)
 		{}
 
-		void *ptr(void *_p = nullptr)
+		void *ptr(void *base = nullptr)
 		{
-			return (void*)((TK_LONG_PTR)_p + (TK_LONG_PTR)p);
+			return (void*)((TK_LONG_PTR)base + (TK_LONG_PTR)p);
 		}
 
 		template<class T>
@@ -185,7 +186,7 @@ namespace tke
 
 	struct ReflectionBank
 	{
-		std::vector<ReflectionBank*> parents;
+		std::vector<std::pair<ReflectionBank*, int>> parents;
 		std::string name;
 		std::vector<Variable*> reflections;
 
@@ -198,8 +199,8 @@ namespace tke
 
 		void addE(const std::string &eName, const std::string &name, size_t offset);
 		
-		void enumertateReflections(void(*callback)(Variable*, void*), void *user_data);
-		Variable *findReflection(const std::string &name);
+		void enumertateReflections(void(*callback)(Variable*, void*), void *user_data, int offset);
+		Variable *findReflection(const std::string &name, int offset);
 	};
 
 	ReflectionBank *addReflectionBank(std::string str);
@@ -266,8 +267,8 @@ namespace tke
 			attributes.push_back(a);
 		}
 
-		void addAttributes(void *p, ReflectionBank *b);
-		void obtainFromAttributes(void *p, ReflectionBank *b);
+		void addAttributes(void *src, ReflectionBank *b);
+		void obtainFromAttributes(void *dst, ReflectionBank *b);
 	};
 
 	struct AttributeTree : AttributeTreeNode

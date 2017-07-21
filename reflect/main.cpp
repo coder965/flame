@@ -72,12 +72,12 @@ int main(int argc, char **argv)
 					if (match[6].matched) // parent
 					{
 						if (structExist(match[6].str()))
-							implString += "currentBank->parents.push_back(" + match[6].str() + "::b);\n";
+							implString += "currentBank->parents.emplace_back(" + match[6].str() + "::b, TK_STRUCT_OFFSET(" + currentStructName + ", " + match[6].str() + "));\n";
 						line = match.suffix();
 						while (std::regex_search(line, match, pattern = R"(([\w_]+))"))
 						{
 							if (structExist(match[1].str()))
-								implString += "currentBank->parents.push_back(" + match[1].str() + "::b);\n";
+								implString += "currentBank->parents.emplace_back(" + match[1].str() + "::b, TK_STRUCT_OFFSET(" + currentStructName + ", " + match[1].str() + "));\n";
 							line = match.suffix();
 						}
 					}

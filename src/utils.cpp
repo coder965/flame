@@ -271,25 +271,26 @@ namespace tke
 		}
 	}
 
-	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, void*), void *user_data)
+	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, void*), void *user_data, int offset)
 	{
 		for (auto r : reflections)
-			callback(r, user_data);
-		for (auto p : parents)
-			p->enumertateReflections(callback, user_data);
+			callback((Variable*)((TK_LONG_PTR)r + offset), user_data);
+		for (auto &p : parents)
+			p.first->enumertateReflections(callback, user_data, offset + p.second);
 	}
 
-	Variable *ReflectionBank::findReflection(const std::string &name)
+	Variable *ReflectionBank::findReflection(const std::string &name, int offset)
 	{
 		for (auto r : reflections)
 		{
 			if (r->name == name)
 				return r;
 		}
-		for (auto p : parents)
+		for (auto &p : parents)
 		{
-			auto r = p->findReflection(name);
-			if (r) return r;
+			auto r = p.first->findReflection(name, offset + p.second);
+			if (r) 
+				return (Variable*)((TK_LONG_PTR)r + offset);
 		}
 		return nullptr;
 	}
@@ -402,9 +403,9 @@ namespace tke
 		return nullptr;
 	}
 
-	void AttributeTreeNode::addAttributes(void *p, ReflectionBank *b)
+	void AttributeTreeNode::addAttributes(void *src, ReflectionBank *b)
 	{
-		ptr = p;
+		ptr = src;
 		b->enumertateReflections([](Variable *r, void *_data) {
 			auto n = (AttributeTreeNode*)_data;
 
@@ -414,7 +415,6 @@ namespace tke
 			if (r->what == Variable::eVariable)
 			{
 				auto v = r->toVar();
-
 				a->set(v->type, v->ptr(n->ptr));
 			}
 			else if (r->what == Variable::eEnum)
@@ -436,15 +436,15 @@ namespace tke
 			}
 
 			n->attributes.push_back(a);
-		}, this);
+		}, this, 0);
 	}
 
-	void AttributeTreeNode::obtainFromAttributes(void *p, ReflectionBank *b)
+	void AttributeTreeNode::obtainFromAttributes(void *dst, ReflectionBank *b)
 	{
-		ptr = p;
+		ptr = dst;
 		for (auto a : attributes)
 		{
-			auto r = b->findReflection(a->name);
+			auto r = b->findReflection(a->name, 0);
 			if (!r)
 			{
 				printf("cannot find \"%s\" reflection from %s", a->name, b->name);
@@ -455,11 +455,11 @@ namespace tke
 			case Variable::eVariable:
 			{
 				auto v = r->toVar();
-				a->get(v->type, v->ptr(p));
+				a->get(v->type, v->ptr(dst));
 			}
 				break;
 			case Variable::eEnum:
-				r->toEnu()->pEnum->get(a->value, r->toEnu()->ptr(p));
+				r->toEnu()->pEnum->get(a->value, r->toEnu()->ptr(dst));
 				break;
 			}
 		}
