@@ -298,6 +298,7 @@ namespace tke
 	extern VkSampler plainUnnormalizedSampler;
 	extern VkSampler colorSampler;
 	extern VkSampler colorBorderSampler;
+	extern VkSampler colorWrapSampler;
 
 	VkFence createFence();
 	void destroyFence(VkFence fence);

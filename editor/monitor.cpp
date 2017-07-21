@@ -187,17 +187,7 @@ void SceneMonitorWidget::show()
 	static bool follow = false;
 	ImGui::Checkbox("Follow", &follow);
 	if (target || follow)
-	{
-		if (selectedItem)
-		{
-			auto obj = selectedItem.toObject();
-			if (obj)
-				scene->camera.setTarget(obj->getCoord() + obj->model->eyePosition * obj->getScale());
-			else
-				scene->camera.setTarget(selectedItem.toTransformer()->getCoord());
-			scene->camera.lookAtTarget();
-		}
-	}
+		scene->camera.object = selectedItem.toObject();
 
 	ImGui::Checkbox("Show Selected Wire Frame", &showSelectedWireframe);
 
@@ -461,7 +451,6 @@ void ModelMonitorWidget::show()
 
 	ImGui::EndDock();
 
-	camera.move();
 	if (camera.changed)
 		camera.lookAtTarget();
 

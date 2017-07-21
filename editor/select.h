@@ -43,3 +43,5 @@ struct SelectedItem : tke::Observer
 	void reset();
 	void select(tke::Object *_obj);
 };
+
+extern SelectedItem selectedItem;

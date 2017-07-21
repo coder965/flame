@@ -357,6 +357,12 @@ namespace tke
 	{
 		if (mode == CameraMode::targeting)
 		{
+			if (object)
+			{
+				target = object->getCoord() + object->model->eyePosition * object->getScale();
+				object = nullptr;
+			}
+
 			if (needUpdateAxis) updateAxis();
 			coord = target + axis[2] * length;
 			needUpdateMat = true;
@@ -3240,9 +3246,10 @@ namespace tke
 		}
 
 		camera.move();
+		if (camera.changed || camera.object)
+			camera.lookAtTarget();
 		if (camera.changed)
 		{
-			camera.lookAtTarget();
 			camera.updateFrustum();
 			// update procedural terrain
 			{
@@ -3448,7 +3455,7 @@ namespace tke
 				if (heightMapTerr_heightMap_position != -1 && terrain->heightMap)
 					ds_heightMapTerrain->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
 				if (heightMapTerr_colorMap_position != -1 && terrain->colorMap)
-					ds_heightMapTerrain->setImage(heightMapTerr_colorMap_position, 0, terrain->colorMap, colorBorderSampler);
+					ds_heightMapTerrain->setImage(heightMapTerr_colorMap_position, 0, terrain->colorMap, colorWrapSampler);
 			}
 		}
 		if (needUpdateIndirectBuffer)

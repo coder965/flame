@@ -38,8 +38,6 @@ struct SceneMonitorWidget : MonitorWidget
 	tke::CommandBuffer *cb_scene;
 	VkEvent scene_renderFinished;
 
-	SelectedItem selectedItem;
-
 	tke::OnceVertexBuffer *physxBuffer = nullptr;
 	tke::CommandBuffer *cb_physx;
 	VkEvent physx_renderFinished;

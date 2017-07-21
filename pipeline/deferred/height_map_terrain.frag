@@ -49,7 +49,7 @@ void main()
 	
 	vec3 normal = normalMatrix * normalize(vec3(L - R, 2.0 * eps, T - B));
 	
-	outAlbedoAlpha = vec4(texture(colorMap, inUV).rgb, 1.0);
+	outAlbedoAlpha = vec4(texture(colorMap, inUV * PATCH_SIZE * TEX_SIZE).rgb, 1.0);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
 	outSpecRoughness = vec4(0.05, 1.0, 0.0, 0.0);
 }

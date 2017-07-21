@@ -490,6 +490,7 @@ namespace tke
 	VkSampler plainUnnormalizedSampler;
 	VkSampler colorSampler;
 	VkSampler colorBorderSampler;
+	VkSampler colorWrapSampler;
 
 	VkFence createFence()
 	{
@@ -894,6 +895,29 @@ namespace tke
 			info.maxLod = 128.f;
 
 			res = vkCreateSampler(device.v, &info, nullptr, &colorBorderSampler);
+			assert(res == VK_SUCCESS);
+		}
+
+		{
+			VkSamplerCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			info.magFilter = VK_FILTER_LINEAR;
+			info.minFilter = VK_FILTER_LINEAR;
+			info.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			info.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			info.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			info.anisotropyEnable = VK_TRUE;
+			info.maxAnisotropy = 16;
+			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+			info.unnormalizedCoordinates = VK_FALSE;
+			info.compareEnable = VK_FALSE;
+			info.compareOp = VK_COMPARE_OP_ALWAYS;
+			info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			info.mipLodBias = 0.0f;
+			info.minLod = 0.f;
+			info.maxLod = 128.f;
+
+			res = vkCreateSampler(device.v, &info, nullptr, &colorWrapSampler);
 			assert(res == VK_SUCCESS);
 		}
 

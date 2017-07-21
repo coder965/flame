@@ -18,6 +18,13 @@ static void _show_scene(tke::Scene *scene)
 	{
 		if (ImGui::TreeNode("List"))
 		{
+			for (int i = 0; i < scene->objects.size(); i++)
+			{
+				auto o = scene->objects[i];
+				if (ImGui::Selectable(std::to_string(i).c_str(), selectedItem.toObject() == o))
+					selectedItem.select(o);
+			}
+
 			ImGui::TreePop();
 		}
 
@@ -234,15 +241,15 @@ void AttributeWidget::show()
 
 			if (ImGui::AddTab("Scene"))
 				_show_scene(m->scene);
-			if (m->selectedItem)
+			if (selectedItem)
 			{
 				if (ImGui::AddTab("Select"))
 				{
-					switch (m->selectedItem.type)
+					switch (selectedItem.type)
 					{
 					case ItemTypeObject:
 					{
-						auto o = m->selectedItem.toObject();
+						auto o = selectedItem.toObject();
 
 						auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
 						ImGui::Text("model:%s", modelName.c_str());

@@ -10,6 +10,8 @@
 
 namespace tke
 {
+	struct Object;
+
 	REFLECTABLE struct Transformer
 	{
 		REFL_BANK;
@@ -135,6 +137,8 @@ namespace tke
 
 		glm::vec3 frustumPoints[8];
 		glm::vec4 frustumPlanes[6];
+
+		Object *object = nullptr;
 
 		Camera();
 		void setMode(CameraMode _mode);
@@ -531,12 +535,12 @@ namespace tke
 		REFLv std::string height_map_filename;
 		REFLv std::string color_map_filename;
 
-		float ext = 10.f;
+		float ext = 16.f;
 		float height = 100.f;
 		float tessFactor = 0.75f;
 
 		Image *heightMap = nullptr;
-		Image *colorMap = nullptr;
+		Image *colorMaps[4] = {};
 		float spec = 0.04f;
 		float roughness = 1.f;
 

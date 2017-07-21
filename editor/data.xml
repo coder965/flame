@@ -2,7 +2,7 @@
   <texture filename="test.jpg" />
   <texture filename="white.jpg" />
   <texture filename="heightmap.jpg" />
-  <texture filename="heightmap_color.jpg" />
+  <texture filename="terrain0.jpg" />
 	<model filename="D:/miku/miku.pmd"/>
   <scene filename="scene_1.xml" />
   <scene filename="scene_2.xml" />

@@ -23,3 +23,5 @@ void SelectedItem::select(tke::Object *_obj)
 	ptr = _obj;
 	ptr->addObserver(this);
 }
+
+SelectedItem selectedItem;
