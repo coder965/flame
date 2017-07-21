@@ -55,7 +55,10 @@ extern ObjectCreationSetting ocs;
 struct TerrainCreationSetting
 {
 	int heightMapIndex = 0;
-	int colorMapIndex = 0;
+	int colorMap0Index = 0;
+	int colorMap1Index = 0;
+	int colorMap2Index = 0;
+	int colorMap3Index = 0;
 	float height = 100;
 	bool usePhysx = false;
 

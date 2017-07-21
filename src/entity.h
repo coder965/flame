@@ -533,7 +533,10 @@ namespace tke
 		REFLv bool use_physx = false;
 
 		REFLv std::string height_map_filename;
-		REFLv std::string color_map_filename;
+		REFLv std::string color_map0_filename;
+		REFLv std::string color_map1_filename;
+		REFLv std::string color_map2_filename;
+		REFLv std::string color_map3_filename;
 
 		float ext = 16.f;
 		float height = 100.f;
@@ -547,7 +550,7 @@ namespace tke
 		physx::PxRigidActor *actor = nullptr;
 
 		Terrain();
-		Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap);
+		Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
 	};
 
 	enum class SkyType

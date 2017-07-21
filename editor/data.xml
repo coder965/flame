@@ -3,6 +3,9 @@
   <texture filename="white.jpg" />
   <texture filename="heightmap.jpg" />
   <texture filename="terrain0.jpg" />
+  <texture filename="terrain1.jpg" />
+  <texture filename="terrain2.jpg" />
+  <texture filename="terrain3.jpg" />
 	<model filename="D:/miku/miku.pmd"/>
   <scene filename="scene_1.xml" />
   <scene filename="scene_2.xml" />

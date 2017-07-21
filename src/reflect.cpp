@@ -134,7 +134,10 @@ currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Terrain, Tran
 currentBank->addE("TerrainType", "type", offsetof(Terrain, type));
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
 currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
-currentBank->addV<std::string>("color_map_filename", offsetof(Terrain, color_map_filename));
+currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_map0_filename));
+currentBank->addV<std::string>("color_map1_filename", offsetof(Terrain, color_map1_filename));
+currentBank->addV<std::string>("color_map2_filename", offsetof(Terrain, color_map2_filename));
+currentBank->addV<std::string>("color_map3_filename", offsetof(Terrain, color_map3_filename));
 currentBank = Scene::b;
 currentBank->addV<std::string>("name", offsetof(Scene, name));
 }};static ReflectInit init;

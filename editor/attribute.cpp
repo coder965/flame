@@ -145,7 +145,10 @@ static void _show_scene(tke::Scene *scene)
 		if (terrain)
 		{
 			ImGui::Text("Height Map:%s", terrain->heightMap->filename.c_str());
-			ImGui::Text("Color Map:%s", terrain->colorMap->filename.c_str());
+			ImGui::Text("Color Map 0:%s", terrain->colorMaps[0]->filename.c_str());
+			ImGui::Text("Color Map 1:%s", terrain->colorMaps[1]->filename.c_str());
+			ImGui::Text("Color Map 2:%s", terrain->colorMaps[2]->filename.c_str());
+			ImGui::Text("Color Map 3:%s", terrain->colorMaps[3]->filename.c_str());
 			ImGui::Text("Height:%f", terrain->height);
 			ImGui::Text("Use Physx:%s", terrain->use_physx ? "Yse" : "No");
 			if (ImGui::Button("Remove Terrain"))
@@ -155,15 +158,33 @@ static void _show_scene(tke::Scene *scene)
 		{
 			if (tcs.heightMapIndex >= tke::textures.size())
 				tcs.heightMapIndex = 0;
-			if (tcs.colorMapIndex >= tke::textures.size())
-				tcs.colorMapIndex = 0;
+			if (tcs.colorMap0Index >= tke::textures.size())
+				tcs.colorMap0Index = 0;
+			if (tcs.colorMap1Index >= tke::textures.size())
+				tcs.colorMap1Index = 0;
+			if (tcs.colorMap2Index >= tke::textures.size())
+				tcs.colorMap2Index = 0;
+			if (tcs.colorMap3Index >= tke::textures.size())
+				tcs.colorMap3Index = 0;
 			if (tke::textures.size() > 0)
 			{
 				if (ImGui::Combo("Height Map", &tcs.heightMapIndex, [](void *data, int idx, const char **out_text) {
 					*out_text = tke::textures[idx]->filename.c_str();
 					return true;
 				}, nullptr, tke::textures.size()));
-				if (ImGui::Combo("Color Map", &tcs.colorMapIndex, [](void *data, int idx, const char **out_text) {
+				if (ImGui::Combo("Color Map 0", &tcs.colorMap0Index, [](void *data, int idx, const char **out_text) {
+					*out_text = tke::textures[idx]->filename.c_str();
+					return true;
+				}, nullptr, tke::textures.size()));
+				if (ImGui::Combo("Color Map 1", &tcs.colorMap1Index, [](void *data, int idx, const char **out_text) {
+					*out_text = tke::textures[idx]->filename.c_str();
+					return true;
+				}, nullptr, tke::textures.size()));
+				if (ImGui::Combo("Color Map 2", &tcs.colorMap2Index, [](void *data, int idx, const char **out_text) {
+					*out_text = tke::textures[idx]->filename.c_str();
+					return true;
+				}, nullptr, tke::textures.size()));
+				if (ImGui::Combo("Color Map 3", &tcs.colorMap3Index, [](void *data, int idx, const char **out_text) {
 					*out_text = tke::textures[idx]->filename.c_str();
 					return true;
 				}, nullptr, tke::textures.size()));
@@ -174,7 +195,7 @@ static void _show_scene(tke::Scene *scene)
 			{
 				if (ImGui::Button("Create Height Map Terrain"))
 				{
-					auto t = new tke::Terrain(tke::TerrainType::height_map, tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMapIndex]);
+					auto t = new tke::Terrain(tke::TerrainType::height_map, tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
 					t->height = tcs.height;
 					scene->addTerrain(t);
 				}

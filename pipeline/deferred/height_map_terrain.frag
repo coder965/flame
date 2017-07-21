@@ -22,7 +22,7 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 
 layout(binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
 
-layout(binding = TKE_UBO_BINDING) uniform sampler2D colorMap;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D colorMaps[4];
 
 layout (location = 0) in vec2 inUV;
 
@@ -48,8 +48,27 @@ void main()
 	float B  = getHeight(inUV + step.yx);
 	
 	vec3 normal = normalMatrix * normalize(vec3(L - R, 2.0 * eps, T - B));
+
+	vec3 color = vec3(0);
+	float h = texture(heightMap, inUV).r;
+	vec2 colUV = inUV * PATCH_SIZE * TEX_SIZE;
+	if (h < 0.33)
+	{
+		float v = h / 0.33;
+		color = mix(texture(colorMaps[0], colUV).rgb, texture(colorMaps[1], colUV).rgb, v);
+	}
+	else if (h < 0.66)
+	{
+		float v = (h - 0.33) / 0.33;
+		color = mix(texture(colorMaps[1], colUV).rgb, texture(colorMaps[2], colUV).rgb, v);
+	}
+	else
+	{
+		float v = (h - 0.66) / 0.33;
+		color = mix(texture(colorMaps[2], colUV).rgb, texture(colorMaps[3], colUV).rgb, v);
+	}
 	
-	outAlbedoAlpha = vec4(texture(colorMap, inUV * PATCH_SIZE * TEX_SIZE).rgb, 1.0);
+	outAlbedoAlpha = vec4(color, 1.0);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
 	outSpecRoughness = vec4(0.05, 1.0, 0.0, 0.0);
 }

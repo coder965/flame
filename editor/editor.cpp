@@ -366,8 +366,14 @@ void TerrainCreationSetting::load(tke::AttributeTreeNode *n)
 	{
 		if (a->name == "heightMapIndex")
 			a->get(&heightMapIndex);
-		else if (a->name == "colorMapIndex")
-			a->get(&colorMapIndex);
+		else if (a->name == "colorMap0Index")
+			a->get(&colorMap0Index);
+		else if (a->name == "colorMap1Index")
+			a->get(&colorMap1Index);
+		else if (a->name == "colorMap2Index")
+			a->get(&colorMap2Index);
+		else if (a->name == "colorMap3Index")
+			a->get(&colorMap3Index);
 		else if (a->name == "height")
 			a->get(&height);
 		else if (a->name == "usePhysx")
@@ -378,7 +384,10 @@ void TerrainCreationSetting::load(tke::AttributeTreeNode *n)
 void TerrainCreationSetting::save(tke::AttributeTreeNode *n)
 {
 	n->addAttribute("heightMapIndex", &heightMapIndex);
-	n->addAttribute("colorMapIndex", &colorMapIndex);
+	n->addAttribute("colorMap0Index", &colorMap0Index);
+	n->addAttribute("colorMap1Index", &colorMap1Index);
+	n->addAttribute("colorMap2Index", &colorMap2Index);
+	n->addAttribute("colorMap3Index", &colorMap3Index);
 	n->addAttribute("height", &height);
 	n->addAttribute("usePhysx", &usePhysx);
 }

@@ -2622,11 +2622,18 @@ namespace tke
 
 	Terrain::Terrain() {}
 
-	Terrain::Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap)
-		:type(_type), use_physx(_use_physx), heightMap(_heightMap), colorMap(_colorMap)
+	Terrain::Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3)
+		:type(_type), use_physx(_use_physx), heightMap(_heightMap)
 	{
+		colorMaps[0] = _colorMap0;
+		colorMaps[1] = _colorMap1;
+		colorMaps[2] = _colorMap2;
+		colorMaps[3] = _colorMap3;
 		height_map_filename = heightMap->filename;
-		color_map_filename = colorMap->filename;
+		color_map0_filename = _colorMap0->filename;
+		color_map1_filename = _colorMap1->filename;
+		color_map2_filename = _colorMap2->filename;
+		color_map3_filename = _colorMap3->filename;
 	}
 
 	static const float gravity = 9.81f;
@@ -3049,7 +3056,7 @@ namespace tke
 
 	void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
-		if (!t->heightMap || !t->colorMap)
+		if (!t->heightMap || !t->colorMaps[0] || !t->colorMaps[1] || !t->colorMaps[2] || !t->colorMaps[3])
 		{
 			delete t;
 			return;
@@ -3452,10 +3459,13 @@ namespace tke
 
 				heightMapTerrainBuffer->update(&stru, stagingBuffer);
 
-				if (heightMapTerr_heightMap_position != -1 && terrain->heightMap)
+				if (heightMapTerr_heightMap_position != -1)
 					ds_heightMapTerrain->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
-				if (heightMapTerr_colorMap_position != -1 && terrain->colorMap)
-					ds_heightMapTerrain->setImage(heightMapTerr_colorMap_position, 0, terrain->colorMap, colorWrapSampler);
+				if (heightMapTerr_colorMap_position != -1)
+				{
+					for (int i = 0; i < 4; i++)
+						ds_heightMapTerrain->setImage(heightMapTerr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
+				}
 			}
 		}
 		if (needUpdateIndirectBuffer)
@@ -3719,7 +3729,10 @@ namespace tke
 				auto t = new Terrain;
 				c->obtainFromAttributes(t, t->b);
 				t->heightMap = getTexture(t->height_map_filename);
-				t->colorMap = getTexture(t->color_map_filename);
+				t->colorMaps[0] = getTexture(t->color_map0_filename);
+				t->colorMaps[1] = getTexture(t->color_map1_filename);
+				t->colorMaps[2] = getTexture(t->color_map2_filename);
+				t->colorMaps[3] = getTexture(t->color_map3_filename);
 				t->needUpdateAxis = true;
 				t->needUpdateQuat = true;
 				t->needUpdateMat = true;
@@ -3829,7 +3842,7 @@ namespace tke
 		heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain.xml");
 		heightMapTerrainPipeline->setup(sceneRenderPass, 1, false);
 		heightMapTerr_heightMap_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
-		heightMapTerr_colorMap_position = heightMapTerrainPipeline->descriptorPosition("colorMap");
+		heightMapTerr_colorMap_position = heightMapTerrainPipeline->descriptorPosition("colorMaps");
 
 		//proceduralTerrainPipeline = new Pipeline;
 		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain.xml");
