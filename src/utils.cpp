@@ -271,28 +271,27 @@ namespace tke
 		}
 	}
 
-	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, void*), void *user_data, int offset)
+	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, int, void*), void *user_data, int offset)
 	{
 		for (auto r : reflections)
-			callback((Variable*)((TK_LONG_PTR)r + offset), user_data);
+			callback(r, offset, user_data);
 		for (auto &p : parents)
 			p.first->enumertateReflections(callback, user_data, offset + p.second);
 	}
 
-	Variable *ReflectionBank::findReflection(const std::string &name, int offset)
+	std::pair<Variable*, int> ReflectionBank::findReflection(const std::string &name, int offset)
 	{
 		for (auto r : reflections)
 		{
 			if (r->name == name)
-				return r;
+				return std::make_pair(r, offset);
 		}
 		for (auto &p : parents)
 		{
 			auto r = p.first->findReflection(name, offset + p.second);
-			if (r) 
-				return (Variable*)((TK_LONG_PTR)r + offset);
+			if (r.first) return r;
 		}
-		return nullptr;
+		return std::make_pair(nullptr, 0);
 	}
 
 	ReflectionBank *addReflectionBank(std::string str)
@@ -406,7 +405,7 @@ namespace tke
 	void AttributeTreeNode::addAttributes(void *src, ReflectionBank *b)
 	{
 		ptr = src;
-		b->enumertateReflections([](Variable *r, void *_data) {
+		b->enumertateReflections([](Variable *r, int offset, void *_data) {
 			auto n = (AttributeTreeNode*)_data;
 
 			auto a = new Attribute;
@@ -415,7 +414,7 @@ namespace tke
 			if (r->what == Variable::eVariable)
 			{
 				auto v = r->toVar();
-				a->set(v->type, v->ptr(n->ptr));
+				a->set(v->type, v->ptr((void*)((TK_LONG_PTR)n->ptr + offset)));
 			}
 			else if (r->what == Variable::eEnum)
 			{
@@ -445,21 +444,21 @@ namespace tke
 		for (auto a : attributes)
 		{
 			auto r = b->findReflection(a->name, 0);
-			if (!r)
+			if (!r.first)
 			{
 				printf("cannot find \"%s\" reflection from %s", a->name, b->name);
 				continue;
 			}
-			switch (r->what)
+			switch (r.first->what)
 			{
 			case Variable::eVariable:
 			{
-				auto v = r->toVar();
-				a->get(v->type, v->ptr(dst));
+				auto v = r.first->toVar();
+				a->get(v->type, v->ptr((void*)((TK_LONG_PTR)dst + r.second)));
 			}
 				break;
 			case Variable::eEnum:
-				r->toEnu()->pEnum->get(a->value, r->toEnu()->ptr(dst));
+				r.first->toEnu()->pEnum->get(a->value, r.first->toEnu()->ptr(dst));
 				break;
 			}
 		}

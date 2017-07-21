@@ -199,8 +199,8 @@ namespace tke
 
 		void addE(const std::string &eName, const std::string &name, size_t offset);
 		
-		void enumertateReflections(void(*callback)(Variable*, void*), void *user_data, int offset);
-		Variable *findReflection(const std::string &name, int offset);
+		void enumertateReflections(void(*callback)(Variable*, int, void*), void *user_data, int offset);
+		std::pair<Variable*, int> findReflection(const std::string &name, int offset);
 	};
 
 	ReflectionBank *addReflectionBank(std::string str);
