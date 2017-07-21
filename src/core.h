@@ -127,12 +127,14 @@ namespace tke
 
 		int lastClickTime = 0;
 		bool doubleClicked = false;
-		bool leftJustDown = false, leftJustUp = false;
-		bool leftPressing = false, middlePressing = false, rightPressing = false;
+		KeyState mouseLeft;
+		KeyState mouseMiddle;
+		KeyState mouseRight;
 		int mouseX = 0, mouseY = 0;
 		int mousePrevX = 0, mousePrevY = 0;
 		int mouseDispX = 0, mouseDispY = 0;
 		int mouseScroll = 0;
+		KeyState keyStates[256];
 
 		void *hWnd = nullptr;
 

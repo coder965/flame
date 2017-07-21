@@ -273,7 +273,7 @@ namespace tke
 
 	void Controller::reset()
 	{
-		front = back = left = right = up = down = turnLeft = turnRight = false;
+		forward = backward = left = right = up = down = turnLeft = turnRight = false;
 		lastTime = nowTime;
 	}
 
@@ -287,30 +287,33 @@ namespace tke
 
 		inEulerX = glm::radians(inEulerX + baseForwardAng);
 
-		if (front && speed > 0.f)
+		if (speed > 0.f)
 		{
-			outCoord.x -= sin(inEulerX) * speed * dist;
-			outCoord.z -= cos(inEulerX) * speed * dist;
+			if (forward)
+			{
+				outCoord.x -= sin(inEulerX) * speed * dist;
+				outCoord.z -= cos(inEulerX) * speed * dist;
+			}
+			if (backward)
+			{
+				outCoord.x += sin(inEulerX) * speed * dist;
+				outCoord.z += cos(inEulerX) * speed * dist;
+			}
+			if (left)
+			{
+				outCoord.x -= cos(inEulerX) * speed * dist;
+				outCoord.z += sin(inEulerX) * speed * dist;
+			}
+			if (right)
+			{
+				outCoord.x += cos(inEulerX) * speed * dist;
+				outCoord.z -= sin(inEulerX) * speed * dist;
+			}
+			if (up)
+				outCoord.y += speed * dist;
+			if (down)
+				outCoord.y -= speed * dist;
 		}
-		if (back && speed > 0.f)
-		{
-			outCoord.x += sin(inEulerX) * speed * dist;
-			outCoord.z += cos(inEulerX) * speed * dist;
-		}
-		if (left && speed > 0.f)
-		{
-			outCoord.x -= cos(inEulerX) * speed * dist;
-			outCoord.z += sin(inEulerX) * speed * dist;
-		}
-		if (right && speed > 0.f)
-		{
-			outCoord.x += cos(inEulerX) * speed * dist;
-			outCoord.z -= sin(inEulerX) * speed * dist;
-		}
-		if (up)
-			outCoord.y += speed * dist;
-		if (down)
-			outCoord.y -= speed * dist;
 
 		if (turnLeft)
 			outEuler.x = turnSpeed * dist;
@@ -322,46 +325,6 @@ namespace tke
 			outEuler.z = -turnSpeed * dist;
 
 		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler.x != 0.f) || (outEuler.y != 0.f) || (outEuler.z != 0.f);
-	}
-
-	bool Controller::keyDown(int key)
-	{
-		switch (key)
-		{
-		case 'W':
-			front = true;
-			return true;
-		case 'S':
-			back = true;
-			return true;
-		case 'A':
-			left = true;
-			return true;
-		case 'D':
-			right = true;
-			return true;
-		}
-		return false;
-	}
-
-	bool Controller::keyUp(int key)
-	{
-		switch (key)
-		{
-		case 'W':
-			front = false;
-			return true;
-		case 'S':
-			back = false;
-			return true;
-		case 'A':
-			left = false;
-			return true;
-		case 'D':
-			right = false;
-			return true;
-		}
-		return false;
 	}
 
 	Camera::Camera()

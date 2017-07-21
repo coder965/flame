@@ -678,9 +678,9 @@ namespace tke
 
 		io.MousePos = ImVec2((float)window->mouseX, (float)window->mouseY);
 
-		io.MouseDown[0] = window->leftPressing;
-		io.MouseDown[1] = window->rightPressing;
-		io.MouseDown[2] = window->middlePressing;
+		io.MouseDown[0] = window->mouseLeft.pressing;
+		io.MouseDown[1] = window->mouseRight.pressing;
+		io.MouseDown[2] = window->mouseMiddle.pressing;
 
 		io.MouseWheel = window->mouseScroll / 120;
 

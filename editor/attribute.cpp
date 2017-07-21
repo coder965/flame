@@ -184,6 +184,21 @@ static void _show_scene(tke::Scene *scene)
 	}
 }
 
+static void _show_model(tke::Model *m)
+{
+	auto modelName = tke::translate(936, CP_UTF8, m->name.c_str());
+	ImGui::Text("name:%s", modelName.c_str());
+	ImGui::Text("filename:%s", m->filename.c_str());
+	ImGui::Text("indice count:%d", m->indices.size());
+	ImGui::Text("indice base:%d", m->indiceBase);
+	ImGui::Text("vertex base:%d", m->vertexBase);
+	if (ImGui::Button("Save Data"))
+		m->saveData(false);
+	ImGui::DragFloat("Controller Height", &m->controllerHeight, 0.1f, 0.f, 10000.f);
+	ImGui::DragFloat("Controller Radius", &m->controllerRadius, 0.1f, 0.f, 10000.f);
+	ImGui::DragFloat3("Eye Position", &m->eyePosition[0]);
+}
+
 void AttributeWidget::show()
 {
 	ImGui::BeginDock("Attribute", &opened);
@@ -202,19 +217,7 @@ void AttributeWidget::show()
 		}
 			break;
 		case GameExplorer::lastItemTypeModel:
-		{
-			auto m = tke::models[gameExplorer->itemIndex];
-			auto modelName = tke::translate(936, CP_UTF8, m->name.c_str());
-			ImGui::Text("name:%s", modelName.c_str());
-			ImGui::Text("filename:%s", m->filename.c_str());
-			ImGui::Text("indice count:%d", m->indices.size());
-			ImGui::Text("indice base:%d", m->indiceBase);
-			ImGui::Text("vertex base:%d", m->vertexBase);
-			if (ImGui::Button("Save Data"))
-				m->saveData(false);
-			ImGui::DragFloat("Controller Height", &m->controllerHeight, 0.1f, 0.f, 10000.f);
-			ImGui::DragFloat("Controller Radius", &m->controllerRadius, 0.1f, 0.f, 10000.f);
-		}
+			_show_model(tke::models[gameExplorer->itemIndex]);
 			break;
 		case GameExplorer::lastItemTypeScene:
 			_show_scene(game.scenes[gameExplorer->itemIndex]);
@@ -277,6 +280,10 @@ void AttributeWidget::show()
 			}
 
 			ImGui::EndTabBar();
+		}
+		else if (lastMonitorWidget->mode == MonitorWidget::ModeModel)
+		{
+			_show_model(((ModelMonitorWidget*)lastMonitorWidget)->model);
 		}
 		break;
 	}

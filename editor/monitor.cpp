@@ -119,20 +119,20 @@ void SceneMonitorWidget::show()
 			{
 				auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
 				auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-				if (mainWindow->leftPressing)
+				if (mainWindow->mouseLeft.pressing)
 					scene->camera.rotateByCursor(distX, distY);
-				else if (mainWindow->middlePressing)
+				else if (mainWindow->mouseMiddle.pressing)
 					scene->camera.moveByCursor(distX, distY);
-				else if (mainWindow->rightPressing)
+				else if (mainWindow->mouseRight.pressing)
 					scene->camera.scroll(distX);
 			}
 			else
 			{
-				if (mainWindow->leftPressing)
+				if (mainWindow->mouseLeft.pressing)
 					transformerTool->mouseMove(mainWindow->mouseDispX, mainWindow->mouseDispY);
 			}
 		}
-		if (mainWindow->leftJustDown)
+		if (mainWindow->mouseLeft.justDown)
 		{
 			if (!tke::atlPressing())
 			{
@@ -149,6 +149,15 @@ void SceneMonitorWidget::show()
 				}
 			}
 		}
+	}
+
+	auto obj = selectedItem.toObject();
+	if (obj)
+	{
+		obj->forward = mainWindow->keyStates[VK_UP].pressing;
+		obj->backward = mainWindow->keyStates[VK_DOWN].pressing;
+		obj->left = mainWindow->keyStates[VK_LEFT].pressing;
+		obj->right = mainWindow->keyStates[VK_RIGHT].pressing;
 	}
 
 	{
@@ -181,7 +190,11 @@ void SceneMonitorWidget::show()
 	{
 		if (selectedItem)
 		{
-			scene->camera.setTarget(selectedItem.toTransformer()->getCoord());
+			auto obj = selectedItem.toObject();
+			if (obj)
+				scene->camera.setTarget(obj->getCoord() + obj->model->eyePosition * obj->getScale());
+			else
+				scene->camera.setTarget(selectedItem.toTransformer()->getCoord());
 			scene->camera.lookAtTarget();
 		}
 	}
@@ -375,9 +388,6 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 	tke::addGuiImage(image);
 
 	camera.setMode(tke::CameraMode::targeting);
-	camera.setLength(20.f);
-	camera.setTarget(glm::vec3());
-	camera.lookAtTarget();
 
 	fb_model = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	if (model->animated)
@@ -430,18 +440,18 @@ void ModelMonitorWidget::show()
 			{
 				auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
 				auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-				if (mainWindow->leftPressing)
+				if (mainWindow->mouseLeft.pressing)
 					camera.rotateByCursor(distX, distY);
-				else if (mainWindow->middlePressing)
+				else if (mainWindow->mouseMiddle.pressing)
 					camera.moveByCursor(distX, distY);
-				else if (mainWindow->rightPressing)
+				else if (mainWindow->mouseRight.pressing)
 					camera.scroll(distX);
 			}
 			else
 			{
 			}
 		}
-		if (mainWindow->leftJustDown)
+		if (mainWindow->mouseLeft.justDown)
 		{
 		}
 	}
@@ -514,11 +524,12 @@ void ModelMonitorWidget::show()
 
 		cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_image);
 
+		cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
+		cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
+		cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
+
 		if (showController)
 		{
-			cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
-			cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
-			cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
 			pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
 			{
 				auto c = model->controllerPosition;

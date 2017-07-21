@@ -292,12 +292,18 @@ namespace tke
 
 	void Window::keyDownEvent(int wParam) 
 	{
+		keyStates[wParam].pressing = true;
+		keyStates[wParam].justDown = true;
+		keyStates[wParam].justUp = false;
 		if (ui)
 			ui->onKeyDown(wParam);
 	}
 
 	void Window::keyUpEvent(int wParam) 
 	{
+		keyStates[wParam].pressing = false;
+		keyStates[wParam].justDown = false;
+		keyStates[wParam].justUp = true;
 		if (ui)
 			ui->onKeyUp(wParam);
 	}
@@ -316,9 +322,9 @@ namespace tke
 			doubleClicked = false;
 		lastClickTime = nowTime;
 
-		leftPressing = true;
-		leftJustDown = true;
-		leftJustUp = false;
+		mouseLeft.pressing = true;
+		mouseLeft.justDown = true;
+		mouseLeft.justUp = false;
 
 		mouseX = x;
 		mouseY = y;
@@ -326,9 +332,9 @@ namespace tke
 
 	void Window::mouseLeftUpEvent(int x, int y)
 	{
-		leftPressing = false;
-		leftJustDown = false;
-		leftJustUp = true;
+		mouseLeft.pressing = false;
+		mouseLeft.justDown = false;
+		mouseLeft.justUp = true;
 
 		mouseX = x;
 		mouseY = y;
@@ -336,7 +342,7 @@ namespace tke
 
 	void Window::mouseMiddleDownEvent(int x, int y)
 	{
-		middlePressing = true;
+		mouseMiddle.pressing = true;
 
 		mouseX = x;
 		mouseY = y;
@@ -344,7 +350,7 @@ namespace tke
 
 	void Window::mouseMiddleUpEvent(int x, int y)
 	{
-		middlePressing = false;
+		mouseMiddle.pressing = false;
 
 		mouseX = x;
 		mouseY = y;
@@ -352,7 +358,7 @@ namespace tke
 
 	void Window::mouseRightDownEvent(int x, int y)
 	{
-		rightPressing = true;
+		mouseRight.pressing = true;
 
 		mouseX = x;
 		mouseY = y;
@@ -360,7 +366,7 @@ namespace tke
 
 	void Window::mouseRightUpEvent(int x, int y)
 	{
-		rightPressing = false;
+		mouseRight.pressing = false;
 
 		mouseX = x;
 		mouseY = y;
@@ -845,8 +851,8 @@ namespace tke
 					current_window->renderEvent();
 					current_window->frameCount++;
 
-					current_window->leftJustDown = false;
-					current_window->leftJustUp = false;
+					current_window->mouseLeft.justDown = false;
+					current_window->mouseLeft.justUp = false;
 					current_window->mousePrevX = current_window->mouseX;
 					current_window->mousePrevY = current_window->mouseY;
 					current_window->mouseScroll = 0;

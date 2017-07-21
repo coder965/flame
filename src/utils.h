@@ -90,6 +90,13 @@ namespace tke
 	extern int screenCy;
 	extern std::string exePath;
 
+	struct KeyState
+	{
+		bool justDown = false;
+		bool justUp = false;
+		bool pressing = false;
+	};
+
 	bool atlPressing();
 
 	const char *getClipBoard();
