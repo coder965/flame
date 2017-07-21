@@ -79,6 +79,8 @@ namespace tke
 	Pipeline *plainPipeline_3d_line = nullptr;
 	int plain3d_bone_pos = -1;
 
+	DescriptorSet *ds_maps = nullptr;
+
 	static Window* current_window = nullptr;
 
 	static void _create_window(Window *p, bool hasUi)
@@ -730,45 +732,11 @@ namespace tke
 		return Err::eNoErr;
 	}
 
-	std::vector<Scene*> showing_scenes;
-
-	static void _update_texture_descriptor_set(Scene *s)
-	{
-		static int map_position0 = -1;
-		static int map_position1 = -1;
-		if (map_position0 == -1 && mrtPipeline) map_position0 = mrtPipeline->descriptorPosition("mapSamplers");
-		if (map_position1 == -1 && mrtAnimPipeline) map_position1 = mrtAnimPipeline->descriptorPosition("mapSamplers");
-		if (map_position0 == -1 || map_position1 == -1)
-			return;
-
-		for (int index = 0; index < modelTextures.size(); index++)
-		{
-			s->ds_mrt->setImage(map_position0, index, modelTextures[index], colorSampler);
-			s->ds_mrtAnim->setImage(map_position1, index, modelTextures[index], colorSampler);
-		}
-	}
-
-	void addShowingScene(Scene *s)
-	{
-		showing_scenes.push_back(s);
-		_update_texture_descriptor_set(s);
-	}
-
-	void removeShowingScene(Scene *s)
-	{
-		for (auto it = showing_scenes.begin(); it != showing_scenes.end(); it++)
-		{
-			if (*it == s)
-			{
-				showing_scenes.erase(it);
-				return;
-			}
-		}
-	}
-
 	void run()
 	{
 		lastTime = GetTickCount();
+
+		ds_maps = mrtPipeline->createDescriptorSet(descriptorPool, 1);
 
 		for (;;)
 		{
@@ -848,8 +816,14 @@ namespace tke
 				}
 				if (needUpdateTexture)
 				{
-					for (auto s : showing_scenes)
-						_update_texture_descriptor_set(s);
+					static int map_position = -1;
+					if (map_position == -1 && mrtPipeline) map_position = mrtPipeline->descriptorPosition("maps");
+					if (map_position != -1)
+					{
+						for (int index = 0; index < modelTextures.size(); index++)
+							ds_maps->setImage(map_position, index, modelTextures[index], colorSampler);
+						needUpdateTexture = false;
+					}
 				}
 				if (needUpdateMaterialBuffer)
 				{

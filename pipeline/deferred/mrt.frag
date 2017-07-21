@@ -13,7 +13,7 @@ layout(binding = TKE_UBO_BINDING) uniform MATERIAL
 	Material material[256];
 }u_material;
 
-layout(binding = TKE_UBO_BINDING) uniform sampler2D mapSamplers[256];
+layout(set = 1, binding = TKE_UBO_BINDING) uniform sampler2D maps[256];
 
 layout(location = 0) in flat uint inMaterialID;
 layout(location = 1) in vec2 inTexcoord;
@@ -39,7 +39,7 @@ void main()
 	}
 	else
 	{
-		vec4 v = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
 		albedo = v.rgb;
 		alpha = v.a;
 	}
@@ -48,7 +48,7 @@ void main()
 	mapIndex = (u_material.material[inMaterialID].mapIndex >> 8) & 0xff;
 	if (mapIndex > 0)
 	{
-		vec4 v = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
 		vec3 tn = normalize(v.xyz * 2.0 - 1.0);
 		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
 	}
@@ -63,7 +63,7 @@ void main()
 	}
 	else
 	{
-		vec4 v = texture(mapSamplers[mapIndex - 1], inTexcoord);
+		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
 		spec = v.r;
 		roughness = v.g;
 	}

@@ -26,13 +26,12 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	fb_scene = scene->createFramebuffer(image);
 	cb_scene = new tke::CommandBuffer(tke::commandPool);
 	scene_renderFinished = tke::createEvent();
-	tke::addShowingScene(scene);
 
 	cb_physx = new tke::CommandBuffer(tke::commandPool);
 	physx_renderFinished = tke::createEvent();
 
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
-	ds_wireframe = tke::plainPipeline_3d_anim_wire->createDescriptorSet(tke::descriptorPool);
+	ds_wireframe_anim = tke::plainPipeline_3d_anim_wire->createDescriptorSet(tke::descriptorPool);
 	wireframe_renderFinished = tke::createEvent();
 
 	VkImageView views[] = {
@@ -53,7 +52,6 @@ SceneMonitorWidget::~SceneMonitorWidget()
 	tke::releaseFramebuffer(fb_scene);
 	delete cb_scene;
 	tke::destroyEvent(scene_renderFinished);
-	tke::removeShowingScene(scene);
 
 	tke::releaseFramebuffer(fb_image);
 	tke::removeGuiImage(image);
@@ -63,7 +61,7 @@ SceneMonitorWidget::~SceneMonitorWidget()
 	tke::destroyEvent(physx_renderFinished);
 
 	delete cb_wireframe;
-	delete ds_wireframe;
+	delete ds_wireframe_anim;
 	tke::destroyEvent(wireframe_renderFinished);
 
 	tke::releaseFramebuffer(fb_tool);
@@ -188,14 +186,8 @@ void SceneMonitorWidget::show()
 		}
 	}
 
-	static bool showSelectedWireframe = true;
 	ImGui::Checkbox("Show Selected Wire Frame", &showSelectedWireframe);
-	static bool showSelectedController = false;
-	ImGui::Checkbox("Show Selected Controller", &showSelectedController);
-	static bool showSelectedEyePosition = false;
-	ImGui::Checkbox("Show Selected Eye Position", &showSelectedEyePosition);
 
-	static bool viewPhysx = false;
 	if (ImGui::Checkbox("View Physx", &viewPhysx))
 	{
 		if (viewPhysx)
@@ -317,8 +309,6 @@ void SceneMonitorWidget::show()
 	}
 
 	{ // draw wireframe
-		static tke::Object *last_obj = nullptr;
-
 		cb_wireframe->reset();
 		cb_wireframe->begin();
 
@@ -348,37 +338,13 @@ void SceneMonitorWidget::show()
 				if (animated)
 				{
 					if (last_obj != obj)
-						ds_wireframe->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
-					cb_wireframe->bindDescriptorSet(ds_wireframe->v);
+						ds_wireframe_anim->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
+					cb_wireframe->bindDescriptorSet(&ds_wireframe_anim->v);
 				}
 				pc.modelview = scene->camera.getMatInv() * obj->getMat();
 				pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(model);
-			}
-
-			if (showSelectedController)
-			{
-				cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
-				cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
-				cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
-				pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
-				{
-					auto c = model->controllerPosition;
-					auto r = model->controllerRadius / 0.5f;
-					auto h = model->controllerHeight;
-					auto mv = scene->camera.getMatInv() * obj->getMat();
-					pc.modelview = mv * glm::translate(c) * glm::scale(r, h, r);
-					cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
-					cb_wireframe->drawModel(tke::cylinderModel);
-					h *= 0.5f;
-					pc.modelview = mv * glm::translate(c - glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
-					cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
-					cb_wireframe->drawModel(tke::sphereModel, 0);
-					pc.modelview = mv * glm::translate(c + glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
-					cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
-					cb_wireframe->drawModel(tke::sphereModel, 1);
-				}
 			}
 
 			cb_wireframe->endRenderPass();
@@ -405,26 +371,48 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 		image->getView(),
 		tke::depthImage->getView()
 	};
-	fb = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	fb_image = tke::getFramebuffer(image, tke::plainRenderPass_image8);
 	tke::addGuiImage(image);
 
+	camera.setMode(tke::CameraMode::targeting);
+	camera.setLength(20.f);
+	camera.setTarget(glm::vec3());
+	camera.lookAtTarget();
+
+	fb_model = tke::getFramebuffer(image->cx, image->cy, tke::plainRenderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	if (model->animated)
+	{
+		animComp = new tke::AnimationComponent(model);
+		ds_anim = tke::plainPipeline_3d_anim_tex->createDescriptorSet(tke::descriptorPool);
+		ds_anim->setBuffer(0, 0, animComp->boneMatrixBuffer);
+	}
 	cb = new tke::CommandBuffer(tke::commandPool);
+	model_renderFinished = tke::createEvent();
+
+	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
 
 	cbs.push_back(cb->v);
+	cbs.push_back(cb_wireframe->v);
 }
 
 ModelMonitorWidget::~ModelMonitorWidget()
 {
-	tke::releaseFramebuffer(fb);
+	tke::releaseFramebuffer(fb_image);
 	tke::removeGuiImage(image);
 	delete image;
 
+	tke::releaseFramebuffer(fb_model);
+	delete animComp;
 	delete cb;
+	delete ds_anim;
+	tke::destroyEvent(model_renderFinished);
+
+	delete cb_wireframe;
 }
 
 void ModelMonitorWidget::show()
 {
-	std::string title = "Monitor - " + model->name;
+	std::string title = "Monitor - " + model->filename;
 	ImGui::BeginDock(title.c_str(), &opened);
 	if (ImGui::IsWindowFocused())
 	{
@@ -433,20 +421,138 @@ void ModelMonitorWidget::show()
 	}
 
 	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
+	ImVec2 image_pos = ImGui::GetItemRectMin();
+	if (ImGui::IsItemHovered())
+	{
+		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
+		{
+			if (tke::atlPressing())
+			{
+				auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
+				auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
+				if (mainWindow->leftPressing)
+					camera.rotateByCursor(distX, distY);
+				else if (mainWindow->middlePressing)
+					camera.moveByCursor(distX, distY);
+				else if (mainWindow->rightPressing)
+					camera.scroll(distX);
+			}
+			else
+			{
+			}
+		}
+		if (mainWindow->leftJustDown)
+		{
+		}
+	}
+
+	ImGui::Checkbox("Show Controller", &showController);
+	ImGui::Checkbox("Show Eye Position", &showEyePosition);
 
 	ImGui::EndDock();
 
-	cb->reset();
-	cb->begin();
+	{
+		cb->reset();
+		cb->begin();
 
-	VkClearValue clearValue = { 0.f, 0.f, 1.f, 1.f };
-	cb->beginRenderPass(tke::plainRenderPass_depth_clear_image8_clear, fb, &clearValue);
+		VkClearValue clearValues[] = {
+			{ 0.f, 0.7f, 0.6f, 1.f },
+			{ 1.f, 0 },
+		};
+		cb->beginRenderPass(tke::plainRenderPass_depth_clear_image8_clear, fb_model, clearValues);
+		auto animated = model->animated;
+		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
+		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
+		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim_tex : tke::plainPipeline_3d_tex);
+		if (animated)
+		{
+			VkDescriptorSet sets[] = {
+				ds_anim->v,
+				tke::ds_maps->v
+			};
+			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+		}
+		else
+		{
+			cb->bindDescriptorSet(&tke::ds_maps->v, 1);
+		}
+		struct
+		{
+			glm::mat4 modelview;
+			glm::mat4 proj;
+		}pc;
+		pc.proj = tke::matPerspective;
+		pc.modelview = camera.getMatInv();
+		cb->pushConstant(tke::StageType::vert, 0, sizeof(pc), &pc);
+		int mtIndex = 0;
+		for (auto m : model->materials)
+		{
+			if (m->albedoAlphaMap)
+				cb->drawModel(model, mtIndex, 1, m->albedoAlphaMap->index);
+			mtIndex++;
+		}
+		cb->endRenderPass();
 
-	cb->endRenderPass();
+		cb->setEvent(model_renderFinished);
 
-	cb->setEvent(renderFinished);
+		cb->end();
+	}
 
-	cb->end();
+	{
+		struct
+		{
+			glm::mat4 modelview;
+			glm::mat4 proj;
+			glm::vec4 color;
+		}pc;
+		pc.proj = tke::matPerspective;
+
+		cb_wireframe->reset();
+		cb_wireframe->begin();
+
+		cb_wireframe->waitEvents(1, &model_renderFinished);
+
+		cb_wireframe->beginRenderPass(tke::plainRenderPass_image8, fb_image);
+
+		if (showController)
+		{
+			cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
+			cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
+			cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
+			pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
+			{
+				auto c = model->controllerPosition;
+				auto r = model->controllerRadius / 0.5f;
+				auto h = model->controllerHeight;
+				auto mv = camera.getMatInv();
+				pc.modelview = mv * glm::translate(c) * glm::scale(r, h, r);
+				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->drawModel(tke::cylinderModel);
+				h *= 0.5f;
+				pc.modelview = mv * glm::translate(c - glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->drawModel(tke::sphereModel, 0);
+				pc.modelview = mv * glm::translate(c + glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->drawModel(tke::sphereModel, 1);
+			}
+		}
+
+		if (showEyePosition)
+		{
+			pc.modelview = camera.getMatInv() * glm::translate(model->eyePosition);
+			pc.color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+			cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+			cb_wireframe->drawModel(tke::sphereModel);
+		}
+
+		cb_wireframe->endRenderPass();
+
+		cb_wireframe->resetEvent(model_renderFinished);
+		cb_wireframe->setEvent(renderFinished);
+
+		cb_wireframe->end();
+	}
 }
 
 std::vector<MonitorWidget*> monitorWidgets;

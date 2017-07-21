@@ -18,6 +18,7 @@ layout(location = 0) in vec3 inVertex;
 #if defined(USE_TEX)
 layout(location = 1) in vec2 inTexcoord;
 layout(location = 0) out vec2 outTexcoord;
+layout(location = 3) out flat uint outTexId;
 #endif
 #if defined(USE_NORMAL)
 layout(location = 2) in vec3 inNormal;
@@ -40,6 +41,7 @@ void main()
 #endif
 #if defined(USE_TEX)
 	outTexcoord = inTexcoord;
+	outTexId = gl_InstanceIndex;
 #endif
 #if defined(USE_NORMAL)
 	mat3 normalMatrix = transpose(inverse(mat3(modelview)));

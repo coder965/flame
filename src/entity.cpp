@@ -3657,7 +3657,7 @@ namespace tke
 		cb->bindVertexBuffer(staticVertexBuffer);
 		cb->bindIndexBuffer(staticIndexBuffer);
 		cb->bindPipeline(panoramaPipeline);
-		cb->bindDescriptorSet(ds_pano->v);
+		cb->bindDescriptorSet(&ds_pano->v);
 		cb->drawIndex(sphereModel->indices.size(), sphereModel->indiceBase, sphereModel->vertexBase);
 
 		// mrt
@@ -3668,7 +3668,11 @@ namespace tke
 			cb->bindVertexBuffer(staticVertexBuffer);
 			cb->bindIndexBuffer(staticIndexBuffer);
 			cb->bindPipeline(mrtPipeline);
-			cb->bindDescriptorSet(ds_mrt->v);
+			VkDescriptorSet sets[] = {
+				ds_mrt->v,
+				ds_maps->v
+			};
+			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 			cb->drawIndirectIndex(staticObjectIndirectBuffer, staticIndirectCount);
 		}
 			// animated
@@ -3677,7 +3681,11 @@ namespace tke
 			cb->bindVertexBuffer(animatedVertexBuffer);
 			cb->bindIndexBuffer(animatedIndexBuffer);
 			cb->bindPipeline(mrtAnimPipeline);
-			cb->bindDescriptorSet(ds_mrtAnim->v);
+			VkDescriptorSet sets[] = {
+				ds_mrtAnim->v,
+				ds_maps->v
+			};
+			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 			cb->drawIndirectIndex(animatedObjectIndirectBuffer, animatedIndirectCount);
 		}
 			// terrain
@@ -3687,7 +3695,7 @@ namespace tke
 			{
 			case TerrainType::height_map:
 				cb->bindPipeline(heightMapTerrainPipeline);
-				cb->bindDescriptorSet(ds_heightMapTerrain->v);
+				cb->bindDescriptorSet(&ds_heightMapTerrain->v);
 				cb->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
 				break;
 			}
@@ -3696,13 +3704,13 @@ namespace tke
 		// deferred
 		cb->nextSubpass();
 		cb->bindPipeline(deferredPipeline);
-		cb->bindDescriptorSet(ds_defe->v);
+		cb->bindDescriptorSet(&ds_defe->v);
 		cb->draw(3);
 
 		// compose
 		cb->nextSubpass();
 		cb->bindPipeline(composePipeline);
-		cb->bindDescriptorSet(ds_comp->v);
+		cb->bindDescriptorSet(&ds_comp->v);
 		cb->draw(3);
 
 		cb->endRenderPass();

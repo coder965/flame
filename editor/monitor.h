@@ -31,6 +31,9 @@ struct SceneMonitorWidget : MonitorWidget
 	tke::Framebuffer *fb_image;
 
 	tke::Scene *scene;
+	bool showSelectedWireframe = true;
+	bool viewPhysx = false;
+	tke::Object *last_obj = nullptr;
 	tke::Framebuffer *fb_scene;
 	tke::CommandBuffer *cb_scene;
 	VkEvent scene_renderFinished;
@@ -42,7 +45,7 @@ struct SceneMonitorWidget : MonitorWidget
 	VkEvent physx_renderFinished;
 
 	tke::CommandBuffer *cb_wireframe;
-	tke::DescriptorSet *ds_wireframe;
+	tke::DescriptorSet *ds_wireframe_anim;
 	VkEvent wireframe_renderFinished;
 
 	tke::Framebuffer *fb_tool;
@@ -56,12 +59,19 @@ struct SceneMonitorWidget : MonitorWidget
 struct ModelMonitorWidget : MonitorWidget
 {
 	tke::Image *image;
-	tke::Framebuffer *fb;
+	tke::Framebuffer *fb_image;
 
 	tke::Model *model;
-
+	bool showController = false;
+	bool showEyePosition = false;
+	tke::Framebuffer *fb_model;
+	tke::Camera camera;
+	tke::AnimationComponent *animComp = nullptr;
 	tke::CommandBuffer *cb;
-	tke::DescriptorSet *ds;
+	tke::DescriptorSet *ds_anim;
+	VkEvent model_renderFinished;
+
+	tke::CommandBuffer *cb_wireframe;
 
 	ModelMonitorWidget(tke::Model *_model);
 	virtual ~ModelMonitorWidget() override;

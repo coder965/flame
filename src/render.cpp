@@ -180,9 +180,9 @@ namespace tke
 		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, 0, 1, &currentPipeline->descriptorSet->v, 0, nullptr);
 	}
 
-	void CommandBuffer::bindDescriptorSet(VkDescriptorSet set)
+	void CommandBuffer::bindDescriptorSet(VkDescriptorSet *sets, int index, int count)
 	{
-		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, 0, 1, &set, 0, nullptr);
+		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, index, count, sets, 0, nullptr);
 	}
 
 	void CommandBuffer::execSecondaryCmd(VkCommandBuffer cmd)
@@ -205,12 +205,12 @@ namespace tke
 		vkCmdDrawIndexed(v, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 	}
 
-	void CommandBuffer::drawModel(Model *m, int mtIndex)
+	void CommandBuffer::drawModel(Model *m, int mtIndex, int instanceCount, int firstInstance)
 	{
 		if (mtIndex == -1)
-			drawIndex(m->indices.size(), m->indiceBase, m->vertexBase);
+			drawIndex(m->indices.size(), m->indiceBase, m->vertexBase, instanceCount, firstInstance);
 		else
-			drawIndex(m->materials[mtIndex]->indiceCount, m->indiceBase + m->materials[mtIndex]->indiceBase, m->vertexBase);
+			drawIndex(m->materials[mtIndex]->indiceCount, m->indiceBase + m->materials[mtIndex]->indiceBase, m->vertexBase, instanceCount, firstInstance);
 	}
 
 	void CommandBuffer::drawIndirect(IndirectVertexBuffer *b, int count, int offset)
@@ -688,6 +688,7 @@ namespace tke
 		const char* pMessage,
 		void* pUserData)
 	{
+		if (messageCode == 0) return VK_FALSE; // descriptor set bind warmming
 		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
 		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
@@ -1402,7 +1403,7 @@ namespace tke
 	}
 
 	static std::string _last_compiled_stage_text;
-	static int _currentUboBinding = 0;
+	static std::vector<int> _currentUboBinding;
 	void Stage::create()
 	{
 		std::vector<std::string> defines;
@@ -1559,21 +1560,27 @@ namespace tke
 					fullLineNum += includeFileLineNum;
 					lineNum++;
 				}
-				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\(\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+)\s*(\[\s*([0-9]+)\s*\])?)"))
+				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\((\s*set\s*=\s*([0-9]+)\s*,\s*)?\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+)\s*(\[\s*([0-9]+)\s*\])?)"))
 				{
-					auto name = match[6].str();
+					auto set = match[2].matched ? std::stoi(match[2].str()) : 0;
+					if (set >= _currentUboBinding.size())
+						_currentUboBinding.resize(set + 1);
+					if (set >= module->descriptors.size())
+						module->descriptors.resize(set + 1);
+
 					Descriptor d;
+					d.name = match[8].str();
 					d.binding = -1;
 					for (int i = 0; i < 5; i++)
 					{
 						if (parent->stages[i])
 						{
 							auto s = parent->stages[i];
-							if (s->type != type && s->module)
+							if (s->type != type && s->module && s->module->descriptors.size() > set)
 							{
-								for (auto &_d : s->module->descriptors)
+								for (auto &_d : s->module->descriptors[set])
 								{
-									if (_d.name == name)
+									if (_d.name == d.name)
 									{
 										d.binding = _d.binding;
 										d.type = _d.type;
@@ -1587,18 +1594,17 @@ namespace tke
 						}
 					}
 
-					d.name = name;
 					if (d.binding == -1)
 					{
-						d.binding = _currentUboBinding;
-						d.type = match[5].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
-						d.count = match[8].matched ? std::stoi(match[8].str()) : 1;
-						module->descriptors.push_back(d);
-						_currentUboBinding++;
+						d.binding = _currentUboBinding[set];
+						d.type = match[7].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
+						d.count = match[10].matched ? std::stoi(match[10].str()) : 1;
+						module->descriptors[set].push_back(d);
+						_currentUboBinding[set]++;
 					}
 					else
 					{
-						module->descriptors.push_back(d);
+						module->descriptors[set].push_back(d);
 					}
 					line = std::regex_replace(line, pattern = R"(TKE_UBO_BINDING)", std::to_string(d.binding));
 
@@ -1822,7 +1828,7 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	static std::vector<DescriptorSetLayout*> descriptorSetLayouts;
+	static std::vector<DescriptorSetLayout*> _descriptorSetLayouts;
 
 	PipelineLayout::~PipelineLayout()
 	{
@@ -2037,7 +2043,7 @@ namespace tke
 			vkBlendAttachments.push_back(s);
 		}
 
-		_currentUboBinding = 0;
+		_currentUboBinding.clear();
 
 		for (auto s : stages)
 		{
@@ -2045,33 +2051,42 @@ namespace tke
 
 			s->create();
 
-			VkPipelineShaderStageCreateInfo i = {};
-			i.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			i.pName = "main";
-			i.stage = (VkShaderStageFlagBits)vkStage(s->type);
-			i.module = s->module->v;
-			vkStages.push_back(i);
+			VkPipelineShaderStageCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			info.pName = "main";
+			info.stage = (VkShaderStageFlagBits)vkStage(s->type);
+			info.module = s->module->v;
+			vkStages.push_back(info);
 
-			for (auto &d : s->module->descriptors)
+			if (vkDescriptors.size() < s->module->descriptors.size())
 			{
-				auto found = false;
-				for (auto &b : vkDescriptors)
-				{
-					if (b.binding == d.binding)
-					{
-						b.stageFlags |= vkStage(s->type);
-						found = true;
-						break;
-					}
-				}
-				if (found) continue;
+				vkDescriptors.resize(s->module->descriptors.size());
+				descriptorSetLayouts.resize(s->module->descriptors.size());
+			}
 
-				VkDescriptorSetLayoutBinding b = {};
-				b.descriptorType = _vkDescriptorType(d.type);
-				b.binding = d.binding;
-				b.descriptorCount = d.count;
-				b.stageFlags = vkStage(s->type);
-				vkDescriptors.push_back(b);
+			for (auto set = 0; set < s->module->descriptors.size(); set++)
+			{
+				for (auto &d : s->module->descriptors[set])
+				{
+					auto found = false;
+					for (auto &b : vkDescriptors[set])
+					{
+						if (b.binding == d.binding)
+						{
+							b.stageFlags |= vkStage(s->type);
+							found = true;
+							break;
+						}
+					}
+					if (found) continue;
+
+					VkDescriptorSetLayoutBinding b = {};
+					b.descriptorType = _vkDescriptorType(d.type);
+					b.binding = d.binding;
+					b.descriptorCount = d.count;
+					b.stageFlags = vkStage(s->type);
+					vkDescriptors[set].push_back(b);
+				}
 			}
 			for (auto &p : s->module->pushConstantRanges)
 			{
@@ -2095,18 +2110,19 @@ namespace tke
 			}
 		}
 
+		for (auto set = 0; set < vkDescriptors.size(); set++)
 		{
 			bool found = false;
-			for (auto d : descriptorSetLayouts)
+			for (auto d : _descriptorSetLayouts)
 			{
-				if (d->bindings.size() == vkDescriptors.size())
+				if (d->bindings.size() == vkDescriptors[set].size())
 				{
 					bool same = true;
 					for (auto i = 0; i < d->bindings.size(); i++)
 					{
 						auto &binding = d->bindings[i];
-						if (binding.binding != vkDescriptors[i].binding || binding.descriptorCount != vkDescriptors[i].descriptorCount ||
-							binding.descriptorType != vkDescriptors[i].descriptorType || binding.stageFlags != vkDescriptors[i].stageFlags)
+						if (binding.binding != vkDescriptors[set][i].binding || binding.descriptorCount != vkDescriptors[set][i].descriptorCount ||
+							binding.descriptorType != vkDescriptors[set][i].descriptorType || binding.stageFlags != vkDescriptors[set][i].stageFlags)
 						{
 							same = false;
 							break;
@@ -2114,7 +2130,7 @@ namespace tke
 					}
 					if (same)
 					{
-						descriptorSetLayout = d;
+						descriptorSetLayouts[set] = d;
 						found = true;
 						break;
 					}
@@ -2124,21 +2140,21 @@ namespace tke
 			if (!found)
 			{
 				auto d = new DescriptorSetLayout;
-				d->bindings.insert(d->bindings.begin(), vkDescriptors.begin(), vkDescriptors.end());
+				d->bindings.insert(d->bindings.begin(), vkDescriptors[set].begin(), vkDescriptors[set].end());
 
 				VkDescriptorSetLayoutCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				info.bindingCount = vkDescriptors.size();
-				info.pBindings = vkDescriptors.data();
+				info.bindingCount = vkDescriptors[set].size();
+				info.pBindings = vkDescriptors[set].data();
 
 				device.mtx.lock();
 				auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &d->v);
 				assert(res == VK_SUCCESS);
 				device.mtx.unlock();
 
-				descriptorSetLayouts.push_back(d);
+				_descriptorSetLayouts.push_back(d);
 
-				descriptorSetLayout = d;
+				descriptorSetLayouts[set] = d;
 			}
 		}
 
@@ -2146,10 +2162,18 @@ namespace tke
 			bool found = false;
 			for (auto p : pipelineLayouts)
 			{
-				if (p->descriptorLayout == descriptorSetLayout->v && p->pushConstantRanges.size() == vkPushConstantRanges.size())
+				if (p->descriptorSetLayouts.size() == descriptorSetLayouts.size() && p->pushConstantRanges.size() == vkPushConstantRanges.size())
 				{
 					bool same = true;
-					for (auto i = 0; i < p->pushConstantRanges.size(); i++)
+					for (auto i = 0; i < descriptorSetLayouts.size(); i++)
+					{
+						if (p->descriptorSetLayouts[i] != descriptorSetLayouts[i]->v)
+						{
+							same = false;
+							break;
+						}
+					}
+					for (auto i = 0; i < vkPushConstantRanges.size(); i++)
 					{
 						auto &pc = p->pushConstantRanges[i];
 						if (pc.offset != vkPushConstantRanges[i].offset || pc.size != vkPushConstantRanges[i].size ||
@@ -2171,13 +2195,14 @@ namespace tke
 			if (!found)
 			{
 				auto p = new PipelineLayout;
-				p->descriptorLayout = descriptorSetLayout->v;
+				for (auto d : descriptorSetLayouts)
+					p->descriptorSetLayouts.push_back(d->v);
 				p->pushConstantRanges.insert(p->pushConstantRanges.begin(), vkPushConstantRanges.begin(), vkPushConstantRanges.end());
 
 				VkPipelineLayoutCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-				info.setLayoutCount = 1;
-				info.pSetLayouts = &descriptorSetLayout->v;
+				info.setLayoutCount = p->descriptorSetLayouts.size();
+				info.pSetLayouts = p->descriptorSetLayouts.data();
 				info.pushConstantRangeCount = p->pushConstantRanges.size();
 				info.pPushConstantRanges = p->pushConstantRanges.data();
 
@@ -2286,7 +2311,7 @@ namespace tke
 
 		if (need_default_ds)
 		{
-			descriptorSet = new DescriptorSet(descriptorPool, descriptorSetLayout);
+			descriptorSet = new DescriptorSet(descriptorPool, descriptorSetLayouts[0]);
 			linkDescriptors(descriptorSet, &globalResource);
 		}
 	}
@@ -2307,16 +2332,19 @@ namespace tke
 			}
 		}
 
-		descriptorSetLayout->refCount--;
-		if (descriptorSetLayout->refCount == 0)
+		for (auto d : descriptorSetLayouts)
 		{
-			for (auto it = descriptorSetLayouts.begin(); it != descriptorSetLayouts.end(); it++)
+			d->refCount--;
+			if (d->refCount == 0)
 			{
-				if (*it == descriptorSetLayout)
+				for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end(); it++)
 				{
-					descriptorSetLayouts.erase(it);
-					delete descriptorSetLayout;
-					break;
+					if (*it == d)
+					{
+						_descriptorSetLayouts.erase(it);
+						delete d;
+						break;
+					}
 				}
 			}
 		}
@@ -2331,9 +2359,9 @@ namespace tke
 			delete stages[i];
 	}
 
-	DescriptorSet *Pipeline::createDescriptorSet(DescriptorPool *_pool)
+	DescriptorSet *Pipeline::createDescriptorSet(DescriptorPool *_pool, int index)
 	{
-		return new DescriptorSet(_pool, descriptorSetLayout);
+		return new DescriptorSet(_pool, descriptorSetLayouts[index]);
 	}
 
 	void Pipeline::linkDescriptors(DescriptorSet *set, ResourceBank *resource)
@@ -2347,14 +2375,17 @@ namespace tke
 				{
 					if (found) break;
 					if (!s) continue;
-					for (auto &d : s->module->descriptors)
+					for (auto set = 0; set < s->module->descriptors.size(); set++)
 					{
-						if (d.name == link.descriptor_name)
+						for (auto &d : s->module->descriptors[set])
 						{
-							link.binding = d.binding;
-							link.type = d.type;
-							found = true;
-							break;
+							if (d.name == link.descriptor_name)
+							{
+								link.binding = d.binding;
+								link.type = d.type;
+								found = true;
+								break;
+							}
 						}
 					}
 				}
@@ -2369,13 +2400,16 @@ namespace tke
 				{
 					if (found) break;
 					if (!s) continue;
-					for (auto &d : s->module->descriptors)
+					for (auto set = 0; set < s->module->descriptors.size(); set++)
 					{
-						if (d.binding == link.binding)
+						for (auto &d : s->module->descriptors[set])
 						{
-							link.type = d.type;
-							found = true;
-							break;
+							if (d.binding == link.binding)
+							{
+								link.type = d.type;
+								found = true;
+								break;
+							}
 						}
 					}
 				}
@@ -2436,10 +2470,13 @@ namespace tke
 		{
 			if (!s) continue;
 
-			for (auto &d : s->module->descriptors)
+			for (auto set = 0; set < s->module->descriptors.size(); set++)
 			{
-				if (d.name == name)
-					return d.binding;
+				for (auto &d : s->module->descriptors[set])
+				{
+					if (d.name == name)
+						return d.binding;
+				}
 			}
 		}
 		return -1;

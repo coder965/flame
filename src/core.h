@@ -118,6 +118,8 @@ namespace tke
 	extern Pipeline *plainPipeline_3d_line;
 	extern int plain3d_bone_pos;
 
+	extern DescriptorSet *ds_maps;
+
 	struct GuiComponent;
 	struct Window
 	{
@@ -199,7 +201,5 @@ namespace tke
 	void processCmdLine(const std::string &str, bool record = true);
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
 	Err init(const std::string &path, int rcx, int rcy);
-	void addShowingScene(Scene *s);
-	void removeShowingScene(Scene *s);
 	void run();
 }

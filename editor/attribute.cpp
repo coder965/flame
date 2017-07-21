@@ -222,9 +222,10 @@ void AttributeWidget::show()
 		}
 		break;
 	case LastWindowTypeMonitor:
-		ImGui::BeginTabBar("##tab_monitor");
 		if (lastMonitorWidget->mode == MonitorWidget::ModeScene)
 		{
+			ImGui::BeginTabBar("##tab_monitor");
+
 			auto m = (SceneMonitorWidget*)lastMonitorWidget;
 
 			if (ImGui::AddTab("Scene"))
@@ -274,8 +275,9 @@ void AttributeWidget::show()
 					}
 				}
 			}
+
+			ImGui::EndTabBar();
 		}
-		ImGui::EndTabBar();
 		break;
 	}
 

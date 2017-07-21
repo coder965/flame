@@ -228,12 +228,12 @@ namespace tke
 		void bindIndexBuffer(OnceIndexBuffer *b);
 		void bindPipeline(Pipeline *p);
 		void bindDescriptorSet();
-		void bindDescriptorSet(VkDescriptorSet set);
+		void bindDescriptorSet(VkDescriptorSet *sets, int index = 0, int count = 1);
 		void execSecondaryCmd(VkCommandBuffer cmd);
 		void pushConstant(StageType stage, int offset, int size, void *src);
 		void draw(int vertexCount, int firstVertex = 0, int instanceCount = 1, int firstInstance = 0);
 		void drawIndex(int indexCount, int firstIndex = 0, int vertexOffset = 0, int instanceCount = 1, int firstInstance = 0);
-		void drawModel(Model *m, int mtIndex = -1);
+		void drawModel(Model *m, int mtIndex = -1, int instanceCount = 1, int firstInstance = 0);
 		void drawIndirect(IndirectVertexBuffer *b, int count, int offset = 0);
 		void drawIndirectIndex(IndirectIndexBuffer *b, int count, int offset = 0);
 		void waitEvents(size_t count, VkEvent *e);
@@ -537,7 +537,7 @@ namespace tke
 		std::string filename;
 		std::vector<std::string> defines;
 
-		std::vector<Descriptor> descriptors;
+		std::vector<std::vector<Descriptor>> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
 		VkShaderModule v;
 		int refCount = 1;
@@ -596,7 +596,7 @@ namespace tke
 
 	struct PipelineLayout
 	{
-		VkDescriptorSetLayout descriptorLayout;
+		std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 		std::vector<VkPushConstantRange> pushConstantRanges;
 		VkPipelineLayout v;
 		int refCount = 1;
@@ -637,16 +637,16 @@ namespace tke
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
 		VkCullModeFlagBits vkCullMode = VK_CULL_MODE_BACK_BIT;
 		std::vector<VkPipelineColorBlendAttachmentState> vkBlendAttachments;
-		std::vector<VkDescriptorSetLayoutBinding> vkDescriptors;
+		std::vector<std::vector<VkDescriptorSetLayoutBinding>> vkDescriptors;
+		std::vector<DescriptorSetLayout*> descriptorSetLayouts;
 		std::vector<VkPushConstantRange> vkPushConstantRanges;
-		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
+		PipelineLayout *pipelineLayout = nullptr;
 
 		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
 		RenderPass *renderPass;
 		int subpassIndex;
 		std::vector<VkDynamicState> vkDynamicStates;
-		DescriptorSetLayout *descriptorSetLayout = nullptr;
-		PipelineLayout *pipelineLayout = nullptr;
+		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 		VkPipeline pipeline = 0;
 		DescriptorSet *descriptorSet = nullptr;
 
@@ -654,7 +654,7 @@ namespace tke
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
 		void setup(RenderPass *_renderPass, std::uint32_t _subpassIndex, bool need_default_ds);
-		DescriptorSet *createDescriptorSet(DescriptorPool *_pool);
+		DescriptorSet *createDescriptorSet(DescriptorPool *_pool, int index = 0);
 		void linkDescriptors(DescriptorSet *set, ResourceBank *resource);
 		int descriptorPosition(const std::string &name);
 	};
