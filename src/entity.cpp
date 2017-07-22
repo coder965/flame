@@ -1699,15 +1699,12 @@ namespace tke
 								break;
 							}
 						}
-
 						if (index == -1)
 						{
 							index = m->positions.size();
-
 							m->positions.push_back(               rawPositions[ids[0]]                 ); 
 							m->uvs.push_back(      ids[1] != -1 ? rawTexcoords[ids[1]] : glm::vec2(0.f));
 							m->normals.push_back(  ids[2] != -1 ? rawNormals[ids[2]]   : glm::vec3(0.f));
-
 							rawIndexs.push_back(ids);
 
 						}
@@ -2182,15 +2179,35 @@ namespace tke
 
 	namespace COLLADA
 	{
+		std::string getId(const std::string &str)
+		{
+			assert(str.size() > 0);
+			if (str[0] == '#')
+				return std::string(str.c_str() + 1);
+		}
+
 		struct Source
 		{
 			std::string id;
-			float *float_array = nullptr;
+			float *float_array;
 
 			~Source()
 			{
 				delete[]float_array;
 			}
+			glm::vec2 &v2(int index)
+			{
+				return *(glm::vec2*)&float_array[index * 2];
+			}
+			glm::vec3 &v3(int index)
+			{
+				return *(glm::vec3*)&float_array[index * 3];
+			}
+		};
+
+		struct VertexInfo
+		{
+			int position_source_index;
 		};
 
 		void load(Model *m, const std::string &filename)
@@ -2201,6 +2218,7 @@ namespace tke
 			n = n->firstNode("geometry"); assert(n);
 			n = n->firstNode("mesh"); assert(n);
 			std::vector<std::unique_ptr<Source>> sources;
+			VertexInfo vertex_info;
 			for (auto c : n->children)
 			{
 				if (c->name == "source")
@@ -2212,21 +2230,201 @@ namespace tke
 					s->id = a->value;
 					n = c->firstNode("float_array"); assert(n);
 					a = n->firstAttribute("count"); assert(a);
-					s->float_array = new float[std::stoi(a->value)];
+					auto count = std::stoi(a->value);
+					s->float_array = new float[count];
 					auto str = n->value;
-					std::regex pattern(R"(([0-9\.\+\-]+))");
+					std::regex pattern(R"(([0-9e\.\+\-]+))");
 					std::smatch match;
-					auto ptr = s->float_array;
-					while (std::regex_search(str, match, pattern))
+					int id = 0;
+					while (std::regex_search(str, match, pattern) && id < count)
 					{
-						*ptr = std::stof(match[1].str());
-						ptr++;
+						s->float_array[id] = std::stof(match[1].str());
+						id++;
 						str = match.suffix();
 					}
 					sources.push_back(std::move(s));
 				}
+				else if (c->name == "vertices")
+				{
+					for (auto cc : c->children)
+					{
+						if (cc->name == "input")
+						{
+							auto a = cc->firstAttribute("semantic"); assert(a);
+							if (a->value == "POSITION")
+							{
+								a = cc->firstAttribute("source"); assert(a);
+								auto id = getId(a->value);
+								for (int i = 0; i < sources.size(); i++)
+								{
+									if (sources[i]->id == id)
+									{
+										vertex_info.position_source_index = i;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				else if (c->name == "polylist")
+				{
+					int position_source_index = -1;
+					int position_offset = -1;
+					int uv_source_index = -1;
+					int uv_offset = -1;
+					int normal_source_index = -1;
+					int normal_offset = -1;
+					int element_count_per_vertex = 0;
+					std::vector<int> vcount;
+					for (auto cc : c->children)
+					{
+						if (cc->name == "input")
+						{
+							Attribute *a;
+							a = cc->firstAttribute("source"); assert(a);
+							auto id = getId(a->value);
+							int source_index = -1;
+							for (int i = 0; i < sources.size(); i++)
+							{
+								if (sources[i]->id == id)
+								{
+									source_index = i;
+									break;
+								}
+							}
+							a = cc->firstAttribute("offset"); assert(a);
+							auto offset = std::stoi(a->value);
+							a = cc->firstAttribute("semantic"); assert(a);
+							if (a->value == "VERTEX")
+							{
+								position_source_index = vertex_info.position_source_index;
+								position_offset = offset;
+							}
+							else if (a->value == "NORMAL")
+							{
+								normal_source_index = source_index;
+								normal_offset = offset;
+							}
+							element_count_per_vertex++;
+						}
+						else if (cc->name == "vcount")
+						{
+							auto str = cc->value;
+							std::regex pattern(R"([0-9]+)");
+							std::smatch match;
+							while (std::regex_search(str, match, pattern))
+							{
+								auto count = std::stoi(match[0].str());
+								assert(count == 3);
+								vcount.push_back(count);
+								str = match.suffix();
+							}
+						}
+						else if (cc->name == "p")
+						{
+							auto str = cc->value;
+							std::smatch match;
+							assert(element_count_per_vertex > 0);
+							assert(element_count_per_vertex <= 3);
+							switch (element_count_per_vertex)
+							{
+							case 1:
+							{
+								std::regex pattern(R"([0-9]+)");
+								auto indice_count = vcount.size() * 3;
+								while (std::regex_search(str, match, pattern) && indice_count > 0)
+								{
+									auto index = std::stoi(match[0].str());
+									m->positions.push_back(sources[position_source_index]->v3(index));
+									m->uvs.push_back(glm::vec2(0.f));
+									m->normals.push_back(glm::vec3(0.f));
+									m->indices.push_back(index);
+									indice_count--;
+									str = match.suffix();
+								}
+							}
+								break;
+							case 2:
+							{
+								std::vector<glm::ivec2> ids;
+								std::regex pattern(R"(([0-9]+)\s+([0-9]+))");
+								auto indice_count = vcount.size() * 3;
+								while (std::regex_search(str, match, pattern) && indice_count > 0)
+								{
+									glm::ivec2 id;
+									id[0] = std::stoi(match[1].str());
+									id[1] = std::stoi(match[2].str());
+									auto index = -1;
+									for (int i = 0; i < ids.size(); i++)
+									{
+										if (id == ids[i])
+										{
+											index = i;
+											break;
+										}
+									}
+									if (index == -1)
+									{
+										index = m->positions.size();
+										m->positions.push_back(sources[position_source_index]->v3(id[position_offset]));
+										m->uvs.push_back(uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]));
+										m->normals.push_back(normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]));
+										ids.push_back(id);
+
+									}
+									m->indices.push_back(index);
+									indice_count--;
+									str = match.suffix();
+								}
+							}
+								break;
+							case 3:
+							{
+								std::vector<glm::ivec3> ids;
+								std::regex pattern(R"(([0-9]+)\s+([0-9]+)\s+([0-9]+))");
+								auto indice_count = vcount.size() * 3;
+								while (std::regex_search(str, match, pattern) && indice_count > 0)
+								{
+									glm::ivec3 id;
+									id[0] = std::stoi(match[1].str());
+									id[1] = std::stoi(match[2].str());
+									id[2] = std::stoi(match[3].str());
+									auto index = -1;
+									for (int i = 0; i < ids.size(); i++)
+									{
+										if (id == ids[i])
+										{
+											index = i;
+											break;
+										}
+									}
+									if (index == -1)
+									{
+										index = m->positions.size();
+										m->positions.push_back(sources[position_source_index]->v3(id[position_offset]));
+										m->uvs.push_back(uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]));
+										m->normals.push_back(normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]));
+										ids.push_back(id);
+
+									}
+									m->indices.push_back(index);
+									indice_count--;
+									str = match.suffix();
+								}
+							}
+								break;
+							}
+						}
+					}
+				}
 			}
-			int a = 1;
+
+			auto mt = new Material;
+			mt->indiceCount = m->indices.size();
+			m->materials.push_back(mt);
+
+			_model_after_process(m);
 		}
 	}
 

@@ -80,8 +80,10 @@ void draw_pickup_frame(tke::CommandBuffer *cb)
 		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
 		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim : tke::plainPipeline_3d);
 		if (animated)
+		{
 			tke::plainPipeline_3d_anim->descriptorSet->setBuffer(tke::plain3d_bone_pos, 0, object->animationComponent->boneMatrixBuffer);
-		cb->bindDescriptorSet();
+			cb->bindDescriptorSet();
+		}
 		struct
 		{
 			glm::mat4 modelview;
@@ -117,13 +119,13 @@ void SceneMonitorWidget::show()
 		{
 			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
 			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-			if (mainWindow->mouseMiddle.pressing)
-				scene->camera.rotateByCursor(distX, distY);
 			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
 				scene->camera.moveByCursor(distX, distY);
-			if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
+			else if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
 				scene->camera.scroll(distX);
-			if (!mainWindow->keyStates[VK_SHIFT].pressing && !mainWindow->keyStates[VK_CONTROL].pressing)
+			else if (mainWindow->mouseMiddle.pressing)
+				scene->camera.rotateByCursor(distX, distY);
+			else if (!mainWindow->keyStates[VK_SHIFT].pressing && !mainWindow->keyStates[VK_CONTROL].pressing)
 			{
 				if (mainWindow->mouseLeft.pressing)
 					transformerTool->mouseMove(mainWindow->mouseDispX, mainWindow->mouseDispY);
@@ -425,11 +427,11 @@ void ModelMonitorWidget::show()
 		{
 			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
 			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-			if (mainWindow->mouseMiddle.pressing)
-				camera.rotateByCursor(distX, distY);
 			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
 				camera.moveByCursor(distX, distY);
-			if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
+			else if (mainWindow->mouseMiddle.pressing)
+			camera.rotateByCursor(distX, distY);
+			else if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
 				camera.scroll(distX);
 		}
 		if (mainWindow->mouseLeft.justDown)
