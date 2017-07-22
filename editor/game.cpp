@@ -67,21 +67,6 @@ void GameExplorer::show()
 		}
 		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("Models"))
-	{
-		for (int i = 0; i < tke::models.size(); i++)
-		{
-			auto m = tke::models[i];
-			if (ImGui::Selectable(m->filename.c_str(), lastItemType == lastItemTypeModel && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
-			{
-				lastItemType = lastItemTypeModel;
-				itemIndex = i;
-				if (ImGui::IsMouseDoubleClicked(0))
-					mainWindow->openModelMonitorWidget(m);
-			}
-		}
-		ImGui::TreePop();
-	}
 	if (ImGui::TreeNode("Animations"))
 	{
 		for (int i = 0; i < tke::animations.size(); i++)
@@ -93,6 +78,21 @@ void GameExplorer::show()
 				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
 					;
+			}
+		}
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Models"))
+	{
+		for (int i = 0; i < tke::models.size(); i++)
+		{
+			auto m = tke::models[i];
+			if (ImGui::Selectable(m->filename.c_str(), lastItemType == lastItemTypeModel && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
+			{
+				lastItemType = lastItemTypeModel;
+				itemIndex = i;
+				if (ImGui::IsMouseDoubleClicked(0))
+					mainWindow->openModelMonitorWidget(m);
 			}
 		}
 		ImGui::TreePop();

@@ -285,7 +285,7 @@ namespace tke
 
 		if (enable)
 		{
-			if (!((int)state | (int)_s))
+			if (!((int)state & (int)_s))
 			{
 				state = State((int)state | (int)_s);
 				return true;
@@ -294,7 +294,7 @@ namespace tke
 		}
 		else
 		{
-			if ((int)state | (int)_s)
+			if ((int)state & (int)_s)
 			{
 				state = State((int)state & ~(int)_s);
 				return true;
@@ -314,11 +314,11 @@ namespace tke
 		outCoord = glm::vec3();
 		outEuler = glm::vec3();
 
-		if (state == State::stand)
-			return false;
-
 		float dist = (nowTime - lastTime) / 1000.f;
 		lastTime = nowTime;
+
+		if (state == State::stand)
+			return false;
 
 		inEulerX = glm::radians(inEulerX + ang_offset);
 
@@ -326,36 +326,36 @@ namespace tke
 
 		if (speed > 0.f)
 		{
-			if (((int)state | (int)State::forward) && !((int)state | (int)State::backward))
+			if (((int)state & (int)State::forward) && !((int)state & (int)State::backward))
 			{
 				outCoord.x -= sin(inEulerX) * speed * dist;
 				outCoord.z -= cos(inEulerX) * speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::backward) && !((int)state | (int)State::forward))
+			if (((int)state & (int)State::backward) && !((int)state & (int)State::forward))
 			{
 				outCoord.x += sin(inEulerX) * speed * dist;
 				outCoord.z += cos(inEulerX) * speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::left) && !((int)state | (int)State::right))
+			if (((int)state & (int)State::left) && !((int)state & (int)State::right))
 			{
 				outCoord.x -= cos(inEulerX) * speed * dist;
 				outCoord.z += sin(inEulerX) * speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::right) && !((int)state | (int)State::left))
+			if (((int)state & (int)State::right) && !((int)state & (int)State::left))
 			{
 				outCoord.x += cos(inEulerX) * speed * dist;
 				outCoord.z -= sin(inEulerX) * speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::up) && !((int)state | (int)State::down))
+			if (((int)state & (int)State::up) && !((int)state & (int)State::down))
 			{
 				outCoord.y += speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::down) && !((int)state | (int)State::up))
+			if (((int)state & (int)State::down) && !((int)state & (int)State::up))
 			{
 				outCoord.y -= speed * dist;
 				changed = true;
@@ -364,22 +364,22 @@ namespace tke
 
 		if (turn_speed > 0.f)
 		{
-			if (((int)state | (int)State::turn_left) && !((int)state | (int)State::turn_right))
+			if (((int)state & (int)State::turn_left) && !((int)state & (int)State::turn_right))
 			{
 				outEuler.x += turn_speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::turn_right) && !((int)state | (int)State::turn_left))
+			if (((int)state & (int)State::turn_right) && !((int)state & (int)State::turn_left))
 			{
 				outEuler.x -= turn_speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::turn_up) && !((int)state | (int)State::turn_down))
+			if (((int)state & (int)State::turn_up) && !((int)state & (int)State::turn_down))
 			{
 				outEuler.z += turn_speed * dist;
 				changed = true;
 			}
-			if (((int)state | (int)State::turn_down) && !((int)state | (int)State::turn_up))
+			if (((int)state & (int)State::turn_down) && !((int)state & (int)State::turn_up))
 			{
 				outEuler.z -= turn_speed * dist;
 				changed = true;
@@ -1446,6 +1446,20 @@ namespace tke
 				m->bones[parentID].children.push_back(i);
 			}
 		}
+
+		Animation *a;
+		a = getAnimation(m->stand_animation_filename);
+		if (a) m->standAnimation = m->bindAnimation(a);
+		a = getAnimation(m->forward_animation_filename);
+		if (a) m->forwardAnimation = m->bindAnimation(a);
+		a = getAnimation(m->backward_animation_filename);
+		if (a) m->backwardAnimation = m->bindAnimation(a);
+		a = getAnimation(m->left_animation_filename);
+		if (a) m->leftAnimation = m->bindAnimation(a);
+		a = getAnimation(m->right_animation_filename);
+		if (a) m->rightAnimation = m->bindAnimation(a);
+		a = getAnimation(m->jump_animation_filename);
+		if (a) m->jumpAnimation = m->bindAnimation(a);
 	}
 
 	void initGeneralModels()
@@ -2327,21 +2341,6 @@ namespace tke
 				file >> m->left_animation_filename;
 				file >> m->right_animation_filename;
 				file >> m->jump_animation_filename;
-
-				Animation *a;
-
-				a = getAnimation(m->stand_animation_filename);
-				if (a) m->standAnimation = m->bindAnimation(a);
-				a = getAnimation(m->forward_animation_filename);
-				if (a) m->forwardAnimation = m->bindAnimation(a);
-				a = getAnimation(m->backward_animation_filename);
-				if (a) m->backwardAnimation = m->bindAnimation(a);
-				a = getAnimation(m->left_animation_filename);
-				if (a) m->leftAnimation = m->bindAnimation(a);
-				a = getAnimation(m->right_animation_filename);
-				if (a) m->rightAnimation = m->bindAnimation(a);
-				a = getAnimation(m->jump_animation_filename);
-				if (a) m->jumpAnimation = m->bindAnimation(a);
 			}
 
 			int rigidbodyCount;

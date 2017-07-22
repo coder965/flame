@@ -223,10 +223,67 @@ static void _show_model(tke::Model *m)
 	if (ImGui::Button("Save Data"))
 		m->saveData(false);
 
-	if (ImGui::Combo("Stand Animation", ))
+	auto standAnimation = m->standAnimation ? m->standAnimation->animation : nullptr;
+	if (ImGui::Combo("Stand Animation", (void**)&standAnimation, [](void *, void *cur, int idx, const char **out_text) {
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		*out_text = a ? a->filename.c_str() : "[NULL]";
+		return (void*)a;
+	}, nullptr, tke::animations.size() + 1))
 	{
-
+		auto b = m->bindAnimation(standAnimation);
+		m->setStandAnimation(b);
 	}
+	auto forwardAnimation = m->forwardAnimation ? m->forwardAnimation->animation : nullptr;
+	if (ImGui::Combo("Forward Animation", (void**)&forwardAnimation, [](void *, void *cur, int idx, const char **out_text) {
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		*out_text = a ? a->filename.c_str() : "[NULL]";
+		return (void*)a;
+	}, nullptr, tke::animations.size() + 1))
+	{
+		auto b = m->bindAnimation(forwardAnimation);
+		m->setForwardAnimation(b);
+	}
+	auto backwardAnimation = m->backwardAnimation ? m->backwardAnimation->animation : nullptr;
+	if (ImGui::Combo("Backward Animation", (void**)&backwardAnimation, [](void *, void *cur, int idx, const char **out_text) {
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		*out_text = a ? a->filename.c_str() : "[NULL]";
+		return (void*)a;
+	}, nullptr, tke::animations.size() + 1))
+	{
+		auto b = m->bindAnimation(backwardAnimation);
+		m->setBackwardAnimation(b);
+	}
+	auto leftAnimation = m->leftAnimation ? m->leftAnimation->animation : nullptr;
+	if (ImGui::Combo("Left Animation", (void**)&leftAnimation, [](void *, void *cur, int idx, const char **out_text) {
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		*out_text = a ? a->filename.c_str() : "[NULL]";
+		return (void*)a;
+	}, nullptr, tke::animations.size() + 1))
+	{
+		auto b = m->bindAnimation(leftAnimation);
+		m->setLeftAnimation(b);
+	}
+	auto rightAnimation = m->rightAnimation ? m->rightAnimation->animation : nullptr;
+	if (ImGui::Combo("Right Animation", (void**)&rightAnimation, [](void *, void *cur, int idx, const char **out_text) {
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		*out_text = a ? a->filename.c_str() : "[NULL]";
+		return (void*)a;
+	}, nullptr, tke::animations.size() + 1))
+	{
+		auto b = m->bindAnimation(rightAnimation);
+		m->setRightAnimation(b);
+	}
+	auto jumpAnimation = m->jumpAnimation ? m->jumpAnimation->animation : nullptr;
+	if (ImGui::Combo("Jump Animation", (void**)&jumpAnimation, [](void *, void *cur, int idx, const char **out_text) {
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		*out_text = a ? a->filename.c_str() : "[NULL]";
+		return (void*)a;
+	}, nullptr, tke::animations.size() + 1))
+	{
+		auto b = m->bindAnimation(jumpAnimation);
+		m->setJumpAnimation(b);
+	}
+
 	ImGui::DragFloat("Controller Height", &m->controller_height, 0.1f, 0.f, 10000.f);
 	ImGui::DragFloat("Controller Radius", &m->controller_radius, 0.1f, 0.f, 10000.f);
 	ImGui::DragFloat3("Controller Position", &m->controller_position[0], 0.1f, 0.f, 10000.f);
