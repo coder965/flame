@@ -98,8 +98,6 @@ namespace tke
 		bool pressing = false;
 	};
 
-	bool atlPressing();
-
 	const char *getClipBoard();
 	void setClipBoard(const std::string &);
 
@@ -252,6 +250,7 @@ namespace tke
 	{
 		void *ptr;
 		std::string name;
+		std::string value;
 		std::vector<Attribute*> attributes;
 		std::vector<AttributeTreeNode*> children;
 

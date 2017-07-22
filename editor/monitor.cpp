@@ -115,18 +115,15 @@ void SceneMonitorWidget::show()
 	{
 		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
 		{
-			if (tke::atlPressing())
-			{
-				auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
-				auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-				if (mainWindow->mouseLeft.pressing)
-					scene->camera.rotateByCursor(distX, distY);
-				else if (mainWindow->mouseMiddle.pressing)
-					scene->camera.moveByCursor(distX, distY);
-				else if (mainWindow->mouseRight.pressing)
-					scene->camera.scroll(distX);
-			}
-			else
+			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
+			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
+			if (mainWindow->mouseMiddle.pressing)
+				scene->camera.rotateByCursor(distX, distY);
+			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
+				scene->camera.moveByCursor(distX, distY);
+			if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
+				scene->camera.scroll(distX);
+			if (!mainWindow->keyStates[VK_SHIFT].pressing && !mainWindow->keyStates[VK_CONTROL].pressing)
 			{
 				if (mainWindow->mouseLeft.pressing)
 					transformerTool->mouseMove(mainWindow->mouseDispX, mainWindow->mouseDispY);
@@ -134,7 +131,7 @@ void SceneMonitorWidget::show()
 		}
 		if (mainWindow->mouseLeft.justDown)
 		{
-			if (!tke::atlPressing())
+			if (!mainWindow->keyStates[VK_SHIFT].pressing && !mainWindow->keyStates[VK_CONTROL].pressing)
 			{
 				auto x = mainWindow->mouseX - image_pos.x;
 				auto y = mainWindow->mouseY - image_pos.y;
@@ -426,20 +423,14 @@ void ModelMonitorWidget::show()
 	{
 		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
 		{
-			if (tke::atlPressing())
-			{
-				auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
-				auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-				if (mainWindow->mouseLeft.pressing)
-					camera.rotateByCursor(distX, distY);
-				else if (mainWindow->mouseMiddle.pressing)
-					camera.moveByCursor(distX, distY);
-				else if (mainWindow->mouseRight.pressing)
-					camera.scroll(distX);
-			}
-			else
-			{
-			}
+			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
+			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
+			if (mainWindow->mouseMiddle.pressing)
+				camera.rotateByCursor(distX, distY);
+			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
+				camera.moveByCursor(distX, distY);
+			if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
+				camera.scroll(distX);
 		}
 		if (mainWindow->mouseLeft.justDown)
 		{

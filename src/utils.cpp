@@ -61,11 +61,6 @@ namespace tke
 	int screenCy;
 	std::string exePath;
 
-	bool atlPressing()
-	{
-		return GetAsyncKeyState(VK_MENU) & 0x8000;
-	}
-
 	const char *getClipBoard()
 	{
 		static std::string str;
@@ -476,6 +471,7 @@ namespace tke
 
 	static void _loadXML(rapidxml::xml_node<> *n, AttributeTreeNode *p)
 	{
+		p->value = n->value();
 		for (auto a = n->first_attribute(); a; a = a->next_attribute())
 		{
 			auto a_ = new Attribute;

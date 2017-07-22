@@ -8,6 +8,7 @@
   <texture filename="terrain3.jpg" />
   <animation filename="D:/miku/walk.vmd"/>
   <model filename="D:/miku/miku.pmd"/>
+  <model filename="cube.dae"/>
   <scene filename="scene_1.xml" />
   <scene filename="scene_2.xml" />
 </data>

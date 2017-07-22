@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <iostream>
 #include <regex>
+#include <memory>
 
 #include "entity.h"
 #include "core.h"
@@ -1631,8 +1632,10 @@ namespace tke
 
 	namespace OBJ
 	{
-		void load(Model *m, std::ifstream &file)
+		void load(Model *m, const std::string &filename)
 		{
+			std::ifstream file(filename);
+
 			int currentIndex = 0;
 			Material *pmt = nullptr;
 
@@ -1902,8 +1905,10 @@ namespace tke
 		};
 #pragma pack()
 
-		void load(Model *m, std::ifstream &file)
+		void load(Model *m, const std::string &filename)
 		{
+			std::ifstream file(filename, std::ios::binary);
+
 			static_assert(sizeof(Header) == 283, "");
 			static_assert(sizeof(VertexData) == 38, "");
 			static_assert(sizeof(MaterialData) == 70, "");
@@ -2175,6 +2180,56 @@ namespace tke
 		}
 	}
 
+	namespace COLLADA
+	{
+		struct Source
+		{
+			std::string id;
+			float *float_array = nullptr;
+
+			~Source()
+			{
+				delete[]float_array;
+			}
+		};
+
+		void load(Model *m, const std::string &filename)
+		{
+			AttributeTree at("COLLADA", filename);
+			AttributeTreeNode *n;
+			n = at.firstNode("library_geometries"); assert(n);
+			n = n->firstNode("geometry"); assert(n);
+			n = n->firstNode("mesh"); assert(n);
+			std::vector<std::unique_ptr<Source>> sources;
+			for (auto c : n->children)
+			{
+				if (c->name == "source")
+				{
+					AttributeTreeNode *n;
+					Attribute *a;
+					auto s = std::make_unique<Source>();
+					a = c->firstAttribute("id"); assert(a);
+					s->id = a->value;
+					n = c->firstNode("float_array"); assert(n);
+					a = n->firstAttribute("count"); assert(a);
+					s->float_array = new float[std::stoi(a->value)];
+					auto str = n->value;
+					std::regex pattern(R"(([0-9\.\+\-]+))");
+					std::smatch match;
+					auto ptr = s->float_array;
+					while (std::regex_search(str, match, pattern))
+					{
+						*ptr = std::stof(match[1].str());
+						ptr++;
+						str = match.suffix();
+					}
+					sources.push_back(std::move(s));
+				}
+			}
+			int a = 1;
+		}
+	}
+
 	namespace VMD
 	{
 #pragma pack(1)
@@ -2194,8 +2249,10 @@ namespace tke
 		};
 #pragma pack()
 
-		void load(Animation *a, std::ifstream &file)
+		void load(Animation *a, const std::string &filename)
 		{
+			std::ifstream file(filename, std::ios::binary);
+
 			static_assert(sizeof(Header) == 50, "");
 			static_assert(sizeof(BoneMotionData) == 111, "");
 
@@ -2226,8 +2283,10 @@ namespace tke
 
 	namespace TKM
 	{
-		void load(Model *m, std::ifstream &file)
+		void load(Model *m, const std::string &filename)
 		{
+			std::ifstream file(filename, std::ios::binary);
+
 			int textureCount = 0;
 			file >> textureCount;
 			for (int i = 0; i < textureCount; i++)
@@ -2580,8 +2639,10 @@ namespace tke
 
 	namespace TKA
 	{
-		void load(Animation *a, std::ifstream &file)
+		void load(Animation *a, const std::string &filename)
 		{
+			std::ifstream file(filename, std::ios::binary);
+
 			int count;
 			file >> count;
 			a->motions.resize(count);
@@ -2617,25 +2678,21 @@ namespace tke
 
 	Model *createModel(const std::string &filename)
 	{
-		std::ifstream file(filename, std::ios::binary);
-		if (!file.good())
+		if (!std::experimental::filesystem::exists(filename))
 		{
 			std::cout << "Model File Lost:" << filename;
 			return nullptr;
 		}
 
-		std::experimental::filesystem::path p(filename);
-		auto ext = p.extension().string();
-		void(*load_func)(Model *, std::ifstream &) = nullptr;
+		std::experimental::filesystem::path path(filename);
+		auto ext = path.extension().string();
+		void(*load_func)(Model *, const std::string &) = nullptr;
 		if (ext == ".obj")
-		{
-			// obj need file open in text mode
-			file.close();
-			file.open(filename);
 			load_func = &OBJ::load;
-		}
 		else if (ext == ".pmd")
 			load_func = &PMD::load;
+		else if (ext == ".dae")
+			load_func = &COLLADA::load;
 		else if (ext == ".tkm")
 			load_func = &TKM::load;
 		else
@@ -2646,10 +2703,10 @@ namespace tke
 
 		auto m = new Model;
 		m->filename = filename;
-		m->filepath = p.parent_path().string();
+		m->filepath = path.parent_path().string();
 		if (m->filepath == "")
 			m->filepath = ".";
-		load_func(m, file);
+		load_func(m, filename);
 
 		_add_model(m);
 
@@ -2658,16 +2715,15 @@ namespace tke
 
 	Animation *createAnimation(const std::string &filename)
 	{
-		std::ifstream file(filename, std::ios::binary);
-		if (!file.good())
+		if (!std::experimental::filesystem::exists(filename))
 		{
 			std::cout << "Animation File Lost:" << filename;
 			return nullptr;
 		}
 
-		std::experimental::filesystem::path p(filename);
-		auto ext = p.extension().string();
-		void(*load_func)(Animation *, std::ifstream &) = nullptr;
+		std::experimental::filesystem::path path(filename);
+		auto ext = path.extension().string();
+		void(*load_func)(Animation *, const std::string &) = nullptr;
 		if (ext == ".vmd")
 			load_func = &VMD::load;
 		else if (ext == ".t3a")
@@ -2678,11 +2734,11 @@ namespace tke
 			return nullptr;
 		}
 		auto a = new Animation;
-		a->filename = p.filename().string();
-		a->filepath = p.parent_path().string();
+		a->filename = path.filename().string();
+		a->filepath = path.parent_path().string();
 		if (a->filepath == "")
 			a->filepath = ".";
-		load_func(a, file);
+		load_func(a, filename);
 
 		animations.push_back(a);
 
@@ -3274,6 +3330,7 @@ namespace tke
 				}
 			}
 			pxScene->simulate(dist);
+			//pxScene->simulate(1.f / 60.f);
 			pxScene->fetchResults(true);
 			for (auto o : objects)
 			{

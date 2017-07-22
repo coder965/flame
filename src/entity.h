@@ -490,34 +490,6 @@ namespace tke
 
 	void initGeneralModels();
 
-	namespace OBJ
-	{
-		void load(Model *m, std::ifstream &file);
-	}
-
-	namespace PMD
-	{
-		void load(Model *m, std::ifstream &file);
-	}
-
-	namespace VMD
-	{
-
-		void load(Animation *a, std::ifstream &file);
-	}
-
-	namespace TKM
-	{
-		void load(Model *m, std::ifstream &file);
-		void save(Model *, const std::string &filename, bool copyTexture);
-	}
-
-	namespace TKA
-	{
-		void load(Animation *a, std::ifstream &file);
-		void save(Animation *a, const std::string &filename);
-	}
-
 	Model *createModel(const std::string &filename);
 
 	Animation *createAnimation(const std::string &filename);
