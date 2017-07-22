@@ -154,10 +154,10 @@ void SceneMonitorWidget::show()
 	auto obj = selectedItem.toObject();
 	if (obj)
 	{
-		obj->forward = mainWindow->keyStates[VK_UP].pressing;
-		obj->backward = mainWindow->keyStates[VK_DOWN].pressing;
-		obj->left = mainWindow->keyStates[VK_LEFT].pressing;
-		obj->right = mainWindow->keyStates[VK_RIGHT].pressing;
+		obj->setState(tke::Controller::State::forward, mainWindow->keyStates[VK_UP].pressing);
+		obj->setState(tke::Controller::State::backward, mainWindow->keyStates[VK_DOWN].pressing);
+		obj->setState(tke::Controller::State::left, mainWindow->keyStates[VK_LEFT].pressing);
+		obj->setState(tke::Controller::State::right, mainWindow->keyStates[VK_RIGHT].pressing);
 	}
 
 	{
@@ -525,18 +525,17 @@ void ModelMonitorWidget::show()
 		{
 			pc.color = glm::vec4(0.f, 0.f, 1.f, 1.f);
 			{
-				auto c = model->controllerPosition;
-				auto r = model->controllerRadius / 0.5f;
-				auto h = model->controllerHeight;
+				auto r = model->controller_radius / 0.5f;
+				auto h = model->controller_height;
 				auto mv = camera.getMatInv();
-				pc.modelview = mv * glm::translate(c) * glm::scale(r, h, r);
+				pc.modelview = mv * glm::translate(model->controller_position) * glm::scale(r, h, r);
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::cylinderModel);
 				h *= 0.5f;
-				pc.modelview = mv * glm::translate(c - glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+				pc.modelview = mv * glm::translate(model->controller_position - glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::sphereModel, 0);
-				pc.modelview = mv * glm::translate(c + glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+				pc.modelview = mv * glm::translate(model->controller_position + glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::sphereModel, 1);
 			}
@@ -544,7 +543,7 @@ void ModelMonitorWidget::show()
 
 		if (showEyePosition)
 		{
-			pc.modelview = camera.getMatInv() * glm::translate(model->eyePosition);
+			pc.modelview = camera.getMatInv() * glm::translate(model->eye_position);
 			pc.color = glm::vec4(1.f, 0.f, 0.f, 1.f);
 			cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 			cb_wireframe->drawModel(tke::sphereModel);

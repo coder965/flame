@@ -23,6 +23,7 @@ struct GameExplorer
 		lastItemTypeNull,
 		lastItemTypeTexture,
 		lastItemTypeModel,
+		lastItemTypeAnimation,
 		lastItemTypeScene
 	};
 

@@ -222,10 +222,15 @@ static void _show_model(tke::Model *m)
 	ImGui::Text("vertex base:%d", m->vertexBase);
 	if (ImGui::Button("Save Data"))
 		m->saveData(false);
-	ImGui::DragFloat("Controller Height", &m->controllerHeight, 0.1f, 0.f, 10000.f);
-	ImGui::DragFloat("Controller Radius", &m->controllerRadius, 0.1f, 0.f, 10000.f);
-	ImGui::DragFloat3("Controller Position", &m->controllerPosition[0], 0.1f, 0.f, 10000.f);
-	ImGui::DragFloat3("Eye Position", &m->eyePosition[0]);
+
+	if (ImGui::Combo("Stand Animation", ))
+	{
+
+	}
+	ImGui::DragFloat("Controller Height", &m->controller_height, 0.1f, 0.f, 10000.f);
+	ImGui::DragFloat("Controller Radius", &m->controller_radius, 0.1f, 0.f, 10000.f);
+	ImGui::DragFloat3("Controller Position", &m->controller_position[0], 0.1f, 0.f, 10000.f);
+	ImGui::DragFloat3("Eye Position", &m->eye_position[0]);
 }
 
 void AttributeWidget::show()

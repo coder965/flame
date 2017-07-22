@@ -271,60 +271,122 @@ namespace tke
 		changed = true;
 	}
 
+	bool Controller::setState(State _s, bool enable)
+	{
+		if (_s == State::stand)
+		{
+			if (state != State::stand)
+			{
+				state = State::stand;
+				return true;
+			}
+			return false;
+		}
+
+		if (enable)
+		{
+			if (!((int)state | (int)_s))
+			{
+				state = State((int)state | (int)_s);
+				return true;
+			}
+			return false;
+		}
+		else
+		{
+			if ((int)state | (int)_s)
+			{
+				state = State((int)state & ~(int)_s);
+				return true;
+			}
+			return false;
+		}
+	}
+
 	void Controller::reset()
 	{
-		forward = backward = left = right = up = down = turnLeft = turnRight = false;
+		state = State::stand;
 		lastTime = nowTime;
 	}
 
 	bool Controller::move(float inEulerX, glm::vec3 &outCoord, glm::vec3 &outEuler)
 	{
-		float dist = (nowTime - lastTime) / 1000.f;
-		lastTime = nowTime;
-
 		outCoord = glm::vec3();
 		outEuler = glm::vec3();
 
+		if (state == State::stand)
+			return false;
+
+		float dist = (nowTime - lastTime) / 1000.f;
+		lastTime = nowTime;
+
 		inEulerX = glm::radians(inEulerX + ang_offset);
+
+		bool changed = false;
 
 		if (speed > 0.f)
 		{
-			if (forward)
+			if (((int)state | (int)State::forward) && !((int)state | (int)State::backward))
 			{
 				outCoord.x -= sin(inEulerX) * speed * dist;
 				outCoord.z -= cos(inEulerX) * speed * dist;
+				changed = true;
 			}
-			if (backward)
+			if (((int)state | (int)State::backward) && !((int)state | (int)State::forward))
 			{
 				outCoord.x += sin(inEulerX) * speed * dist;
 				outCoord.z += cos(inEulerX) * speed * dist;
+				changed = true;
 			}
-			if (left)
+			if (((int)state | (int)State::left) && !((int)state | (int)State::right))
 			{
 				outCoord.x -= cos(inEulerX) * speed * dist;
 				outCoord.z += sin(inEulerX) * speed * dist;
+				changed = true;
 			}
-			if (right)
+			if (((int)state | (int)State::right) && !((int)state | (int)State::left))
 			{
 				outCoord.x += cos(inEulerX) * speed * dist;
 				outCoord.z -= sin(inEulerX) * speed * dist;
+				changed = true;
 			}
-			if (up)
+			if (((int)state | (int)State::up) && !((int)state | (int)State::down))
+			{
 				outCoord.y += speed * dist;
-			if (down)
+				changed = true;
+			}
+			if (((int)state | (int)State::down) && !((int)state | (int)State::up))
+			{
 				outCoord.y -= speed * dist;
+				changed = true;
+			}
 		}
 
-		if (turnLeft)
-			outEuler.x = turn_speed * dist;
-		if (turnRight)
-			outEuler.x = -turn_speed * dist;
-		if (turnUp)
-			outEuler.z = turn_speed * dist;
-		if (turnDown)
-			outEuler.z = -turn_speed * dist;
+		if (turn_speed > 0.f)
+		{
+			if (((int)state | (int)State::turn_left) && !((int)state | (int)State::turn_right))
+			{
+				outEuler.x += turn_speed * dist;
+				changed = true;
+			}
+			if (((int)state | (int)State::turn_right) && !((int)state | (int)State::turn_left))
+			{
+				outEuler.x -= turn_speed * dist;
+				changed = true;
+			}
+			if (((int)state | (int)State::turn_up) && !((int)state | (int)State::turn_down))
+			{
+				outEuler.z += turn_speed * dist;
+				changed = true;
+			}
+			if (((int)state | (int)State::turn_down) && !((int)state | (int)State::turn_up))
+			{
+				outEuler.z -= turn_speed * dist;
+				changed = true;
+			}
+		}
 
-		return (outCoord.x != 0.f || outCoord.y != 0.f || outCoord.z != 0.f) || (outEuler.x != 0.f) || (outEuler.y != 0.f) || (outEuler.z != 0.f);
+		return changed;
 	}
 
 	Camera::Camera()
@@ -359,7 +421,7 @@ namespace tke
 		{
 			if (object)
 			{
-				target = object->getCoord() + object->model->eyePosition * object->getScale();
+				target = object->getCoord() + object->model->eye_position * object->getScale();
 				object = nullptr;
 			}
 
@@ -607,17 +669,7 @@ namespace tke
 			rigidbodies.clear();
 		}
 
-		for (auto a : at.attributes)
-		{
-			if (a->name == "controller_position")
-				a->get(&controllerPosition);
-			if (a->name == "controller_height")
-				a->get(&controllerHeight);
-			if (a->name == "controller_radius")
-				a->get(&controllerRadius);
-			if (a->name == "eye_position")
-				a->get(&eyePosition);
-		}
+		at.obtainFromAttributes(this, b);
 
 		for (auto c : at.children)
 		{
@@ -634,6 +686,8 @@ namespace tke
 	{
 		AttributeTree at("data");
 
+		at.addAttributes(this, b);
+
 		if (needRigidbody)
 		{
 			for (auto r : rigidbodies)
@@ -643,21 +697,22 @@ namespace tke
 			}
 		}
 
-		at.addAttribute("controller_position", &controllerPosition);
-		at.addAttribute("controller_height", &controllerHeight);
-		at.addAttribute("controller_radius", &controllerRadius);
-		at.addAttribute("eye_position", &eyePosition);
-
 		at.saveXML(filename + ".xml");
 	}
 
-	AnimationBinding *Model::bindAnimation(Animation *pAnimationTemplate)
+	AnimationBinding *Model::bindAnimation(Animation *a)
 	{
-		auto pAnimation = new AnimationBinding;
-		pAnimation->pTemplate = pAnimationTemplate;
-		for (auto &motion : pAnimationTemplate->motions)
+		for (auto b : animationBindings)
 		{
-			pAnimation->frameTotal = glm::max(pAnimation->frameTotal, motion.frame);
+			if (b->animation == a)
+				return b;
+		}
+
+		auto binding = new AnimationBinding;
+		binding->animation = a;
+		for (auto &motion : a->motions)
+		{
+			binding->frameTotal = glm::max(binding->frameTotal, motion.frame);
 
 			int boneID = -1;
 			for (int iBone = 0; iBone < bones.size(); iBone++)
@@ -671,7 +726,7 @@ namespace tke
 			if (boneID == -1) continue;
 
 			BoneMotionTrack *pTrack = nullptr;
-			for (auto t : pAnimation->pTracks)
+			for (auto t : binding->pTracks)
 			{
 				if (t->boneID == boneID)
 				{
@@ -684,7 +739,7 @@ namespace tke
 				pTrack = new BoneMotionTrack;
 				pTrack->boneID = boneID;
 				pTrack->pMotions.push_back(&motion);
-				pAnimation->pTracks.push_back(pTrack);
+				binding->pTracks.push_back(pTrack);
 			}
 			else
 			{
@@ -701,8 +756,44 @@ namespace tke
 				if (!inserted) pTrack->pMotions.push_back(&motion);
 			}
 		}
-		animations.push_back(pAnimation);
-		return pAnimation;
+		animationBindings.push_back(binding);
+		return binding;
+	}
+
+	void Model::setStandAnimation(AnimationBinding *b)
+	{
+		standAnimation = b;
+		stand_animation_filename = b ? b->animation->filename : "";
+	}
+
+	void Model::setForwardAnimation(AnimationBinding *b)
+	{
+		forwardAnimation = b;
+		forward_animation_filename = b ? b->animation->filename : "";
+	}
+
+	void Model::setBackwardAnimation(AnimationBinding *b)
+	{
+		backwardAnimation = b;
+		backward_animation_filename = b ? b->animation->filename : "";
+	}
+
+	void Model::setLeftAnimation(AnimationBinding *b)
+	{
+		leftAnimation = b;
+		left_animation_filename = b ? b->animation->filename : "";
+	}
+
+	void Model::setRightAnimation(AnimationBinding *b)
+	{
+		rightAnimation = b;
+		right_animation_filename = b ? b->animation->filename : "";
+	}
+
+	void Model::setJumpAnimation(AnimationBinding *b)
+	{
+		jumpAnimation = b;
+		jump_animation_filename = b ? b->animation->filename : "";
 	}
 
 	Image *Model::getImage(const char *name)
@@ -2121,18 +2212,6 @@ namespace tke
 
 	namespace TKM
 	{
-		static AnimationBinding *_loadAnimation(std::ifstream &file, Model *pModel)
-		{
-			std::string animName;
-			file >> animName;
-			for (auto a : animations)
-			{
-				if (a->name == animName == 0)
-					return pModel->bindAnimation(a);
-			}
-			return nullptr;
-		}
-
 		void load(Model *m, std::ifstream &file)
 		{
 			int textureCount = 0;
@@ -2242,12 +2321,27 @@ namespace tke
 
 			if (m->animated)
 			{
-				m->animationStand = _loadAnimation(file, m);
-				m->animationForward = _loadAnimation(file, m);
-				m->animationLeft = _loadAnimation(file, m);
-				m->animationRight = _loadAnimation(file, m);
-				m->animationBackward = _loadAnimation(file, m);
-				m->animationJump = _loadAnimation(file, m);
+				file >> m->stand_animation_filename;
+				file >> m->forward_animation_filename;
+				file >> m->backward_animation_filename;
+				file >> m->left_animation_filename;
+				file >> m->right_animation_filename;
+				file >> m->jump_animation_filename;
+
+				Animation *a;
+
+				a = getAnimation(m->stand_animation_filename);
+				if (a) m->standAnimation = m->bindAnimation(a);
+				a = getAnimation(m->forward_animation_filename);
+				if (a) m->forwardAnimation = m->bindAnimation(a);
+				a = getAnimation(m->backward_animation_filename);
+				if (a) m->backwardAnimation = m->bindAnimation(a);
+				a = getAnimation(m->left_animation_filename);
+				if (a) m->leftAnimation = m->bindAnimation(a);
+				a = getAnimation(m->right_animation_filename);
+				if (a) m->rightAnimation = m->bindAnimation(a);
+				a = getAnimation(m->jump_animation_filename);
+				if (a) m->jumpAnimation = m->bindAnimation(a);
 			}
 
 			int rigidbodyCount;
@@ -2318,23 +2412,15 @@ namespace tke
 				m->addJoint(j);
 			}
 
-			file >> m->boundingPosition;
-			file >> m->boundingSize;
+			file >> m->bounding_position;
+			file >> m->bounding_size;
 
-			file >> m->controllerHeight;
-			file >> m->controllerRadius;
+			file >> m->controller_height;
+			file >> m->controller_radius;
 
-			file >> m->eyePosition;
+			file >> m->eye_position;
 
 			_model_after_process(m);
-		}
-
-		static void _saveAnimation(std::ofstream &file, Model *pModel, AnimationBinding *pAnim)
-		{
-			std::string animName;
-			if (pAnim)
-				animName = pAnim->pTemplate->name;
-			file << animName;
 		}
 
 		void save(Model *m, const std::string &filename, bool copyTexture)
@@ -2431,12 +2517,12 @@ namespace tke
 
 			if (m->animated)
 			{
-				_saveAnimation(file, m, m->animationStand);
-				_saveAnimation(file, m, m->animationForward);
-				_saveAnimation(file, m, m->animationLeft);
-				_saveAnimation(file, m, m->animationRight);
-				_saveAnimation(file, m, m->animationBackward);
-				_saveAnimation(file, m, m->animationJump);
+				file << m->stand_animation_filename;
+				file << m->forward_animation_filename;
+				file << m->backward_animation_filename;
+				file << m->left_animation_filename;
+				file << m->right_animation_filename;
+				file << m->jump_animation_filename;
 			}
 
 
@@ -2483,13 +2569,13 @@ namespace tke
 				file << j->sprintRotationConstant;
 			}
 
-			file << m->boundingPosition;
-			file << m->boundingSize;
+			file << m->bounding_position;
+			file << m->bounding_size;
 
-			file << m->controllerHeight;
-			file << m->controllerRadius;
+			file << m->controller_height;
+			file << m->controller_radius;
 
-			file << m->eyePosition;
+			file << m->eye_position;
 		}
 	}
 
@@ -2618,6 +2704,20 @@ namespace tke
 	Object::~Object()
 	{
 		delete animationComponent;
+	}
+
+	void Object::setState(Controller::State _s, bool enable)
+	{
+		if (Controller::setState(_s, enable))
+		{
+			if (animationComponent)
+			{
+				if (state == Controller::State::stand)
+					animationComponent->setAnimation(model->standAnimation);
+				else if (state == Controller::State::forward)
+					animationComponent->setAnimation(model->forwardAnimation);
+			}
+		}
 	}
 
 	Terrain::Terrain() {}
@@ -2980,10 +3080,10 @@ namespace tke
 
 		if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 		{
-			auto c = m->controllerPosition * o->getScale() + o->getCoord();
+			auto c = m->controller_position * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
-			capsuleDesc.radius = (m->controllerRadius * o->getScale().x) / 0.8f;
-			capsuleDesc.height = (m->controllerHeight * o->getScale().y) / 0.8f;
+			capsuleDesc.radius = (m->controller_radius * o->getScale().x) / 0.8f;
+			capsuleDesc.height = (m->controller_height * o->getScale().y) / 0.8f;
 			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 			capsuleDesc.material = pxDefaultMaterial;
 			capsuleDesc.position.x = c.x;
@@ -3246,7 +3346,7 @@ namespace tke
 				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					auto p = o->pxController->getPosition();
-					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controllerPosition * o->getScale();
+					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->getScale();
 					o->setCoord(c);
 				}
 			}

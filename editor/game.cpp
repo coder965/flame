@@ -24,6 +24,11 @@ void Game::load()
 			auto a = c->firstAttribute("filename");
 			tke::createModel(a->value);
 		}
+		else if (c->name == "animation")
+		{
+			auto a = c->firstAttribute("filename");
+			tke::createAnimation(a->value);
+		}
 		else if (c->name == "scene")
 		{
 			auto a = c->firstAttribute("filename");
@@ -73,6 +78,21 @@ void GameExplorer::show()
 				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
 					mainWindow->openModelMonitorWidget(m);
+			}
+		}
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Animations"))
+	{
+		for (int i = 0; i < tke::animations.size(); i++)
+		{
+			auto a = tke::animations[i];
+			if (ImGui::Selectable(a->filename.c_str(), lastItemType == lastItemTypeAnimation && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
+			{
+				lastItemType = lastItemTypeAnimation;
+				itemIndex = i;
+				if (ImGui::IsMouseDoubleClicked(0))
+					;
 			}
 		}
 		ImGui::TreePop();

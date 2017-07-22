@@ -111,14 +111,30 @@ namespace tke
 
 	REFLECTABLE struct Controller
 	{
+		enum class State
+		{
+			stand = 0,
+			forward = 1 << 0,
+			backward = 1 << 1,
+			left = 1 << 2,
+			right = 1 << 3,
+			up = 1 << 4,
+			down = 1 << 5,
+			turn_left = 1 << 6,
+			turn_right = 1 << 7,
+			turn_up = 1 << 8,
+			turn_down = 1 << 9
+		};
+
 		REFL_BANK;
 
 		int lastTime = 0;
 		REFLv float ang_offset = 0.f;
 		REFLv float speed = 1.f;
 		REFLv float turn_speed = 75.f;
-		bool forward = false, backward = false, left = false, right = false, up = false, down = false, turnLeft = false, turnRight = false, turnUp = false, turnDown = false;
+		State state = State::stand;
 
+		bool setState(State _s, bool enable);
 		void reset();
 		bool move(float inEulerX, glm::vec3 &outCoord, glm::vec3 &outEuler);
 	};
@@ -246,6 +262,15 @@ namespace tke
 	};
 
 	extern std::vector<Animation*> animations;
+	inline Animation *getAnimation(const std::string &filename)
+	{
+		for (auto a : animations)
+		{
+			if (a->filename == filename)
+				return a;
+		}
+		return nullptr;
+	}
 
 	struct BoneMotionTrack
 	{
@@ -256,7 +281,7 @@ namespace tke
 	struct AnimationBinding
 	{
 		~AnimationBinding();
-		Animation *pTemplate;
+		Animation *animation;
 		int frameTotal;
 		std::vector<BoneMotionTrack*> pTracks;
 	};
@@ -338,8 +363,10 @@ namespace tke
 		glm::vec3 sprintRotationConstant;
 	};
 
-	struct Model
+	REFLECTABLE struct Model
 	{
+		REFL_BANK;
+
 		std::string name;
 		std::string comment;
 		std::string filename;
@@ -364,13 +391,20 @@ namespace tke
 		std::vector<Bone> bones;
 		std::vector<IK> iks;
 
-		std::vector<AnimationBinding*> animations;
-		AnimationBinding* animationStand = nullptr;
-		AnimationBinding* animationForward = nullptr;
-		AnimationBinding* animationLeft = nullptr;
-		AnimationBinding* animationRight = nullptr;
-		AnimationBinding* animationBackward = nullptr;
-		AnimationBinding* animationJump = nullptr;
+		std::vector<AnimationBinding*> animationBindings;
+		AnimationBinding* standAnimation = nullptr;
+		AnimationBinding* forwardAnimation = nullptr;
+		AnimationBinding* backwardAnimation = nullptr;
+		AnimationBinding* leftAnimation = nullptr;
+		AnimationBinding* rightAnimation = nullptr;
+		AnimationBinding* jumpAnimation = nullptr;
+
+		REFLv std::string stand_animation_filename;
+		REFLv std::string forward_animation_filename;
+		REFLv std::string left_animation_filename;
+		REFLv std::string right_animation_filename;
+		REFLv std::string backward_animation_filename;
+		REFLv std::string jump_animation_filename;
 
 		std::vector<Rigidbody*> rigidbodies;
 
@@ -379,21 +413,27 @@ namespace tke
 		glm::vec3 maxCoord;
 		glm::vec3 minCoord;
 
-		glm::vec3 boundingPosition;
-		float boundingSize = 1.f;
+		glm::vec3 bounding_position;
+		float bounding_size = 1.f;
 
-		glm::vec3 controllerPosition;
-		float controllerHeight = 1.f;
-		float controllerRadius = 0.5f;
+		REFLv glm::vec3 controller_position;
+		REFLv float controller_height = 1.f;
+		REFLv float controller_radius = 0.5f;
 
-		glm::vec3 eyePosition;
+		REFLv glm::vec3 eye_position;
 
 		void loadData(bool needRigidbody);
 		void saveData(bool needRigidbody);
 
 		Image *getImage(const char *name);
 
-		AnimationBinding *bindAnimation(Animation *pAnimationTemplate);
+		AnimationBinding *bindAnimation(Animation *a);
+		void setStandAnimation(AnimationBinding *b);
+		void setForwardAnimation(AnimationBinding *b);
+		void setBackwardAnimation(AnimationBinding *b);
+		void setLeftAnimation(AnimationBinding *b);
+		void setRightAnimation(AnimationBinding *b);
+		void setJumpAnimation(AnimationBinding *b);
 
 		void addRigidbody(Rigidbody *pRigidbody);
 		Rigidbody *deleteRigidbody(Rigidbody *pRigidbody);
@@ -517,6 +557,7 @@ namespace tke
 		Object();
 		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsType::null);
 		~Object();
+		void setState(Controller::State _s, bool enable);
 	};
 
 	REFLECTABLE enum class TerrainType
