@@ -2,7 +2,7 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="StaticObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-	<stage filename="depth.vert"/>
-	<stage filename="depth.frag"/>
+	<stage filename="esm.vert"/>
+	<stage filename="esm.frag"/>
 </pipeline>
 

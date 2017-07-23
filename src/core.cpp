@@ -57,14 +57,15 @@ namespace tke
 	Image *depthImage = nullptr;
 	Image *pickUpImage = nullptr;
 
-	RenderPass *plainRenderPass_image8;
-	RenderPass *plainRenderPass_image8_clear;
-	RenderPass *plainRenderPass_image16;
-	RenderPass *plainRenderPass_image16_clear;
-	RenderPass *plainRenderPass_depth_clear_image8;
-	RenderPass *plainRenderPass_depth_clear_image8_clear;
-	RenderPass *plainRenderPass_window;
-	RenderPass *plainRenderPass_window_clear;
+	RenderPass *renderPass_image8;
+	RenderPass *renderPass_image8_clear;
+	RenderPass *renderPass_image16;
+	RenderPass *renderPass_image16_clear;
+	RenderPass *renderPass_depth_clear;
+	RenderPass *renderPass_depth_clear_image8;
+	RenderPass *renderPass_depth_clear_image8_clear;
+	RenderPass *renderPass_window;
+	RenderPass *renderPass_window_clear;
 
 	Framebuffer *pickUpFb = nullptr;
 
@@ -275,7 +276,7 @@ namespace tke
 		for (int i = 0; i < 2; i++)
 		{
 			new (&images[i]) Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
-			framebuffers[i] = getFramebuffer(&images[i], plainRenderPass_window);
+			framebuffers[i] = getFramebuffer(&images[i], renderPass_window);
 		}
 	}
 
@@ -509,7 +510,7 @@ namespace tke
 			return 0;
 
 		auto cb = commandPool->begineOnce();
-		cb->beginRenderPass(plainRenderPass_depth_clear_image8_clear, pickUpFb);
+		cb->beginRenderPass(renderPass_depth_clear_image8_clear, pickUpFb);
 		drawCallback(cb);
 		cb->endRenderPass();
 		commandPool->endOnce(cb);
@@ -639,9 +640,11 @@ namespace tke
 			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att6 = depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
 			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-			VkSubpassDescription subpass1 = subpassDesc(1, &col_ref, &dep_ref);
+			VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
+			VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
 			VkAttachmentDescription atts0[] = {
 				att0,
 				att6
@@ -650,14 +653,15 @@ namespace tke
 				att1,
 				att6
 			};
-			plainRenderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
-			plainRenderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
-			plainRenderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
-			plainRenderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
-			plainRenderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass1);
-			plainRenderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass1);
-			plainRenderPass_window = new RenderPass(1, &att4, 1, &subpass0);
-			plainRenderPass_window_clear = new RenderPass(1, &att5, 1, &subpass0);
+			renderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
+			renderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
+			renderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
+			renderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
+			renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
+			renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
+			renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
+			renderPass_window = new RenderPass(1, &att4, 1, &subpass0);
+			renderPass_window_clear = new RenderPass(1, &att5, 1, &subpass0);
 		}
 
 		{
@@ -665,37 +669,37 @@ namespace tke
 				pickUpImage->getView(),
 				depthImage->getView()
 			};
-			pickUpFb = getFramebuffer(resCx, resCy, plainRenderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
+			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}
 
 		plainPipeline_2d = new Pipeline;
 		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
-		plainPipeline_2d->setup(plainRenderPass_image8, 0, true);
+		plainPipeline_2d->setup(renderPass_image8, 0, true);
 
 		plainPipeline_3d = new Pipeline;
 		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
-		plainPipeline_3d->setup(plainRenderPass_depth_clear_image8, 0, false);
+		plainPipeline_3d->setup(renderPass_depth_clear_image8, 0, false);
 		plainPipeline_3d_anim = new Pipeline;
 		plainPipeline_3d_anim->loadXML(enginePath + "pipeline/plain3d/plain3d_anim.xml");
-		plainPipeline_3d_anim->setup(plainRenderPass_depth_clear_image8, 0, true);
+		plainPipeline_3d_anim->setup(renderPass_depth_clear_image8, 0, true);
 		plainPipeline_3d_normal = new Pipeline;
 		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
-		plainPipeline_3d_normal->setup(plainRenderPass_depth_clear_image8, 0, false);
+		plainPipeline_3d_normal->setup(renderPass_depth_clear_image8, 0, false);
 		plainPipeline_3d_tex = new Pipeline;
 		plainPipeline_3d_tex->loadXML(enginePath + "pipeline/plain3d/plain3d_tex.xml");
-		plainPipeline_3d_tex->setup(plainRenderPass_depth_clear_image8, 0, false);
+		plainPipeline_3d_tex->setup(renderPass_depth_clear_image8, 0, false);
 		plainPipeline_3d_anim_tex = new Pipeline;
 		plainPipeline_3d_anim_tex->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml");
-		plainPipeline_3d_anim_tex->setup(plainRenderPass_depth_clear_image8, 0, true);
+		plainPipeline_3d_anim_tex->setup(renderPass_depth_clear_image8, 0, true);
 		plainPipeline_3d_wire = new Pipeline;
 		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
-		plainPipeline_3d_wire->setup(plainRenderPass_image8, 0, false);
+		plainPipeline_3d_wire->setup(renderPass_image8, 0, false);
 		plainPipeline_3d_anim_wire = new Pipeline;
 		plainPipeline_3d_anim_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml");
-		plainPipeline_3d_anim_wire->setup(plainRenderPass_image8, 0, true);
+		plainPipeline_3d_anim_wire->setup(renderPass_image8, 0, true);
 		plainPipeline_3d_line = new Pipeline;
 		plainPipeline_3d_line->loadXML(enginePath + "pipeline/plain3d/plain3d_line.xml");
-		plainPipeline_3d_line->setup(plainRenderPass_image8, 0, false);
+		plainPipeline_3d_line->setup(renderPass_image8, 0, false);
 		plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 		staticVertexBuffer = new VertexBuffer();

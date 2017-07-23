@@ -561,13 +561,6 @@ namespace tke
 	Light::Light(LightType _type, bool _shadow = false)
 		:type(_type), shadow(_shadow)
 	{
-		if (shadow)
-			depthImage = new Image(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CY, VK_FORMAT_D16_UNORM);
-	}
-
-	Light::~Light()
-	{
-		delete depthImage;
 	}
 
 	void Light::setColor(const glm::vec3 &v)
@@ -3031,6 +3024,8 @@ namespace tke
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
 
+	Pipeline *esmPipeline = nullptr;
+
 	Pipeline *composePipeline = nullptr;
 
 	struct MatrixBufferShaderStruct
@@ -3068,6 +3063,8 @@ namespace tke
 		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		esmImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
 		resource.setImage(mainImage, "Main.Image");
 		resource.setImage(albedoAlphaImage, "AlbedoAlpha.Image");
 		resource.setImage(normalHeightImage, "NormalHeight.Image");
@@ -3082,6 +3079,7 @@ namespace tke
 		ambientBuffer = new UniformBuffer(sizeof AmbientBufferShaderStruct);
 		staticObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
 		animatedObjectIndirectBuffer = new IndirectIndexBuffer(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+
 		resource.setBuffer(matrixBuffer, "Matrix.UniformBuffer");
 		resource.setBuffer(staticObjectMatrixBuffer, "StaticObjectMatrix.UniformBuffer");
 		resource.setBuffer(animatedObjectMatrixBuffer, "AnimatedObjectMatrix.UniformBuffer");
@@ -3630,9 +3628,9 @@ namespace tke
 
 					{
 						auto cb = commandPool->begineOnce();
-						auto fb = getFramebuffer(envrImage, plainRenderPass_image16);
+						auto fb = getFramebuffer(envrImage, renderPass_image16);
 
-						cb->beginRenderPass(plainRenderPass_image16, fb);
+						cb->beginRenderPass(renderPass_image16, fb);
 						cb->bindPipeline(scatteringPipeline);
 						auto dir = sunLight->getAxis()[2];
 						cb->pushConstant(tke::StageType::frag, 0, sizeof(dir), &dir);
@@ -3654,9 +3652,9 @@ namespace tke
 								for (int i = 0; i < 3; i++)
 								{
 									auto cb = commandPool->begineOnce();
-									auto fb = getFramebuffer(envrImageDownsample[i], plainRenderPass_image16);
+									auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
 
-									cb->beginRenderPass(plainRenderPass_image16, fb);
+									cb->beginRenderPass(renderPass_image16, fb);
 									cb->bindPipeline(downsamplePipeline);
 									cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
 									auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
@@ -3678,9 +3676,9 @@ namespace tke
 								for (int i = 1; i < envrImage->level; i++)
 								{
 									auto cb = commandPool->begineOnce();
-									auto fb = getFramebuffer(envrImage, plainRenderPass_image16, i);
+									auto fb = getFramebuffer(envrImage, renderPass_image16, i);
 
-									cb->beginRenderPass(plainRenderPass_image16, fb);
+									cb->beginRenderPass(renderPass_image16, fb);
 									cb->bindPipeline(convolvePipeline);
 									auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 									cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
@@ -4197,15 +4195,15 @@ namespace tke
 
 		scatteringPipeline = new Pipeline;
 		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
-		scatteringPipeline->setup(plainRenderPass_image16, 0, false);
+		scatteringPipeline->setup(renderPass_image16, 0, false);
 
 		downsamplePipeline = new Pipeline;
 		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
-		downsamplePipeline->setup(plainRenderPass_image16, 0, true);
+		downsamplePipeline->setup(renderPass_image16, 0, true);
 
 		convolvePipeline = new Pipeline;
 		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
-		convolvePipeline->setup(plainRenderPass_image16, 0, true);
+		convolvePipeline->setup(renderPass_image16, 0, true);
 
 		panoramaPipeline = new Pipeline;
 		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");

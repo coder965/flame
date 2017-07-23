@@ -96,14 +96,15 @@ namespace tke
 	extern Image *depthImage;
 	extern Image *pickUpImage;
 
-	extern RenderPass *plainRenderPass_image8;
-	extern RenderPass *plainRenderPass_image8_clear;
-	extern RenderPass *plainRenderPass_image16;
-	extern RenderPass *plainRenderPass_image16_clear;
-	extern RenderPass *plainRenderPass_depth_clear_image8;
-	extern RenderPass *plainRenderPass_depth_clear_image8_clear;
-	extern RenderPass *plainRenderPass_window;
-	extern RenderPass *plainRenderPass_window_clear;
+	extern RenderPass *renderPass_image8;
+	extern RenderPass *renderPass_image8_clear;
+	extern RenderPass *renderPass_image16;
+	extern RenderPass *renderPass_image16_clear;
+	extern RenderPass *renderPass_depth_clear;
+	extern RenderPass *renderPass_depth_clear_image8;
+	extern RenderPass *renderPass_depth_clear_image8_clear;
+	extern RenderPass *renderPass_window;
+	extern RenderPass *renderPass_window_clear;
 
 	extern Framebuffer *pickUpFb;
 

@@ -185,13 +185,11 @@ namespace tke
 		float range = 0.5f;
 
 		bool shadow;
-		Image *depthImage = nullptr;
 
 		int sceneIndex = -1;
 		int sceneShadowIndex = -1;
 
 		Light(LightType _type, bool _shadow = false);
-		~Light();
 		void setColor(const glm::vec3 &);
 	};
 
@@ -622,6 +620,7 @@ namespace tke
 	extern Pipeline *heightMapTerrainPipeline;
 	extern Pipeline *proceduralTerrainPipeline;
 	extern Pipeline *deferredPipeline;
+	extern Pipeline *esmPipeline;
 	extern Pipeline *composePipeline;
 
 	REFLECTABLE struct Scene
@@ -687,6 +686,7 @@ namespace tke
 		Image *albedoAlphaImage;
 		Image *normalHeightImage;
 		Image *specRoughnessImage;
+		Image *esmImage;
 
 		UniformBuffer *matrixBuffer;
 		UniformBuffer *staticObjectMatrixBuffer;

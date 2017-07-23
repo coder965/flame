@@ -108,7 +108,7 @@ void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent, VkEvent signa
 
 	cb->waitEvents(1, &waitEvent);
 
-	cb->beginRenderPass(tke::plainRenderPass_depth_clear_image8, fb);
+	cb->beginRenderPass(tke::renderPass_depth_clear_image8, fb);
 
 	currentTransformerTool = this;
 	currentCamera = camera;
