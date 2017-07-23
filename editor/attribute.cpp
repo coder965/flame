@@ -10,6 +10,17 @@ static void _show_scene(tke::Scene *scene)
 	{
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("Ambient"))
+	{
+		auto ambientColor = scene->ambientColor;
+		if (ImGui::DragFloat3("Ambient Color", &ambientColor[0], 0.1f, 0.f, 100.f))
+			scene->setAmbientColor(ambientColor);
+		auto fogColor = scene->fogColor;
+		if (ImGui::DragFloat3("Fog Color", &fogColor[0], 0.1f, 0.f, 100.f))
+			scene->setFogColor(fogColor);
+			
+		ImGui::TreePop();
+	}
 	if (ImGui::TreeNode("Lights"))
 	{
 		ImGui::TreePop();

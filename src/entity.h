@@ -184,12 +184,15 @@ namespace tke
 		glm::vec3 color = glm::vec3(0.5f);
 		float range = 0.5f;
 
-		bool shadow = false;
+		bool shadow;
+		Image *depthImage = nullptr;
 
 		int sceneIndex = -1;
 		int sceneShadowIndex = -1;
 
-		Light(LightType _type);
+		Light(LightType _type, bool _shadow = false);
+		~Light();
+		void setColor(const glm::vec3 &);
 	};
 
 	struct Material
@@ -600,7 +603,8 @@ namespace tke
 
 	struct AmbientBufferShaderStruct
 	{
-		glm::vec4 v;
+		glm::vec3 color;
+		glm::uint envr_max_mipmap;
 		glm::vec4 fogcolor;
 	};
 
@@ -644,6 +648,7 @@ namespace tke
 		float hdrWhite = 1.f;
 
 		glm::vec3 ambientColor = glm::vec3(0.5f);
+		glm::vec3 fogColor = glm::vec3(0.5f);
 
 		float ssaoRadius = 10.f;
 		float ssaoBias = 0.01f;
@@ -654,7 +659,7 @@ namespace tke
 		Camera camera;
 
 		std::vector<Light*> lights;
-		Light *pSunLight = nullptr;
+		Light *sunLight = nullptr;
 
 		std::vector<Object*> objects;
 
@@ -662,7 +667,8 @@ namespace tke
 
 		bool needUpdateSky = true;
 		bool needUpdateIndirectBuffer = true;
-		bool lightCountChanged = true;
+		bool needUpdateAmbientBuffer = true;
+		bool needUpdateLightCount = true;
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 
@@ -702,7 +708,6 @@ namespace tke
 		Scene();
 		~Scene();
 
-		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void addLight(Light *pLight);
 		Light *removeLight(Light *pLight);
 		void addObject(Object *pObject);
@@ -711,8 +716,11 @@ namespace tke
 		void addTerrain(Terrain *pTerrain);
 		void removeTerrain();
 		void clear();
+		void setAmbientColor(const glm::vec3 &);
+		void setFogColor(const glm::vec3 &);
 		Framebuffer *createFramebuffer(Image *dst);
 		void show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent);
+		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void load(const std::string &filename);
 		void save(const std::string &filename);
 	};

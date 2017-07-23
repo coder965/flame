@@ -33,7 +33,8 @@ layout(binding = 1) uniform MATRIX
 
 layout(binding = 2) uniform AMBIENT
 {
-	vec4 v; // (R,G,B) - ambient color, (A) - EnvrMipmaps
+	vec3 color;
+	uint envr_max_mipmap;
 	vec4 fogColor;
 }u_ambient;
 
@@ -163,13 +164,12 @@ void main()
 	
 	vec3 color = lightSumColor;
 #if defined(USE_IBL)
-	float envrMipmaps = u_ambient.v.a;
 	mat3 matrixViewInv3 = mat3(u_matrix.viewInv);
-	vec3 irradiance = albedo * textureLod(envrSampler, panorama(matrixViewInv3 * normal), envrMipmaps).rgb;
-	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * envrMipmaps).rgb;
-	color += u_ambient.v.rgb * (irradiance + radiance);
+	vec3 irradiance = albedo * textureLod(envrSampler, panorama(matrixViewInv3 * normal), u_ambient.envr_max_mipmap).rgb;
+	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * u_ambient.envr_max_mipmap).rgb;
+	color += u_ambient.color * (irradiance + radiance);
 #else
-	color += u_ambient.v.rgb * albedo;
+	color += u_ambient.color * albedo;
 #endif
 	
 	float fog = clamp(exp2(-0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);

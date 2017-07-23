@@ -558,9 +558,23 @@ namespace tke
 		addEuler(euler);
 	}
 
-	Light::Light(LightType _type)
-		:type(_type)
-	{}
+	Light::Light(LightType _type, bool _shadow = false)
+		:type(_type), shadow(_shadow)
+	{
+		if (shadow)
+			depthImage = new Image(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CY, VK_FORMAT_D16_UNORM);
+	}
+
+	Light::~Light()
+	{
+		delete depthImage;
+	}
+
+	void Light::setColor(const glm::vec3 &v)
+	{
+		color = v;
+		changed = true;
+	}
 
 	std::string getLightTypeName(LightType _type)
 	{
@@ -3031,6 +3045,11 @@ namespace tke
 		glm::vec2 viewportDim;
 	};
 
+	static void _setSunLight_attribute(Scene *s)
+	{
+		s->sunLight->setEuler(glm::vec3(s->atmosphereSunDir, 0.f));
+	}
+
 	Scene::Scene()
 		:resource(&globalResource)
 	{
@@ -3085,6 +3104,10 @@ namespace tke
 		deferredPipeline->linkDescriptors(ds_defe, &resource);
 		ds_comp = composePipeline->createDescriptorSet(descriptorPool);
 		composePipeline->linkDescriptors(ds_comp, &resource);
+
+		sunLight = new Light(LightType::parallax);
+		_setSunLight_attribute(this);
+		addLight(sunLight);
 	}
 
 	Scene::~Scene()
@@ -3105,62 +3128,11 @@ namespace tke
 		delete ds_comp;
 	}
 
-	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
-	{
-		//WIN32_FIND_DATA fd;
-		//HANDLE hFind;
-
-		//hFind = FindFirstFile(sprintf("%s\\pano.*", dir), &fd);
-		//if (hFind != INVALID_HANDLE_VALUE)
-		//{
-		//	auto pImage = createImage(sprintf("%s\\%s", dir, fd.cFileName), true);
-		//	if (pImage)
-		//	{
-		//		delete skyImage;
-		//		skyImage = pImage;
-		//	}
-		//	FindClose(hFind);
-		//}
-
-		//std::vector<std::string> mipmapNames;
-		//for (int i = 0; i < 100; i++)
-		//{
-		//	hFind = FindFirstFile(sprintf("%s\\rad%d.*", dir, i), &fd);
-		//	if (hFind == INVALID_HANDLE_VALUE)
-		//		break;
-		//	FindClose(hFind);
-		//	mipmapNames.push_back(sprintf("%s\\%s", dir, fd.cFileName));
-		//}
-		//auto pImage = createImage(mipmapNames, true);
-		//if (pImage)
-		//{
-		//	strcpy(pImage->m_fileName, dir);
-		//	delete radianceImage;
-		//	radianceImage = pImage;
-		//}
-
-		//hFind = FindFirstFile(sprintf("%s\\irr.*", dir), &fd);
-		//if (hFind != INVALID_HANDLE_VALUE)
-		//{
-		//	auto pImage = createImage(sprintf("%s\\%s", dir, fd.cFileName), true);
-		//	if (pImage)
-		//	{
-		//		delete irradianceImage;
-		//		irradianceImage = pImage;
-		//	}
-		//	FindClose(hFind);
-		//}
-
-		//strcpy(skyName, dir);
-
-		needUpdateSky = true;
-	}
-
 	void Scene::addLight(Light *pLight) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
 		mtx.lock();
 		lights.push_back(pLight);
-		lightCountChanged = true;
+		needUpdateLightCount = true;
 		mtx.unlock();
 	}
 
@@ -3192,7 +3164,7 @@ namespace tke
 				break;
 			}
 		}
-		lightCountChanged = true;
+		needUpdateLightCount = true;
 		mtx.unlock();
 		return pLight;
 	}
@@ -3470,7 +3442,7 @@ namespace tke
 	{
 		mtx.lock();
 
-		pSunLight = nullptr;
+		sunLight = nullptr;
 
 		for (auto pLight : lights)
 			delete pLight;
@@ -3484,6 +3456,18 @@ namespace tke
 		terrain = nullptr;
 
 		mtx.unlock();
+	}
+
+	void Scene::setAmbientColor(const glm::vec3 &v)
+	{
+		ambientColor = v;
+		needUpdateAmbientBuffer = true;
+	}
+
+	void Scene::setFogColor(const glm::vec3 &v)
+	{
+		fogColor = v;
+		needUpdateAmbientBuffer = true;
 	}
 
 	Framebuffer *Scene::createFramebuffer(Image *dst)
@@ -3635,28 +3619,14 @@ namespace tke
 		}
 		if (needUpdateSky)
 		{
-			AmbientBufferShaderStruct stru;
-			stru.v = glm::vec4(ambientColor, 0);
-			stru.fogcolor = glm::vec4(0.f, 0.f, 0.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-			ambientBuffer->update(&stru, stagingBuffer);
+			needUpdateAmbientBuffer = true;
 
 			switch (skyType)
 			{
 			case SkyType::atmosphere_scattering:
 				if (panoramaPipeline)
 				{ // update Atmospheric Scattering
-					{
-						float fScaleDepth = 0.25;// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
-
-						auto mrX = glm::mat3(glm::rotate(atmosphereSunDir.x, glm::vec3(0.f, 1.f, 0.f)));
-						auto v3LightPosition = glm::normalize(glm::mat3(glm::rotate(atmosphereSunDir.y, mrX * glm::vec3(0.f, 0.f, 1.f))) * mrX * glm::vec3(1.f, 0.f, 0.f));// The direction vector to the light source
-
-						if (pSunLight)
-							pSunLight->setEuler(glm::vec3(atmosphereSunDir, 0.f));
-
-						float fScale = 1.f / (atmosphereOuterRadius - atmosphereInnerRadius);	// 1 / (fOuterRadius - fInnerRadius)
-						float fScaleOverScaleDepth = fScale / fScaleDepth;	// fScale / fScaleDepth
-					}
+					_setSunLight_attribute(this);
 
 					{
 						auto cb = commandPool->begineOnce();
@@ -3664,6 +3634,8 @@ namespace tke
 
 						cb->beginRenderPass(plainRenderPass_image16, fb);
 						cb->bindPipeline(scatteringPipeline);
+						auto dir = sunLight->getAxis()[2];
+						cb->pushConstant(tke::StageType::frag, 0, sizeof(dir), &dir);
 						cb->draw(3);
 						cb->endRenderPass();
 
@@ -3724,11 +3696,6 @@ namespace tke
 							}
 
 							ds_defe->setImage(defe_envr_position, 0, envrImage, colorSampler, 0, 0, envrImage->level);
-
-							AmbientBufferShaderStruct stru;
-							stru.v = glm::vec4(1.f, 1.f, 1.f, 3);
-							stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-							ambientBuffer->update(&stru, stagingBuffer);
 						}
 					}
 				}
@@ -3749,6 +3716,16 @@ namespace tke
 			}
 
 			needUpdateSky = false;
+		}
+		if (needUpdateAmbientBuffer)
+		{
+			AmbientBufferShaderStruct stru;
+			stru.color = ambientColor;
+			stru.envr_max_mipmap = envrImage->level - 1;
+			stru.fogcolor = glm::vec4(fogColor, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+			ambientBuffer->update(&stru, stagingBuffer);
+
+			needUpdateAmbientBuffer = false;
 		}
 		if (objects.size() > 0)
 		{
@@ -3881,23 +3858,29 @@ namespace tke
 			}
 			needUpdateIndirectBuffer = false;
 		}
+		if (needUpdateLightCount)
+		{ // light count in light attribute
+			auto count = lights.size();
+			lightBuffer->update(&count, stagingBuffer, 4);
+			needUpdateLightCount = false;
+		}
 		if (lights.size() > 0)
 		{ // light attribute
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightShaderStruct) * lights.size());
-			for (auto pLight : lights)
+			for (auto l : lights)
 			{
-				if (pLight->changed)
+				if (l->changed)
 				{
 					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
 					LightShaderStruct stru;
-					if (pLight->type == LightType::parallax)
-						stru.coord = glm::vec4(pLight->getAxis()[2], 0.f);
+					if (l->type == LightType::parallax)
+						stru.coord = glm::vec4(l->getAxis()[2], 0.f);
 					else
-						stru.coord = glm::vec4(pLight->getCoord(), pLight->type);
-					stru.color = glm::vec4(pLight->color, 1.f);
-					stru.spotData = glm::vec4(-pLight->getAxis()[2], pLight->range);
+						stru.coord = glm::vec4(l->getCoord(), l->type);
+					stru.color = glm::vec4(l->color, 1.f);
+					stru.spotData = glm::vec4(-l->getAxis()[2], l->range);
 					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
@@ -3965,12 +3948,6 @@ namespace tke
 					}
 				}
 			}
-		}
-		if (lightCountChanged)
-		{ // light count in light attribute
-			auto count = lights.size();
-			lightBuffer->update(&count, stagingBuffer, 4);
-			lightCountChanged = false;
 		}
 
 		camera.changed = false;
@@ -4051,6 +4028,57 @@ namespace tke
 
 		cb->setEvent(signalEvent);
 		cb->end();
+	}
+
+	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
+	{
+		//WIN32_FIND_DATA fd;
+		//HANDLE hFind;
+
+		//hFind = FindFirstFile(sprintf("%s\\pano.*", dir), &fd);
+		//if (hFind != INVALID_HANDLE_VALUE)
+		//{
+		//	auto pImage = createImage(sprintf("%s\\%s", dir, fd.cFileName), true);
+		//	if (pImage)
+		//	{
+		//		delete skyImage;
+		//		skyImage = pImage;
+		//	}
+		//	FindClose(hFind);
+		//}
+
+		//std::vector<std::string> mipmapNames;
+		//for (int i = 0; i < 100; i++)
+		//{
+		//	hFind = FindFirstFile(sprintf("%s\\rad%d.*", dir, i), &fd);
+		//	if (hFind == INVALID_HANDLE_VALUE)
+		//		break;
+		//	FindClose(hFind);
+		//	mipmapNames.push_back(sprintf("%s\\%s", dir, fd.cFileName));
+		//}
+		//auto pImage = createImage(mipmapNames, true);
+		//if (pImage)
+		//{
+		//	strcpy(pImage->m_fileName, dir);
+		//	delete radianceImage;
+		//	radianceImage = pImage;
+		//}
+
+		//hFind = FindFirstFile(sprintf("%s\\irr.*", dir), &fd);
+		//if (hFind != INVALID_HANDLE_VALUE)
+		//{
+		//	auto pImage = createImage(sprintf("%s\\%s", dir, fd.cFileName), true);
+		//	if (pImage)
+		//	{
+		//		delete irradianceImage;
+		//		irradianceImage = pImage;
+		//	}
+		//	FindClose(hFind);
+		//}
+
+		//strcpy(skyName, dir);
+
+		needUpdateSky = true;
 	}
 
 	void Scene::load(const std::string &_filename)

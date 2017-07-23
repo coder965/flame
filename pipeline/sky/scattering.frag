@@ -5,7 +5,11 @@ layout(location = 0) in vec2 inTexcoord;
 
 layout(location = 0) out vec4 outColor;
 
-const vec3 lightdir = vec3(1.0, 0.0, 0.0);
+layout(push_constant) uniform PushConstant
+{
+	vec3 lightdir;
+}pc;
+
 const vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131); // air
 const float rayleigh_brightness = 3.3, mie_brightness = 0.1, spot_brightness = 1000.0, scatter_strength = 0.028, rayleigh_strength = 0.139, mie_strength = 0.0264;
 const float rayleigh_collection_power = 0.81, mie_collection_power = 0.39, mie_distribution = 0.63;
@@ -61,7 +65,7 @@ vec3 absorb(float dist, vec3 color, float factor)
 void main()
 {
     vec3 eyedir = inversePanorama(inTexcoord);
-    float alpha = dot(eyedir, lightdir);
+    float alpha = dot(eyedir, pc.lightdir);
         
     float rayleigh_factor = phase(alpha, -0.01)*rayleigh_brightness;
     float mie_factor = phase(alpha, mie_distribution)*mie_brightness;
@@ -79,8 +83,8 @@ void main()
 	{
         float sample_distance = step_length*float(i);
         vec3 position = eye_position + eyedir*sample_distance;
-        float extinction = horizon_extinction(position, lightdir, surface_height-0.35);
-        float sample_depth = atmospheric_depth(position, lightdir);
+        float extinction = horizon_extinction(position, pc.lightdir, surface_height-0.35);
+        float sample_depth = atmospheric_depth(position, pc.lightdir);
         vec3 influx = absorb(sample_depth, vec3(intensity), scatter_strength)*extinction;
         rayleigh_collected += absorb(sample_distance, Kr*influx, rayleigh_strength);
         mie_collected += absorb(sample_distance, influx, mie_strength);
