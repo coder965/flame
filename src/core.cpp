@@ -43,6 +43,20 @@ namespace tke
 	std::vector<Image*> textures;
 
 	std::vector<Image*> modelTextures;
+
+	Image *addModelTexture(const std::string &filename, bool sRGB)
+	{
+		for (auto i : modelTextures)
+		{
+			if (i->full_filename == filename)
+				return i;
+		}
+		auto i = createImage(filename, sRGB);
+		i->index = modelTextures.size();
+		modelTextures.push_back(i);
+		return i;
+	}
+
 	std::vector<MaterialShaderStruct> modelMaterials;
 
 	VertexBuffer *staticVertexBuffer = nullptr;
@@ -54,7 +68,7 @@ namespace tke
 	UniformBuffer *constantBuffer = nullptr;
 	UniformBuffer *materialBuffer = nullptr;
 
-	Image *depthImage = nullptr;
+	Image *plainDepthImage = nullptr;
 	Image *pickUpImage = nullptr;
 
 	RenderPass *renderPass_image8;
@@ -625,9 +639,9 @@ namespace tke
 			}
 		}
 
-		// this kind of depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
-		depthImage = new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		globalResource.setImage(depthImage, "Depth.Image");
+		// 32bit depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
+		plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		globalResource.setImage(plainDepthImage, "Depth.Image");
 
 		pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
@@ -667,7 +681,7 @@ namespace tke
 		{
 			VkImageView views[] = {
 				pickUpImage->getView(),
-				depthImage->getView()
+				plainDepthImage->getView()
 			};
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}

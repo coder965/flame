@@ -2612,7 +2612,9 @@ namespace tke
 		assert(d);
 
 		auto i = new Image(d->cx, d->cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, d->v, d->size);
-		i->filename = filename;
+		i->full_filename = filename;
+		std::experimental::filesystem::path path(filename);
+		i->filename = path.filename().string();
 		i->bytePerPixel = d->byte_per_pixel;
 		i->pitch = d->pitch;
 		i->sRGB = sRGB;

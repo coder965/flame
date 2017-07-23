@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <memory>
 
 #include "utils.h"
 #include "math.h"
@@ -259,7 +260,7 @@ namespace tke
 		std::string comment;
 		std::string filename;
 		std::string filepath;
-		std::vector<BoneMotion> motions;
+		std::vector<std::unique_ptr<BoneMotion>> motions;
 	};
 
 	extern std::vector<Animation*> animations;
@@ -276,15 +277,14 @@ namespace tke
 	struct BoneMotionTrack
 	{
 		int boneID;
-		std::vector<BoneMotion*> pMotions;
+		std::vector<BoneMotion*> motions;
 	};
 
 	struct AnimationBinding
 	{
-		~AnimationBinding();
 		Animation *animation;
 		int frameTotal;
-		std::vector<BoneMotionTrack*> pTracks;
+		std::vector<std::unique_ptr<BoneMotionTrack>> tracks;
 	};
 
 	struct CollisionGroup
@@ -340,13 +340,12 @@ namespace tke
 		float rotationAttenuation;
 		float bounce;
 		float friction;
-		std::vector<Shape*> shapes;
+		std::vector<std::unique_ptr<Shape>> shapes;
 
 		Rigidbody();
 		Rigidbody(RigidbodyType _type);
-		~Rigidbody();
-		void addShape(Shape *pShape);
-		Shape *deleteShape(Shape *pRigidBody);
+		void addShape(std::unique_ptr<Shape> &s);
+		Shape *removeShape(Shape *s);
 	};
 
 	struct Joint : Transformer
@@ -387,8 +386,6 @@ namespace tke
 
 		std::vector<Material*> materials;
 
-		std::vector<Image*> pImages;
-
 		std::vector<Bone> bones;
 		std::vector<IK> iks;
 
@@ -425,8 +422,6 @@ namespace tke
 
 		void loadData(bool needRigidbody);
 		void saveData(bool needRigidbody);
-
-		Image *getImage(const char *name);
 
 		AnimationBinding *bindAnimation(Animation *a);
 		void setStandAnimation(AnimationBinding *b);
@@ -683,6 +678,7 @@ namespace tke
 		Image *envrImage;
 
 		Image *mainImage;
+		Image *depthImage;
 		Image *albedoAlphaImage;
 		Image *normalHeightImage;
 		Image *specRoughnessImage;
@@ -707,7 +703,6 @@ namespace tke
 
 		Scene();
 		~Scene();
-
 		void addLight(Light *pLight);
 		Light *removeLight(Light *pLight);
 		void addObject(Object *pObject);

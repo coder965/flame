@@ -185,6 +185,7 @@ namespace tke
 
 		std::vector<ImageView*> views;
 
+		std::string full_filename;
 		std::string filename;
 
 		bool sRGB = false;

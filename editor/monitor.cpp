@@ -36,7 +36,7 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 
 	VkImageView views[] = {
 		image->getView(),
-		tke::depthImage->getView()
+		tke::plainDepthImage->getView()
 	};
 	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool);
@@ -371,7 +371,7 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	VkImageView views[] = {
 		image->getView(),
-		tke::depthImage->getView()
+		tke::plainDepthImage->getView()
 	};
 	fb_image = tke::getFramebuffer(image, tke::renderPass_image8);
 	tke::addGuiImage(image);

@@ -29,7 +29,7 @@ inline std::ofstream& operator<<(std::ofstream &file, T &v)
 	return file;
 }
 
-inline std::ifstream& operator>>(std::ifstream &file, std::string &str)
+inline std::ifstream& operator>(std::ifstream &file, std::string &str)
 {
 	int size;
 	file >> size;
@@ -38,7 +38,7 @@ inline std::ifstream& operator>>(std::ifstream &file, std::string &str)
 	return file;
 }
 
-inline std::ofstream& operator<<(std::ofstream &file, std::string &str)
+inline std::ofstream& operator<(std::ofstream &file, std::string &str)
 {
 	file << str.size();
 	file.write((char*)str.data(), str.size());
@@ -46,7 +46,6 @@ inline std::ofstream& operator<<(std::ofstream &file, std::string &str)
 }
 
 template<size_t s> struct Sizer {};
-
 
 #define PITCH(x) (x % 4 == 0 ? x : 4 - x % 4 + x)
 

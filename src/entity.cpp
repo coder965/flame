@@ -558,7 +558,7 @@ namespace tke
 		addEuler(euler);
 	}
 
-	Light::Light(LightType _type, bool _shadow = false)
+	Light::Light(LightType _type, bool _shadow)
 		:type(_type), shadow(_shadow)
 	{
 	}
@@ -580,12 +580,6 @@ namespace tke
 	}
 
 	std::vector<Animation*> animations;
-
-	AnimationBinding::~AnimationBinding()
-	{
-		for (auto t : pTracks)
-			delete t;
-	}
 
 	std::string shapeTypeName(ShapeType t)
 	{
@@ -634,34 +628,28 @@ namespace tke
 	{
 	}
 
-	Rigidbody::~Rigidbody()
-	{
-		for (auto s : shapes)
-			delete s;
-	}
-
-	void Rigidbody::addShape(Shape *pShape)
+	void Rigidbody::addShape(std::unique_ptr<Shape> &s)
 	{
 		static auto magicNumber = 0;
-		pShape->id = magicNumber++;
-		shapes.push_back(pShape);
+		s->id = magicNumber++;
+		shapes.push_back(std::move(s));
 	}
 
-	Shape *Rigidbody::deleteShape(Shape *pShape)
+	Shape *Rigidbody::removeShape(Shape *s)
 	{
 		for (auto it = shapes.begin(); it != shapes.end(); it++)
 		{
-			if (*it == pShape)
+			if ((*it).get() == s)
 			{
 				if (it > shapes.begin())
-					pShape = *(it - 1);
+					s = (*(it - 1)).get();
 				else
-					pShape = nullptr;
+					s = nullptr;
 				shapes.erase(it);
 				break;
 			}
 		}
-		return pShape;
+		return s;
 	}
 
 	void Model::loadData(bool needRigidbody)
@@ -718,14 +706,14 @@ namespace tke
 
 		auto binding = new AnimationBinding;
 		binding->animation = a;
-		for (auto &motion : a->motions)
+		for (auto &m : a->motions)
 		{
-			binding->frameTotal = glm::max(binding->frameTotal, motion.frame);
+			binding->frameTotal = glm::max(binding->frameTotal, m->frame);
 
 			int boneID = -1;
 			for (int iBone = 0; iBone < bones.size(); iBone++)
 			{
-				if (motion.name.compare(bones[iBone].name) == 0)
+				if (m->name == bones[iBone].name)
 				{
 					boneID = iBone;
 					break;
@@ -733,35 +721,32 @@ namespace tke
 			}
 			if (boneID == -1) continue;
 
-			BoneMotionTrack *pTrack = nullptr;
-			for (auto t : binding->pTracks)
+			BoneMotionTrack *t = nullptr;
+			for (auto &_t : binding->tracks)
 			{
-				if (t->boneID == boneID)
+				if (_t->boneID == boneID)
 				{
-					pTrack = t;
+					t = _t.get();
 					break;
 				}
 			}
-			if (!pTrack)
+			if (!t)
 			{
-				pTrack = new BoneMotionTrack;
-				pTrack->boneID = boneID;
-				pTrack->pMotions.push_back(&motion);
-				binding->pTracks.push_back(pTrack);
+				auto ut = std::make_unique<BoneMotionTrack>();
+				t = ut.get();
+				t->boneID = boneID;
+				t->motions.push_back(m.get());
+				binding->tracks.push_back(std::move(ut));
 			}
 			else
 			{
-				bool inserted = false;
-				for (int i = 0; i < pTrack->pMotions.size(); i++)
+				std::vector<BoneMotion*>::iterator it;
+				for (it = t->motions.begin(); it != t->motions.end(); it++)
 				{
-					if (pTrack->pMotions[i]->frame > motion.frame)
-					{
-						pTrack->pMotions.insert(pTrack->pMotions.begin() + i, &motion);
-						inserted = true;
+					if ((*it)->frame > m->frame)
 						break;
-					}
 				}
-				if (!inserted) pTrack->pMotions.push_back(&motion);
+				t->motions.insert(it, m.get());
 			}
 		}
 		animationBindings.push_back(binding);
@@ -804,16 +789,6 @@ namespace tke
 		jump_animation_filename = b ? b->animation->filename : "";
 	}
 
-	Image *Model::getImage(const char *name)
-	{
-		for (auto pImage : pImages)
-		{
-			if (pImage->filename.compare(name) == 0)
-				return pImage;
-		}
-		return nullptr;
-	}
-
 	void Model::addRigidbody(Rigidbody *pRigidbody)
 	{
 		static auto magicNumber = 0;
@@ -848,23 +823,6 @@ namespace tke
 	std::vector<Model*> models;
 	static void _add_model(Model *m)
 	{
-		for (auto src : m->pImages)
-		{
-			bool found = false;
-			for (auto i : modelTextures)
-			{
-				if (i == src)
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				src->index = modelTextures.size();
-				modelTextures.push_back(src);
-			}
-		}
 		for (auto mt : m->materials)
 		{
 			MaterialShaderStruct stru;
@@ -1000,17 +958,17 @@ namespace tke
 				boneData[i].coord = glm::vec3();
 			}
 
-			for (auto pTrack : currentAnimation->pTracks)
+			for (auto &t : currentAnimation->tracks)
 			{
-				auto pBoneData = &boneData[pTrack->boneID];
-				auto it = std::upper_bound(pTrack->pMotions.rbegin(), pTrack->pMotions.rend(), currentFrame, [](int frame, BoneMotion *bm) {
+				auto pBoneData = &boneData[t->boneID];
+				auto it = std::upper_bound(t->motions.rbegin(), t->motions.rend(), currentFrame, [](int frame, BoneMotion *bm) {
 					return frame > bm->frame;
 				});
 
-				if (it == pTrack->pMotions.rend()) continue;
+				if (it == t->motions.rend()) continue;
 
 				auto pLeftMotion = *it;
-				auto pRightMotion = (it == pTrack->pMotions.rbegin() ? pTrack->pMotions[0] : *(it - 1));
+				auto pRightMotion = (it == t->motions.rbegin() ? t->motions[0] : *(it - 1));
 
 				auto beta = 0.f;
 				if (pLeftMotion != pRightMotion) beta = (currentFrame - pLeftMotion->frame) / (pRightMotion->frame - pLeftMotion->frame);
@@ -1501,9 +1459,9 @@ namespace tke
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cubeModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeType::box);
-			pRigidbody->addShape(pShape);
-			pShape->setScale(glm::vec3(0.5f));
+			auto s = std::make_unique<Shape>(ShapeType::box);
+			s->setScale(glm::vec3(0.5f));
+			pRigidbody->addShape(s);
 
 			_model_after_process(cubeModel);
 
@@ -1527,9 +1485,9 @@ namespace tke
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			sphereModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeType::sphere);
-			pRigidbody->addShape(pShape);
-			pShape->setScale(glm::vec3(0.5f));
+			auto s = std::make_unique<Shape>(ShapeType::sphere);
+			s->setScale(glm::vec3(0.5f));
+			pRigidbody->addShape(s);
 
 			_model_after_process(sphereModel);
 
@@ -1549,9 +1507,9 @@ namespace tke
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cylinderModel->addRigidbody(pRigidbody);
-			auto pShape = new Shape(ShapeType::capsule);
-			pRigidbody->addShape(pShape);
-			pShape->setScale(glm::vec3(0.5f));
+			auto s = std::make_unique<Shape>(ShapeType::capsule);
+			s->setScale(glm::vec3(0.5f));
+			pRigidbody->addShape(s);
 
 			_model_after_process(cylinderModel);
 
@@ -1778,25 +1736,13 @@ namespace tke
 							{
 								std::string filename;
 								ss >> filename;
-								auto pImage = m->getImage(filename.c_str());
-								if (!pImage)
-								{
-									pImage = createImage(m->filepath + "/" + filename, true);
-									if (pImage) m->pImages.push_back(pImage);
-								}
-								pmt->albedoAlphaMap = pImage;
+								pmt->albedoAlphaMap = addModelTexture(m->filepath + "/" + filename, true);
 							}
 							else if (token == "map_bump")
 							{
 								std::string filename;
 								ss >> filename;
-								auto pImage = m->getImage(filename.c_str());
-								if (!pImage)
-								{
-									pImage = createImage(m->filepath + "/" + filename);
-									if (pImage) m->pImages.push_back(pImage);
-								}
-								pmt->normalHeightMap = pImage;
+								pmt->normalHeightMap = addModelTexture(m->filepath + "/" + filename);
 							}
 						}
 					}
@@ -1985,14 +1931,7 @@ namespace tke
 				pmt->indiceBase = currentIndiceVertex;
 				pmt->indiceCount = data.indiceCount;
 
-				auto pImage = m->getImage(data.mapName);
-				if (!pImage)
-				{
-					pImage = createImage(m->filepath + "/" + data.mapName, true);
-					if (pImage) m->pImages.push_back(pImage);
-				}
-				pmt->albedoAlphaMap = pImage;
-
+				pmt->albedoAlphaMap = addModelTexture(m->filepath + "/" + data.mapName, true);
 
 				currentIndiceVertex += data.indiceCount;
 
@@ -2127,8 +2066,7 @@ namespace tke
 				p->setQuat(rotationQuat);
 				p->type = (RigidbodyType)data.mode;
 				//m->addRigidbody(p); // TODO : FIX
-				auto q = new Shape;
-				p->addShape(q);
+				auto q = std::make_unique<Shape>();
 				switch (data.type)
 				{
 				case 0: q->type = ShapeType::sphere; break;
@@ -2148,6 +2086,7 @@ namespace tke
 				q->setScale(data.size);
 				auto v = q->getVolume();
 				if (v != 0.f) p->density = data.mass / v;
+				p->addShape(q);
 			}
 
 			unsigned int jointCount;
@@ -2468,20 +2407,20 @@ namespace tke
 
 			int count;
 			file >> count;
-			a->motions.resize(count);
 			for (int i = 0; i < count; i++)
 			{
 				BoneMotionData data;
 				file.read((char*)&data, sizeof(BoneMotionData));
-				a->motions[i].name = japaneseToChinese(data.name);
-				a->motions[i].frame = data.frame;
-				a->motions[i].coord = glm::vec3(data.coord);
-				a->motions[i].quaternion = glm::vec4(data.quaternion);
-				memcpy(a->motions[i].bezier, data.bezier, 64);
-
-				a->motions[i].coord.z *= -1.f;
-				a->motions[i].quaternion.z *= -1.f;
-				a->motions[i].quaternion.w *= -1.f;
+				auto m = std::make_unique<BoneMotion>();
+				m->name = japaneseToChinese(data.name);
+				m->frame = data.frame;
+				m->coord = glm::vec3(data.coord);
+				m->quaternion = glm::vec4(data.quaternion);
+				memcpy(m->bezier, data.bezier, 64);
+				m->coord.z *= -1.f;
+				m->quaternion.z *= -1.f;
+				m->quaternion.w *= -1.f;
+				a->motions.push_back(std::move(m));
 			}
 		}
 	}
@@ -2491,18 +2430,6 @@ namespace tke
 		void load(Model *m, const std::string &filename)
 		{
 			std::ifstream file(filename, std::ios::binary);
-
-			int textureCount = 0;
-			file >> textureCount;
-			for (int i = 0; i < textureCount; i++)
-			{
-				std::string filename;
-				file >> filename;
-				bool sRGB;
-				file >> sRGB;
-				auto pImage = createImage(m->filepath + "/" + filename, sRGB);
-				if (pImage) m->pImages.push_back(pImage);
-			}
 
 			file >> m->animated;
 
@@ -2555,11 +2482,11 @@ namespace tke
 				file >> pmt->roughness;
 				std::string name;
 				file >> name;
-				pmt->albedoAlphaMap = m->getImage(name.c_str());
+				pmt->albedoAlphaMap = addModelTexture(m->filepath + "/" + name, true);
 				file >> name;
-				pmt->normalHeightMap = m->getImage(name.c_str());
+				pmt->normalHeightMap = addModelTexture(m->filepath + "/" + name);
 				file >> name;
-				pmt->specRoughnessMap = m->getImage(name.c_str());
+				pmt->specRoughnessMap = addModelTexture(m->filepath + "/" + name);
 
 				m->materials.push_back(pmt);
 			}
@@ -2636,7 +2563,7 @@ namespace tke
 				file >> shapeCount;
 				for (int j = 0; j < shapeCount; j++)
 				{
-					auto q = new Shape;
+					auto q = std::make_unique<Shape>();
 					p->addShape(q);
 					glm::vec3 coord;
 					file >> coord;
@@ -2688,26 +2615,13 @@ namespace tke
 
 		void save(Model *m, const std::string &filename, bool copyTexture)
 		{
-			std::experimental::filesystem::path p(filename);
+			std::experimental::filesystem::path path(filename);
 
-			std::string dstFilepath = p.parent_path().string();
+			std::string dstFilepath = path.parent_path().string();
 			if (dstFilepath == "")
 				dstFilepath = ".";
 
 			std::ofstream file(filename);
-
-			file << m->pImages.size();
-			for (auto pImage : m->pImages)
-			{
-				file << pImage->filename;
-				file << pImage->sRGB;
-				if (copyTexture)
-				{
-					std::string srcFilename = m->filepath + "/" + pImage->filename;
-					std::string dstFilename = dstFilepath + "/" + pImage->filename;
-					CopyFile(srcFilename.c_str(), dstFilename.c_str(), false);
-				}
-			}
 
 			file << m->animated;;
 
@@ -2749,12 +2663,27 @@ namespace tke
 				file << mt->alpha;
 				file << mt->spec;
 				file << mt->roughness;
-				if (mt->albedoAlphaMap) file << mt->albedoAlphaMap->filename;
-				else file << 0;
-				if (mt->normalHeightMap) file << mt->normalHeightMap->filename;
-				else file << 0;
-				if (mt->specRoughnessMap) file << mt->specRoughnessMap->filename;
-				else file << 0;
+				file << mt->albedoAlphaMap ? mt->albedoAlphaMap->filename : 0;
+				file << mt->normalHeightMap ? mt->normalHeightMap->filename : 0;
+				file << mt->specRoughnessMap ? mt->specRoughnessMap->filename : 0;
+				if (copyTexture)
+				{
+					if (mt->albedoAlphaMap)
+					{
+						std::string dst = dstFilepath + "/" + mt->albedoAlphaMap->filename;
+						CopyFile(mt->albedoAlphaMap->full_filename.c_str(), dst.c_str(), false);
+					}
+					if (mt->normalHeightMap)
+					{
+						std::string dst = dstFilepath + "/" + mt->normalHeightMap->filename;
+						CopyFile(mt->normalHeightMap->full_filename.c_str(), dst.c_str(), false);
+					}
+					if (mt->specRoughnessMap)
+					{
+						std::string dst = dstFilepath + "/" + mt->specRoughnessMap->filename;
+						CopyFile(mt->specRoughnessMap->full_filename.c_str(), dst.c_str(), false);
+					}
+				}
 			}
 
 			file << m->bones.size();
@@ -2807,7 +2736,7 @@ namespace tke
 				file << rb->friction;
 
 				file << rb->shapes.size();
-				for (auto s : rb->shapes)
+				for (auto &s : rb->shapes)
 				{
 					file << s->getCoord();
 					file << s->getEuler();
@@ -2850,17 +2779,14 @@ namespace tke
 
 			int count;
 			file >> count;
-			a->motions.resize(count);
 			for (int i = 0; i < count; i++)
 			{
-				int nameSize;
-				file >> nameSize;
-				a->motions[i].name.resize(nameSize);
-				file.read((char*)a->motions[i].name.data(), nameSize);
-				file >> a->motions[i].frame;
-				file.read((char*)&a->motions[i].coord, sizeof(glm::vec3));
-				file.read((char*)&a->motions[i].quaternion, sizeof(glm::vec4));
-				file.read(a->motions[i].bezier, 64);
+				auto m = std::make_unique<BoneMotion>();
+				file > m->name;
+				file >> m->frame;
+				file >> m->coord;
+				file >> m->quaternion;
+				file.read(m->bezier, 64);
 			}
 		}
 
@@ -2869,14 +2795,13 @@ namespace tke
 			std::ofstream file(filename, std::ios::binary);
 
 			file << a->motions.size();
-			for (auto &motion : a->motions)
+			for (auto &m : a->motions)
 			{
-				file << motion.name.size();
-				file.write(motion.name.c_str(), motion.name.size());
-				file << motion.frame;
-				file.write((char*)&motion.coord, sizeof(glm::vec3));
-				file.write((char*)&motion.quaternion, sizeof(glm::vec4));
-				file.write(motion.bezier, 64);
+				file < m->name;
+				file << m->frame;
+				file << m->coord;
+				file << m->quaternion;
+				file.write(m->bezier, 64);
 			}
 		}
 	}
@@ -3053,19 +2978,19 @@ namespace tke
 		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 		pxScene = pxPhysics->createScene(pxSceneDesc);
-
 		pxControllerManager = PxCreateControllerManager(*pxScene);
 
 		envrImage = new Image(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
-		resource.setImage(envrImage, "Envr.Image");
-
 		mainImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		depthImage = new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		albedoAlphaImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		normalHeightImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		specRoughnessImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		esmImage = new Image(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		esmImage = new Image(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
+		resource.setImage(envrImage, "Envr.Image");
 		resource.setImage(mainImage, "Main.Image");
+		resource.setImage(depthImage, "Depth.Image");
 		resource.setImage(albedoAlphaImage, "AlbedoAlpha.Image");
 		resource.setImage(normalHeightImage, "NormalHeight.Image");
 		resource.setImage(specRoughnessImage, "SpecRoughness.Image");
@@ -3110,6 +3035,21 @@ namespace tke
 
 	Scene::~Scene()
 	{
+		pxScene->release();
+		pxControllerManager->release();
+
+		delete envrImage;
+		delete mainImage;
+		delete depthImage;
+		delete albedoAlphaImage;
+		delete normalHeightImage;
+		delete specRoughnessImage;
+		delete esmImage;
+
+		delete matrixBuffer;
+		delete staticObjectMatrixBuffer;
+		delete animatedObjectMatrixBuffer;
+
 		for (auto pLight : lights)
 			delete pLight;
 
@@ -3212,7 +3152,7 @@ namespace tke
 					auto actor = (((int)o->physics_type & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
 						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
 
-					for (auto s : r->shapes)
+					for (auto &s : r->shapes)
 					{
 						glm::vec3 coord = s->getCoord() * objScale;
 						glm::mat3 axis = s->getAxis();

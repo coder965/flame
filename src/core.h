@@ -71,6 +71,9 @@ namespace tke
 		return nullptr;
 	}
 
+	extern std::vector<Image*> modelTextures;
+	Image *addModelTexture(const std::string &filename, bool sRGB = false);
+
 	struct MaterialShaderStruct
 	{
 		unsigned int albedoAlphaCompress;
@@ -80,8 +83,6 @@ namespace tke
 
 		unsigned int dummy;
 	};
-
-	extern std::vector<Image*> modelTextures;
 	extern std::vector<MaterialShaderStruct> modelMaterials;
 
 	extern VertexBuffer *staticVertexBuffer;
@@ -93,7 +94,7 @@ namespace tke
 	extern UniformBuffer *constantBuffer;
 	extern UniformBuffer *materialBuffer;
 
-	extern Image *depthImage;
+	extern Image *plainDepthImage;
 	extern Image *pickUpImage;
 
 	extern RenderPass *renderPass_image8;
