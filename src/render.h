@@ -234,7 +234,7 @@ namespace tke
 		void pushConstant(StageType stage, int offset, int size, void *src);
 		void draw(int vertexCount, int firstVertex = 0, int instanceCount = 1, int firstInstance = 0);
 		void drawIndex(int indexCount, int firstIndex = 0, int vertexOffset = 0, int instanceCount = 1, int firstInstance = 0);
-		void drawModel(Model *m, int mtIndex = -1, int instanceCount = 1, int firstInstance = 0);
+		void drawModel(Model *m, int gIndex = -1, int instanceCount = 1, int firstInstance = 0);
 		void drawIndirect(IndirectVertexBuffer *b, int count, int offset = 0);
 		void drawIndirectIndex(IndirectIndexBuffer *b, int count, int offset = 0);
 		void waitEvents(size_t count, VkEvent *e);

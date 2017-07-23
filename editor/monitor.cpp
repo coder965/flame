@@ -480,12 +480,12 @@ void ModelMonitorWidget::show()
 		pc.proj = tke::matPerspective;
 		pc.modelview = camera.getMatInv();
 		cb->pushConstant(tke::StageType::vert, 0, sizeof(pc), &pc);
-		int mtIndex = 0;
-		for (auto m : model->materials)
+		int gIndex = 0;
+		for (auto &g : model->geometries)
 		{
-			if (m->albedoAlphaMap)
-				cb->drawModel(model, mtIndex, 1, m->albedoAlphaMap->index);
-			mtIndex++;
+			if (g->material->albedoAlphaMap)
+				cb->drawModel(model, gIndex, 1, g->material->albedoAlphaMap->index);
+			gIndex++;
 		}
 		cb->endRenderPass();
 

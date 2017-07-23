@@ -196,8 +196,6 @@ namespace tke
 
 	struct Material
 	{
-		std::string name;
-
 		unsigned char albedoR = 255, albedoG = 255, albedoB = 255;
 		unsigned char alpha = 255;
 		unsigned char spec = 0;
@@ -207,14 +205,17 @@ namespace tke
 		Image *normalHeightMap = nullptr;
 		Image *specRoughnessMap = nullptr;
 
+		int sceneIndex = -1;
+	};
+
+	struct Geometry
+	{
+		Material *material = nullptr;
+
 		int indiceBase = 0; // offset of model base
 		int indiceCount = 0;
 
 		bool visible = true;
-
-		int sceneIndex = -1;
-
-		void *ptr = nullptr;
 	};
 
 	struct Bone
@@ -384,7 +385,7 @@ namespace tke
 		std::vector<glm::vec4> boneIDs;
 		std::vector<int> indices;
 
-		std::vector<Material*> materials;
+		std::vector<std::unique_ptr<Geometry>> geometries;
 
 		std::vector<Bone> bones;
 		std::vector<IK> iks;

@@ -57,7 +57,30 @@ namespace tke
 		return i;
 	}
 
-	std::vector<MaterialShaderStruct> modelMaterials;
+	std::vector<Material*> modelMaterials;
+	Material *defaultMaterial = nullptr;
+	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha,
+		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap)
+	{
+		for (auto m : modelMaterials)
+		{
+			if (m->albedoAlphaMap == albedoAlphaMap ? true : (m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
+				&& m->specRoughnessMap == specRoughnessMap ? true : (m->spec == spec && m->roughness == roughness)
+				&& m->normalHeightMap == normalHeightMap)
+				return m;
+		}
+		auto m = new Material;
+		m->albedoR = albedoR;
+		m->albedoG = albedoG;
+		m->albedoB = albedoB;
+		m->alpha = alpha;
+		m->spec = spec;
+		m->roughness = roughness;
+		m->albedoAlphaMap = albedoAlphaMap;
+		m->normalHeightMap = normalHeightMap;
+		m->specRoughnessMap = specRoughnessMap;
+		return m;
+	}
 
 	VertexBuffer *staticVertexBuffer = nullptr;
 	IndexBuffer *staticIndexBuffer = nullptr;
@@ -561,6 +584,16 @@ namespace tke
 		float envrCy;
 	};
 
+	struct MaterialShaderStruct
+	{
+		unsigned int albedoAlphaCompress;
+		unsigned int specRoughnessCompress;
+
+		unsigned int mapIndex;
+
+		unsigned int dummy;
+	};
+
 	Err init(const std::string &path, int rcx, int rcy)
 	{
 		enginePath = path;
@@ -581,6 +614,9 @@ namespace tke
 			false
 #endif
 		);
+
+		defaultMaterial = new Material;
+		modelMaterials.push_back(defaultMaterial);
 
 		stagingBuffer = new StagingBuffer(65536);
 
@@ -852,7 +888,22 @@ namespace tke
 				if (needUpdateMaterialBuffer)
 				{
 					if (modelMaterials.size() > 0)
-						materialBuffer->update(modelMaterials.data(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
+					{
+						std::unique_ptr<MaterialShaderStruct[]> mts(new MaterialShaderStruct[modelMaterials.size()]);
+
+						for (int i = 0; i < modelMaterials.size(); i++)
+						{
+							auto m = modelMaterials[i];
+
+							mts[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
+							mts[i].specRoughnessCompress = m->spec + (m->roughness << 8);
+							mts[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
+							((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
+							((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+						}
+
+						materialBuffer->update(mts.get(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
+					}
 					needUpdateMaterialBuffer = false;
 				}
 

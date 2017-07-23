@@ -823,60 +823,6 @@ namespace tke
 	std::vector<Model*> models;
 	static void _add_model(Model *m)
 	{
-		for (auto mt : m->materials)
-		{
-			MaterialShaderStruct stru;
-			stru.albedoAlphaCompress = mt->albedoR + (mt->albedoG << 8) + (mt->albedoB << 16) + (mt->alpha << 24);
-			stru.specRoughnessCompress = mt->spec + (mt->roughness << 8);
-
-			auto albedoAlphaMapIndex = mt->albedoAlphaMap ? mt->albedoAlphaMap->index + 1 : 0;
-			auto normalHeightMapIndex = mt->normalHeightMap ? mt->normalHeightMap->index + 1 : 0;
-			auto specRoughnessMapIndex = mt->specRoughnessMap ? mt->specRoughnessMap->index + 1 : 0;
-
-			int sameIndex = -1;
-			int materialIndex = 0;
-			for (auto &mt : modelMaterials)
-			{
-				auto storeAlbedoAlphaMapIndex = mt.mapIndex & 0xff;
-				auto storeNormalHeightMapIndex = (mt.mapIndex >> 8) & 0xff;
-				auto storeSpecRoughnessMapIndex = (mt.mapIndex >> 16) & 0xff;
-
-				bool theSameAlbedoAlpha = false;
-				bool theSameNormalHeight = false;
-				bool theSameSpecRoughness = false;
-
-				if (albedoAlphaMapIndex != 0 && albedoAlphaMapIndex == storeAlbedoAlphaMapIndex)
-					theSameAlbedoAlpha = true;
-				else if (albedoAlphaMapIndex == 0 && storeAlbedoAlphaMapIndex == 0 &&
-					stru.albedoAlphaCompress == mt.albedoAlphaCompress)
-					theSameAlbedoAlpha = true;
-				if (normalHeightMapIndex == storeNormalHeightMapIndex)
-					theSameNormalHeight = true;
-				if (specRoughnessMapIndex != 0 && specRoughnessMapIndex == storeSpecRoughnessMapIndex)
-					theSameSpecRoughness = true;
-				else if (specRoughnessMapIndex == 0 && storeSpecRoughnessMapIndex == 0 &&
-					stru.specRoughnessCompress == mt.specRoughnessCompress)
-					theSameSpecRoughness = true;
-
-				if (theSameAlbedoAlpha && theSameNormalHeight && theSameSpecRoughness)
-				{
-					sameIndex = materialIndex;
-					break;
-				}
-
-				materialIndex++;
-			}
-			if (sameIndex == -1)
-			{
-				mt->sceneIndex = modelMaterials.size();
-				stru.mapIndex = albedoAlphaMapIndex + (normalHeightMapIndex << 8) + (specRoughnessMapIndex << 16);
-				modelMaterials.push_back(stru);
-			}
-			else
-			{
-				mt->sceneIndex = sameIndex;
-			}
-		}
 		models.push_back(m);
 		needUpdateVertexBuffer = true;
 		needUpdateMaterialBuffer = true;
@@ -1437,9 +1383,10 @@ namespace tke
 
 			addTriangleVertex(triangleModel, glm::mat3(), glm::vec3());
 
-			auto mt = new Material;
-			mt->indiceCount = triangleModel->indices.size();
-			triangleModel->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = triangleModel->indices.size();
+			triangleModel->geometries.push_back(std::move(g));
 
 			_model_after_process(triangleModel);
 
@@ -1453,9 +1400,10 @@ namespace tke
 
 			addCubeVertex(cubeModel, glm::mat3(), glm::vec3(), 1.f);
 
-			auto mt = new Material;
-			mt->indiceCount = cubeModel->indices.size();
-			cubeModel->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = cubeModel->indices.size();
+			cubeModel->geometries.push_back(std::move(g));
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cubeModel->addRigidbody(pRigidbody);
@@ -1475,13 +1423,15 @@ namespace tke
 
 			addSphereVertex(sphereModel, glm::mat3(), glm::vec3(), 0.5f, 32, 32);
 
-			auto mt0 = new Material;
-			mt0->indiceCount = sphereModel->indices.size() / 2;
-			sphereModel->materials.push_back(mt0);
-			auto mt1 = new Material;
-			mt1->indiceBase = sphereModel->indices.size() / 2;
-			mt1->indiceCount = sphereModel->indices.size() / 2;
-			sphereModel->materials.push_back(mt1);
+			auto g0 = std::make_unique<Geometry>();
+			g0->material = defaultMaterial;
+			g0->indiceCount = sphereModel->indices.size() / 2;
+			auto g1 = std::make_unique<Geometry>();
+			g1->material = defaultMaterial;
+			g1->indiceBase = g0->indiceCount;
+			g1->indiceCount = g0->indiceCount;
+			sphereModel->geometries.push_back(std::move(g0));
+			sphereModel->geometries.push_back(std::move(g1));
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			sphereModel->addRigidbody(pRigidbody);
@@ -1501,9 +1451,10 @@ namespace tke
 
 			addCylinderVertex(cylinderModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
 
-			auto mt = new Material;
-			mt->indiceCount = cylinderModel->indices.size();
-			cylinderModel->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = cylinderModel->indices.size();
+			cylinderModel->geometries.push_back(std::move(g));
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cylinderModel->addRigidbody(pRigidbody);
@@ -1523,9 +1474,10 @@ namespace tke
 
 			addConeVertex(coneModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
 
-			auto mt = new Material;
-			mt->indiceCount = coneModel->indices.size();
-			coneModel->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = coneModel->indices.size();
+			coneModel->geometries.push_back(std::move(g));
 
 			_model_after_process(coneModel);
 
@@ -1542,9 +1494,10 @@ namespace tke
 			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
 			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
 
-			auto mt = new Material;
-			mt->indiceCount = arrowModel->indices.size();
-			arrowModel->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = arrowModel->indices.size();
+			arrowModel->geometries.push_back(std::move(g));
 
 			_model_after_process(arrowModel);
 
@@ -1560,9 +1513,10 @@ namespace tke
 
 			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
 
-			auto mt = new Material;
-			mt->indiceCount = torusModel->indices.size();
-			torusModel->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = torusModel->indices.size();
+			torusModel->geometries.push_back(std::move(g));
 
 			_model_after_process(torusModel);
 
@@ -1581,13 +1535,15 @@ namespace tke
 			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
 			int ic1 = hamerModel->indices.size();
 
-			auto mt0 = new Material;
-			mt0->indiceCount = ic0;
-			hamerModel->materials.push_back(mt0);
-			auto mt1 = new Material;
-			mt1->indiceBase = ic0;
-			mt1->indiceCount = ic1 - ic0;
-			hamerModel->materials.push_back(mt1);
+			auto g0 = std::make_unique<Geometry>();
+			g0->material = defaultMaterial;
+			g0->indiceCount = ic0;
+			auto g1 = std::make_unique<Geometry>();
+			g1->material = defaultMaterial;
+			g1->indiceBase = ic0;
+			g1->indiceCount = ic1 - ic0;
+			hamerModel->geometries.push_back(std::move(g0));
+			hamerModel->geometries.push_back(std::move(g1));
 
 			_model_after_process(hamerModel);
 
@@ -1602,7 +1558,10 @@ namespace tke
 			std::ifstream file(filename);
 
 			int currentIndex = 0;
-			Material *pmt = nullptr;
+
+			std::vector<std::pair<std::string, Material*>> materials;
+
+			Geometry *currentGeometry = nullptr;
 
 			std::vector<glm::vec3> rawPositions;
 			std::vector<glm::vec2> rawTexcoords;
@@ -1675,31 +1634,39 @@ namespace tke
 						}
 						m->indices.push_back(index);
 						currentIndex++;
-						pmt->indiceCount++;
+						currentGeometry->indiceCount++;
 					}
 				}
 				else if (token == "usemtl")
 				{
 					std::string name;
 					ss >> name;
-					for (auto mt : m->materials)
+					for (auto &_m : materials)
 					{
-						if (name == mt->name)
+						if (name == _m.first)
 						{
-							pmt = mt;
-							pmt->indiceBase = currentIndex;
+							auto g = std::make_unique<Geometry>();
+							currentGeometry = g.get();
+							currentGeometry->material = _m.second;
+							currentGeometry->indiceBase = currentIndex;
+							m->geometries.push_back(std::move(g));
 							break;
 						}
 					}
 				}
 				else if (token == "mtllib")
 				{
-					std::string mtlName;
-					ss >> mtlName;
+					std::string libName;
+					ss >> libName;
 
-					if (mtlName != "")
+					if (libName != "")
 					{
-						std::ifstream file(m->filepath + "/" + mtlName);
+						std::ifstream file(m->filepath + "/" + libName);
+
+						std::string mtlName;
+						unsigned char spec, roughness;
+						Image *albedoAlphaMap = nullptr;
+						Image *normalHeightMap = nullptr;
 
 						while (!file.eof())
 						{
@@ -1712,39 +1679,32 @@ namespace tke
 
 							if (token == "newmtl")
 							{
-								pmt = new Material;
-
-								std::string mtlName;
 								ss >> mtlName;
-								pmt->name = mtlName;
-
-								m->materials.push_back(pmt);
 							}
 							else if (token == "tk_spec")
 							{
-								float spec;
 								ss >> spec;
-								pmt->spec = 255.f * spec;
 							}
 							else if (token == "tk_roughness")
 							{
-								float roughness;
 								ss >> roughness;
-								pmt->roughness = 255.f * roughness;
 							}
 							else if (token == "map_Kd")
 							{
 								std::string filename;
 								ss >> filename;
-								pmt->albedoAlphaMap = addModelTexture(m->filepath + "/" + filename, true);
+								albedoAlphaMap = addModelTexture(m->filepath + "/" + filename, true);
 							}
 							else if (token == "map_bump")
 							{
 								std::string filename;
 								ss >> filename;
-								pmt->normalHeightMap = addModelTexture(m->filepath + "/" + filename);
+								normalHeightMap = addModelTexture(m->filepath + "/" + filename);
 							}
 						}
+
+						auto _m = addModelMaterial(255, 255, 255, 255, spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
+						materials.emplace_back(mtlName, _m);
 					}
 				}
 			}
@@ -1921,21 +1881,15 @@ namespace tke
 				MaterialData data;
 				file.read((char*)&data, sizeof(MaterialData));
 
-				auto pmt = new Material;
-				pmt->name = std::to_string(i);
-
-				pmt->albedoR = data.diffuse.r * 255;
-				pmt->albedoG = data.diffuse.g * 255;
-				pmt->albedoB = data.diffuse.b * 255;
-				pmt->alpha = data.diffuse.a * 255;
-				pmt->indiceBase = currentIndiceVertex;
-				pmt->indiceCount = data.indiceCount;
-
-				pmt->albedoAlphaMap = addModelTexture(m->filepath + "/" + data.mapName, true);
+				auto g = std::make_unique<Geometry>();
+				g->material = addModelMaterial(data.diffuse.r * 255, data.diffuse.g * 255, data.diffuse.b * 255, data.diffuse.a * 255,
+					0, 255, addModelTexture(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
+				g->indiceBase = currentIndiceVertex;
+				g->indiceCount = data.indiceCount;
 
 				currentIndiceVertex += data.indiceCount;
 
-				m->materials.push_back(pmt);
+				m->geometries.push_back(std::move(g));
 			}
 
 			unsigned short boneCount;
@@ -2366,9 +2320,10 @@ namespace tke
 				}
 			}
 
-			auto mt = new Material;
-			mt->indiceCount = m->indices.size();
-			m->materials.push_back(mt);
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = m->indices.size();
+			m->geometries.push_back(std::move(g));
 
 			_model_after_process(m);
 		}
@@ -2462,33 +2417,34 @@ namespace tke
 				file.read((char*)m->indices.data(), indiceCount * sizeof(int));
 			}
 
-			int materialCount;
-			file >> materialCount;
-			for (int i = 0; i < materialCount; i++)
+			int geometryCount;
+			file >> geometryCount;
+			for (int i = 0; i < geometryCount; i++)
 			{
-				auto pmt = new Material;
+				unsigned char albedoR, albedoG, albedoB, alpha, spec, roughness;
+				file >> albedoR;
+				file >> albedoG;
+				file >> albedoB;
+				file >> alpha;
+				file >> spec;
+				file >> roughness;
+				std::string albedoAlphaMapName;
+				std::string normalHeightMapName;
+				std::string specRoughnessMapName;
+				file >> albedoAlphaMapName;
+				file >> normalHeightMapName;
+				file >> specRoughnessMapName;
 
-				file >> pmt->indiceBase;
-				file >> pmt->indiceCount;
+				auto g = std::make_unique<Geometry>();
+				g->material = addModelMaterial(albedoR, albedoG, albedoB, alpha, spec, roughness, 
+					addModelTexture(m->filepath + "/" + albedoAlphaMapName, true),
+					addModelTexture(m->filepath + "/" + normalHeightMapName, true),
+					addModelTexture(m->filepath + "/" + specRoughnessMapName, true));
+				file >> g->indiceBase;
+				file >> g->indiceCount;
+				file >> g->visible;
 
-				file >> pmt->visible;
-
-				file >> pmt->name;
-				file >> pmt->albedoR;
-				file >> pmt->albedoG;
-				file >> pmt->albedoB;
-				file >> pmt->alpha;
-				file >> pmt->spec;
-				file >> pmt->roughness;
-				std::string name;
-				file >> name;
-				pmt->albedoAlphaMap = addModelTexture(m->filepath + "/" + name, true);
-				file >> name;
-				pmt->normalHeightMap = addModelTexture(m->filepath + "/" + name);
-				file >> name;
-				pmt->specRoughnessMap = addModelTexture(m->filepath + "/" + name);
-
-				m->materials.push_back(pmt);
+				m->geometries.push_back(std::move(g));
 			}
 
 			int boneCount;
@@ -2647,41 +2603,38 @@ namespace tke
 				file.write((char*)m->indices.data(), vertexCount * sizeof(int));
 			}
 
-			file << m->materials.size();
-			for (auto mt : m->materials)
+			file << m->geometries.size();
+			for (auto &g : m->geometries)
 			{
-				file << mt->indiceBase;
-				file << mt->indiceCount;
+				file << g->material->albedoR;
+				file << g->material->albedoG;
+				file << g->material->albedoB;
+				file << g->material->alpha;
+				file << g->material->spec;
+				file << g->material->roughness;
+				file << g->material->albedoAlphaMap ? g->material->albedoAlphaMap->filename : 0;
+				file << g->material->normalHeightMap ? g->material->normalHeightMap->filename : 0;
+				file << g->material->specRoughnessMap ? g->material->specRoughnessMap->filename : 0;
 
-				file << mt->visible;
-
-				file << mt->name;
-
-				file << mt->albedoR;
-				file << mt->albedoG;
-				file << mt->albedoB;
-				file << mt->alpha;
-				file << mt->spec;
-				file << mt->roughness;
-				file << mt->albedoAlphaMap ? mt->albedoAlphaMap->filename : 0;
-				file << mt->normalHeightMap ? mt->normalHeightMap->filename : 0;
-				file << mt->specRoughnessMap ? mt->specRoughnessMap->filename : 0;
+				file << g->indiceBase;
+				file << g->indiceCount;
+				file << g->visible;
 				if (copyTexture)
 				{
-					if (mt->albedoAlphaMap)
+					if (g->material->albedoAlphaMap)
 					{
-						std::string dst = dstFilepath + "/" + mt->albedoAlphaMap->filename;
-						CopyFile(mt->albedoAlphaMap->full_filename.c_str(), dst.c_str(), false);
+						std::string dst = dstFilepath + "/" + g->material->albedoAlphaMap->filename;
+						CopyFile(g->material->albedoAlphaMap->full_filename.c_str(), dst.c_str(), false);
 					}
-					if (mt->normalHeightMap)
+					if (g->material->normalHeightMap)
 					{
-						std::string dst = dstFilepath + "/" + mt->normalHeightMap->filename;
-						CopyFile(mt->normalHeightMap->full_filename.c_str(), dst.c_str(), false);
+						std::string dst = dstFilepath + "/" + g->material->normalHeightMap->filename;
+						CopyFile(g->material->normalHeightMap->full_filename.c_str(), dst.c_str(), false);
 					}
-					if (mt->specRoughnessMap)
+					if (g->material->specRoughnessMap)
 					{
-						std::string dst = dstFilepath + "/" + mt->specRoughnessMap->filename;
-						CopyFile(mt->specRoughnessMap->full_filename.c_str(), dst.c_str(), false);
+						std::string dst = dstFilepath + "/" + g->material->specRoughnessMap->filename;
+						CopyFile(g->material->specRoughnessMap->full_filename.c_str(), dst.c_str(), false);
 					}
 				}
 			}
@@ -3753,14 +3706,14 @@ namespace tke
 
 					if (!pModel->animated)
 					{
-						for (auto mt : pModel->materials)
+						for (auto &g : pModel->geometries)
 						{
 							VkDrawIndexedIndirectCommand command = {};
 							command.instanceCount = 1;
-							command.indexCount = mt->indiceCount;
+							command.indexCount = g->indiceCount;
 							command.vertexOffset = pModel->vertexBase;
-							command.firstIndex = pModel->indiceBase + mt->indiceBase;
-							command.firstInstance = (staticIndex << 16) + mt->sceneIndex;
+							command.firstIndex = pModel->indiceBase + g->indiceBase;
+							command.firstInstance = (staticIndex << 16) + g->material->sceneIndex;
 
 							staticCommands.push_back(command);
 						}
@@ -3769,14 +3722,14 @@ namespace tke
 					}
 					else
 					{
-						for (auto mt : pModel->materials)
+						for (auto &g : pModel->geometries)
 						{
 							VkDrawIndexedIndirectCommand command = {};
 							command.instanceCount = 1;
-							command.indexCount = mt->indiceCount;
+							command.indexCount = g->indiceCount;
 							command.vertexOffset = pModel->vertexBase;
-							command.firstIndex = pModel->indiceBase + mt->indiceBase;
-							command.firstInstance = (animatedIndex << 16) + mt->sceneIndex;
+							command.firstIndex = pModel->indiceBase + g->indiceBase;
+							command.firstInstance = (animatedIndex << 16) + g->material->sceneIndex;
 
 							animatedCommands.push_back(command);
 						}

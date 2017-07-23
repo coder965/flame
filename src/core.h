@@ -2,6 +2,7 @@
 
 #include "math.h"
 #include "render.h"
+#include "entity.h"
 
 namespace tke
 {
@@ -74,16 +75,10 @@ namespace tke
 	extern std::vector<Image*> modelTextures;
 	Image *addModelTexture(const std::string &filename, bool sRGB = false);
 
-	struct MaterialShaderStruct
-	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
-
-		unsigned int mapIndex;
-
-		unsigned int dummy;
-	};
-	extern std::vector<MaterialShaderStruct> modelMaterials;
+	extern std::vector<Material*> modelMaterials;
+	extern Material *defaultMaterial;
+	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha, 
+		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap);
 
 	extern VertexBuffer *staticVertexBuffer;
 	extern IndexBuffer *staticIndexBuffer;

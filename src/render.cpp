@@ -205,12 +205,12 @@ namespace tke
 		vkCmdDrawIndexed(v, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 	}
 
-	void CommandBuffer::drawModel(Model *m, int mtIndex, int instanceCount, int firstInstance)
+	void CommandBuffer::drawModel(Model *m, int gIndex, int instanceCount, int firstInstance)
 	{
-		if (mtIndex == -1)
+		if (gIndex == -1)
 			drawIndex(m->indices.size(), m->indiceBase, m->vertexBase, instanceCount, firstInstance);
 		else
-			drawIndex(m->materials[mtIndex]->indiceCount, m->indiceBase + m->materials[mtIndex]->indiceBase, m->vertexBase, instanceCount, firstInstance);
+			drawIndex(m->geometries[gIndex]->indiceCount, m->indiceBase + m->geometries[gIndex]->indiceBase, m->vertexBase, instanceCount, firstInstance);
 	}
 
 	void CommandBuffer::drawIndirect(IndirectVertexBuffer *b, int count, int offset)
