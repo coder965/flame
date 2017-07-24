@@ -4104,8 +4104,8 @@ namespace tke
 		};
 
 		VkSubpassDependency dependencies[] = {
-			subpassDependency(1, 2),
-			subpassDependency(2, 3)
+			subpassDependency(0, 1),
+			subpassDependency(1, 2)
 		};
 
 		sceneRenderPass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
@@ -4124,16 +4124,16 @@ namespace tke
 
 		mrtPipeline = new Pipeline;
 		mrtPipeline->loadXML(enginePath + "pipeline/deferred/mrt.xml");
-		mrtPipeline->setup(sceneRenderPass, 1, false);
+		mrtPipeline->setup(sceneRenderPass, 0, false);
 
 		mrtAnimPipeline = new Pipeline;
 		mrtAnimPipeline->loadXML(enginePath + "pipeline/deferred/mrt_anim.xml");
-		mrtAnimPipeline->setup(sceneRenderPass, 1, false);
+		mrtAnimPipeline->setup(sceneRenderPass, 0, false);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
 		heightMapTerrainPipeline = new Pipeline;
 		heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain.xml");
-		heightMapTerrainPipeline->setup(sceneRenderPass, 1, false);
+		heightMapTerrainPipeline->setup(sceneRenderPass, 0, false);
 		heightMapTerr_heightMap_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
 		heightMapTerr_colorMap_position = heightMapTerrainPipeline->descriptorPosition("colorMaps");
 
@@ -4151,11 +4151,11 @@ namespace tke
 
 		deferredPipeline = new Pipeline;
 		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
-		deferredPipeline->setup(sceneRenderPass, 2, false);
+		deferredPipeline->setup(sceneRenderPass, 1, false);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 
 		composePipeline = new Pipeline;
 		composePipeline->loadXML(enginePath + "pipeline/compose/compose.xml");
-		composePipeline->setup(sceneRenderPass, 3, false);
+		composePipeline->setup(sceneRenderPass, 2, false);
 	}
 }
