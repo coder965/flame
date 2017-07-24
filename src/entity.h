@@ -617,6 +617,7 @@ namespace tke
 	extern Pipeline *proceduralTerrainPipeline;
 	extern Pipeline *deferredPipeline;
 	extern Pipeline *esmPipeline;
+	extern Pipeline *esmAnimPipeline;
 	extern Pipeline *composePipeline;
 
 	REFLECTABLE struct Scene
@@ -667,7 +668,6 @@ namespace tke
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 
-		int shadowCount = 0;
 		int staticIndirectCount = 0;
 		int animatedIndirectCount = 0;
 
@@ -676,31 +676,39 @@ namespace tke
 
 		ResourceBank resource;
 
-		Image *envrImage;
+		std::unique_ptr<Image> envrImage;
 
-		Image *mainImage;
-		Image *depthImage;
-		Image *albedoAlphaImage;
-		Image *normalHeightImage;
-		Image *specRoughnessImage;
-		Image *esmImage;
+		std::unique_ptr<Image> mainImage;
+		std::unique_ptr<Image> depthImage;
+		std::unique_ptr<Image> albedoAlphaImage;
+		std::unique_ptr<Image> normalHeightImage;
+		std::unique_ptr<Image> specRoughnessImage;
+		std::unique_ptr<Image> esmImage;
+		std::unique_ptr<Image> esmDepthImage;
 
-		UniformBuffer *matrixBuffer;
-		UniformBuffer *staticObjectMatrixBuffer;
-		UniformBuffer *animatedObjectMatrixBuffer;
-		IndirectIndexBuffer *staticObjectIndirectBuffer;
-		IndirectIndexBuffer *animatedObjectIndirectBuffer;
-		UniformBuffer *heightMapTerrainBuffer;
-		UniformBuffer *proceduralTerrainBuffer;
-		UniformBuffer *lightBuffer;
-		UniformBuffer *ambientBuffer;
+		std::unique_ptr<UniformBuffer> matrixBuffer;
+		std::unique_ptr<UniformBuffer> staticObjectMatrixBuffer;
+		std::unique_ptr<UniformBuffer> animatedObjectMatrixBuffer;
+		std::unique_ptr<IndirectIndexBuffer> staticObjectIndirectBuffer;
+		std::unique_ptr<IndirectIndexBuffer> animatedObjectIndirectBuffer;
+		std::unique_ptr<UniformBuffer> heightMapTerrainBuffer;
+		std::unique_ptr<UniformBuffer> proceduralTerrainBuffer;
+		std::unique_ptr<UniformBuffer> lightBuffer;
+		std::unique_ptr<UniformBuffer> shadowBuffer;
+		std::unique_ptr<UniformBuffer> ambientBuffer;
 
-		DescriptorSet *ds_pano;
-		DescriptorSet *ds_mrt;
-		DescriptorSet *ds_mrtAnim;
-		DescriptorSet *ds_heightMapTerrain;
-		DescriptorSet *ds_defe;
-		DescriptorSet *ds_comp;
+		std::unique_ptr<DescriptorSet> ds_pano;
+		std::unique_ptr<DescriptorSet> ds_mrt;
+		std::unique_ptr<DescriptorSet> ds_mrtAnim;
+		std::unique_ptr<DescriptorSet> ds_mrtAnim_bone;
+		std::unique_ptr<DescriptorSet> ds_heightMapTerrain;
+		std::unique_ptr<DescriptorSet> ds_esm;
+		std::unique_ptr<DescriptorSet> ds_esmAnim;
+		std::unique_ptr<DescriptorSet> ds_defe;
+		std::unique_ptr<DescriptorSet> ds_comp;
+
+		std::unique_ptr<Framebuffer> fb_esm[TKE_MAX_SHADOW_COUNT * 6];
+		VkEvent shadowRenderFinished;
 
 		Scene();
 		~Scene();

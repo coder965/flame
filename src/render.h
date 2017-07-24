@@ -192,7 +192,7 @@ namespace tke
 
 		int index = -1;
 
-		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, void *_data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
+		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, void *_data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
 		Image(Type _type, VkImage _image, int w, int h, VkFormat _format);
 		~Image();
 		int getWidth(int _level = 0) const;

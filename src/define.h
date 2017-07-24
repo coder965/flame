@@ -14,4 +14,5 @@
 #define TKE_ENVR_SIZE_CY (128 * 2)
 #define TKE_SHADOWMAP_CX (2048)
 #define TKE_SHADOWMAP_CY (2048)
+#define TKE_MAX_SHADOW_COUNT (8)
 #define TKE_PATCH_SIZE (64)

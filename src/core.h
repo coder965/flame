@@ -99,6 +99,7 @@ namespace tke
 	extern RenderPass *renderPass_depth_clear;
 	extern RenderPass *renderPass_depth_clear_image8;
 	extern RenderPass *renderPass_depth_clear_image8_clear;
+	extern RenderPass *renderPass_depth_clear_image32f_clear;
 	extern RenderPass *renderPass_window;
 	extern RenderPass *renderPass_window_clear;
 

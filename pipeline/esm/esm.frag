@@ -1,3 +1,16 @@
+layout(binding = TKE_UBO_BINDING) uniform CONSTANT
+{
+	float near;
+	float far;
+	float cx;
+	float cy;
+	float aspect;
+	float fovy;
+	float tanHfFovy;
+	float envrCx;
+	float envrCy;
+}u_constant;
+
 struct Material
 {
 	uint albedoAlphaCompress;
@@ -16,12 +29,20 @@ layout(binding = TKE_UBO_BINDING) uniform MATERIAL
 layout(set = 1, binding = TKE_UBO_BINDING) uniform sampler2D maps[256];
 
 layout(location = 0) in vec2 inTexcoord;
+layout(location = 1) in flat uint inMaterialID;
+
+layout(location = 0) out float outExp;
+
+highp float map_01(float x, float v0, float v1)
+{
+	return (x - v0) / (v1 - v0);
+}
 		
 void main()
 {
 	uint mapIndex;
 
-	vec3 albedo;
+	float alpha;
 	mapIndex = u_material.material[inMaterialID].mapIndex & 0xff;
 	if (mapIndex == 0)
 	{
@@ -33,6 +54,14 @@ void main()
 		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
 		alpha = v.a;
 	}
-	
-	outAlbedoAlpha = vec4(albedo, alpha);
+	if (alpha < 0.5)
+		discard;
+
+	float depthDivisor = (1.0 / gl_FragCoord.w);
+	float mappedDivisor = map_01(depthDivisor, u_constant.near, u_constant.far);
+
+	// Exponential is a configurable constant for approximation.
+	// Generally a higher Exponential means greater difference in depths.
+	// Because of this there will be less error, but we may run out of precision.
+	outExp = exp(/*Light.Exponential*/16.0 * mappedDivisor);
 }

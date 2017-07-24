@@ -1085,12 +1085,9 @@ namespace tke
 	{
 	}
 
-	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level , void *_data, size_t _size, VkImageAspectFlags aspect)
+	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, void *_data, size_t _size, VkImageAspectFlags aspect)
+		:cx(w), cy(h), level(_level), layer(_layer), format(_format)
 	{
-		cx = w;
-		cy = h;
-		level = _level;
-		format = _format;
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
 			type = eDepth;
 		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
@@ -2611,7 +2608,7 @@ namespace tke
 		auto d = createImageData(filename);
 		assert(d);
 
-		auto i = new Image(d->cx, d->cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, d->v, d->size);
+		auto i = new Image(d->cx, d->cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, d->v, d->size);
 		i->full_filename = filename;
 		std::experimental::filesystem::path path(filename);
 		i->filename = path.filename().string();

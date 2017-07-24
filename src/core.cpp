@@ -64,8 +64,8 @@ namespace tke
 	{
 		for (auto m : modelMaterials)
 		{
-			if (m->albedoAlphaMap == albedoAlphaMap ? true : (m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
-				&& m->specRoughnessMap == specRoughnessMap ? true : (m->spec == spec && m->roughness == roughness)
+			if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
+				&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
 				&& m->normalHeightMap == normalHeightMap)
 				return m;
 		}
@@ -79,6 +79,8 @@ namespace tke
 		m->albedoAlphaMap = albedoAlphaMap;
 		m->normalHeightMap = normalHeightMap;
 		m->specRoughnessMap = specRoughnessMap;
+		m->sceneIndex = modelMaterials.size();
+		modelMaterials.push_back(m);
 		return m;
 	}
 
@@ -101,6 +103,7 @@ namespace tke
 	RenderPass *renderPass_depth_clear;
 	RenderPass *renderPass_depth_clear_image8;
 	RenderPass *renderPass_depth_clear_image8_clear;
+	RenderPass *renderPass_depth_clear_image32f_clear;
 	RenderPass *renderPass_window;
 	RenderPass *renderPass_window_clear;
 
@@ -689,6 +692,7 @@ namespace tke
 			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att6 = depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
 			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
 			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
@@ -703,6 +707,10 @@ namespace tke
 				att1,
 				att6
 			};
+			VkAttachmentDescription atts2[] = {
+				att7,
+				att6
+			};
 			renderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
 			renderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
 			renderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
@@ -710,6 +718,7 @@ namespace tke
 			renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
 			renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
 			renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
+			renderPass_depth_clear_image32f_clear = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
 			renderPass_window = new RenderPass(1, &att4, 1, &subpass0);
 			renderPass_window_clear = new RenderPass(1, &att5, 1, &subpass0);
 		}
@@ -895,11 +904,12 @@ namespace tke
 						{
 							auto m = modelMaterials[i];
 
+							MaterialShaderStruct mt;
 							mts[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
 							mts[i].specRoughnessCompress = m->spec + (m->roughness << 8);
 							mts[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-							((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-							((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+								((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
+								((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
 						}
 
 						materialBuffer->update(mts.get(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());

@@ -16,7 +16,7 @@ layout(binding = TKE_UBO_BINDING) uniform OBJECT
 }u_object;
 
 #if defined(ANIM)
-layout(binding = TKE_UBO_BINDING) uniform BONE
+layout(set = 2, binding = TKE_UBO_BINDING) uniform BONE
 {
 	mat4 matrix[256];
 }u_bone[8];
@@ -38,8 +38,8 @@ layout(location = 3) out vec3 outTangent;
 
 void main()
 {
-	int objID = gl_InstanceIndex >> 16;
-	outMaterialID = gl_InstanceIndex & 0xffff;
+	uint objID = gl_InstanceIndex >> 8;
+	outMaterialID = gl_InstanceIndex & 0xff;
 	outTexcoord = inTexcoord;
 	mat4 modelMatrix = u_object.matrix[objID];
 #if defined(ANIM)
