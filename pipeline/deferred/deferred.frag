@@ -6,7 +6,7 @@
 #define USE_PHONG
 #endif
 
-layout(binding = 0) uniform CONSTANT
+layout(binding = TKE_UBO_BINDING) uniform CONSTANT
 {
 	float near;
 	float far;
@@ -19,7 +19,7 @@ layout(binding = 0) uniform CONSTANT
 	float envrCy;
 }u_constant;
 
-layout(binding = 1) uniform MATRIX
+layout(binding = TKE_UBO_BINDING) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -31,7 +31,7 @@ layout(binding = 1) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 2) uniform AMBIENT
+layout(binding = TKE_UBO_BINDING) uniform AMBIENT
 {
 	vec3 color;
 	uint envr_max_mipmap;
@@ -45,20 +45,18 @@ struct Light
 	vec4 spotData;
 };
 
-layout(binding = 3) uniform LIGHT
+layout(binding = TKE_UBO_BINDING) uniform LIGHT
 {
 	uint count;
 	Light lights[256];
 }u_light;
-      
-layout(binding = 4) uniform sampler2D depthSampler;
-layout(binding = 5) uniform sampler2D albedoAlphaSampler;
-layout(binding = 6) uniform sampler2D normalHeightSampler;
-layout(binding = 7) uniform sampler2D specRoughnessSampler;
-layout(binding = 8) uniform sampler2D aoSampler;
-#if defined(USE_IBL)
-layout(binding = 9) uniform sampler2D envrSampler;
-#endif
+
+layout(binding = TKE_UBO_BINDING) uniform sampler2D envrSampler;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D depthSampler;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D albedoAlphaSampler;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D normalHeightSampler;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D specRoughnessSampler;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D aoSampler;
 
 layout(location = 0) in vec3 inViewDir;
 
@@ -103,13 +101,17 @@ float specularOcclusion(float dotNV, float ao, float smothness)
 
 void main()
 {
+	vec3 viewDir = normalize(inViewDir);
+
 	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
 	if (inDepth == 1.0)
-		discard;
+	{
+		outColor = vec4(textureLod(envrSampler, panorama(mat3(u_matrix.viewInv) * viewDir), 0).rgb, 1.0);
+		return;
+	}
 		
 	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
 		
-	vec3 viewDir = normalize(inViewDir);
 	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
 	
 	vec4 inAlbedoAlpha = texture(albedoAlphaSampler, gl_FragCoord.xy);

@@ -610,7 +610,6 @@ namespace tke
 	extern Pipeline *downsamplePipeline;
 	extern Pipeline *convolvePipeline;
 
-	extern Pipeline *panoramaPipeline;
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;
 	extern Pipeline *heightMapTerrainPipeline;
@@ -697,7 +696,6 @@ namespace tke
 		std::unique_ptr<UniformBuffer> shadowBuffer;
 		std::unique_ptr<UniformBuffer> ambientBuffer;
 
-		std::unique_ptr<DescriptorSet> ds_pano;
 		std::unique_ptr<DescriptorSet> ds_mrt;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim_bone;

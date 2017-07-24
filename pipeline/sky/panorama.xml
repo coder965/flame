@@ -1,7 +1,0 @@
-<pipeline name="Panorama.Pipeline" cx="-1" cy="-1" vertex_input_type="normal" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-  <link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer"/>
-  <link binding="-1" array_element="0" descriptor_name="tex" resource_name="Envr.Image" sampler="color"/>
-	<stage filename="panorama.vert"/>
-	<stage filename="panorama.frag"/>
-</pipeline>
-

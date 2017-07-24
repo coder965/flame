@@ -2886,8 +2886,6 @@ namespace tke
 
 	Pipeline *convolvePipeline = nullptr;
 
-	Pipeline *panoramaPipeline = nullptr;
-
 	Pipeline *mrtPipeline;
 
 	Pipeline *mrtAnimPipeline;
@@ -2972,8 +2970,6 @@ namespace tke
 		resource.setBuffer(staticObjectIndirectBuffer.get(), "Scene.Static.IndirectBuffer");
 		resource.setBuffer(animatedObjectIndirectBuffer.get(), "Scene.Animated.IndirectBuffer");
 
-		ds_pano = std::move(std::unique_ptr<DescriptorSet>(panoramaPipeline->createDescriptorSet(descriptorPool)));
-		panoramaPipeline->linkDescriptors(ds_pano.get(), &resource);
 		ds_mrt = std::move(std::unique_ptr<DescriptorSet>(mrtPipeline->createDescriptorSet(descriptorPool)));
 		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
 		ds_mrtAnim = std::move(std::unique_ptr<DescriptorSet>(mrtAnimPipeline->createDescriptorSet(descriptorPool)));
@@ -3482,7 +3478,6 @@ namespace tke
 			switch (skyType)
 			{
 			case SkyType::atmosphere_scattering:
-				if (panoramaPipeline)
 				{ // update Atmospheric Scattering
 					_setSunLight_attribute(this);
 
@@ -3888,15 +3883,7 @@ namespace tke
 
 		cb->beginRenderPass(sceneRenderPass, fb);
 
-		// sky
-		cb->bindVertexBuffer(staticVertexBuffer);
-		cb->bindIndexBuffer(staticIndexBuffer);
-		cb->bindPipeline(panoramaPipeline);
-		cb->bindDescriptorSet(&ds_pano->v);
-		cb->drawIndex(sphereModel->indices.size(), sphereModel->indiceBase, sphereModel->vertexBase);
-
 		// mrt
-		cb->nextSubpass();
 			// static
 		if (staticIndirectCount > 0)
 		{
@@ -3937,10 +3924,10 @@ namespace tke
 			}
 		}
 
-		cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, 
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
-			esmImage.get(), 0, 1, 0, TKE_MAX_SHADOW_COUNT * 8);
+		//cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
+		//	VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, 
+		//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+		//	esmImage.get(), 0, 1, 0, TKE_MAX_SHADOW_COUNT * 8);
 
 		// deferred
 		cb->nextSubpass();
@@ -4111,14 +4098,12 @@ namespace tke
 		VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
 		VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_GENERAL };
 		VkSubpassDescription subpasses[] = {
-			subpassDesc(1, &main_col_ref),                              // sky
 			subpassDesc(ARRAYSIZE(mrt_col_ref), mrt_col_ref, &dep_ref), // mrt
 			subpassDesc(1, &main_col_ref),                              // deferred
 			subpassDesc(1, &dst_col_ref)                                // compose
 		};
 
 		VkSubpassDependency dependencies[] = {
-			subpassDependency(0, 2),
 			subpassDependency(1, 2),
 			subpassDependency(2, 3)
 		};
@@ -4136,10 +4121,6 @@ namespace tke
 		convolvePipeline = new Pipeline;
 		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
 		convolvePipeline->setup(renderPass_image16, 0, true);
-
-		panoramaPipeline = new Pipeline;
-		panoramaPipeline->loadXML(enginePath + "pipeline/sky/panorama.xml");
-		panoramaPipeline->setup(sceneRenderPass, 0, false);
 
 		mrtPipeline = new Pipeline;
 		mrtPipeline->loadXML(enginePath + "pipeline/deferred/mrt.xml");
