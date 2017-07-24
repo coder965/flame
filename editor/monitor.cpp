@@ -73,7 +73,7 @@ void draw_pickup_frame(tke::CommandBuffer *cb)
 {
 	for (int i = 0; i < currentScene->objects.size(); i++)
 	{
-		auto object = currentScene->objects[i];
+		auto object = currentScene->objects[i].get();
 		auto model = object->model;
 		auto animated = model->animated;
 		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
@@ -144,7 +144,7 @@ void SceneMonitorWidget::show()
 					if (index == 0)
 						selectedItem.reset();
 					else
-						selectedItem.select(scene->objects[index - 1]);
+						selectedItem.select(scene->objects[index - 1].get());
 				}
 			}
 		}

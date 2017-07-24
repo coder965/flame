@@ -628,11 +628,11 @@ namespace tke
 	{
 	}
 
-	void Rigidbody::addShape(std::unique_ptr<Shape> &s)
+	void Rigidbody::addShape(Shape *s)
 	{
 		static auto magicNumber = 0;
 		s->id = magicNumber++;
-		shapes.push_back(std::move(s));
+		shapes.push_back(std::move(std::unique_ptr<Shape>(s)));
 	}
 
 	Shape *Rigidbody::removeShape(Shape *s)
@@ -1407,7 +1407,7 @@ namespace tke
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cubeModel->addRigidbody(pRigidbody);
-			auto s = std::make_unique<Shape>(ShapeType::box);
+			auto s = new Shape(ShapeType::box);
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
@@ -1435,7 +1435,7 @@ namespace tke
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			sphereModel->addRigidbody(pRigidbody);
-			auto s = std::make_unique<Shape>(ShapeType::sphere);
+			auto s = new Shape(ShapeType::sphere);
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
@@ -1458,7 +1458,7 @@ namespace tke
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
 			cylinderModel->addRigidbody(pRigidbody);
-			auto s = std::make_unique<Shape>(ShapeType::capsule);
+			auto s = new Shape(ShapeType::capsule);
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
@@ -2020,7 +2020,7 @@ namespace tke
 				p->setQuat(rotationQuat);
 				p->type = (RigidbodyType)data.mode;
 				//m->addRigidbody(p); // TODO : FIX
-				auto q = std::make_unique<Shape>();
+				auto q = new Shape;
 				switch (data.type)
 				{
 				case 0: q->type = ShapeType::sphere; break;
@@ -2519,7 +2519,7 @@ namespace tke
 				file >> shapeCount;
 				for (int j = 0; j < shapeCount; j++)
 				{
-					auto q = std::make_unique<Shape>();
+					auto q = new Shape;
 					p->addShape(q);
 					glm::vec3 coord;
 					file >> coord;
@@ -2997,8 +2997,6 @@ namespace tke
 			fb_esm[i] = std::move(std::unique_ptr<Framebuffer>(getFramebuffer(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CY, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views)));
 		}
 
-		shadowRenderFinished = createEvent();
-
 		sunLight = new Light(LightType::parallax);
 		_setSunLight_attribute(this);
 		addLight(sunLight);
@@ -3008,57 +3006,37 @@ namespace tke
 	{
 		pxScene->release();
 		pxControllerManager->release();
-
-		for (auto pLight : lights)
-			delete pLight;
-
-		for (auto pObject : objects)
-			delete pObject;
-
-		delete terrain;
-
-		destroyEvent(shadowRenderFinished);
 	}
 
-	void Scene::addLight(Light *pLight) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
+	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
 		mtx.lock();
-		lights.push_back(pLight);
+		lights.push_back(std::move(std::unique_ptr<Light>(l)));
 		needUpdateLightCount = true;
 		mtx.unlock();
 	}
 
-	Light *Scene::removeLight(Light *pLight)
+	Light *Scene::removeLight(Light *l)
 	{
 		mtx.lock();
 		for (auto it = lights.begin(); it != lights.end(); it++)
 		{
-			if (*it == pLight)
+			if (it->get() == l)
 			{
 				for (auto itt = it + 1; itt != lights.end(); itt++)
 				{
 					(*itt)->sceneIndex--;
-					if ((*itt)->shadow && pLight->shadow)
-					{
-						if (pLight->type == LightType::parallax)
-							(*itt)->sceneShadowIndex--;
-						else if (pLight->type == LightType::point)
-							(*itt)->sceneShadowIndex -= 6;
-					}
 					(*itt)->changed = true;
 				}
-				delete pLight;
+				delete l;
 				it = lights.erase(it);
-				if (it == lights.end())
-					pLight = nullptr;
-				else
-					pLight = *it;
+				l = it == lights.end() ? nullptr : it->get();
 				break;
 			}
 		}
 		needUpdateLightCount = true;
 		mtx.unlock();
-		return pLight;
+		return l;
 	}
 
 	void Scene::addObject(Object *o) // when a object is added to scene, the owner is the scene, object cannot be deleted elsewhere
@@ -3211,7 +3189,7 @@ namespace tke
 			o->pxController = pxControllerManager->createController(capsuleDesc);
 		}
 
-		objects.push_back(o);
+		objects.push_back(std::move(std::unique_ptr<Object>(o)));
 
 		needUpdateIndirectBuffer = true;
 		mtx.unlock();
@@ -3222,7 +3200,7 @@ namespace tke
 		mtx.lock();
 		for (auto it = objects.begin(); it != objects.end(); it++)
 		{
-			if (*it == o)
+			if (it->get() == o)
 			{
 				for (auto itt = it + 1; itt != objects.end(); itt++)
 				{
@@ -3237,11 +3215,8 @@ namespace tke
 				if (o->pxController)
 					o->pxController->release();
 				delete o;
-				if (it > objects.begin())
-					o = *(it - 1);
-				else
-					o = nullptr;
-				objects.erase(it);
+				it = objects.erase(it);
+				o = it == objects.end() ? nullptr : it->get();
 				break;
 			}
 		}
@@ -3312,7 +3287,7 @@ namespace tke
 			delete[]samples;
 		}
 
-		terrain = t;
+		terrain = std::unique_ptr<Terrain>(t);
 
 		mtx.unlock();
 	}
@@ -3324,8 +3299,7 @@ namespace tke
 		if (terrain->actor)
 			terrain->actor->release();
 
-		delete terrain;
-		terrain = nullptr;
+		terrain.reset();
 
 		mtx.unlock();
 	}
@@ -3335,17 +3309,9 @@ namespace tke
 		mtx.lock();
 
 		sunLight = nullptr;
-
-		for (auto pLight : lights)
-			delete pLight;
 		lights.clear();
-
-		for (auto pObject : objects)
-			delete pObject;
 		objects.clear();
-
-		delete terrain;
-		terrain = nullptr;
+		terrain.reset();
 
 		mtx.unlock();
 	}
@@ -3378,17 +3344,17 @@ namespace tke
 	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
 	{
 		// update animation and bones
-		for (auto object : objects)
+		for (auto &o : objects)
 		{
-			if (object->animationComponent)
-				object->animationComponent->update();
+			if (o->animationComponent)
+				o->animationComponent->update();
 		}
 
 		// update physics (controller should move first, then simulate, and then get the result coord)
 		auto dist = (timeDisp) / 1000.f;
 		if (dist > 0.f)
 		{
-			for (auto o : objects) // set controller coord
+			for (auto &o : objects) // set controller coord
 			{
 				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
 				{
@@ -3406,7 +3372,7 @@ namespace tke
 			pxScene->simulate(dist);
 			//pxScene->simulate(1.f / 60.f);
 			pxScene->fetchResults(true);
-			for (auto o : objects)
+			for (auto &o : objects)
 			{
 				if ((int)o->physics_type & (int)ObjectPhysicsType::dynamic)
 				{
@@ -3628,7 +3594,7 @@ namespace tke
 			int staticObjectIndex = 0;
 			int animatedObjectIndex = 0;
 
-			for (auto o : objects)
+			for (auto &o : objects)
 			{
 				if (!o->model->animated)
 				{
@@ -3703,7 +3669,7 @@ namespace tke
 				int staticIndex = 0;
 				int animatedIndex = 0;
 
-				for (auto o : objects)
+				for (auto &o : objects)
 				{
 					auto m = o->model;
 
@@ -3721,7 +3687,7 @@ namespace tke
 							staticCommands.push_back(command);
 						}
 
-						animatedObjects.push_back(o);
+						animatedObjects.push_back(o.get());
 						staticIndex++;
 					}
 					else
@@ -3741,7 +3707,7 @@ namespace tke
 						if (mrt_bone_position != -1)
 							ds_mrtAnim_bone->setBuffer(mrt_bone_position, animatedIndex, o->animationComponent->boneMatrixBuffer);
 
-						staticObjects.push_back(o);
+						staticObjects.push_back(o.get());
 						animatedIndex++;
 					}
 				}
@@ -3767,7 +3733,7 @@ namespace tke
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * lights.size());
 
-			for (auto l : lights)
+			for (auto &l : lights)
 			{
 				if (!l->shadow)
 				{
@@ -3776,7 +3742,7 @@ namespace tke
 				}
 
 				l->sceneShadowIndex = shadowIndex;
-				shadowLights.push_back(l);
+				shadowLights.push_back(l.get());
 
 				if (l->type == LightType::parallax)
 				{
@@ -3836,7 +3802,7 @@ namespace tke
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightShaderStruct) * lights.size());
-			for (auto l : lights)
+			for (auto &l : lights)
 			{
 				if (l->changed)
 				{
@@ -3862,10 +3828,10 @@ namespace tke
 		}
 
 		camera.changed = false;
-		for (auto pLight : lights)
-			pLight->changed = false;
-		for (auto pObject : objects)
-			pObject->changed = false;
+		for (auto &l : lights)
+			l->changed = false;
+		for (auto &o : objects)
+			o->changed = false;
 		if (terrain)
 			terrain->changed = false;
 
@@ -3920,8 +3886,6 @@ namespace tke
 			cb->endRenderPass();
 		}
 
-		cb->setEvent(shadowRenderFinished);
-
 		cb->beginRenderPass(sceneRenderPass, fb);
 
 		// sky
@@ -3973,8 +3937,10 @@ namespace tke
 			}
 		}
 
-		cb->waitEvents(1, &shadowRenderFinished);
-		cb->resetEvent(shadowRenderFinished);
+		cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, 
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+			esmImage.get(), 0, 1, 0, TKE_MAX_SHADOW_COUNT * 8);
 
 		// deferred
 		cb->nextSubpass();
@@ -4092,13 +4058,13 @@ namespace tke
 	{
 		tke::AttributeTree at("scene");
 		at.addAttributes(this, b);
-		for (auto o : objects)
+		for (auto &o : objects)
 		{
 			auto n = new AttributeTreeNode("object");
 			o->getCoord();
 			o->getEuler();
 			o->getScale();
-			n->addAttributes(o, o->b);
+			n->addAttributes(o.get(), o->b);
 			at.children.push_back(n);
 		}
 		if (terrain)
@@ -4107,7 +4073,7 @@ namespace tke
 			terrain->getCoord();
 			terrain->getEuler();
 			terrain->getScale();
-			n->addAttributes(terrain, terrain->b);
+			n->addAttributes(terrain.get(), terrain->b);
 			at.children.push_back(n);
 		}
 		at.saveXML(filename);

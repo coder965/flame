@@ -345,7 +345,7 @@ namespace tke
 
 		Rigidbody();
 		Rigidbody(RigidbodyType _type);
-		void addShape(std::unique_ptr<Shape> &s);
+		void addShape(Shape *s);
 		Shape *removeShape(Shape *s);
 	};
 
@@ -654,12 +654,12 @@ namespace tke
 
 		Camera camera;
 
-		std::vector<Light*> lights;
+		std::vector<std::unique_ptr<Light>> lights;
 		Light *sunLight = nullptr;
 
-		std::vector<Object*> objects;
+		std::vector<std::unique_ptr<Object>> objects;
 
-		Terrain *terrain = nullptr;
+		std::unique_ptr<Terrain> terrain;
 
 		bool needUpdateSky = true;
 		bool needUpdateIndirectBuffer = true;
@@ -708,7 +708,6 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_comp;
 
 		std::unique_ptr<Framebuffer> fb_esm[TKE_MAX_SHADOW_COUNT * 6];
-		VkEvent shadowRenderFinished;
 
 		Scene();
 		~Scene();

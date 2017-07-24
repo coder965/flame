@@ -94,6 +94,30 @@ namespace tke
 		assert(res == VK_SUCCESS);
 	}
 
+	void CommandBuffer::imageBarrier(VkPipelineStageFlags srcStageFlags, VkPipelineStageFlags dstStageFlags, VkAccessFlags srcAccessFlags, VkAccessFlags dstAccessFlags, VkImageLayout oldLayout, VkImageLayout newLayout, Image *image, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	{
+		VkImageMemoryBarrier barrier;
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.pNext = nullptr;
+		barrier.srcAccessMask = srcAccessFlags;
+		barrier.dstAccessMask = dstAccessFlags;
+		barrier.oldLayout = oldLayout;
+		barrier.newLayout = newLayout;
+		barrier.image = image->v;
+		if (image->type == Image::eColor || image->type == Image::eSwapchain)
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		else
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		barrier.subresourceRange.baseMipLevel = baseLevel;
+		barrier.subresourceRange.levelCount = levelCount;
+		barrier.subresourceRange.baseArrayLayer = baseLayer;
+		barrier.subresourceRange.layerCount = layerCount;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		
+		vkCmdPipelineBarrier(v, srcStageFlags, dstStageFlags, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
+	}
+
 	void CommandBuffer::beginRenderPass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue)
 	{
 		VkRenderPassBeginInfo info = {};

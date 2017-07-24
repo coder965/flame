@@ -31,7 +31,7 @@ static void _show_scene(tke::Scene *scene)
 		{
 			for (int i = 0; i < scene->objects.size(); i++)
 			{
-				auto o = scene->objects[i];
+				auto o = scene->objects[i].get();
 				if (ImGui::Selectable(std::to_string(i).c_str(), selectedItem.toObject() == o))
 					selectedItem.select(o);
 			}
@@ -151,7 +151,7 @@ static void _show_scene(tke::Scene *scene)
 	}
 	if (ImGui::TreeNode("Terrain"))
 	{
-		auto terrain = scene->terrain;
+		auto terrain = scene->terrain.get();
 
 		if (terrain)
 		{
