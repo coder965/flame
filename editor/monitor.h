@@ -35,7 +35,6 @@ struct SceneMonitorWidget : MonitorWidget
 	bool viewPhysx = false;
 	tke::Object *last_obj = nullptr;
 	tke::Framebuffer *fb_scene;
-	tke::CommandBuffer *cb_scene;
 	VkEvent scene_renderFinished;
 
 	tke::OnceVertexBuffer *physxBuffer = nullptr;

@@ -805,7 +805,7 @@ namespace tke
 	{
 		lastTime = GetTickCount();
 
-		ds_maps = mrtPipeline->createDescriptorSet(descriptorPool, 1);
+		ds_maps = new DescriptorSet(descriptorPool, mrtPipeline, 1);
 
 		for (;;)
 		{

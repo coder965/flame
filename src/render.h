@@ -264,7 +264,7 @@ namespace tke
 		DescriptorSetLayout *layout;
 		VkDescriptorSet v;
 
-		DescriptorSet(DescriptorPool *_pool, DescriptorSetLayout *_layout);
+		DescriptorSet(DescriptorPool *_pool, Pipeline *pipeline, int index = 0);
 		~DescriptorSet();
 		void setBuffer(int binding, int index, Buffer *buffer);
 		void setImage(int binding, int index, Image *image, VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
@@ -657,7 +657,6 @@ namespace tke
 		void loadXML(const std::string &filename);
 		void saveXML(const std::string &filename);
 		void setup(RenderPass *_renderPass, std::uint32_t _subpassIndex, bool need_default_ds);
-		DescriptorSet *createDescriptorSet(DescriptorPool *_pool, int index = 0);
 		void linkDescriptors(DescriptorSet *set, ResourceBank *resource);
 		int descriptorPosition(const std::string &name);
 	};

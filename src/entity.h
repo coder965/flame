@@ -707,6 +707,10 @@ namespace tke
 
 		std::unique_ptr<Framebuffer> fb_esm[TKE_MAX_SHADOW_COUNT * 6];
 
+		std::unique_ptr<CommandBuffer> cb_shadow;
+		std::unique_ptr<CommandBuffer> cb_mrt;
+		std::unique_ptr<CommandBuffer> cb_deferred;
+
 		Scene();
 		~Scene();
 		void addLight(Light *pLight);
@@ -720,7 +724,7 @@ namespace tke
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);
 		Framebuffer *createFramebuffer(Image *dst);
-		void show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent);
+		void show(Framebuffer *fb, VkEvent signalEvent);
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void load(const std::string &filename);
 		void save(const std::string &filename);

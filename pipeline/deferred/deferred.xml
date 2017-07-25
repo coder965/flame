@@ -3,6 +3,7 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="AMBIENT" resource_name="Ambient.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="LIGHT" resource_name="Light.UniformBuffer" sampler="none"/>
+  <link binding="-1" array_element="0" descriptor_name="envrSampler" resource_name="Envr.Image" sampler="color"/>
 	<link binding="-1" array_element="0" descriptor_name="depthSampler" resource_name="Depth.Image" sampler="plain_unnormalized"/>
 	<link binding="-1" array_element="0" descriptor_name="albedoAlphaSampler" resource_name="AlbedoAlpha.Image" sampler="plain_unnormalized"/>
 	<link binding="-1" array_element="0" descriptor_name="normalHeightSampler" resource_name="NormalHeight.Image" sampler="plain_unnormalized"/>

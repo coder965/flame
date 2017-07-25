@@ -24,14 +24,13 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	tke::addGuiImage(image);
 
 	fb_scene = scene->createFramebuffer(image);
-	cb_scene = new tke::CommandBuffer(tke::commandPool);
 	scene_renderFinished = tke::createEvent();
 
 	cb_physx = new tke::CommandBuffer(tke::commandPool);
 	physx_renderFinished = tke::createEvent();
 
 	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
-	ds_wireframe_anim = tke::plainPipeline_3d_anim_wire->createDescriptorSet(tke::descriptorPool);
+	ds_wireframe_anim = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_wire);
 	wireframe_renderFinished = tke::createEvent();
 
 	VkImageView views[] = {
@@ -41,7 +40,7 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool);
 
-	cbs.push_back(cb_scene->v);
+	cbs.push_back(scene->cb_deferred->v);
 	cbs.push_back(cb_physx->v);
 	cbs.push_back(cb_wireframe->v);
 	cbs.push_back(transformerTool->cb->v);
@@ -50,7 +49,6 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 SceneMonitorWidget::~SceneMonitorWidget()
 {
 	tke::releaseFramebuffer(fb_scene);
-	delete cb_scene;
 	tke::destroyEvent(scene_renderFinished);
 
 	tke::releaseFramebuffer(fb_image);
@@ -209,7 +207,7 @@ void SceneMonitorWidget::show()
 
 	ImGui::EndDock();
 
-	scene->show(cb_scene, fb_scene, scene_renderFinished);
+	scene->show(fb_scene, scene_renderFinished);
 
 	{ // view physx
 		cb_physx->reset();
@@ -382,7 +380,7 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 	if (model->animated)
 	{
 		animComp = new tke::AnimationComponent(model);
-		ds_anim = tke::plainPipeline_3d_anim_tex->createDescriptorSet(tke::descriptorPool);
+		ds_anim = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_tex);
 		ds_anim->setBuffer(0, 0, animComp->boneMatrixBuffer);
 	}
 	cb = new tke::CommandBuffer(tke::commandPool);

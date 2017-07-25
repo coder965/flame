@@ -339,8 +339,8 @@ namespace tke
 
 	CommandPool *commandPool = nullptr;
 
-	DescriptorSet::DescriptorSet(DescriptorPool *_pool, DescriptorSetLayout *_layout)
-		:pool(_pool), layout(_layout)
+	DescriptorSet::DescriptorSet(DescriptorPool *_pool, Pipeline *pipeline, int index)
+		:pool(_pool), layout(pipeline->descriptorSetLayouts[index])
 	{
 		VkDescriptorSetAllocateInfo descriptorSetInfo = {};
 		descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -2404,11 +2404,6 @@ namespace tke
 			delete stages[i];
 	}
 
-	DescriptorSet *Pipeline::createDescriptorSet(DescriptorPool *_pool, int index)
-	{
-		return new DescriptorSet(_pool, descriptorSetLayouts[index]);
-	}
-
 	void Pipeline::linkDescriptors(DescriptorSet *set, ResourceBank *resource)
 	{
 		for (auto &link : links)
@@ -2499,7 +2494,7 @@ namespace tke
 							break;
 						}
 					}
-					set->setImage(link.binding, link.array_element, image, link.vkSampler);
+					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, 0, image->level, 0, image->layer);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);

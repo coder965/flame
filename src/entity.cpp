@@ -2970,19 +2970,23 @@ namespace tke
 		resource.setBuffer(staticObjectIndirectBuffer.get(), "Scene.Static.IndirectBuffer");
 		resource.setBuffer(animatedObjectIndirectBuffer.get(), "Scene.Animated.IndirectBuffer");
 
-		ds_mrt = std::move(std::unique_ptr<DescriptorSet>(mrtPipeline->createDescriptorSet(descriptorPool)));
+		ds_mrt = std::make_unique<DescriptorSet>(descriptorPool, mrtPipeline);
 		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
-		ds_mrtAnim = std::move(std::unique_ptr<DescriptorSet>(mrtAnimPipeline->createDescriptorSet(descriptorPool)));
+		ds_mrtAnim = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline);
 		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
-		ds_mrtAnim_bone = std::move(std::unique_ptr<DescriptorSet>(mrtAnimPipeline->createDescriptorSet(descriptorPool, 2)));
-		ds_heightMapTerrain = std::move(std::unique_ptr<DescriptorSet>(heightMapTerrainPipeline->createDescriptorSet(descriptorPool)));
+		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrtAnimPipeline, mrtAnimPipeline, 2);
+		ds_heightMapTerrain = std::make_unique<DescriptorSet>(descriptorPool, heightMapTerrainPipeline);
 		heightMapTerrainPipeline->linkDescriptors(ds_heightMapTerrain.get(), &resource);
-		ds_esm = std::move(std::unique_ptr<DescriptorSet>(esmPipeline->createDescriptorSet(descriptorPool)));
-		ds_esmAnim = std::move(std::unique_ptr<DescriptorSet>(esmAnimPipeline->createDescriptorSet(descriptorPool)));
-		ds_defe = std::move(std::unique_ptr<DescriptorSet>(deferredPipeline->createDescriptorSet(descriptorPool)));
+		ds_esm = std::make_unique<DescriptorSet>(descriptorPool, esmPipeline);
+		ds_esmAnim = std::make_unique<DescriptorSet>(descriptorPool, esmAnimPipeline);
+		ds_defe = std::make_unique<DescriptorSet>(descriptorPool, deferredPipeline);
 		deferredPipeline->linkDescriptors(ds_defe.get(), &resource);
-		ds_comp = std::move(std::unique_ptr<DescriptorSet>(composePipeline->createDescriptorSet(descriptorPool)));
+		ds_comp = std::make_unique<DescriptorSet>(descriptorPool, composePipeline);
 		composePipeline->linkDescriptors(ds_comp.get(), &resource);
+
+		cb_shadow = std::make_unique<CommandBuffer>(commandPool);
+		cb_mrt = std::make_unique<CommandBuffer>(commandPool);
+		cb_deferred = std::make_unique<CommandBuffer>(commandPool);
 
 		for (int i = 0; i < TKE_MAX_SHADOW_COUNT * 6; i++)
 		{
@@ -3337,7 +3341,7 @@ namespace tke
 		return getFramebuffer(resCx, resCy, sceneRenderPass, ARRAYSIZE(views), views);
 	}
 
-	void Scene::show(CommandBuffer *cb, Framebuffer *fb, VkEvent signalEvent)
+	void Scene::show(Framebuffer *fb, VkEvent signalEvent)
 	{
 		// update animation and bones
 		for (auto &o : objects)
@@ -3496,7 +3500,6 @@ namespace tke
 						releaseFramebuffer(fb);
 					}
 
-					if (deferredPipeline)
 					{ // update IBL
 						if (defe_envr_position != -1)
 						{
@@ -3547,8 +3550,6 @@ namespace tke
 									releaseFramebuffer(fb);
 								}
 							}
-
-							ds_defe->setImage(defe_envr_position, 0, envrImage.get(), colorSampler, 0, 0, envrImage->level);
 						}
 					}
 				}
@@ -3830,86 +3831,90 @@ namespace tke
 		if (terrain)
 			terrain->changed = false;
 
-		cb->reset();
-		cb->begin();
+		cb_shadow->reset();
+		cb_shadow->begin();
+		cb_shadow->end();
+
+		cb_deferred->reset();
+		cb_deferred->begin();
 
 		// shadow
 		for (int i = 0; i < shadowLights.size(); i++)
 		{
 			auto l = shadowLights[i];
 
-			cb->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get());
+			cb_deferred->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get());
 			// static
 			if (staticIndirectCount > 0)
 			{
-				cb->bindVertexBuffer(staticVertexBuffer);
-				cb->bindIndexBuffer(staticIndexBuffer);
-				cb->bindPipeline(esmPipeline);
+				cb_deferred->bindVertexBuffer(staticVertexBuffer);
+				cb_deferred->bindIndexBuffer(staticIndexBuffer);
+				cb_deferred->bindPipeline(esmPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esm->v,
 					ds_maps->v
 				};
-				cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+				cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 				for (int oId = 0; oId < staticIndirectCount; oId++)
 				{
 					auto o = staticObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-						cb->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						cb_deferred->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
 				}
 			}
 			// animated
 			if (animatedIndirectCount)
 			{
-				cb->bindVertexBuffer(animatedVertexBuffer);
-				cb->bindIndexBuffer(animatedIndexBuffer);
-				cb->bindPipeline(esmPipeline);
+				cb_deferred->bindVertexBuffer(animatedVertexBuffer);
+				cb_deferred->bindIndexBuffer(animatedIndexBuffer);
+				cb_deferred->bindPipeline(esmPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esmAnim->v,
 					ds_maps->v,
 					ds_mrtAnim_bone->v
 				};
-				cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+				cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 				for (int oId = 0; oId < staticIndirectCount; oId++)
 				{
 					auto o = staticObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-						cb->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						cb_deferred->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
 				}
 			}
-			cb->endRenderPass();
+			cb_deferred->endRenderPass();
 		}
 
-		cb->beginRenderPass(sceneRenderPass, fb);
+		cb_deferred->beginRenderPass(sceneRenderPass, fb);
 
 		// mrt
 			// static
 		if (staticIndirectCount > 0)
 		{
-			cb->bindVertexBuffer(staticVertexBuffer);
-			cb->bindIndexBuffer(staticIndexBuffer);
-			cb->bindPipeline(mrtPipeline);
+			cb_deferred->bindVertexBuffer(staticVertexBuffer);
+			cb_deferred->bindIndexBuffer(staticIndexBuffer);
+			cb_deferred->bindPipeline(mrtPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
 				ds_maps->v
 			};
-			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb->drawIndirectIndex(staticObjectIndirectBuffer.get(), staticIndirectCount);
+			cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+			cb_deferred->drawIndirectIndex(staticObjectIndirectBuffer.get(), staticIndirectCount);
 		}
 			// animated
 		if (animatedIndirectCount)
 		{
-			cb->bindVertexBuffer(animatedVertexBuffer);
-			cb->bindIndexBuffer(animatedIndexBuffer);
-			cb->bindPipeline(mrtAnimPipeline);
+			cb_deferred->bindVertexBuffer(animatedVertexBuffer);
+			cb_deferred->bindIndexBuffer(animatedIndexBuffer);
+			cb_deferred->bindPipeline(mrtAnimPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
 				ds_maps->v,
 				ds_mrtAnim_bone->v
 			};
-			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animatedIndirectCount);
+			cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+			cb_deferred->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animatedIndirectCount);
 		}
 			// terrain
 		if (terrain)
@@ -3917,9 +3922,9 @@ namespace tke
 			switch (terrain->type)
 			{
 			case TerrainType::height_map:
-				cb->bindPipeline(heightMapTerrainPipeline);
-				cb->bindDescriptorSet(&ds_heightMapTerrain->v);
-				cb->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
+				cb_deferred->bindPipeline(heightMapTerrainPipeline);
+				cb_deferred->bindDescriptorSet(&ds_heightMapTerrain->v);
+				cb_deferred->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
 				break;
 			}
 		}
@@ -3930,21 +3935,21 @@ namespace tke
 		//	esmImage.get(), 0, 1, 0, TKE_MAX_SHADOW_COUNT * 8);
 
 		// deferred
-		cb->nextSubpass();
-		cb->bindPipeline(deferredPipeline);
-		cb->bindDescriptorSet(&ds_defe->v);
-		cb->draw(3);
+		cb_deferred->nextSubpass();
+		cb_deferred->bindPipeline(deferredPipeline);
+		cb_deferred->bindDescriptorSet(&ds_defe->v);
+		cb_deferred->draw(3);
 
 		// compose
-		cb->nextSubpass();
-		cb->bindPipeline(composePipeline);
-		cb->bindDescriptorSet(&ds_comp->v);
-		cb->draw(3);
+		cb_deferred->nextSubpass();
+		cb_deferred->bindPipeline(composePipeline);
+		cb_deferred->bindDescriptorSet(&ds_comp->v);
+		cb_deferred->draw(3);
 
-		cb->endRenderPass();
+		cb_deferred->endRenderPass();
 
-		cb->setEvent(signalEvent);
-		cb->end();
+		cb_deferred->setEvent(signalEvent);
+		cb_deferred->end();
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
