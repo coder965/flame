@@ -2940,6 +2940,7 @@ namespace tke
 		normalHeightImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		specRoughnessImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		esmImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, TKE_MAX_SHADOW_COUNT * 6);
+		debugImages.emplace_back("Esm Image", esmImage.get());
 		esmDepthImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		resource.setImage(envrImage.get(), "Envr.Image");
@@ -2974,7 +2975,7 @@ namespace tke
 		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
 		ds_mrtAnim = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline);
 		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
-		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrtAnimPipeline, mrtAnimPipeline, 2);
+		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline, 2);
 		ds_heightMapTerrain = std::make_unique<DescriptorSet>(descriptorPool, heightMapTerrainPipeline);
 		heightMapTerrainPipeline->linkDescriptors(ds_heightMapTerrain.get(), &resource);
 		ds_esm = std::make_unique<DescriptorSet>(descriptorPool, esmPipeline);
@@ -2997,6 +2998,9 @@ namespace tke
 			fb_esm[i] = std::move(std::unique_ptr<Framebuffer>(getFramebuffer(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CY, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views)));
 		}
 
+		shadowRenderFinished = createEvent();
+		mrtRenderFinished = createEvent();
+
 		sunLight = new Light(LightType::parallax);
 		_setSunLight_attribute(this);
 		addLight(sunLight);
@@ -3006,6 +3010,9 @@ namespace tke
 	{
 		pxScene->release();
 		pxControllerManager->release();
+
+		destroyEvent(shadowRenderFinished);
+		destroyEvent(mrtRenderFinished);
 	}
 
 	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
@@ -3831,60 +3838,61 @@ namespace tke
 		if (terrain)
 			terrain->changed = false;
 
+		// shadow
 		cb_shadow->reset();
 		cb_shadow->begin();
-		cb_shadow->end();
 
-		cb_deferred->reset();
-		cb_deferred->begin();
-
-		// shadow
 		for (int i = 0; i < shadowLights.size(); i++)
 		{
 			auto l = shadowLights[i];
 
-			cb_deferred->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get());
+			cb_shadow->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get());
 			// static
 			if (staticIndirectCount > 0)
 			{
-				cb_deferred->bindVertexBuffer(staticVertexBuffer);
-				cb_deferred->bindIndexBuffer(staticIndexBuffer);
-				cb_deferred->bindPipeline(esmPipeline);
+				cb_shadow->bindVertexBuffer(staticVertexBuffer);
+				cb_shadow->bindIndexBuffer(staticIndexBuffer);
+				cb_shadow->bindPipeline(esmPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esm->v,
 					ds_maps->v
 				};
-				cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+				cb_shadow->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 				for (int oId = 0; oId < staticIndirectCount; oId++)
 				{
 					auto o = staticObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-						cb_deferred->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						cb_shadow->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
 				}
 			}
 			// animated
 			if (animatedIndirectCount)
 			{
-				cb_deferred->bindVertexBuffer(animatedVertexBuffer);
-				cb_deferred->bindIndexBuffer(animatedIndexBuffer);
-				cb_deferred->bindPipeline(esmPipeline);
+				cb_shadow->bindVertexBuffer(animatedVertexBuffer);
+				cb_shadow->bindIndexBuffer(animatedIndexBuffer);
+				cb_shadow->bindPipeline(esmPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esmAnim->v,
 					ds_maps->v,
 					ds_mrtAnim_bone->v
 				};
-				cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+				cb_shadow->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 				for (int oId = 0; oId < staticIndirectCount; oId++)
 				{
 					auto o = staticObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-						cb_deferred->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						cb_shadow->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
 				}
 			}
-			cb_deferred->endRenderPass();
+			cb_shadow->endRenderPass();
 		}
+
+		cb_shadow->end();
+
+		cb_deferred->reset();
+		cb_deferred->begin();
 
 		cb_deferred->beginRenderPass(sceneRenderPass, fb);
 

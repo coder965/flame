@@ -40,6 +40,8 @@ namespace tke
 	bool needUpdateMaterialBuffer = true;
 	bool needUpdateTexture = true;
 
+	std::vector<std::pair<std::string, Image*>> debugImages;
+
 	std::vector<Image*> textures;
 
 	std::vector<Image*> modelTextures;

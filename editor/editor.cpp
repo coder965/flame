@@ -4,6 +4,7 @@
 #include "game.h"
 #include "monitor.h"
 #include "attribute.h"
+#include "debug.h"
 
 LastWindowType lastWindowType = LastWindowTypeNull;
 MonitorWidget *lastMonitorWidget = nullptr;
@@ -18,6 +19,9 @@ EditorWindow::EditorWindow()
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	game.load();
+
+	for (auto &i : tke::debugImages)
+		tke::addGuiImage(i.second);
 
 	{
 		tke::AttributeTree at("data", "ui.xml");
@@ -140,6 +144,12 @@ void EditorWindow::openAttributeWidget()
 		attributeWidget = new AttributeWidget;
 }
 
+void EditorWindow::openDebugWidget()
+{
+	if (!debugWidget)
+		debugWidget = new DebugWidget;
+}
+
 void EditorWindow::renderEvent()
 {
 	beginFrame();
@@ -211,6 +221,10 @@ void EditorWindow::renderEvent()
 		{
 			openAttributeWidget();
 		}
+		if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
+		{
+			openDebugWidget();
+		}
 		ImGui::EndMenu();
 	}
 	if (ImGui::BeginMenu("Build"))
@@ -246,6 +260,16 @@ void EditorWindow::renderEvent()
 		{
 			delete attributeWidget;
 			attributeWidget = nullptr;
+		}
+	}
+
+	if (debugWidget)
+	{
+		debugWidget->show();
+		if (!debugWidget->opened)
+		{
+			delete debugWidget;
+			debugWidget = nullptr;
 		}
 	}
 

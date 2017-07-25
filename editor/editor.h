@@ -24,6 +24,7 @@ struct EditorWindow : tke::Window
 	void openSceneMonitorWidget(tke::Scene *s);
 	void openModelMonitorWidget(tke::Model *m);
 	void openAttributeWidget();
+	void openDebugWidget();
 	virtual void renderEvent() override;
 };
 

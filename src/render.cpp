@@ -2356,7 +2356,7 @@ namespace tke
 
 		if (need_default_ds)
 		{
-			descriptorSet = new DescriptorSet(descriptorPool, descriptorSetLayouts[0]);
+			descriptorSet = new DescriptorSet(descriptorPool, this);
 			linkDescriptors(descriptorSet, &globalResource);
 		}
 	}

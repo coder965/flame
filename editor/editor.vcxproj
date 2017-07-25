@@ -158,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="attribute.cpp" />
+    <ClCompile Include="debug.cpp" />
     <ClCompile Include="editor.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
@@ -168,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="attribute.h" />
+    <ClInclude Include="debug.h" />
     <ClInclude Include="editor.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="monitor.h" />

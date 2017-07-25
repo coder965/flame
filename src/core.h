@@ -61,6 +61,8 @@ namespace tke
 	extern bool needUpdateMaterialBuffer;
 	extern bool needUpdateTexture;
 
+	extern std::vector<std::pair<std::string, Image*>> debugImages;
+
 	extern std::vector<Image*> textures;
 	inline Image *getTexture(const std::string &filename)
 	{

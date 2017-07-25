@@ -705,11 +705,14 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_defe;
 		std::unique_ptr<DescriptorSet> ds_comp;
 
-		std::unique_ptr<Framebuffer> fb_esm[TKE_MAX_SHADOW_COUNT * 6];
-
 		std::unique_ptr<CommandBuffer> cb_shadow;
 		std::unique_ptr<CommandBuffer> cb_mrt;
 		std::unique_ptr<CommandBuffer> cb_deferred;
+
+		std::unique_ptr<Framebuffer> fb_esm[TKE_MAX_SHADOW_COUNT * 6];
+
+		VkEvent shadowRenderFinished;
+		VkEvent mrtRenderFinished;
 
 		Scene();
 		~Scene();
