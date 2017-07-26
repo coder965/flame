@@ -51,11 +51,17 @@ layout(binding = TKE_UBO_BINDING) uniform LIGHT
 	Light lights[256];
 }u_light;
 
+layout(binding = TKE_UBO_BINDING) uniform SHADOW
+{
+	mat4 matrix[8];
+}u_shadow;
+
 layout(binding = TKE_UBO_BINDING) uniform sampler2D envrSampler;
 layout(binding = TKE_UBO_BINDING) uniform sampler2D depthSampler;
 layout(binding = TKE_UBO_BINDING) uniform sampler2D albedoAlphaSampler;
 layout(binding = TKE_UBO_BINDING) uniform sampler2D normalHeightSampler;
 layout(binding = TKE_UBO_BINDING) uniform sampler2D specRoughnessSampler;
+layout(binding = TKE_UBO_BINDING) uniform sampler2D shadowSampler[48];
 layout(binding = TKE_UBO_BINDING) uniform sampler2D aoSampler;
 
 layout(location = 0) in vec3 inViewDir;
@@ -97,7 +103,12 @@ vec3 brdf(vec3 V, vec3 L, vec3 N, float roughness, float spec, vec3 albedo, vec3
 float specularOcclusion(float dotNV, float ao, float smothness)
 {
     return clamp(pow(dotNV + ao, smothness) - 1.0 + ao, 0.0, 1.0);
-}	
+}
+
+highp float map_01(float x, float v0, float v1)
+{
+	return (x - v0) / (v1 - v0);
+}
 
 void main()
 {
@@ -113,6 +124,7 @@ void main()
 	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
 		
 	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
+	vec4 coordWorld = u_matrix.viewInv * vec4(coordView, 1.0);
 	
 	vec4 inAlbedoAlpha = texture(albedoAlphaSampler, gl_FragCoord.xy);
 	vec4 inNormalHeight = texture(normalHeightSampler, gl_FragCoord.xy);
@@ -130,10 +142,24 @@ void main()
 	for (int i = 0; i < u_light.count; i++)
 	{
 		Light light = u_light.lights[i];
-		
-		vec3 lightColor = light.color.xyz;
 
-		vec3 lightDir = light.coord.xyz;;
+		float visibility = 1.0;
+		{
+			int shadowId = int(light.color.a);
+			if (shadowId != -1)
+			{
+				vec4 shadowCoord = u_shadow.matrix[shadowId] * coordWorld;
+				float occluder = textureProj(shadowSampler[shadowId * 6], shadowCoord.xyw).r;
+				float reciever = map_01(shadowCoord.w, u_constant.near, u_constant.far);
+				reciever = shadowCoord.z / shadowCoord.w;
+				visibility = clamp(occluder * exp(-128.0 * reciever), 0.0, 1.0);
+				visibility = occluder - reciever > 0.0 ? 0.0 : 1.0;
+			}
+		}
+		if (visibility == 0.0) continue;
+		
+		vec3 lightColor = light.color.xyz * visibility;
+		vec3 lightDir = light.coord.xyz;
 		if (light.coord.w == 0.0)
 		{
 			lightDir = (u_matrix.view * vec4(lightDir, 0.0)).xyz;

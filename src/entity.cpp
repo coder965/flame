@@ -2899,6 +2899,7 @@ namespace tke
 
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
+	static int defe_shad_position = -1;
 
 	Pipeline *esmPipeline = nullptr;
 
@@ -2968,6 +2969,7 @@ namespace tke
 		resource.setBuffer(proceduralTerrainBuffer.get(), "ProceduralTerrain.UniformBuffer");
 		resource.setBuffer(lightBuffer.get(), "Light.UniformBuffer");
 		resource.setBuffer(ambientBuffer.get(), "Ambient.UniformBuffer");
+		resource.setBuffer(shadowBuffer.get(), "Shadow.UniformBuffer");
 		resource.setBuffer(staticObjectIndirectBuffer.get(), "Scene.Static.IndirectBuffer");
 		resource.setBuffer(animatedObjectIndirectBuffer.get(), "Scene.Animated.IndirectBuffer");
 
@@ -2979,7 +2981,9 @@ namespace tke
 		ds_heightMapTerrain = std::make_unique<DescriptorSet>(descriptorPool, heightMapTerrainPipeline);
 		heightMapTerrainPipeline->linkDescriptors(ds_heightMapTerrain.get(), &resource);
 		ds_esm = std::make_unique<DescriptorSet>(descriptorPool, esmPipeline);
+		esmPipeline->linkDescriptors(ds_esm.get(), &resource);
 		ds_esmAnim = std::make_unique<DescriptorSet>(descriptorPool, esmAnimPipeline);
+		esmAnimPipeline->linkDescriptors(ds_esmAnim.get(), &resource);
 		ds_defe = std::make_unique<DescriptorSet>(descriptorPool, deferredPipeline);
 		deferredPipeline->linkDescriptors(ds_defe.get(), &resource);
 		ds_comp = std::make_unique<DescriptorSet>(descriptorPool, composePipeline);
@@ -3002,6 +3006,7 @@ namespace tke
 		mrtRenderFinished = createEvent();
 
 		sunLight = new Light(LightType::parallax);
+		sunLight->shadow = true;
 		_setSunLight_attribute(this);
 		addLight(sunLight);
 	}
@@ -3660,10 +3665,13 @@ namespace tke
 				}
 			}
 		}
-		std::vector<Object*> staticObjects;
-		std::vector<Object*> animatedObjects;
+		static std::vector<Object*> staticObjects;
+		static std::vector<Object*> animatedObjects;
 		if (needUpdateIndirectBuffer)
 		{
+			staticObjects.clear();
+			animatedObjects.clear();
+
 			if (objects.size() > 0)
 			{
 				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
@@ -3690,7 +3698,7 @@ namespace tke
 							staticCommands.push_back(command);
 						}
 
-						animatedObjects.push_back(o.get());
+						staticObjects.push_back(o.get());
 						staticIndex++;
 					}
 					else
@@ -3710,7 +3718,7 @@ namespace tke
 						if (mrt_bone_position != -1)
 							ds_mrtAnim_bone->setBuffer(mrt_bone_position, animatedIndex, o->animationComponent->boneMatrixBuffer);
 
-						staticObjects.push_back(o.get());
+						animatedObjects.push_back(o.get());
 						animatedIndex++;
 					}
 				}
@@ -3767,7 +3775,8 @@ namespace tke
 						auto halfHeight = (vMax.y - vMin.y) * 0.5f;
 						auto halfDepth = glm::max(vMax.x - vMin.x, TKE_NEAR) * 0.5f;
 						auto center = lighAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
-						auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * glm::lookAt(center - halfDepth * lighAxis[0], center, lighAxis[1]);
+						//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
+						auto shadowMatrix = glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_FAR, TKE_NEAR) * glm::lookAt(camera.target + glm::vec3(0, 0, 100), camera.target, glm::vec3(0, 1, 0));
 
 						auto srcOffset = sizeof(glm::mat4) * ranges.size();
 						memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));
@@ -3776,8 +3785,11 @@ namespace tke
 						range.dstOffset = sizeof(glm::mat4) * shadowIndex;
 						range.size = sizeof(glm::mat4);
 						ranges.push_back(range);
+
+						if (defe_shad_position != -1)
+							ds_defe->setImage(defe_shad_position, shadowIndex, esmImage.get(), colorSampler, 0, 0, 1, shadowIndex, 1);
 					}
-					shadowIndex++;
+					shadowIndex += 6;
 				}
 				else if (l->type == LightType::point)
 				{
@@ -3798,7 +3810,7 @@ namespace tke
 				}
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, lightBuffer->v, ranges.size(), ranges.data());
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, shadowBuffer->v, ranges.size(), ranges.data());
 		}
 		if (lights.size() > 0)
 		{ // light attribute
@@ -3814,7 +3826,7 @@ namespace tke
 						stru.coord = glm::vec4(l->getAxis()[2], 0.f);
 					else
 						stru.coord = glm::vec4(l->getCoord(), l->type);
-					stru.color = glm::vec4(l->color, 1.f);
+					stru.color = glm::vec4(l->color, l->sceneShadowIndex);
 					stru.spotData = glm::vec4(-l->getAxis()[2], l->range);
 					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
 					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
@@ -3848,7 +3860,7 @@ namespace tke
 
 			cb_shadow->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get());
 			// static
-			if (staticIndirectCount > 0)
+			if (staticObjects.size() > 0)
 			{
 				cb_shadow->bindVertexBuffer(staticVertexBuffer);
 				cb_shadow->bindIndexBuffer(staticIndexBuffer);
@@ -3858,7 +3870,7 @@ namespace tke
 					ds_maps->v
 				};
 				cb_shadow->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-				for (int oId = 0; oId < staticIndirectCount; oId++)
+				for (int oId = 0; oId < staticObjects.size(); oId++)
 				{
 					auto o = staticObjects[oId];
 					auto m = o->model;
@@ -3867,23 +3879,31 @@ namespace tke
 				}
 			}
 			// animated
-			if (animatedIndirectCount)
+			if (animatedObjects.size() > 0)
 			{
 				cb_shadow->bindVertexBuffer(animatedVertexBuffer);
 				cb_shadow->bindIndexBuffer(animatedIndexBuffer);
-				cb_shadow->bindPipeline(esmPipeline);
+				cb_shadow->bindPipeline(esmAnimPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esmAnim->v,
 					ds_maps->v,
 					ds_mrtAnim_bone->v
 				};
 				cb_shadow->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-				for (int oId = 0; oId < staticIndirectCount; oId++)
+				for (int oId = 0; oId < animatedObjects.size(); oId++)
 				{
-					auto o = staticObjects[oId];
+					auto o = animatedObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
+					{
+						auto index = (i << 28) + (oId << 8) + gId;
 						cb_shadow->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						unsigned int v = index >> 8;
+						auto objID = v & 0x80000;
+						auto shadowID = v >> 20;
+						auto outMaterialID = index & 0xff;
+						int cut = 1;
+					}
 				}
 			}
 			cb_shadow->endRenderPass();
@@ -4166,6 +4186,7 @@ namespace tke
 		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
 		deferredPipeline->setup(sceneRenderPass, 1, false);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
+		defe_shad_position = deferredPipeline->descriptorPosition("shadowSampler");
 
 		composePipeline = new Pipeline;
 		composePipeline->loadXML(enginePath + "pipeline/compose/compose.xml");

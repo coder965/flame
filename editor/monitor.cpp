@@ -40,6 +40,7 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool);
 
+	cbs.push_back(scene->cb_shadow->v);
 	cbs.push_back(scene->cb_deferred->v);
 	cbs.push_back(cb_physx->v);
 	cbs.push_back(cb_wireframe->v);

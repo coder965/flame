@@ -572,8 +572,8 @@ namespace tke
 
 	struct LightShaderStruct
 	{
-		glm::vec4 coord; // w - the light type
-		glm::vec4 color;
+		glm::vec4 coord;    // w - the light type
+		glm::vec4 color;    // rgb - color, a shadow index(-1 is no shadow)
 		glm::vec4 spotData; // spot direction and spot range
 	};
 

@@ -4,7 +4,7 @@ layout(binding = TKE_UBO_BINDING) uniform OBJECT
 }u_object;
 
 #if defined(ANIM)
-layout(set = 1, binding = TKE_UBO_BINDING) uniform BONE
+layout(set = 2, binding = TKE_UBO_BINDING) uniform BONE
 {
 	mat4 matrix[256];
 }u_bone[8];
