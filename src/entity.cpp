@@ -2942,7 +2942,7 @@ namespace tke
 		specRoughnessImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		esmImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, TKE_MAX_SHADOW_COUNT * 6);
 		debugImages.emplace_back("Esm Image", esmImage.get());
-		esmDepthImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		esmDepthImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		resource.setImage(envrImage.get(), "Envr.Image");
 		resource.setImage(mainImage.get(), "Main.Image");
@@ -3776,7 +3776,11 @@ namespace tke
 						auto halfDepth = glm::max(vMax.x - vMin.x, TKE_NEAR) * 0.5f;
 						auto center = lighAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
 						//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
-						auto shadowMatrix = glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_FAR, TKE_NEAR) * glm::lookAt(camera.target + glm::vec3(0, 0, 100), camera.target, glm::vec3(0, 1, 0));
+						auto shadowMatrix = glm::mat4( 1.f, 0.f, 0.f,  0.f,
+													   0.f, 1.f, 0.f,  0.f,
+													   0.f, 0.f, 0.5f, 0.f,
+													   0.f, 0.f, 0.5f, 1.f) *
+							glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR) * glm::lookAt(camera.target + glm::vec3(0, 0, 100), camera.target, glm::vec3(0, 1, 0));
 
 						auto srcOffset = sizeof(glm::mat4) * ranges.size();
 						memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));
@@ -3858,7 +3862,11 @@ namespace tke
 		{
 			auto l = shadowLights[i];
 
-			cb_shadow->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get());
+			VkClearValue clearValues[] = {
+				{ 1.f, 0 },
+				{ 1.f, 1.f, 1.f, 1.f }
+			};
+			cb_shadow->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get(), clearValues);
 			// static
 			if (staticObjects.size() > 0)
 			{
@@ -3895,15 +3903,7 @@ namespace tke
 					auto o = animatedObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-					{
-						auto index = (i << 28) + (oId << 8) + gId;
 						cb_shadow->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
-						unsigned int v = index >> 8;
-						auto objID = v & 0x80000;
-						auto shadowID = v >> 20;
-						auto outMaterialID = index & 0xff;
-						int cut = 1;
-					}
 				}
 			}
 			cb_shadow->endRenderPass();
@@ -4116,7 +4116,7 @@ namespace tke
 
 		VkAttachmentDescription atts[] = {
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), // main
-			depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR),				 // depth
+			depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),				 // depth
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // albedo alpha
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // normal height
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // spec roughness

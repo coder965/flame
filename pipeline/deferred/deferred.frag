@@ -1,6 +1,7 @@
 #include "..\depth.h"
 #include "..\pi.h"
 #include "..\panorama.h"
+#include "..\esm.h"
 
 #if !defined(USE_PHGON) && !defined(USE_PBR)
 #define USE_PHONG
@@ -125,6 +126,8 @@ void main()
 		
 	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
 	vec4 coordWorld = u_matrix.viewInv * vec4(coordView, 1.0);
+	//outColor = vec4(coordWorld.xyz, 1.0);
+	//return;
 	
 	vec4 inAlbedoAlpha = texture(albedoAlphaSampler, gl_FragCoord.xy);
 	vec4 inNormalHeight = texture(normalHeightSampler, gl_FragCoord.xy);
@@ -148,12 +151,19 @@ void main()
 			int shadowId = int(light.color.a);
 			if (shadowId != -1)
 			{
-				vec4 shadowCoord = u_shadow.matrix[shadowId] * coordWorld;
-				float occluder = textureProj(shadowSampler[shadowId * 6], shadowCoord.xyw).r;
-				float reciever = map_01(shadowCoord.w, u_constant.near, u_constant.far);
-				reciever = shadowCoord.z / shadowCoord.w;
-				visibility = clamp(occluder * exp(-128.0 * reciever), 0.0, 1.0);
-				visibility = occluder - reciever > 0.0 ? 0.0 : 1.0;
+				vec4 shadowCoord = u_shadow.matrix[shadowId] * coordWorld; 
+				shadowCoord /= shadowCoord.w;
+				if (shadowCoord.z >= 0.0 && shadowCoord.z <= 1.0)
+				{
+					float occluder = texture(shadowSampler[shadowId * 6], (shadowCoord.xy * 0.5 + 0.5)).r;
+					float reciever = shadowCoord.z;
+					//visibility = clamp(occluder * exp(-esm_factor * reciever), 0.0, 1.0);
+					//visibility = occluder < esm_factor * reciever ? 0.0 : 1.0;
+					visibility = (occluder - exp(esm_factor * reciever)) / 8.0;
+					//visibility = occluder < reciever ? 0.0 : 1.0;
+				}
+
+				lightSumColor = vec3(visibility); break;
 			}
 		}
 		if (visibility == 0.0) continue;
@@ -189,6 +199,8 @@ void main()
 		lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
 #endif
 	}
+
+	outColor = vec4(lightSumColor, 1.0); return;
 	
 	vec3 color = lightSumColor;
 #if defined(USE_IBL)

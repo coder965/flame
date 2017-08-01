@@ -1,0 +1,1 @@
+const float esm_factor = 30.0;

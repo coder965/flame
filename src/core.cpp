@@ -621,6 +621,7 @@ namespace tke
 		);
 
 		defaultMaterial = new Material;
+		defaultMaterial->sceneIndex = 0;
 		modelMaterials.push_back(defaultMaterial);
 
 		stagingBuffer = new StagingBuffer(65536);
@@ -680,8 +681,7 @@ namespace tke
 			}
 		}
 
-		// 32bit depth format would not change depth to 0 ~ 1, which will let to be -1 ~ 1.
-		plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(plainDepthImage, "Depth.Image");
 
 		pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
@@ -693,7 +693,7 @@ namespace tke
 			auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att6 = depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
 			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
