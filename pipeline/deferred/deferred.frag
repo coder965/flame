@@ -159,7 +159,8 @@ void main()
 					float reciever = shadowCoord.z;
 					//visibility = clamp(occluder * exp(-esm_factor * reciever), 0.0, 1.0);
 					//visibility = occluder < esm_factor * reciever ? 0.0 : 1.0;
-					visibility = (occluder - exp(esm_factor * reciever)) / 8.0;
+					//visibility = (occluder / exp(esm_factor * reciever)) / 8.0;
+					visibility = (exp(esm_factor * reciever) - occluder) / 8.0;
 					//visibility = occluder < reciever ? 0.0 : 1.0;
 				}
 

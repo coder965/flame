@@ -514,6 +514,8 @@ namespace tke
 		REFLv std::string model_filename;
 		Model *model = nullptr;
 
+		REFLv std::string name;
+
 		REFLe ObjectPhysicsType physics_type = ObjectPhysicsType::null; // cannot change
 
 		AnimationComponent *animationComponent = nullptr;

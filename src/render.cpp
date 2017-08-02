@@ -1896,7 +1896,7 @@ namespace tke
 		at.loadXML(filename);
 		at.obtainFromAttributes(this, b);
 
-		for (auto c : at.children)
+		for (auto &c : at.children)
 		{
 			if (c->name == "blend_attachment")
 			{
@@ -1946,19 +1946,19 @@ namespace tke
 		{
 			auto n = new AttributeTreeNode("blend_attachment");
 			n->addAttributes(&b, b.b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		for (auto &s : dynamicStates)
 		{
 			auto n = new AttributeTreeNode("dynamic");
 			n->addAttributes(&s, s.b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		for (auto &l : links)
 		{
 			auto n = new AttributeTreeNode("link");
 			n->addAttributes(&l, l.b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		for (int i = 0; i < 5; i++)
 		{
@@ -1967,19 +1967,19 @@ namespace tke
 
 			auto n = new AttributeTreeNode("stage");
 			n->addAttributes(s, s->b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		for (auto &m : shaderMacros)
 		{
 			auto n = new AttributeTreeNode("macro");
 			n->addAttributes(&m, m.b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 
 		at.saveXML(filename);
 	}
 
-	void Pipeline::setup(RenderPass *_renderPass, std::uint32_t _subpassIndex, bool need_default_ds)
+	void Pipeline::setup(RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
 	{
 		if (!pVertexInputState)
 		{

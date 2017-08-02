@@ -5,6 +5,7 @@
 #include <list>
 #include <string>
 #include <typeindex>
+#include <memory>
 
 #if defined(_WIN64)
 typedef __int64 TK_LONG_PTR;
@@ -250,11 +251,12 @@ namespace tke
 		void *ptr;
 		std::string name;
 		std::string value;
-		std::vector<Attribute*> attributes;
-		std::vector<AttributeTreeNode*> children;
+		std::vector<std::unique_ptr<Attribute>> attributes;
+		std::vector<std::unique_ptr<AttributeTreeNode>> children;
 
 		AttributeTreeNode(const std::string &_name);
-		~AttributeTreeNode();
+		void add(Attribute *);
+		void add(AttributeTreeNode *);
 		Attribute *firstAttribute(const std::string &_name);
 		AttributeTreeNode *firstNode(const std::string &_name);
 

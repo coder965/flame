@@ -371,28 +371,32 @@ namespace tke
 		: name(_name)
 	{}
 
-	AttributeTreeNode::~AttributeTreeNode()
+	void AttributeTreeNode::add(Attribute *a)
 	{
-		for (auto a : attributes) delete a;
-		for (auto c : children) delete c;
+		attributes.push_back(std::move(std::unique_ptr<Attribute>(a)));
+	}
+
+	void AttributeTreeNode::add(AttributeTreeNode *n)
+	{
+		children.push_back(std::move(std::unique_ptr<AttributeTreeNode>(n)));
 	}
 
 	Attribute *AttributeTreeNode::firstAttribute(const std::string &_name)
 	{
-		for (auto a : attributes)
+		for (auto &a : attributes)
 		{
 			if (a->name == _name)
-				return a;
+				return a.get();
 		}
 		return nullptr;
 	}
 
 	AttributeTreeNode *AttributeTreeNode::firstNode(const std::string &_name)
 	{
-		for (auto c : children)
+		for (auto &c : children)
 		{
 			if (c->name == _name)
-				return c;
+				return c.get();
 		}
 		return nullptr;
 	}
@@ -429,14 +433,14 @@ namespace tke
 				}
 			}
 
-			n->attributes.push_back(a);
+			n->add(a);
 		}, this, 0);
 	}
 
 	void AttributeTreeNode::obtainFromAttributes(void *dst, ReflectionBank *b)
 	{
 		ptr = dst;
-		for (auto a : attributes)
+		for (auto &a : attributes)
 		{
 			auto r = b->findReflection(a->name, 0);
 			if (!r.first)
@@ -474,16 +478,16 @@ namespace tke
 		p->value = n->value();
 		for (auto a = n->first_attribute(); a; a = a->next_attribute())
 		{
-			auto a_ = new Attribute;
-			a_->name = a->name();
-			a_->value = a->value();
-			p->attributes.push_back(a_);
+			auto _a = new Attribute;
+			_a->name = a->name();
+			_a->value = a->value();
+			p->add(_a);
 		}
 
 		for (auto nn = n->first_node(); nn; nn = nn->next_sibling())
 		{
 			auto c = new AttributeTreeNode(nn->name());
-			p->children.push_back(c);
+			p->add(c);
 			_loadXML(nn, c);
 		}
 	}
@@ -507,14 +511,14 @@ namespace tke
 
 	static void _saveXML(rapidxml::xml_document<> &doc, rapidxml::xml_node<> *n, AttributeTreeNode *p)
 	{
-		for (auto a : p->attributes)
+		for (auto &a : p->attributes)
 			n->append_attribute(doc.allocate_attribute(a->name.c_str(), a->value.c_str()));
 
-		for (auto c : p->children)
+		for (auto &c : p->children)
 		{
 			auto node = doc.allocate_node(rapidxml::node_element, c->name.c_str());
 			n->append_node(node);
-			_saveXML(doc, node, c);
+			_saveXML(doc, node, c.get());
 		}
 	}
 

@@ -182,7 +182,6 @@ void SceneMonitorWidget::show()
 	if (ImGui::Button("Target To Selected"))
 		target = true;
 	ImGui::SameLine();
-	static bool follow = false;
 	ImGui::Checkbox("Follow", &follow);
 	if (target || follow)
 		scene->camera.object = selectedItem.toObject();

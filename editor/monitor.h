@@ -48,6 +48,8 @@ struct SceneMonitorWidget : MonitorWidget
 	tke::Framebuffer *fb_tool;
 	TransformerTool *transformerTool;
 
+	bool follow = false;
+
 	SceneMonitorWidget(tke::Scene *_scene);
 	virtual ~SceneMonitorWidget() override;
 	virtual void show() override;

@@ -21,8 +21,8 @@ struct EditorWindow : tke::Window
 	EditorWindow();
 	virtual ~EditorWindow() override;
 	void openGameExplorer();
-	void openSceneMonitorWidget(tke::Scene *s);
-	void openModelMonitorWidget(tke::Model *m);
+	SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
+	ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);
 	void openAttributeWidget();
 	void openDebugWidget();
 	virtual void renderEvent() override;

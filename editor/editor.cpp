@@ -38,27 +38,36 @@ EditorWindow::EditorWindow()
 				}
 				else if (c->name == "MonitorWidget")
 				{
-					auto a0 = c->firstAttribute("scene_filename");
-					if (a0)
+					tke::Attribute *a;
+					a = c->firstAttribute("scene_filename");
+					if (a)
 					{
 						tke::Scene *s = nullptr;
 						for (auto _s : game.scenes)
 						{
-							if (_s->filename == a0->value)
+							if (_s->filename == a->value)
 							{
 								s = _s;
 								break;
 							}
 						}
 						if (s)
-							openSceneMonitorWidget(s);
+						{
+							auto w = openSceneMonitorWidget(s);
+							a = c->firstAttribute("follow");
+							if (a)
+								a->get(&w->follow);
+						}
 					}
-					auto a1 = c->firstAttribute("model_filename");
-					if (a1)
+					else
 					{
-						auto m = tke::getModel(a1->value);
-						if (m)
-							openModelMonitorWidget(m);
+						a = c->firstAttribute("model_filename");
+						if (a)
+						{
+							auto m = tke::getModel(a->value);
+							if (m)
+								openModelMonitorWidget(m);
+						}
 					}
 				}
 				else if (c->name == "AttributeWidget")
@@ -96,9 +105,15 @@ EditorWindow::~EditorWindow()
 		{
 			auto n = new tke::AttributeTreeNode("MonitorWidget");
 			if (m->mode == MonitorWidget::ModeScene)
-				n->addAttribute("scene_filename", ((SceneMonitorWidget*)m)->scene->filename);
+			{
+				auto w = (SceneMonitorWidget*)m;
+				n->addAttribute("scene_filename", w->scene->filename);
+				n->addAttribute("follow", &w->follow);
+			}
 			else if (m->mode == MonitorWidget::ModeModel)
+			{
 				n->addAttribute("model_filename", ((ModelMonitorWidget*)m)->model->filename);
+			}
 			at.children.push_back(n);
 		}
 		{
@@ -116,6 +131,12 @@ EditorWindow::~EditorWindow()
 			tcs.save(n);
 			at.children.push_back(n);
 		}
+		if (SelectObject)
+		{
+			auto n = new tke::AttributeTreeNode("select");
+
+			at.children.push_back(n);
+		}
 		at.saveXML("ui.xml");
 	}
 
@@ -128,14 +149,18 @@ void EditorWindow::openGameExplorer()
 		gameExplorer = new GameExplorer;
 }
 
-void EditorWindow::openSceneMonitorWidget(tke::Scene *s)
+SceneMonitorWidget *EditorWindow::openSceneMonitorWidget(tke::Scene *s)
 {
-	monitorWidgets.push_back(new SceneMonitorWidget(s));
+	auto w = new SceneMonitorWidget(s);
+	monitorWidgets.push_back(w);
+	return w;
 }
 
-void EditorWindow::openModelMonitorWidget(tke::Model *m)
+ModelMonitorWidget *EditorWindow::openModelMonitorWidget(tke::Model *m)
 {
-	monitorWidgets.push_back(new ModelMonitorWidget(m));
+	auto w = new ModelMonitorWidget(m);
+	monitorWidgets.push_back(w);
+	return w;
 }
 
 void EditorWindow::openAttributeWidget()

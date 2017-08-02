@@ -750,7 +750,7 @@ namespace tke
 			n->addAttribute("child0", std::to_string(ImGui::g_dock.getDockIndex(dock.children[0])));
 			n->addAttribute("child1", std::to_string(ImGui::g_dock.getDockIndex(dock.children[1])));
 			n->addAttribute("parent", std::to_string(ImGui::g_dock.getDockIndex(dock.parents)));
-			at.children.push_back(n);
+			at.add(n);
 		}
 
 		at.saveXML(filename);
@@ -765,7 +765,7 @@ namespace tke
 		tke::AttributeTree at("data", "ui_dock.xml");
 		if (at.good)
 		{
-			for (auto c : at.children)
+			for (auto &c : at.children)
 			{
 				if (c->name == "dock")
 				{
@@ -774,7 +774,7 @@ namespace tke
 				}
 			}
 
-			for (auto c : at.children)
+			for (auto &c : at.children)
 			{
 				if (c->name == "dock")
 				{

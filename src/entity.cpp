@@ -667,12 +667,11 @@ namespace tke
 
 		at.obtainFromAttributes(this, b);
 
-		for (auto c : at.children)
+		for (auto &c : at.children)
 		{
 			if (c->name == "rigid_body")
 			{
 				auto r = new Rigidbody;
-
 				rigidbodies.push_back(r);
 			}
 		}
@@ -689,7 +688,7 @@ namespace tke
 			for (auto r : rigidbodies)
 			{
 				auto n = new AttributeTreeNode("rigid_body");
-				at.children.push_back(n);
+				at.add(n);
 			}
 		}
 
@@ -2119,7 +2118,7 @@ namespace tke
 			n = n->firstNode("mesh"); assert(n);
 			std::vector<std::unique_ptr<Source>> sources;
 			VertexInfo vertex_info;
-			for (auto c : n->children)
+			for (auto &c : n->children)
 			{
 				if (c->name == "source")
 				{
@@ -2146,7 +2145,7 @@ namespace tke
 				}
 				else if (c->name == "vertices")
 				{
-					for (auto cc : c->children)
+					for (auto &cc : c->children)
 					{
 						if (cc->name == "input")
 						{
@@ -2177,7 +2176,7 @@ namespace tke
 					int normal_offset = -1;
 					int element_count_per_vertex = 0;
 					std::vector<int> vcount;
-					for (auto cc : c->children)
+					for (auto &cc : c->children)
 					{
 						if (cc->name == "input")
 						{
@@ -3051,6 +3050,8 @@ namespace tke
 		return l;
 	}
 
+	static int _objectMagicIndex = 0;
+
 	void Scene::addObject(Object *o) // when a object is added to scene, the owner is the scene, object cannot be deleted elsewhere
 									 // and, if object has physics componet, it can be only moved by physics
 	{
@@ -3059,6 +3060,12 @@ namespace tke
 		{
 			delete o;
 			return;
+		}
+
+		if (o->name == "")
+		{
+			o->name = std::to_string(_objectMagicIndex);
+			_objectMagicIndex++;
 		}
 
 		mtx.lock();
@@ -4037,7 +4044,7 @@ namespace tke
 
 		tke::AttributeTree at("scene", filename);
 		at.obtainFromAttributes(this, b);
-		for (auto c : at.children)
+		for (auto &c : at.children)
 		{
 			if (c->name == "object")
 			{
@@ -4085,7 +4092,7 @@ namespace tke
 			o->getEuler();
 			o->getScale();
 			n->addAttributes(o.get(), o->b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		if (terrain)
 		{
@@ -4094,7 +4101,7 @@ namespace tke
 			terrain->getEuler();
 			terrain->getScale();
 			n->addAttributes(terrain.get(), terrain->b);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		at.saveXML(filename);
 	}
