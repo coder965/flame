@@ -140,12 +140,8 @@ currentBank->parents.emplace_back(Controller::b, TK_STRUCT_OFFSET(Object, Contro
 currentBank->addV<std::string>("model_filename", offsetof(Object, model_filename));
 currentBank->addV<std::string>("name", offsetof(Object, name));
 currentBank->addE("ObjectPhysicsType", "physics_type", offsetof(Object, physics_type));
-currentEnum = tke::addReflectEnum("TerrainType");
-currentEnum->items.emplace_back("height_map", (int)TerrainType::height_map);
-currentEnum->items.emplace_back("procedural", (int)TerrainType::procedural);
 currentBank = Terrain::b;
 currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Terrain, Transformer));
-currentBank->addE("TerrainType", "type", offsetof(Terrain, type));
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
 currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
 currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_map0_filename));

@@ -531,17 +531,10 @@ namespace tke
 		void setState(Controller::State _s, bool enable);
 	};
 
-	REFLECTABLE enum class TerrainType
-	{
-		REFLe height_map = 1 << 0,
-		REFLe procedural = 1 << 1
-	};
-
 	REFLECTABLE struct Terrain : Transformer
 	{
 		REFL_BANK;
 
-		REFLe TerrainType type = TerrainType::height_map;
 		REFLv bool use_physx = false;
 
 		REFLv std::string height_map_filename;
@@ -564,13 +557,18 @@ namespace tke
 		physx::PxRigidActor *actor = nullptr;
 
 		Terrain();
-		Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
+		Terrain(bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
 	};
 
 	REFLECTABLE struct Water : Transformer
 	{
 		REFL_BANK;
 
+		int blockCx = 64;
+		float blockSize = 16.f;
+		float height = 10.f;
+		float tessellationFactor = 0.75f;
+		float textureUvFactor = 8.f;
 	};
 
 	enum class SkyType
@@ -582,9 +580,9 @@ namespace tke
 
 	struct LightShaderStruct
 	{
-		glm::vec4 coord;    // w - the light type
-		glm::vec4 color;    // rgb - color, a shadow index(-1 is no shadow)
-		glm::vec4 spotData; // spot direction and spot range
+		glm::vec4 coord;    // xyz - coord(point/spot)/dir(parallax), w - the light type
+		glm::vec4 color;    // rgb - color, a - shadow index(-1 is no shadow)
+		glm::vec4 spotData; // xyz - spot direction, a - spot range
 	};
 
 	struct LightBufferShaderStruct
@@ -624,7 +622,7 @@ namespace tke
 
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;
-	extern Pipeline *heightMapTerrainPipeline;
+	extern Pipeline *terrainPipeline;
 	extern Pipeline *proceduralTerrainPipeline;
 	extern Pipeline *deferredPipeline;
 	extern Pipeline *esmPipeline;
@@ -672,6 +670,8 @@ namespace tke
 
 		std::unique_ptr<Terrain> terrain;
 
+		std::vector<std::unique_ptr<Water>> waters;
+
 		bool needUpdateSky = true;
 		bool needUpdateIndirectBuffer = true;
 		bool needUpdateAmbientBuffer = true;
@@ -711,7 +711,7 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_mrt;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim_bone;
-		std::unique_ptr<DescriptorSet> ds_heightMapTerrain;
+		std::unique_ptr<DescriptorSet> ds_terrain;
 		std::unique_ptr<DescriptorSet> ds_esm;
 		std::unique_ptr<DescriptorSet> ds_esmAnim;
 		std::unique_ptr<DescriptorSet> ds_defe;

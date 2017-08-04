@@ -68,6 +68,8 @@ namespace tke
 	void eulerYxzToMatrix(glm::vec3 &e, glm::mat3 &mat);
 	glm::mat4 makeMatrix(glm::mat3 &rotation, glm::vec3 coord);
 
+	float linearDepthOrtho(float z, float depth_near, float depth_far);
+	float linearDepthPerspective(float z, float depth_near, float depth_far);
 	float rand2d(glm::vec2 v);
 	float noise2d(glm::vec2 v);
 	float fbm2d(glm::vec2 v);

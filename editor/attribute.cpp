@@ -206,7 +206,7 @@ static void _show_scene(tke::Scene *scene)
 			{
 				if (ImGui::Button("Create Height Map Terrain"))
 				{
-					auto t = new tke::Terrain(tke::TerrainType::height_map, tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
+					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
 					t->height = tcs.height;
 					scene->addTerrain(t);
 				}

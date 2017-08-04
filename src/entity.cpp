@@ -2860,8 +2860,8 @@ namespace tke
 
 	Terrain::Terrain() {}
 
-	Terrain::Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3)
-		:type(_type), use_physx(_use_physx), heightMap(_heightMap)
+	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3)
+		:use_physx(_use_physx), heightMap(_heightMap)
 	{
 		colorMaps[0] = _colorMap0;
 		colorMaps[1] = _colorMap1;
@@ -2891,11 +2891,9 @@ namespace tke
 	Pipeline *mrtAnimPipeline;
 	static int mrt_bone_position = -1;
 
-	Pipeline *heightMapTerrainPipeline = nullptr;
-	static int heightMapTerr_heightMap_position = -1;
-	static int heightMapTerr_colorMap_position = -1;
-
-	Pipeline *proceduralTerrainPipeline = nullptr;
+	Pipeline *terrainPipeline = nullptr;
+	static int terr_heightMap_position = -1;
+	static int terr_colorMap_position = -1;
 
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
@@ -2978,8 +2976,8 @@ namespace tke
 		ds_mrtAnim = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline);
 		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
 		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline, 2);
-		ds_heightMapTerrain = std::make_unique<DescriptorSet>(descriptorPool, heightMapTerrainPipeline);
-		heightMapTerrainPipeline->linkDescriptors(ds_heightMapTerrain.get(), &resource);
+		ds_terrain = std::make_unique<DescriptorSet>(descriptorPool, terrainPipeline);
+		terrainPipeline->linkDescriptors(ds_terrain.get(), &resource);
 		ds_esm = std::make_unique<DescriptorSet>(descriptorPool, esmPipeline);
 		esmPipeline->linkDescriptors(ds_esm.get(), &resource);
 		ds_esmAnim = std::make_unique<DescriptorSet>(descriptorPool, esmAnimPipeline);
@@ -3666,12 +3664,12 @@ namespace tke
 
 				heightMapTerrainBuffer->update(&stru, stagingBuffer);
 
-				if (heightMapTerr_heightMap_position != -1)
-					ds_heightMapTerrain->setImage(heightMapTerr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
-				if (heightMapTerr_colorMap_position != -1)
+				if (terr_heightMap_position != -1)
+					ds_terrain->setImage(terr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
+				if (terr_colorMap_position != -1)
 				{
 					for (int i = 0; i < 4; i++)
-						ds_heightMapTerrain->setImage(heightMapTerr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
+						ds_terrain->setImage(terr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
 				}
 			}
 		}
@@ -3957,14 +3955,9 @@ namespace tke
 			// terrain
 		if (terrain)
 		{
-			switch (terrain->type)
-			{
-			case TerrainType::height_map:
-				cb_deferred->bindPipeline(heightMapTerrainPipeline);
-				cb_deferred->bindDescriptorSet(&ds_heightMapTerrain->v);
-				cb_deferred->draw(4, 0, terrain->blockCx * terrain->blockCx);
-				break;
-			}
+			cb_deferred->bindPipeline(terrainPipeline);
+			cb_deferred->bindDescriptorSet(&ds_terrain->v);
+			cb_deferred->draw(4, 0, terrain->blockCx * terrain->blockCx);
 		}
 
 		//cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
@@ -4174,11 +4167,11 @@ namespace tke
 		mrtAnimPipeline->setup(sceneRenderPass, 0, false);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 
-		heightMapTerrainPipeline = new Pipeline;
-		heightMapTerrainPipeline->loadXML(enginePath + "pipeline/deferred/height_map_terrain.xml");
-		heightMapTerrainPipeline->setup(sceneRenderPass, 0, false);
-		heightMapTerr_heightMap_position = heightMapTerrainPipeline->descriptorPosition("heightMap");
-		heightMapTerr_colorMap_position = heightMapTerrainPipeline->descriptorPosition("colorMaps");
+		terrainPipeline = new Pipeline;
+		terrainPipeline->loadXML(enginePath + "pipeline/deferred/terrain.xml");
+		terrainPipeline->setup(sceneRenderPass, 0, false);
+		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
+		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
 
 		//proceduralTerrainPipeline = new Pipeline;
 		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain.xml");
