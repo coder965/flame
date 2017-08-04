@@ -27,7 +27,7 @@ EditorWindow::EditorWindow()
 		tke::AttributeTree at("data", "ui.xml");
 		if (at.good)
 		{
-			for (auto c : at.children)
+			for (auto &c : at.children)
 			{
 				if (c->name == "GameExplorer")
 				{
@@ -79,11 +79,11 @@ EditorWindow::EditorWindow()
 				}
 				else if (c->name == "object_creation_setting")
 				{
-					ocs.load(c);
+					ocs.load(c.get());
 				}
 				else if (c->name == "terrain_creation_setting")
 				{
-					tcs.load(c);
+					tcs.load(c.get());
 				}
 			}
 		}
@@ -99,7 +99,7 @@ EditorWindow::~EditorWindow()
 		{
 			auto n = new tke::AttributeTreeNode("GameExplorer");
 			n->addAttribute("opened", gameExplorer ? "true" : "false");
-			at.children.push_back(n);
+			at.add(n);
 		}
 		for (auto m : monitorWidgets)
 		{
@@ -114,28 +114,27 @@ EditorWindow::~EditorWindow()
 			{
 				n->addAttribute("model_filename", ((ModelMonitorWidget*)m)->model->filename);
 			}
-			at.children.push_back(n);
+			at.add(n);
 		}
 		{
 			auto n = new tke::AttributeTreeNode("AttributeWidget");
 			n->addAttribute("opened", attributeWidget ? "true" : "false");
-			at.children.push_back(n);
+			at.add(n);
 		}
 		{
 			auto n = new tke::AttributeTreeNode("object_creation_setting");
 			ocs.save(n);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		{
 			auto n = new tke::AttributeTreeNode("terrain_creation_setting");
 			tcs.save(n);
-			at.children.push_back(n);
+			at.add(n);
 		}
 		if (SelectObject)
 		{
 			auto n = new tke::AttributeTreeNode("select");
-
-			at.children.push_back(n);
+			at.add(n);
 		}
 		at.saveXML("ui.xml");
 	}
@@ -338,7 +337,7 @@ EditorWindow *mainWindow = nullptr;
 
 void ObjectCreationSetting::load(tke::AttributeTreeNode *n)
 {
-	for (auto a : n->attributes)
+	for (auto &a : n->attributes)
 	{
 		if (a->name == "modelIndex")
 			a->get(&modelIndex);
@@ -411,7 +410,7 @@ ObjectCreationSetting ocs;
 
 void TerrainCreationSetting::load(tke::AttributeTreeNode *n)
 {
-	for (auto a : n->attributes)
+	for (auto &a : n->attributes)
 	{
 		if (a->name == "heightMapIndex")
 			a->get(&heightMapIndex);

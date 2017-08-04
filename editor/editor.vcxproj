@@ -161,7 +161,9 @@
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="editor.cpp" />
     <ClCompile Include="game.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="main.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
     <ClCompile Include="monitor.cpp" />
     <ClCompile Include="select.cpp" />
     <ClCompile Include="tool.cpp" />

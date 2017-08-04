@@ -7,7 +7,7 @@
 void Game::load()
 {
 	tke::AttributeTree at("data", "data.xml");
-	for (auto c : at.children)
+	for (auto &c : at.children)
 	{
 		if (c->name == "texture")
 		{

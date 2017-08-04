@@ -1,1 +1,1 @@
-const float esm_factor = 30.0;
+const float esm_factor = 300.0;

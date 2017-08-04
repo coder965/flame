@@ -264,7 +264,7 @@ namespace tke
 		inline void addAttribute(_Valty&&... _Val)
 		{
 			auto a = new Attribute(_Val...);
-			attributes.push_back(a);
+			add(a);
 		}
 
 		void addAttributes(void *src, ReflectionBank *b);

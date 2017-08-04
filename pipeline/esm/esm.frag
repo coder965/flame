@@ -65,5 +65,6 @@ void main()
 	// Generally a higher Exponential means greater difference in depths.
 	// Because of this there will be less error, but we may run out of precision.
 	outExp = exp(/*Light.Exponential*/esm_factor * (gl_FragCoord.z / gl_FragCoord.w));
+	//outExp = gl_FragCoord.z / gl_FragCoord.w;
 	//outExp = gl_FragCoord.z;
 }

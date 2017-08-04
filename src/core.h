@@ -204,4 +204,7 @@ namespace tke
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
 	Err init(const std::string &path, int rcx, int rcy);
 	void run();
+
+	float LinearDepthOrtho(float z, float depth_near, float depth_far);
+	float LinearDepthPerspective(float z, float depth_near, float depth_far);
 }

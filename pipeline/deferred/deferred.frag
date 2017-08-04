@@ -158,13 +158,13 @@ void main()
 					float occluder = texture(shadowSampler[shadowId * 6], (shadowCoord.xy * 0.5 + 0.5)).r;
 					float reciever = shadowCoord.z;
 					//visibility = clamp(occluder * exp(-esm_factor * reciever), 0.0, 1.0);
-					//visibility = occluder < esm_factor * reciever ? 0.0 : 1.0;
+					visibility = occluder < exp(esm_factor * reciever) ? 0.0 : 1.0;
 					//visibility = (occluder / exp(esm_factor * reciever)) / 8.0;
-					visibility = (exp(esm_factor * reciever) - occluder) / 8.0;
+					//visibility = (exp(esm_factor * reciever) - occluder) / 8.0;
 					//visibility = occluder < reciever ? 0.0 : 1.0;
 				}
 
-				lightSumColor = vec3(visibility); break;
+				//lightSumColor = vec3(visibility); break;
 			}
 		}
 		if (visibility == 0.0) continue;
@@ -201,7 +201,7 @@ void main()
 #endif
 	}
 
-	outColor = vec4(lightSumColor, 1.0); return;
+	//outColor = vec4(lightSumColor, 1.0); return;
 	
 	vec3 color = lightSumColor;
 #if defined(USE_IBL)

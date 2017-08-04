@@ -497,7 +497,8 @@ namespace tke
 		frustumPlanes[5].z = matrix[2].w - matrix[2].z;
 		frustumPlanes[5].w = matrix[3].w - matrix[3].z;
 
-		for (auto i = 0; i < 6; i++) frustumPlanes[i] = glm::normalize(frustumPlanes[i]);
+		for (auto i = 0; i < 6; i++) 
+			frustumPlanes[i] = glm::normalize(frustumPlanes[i]);
 	}
 
 	void Camera::reset()
