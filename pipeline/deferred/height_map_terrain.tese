@@ -1,9 +1,11 @@
 layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 {
-	float ext;
+	int blockCx;
+	float blockSize;
 	float height;
-	float tessFactor;
-	float mapDim;
+	float tessellationFactor;
+	float textureUvFactor;
+	float mapDimension;
 }u_terrain;
 
 layout(binding = TKE_UBO_BINDING) uniform MATRIX

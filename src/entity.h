@@ -550,9 +550,11 @@ namespace tke
 		REFLv std::string color_map2_filename;
 		REFLv std::string color_map3_filename;
 
-		float ext = 16.f;
+		int blockCx = 64;
+		float blockSize = 16.f;
 		float height = 100.f;
-		float tessFactor = 0.75f;
+		float tessellationFactor = 0.75f;
+		float textureUvFactor = 8.f;
 
 		Image *heightMap = nullptr;
 		Image *colorMaps[4] = {};
@@ -563,6 +565,12 @@ namespace tke
 
 		Terrain();
 		Terrain(TerrainType _type, bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
+	};
+
+	REFLECTABLE struct Water : Transformer
+	{
+		REFL_BANK;
+
 	};
 
 	enum class SkyType
@@ -591,10 +599,12 @@ namespace tke
 
 	struct HeightMapTerrainShaderStruct
 	{
-		float ext;
+		int blockCx;
+		float blockSize;
 		float height;
-		float tessFactor;
-		float mapDim;
+		float tessellationFactor;
+		float textureUvFactor;
+		float mapDimension;
 	};
 
 	struct AmbientBufferShaderStruct

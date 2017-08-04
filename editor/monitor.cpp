@@ -427,10 +427,10 @@ void ModelMonitorWidget::show()
 			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
 			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
 				camera.moveByCursor(distX, distY);
-			else if (mainWindow->mouseMiddle.pressing)
-			camera.rotateByCursor(distX, distY);
 			else if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
 				camera.scroll(distX);
+			else if (mainWindow->mouseMiddle.pressing)
+				camera.rotateByCursor(distX, distY);
 		}
 		if (mainWindow->mouseLeft.justDown)
 		{

@@ -3298,7 +3298,7 @@ namespace tke
 			hfDesc.samples.data = samples;
 			hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
 
-			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->ext * TKE_PATCH_SIZE / m->cx, t->ext * TKE_PATCH_SIZE / m->cy);
+			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->blockSize * t->blockCx / m->cx, t->blockSize * t->blockCx / m->cy);
 			t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
 			t->actor->createShape(hfGeom, *pxDefaultMaterial);
 
@@ -3657,10 +3657,12 @@ namespace tke
 			if (terrain->changed)
 			{
 				HeightMapTerrainShaderStruct stru;
-				stru.ext = terrain->ext;
+				stru.blockCx = terrain->blockCx;
+				stru.blockSize = terrain->blockSize;
 				stru.height = terrain->height;
-				stru.tessFactor = terrain->tessFactor;
-				stru.mapDim = terrain->heightMap ? terrain->heightMap->cx : 1024;
+				stru.tessellationFactor = terrain->tessellationFactor;
+				stru.textureUvFactor = terrain->textureUvFactor;
+				stru.mapDimension = terrain->heightMap ? terrain->heightMap->cx : 1024;
 
 				heightMapTerrainBuffer->update(&stru, stagingBuffer);
 
@@ -3960,7 +3962,7 @@ namespace tke
 			case TerrainType::height_map:
 				cb_deferred->bindPipeline(heightMapTerrainPipeline);
 				cb_deferred->bindDescriptorSet(&ds_heightMapTerrain->v);
-				cb_deferred->draw(4, 0, TKE_PATCH_SIZE * TKE_PATCH_SIZE);
+				cb_deferred->draw(4, 0, terrain->blockCx * terrain->blockCx);
 				break;
 			}
 		}

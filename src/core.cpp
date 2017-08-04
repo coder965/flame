@@ -190,8 +190,8 @@ namespace tke
 				break;
 			case WM_SIZE:
 			{
-				auto cx = LOWORD(lParam);
-				auto cy = HIWORD(lParam);
+				auto cx = glm::max(LOWORD(lParam), (WORD)1);
+				auto cy = glm::max(HIWORD(lParam), (WORD)1);
 				if (cx != current_window->cx || cy != current_window->cy)
 				{
 					current_window->cx = cx;

@@ -1,11 +1,11 @@
-#include "terrain.h"
-
 layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 {
-	float ext;
+	int blockCx;
+	float blockSize;
 	float height;
-	float tessFactor;
-	float mapDim;
+	float tessellationFactor;
+	float textureUvFactor;
+	float mapDimension;
 }u_terrain;
 
 layout(binding = TKE_UBO_BINDING) uniform MATRIX
@@ -39,8 +39,8 @@ void main()
 {
 	mat3 normalMatrix = mat3(u_matrix.view);
 	
-	vec2 step = vec2(1.0 / u_terrain.mapDim, 0);
-	float eps = (PATCH_SIZE * u_terrain.ext) * step.x;
+	vec2 step = vec2(1.0 / u_terrain.mapDimension, 0);
+	float eps = (u_terrain.blockCx * u_terrain.blockSize) * step.x;
 	
 	float L  = getHeight(inUV - step.xy);
 	float R  = getHeight(inUV + step.xy);
@@ -51,7 +51,7 @@ void main()
 
 	vec3 color = vec3(0);
 	float h = texture(heightMap, inUV).r;
-	vec2 colUV = inUV * PATCH_SIZE * TEX_SIZE;
+	vec2 colUV = inUV * u_terrain.blockCx * u_terrain.textureUvFactor;
 	if (h < 0.33)
 	{
 		float v = h / 0.33;

@@ -1,9 +1,11 @@
 layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 {
-	float ext;
+	int blockCx;
+	float blockSize;
 	float height;
-	float tessFactor;
-	float mapDim;
+	float tessellationFactor;
+	float textureUvFactor;
+	float mapDimension;
 }u_terrain;
 
 layout(binding = TKE_UBO_BINDING) uniform MATRIX
@@ -42,14 +44,14 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 	clip0.xy *= u_matrix.viewportDim;
 	clip1.xy *= u_matrix.viewportDim;
 	
-	return clamp(distance(clip0, clip1) / u_terrain.ext * u_terrain.tessFactor, 1.0, 64.0);
+	return clamp(distance(clip0, clip1) / u_terrain.blockSize * u_terrain.tessellationFactor, 1.0, 64.0);
 }
 
 bool frustumCheck()
 {
 	vec2 uv = (inUV[0] + inUV[1] + inUV[2] + inUV[3]) * 0.25;
 	
-	const float radius = max(u_terrain.ext, u_terrain.height);
+	const float radius = max(u_terrain.blockSize, u_terrain.height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
 	pos.y += texture(heightMap, uv).r * u_terrain.height;
 	pos = u_matrix.projView * pos;
@@ -79,7 +81,7 @@ void main()
 		else
 		{
 			
-			if (u_terrain.tessFactor > 0.0)
+			if (u_terrain.tessellationFactor > 0.0)
 			{
 				gl_TessLevelOuter[0] = screenSpaceTessFactor(gl_in[3].gl_Position, gl_in[0].gl_Position);
 				gl_TessLevelOuter[1] = screenSpaceTessFactor(gl_in[0].gl_Position, gl_in[1].gl_Position);

@@ -1,4 +1,4 @@
-#pragma
+#pragma once
 
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)
@@ -15,4 +15,3 @@
 #define TKE_SHADOWMAP_CX (2048)
 #define TKE_SHADOWMAP_CY (2048)
 #define TKE_MAX_SHADOW_COUNT (8)
-#define TKE_PATCH_SIZE (64)

@@ -16,6 +16,7 @@ tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Model::b = tke::addReflectionBank("Model");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
+tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
 tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 struct ReflectInit{ReflectInit(){
 tke::Enum *currentEnum = nullptr;
@@ -151,6 +152,8 @@ currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_ma
 currentBank->addV<std::string>("color_map1_filename", offsetof(Terrain, color_map1_filename));
 currentBank->addV<std::string>("color_map2_filename", offsetof(Terrain, color_map2_filename));
 currentBank->addV<std::string>("color_map3_filename", offsetof(Terrain, color_map3_filename));
+currentBank = Water::b;
+currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Water, Transformer));
 currentBank = Scene::b;
 currentBank->addV<std::string>("name", offsetof(Scene, name));
 }};static ReflectInit init;
