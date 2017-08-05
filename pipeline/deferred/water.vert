@@ -1,4 +1,4 @@
-struct WATER
+struct Water
 {
 	vec3 coord;
 	int blockCx;

@@ -638,6 +638,7 @@ namespace tke
 	extern Pipeline *mrtPipeline;
 	extern Pipeline *mrtAnimPipeline;
 	extern Pipeline *terrainPipeline;
+	extern Pipeline *waterPipeline;
 	extern Pipeline *proceduralTerrainPipeline;
 	extern Pipeline *deferredPipeline;
 	extern Pipeline *esmPipeline;
@@ -719,7 +720,6 @@ namespace tke
 		std::unique_ptr<IndirectIndexBuffer> animatedObjectIndirectBuffer;
 		std::unique_ptr<UniformBuffer> terrainBuffer;
 		std::unique_ptr<UniformBuffer> waterBuffer;
-		std::unique_ptr<UniformBuffer> proceduralTerrainBuffer;
 		std::unique_ptr<UniformBuffer> lightBuffer;
 		std::unique_ptr<UniformBuffer> shadowBuffer;
 		std::unique_ptr<UniformBuffer> ambientBuffer;
@@ -728,6 +728,7 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_mrtAnim;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim_bone;
 		std::unique_ptr<DescriptorSet> ds_terrain;
+		std::unique_ptr<DescriptorSet> ds_water;
 		std::unique_ptr<DescriptorSet> ds_esm;
 		std::unique_ptr<DescriptorSet> ds_esmAnim;
 		std::unique_ptr<DescriptorSet> ds_defe;
@@ -744,13 +745,15 @@ namespace tke
 
 		Scene();
 		~Scene();
-		void addLight(Light *pLight);
-		Light *removeLight(Light *pLight);
-		void addObject(Object *pObject);
-		Object *removeObject(Object *pObject);
+		void addLight(Light *l);
+		Light *removeLight(Light *l);
+		void addObject(Object *o);
+		Object *removeObject(Object *o);
 		int getCollisionGroupID(int ID, unsigned int mask);
-		void addTerrain(Terrain *pTerrain);
+		void addTerrain(Terrain *t);
 		void removeTerrain();
+		void addWater(Water *w);
+		Water *removeWater(Water *w);
 		void clear();
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);

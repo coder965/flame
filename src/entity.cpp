@@ -2895,6 +2895,8 @@ namespace tke
 	static int terr_heightMap_position = -1;
 	static int terr_colorMap_position = -1;
 
+	Pipeline *waterPipeline = nullptr;
+
 	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
 	static int defe_shad_position = -1;
@@ -2954,7 +2956,6 @@ namespace tke
 		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof TerrainShaderStruct);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * TKE_MAX_WATER_COUNT);
-		proceduralTerrainBuffer = std::make_unique<UniformBuffer>(sizeof(glm::vec2));
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
 		ambientBuffer = std::make_unique<UniformBuffer>(sizeof AmbientBufferShaderStruct);
 		shadowBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_SHADOW_COUNT);
@@ -2965,7 +2966,7 @@ namespace tke
 		resource.setBuffer(staticObjectMatrixBuffer.get(), "StaticObjectMatrix.UniformBuffer");
 		resource.setBuffer(animatedObjectMatrixBuffer.get(), "AnimatedObjectMatrix.UniformBuffer");
 		resource.setBuffer(terrainBuffer.get(), "Terrain.UniformBuffer");
-		resource.setBuffer(proceduralTerrainBuffer.get(), "ProceduralTerrain.UniformBuffer");
+		resource.setBuffer(waterBuffer.get(), "Water.UniformBuffer");
 		resource.setBuffer(lightBuffer.get(), "Light.UniformBuffer");
 		resource.setBuffer(ambientBuffer.get(), "Ambient.UniformBuffer");
 		resource.setBuffer(shadowBuffer.get(), "Shadow.UniformBuffer");
@@ -2979,6 +2980,8 @@ namespace tke
 		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline, 2);
 		ds_terrain = std::make_unique<DescriptorSet>(descriptorPool, terrainPipeline);
 		terrainPipeline->linkDescriptors(ds_terrain.get(), &resource);
+		ds_water = std::make_unique<DescriptorSet>(descriptorPool, waterPipeline);
+		waterPipeline->linkDescriptors(ds_water.get(), &resource);
 		ds_esm = std::make_unique<DescriptorSet>(descriptorPool, esmPipeline);
 		esmPipeline->linkDescriptors(ds_esm.get(), &resource);
 		ds_esmAnim = std::make_unique<DescriptorSet>(descriptorPool, esmAnimPipeline);
@@ -3323,6 +3326,35 @@ namespace tke
 		mtx.unlock();
 	}
 
+	void Scene::addWater(Water *w)
+	{
+		mtx.lock();
+		waters.push_back(std::move(std::unique_ptr<Water>(w)));
+		mtx.unlock();
+	}
+
+	Water *Scene::removeWater(Water *w)
+	{
+		mtx.lock();
+		for (auto it = waters.begin(); it != waters.end(); it++)
+		{
+			if (it->get() == w)
+			{
+				for (auto itt = it + 1; itt != waters.end(); itt++)
+				{
+					//(*itt)->sceneIndex--;
+					(*itt)->changed = true;
+				}
+				delete w;
+				it = waters.erase(it);
+				w = it == waters.end() ? nullptr : it->get();
+				break;
+			}
+		}
+		mtx.unlock();
+		return w;
+	}
+
 	void Scene::clear()
 	{
 		mtx.lock();
@@ -3471,17 +3503,7 @@ namespace tke
 		if (camera.changed || camera.object)
 			camera.lookAtTarget();
 		if (camera.changed)
-		{
 			camera.updateFrustum();
-			// update procedural terrain
-			{
-
-				auto pos = camera.getCoord();
-				auto seed = glm::vec2(pos.x - 500.f, pos.z - 500.f);
-				seed /= 1000.f;
-				proceduralTerrainBuffer->update(&seed, stagingBuffer);
-			}
-		}
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
 			stru.proj = matPerspective;
@@ -3680,7 +3702,6 @@ namespace tke
 			int updateCount = 0;
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(WaterShaderStruct) * waters.size());
-			int index = 0;
 
 			for (auto &w : waters)
 			{
@@ -3994,6 +4015,17 @@ namespace tke
 			cb_deferred->bindDescriptorSet(&ds_terrain->v);
 			cb_deferred->draw(4, 0, terrain->blockCx * terrain->blockCx);
 		}
+			// water
+		if (waters.size() > 0)
+		{
+			int index = 0;
+			for (auto &w : waters)
+			{
+				cb_deferred->bindPipeline(waterPipeline);
+				cb_deferred->bindDescriptorSet(&ds_water->v);
+				cb_deferred->draw(4, 0, w->blockCx * w->blockCx);
+			}
+		}
 
 		//cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
 		//	VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, 
@@ -4207,6 +4239,10 @@ namespace tke
 		terrainPipeline->setup(sceneRenderPass, 0, false);
 		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
 		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
+
+		waterPipeline = new Pipeline;
+		waterPipeline->loadXML(enginePath + "pipeline/deferred/water.xml");
+		waterPipeline->setup(sceneRenderPass, 0, false);
 
 		//proceduralTerrainPipeline = new Pipeline;
 		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain.xml");

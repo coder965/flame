@@ -444,3 +444,22 @@ void TerrainCreationSetting::save(tke::AttributeTreeNode *n)
 }
 
 TerrainCreationSetting tcs;
+
+void WaterCreationSetting::load(tke::AttributeTreeNode *n)
+{
+	for (auto &a : n->attributes)
+	{
+		if (a->name == "coord")
+			a->get(&coord);
+		else if (a->name == "height")
+			a->get(&height);
+	}
+}
+
+void WaterCreationSetting::save(tke::AttributeTreeNode *n)
+{
+	n->addAttribute("coord", &coord);
+	n->addAttribute("height", &height);
+}
+
+WaterCreationSetting wcs;

@@ -221,6 +221,33 @@ static void _show_scene(tke::Scene *scene)
 
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("Waters"))
+	{
+		if (ImGui::TreeNode("List"))
+		{
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Create"))
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				char *strs[] = { "CoordX", "CoordY", "CoordZ" };
+				ImGui::DragFloat(strs[i], &wcs.coord[i], 0.5f);
+			}
+			ImGui::DragFloat("Height", &wcs.height);
+			if (ImGui::Button("Create Water"))
+			{
+				auto w = new tke::Water;
+				w->setCoord(wcs.coord);
+				w->height = wcs.height;
+				scene->addWater(w);
+			}
+
+			ImGui::TreePop();
+		}
+
+		ImGui::TreePop();
+	}
 }
 
 static void _show_model(tke::Model *m)

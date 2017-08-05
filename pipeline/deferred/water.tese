@@ -1,4 +1,4 @@
-struct WATER
+struct Water
 {
 	vec3 coord;
 	int blockCx;
@@ -43,7 +43,7 @@ void main()
 	vec4 pos0 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
-	//pos.y += texture(heightMap, outUV).r * u_water.d[inWaterId].height;
-	pos.xyz += u_water.d[inWaterId].coord;
+	//pos.y += texture(heightMap, outUV).r * u_water.d[inWaterId[0]].height;
+	pos.xyz += u_water.d[inWaterId[0]].coord;
 	gl_Position = u_matrix.projView * pos;
 }

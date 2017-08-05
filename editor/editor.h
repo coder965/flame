@@ -69,3 +69,14 @@ struct TerrainCreationSetting
 };
 
 extern TerrainCreationSetting tcs;
+
+struct WaterCreationSetting
+{
+	glm::vec3 coord;
+	float height = 100;
+
+	void load(tke::AttributeTreeNode *n);
+	void save(tke::AttributeTreeNode *n);
+};
+
+extern WaterCreationSetting wcs;
