@@ -5,6 +5,7 @@
 #include "monitor.h"
 #include "attribute.h"
 #include "debug.h"
+#include "texture_editor.h"
 
 LastWindowType lastWindowType = LastWindowTypeNull;
 MonitorWidget *lastMonitorWidget = nullptr;
@@ -77,6 +78,20 @@ EditorWindow::EditorWindow()
 					if (opened)
 						openAttributeWidget();
 				}
+				else if (c->name == "DebugWidget")
+				{
+					bool opened;
+					c->firstAttribute("opened")->get(&opened);
+					if (opened)
+						openDebugWidget();
+				}
+				else if (c->name == "TextureEditor")
+				{
+					bool opened;
+					c->firstAttribute("opened")->get(&opened);
+					if (opened)
+						openTextureEditor();
+				}
 				else if (c->name == "object_creation_setting")
 				{
 					ocs.load(c.get());
@@ -119,6 +134,16 @@ EditorWindow::~EditorWindow()
 		{
 			auto n = new tke::AttributeTreeNode("AttributeWidget");
 			n->addAttribute("opened", attributeWidget ? "true" : "false");
+			at.add(n);
+		}
+		{
+			auto n = new tke::AttributeTreeNode("DebugWidget");
+			n->addAttribute("opened", debugWidget ? "true" : "false");
+			at.add(n);
+		}
+		{
+			auto n = new tke::AttributeTreeNode("TextureEditor");
+			n->addAttribute("opened", textureEditor ? "true" : "false");
 			at.add(n);
 		}
 		{
@@ -172,6 +197,12 @@ void EditorWindow::openDebugWidget()
 {
 	if (!debugWidget)
 		debugWidget = new DebugWidget;
+}
+
+void EditorWindow::openTextureEditor()
+{
+	if (!textureEditor)
+		textureEditor = new TextureEditor;
 }
 
 void EditorWindow::renderEvent()
@@ -249,6 +280,10 @@ void EditorWindow::renderEvent()
 		{
 			openDebugWidget();
 		}
+		if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
+		{
+			openTextureEditor();
+		}
 		ImGui::EndMenu();
 	}
 	if (ImGui::BeginMenu("Build"))
@@ -294,6 +329,16 @@ void EditorWindow::renderEvent()
 		{
 			delete debugWidget;
 			debugWidget = nullptr;
+		}
+	}
+
+	if (textureEditor)
+	{
+		textureEditor->show();
+		if (!textureEditor->opened)
+		{
+			delete textureEditor;
+			textureEditor = nullptr;
 		}
 	}
 

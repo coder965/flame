@@ -45,6 +45,9 @@
     <ClCompile Include="debug.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="texture_editor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editor.h">
@@ -69,6 +72,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="debug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="texture_editor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,6 +3,8 @@
 	<MonitorWidget model_filename="D:/miku/miku.pmd"/>
 	<MonitorWidget scene_filename="scene_1.xml" follow="false"/>
 	<AttributeWidget opened="true"/>
+	<DebugWidget opened="false"/>
+	<TextureEditor opened="true"/>
 	<object_creation_setting modelIndex="1" use_camera_position="false" use_camera_target_position="true" coord="0./0./0." randCX="false" randCY="false" randCZ="false" coordRandRange="8.700001" euler="0./0./0." randRX="false" randRY="false" randRZ="false" eulerRandRange="360." scale="1./1./1." randSX="false" randSY="false" randSZ="false" scaleRandRange="8.6" same_scale_rand="false" physxType="0"/>
 	<terrain_creation_setting coord="0./0./0." heightMapIndex="2" colorMap0Index="3" colorMap1Index="4" colorMap2Index="5" colorMap3Index="6" height="100." usePhysx="true"/>
 	<select/>

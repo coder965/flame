@@ -143,6 +143,7 @@ currentBank->addE("ObjectPhysicsType", "physics_type", offsetof(Object, physics_
 currentBank = Terrain::b;
 currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Terrain, Transformer));
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
+currentBank->addV<std::string>("blend_map_filename", offsetof(Terrain, blend_map_filename));
 currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
 currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_map0_filename));
 currentBank->addV<std::string>("color_map1_filename", offsetof(Terrain, color_map1_filename));

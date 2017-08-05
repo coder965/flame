@@ -22,7 +22,7 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 }u_matrix;
 
 layout(binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
-
+layout(binding = TKE_UBO_BINDING) uniform sampler2D blendMap;
 layout(binding = TKE_UBO_BINDING) uniform sampler2D colorMaps[4];
 
 layout (location = 0) in vec2 inUV;
@@ -52,21 +52,21 @@ void main()
 
 	vec3 color = vec3(0);
 	float h = texture(heightMap, inUV).r;
-	vec2 colUV = inUV * u_terrain.blockCx * u_terrain.textureUvFactor;
+	vec2 tilledUV = inUV * u_terrain.blockCx * u_terrain.textureUvFactor;
 	if (h < 0.33)
 	{
 		float v = h / 0.33;
-		color = mix(texture(colorMaps[0], colUV).rgb, texture(colorMaps[1], colUV).rgb, v);
+		color = mix(texture(colorMaps[0], tilledUV).rgb, texture(colorMaps[1], tilledUV).rgb, v);
 	}
 	else if (h < 0.66)
 	{
 		float v = (h - 0.33) / 0.33;
-		color = mix(texture(colorMaps[1], colUV).rgb, texture(colorMaps[2], colUV).rgb, v);
+		color = mix(texture(colorMaps[1], tilledUV).rgb, texture(colorMaps[2], tilledUV).rgb, v);
 	}
 	else
 	{
 		float v = (h - 0.66) / 0.33;
-		color = mix(texture(colorMaps[2], colUV).rgb, texture(colorMaps[3], colUV).rgb, v);
+		color = mix(texture(colorMaps[2], tilledUV).rgb, texture(colorMaps[3], tilledUV).rgb, v);
 	}
 	
 	outAlbedoAlpha = vec4(color, 1.0);

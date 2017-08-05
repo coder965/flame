@@ -166,6 +166,7 @@
     </ClCompile>
     <ClCompile Include="monitor.cpp" />
     <ClCompile Include="select.cpp" />
+    <ClCompile Include="texture_editor.cpp" />
     <ClCompile Include="tool.cpp" />
     <ClCompile Include="transformer_tool.cpp" />
   </ItemGroup>
@@ -176,6 +177,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="monitor.h" />
     <ClInclude Include="select.h" />
+    <ClInclude Include="texture_editor.h" />
     <ClInclude Include="tool.h" />
     <ClInclude Include="transformer_tool.h" />
   </ItemGroup>

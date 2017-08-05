@@ -537,6 +537,7 @@ namespace tke
 
 		REFLv bool use_physx = false;
 
+		REFLv std::string blend_map_filename;
 		REFLv std::string height_map_filename;
 		REFLv std::string color_map0_filename;
 		REFLv std::string color_map1_filename;
@@ -549,6 +550,7 @@ namespace tke
 		float tessellationFactor = 0.75f;
 		float textureUvFactor = 8.f;
 
+		Image *blendMap = nullptr;
 		Image *heightMap = nullptr;
 		Image *colorMaps[4] = {};
 		float spec = 0.04f;
