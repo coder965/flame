@@ -117,6 +117,8 @@ namespace tke
 		~OnceFileBuffer();
 	};
 
+	void iterateDirectory(const std::experimental::filesystem::path &filepath, void(*callback)(const std::experimental::filesystem::path &name, bool is_directory));
+
 	struct NormalVariable;
 	struct EnumVariable;
 

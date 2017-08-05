@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <sstream>
 #include <regex>
+#include <filesystem>
 #define NOMINMAX
 #include <Windows.h>
 
@@ -192,6 +193,23 @@ namespace tke
 	OnceFileBuffer::~OnceFileBuffer()
 	{
 		delete data;
+	}
+
+	void iterateDirectory(const std::experimental::filesystem::path &filepath, void(*callback)(const std::experimental::filesystem::path &name, bool is_directory))
+	{
+		std::experimental::filesystem::directory_iterator end_it;
+		for (std::experimental::filesystem::directory_iterator it(filepath); it != end_it; it++)
+		{
+			if (std::experimental::filesystem::is_directory(it->status()))
+			{
+				iterateDirectory(it->path(), callback);
+				callback(it->path().string(), true);
+			}
+			else
+			{
+				callback(it->path().string(), false);
+			}
+		}
 	}
 
 	Variable::Variable(What _what, const std::string &_name)

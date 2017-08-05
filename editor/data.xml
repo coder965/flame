@@ -10,6 +10,6 @@
   <animation filename="D:/miku/walk.vmd"/>
   <model filename="D:/miku/miku.pmd"/>
   <model filename="cube.dae"/>
-  <scene filename="scene_1.xml" />
-  <scene filename="scene_2.xml" />
+  <scene filename="scene_1.scene" />
+  <scene filename="scene_2.scene" />
 </data>

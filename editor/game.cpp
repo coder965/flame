@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "../src/gui.h"
 #include "../src/entity.h"
 
@@ -37,6 +39,47 @@ void Game::load()
 			scene->camera.setMode(tke::CameraMode::targeting);
 			scene->camera.setCoord(0.f, 5.f, 0.f);
 			scenes.push_back(scene);
+		}
+		else if (c->name == "dir")
+		{
+			auto a = c->firstAttribute("path");
+			tke::iterateDirectory(a->value, [](const std::experimental::filesystem::path &name, bool is_dir) {
+				if (!is_dir)
+				{
+					auto ext = name.extension().string();
+					if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".tga")
+					{
+						auto i = tke::createImage(name.string(), false, true);
+						if (i)
+						{
+							tke::textures.push_back(i);
+							tke::addGuiImage(i);
+						}
+					}
+					else if (ext == ".obj" || ext == ".pmd" || ext == ".dae" || ext == ".tkm")
+					{
+						tke::createModel(name.string());
+					}
+					else if (ext == ".vmd" || ext == ".t3a")
+					{
+						tke::createAnimation(name.string());
+					}
+					else if (ext == ".scene")
+					{
+						auto scene = new tke::Scene;
+						scene->load(name.string());
+						scene->camera.setMode(tke::CameraMode::targeting);
+						scene->camera.setCoord(0.f, 5.f, 0.f);
+						scenes.push_back(scene);
+					}
+				}
+			});
+			std::experimental::filesystem::path path(a->value);
+			std::experimental::filesystem::directory_iterator end_it;
+			for (std::experimental::filesystem::directory_iterator it(path); it != end_it; it++)
+			{
+
+			}
 		}
 	}
 }
