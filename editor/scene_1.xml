@@ -1,5 +1,5 @@
 <scene name="1">
 	<object model_filename="D:/miku/miku.pmd" physics_type="static_r controller" coord="512./49.681156/517.630005" euler="0./0./0." scale="0.1/0.1/0.1" ang_offset="180." speed="1." turn_speed="75."/>
-	<terrain type="height_map" use_physx="true" height_map_filename="heightmap.jpg" color_map0_filename="terrain0.jpg" color_map1_filename="terrain1.jpg" color_map2_filename="terrain2.jpg" color_map3_filename="terrain3.jpg" coord="0./0./0." euler="0./0./0." scale="1./1./1."/>
+	<terrain use_physx="true" height_map_filename="heightmap.jpg" color_map0_filename="terrain0.jpg" color_map1_filename="terrain1.jpg" color_map2_filename="terrain2.jpg" color_map3_filename="terrain3.jpg" coord="0./0./0." euler="0./0./0." scale="1./1./1."/>
 </scene>
 

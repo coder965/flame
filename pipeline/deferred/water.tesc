@@ -1,12 +1,18 @@
-layout(binding = TKE_UBO_BINDING) uniform WATER
+struct WATER
 {
+	vec3 coord;
 	int blockCx;
 	float blockSize;
 	float height;
 	float tessellationFactor;
 	float textureUvFactor;
 	float mapDimension;
-}u_water[8];
+};
+
+layout(binding = TKE_UBO_BINDING) uniform WATER
+{
+	Water d[8];
+}u_water;
 
 layout(binding = TKE_UBO_BINDING) uniform MATRIX
 {
@@ -19,8 +25,6 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
-
-layout(binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
 
 layout (vertices = 4) out;
  
@@ -46,16 +50,17 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 	clip0.xy *= u_matrix.viewportDim;
 	clip1.xy *= u_matrix.viewportDim;
 	
-	return clamp(distance(clip0, clip1) / u_water[inWaterId].blockSize * u_water[inWaterId].tessellationFactor, 1.0, 64.0);
+	return clamp(distance(clip0, clip1) / u_water.d[inWaterId].blockSize * u_water.d[inWaterId].tessellationFactor, 1.0, 64.0);
 }
 
 bool frustumCheck()
 {
 	vec2 uv = (inUV[0] + inUV[1] + inUV[2] + inUV[3]) * 0.25;
 	
-	const float radius = max(u_water[inWaterId].blockSize, u_water[inWaterId].height);
+	const float radius = max(u_water.d[inWaterId].blockSize, u_water.d[inWaterId].height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
-	pos.y += texture(heightMap, uv).r * u_water[inWaterId].height;
+	//pos.y += texture(heightMap, uv).r * u_water.d[inWaterId].height;
+	pos.xyz += u_water.d[inWaterId].coord;
 	pos = u_matrix.projView * pos;
 	pos = pos / pos.w;
 
@@ -83,7 +88,7 @@ void main()
 		else
 		{
 			
-			if (u_water[inWaterId].tessellationFactor > 0.0)
+			if (u_water.d[inWaterId].tessellationFactor > 0.0)
 			{
 				gl_TessLevelOuter[0] = screenSpaceTessFactor(gl_in[3].gl_Position, gl_in[0].gl_Position);
 				gl_TessLevelOuter[1] = screenSpaceTessFactor(gl_in[0].gl_Position, gl_in[1].gl_Position);
@@ -104,7 +109,7 @@ void main()
 		}
 	}
 
-	gl_out[gl_InvocationID].gl_Position =  gl_in[gl_InvocationID].gl_Position;
+	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 	outWaterId[gl_InvocationID] = inWaterId[gl_InvocationID];
 	outUV[gl_InvocationID] = inUV[gl_InvocationID];
 } 

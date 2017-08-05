@@ -55,6 +55,7 @@ extern ObjectCreationSetting ocs;
 
 struct TerrainCreationSetting
 {
+	glm::vec3 coord;
 	int heightMapIndex = 0;
 	int colorMap0Index = 0;
 	int colorMap1Index = 0;

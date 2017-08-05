@@ -1,5 +1,6 @@
 layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 {
+	vec3 coord;
 	int blockCx;
 	float blockSize;
 	float height;
@@ -38,5 +39,6 @@ void main()
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
 	pos.y += texture(heightMap, outUV).r * u_terrain.height;
+	pos.xyz += u_terrain.coord;
 	gl_Position = u_matrix.projView * pos;
 }

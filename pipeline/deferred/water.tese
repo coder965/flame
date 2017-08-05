@@ -1,12 +1,18 @@
-layout(binding = TKE_UBO_BINDING) uniform WATER
+struct WATER
 {
+	vec3 coord;
 	int blockCx;
 	float blockSize;
 	float height;
 	float tessellationFactor;
 	float textureUvFactor;
 	float mapDimension;
-}u_water[8];
+};
+
+layout(binding = TKE_UBO_BINDING) uniform WATER
+{
+	Water d[8];
+}u_water;
 
 layout(binding = TKE_UBO_BINDING) uniform MATRIX
 {
@@ -19,8 +25,6 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
 }u_matrix;
-
-layout (binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
 
 layout(quads, equal_spacing, ccw) in;
 
@@ -39,6 +43,7 @@ void main()
 	vec4 pos0 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
-	pos.y += texture(heightMap, outUV).r * u_water[inWaterId].height;
+	//pos.y += texture(heightMap, outUV).r * u_water.d[inWaterId].height;
+	pos.xyz += u_water.d[inWaterId].coord;
 	gl_Position = u_matrix.projView * pos;
 }

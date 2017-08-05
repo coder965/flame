@@ -1,5 +1,6 @@
 layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 {
+	vec3 coord;
 	int blockCx;
 	float blockSize;
 	float height;

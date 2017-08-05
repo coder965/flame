@@ -2952,7 +2952,8 @@ namespace tke
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
 		staticObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
 		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
-		heightMapTerrainBuffer = std::make_unique<UniformBuffer>(sizeof(HeightMapTerrainShaderStruct) * 8);
+		terrainBuffer = std::make_unique<UniformBuffer>(sizeof TerrainShaderStruct);
+		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * TKE_MAX_WATER_COUNT);
 		proceduralTerrainBuffer = std::make_unique<UniformBuffer>(sizeof(glm::vec2));
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
 		ambientBuffer = std::make_unique<UniformBuffer>(sizeof AmbientBufferShaderStruct);
@@ -2963,7 +2964,7 @@ namespace tke
 		resource.setBuffer(matrixBuffer.get(), "Matrix.UniformBuffer");
 		resource.setBuffer(staticObjectMatrixBuffer.get(), "StaticObjectMatrix.UniformBuffer");
 		resource.setBuffer(animatedObjectMatrixBuffer.get(), "AnimatedObjectMatrix.UniformBuffer");
-		resource.setBuffer(heightMapTerrainBuffer.get(), "HeightMapTerrain.UniformBuffer");
+		resource.setBuffer(terrainBuffer.get(), "Terrain.UniformBuffer");
 		resource.setBuffer(proceduralTerrainBuffer.get(), "ProceduralTerrain.UniformBuffer");
 		resource.setBuffer(lightBuffer.get(), "Light.UniformBuffer");
 		resource.setBuffer(ambientBuffer.get(), "Ambient.UniformBuffer");
@@ -3654,15 +3655,16 @@ namespace tke
 		{
 			if (terrain->changed)
 			{
-				HeightMapTerrainShaderStruct stru;
+				TerrainShaderStruct stru;
+				stru.coord = terrain->getCoord();
 				stru.blockCx = terrain->blockCx;
 				stru.blockSize = terrain->blockSize;
 				stru.height = terrain->height;
 				stru.tessellationFactor = terrain->tessellationFactor;
 				stru.textureUvFactor = terrain->textureUvFactor;
-				stru.mapDimension = terrain->heightMap ? terrain->heightMap->cx : 1024;
+				stru.mapDimension = terrain->heightMap->cx;
 
-				heightMapTerrainBuffer->update(&stru, stagingBuffer);
+				terrainBuffer->update(&stru, stagingBuffer);
 
 				if (terr_heightMap_position != -1)
 					ds_terrain->setImage(terr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
@@ -3672,6 +3674,39 @@ namespace tke
 						ds_terrain->setImage(terr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
 				}
 			}
+		}
+		if (waters.size() > 0)
+		{
+			int updateCount = 0;
+			std::vector<VkBufferCopy> ranges;
+			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(WaterShaderStruct) * waters.size());
+			int index = 0;
+
+			for (auto &w : waters)
+			{
+				if (w->changed)
+				{
+					auto offset = sizeof(WaterShaderStruct) * updateCount;
+					WaterShaderStruct stru;
+					stru.coord = w->getCoord();
+					stru.blockCx = w->blockCx;
+					stru.blockSize = w->blockSize;
+					stru.height = w->height;
+					stru.tessellationFactor = w->tessellationFactor;
+					stru.textureUvFactor = w->textureUvFactor;
+					stru.mapDimension = 1024;
+					memcpy(map + offset, &stru, sizeof(WaterShaderStruct));
+					VkBufferCopy range = {};
+					range.srcOffset = offset;
+					range.dstOffset = offset;
+					range.size = sizeof(WaterShaderStruct);
+					ranges.push_back(range);
+
+					updateCount++;
+				}
+			}
+			stagingBuffer->unmap();
+			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, waterBuffer->v, ranges.size(), ranges.data());
 		}
 		static std::vector<Object*> staticObjects;
 		static std::vector<Object*> animatedObjects;

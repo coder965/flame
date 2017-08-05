@@ -595,14 +595,29 @@ namespace tke
 		LightShaderStruct lights[TKE_MAX_LIGHT_COUNT];
 	};
 
-	struct HeightMapTerrainShaderStruct
+	struct TerrainShaderStruct
 	{
+		glm::vec3 coord;
 		int blockCx;
 		float blockSize;
 		float height;
 		float tessellationFactor;
 		float textureUvFactor;
 		float mapDimension;
+	};
+
+	struct WaterShaderStruct
+	{
+		glm::vec3 coord;
+		int blockCx;
+		float blockSize;
+		float height;
+		float tessellationFactor;
+		float textureUvFactor;
+		float mapDimension;
+		unsigned int dummy0;
+		unsigned int dummy1;
+		unsigned int dummy2;
 	};
 
 	struct AmbientBufferShaderStruct
@@ -702,7 +717,8 @@ namespace tke
 		std::unique_ptr<UniformBuffer> animatedObjectMatrixBuffer;
 		std::unique_ptr<IndirectIndexBuffer> staticObjectIndirectBuffer;
 		std::unique_ptr<IndirectIndexBuffer> animatedObjectIndirectBuffer;
-		std::unique_ptr<UniformBuffer> heightMapTerrainBuffer;
+		std::unique_ptr<UniformBuffer> terrainBuffer;
+		std::unique_ptr<UniformBuffer> waterBuffer;
 		std::unique_ptr<UniformBuffer> proceduralTerrainBuffer;
 		std::unique_ptr<UniformBuffer> lightBuffer;
 		std::unique_ptr<UniformBuffer> shadowBuffer;

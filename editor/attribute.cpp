@@ -177,6 +177,11 @@ static void _show_scene(tke::Scene *scene)
 				tcs.colorMap2Index = 0;
 			if (tcs.colorMap3Index >= tke::textures.size())
 				tcs.colorMap3Index = 0;
+			for (int i = 0; i < 3; i++)
+			{
+				char *strs[] = { "CoordX", "CoordY", "CoordZ" };
+				ImGui::DragFloat(strs[i], &tcs.coord[i], 0.5f);
+			}
 			if (tke::textures.size() > 0)
 			{
 				if (ImGui::Combo("Height Map", &tcs.heightMapIndex, [](void *data, int idx, const char **out_text) {
@@ -204,18 +209,13 @@ static void _show_scene(tke::Scene *scene)
 			ImGui::Checkbox("Use Physx", &tcs.usePhysx);
 			if (tke::textures.size() > 0)
 			{
-				if (ImGui::Button("Create Height Map Terrain"))
+				if (ImGui::Button("Create Terrain"))
 				{
 					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
+					t->setCoord(tcs.coord);
 					t->height = tcs.height;
 					scene->addTerrain(t);
 				}
-			}
-			ImGui::Separator();
-			if (ImGui::Button("Create Procedural Terrain"))
-			{
-				//auto t = new tke::Terrain(tke::TerrainType::procedural, tcs.usePhysx);
-				//scene->addTerrain(t);
 			}
 		}
 
