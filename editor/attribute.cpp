@@ -169,6 +169,8 @@ static void _show_scene(tke::Scene *scene)
 		{
 			if (tcs.heightMapIndex >= tke::textures.size())
 				tcs.heightMapIndex = 0;
+			if (tcs.blendMapIndex >= tke::textures.size())
+				tcs.blendMapIndex = 0;
 			if (tcs.colorMap0Index >= tke::textures.size())
 				tcs.colorMap0Index = 0;
 			if (tcs.colorMap1Index >= tke::textures.size())
@@ -185,6 +187,10 @@ static void _show_scene(tke::Scene *scene)
 			if (tke::textures.size() > 0)
 			{
 				if (ImGui::Combo("Height Map", &tcs.heightMapIndex, [](void *data, int idx, const char **out_text) {
+					*out_text = tke::textures[idx]->filename.c_str();
+					return true;
+				}, nullptr, tke::textures.size()));
+				if (ImGui::Combo("Blend Map", &tcs.blendMapIndex, [](void *data, int idx, const char **out_text) {
 					*out_text = tke::textures[idx]->filename.c_str();
 					return true;
 				}, nullptr, tke::textures.size()));
@@ -211,7 +217,7 @@ static void _show_scene(tke::Scene *scene)
 			{
 				if (ImGui::Button("Create Terrain"))
 				{
-					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
+					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.blendMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
 					t->setCoord(tcs.coord);
 					t->height = tcs.height;
 					scene->addTerrain(t);

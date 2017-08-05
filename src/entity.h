@@ -559,7 +559,7 @@ namespace tke
 		physx::PxRigidActor *actor = nullptr;
 
 		Terrain();
-		Terrain(bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
+		Terrain(bool _use_physx, Image *_heightMap, Image *_blendMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
 	};
 
 	REFLECTABLE struct Water : Transformer

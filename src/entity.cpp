@@ -2860,8 +2860,8 @@ namespace tke
 
 	Terrain::Terrain() {}
 
-	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3)
-		:use_physx(_use_physx), heightMap(_heightMap)
+	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_blendMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3)
+		:use_physx(_use_physx), blendMap(_blendMap), heightMap(_heightMap)
 	{
 		colorMaps[0] = _colorMap0;
 		colorMaps[1] = _colorMap1;
@@ -2893,6 +2893,7 @@ namespace tke
 
 	Pipeline *terrainPipeline = nullptr;
 	static int terr_heightMap_position = -1;
+	static int terr_blendMap_position = -1;
 	static int terr_colorMap_position = -1;
 
 	Pipeline *waterPipeline = nullptr;
@@ -3270,7 +3271,7 @@ namespace tke
 
 	void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
-		if (!t->heightMap || !t->colorMaps[0] || !t->colorMaps[1] || !t->colorMaps[2] || !t->colorMaps[3])
+		if (!t->heightMap || !t->blendMap || !t->colorMaps[0] || !t->colorMaps[1] || !t->colorMaps[2] || !t->colorMaps[3])
 		{
 			delete t;
 			return;
@@ -3690,6 +3691,8 @@ namespace tke
 
 				if (terr_heightMap_position != -1)
 					ds_terrain->setImage(terr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
+				if (terr_blendMap_position != -1)
+					ds_terrain->setImage(terr_blendMap_position, 0, terrain->blendMap, colorBorderSampler);
 				if (terr_colorMap_position != -1)
 				{
 					for (int i = 0; i < 4; i++)
@@ -4131,6 +4134,7 @@ namespace tke
 				auto t = new Terrain;
 				c->obtainFromAttributes(t, t->b);
 				t->heightMap = getTexture(t->height_map_filename);
+				t->blendMap = getTexture(t->blend_map_filename);
 				t->colorMaps[0] = getTexture(t->color_map0_filename);
 				t->colorMaps[1] = getTexture(t->color_map1_filename);
 				t->colorMaps[2] = getTexture(t->color_map2_filename);
@@ -4238,6 +4242,7 @@ namespace tke
 		terrainPipeline->loadXML(enginePath + "pipeline/deferred/terrain.xml");
 		terrainPipeline->setup(sceneRenderPass, 0, false);
 		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
+		terr_blendMap_position = terrainPipeline->descriptorPosition("blendMap");
 		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
 
 		waterPipeline = new Pipeline;

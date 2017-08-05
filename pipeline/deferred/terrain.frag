@@ -52,22 +52,14 @@ void main()
 
 	vec3 color = vec3(0);
 	float h = texture(heightMap, inUV).r;
+	vec4 blend;
+	blend.rgb = texture(blendMap, inUV).rgb;
+	blend.a = 1.0 - blend.x - blend.y - blend.z;
 	vec2 tilledUV = inUV * u_terrain.blockCx * u_terrain.textureUvFactor;
-	if (h < 0.33)
-	{
-		float v = h / 0.33;
-		color = mix(texture(colorMaps[0], tilledUV).rgb, texture(colorMaps[1], tilledUV).rgb, v);
-	}
-	else if (h < 0.66)
-	{
-		float v = (h - 0.33) / 0.33;
-		color = mix(texture(colorMaps[1], tilledUV).rgb, texture(colorMaps[2], tilledUV).rgb, v);
-	}
-	else
-	{
-		float v = (h - 0.66) / 0.33;
-		color = mix(texture(colorMaps[2], tilledUV).rgb, texture(colorMaps[3], tilledUV).rgb, v);
-	}
+	color += texture(colorMaps[0], tilledUV).rgb * blend.r;
+	color += texture(colorMaps[1], tilledUV).rgb * blend.g;
+	color += texture(colorMaps[2], tilledUV).rgb * blend.b;
+	color += texture(colorMaps[3], tilledUV).rgb * blend.a;
 	
 	outAlbedoAlpha = vec4(color, 1.0);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
