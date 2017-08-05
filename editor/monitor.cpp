@@ -110,8 +110,11 @@ void SceneMonitorWidget::show()
 	if (ImGui::Button("save"))
 		scene->save(scene->filename);
 
-	ImGui::ImageButton(ImTextureID(image->index), ImVec2(tke::resCx, tke::resCy), ImVec2(0, 0), ImVec2(1, 1), 0);
-	ImVec2 image_pos = ImGui::GetItemRectMin();
+	ImVec2 image_pos = ImGui::GetCursorScreenPos();
+	ImVec2 image_size = ImVec2(image->cx, image->cy);
+	ImGui::InvisibleButton("canvas", image_size);
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	draw_list->AddImage(ImTextureID(image->index), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
 		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)

@@ -1,7 +1,7 @@
 <data>
 	<GameExplorer opened="true"/>
 	<MonitorWidget model_filename="D:/miku/miku.pmd"/>
-	<MonitorWidget scene_filename="scene_1.xml" follow="false"/>
+	<MonitorWidget scene_filename="scene_1.xml" follow="true"/>
 	<AttributeWidget opened="true"/>
 	<DebugWidget opened="false"/>
 	<TextureEditor opened="true"/>

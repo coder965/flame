@@ -8,6 +8,9 @@
 #include "entity.h"
 #include "core.h"
 
+#define NOMINMAX
+#include <FreeImage.h>
+
 namespace tke
 {
 	void Device::waitIdle()
@@ -442,7 +445,7 @@ namespace tke
 	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
 		auto view = i->getView(0, level);
-		return getFramebuffer(i->getWidth(level), i->getHeight(level), renderPass, 1, &view);
+		return getFramebuffer(i->getCx(level), i->getCy(level), renderPass, 1, &view);
 	}
 
 	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
@@ -1247,8 +1250,8 @@ namespace tke
 		region.imageSubresource.mipLevel = 0;
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = getWidth(_level);
-		region.imageExtent.height = getHeight(_level);
+		region.imageExtent.width = getCx(_level);
+		region.imageExtent.height = getCy(_level);
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
@@ -1301,7 +1304,7 @@ namespace tke
 		return view->v;
 	}
 
-	int Image::getWidth(int _level) const
+	int Image::getCx(int _level) const
 	{
 		int w = cx;
 		for (;;)
@@ -1314,7 +1317,7 @@ namespace tke
 		return w;
 	}
 
-	int Image::getHeight(int _level) const
+	int Image::getCy(int _level) const
 	{
 		int h = cy;
 		for (;;)
@@ -2522,9 +2525,6 @@ namespace tke
 		return -1;
 	}
 
-#define NOMINMAX
-#include <FreeImage.h>
-
 	ImageData::~ImageData()
 	{
 		delete[]v;
@@ -2574,7 +2574,21 @@ namespace tke
 
 		auto pData = new ImageData;
 		auto colorType = FreeImage_GetColorType(dib);
-		pData->fif = fif;
+		switch (fif)
+		{
+		case FREE_IMAGE_FORMAT::FIF_BMP:
+			pData->file_type = ImageFileTypeBMP;
+			break;
+		case FREE_IMAGE_FORMAT::FIF_JPEG:
+			pData->file_type = ImageFileTypeJPEG;
+			break;
+		case FREE_IMAGE_FORMAT::FIF_PNG:
+			pData->file_type = ImageFileTypePNG;
+			break;
+		case FREE_IMAGE_FORMAT::FIF_TARGA:
+			pData->file_type = ImageFileTypeTARGA;
+			break;
+		}
 		switch (colorType)
 		{
 		case FIC_MINISBLACK: case FIC_MINISWHITE:
@@ -2612,8 +2626,8 @@ namespace tke
 				{
 					for (int x = 0; x < pData->cx; x++)
 					{
-						std::swap(pData->v[y * pData->pitch + x * pData->channel + 0],
-							pData->v[y * pData->pitch + x * pData->channel + 2]);
+						std::swap(pData->v[y * pData->pitch + x * 4 + 0],
+							pData->v[y * pData->pitch + x * 4 + 2]);
 					}
 				}
 			}
@@ -2622,10 +2636,35 @@ namespace tke
 		return pData;
 	}
 
+	void saveImageFile(const std::string &filename, unsigned char *data, int cx, int cy, int byte_per_pixel)
+	{
+		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
+		auto pitch = PITCH(cx * byte_per_pixel);
+		if (byte_per_pixel == 4)
+		{
+			if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
+				fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
+				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
+				fif == FREE_IMAGE_FORMAT::FIF_PNG)
+			{
+				for (int y = 0; y < cy; y++)
+				{
+					for (int x = 0; x < cx; x++)
+					{
+						std::swap(data[y * pitch + x * 4 + 0],
+							data[y * pitch + x * 4 + 2]);
+					}
+				}
+			}
+		}
+		auto dib = FreeImage_ConvertFromRawBits(data, cx, cy, PITCH(cx * byte_per_pixel), byte_per_pixel * 8, 0x0000FF, 0xFF0000, 0x00FF00, true);
+		FreeImage_Save(fif, dib, filename.c_str());
+	}
+
 	Image *createImage(const std::string &filename, bool sRGB, bool saveData)
 	{
-		auto d = createImageData(filename);
-		assert(d);
+		std::unique_ptr<ImageData> d(std::move(createImageData(filename)));
+		assert(d.get());
 
 		auto i = new Image(d->cx, d->cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, d->v, d->size);
 		i->full_filename = filename;
@@ -2640,7 +2679,6 @@ namespace tke
 			i->data = d->v;
 			d->v = nullptr;
 		}
-		delete d;
 
 		return i;
 	}

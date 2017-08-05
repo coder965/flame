@@ -624,7 +624,7 @@ namespace tke
 		defaultMaterial->sceneIndex = 0;
 		modelMaterials.push_back(defaultMaterial);
 
-		stagingBuffer = new StagingBuffer(65536);
+		stagingBuffer = new StagingBuffer(67108864);
 
 		{
 			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);

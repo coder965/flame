@@ -127,9 +127,17 @@ namespace tke
 		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
 
+	enum ImageFileType
+	{
+		ImageFileTypeBMP,
+		ImageFileTypeJPEG,
+		ImageFileTypePNG,
+		ImageFileTypeTARGA
+	};
+
 	struct ImageData
 	{
-		int fif;
+		ImageFileType file_type;
 		size_t byte_per_pixel;
 		size_t channel;
 		size_t cx;
@@ -143,6 +151,7 @@ namespace tke
 	};
 
 	ImageData *createImageData(const std::string &filename);
+	void saveImageFile(const std::string &filename, unsigned char *data, int cx, int cy, int byte_per_pixel);
 
 	struct ImageView
 	{
@@ -195,8 +204,8 @@ namespace tke
 		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, void *_data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
 		Image(Type _type, VkImage _image, int w, int h, VkFormat _format);
 		~Image();
-		int getWidth(int _level = 0) const;
-		int getHeight(int _level = 0) const;
+		int getCx(int _level = 0) const;
+		int getCy(int _level = 0) const;
 		unsigned char getR(float x, float y);
 		void transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout);
 		void fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect);
