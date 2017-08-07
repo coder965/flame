@@ -580,8 +580,6 @@ namespace tke
 		return typeNames[(int)_type];
 	}
 
-	std::vector<std::unique_ptr<Animation>> animations;
-
 	std::string shapeTypeName(ShapeType t)
 	{
 		char *names[] = {
@@ -820,7 +818,6 @@ namespace tke
 		joints.push_back(pJoint);
 	}
 
-	std::vector<std::unique_ptr<Model>> models;
 	static void _add_model(Model *m)
 	{
 		models.push_back(std::move(std::unique_ptr<Model>(m)));
@@ -2752,8 +2749,9 @@ namespace tke
 		}
 	}
 
-	Model *createModel(const std::string &filename)
+	Model *createModel(const std::string &_filename)
 	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
 		if (!std::experimental::filesystem::exists(filename))
 		{
 			std::cout << "Model File Lost:" << filename;
@@ -2789,8 +2787,9 @@ namespace tke
 		return m;
 	}
 
-	Animation *createAnimation(const std::string &filename)
+	Animation *createAnimation(const std::string &_filename)
 	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
 		if (!std::experimental::filesystem::exists(filename))
 		{
 			std::cout << "Animation File Lost:" << filename;
@@ -4099,7 +4098,7 @@ namespace tke
 
 	void Scene::load(const std::string &_filename)
 	{
-		filename = _filename;
+		filename = std::experimental::filesystem::path(_filename).string();
 
 		tke::AttributeTree at("scene", filename);
 		at.obtainFromAttributes(this, b);
@@ -4175,8 +4174,6 @@ namespace tke
 	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
 
 	//}
-
-	std::vector<std::unique_ptr<Scene>> scenes;
 
 	void initScene()
 	{

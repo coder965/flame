@@ -264,17 +264,6 @@ namespace tke
 		std::vector<std::unique_ptr<BoneMotion>> motions;
 	};
 
-	extern std::vector<std::unique_ptr<Animation>> animations;
-	inline Animation *getAnimation(const std::string &filename)
-	{
-		for (auto &a : animations)
-		{
-			if (a->filename == filename)
-				return a.get();
-		}
-		return nullptr;
-	}
-
 	struct BoneMotionTrack
 	{
 		int boneID;
@@ -437,17 +426,6 @@ namespace tke
 
 		void addJoint(Joint *pJoint);
 	};
-
-	extern std::vector<std::unique_ptr<Model>> models;
-	inline Model *getModel(const std::string &filename)
-	{
-		for (auto &m : models)
-		{
-			if (m->filename == filename)
-				return m.get();
-		}
-		return nullptr;
-	}
 
 	struct AnimationComponent
 	{
@@ -764,21 +742,6 @@ namespace tke
 		void load(const std::string &filename);
 		void save(const std::string &filename);
 	};
-
-	extern std::vector<std::unique_ptr<Scene>> scenes;
-	inline void addScene(Scene *s)
-	{
-		scenes.push_back(std::move(std::unique_ptr<Scene>(s)));
-	}
-	inline Scene *getScene(const std::string &filename)
-	{
-		for (auto &s : scenes)
-		{
-			if (s->filename == filename)
-				return s.get();
-		}
-		return nullptr;
-	}
 
 	void initScene();
 }

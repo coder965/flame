@@ -251,7 +251,7 @@ namespace tke
 
 	struct AttributeTreeNode
 	{
-		void *ptr;
+		void *ptr = nullptr;
 		std::string name;
 		std::string value;
 		std::vector<std::unique_ptr<Attribute>> attributes;

@@ -46,8 +46,9 @@ namespace tke
 
 	std::vector<std::unique_ptr<Image>> modelTextures;
 
-	Image *addModelTexture(const std::string &filename, bool sRGB)
+	Image *addModelTexture(const std::string &_filename, bool sRGB)
 	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
 		for (auto &i : modelTextures)
 		{
 			if (i->full_filename == filename)
@@ -85,6 +86,12 @@ namespace tke
 		modelMaterials.push_back(m);
 		return m;
 	}
+
+	std::vector<std::unique_ptr<Animation>> animations;
+
+	std::vector<std::unique_ptr<Model>> models;
+
+	std::vector<std::unique_ptr<Scene>> scenes;
 
 	VertexBuffer *staticVertexBuffer = nullptr;
 	IndexBuffer *staticIndexBuffer = nullptr;

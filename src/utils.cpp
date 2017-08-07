@@ -505,8 +505,8 @@ namespace tke
 		for (auto nn = n->first_node(); nn; nn = nn->next_sibling())
 		{
 			auto c = new AttributeTreeNode(nn->name());
-			p->add(c);
 			_loadXML(nn, c);
+			p->add(c);
 		}
 	}
 

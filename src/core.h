@@ -68,11 +68,12 @@ namespace tke
 	{
 		textures.push_back(std::move(std::unique_ptr<Image>(i)));
 	}
-	inline Image *getTexture(const std::string &filename)
+	inline Image *getTexture(const std::string &_filename)
 	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
 		for (auto &i : textures)
 		{
-			if (i->filename == filename)
+			if (i->full_filename == filename)
 				return i.get();
 		}
 		return nullptr;
@@ -85,6 +86,46 @@ namespace tke
 	extern Material *defaultMaterial;
 	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha, 
 		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap);
+
+	extern std::vector<std::unique_ptr<Animation>> animations;
+	inline Animation *getAnimation(const std::string &_filename)
+	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
+		for (auto &a : animations)
+		{
+			if (a->filename == filename)
+				return a.get();
+		}
+		return nullptr;
+	}
+
+	extern std::vector<std::unique_ptr<Model>> models;
+	inline Model *getModel(const std::string &_filename)
+	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
+		for (auto &m : models)
+		{
+			if (m->filename == filename)
+				return m.get();
+		}
+		return nullptr;
+	}
+
+	extern std::vector<std::unique_ptr<Scene>> scenes;
+	inline void addScene(Scene *s)
+	{
+		scenes.push_back(std::move(std::unique_ptr<Scene>(s)));
+	}
+	inline Scene *getScene(const std::string &_filename)
+	{
+		auto filename = std::experimental::filesystem::path(_filename).string();
+		for (auto &s : scenes)
+		{
+			if (s->filename == filename)
+				return s.get();
+		}
+		return nullptr;
+	}
 
 	extern VertexBuffer *staticVertexBuffer;
 	extern IndexBuffer *staticIndexBuffer;

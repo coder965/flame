@@ -64,14 +64,6 @@ void Game::load()
 					{
 						tke::createAnimation(name.string());
 					}
-					else if (ext == ".scene")
-					{
-						auto s = new tke::Scene;
-						s->load(name.string());
-						s->camera.setMode(tke::CameraMode::targeting);
-						s->camera.setCoord(0.f, 5.f, 0.f);
-						tke::addScene(s);
-					}
 				}
 			});
 
