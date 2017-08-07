@@ -4,21 +4,38 @@
 #include "select.h"
 #include "attribute.h"
 
-static void _show_scene(tke::Scene *scene)
+static void _show_scene(tke::Scene *s)
 {
 	if (ImGui::TreeNode("Sky"))
 	{
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode("Ambient"))
-	{
-		auto ambientColor = scene->ambientColor;
+		static glm::vec2 sun_dir;
+		if (ImGui::Button("Change Sun Dir"))
+		{
+			ImGui::OpenPopup("Sun Dir");
+			sun_dir = s->sunDir;
+		}
+		if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::DragFloat("x", &sun_dir[0]);
+			ImGui::DragFloat("y", &sun_dir[1]);
+			if (ImGui::Button("Ok"))
+			{
+				s->setSunDir(sun_dir);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+				ImGui::CloseCurrentPopup();
+
+			ImGui::EndPopup();
+		}
+		auto ambientColor = s->ambientColor;
 		if (ImGui::DragFloat3("Ambient Color", &ambientColor[0], 0.1f, 0.f, 100.f))
-			scene->setAmbientColor(ambientColor);
-		auto fogColor = scene->fogColor;
+			s->setAmbientColor(ambientColor);
+		auto fogColor = s->fogColor;
 		if (ImGui::DragFloat3("Fog Color", &fogColor[0], 0.1f, 0.f, 100.f))
-			scene->setFogColor(fogColor);
-			
+			s->setFogColor(fogColor);
+
 		ImGui::TreePop();
 	}
 	if (ImGui::TreeNode("Lights"))
@@ -29,9 +46,9 @@ static void _show_scene(tke::Scene *scene)
 	{
 		if (ImGui::TreeNode("List"))
 		{
-			for (int i = 0; i < scene->objects.size(); i++)
+			for (int i = 0; i < s->objects.size(); i++)
 			{
-				auto o = scene->objects[i].get();
+				auto o = s->objects[i].get();
 				if (ImGui::Selectable(std::to_string(i).c_str(), selectedItem.toObject() == o))
 					selectedItem.select(o);
 			}
@@ -62,9 +79,9 @@ static void _show_scene(tke::Scene *scene)
 				{
 					char *strs[] = { "%f CoordX", "%f CoordY", "%f CoordZ" };
 					if (!ocs.use_camera_target_position)
-						ImGui::Text(strs[i], scene->camera.getCoord()[i]);
+						ImGui::Text(strs[i], s->camera.getCoord()[i]);
 					else
-						ImGui::Text(strs[i], scene->camera.target[i]);
+						ImGui::Text(strs[i], s->camera.target[i]);
 				}
 				ImGui::SameLine();
 				char *strs[] = { "Rand##cx", "Rand##cy", "Rand##cz" };
@@ -118,9 +135,9 @@ static void _show_scene(tke::Scene *scene)
 				if (ocs.use_camera_position)
 				{
 					if (ocs.use_camera_target_position)
-						_coord = scene->camera.target;
+						_coord = s->camera.target;
 					else
-						_coord = scene->camera.getCoord();
+						_coord = s->camera.getCoord();
 				}
 				else
 				{
@@ -142,7 +159,7 @@ static void _show_scene(tke::Scene *scene)
 					if (ocs.randS[i + 1]) _scale[i + 1] += ocs.same_scale_rand ? scale_rand : ((float)rand() / (float)RAND_MAX) * ocs.scaleRandRange;
 				o->setScale(_scale);
 
-				scene->addObject(o);
+				s->addObject(o);
 			}
 
 			ImGui::TreePop();
@@ -151,7 +168,7 @@ static void _show_scene(tke::Scene *scene)
 	}
 	if (ImGui::TreeNode("Terrain"))
 	{
-		auto terrain = scene->terrain.get();
+		auto terrain = s->terrain.get();
 
 		if (terrain)
 		{
@@ -163,7 +180,7 @@ static void _show_scene(tke::Scene *scene)
 			ImGui::Text("Height:%f", terrain->height);
 			ImGui::Text("Use Physx:%s", terrain->use_physx ? "Yse" : "No");
 			if (ImGui::Button("Remove Terrain"))
-				scene->removeTerrain();
+				s->removeTerrain();
 		}
 		else
 		{
@@ -220,7 +237,7 @@ static void _show_scene(tke::Scene *scene)
 					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex].get(), tke::textures[tcs.blendMapIndex].get(), tke::textures[tcs.colorMap0Index].get(), tke::textures[tcs.colorMap1Index].get(), tke::textures[tcs.colorMap2Index].get(), tke::textures[tcs.colorMap3Index].get());
 					t->setCoord(tcs.coord);
 					t->height = tcs.height;
-					scene->addTerrain(t);
+					s->addTerrain(t);
 				}
 			}
 		}
@@ -246,7 +263,7 @@ static void _show_scene(tke::Scene *scene)
 				auto w = new tke::Water;
 				w->setCoord(wcs.coord);
 				w->height = wcs.height;
-				scene->addWater(w);
+				s->addWater(w);
 			}
 
 			ImGui::TreePop();

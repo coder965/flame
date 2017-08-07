@@ -59,22 +59,35 @@ void TextureEditor::show()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Save"))
+		ImGui::OpenPopup("Save Attribute");
+	if (ImGui::BeginPopupModal("Save Attribute", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		auto cb = tke::commandPool->begineOnce();
-		VkBufferImageCopy range = {};
-		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.imageSubresource.layerCount = 1;
-		range.imageOffset.x = 0;
-		range.imageOffset.y = 0;
-		range.imageExtent.width = image->cx;
-		range.imageExtent.height = image->cy;
-		range.imageExtent.depth = 1;
-		vkCmdCopyImageToBuffer(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tke::stagingBuffer->v, 1, &range);
-		tke::commandPool->endOnce(cb);
+		static char filename[260];
+		ImGui::InputText("Filename", filename, TK_ARRAYSIZE(filename));
 
-		auto pixel = (unsigned char*)tke::stagingBuffer->map(0, image->size);
-		tke::saveImageFile("shit.png", pixel, image->cx, image->cy, 4);
-		tke::stagingBuffer->unmap();
+		if (ImGui::Button("Save"))
+		{
+			auto cb = tke::commandPool->begineOnce();
+			VkBufferImageCopy range = {};
+			range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			range.imageSubresource.layerCount = 1;
+			range.imageOffset.x = 0;
+			range.imageOffset.y = 0;
+			range.imageExtent.width = image->cx;
+			range.imageExtent.height = image->cy;
+			range.imageExtent.depth = 1;
+			vkCmdCopyImageToBuffer(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tke::stagingBuffer->v, 1, &range);
+			tke::commandPool->endOnce(cb);
+
+			auto pixel = (unsigned char*)tke::stagingBuffer->map(0, image->size);
+			tke::saveImageFile(filename, pixel, image->cx, image->cy, 4);
+			tke::stagingBuffer->unmap();
+
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+			ImGui::CloseCurrentPopup();
 	}
 
 	if (image)

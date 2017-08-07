@@ -520,6 +520,10 @@ namespace tke
 		REFLv std::string color_map1_filename;
 		REFLv std::string color_map2_filename;
 		REFLv std::string color_map3_filename;
+		REFLv std::string normal_map0_filename;
+		REFLv std::string normal_map1_filename;
+		REFLv std::string normal_map2_filename;
+		REFLv std::string normal_map3_filename;
 
 		int blockCx = 64;
 		float blockSize = 16.f;
@@ -530,13 +534,15 @@ namespace tke
 		Image *blendMap = nullptr;
 		Image *heightMap = nullptr;
 		Image *colorMaps[4] = {};
+		Image *normalMaps[4] = {};
 		float spec = 0.04f;
 		float roughness = 1.f;
 
 		physx::PxRigidActor *actor = nullptr;
 
-		Terrain();
-		Terrain(bool _use_physx, Image *_heightMap, Image *_blendMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3);
+		Terrain(bool _use_physx = false, Image *_heightMap = nullptr, Image *_blendMap = nullptr, 
+			Image *_colorMap0 = nullptr, Image *_colorMap1 = nullptr, Image *_colorMap2 = nullptr, Image *_colorMap3 = nullptr,
+			Image *_normalMap0 = nullptr, Image *_normalMap1 = nullptr, Image *_normalMap2 = nullptr, Image *_normalMap3 = nullptr);
 	};
 
 	REFLECTABLE struct Water : Transformer
@@ -635,7 +641,7 @@ namespace tke
 		std::string filepath;
 
 		SkyType skyType = SkyType::atmosphere_scattering;
-		glm::vec2 atmosphereSunDir = glm::vec2(0.f, -90.f);
+		glm::vec2 sunDir = glm::vec2(0.f, -90.f);
 		float atmosphereSunE = 20.f;
 		float atmosphereInnerRadius = 10.f; // The inner (planetary) radius
 		float atmosphereOuterRadius = 10.25f; // The outer (atmosphere) radius
@@ -734,6 +740,7 @@ namespace tke
 		void addWater(Water *w);
 		Water *removeWater(Water *w);
 		void clear();
+		void setSunDir(const glm::vec2 &);
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);
 		Framebuffer *createFramebuffer(Image *dst);

@@ -2850,20 +2850,37 @@ namespace tke
 		}
 	}
 
-	Terrain::Terrain() {}
-
-	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_blendMap, Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3)
+	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_blendMap, 
+		Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3,
+		Image *_normalMap0, Image *_normalMap1, Image *_normalMap2, Image *_normalMap3)
 		:use_physx(_use_physx), blendMap(_blendMap), heightMap(_heightMap)
 	{
 		colorMaps[0] = _colorMap0;
 		colorMaps[1] = _colorMap1;
 		colorMaps[2] = _colorMap2;
 		colorMaps[3] = _colorMap3;
-		height_map_filename = heightMap->filename;
-		color_map0_filename = _colorMap0->filename;
-		color_map1_filename = _colorMap1->filename;
-		color_map2_filename = _colorMap2->filename;
-		color_map3_filename = _colorMap3->filename;
+		normalMaps[0] = _normalMap0;
+		normalMaps[1] = _normalMap1;
+		normalMaps[2] = _normalMap2;
+		normalMaps[3] = _normalMap3;
+		if (heightMap)
+			height_map_filename = heightMap->filename;
+		if (_colorMap0)
+			color_map0_filename = _colorMap0->filename;
+		if (_colorMap1)
+			color_map1_filename = _colorMap1->filename;
+		if (_colorMap2)
+			color_map2_filename = _colorMap2->filename;
+		if (_colorMap3)
+			color_map3_filename = _colorMap2->filename;
+		if (_normalMap0)
+			normal_map0_filename = _normalMap0->filename;
+		if (_normalMap1)
+			normal_map1_filename = _normalMap1->filename;
+		if (_normalMap2)
+			normal_map2_filename = _normalMap2->filename;
+		if (_normalMap3)
+			normal_map3_filename = _normalMap3->filename;
 	}
 
 	static const float gravity = 9.81f;
@@ -2887,6 +2904,7 @@ namespace tke
 	static int terr_heightMap_position = -1;
 	static int terr_blendMap_position = -1;
 	static int terr_colorMap_position = -1;
+	static int terr_normalMap_position = -1;
 
 	Pipeline *waterPipeline = nullptr;
 
@@ -2914,7 +2932,7 @@ namespace tke
 
 	static void _setSunLight_attribute(Scene *s)
 	{
-		s->sunLight->setEuler(glm::vec3(s->atmosphereSunDir, 0.f));
+		s->sunLight->setEuler(glm::vec3(s->sunDir.x, 0.f, s->sunDir.y));
 	}
 
 	Scene::Scene()
@@ -3263,15 +3281,9 @@ namespace tke
 
 	void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
-		if (!t->heightMap || !t->blendMap || !t->colorMaps[0] || !t->colorMaps[1] || !t->colorMaps[2] || !t->colorMaps[3])
-		{
-			delete t;
-			return;
-		}
-
 		mtx.lock();
 
-		if (t->use_physx)
+		if (t->use_physx && t->heightMap)
 		{
 			auto m = t->heightMap;
 
@@ -3358,6 +3370,12 @@ namespace tke
 		terrain.reset();
 
 		mtx.unlock();
+	}
+
+	void Scene::setSunDir(const glm::vec2 &v)
+	{
+		sunDir = v;
+		needUpdateSky = true;
 	}
 
 	void Scene::setAmbientColor(const glm::vec3 &v)
@@ -3681,14 +3699,25 @@ namespace tke
 
 				terrainBuffer->update(&stru, stagingBuffer);
 
-				if (terr_heightMap_position != -1)
+				if (terr_heightMap_position != -1 && terrain->heightMap)
 					ds_terrain->setImage(terr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
-				if (terr_blendMap_position != -1)
+				if (terr_blendMap_position != -1 && terrain->blendMap)
 					ds_terrain->setImage(terr_blendMap_position, 0, terrain->blendMap, colorBorderSampler);
 				if (terr_colorMap_position != -1)
 				{
 					for (int i = 0; i < 4; i++)
-						ds_terrain->setImage(terr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
+					{
+						if (terrain->colorMaps[i])
+							ds_terrain->setImage(terr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
+					}
+				}
+				if (terr_normalMap_position != -1)
+				{
+					for (int i = 0; i < 4; i++)
+					{
+						if (terrain->normalMaps[i])
+							ds_terrain->setImage(terr_normalMap_position, i, terrain->normalMaps[i], colorWrapSampler);
+					}
 				}
 			}
 		}
@@ -4131,6 +4160,10 @@ namespace tke
 				t->colorMaps[1] = getTexture(t->color_map1_filename);
 				t->colorMaps[2] = getTexture(t->color_map2_filename);
 				t->colorMaps[3] = getTexture(t->color_map3_filename);
+				t->normalMaps[0] = getTexture(t->normal_map0_filename);
+				t->normalMaps[1] = getTexture(t->normal_map1_filename);
+				t->normalMaps[2] = getTexture(t->normal_map2_filename);
+				t->normalMaps[3] = getTexture(t->normal_map3_filename);
 				t->needUpdateAxis = true;
 				t->needUpdateQuat = true;
 				t->needUpdateMat = true;
@@ -4236,6 +4269,7 @@ namespace tke
 		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
 		terr_blendMap_position = terrainPipeline->descriptorPosition("blendMap");
 		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
+		terr_normalMap_position = terrainPipeline->descriptorPosition("normalMaps");
 
 		waterPipeline = new Pipeline;
 		waterPipeline->loadXML(enginePath + "pipeline/deferred/water.xml");
