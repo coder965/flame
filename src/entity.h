@@ -482,6 +482,8 @@ namespace tke
 		physx::PxRigidActor *actor = nullptr;
 		glm::mat3 rotation;
 		glm::vec3 coord;
+
+		~RigidBodyData();
 	};
 
 	REFLECTABLE struct Object : Transformer, Controller, Observed
@@ -495,7 +497,7 @@ namespace tke
 
 		REFLe ObjectPhysicsType physics_type = ObjectPhysicsType::null; // cannot change
 
-		AnimationComponent *animationComponent = nullptr;
+		std::unique_ptr<AnimationComponent> animationComponent;
 		std::vector<RigidBodyData> rigidbodyDatas;
 		physx::PxController *pxController = nullptr;
 		float floatingTime = 0.f;
@@ -525,11 +527,11 @@ namespace tke
 		REFLv std::string normal_map2_filename;
 		REFLv std::string normal_map3_filename;
 
-		int blockCx = 64;
-		float blockSize = 16.f;
-		float height = 100.f;
-		float tessellationFactor = 0.75f;
-		float textureUvFactor = 8.f;
+		REFLv int block_cx = 64;
+		REFLv float block_size = 16.f;
+		REFLv float height = 100.f;
+		REFLv float tessellation_factor = 0.75f;
+		REFLv float texture_uv_factor = 8.f;
 
 		Image *blendMap = nullptr;
 		Image *heightMap = nullptr;
@@ -589,6 +591,9 @@ namespace tke
 		float tessellationFactor;
 		float textureUvFactor;
 		float mapDimension;
+		unsigned int dummy0;
+		unsigned int dummy1;
+		unsigned int dummy2;
 	};
 
 	struct WaterShaderStruct

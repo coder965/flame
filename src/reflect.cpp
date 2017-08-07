@@ -153,6 +153,11 @@ currentBank->addV<std::string>("normal_map0_filename", offsetof(Terrain, normal_
 currentBank->addV<std::string>("normal_map1_filename", offsetof(Terrain, normal_map1_filename));
 currentBank->addV<std::string>("normal_map2_filename", offsetof(Terrain, normal_map2_filename));
 currentBank->addV<std::string>("normal_map3_filename", offsetof(Terrain, normal_map3_filename));
+currentBank->addV<int>("block_cx", offsetof(Terrain, block_cx));
+currentBank->addV<float>("block_size", offsetof(Terrain, block_size));
+currentBank->addV<float>("height", offsetof(Terrain, height));
+currentBank->addV<float>("tessellation_factor", offsetof(Terrain, tessellation_factor));
+currentBank->addV<float>("texture_uv_factor", offsetof(Terrain, texture_uv_factor));
 currentBank = Water::b;
 currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Water, Transformer));
 currentBank = Scene::b;

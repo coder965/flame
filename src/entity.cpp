@@ -2820,6 +2820,10 @@ namespace tke
 		return a;
 	}
 
+	RigidBodyData::~RigidBodyData()
+	{
+		actor->release();
+	}
 
 	Object::Object() {}
 
@@ -2828,12 +2832,13 @@ namespace tke
 	{
 		model_filename = model->filename;
 		if (model->animated)
-			animationComponent = new AnimationComponent(model);
+			animationComponent = std::make_unique<AnimationComponent>(model);
 	}
 
 	Object::~Object()
 	{
-		delete animationComponent;
+		if (pxController)
+			pxController->release();
 	}
 
 	void Object::setState(Controller::State _s, bool enable)
@@ -3026,8 +3031,8 @@ namespace tke
 
 	Scene::~Scene()
 	{
-		pxScene->release();
 		pxControllerManager->release();
+		pxScene->release();
 
 		destroyEvent(shadowRenderFinished);
 		destroyEvent(mrtRenderFinished);
@@ -3305,7 +3310,7 @@ namespace tke
 			hfDesc.samples.data = samples;
 			hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
 
-			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->blockSize * t->blockCx / m->cx, t->blockSize * t->blockCx / m->cy);
+			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->block_size * t->block_cx / m->cx, t->block_size * t->block_cx / m->cy);
 			t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
 			t->actor->createShape(hfGeom, *pxDefaultMaterial);
 
@@ -3690,11 +3695,11 @@ namespace tke
 			{
 				TerrainShaderStruct stru;
 				stru.coord = terrain->getCoord();
-				stru.blockCx = terrain->blockCx;
-				stru.blockSize = terrain->blockSize;
+				stru.blockCx = terrain->block_cx;
+				stru.blockSize = terrain->block_size;
 				stru.height = terrain->height;
-				stru.tessellationFactor = terrain->tessellationFactor;
-				stru.textureUvFactor = terrain->textureUvFactor;
+				stru.tessellationFactor = terrain->tessellation_factor;
+				stru.textureUvFactor = terrain->texture_uv_factor;
 				stru.mapDimension = terrain->heightMap->cx;
 
 				terrainBuffer->update(&stru, stagingBuffer);
@@ -4037,7 +4042,7 @@ namespace tke
 		{
 			cb_deferred->bindPipeline(terrainPipeline);
 			cb_deferred->bindDescriptorSet(&ds_terrain->v);
-			cb_deferred->draw(4, 0, terrain->blockCx * terrain->blockCx);
+			cb_deferred->draw(4, 0, terrain->block_cx * terrain->block_cx);
 		}
 			// water
 		if (waters.size() > 0)
@@ -4139,7 +4144,7 @@ namespace tke
 				c->obtainFromAttributes(o, o->b);
 				o->model = getModel(o->model_filename);
 				if (o->model && o->model->animated)
-					o->animationComponent = new AnimationComponent(o->model);
+					o->animationComponent = std::make_unique<AnimationComponent>(o->model);
 				o->needUpdateAxis = true;
 				o->needUpdateQuat = true;
 				o->needUpdateMat = true;
