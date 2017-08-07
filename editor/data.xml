@@ -1,15 +1,5 @@
 <data>
-  <texture filename="test.jpg" />
-  <texture filename="white.jpg" />
-  <texture filename="heightmap.jpg" />
-  <texture filename="shit.png" />
-  <texture filename="terrain0.jpg" />
-  <texture filename="terrain1.jpg" />
-  <texture filename="terrain2.jpg" />
-  <texture filename="terrain3.jpg" />
+  <dir path="res" />
   <animation filename="D:/miku/walk.vmd"/>
   <model filename="D:/miku/miku.pmd"/>
-  <model filename="cube.dae"/>
-  <scene filename="scene_1.scene" />
-  <scene filename="scene_2.scene" />
 </data>

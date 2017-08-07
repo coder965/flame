@@ -6,6 +6,7 @@
 #include <string>
 #include <typeindex>
 #include <memory>
+#include <filesystem>
 
 #if defined(_WIN64)
 typedef __int64 TK_LONG_PTR;

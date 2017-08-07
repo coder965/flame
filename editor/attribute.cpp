@@ -112,7 +112,7 @@ static void _show_scene(tke::Scene *scene)
 					if (use_controller)
 						_physxType = tke::ObjectPhysicsType((int)_physxType | (int)tke::ObjectPhysicsType::controller);
 				}
-				auto o = new tke::Object(tke::models[ocs.modelIndex], _physxType);
+				auto o = new tke::Object(tke::models[ocs.modelIndex].get(), _physxType);
 
 				glm::vec3 _coord;
 				if (ocs.use_camera_position)
@@ -217,7 +217,7 @@ static void _show_scene(tke::Scene *scene)
 			{
 				if (ImGui::Button("Create Terrain"))
 				{
-					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex], tke::textures[tcs.blendMapIndex], tke::textures[tcs.colorMap0Index], tke::textures[tcs.colorMap1Index], tke::textures[tcs.colorMap2Index], tke::textures[tcs.colorMap3Index]);
+					auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex].get(), tke::textures[tcs.blendMapIndex].get(), tke::textures[tcs.colorMap0Index].get(), tke::textures[tcs.colorMap1Index].get(), tke::textures[tcs.colorMap2Index].get(), tke::textures[tcs.colorMap3Index].get());
 					t->setCoord(tcs.coord);
 					t->height = tcs.height;
 					scene->addTerrain(t);
@@ -269,7 +269,7 @@ static void _show_model(tke::Model *m)
 
 	auto standAnimation = m->standAnimation ? m->standAnimation->animation : nullptr;
 	if (ImGui::Combo("Stand Animation", (void**)&standAnimation, [](void *, void *cur, int idx, const char **out_text) {
-		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());
 		*out_text = a ? a->filename.c_str() : "[NULL]";
 		return (void*)a;
 	}, nullptr, tke::animations.size() + 1))
@@ -279,7 +279,7 @@ static void _show_model(tke::Model *m)
 	}
 	auto forwardAnimation = m->forwardAnimation ? m->forwardAnimation->animation : nullptr;
 	if (ImGui::Combo("Forward Animation", (void**)&forwardAnimation, [](void *, void *cur, int idx, const char **out_text) {
-		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());
 		*out_text = a ? a->filename.c_str() : "[NULL]";
 		return (void*)a;
 	}, nullptr, tke::animations.size() + 1))
@@ -289,7 +289,7 @@ static void _show_model(tke::Model *m)
 	}
 	auto backwardAnimation = m->backwardAnimation ? m->backwardAnimation->animation : nullptr;
 	if (ImGui::Combo("Backward Animation", (void**)&backwardAnimation, [](void *, void *cur, int idx, const char **out_text) {
-		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());
 		*out_text = a ? a->filename.c_str() : "[NULL]";
 		return (void*)a;
 	}, nullptr, tke::animations.size() + 1))
@@ -299,7 +299,7 @@ static void _show_model(tke::Model *m)
 	}
 	auto leftAnimation = m->leftAnimation ? m->leftAnimation->animation : nullptr;
 	if (ImGui::Combo("Left Animation", (void**)&leftAnimation, [](void *, void *cur, int idx, const char **out_text) {
-		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());
 		*out_text = a ? a->filename.c_str() : "[NULL]";
 		return (void*)a;
 	}, nullptr, tke::animations.size() + 1))
@@ -309,7 +309,7 @@ static void _show_model(tke::Model *m)
 	}
 	auto rightAnimation = m->rightAnimation ? m->rightAnimation->animation : nullptr;
 	if (ImGui::Combo("Right Animation", (void**)&rightAnimation, [](void *, void *cur, int idx, const char **out_text) {
-		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());
 		*out_text = a ? a->filename.c_str() : "[NULL]";
 		return (void*)a;
 	}, nullptr, tke::animations.size() + 1))
@@ -319,7 +319,7 @@ static void _show_model(tke::Model *m)
 	}
 	auto jumpAnimation = m->jumpAnimation ? m->jumpAnimation->animation : nullptr;
 	if (ImGui::Combo("Jump Animation", (void**)&jumpAnimation, [](void *, void *cur, int idx, const char **out_text) {
-		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1]);
+		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());
 		*out_text = a ? a->filename.c_str() : "[NULL]";
 		return (void*)a;
 	}, nullptr, tke::animations.size() + 1))
@@ -345,17 +345,17 @@ void AttributeWidget::show()
 		{
 		case GameExplorer::lastItemTypeTexture:
 		{
-			auto i = tke::textures[gameExplorer->itemIndex];
+			auto i = tke::textures[gameExplorer->itemIndex].get();
 			ImGui::Text("filename:%s", i->filename.c_str());
 			ImGui::Text("size:%d x %d", i->cx, i->cy);
 			ImGui::Image((ImTextureID)i->index, ImVec2(i->cx, i->cy));
 		}
 			break;
 		case GameExplorer::lastItemTypeModel:
-			_show_model(tke::models[gameExplorer->itemIndex]);
+			_show_model(tke::models[gameExplorer->itemIndex].get());
 			break;
 		case GameExplorer::lastItemTypeScene:
-			_show_scene(game.scenes[gameExplorer->itemIndex]);
+			_show_scene(tke::scenes[gameExplorer->itemIndex].get());
 			break;
 		}
 		break;

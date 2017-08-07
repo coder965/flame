@@ -8,8 +8,6 @@ struct MonitorWidget;
 
 struct Game
 {
-	std::vector<tke::Scene*> scenes;
-
 	void load();
 	void save();
 };

@@ -42,20 +42,20 @@ namespace tke
 
 	std::vector<std::pair<std::string, Image*>> debugImages;
 
-	std::vector<Image*> textures;
+	std::vector<std::unique_ptr<Image>> textures;
 
-	std::vector<Image*> modelTextures;
+	std::vector<std::unique_ptr<Image>> modelTextures;
 
 	Image *addModelTexture(const std::string &filename, bool sRGB)
 	{
-		for (auto i : modelTextures)
+		for (auto &i : modelTextures)
 		{
 			if (i->full_filename == filename)
-				return i;
+				return i.get();
 		}
 		auto i = createImage(filename, sRGB);
 		i->index = modelTextures.size();
-		modelTextures.push_back(i);
+		modelTextures.push_back(std::move(std::unique_ptr<Image>(i)));
 		return i;
 	}
 
@@ -831,48 +831,48 @@ namespace tke
 					std::vector<AnimatedVertex> animatedVertexs;
 					std::vector<int> animatedIndices;
 
-					for (auto pModel : models)
+					for (auto &m : models)
 					{
-						if (!pModel->animated)
+						if (!m->animated)
 						{
-							pModel->vertexBase = staticVertexs.size();
-							pModel->indiceBase = staticIndices.size();
+							m->vertexBase = staticVertexs.size();
+							m->indiceBase = staticIndices.size();
 
-							for (int i = 0; i < pModel->positions.size(); i++)
+							for (int i = 0; i < m->positions.size(); i++)
 							{
 								Vertex vertex;
-								vertex.position = i < pModel->positions.size() ? pModel->positions[i] : glm::vec3(0.f);
-								vertex.uv       = i < pModel->uvs.size()       ? pModel->uvs[i]       : glm::vec2(0.f);
-								vertex.normal   = i < pModel->normals.size()   ? pModel->normals[i]   : glm::vec3(0.f);
-								vertex.tangent  = i < pModel->tangents.size()  ? pModel->tangents[i]  : glm::vec3(0.f);
+								vertex.position = i < m->positions.size() ? m->positions[i] : glm::vec3(0.f);
+								vertex.uv       = i < m->uvs.size()       ? m->uvs[i]       : glm::vec2(0.f);
+								vertex.normal   = i < m->normals.size()   ? m->normals[i]   : glm::vec3(0.f);
+								vertex.tangent  = i < m->tangents.size()  ? m->tangents[i]  : glm::vec3(0.f);
 
 								staticVertexs.push_back(vertex);
 							}
-							for (int i = 0; i < pModel->indices.size(); i++)
+							for (int i = 0; i < m->indices.size(); i++)
 							{
-								staticIndices.push_back(pModel->indices[i]);
+								staticIndices.push_back(m->indices[i]);
 							}
 						}
 						else
 						{
-							pModel->vertexBase = animatedVertexs.size();
-							pModel->indiceBase = animatedIndices.size();
+							m->vertexBase = animatedVertexs.size();
+							m->indiceBase = animatedIndices.size();
 
-							for (int i = 0; i < pModel->positions.size(); i++)
+							for (int i = 0; i < m->positions.size(); i++)
 							{
 								AnimatedVertex vertex;
-								vertex.position   = i < pModel->positions.size()   ? pModel->positions[i]   : glm::vec3(0.f);
-								vertex.uv         = i < pModel->uvs.size()         ? pModel->uvs[i]         : glm::vec2(0.f);
-								vertex.normal     = i < pModel->normals.size()     ? pModel->normals[i]     : glm::vec3(0.f);
-								vertex.tangent    = i < pModel->tangents.size()    ? pModel->tangents[i]    : glm::vec3(0.f);
-								vertex.boneWeight = i < pModel->boneWeights.size() ? pModel->boneWeights[i] : glm::vec4(0.f);
-								vertex.boneID     = i < pModel->boneIDs.size()     ? pModel->boneIDs[i]     : glm::vec4(0.f);
+								vertex.position   = i < m->positions.size()   ? m->positions[i]   : glm::vec3(0.f);
+								vertex.uv         = i < m->uvs.size()         ? m->uvs[i]         : glm::vec2(0.f);
+								vertex.normal     = i < m->normals.size()     ? m->normals[i]     : glm::vec3(0.f);
+								vertex.tangent    = i < m->tangents.size()    ? m->tangents[i]    : glm::vec3(0.f);
+								vertex.boneWeight = i < m->boneWeights.size() ? m->boneWeights[i] : glm::vec4(0.f);
+								vertex.boneID     = i < m->boneIDs.size()     ? m->boneIDs[i]     : glm::vec4(0.f);
 
 								animatedVertexs.push_back(vertex);
 							}
-							for (int i = 0; i < pModel->indices.size(); i++)
+							for (int i = 0; i < m->indices.size(); i++)
 							{
-								animatedIndices.push_back(pModel->indices[i]);
+								animatedIndices.push_back(m->indices[i]);
 							}
 						}
 					}
@@ -892,7 +892,7 @@ namespace tke
 					if (map_position != -1)
 					{
 						for (int index = 0; index < modelTextures.size(); index++)
-							ds_maps->setImage(map_position, index, modelTextures[index], colorSampler);
+							ds_maps->setImage(map_position, index, modelTextures[index].get(), colorSampler);
 						needUpdateTexture = false;
 					}
 				}

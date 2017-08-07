@@ -63,18 +63,22 @@ namespace tke
 
 	extern std::vector<std::pair<std::string, Image*>> debugImages;
 
-	extern std::vector<Image*> textures;
+	extern std::vector<std::unique_ptr<Image>> textures;
+	inline void addTexture(Image *i)
+	{
+		textures.push_back(std::move(std::unique_ptr<Image>(i)));
+	}
 	inline Image *getTexture(const std::string &filename)
 	{
-		for (auto i : textures)
+		for (auto &i : textures)
 		{
 			if (i->filename == filename)
-				return i;
+				return i.get();
 		}
 		return nullptr;
 	}
 
-	extern std::vector<Image*> modelTextures;
+	extern std::vector<std::unique_ptr<Image>> modelTextures;
 	Image *addModelTexture(const std::string &filename, bool sRGB = false);
 
 	extern std::vector<Material*> modelMaterials;

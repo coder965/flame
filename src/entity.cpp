@@ -580,7 +580,7 @@ namespace tke
 		return typeNames[(int)_type];
 	}
 
-	std::vector<Animation*> animations;
+	std::vector<std::unique_ptr<Animation>> animations;
 
 	std::string shapeTypeName(ShapeType t)
 	{
@@ -820,20 +820,13 @@ namespace tke
 		joints.push_back(pJoint);
 	}
 
-	std::vector<Model*> models;
+	std::vector<std::unique_ptr<Model>> models;
 	static void _add_model(Model *m)
 	{
-		models.push_back(m);
+		models.push_back(std::move(std::unique_ptr<Model>(m)));
 		needUpdateVertexBuffer = true;
 		needUpdateMaterialBuffer = true;
 		needUpdateTexture = true;
-	}
-
-	void clearModel()
-	{
-		for (auto m : models)
-			delete m;
-		models.clear();
 	}
 
 	AnimationComponent::AnimationComponent(Model *_model)
@@ -2823,7 +2816,7 @@ namespace tke
 			a->filepath = ".";
 		load_func(a, filename);
 
-		animations.push_back(a);
+		animations.push_back(std::move(std::unique_ptr<Animation>(a)));
 
 		return a;
 	}
@@ -4182,6 +4175,8 @@ namespace tke
 	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
 
 	//}
+
+	std::vector<std::unique_ptr<Scene>> scenes;
 
 	void initScene()
 	{

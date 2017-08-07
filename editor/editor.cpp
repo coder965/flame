@@ -43,15 +43,7 @@ EditorWindow::EditorWindow()
 					a = c->firstAttribute("scene_filename");
 					if (a)
 					{
-						tke::Scene *s = nullptr;
-						for (auto _s : game.scenes)
-						{
-							if (_s->filename == a->value)
-							{
-								s = _s;
-								break;
-							}
-						}
+						auto s = tke::getScene(a->value);
 						if (s)
 						{
 							auto w = openSceneMonitorWidget(s);
