@@ -2558,8 +2558,24 @@ namespace tke
 		return VK_FORMAT_UNDEFINED;
 	}
 
+	namespace KTX
+	{
+		static const char identifier[12] = {
+			0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
+		};
+	}
+
 	ImageData *createImageData(const std::string &filename)
 	{
+		{
+			std::experimental::filesystem::path path(filename);
+			auto ext = path.extension().string();
+			if (ext == ".ktx")
+			{
+
+			}
+		}
+
 		auto fif = FIF_UNKNOWN;
 		fif = FreeImage_GetFileType(filename.c_str());
 		if (fif == FIF_UNKNOWN)
@@ -2572,72 +2588,81 @@ namespace tke
 		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			FreeImage_FlipVertical(dib);
 
-		auto pData = new ImageData;
+		auto data = new ImageData;
 		auto colorType = FreeImage_GetColorType(dib);
 		switch (fif)
 		{
 		case FREE_IMAGE_FORMAT::FIF_BMP:
-			pData->file_type = ImageFileTypeBMP;
+			data->file_type = ImageFileTypeBMP;
 			break;
 		case FREE_IMAGE_FORMAT::FIF_JPEG:
-			pData->file_type = ImageFileTypeJPEG;
+			data->file_type = ImageFileTypeJPEG;
 			break;
 		case FREE_IMAGE_FORMAT::FIF_PNG:
-			pData->file_type = ImageFileTypePNG;
+			data->file_type = ImageFileTypePNG;
 			break;
 		case FREE_IMAGE_FORMAT::FIF_TARGA:
-			pData->file_type = ImageFileTypeTARGA;
+			data->file_type = ImageFileTypeTARGA;
 			break;
 		}
 		switch (colorType)
 		{
 		case FIC_MINISBLACK: case FIC_MINISWHITE:
-			pData->channel = 1;
+			data->channel = 1;
 			break;
 		case FIC_RGB:
 		{
 			auto newDib = FreeImage_ConvertTo32Bits(dib);
 			FreeImage_Unload(dib);
 			dib = newDib;
-			pData->channel = 4;
+			data->channel = 4;
 		}
 			break;
 		case FIC_RGBALPHA:
-			pData->channel = 4;
+			data->channel = 4;
 			break;
 		}
-		pData->cx = FreeImage_GetWidth(dib);
-		pData->cy = FreeImage_GetHeight(dib);
-		pData->byte_per_pixel = FreeImage_GetBPP(dib) / 8;
-		pData->pitch = FreeImage_GetPitch(dib);
-		pData->size = pData->pitch * pData->cy;
-		pData->v = new unsigned char[pData->size];
-		memcpy(pData->v, FreeImage_GetBits(dib), pData->size);
+		data->cx = FreeImage_GetWidth(dib);
+		data->cy = FreeImage_GetHeight(dib);
+		data->byte_per_pixel = FreeImage_GetBPP(dib) / 8;
+		data->pitch = FreeImage_GetPitch(dib);
+		data->size = data->pitch * data->cy;
+		data->v = new unsigned char[data->size];
+		memcpy(data->v, FreeImage_GetBits(dib), data->size);
 		FreeImage_Unload(dib);
 
-		if (pData->channel == 4)
+		if (data->channel == 4)
 		{
 			if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
 				fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
 				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
 				fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			{
-				for (int y = 0; y < pData->cy; y++)
+				for (int y = 0; y < data->cy; y++)
 				{
-					for (int x = 0; x < pData->cx; x++)
+					for (int x = 0; x < data->cx; x++)
 					{
-						std::swap(pData->v[y * pData->pitch + x * 4 + 0],
-							pData->v[y * pData->pitch + x * 4 + 2]);
+						std::swap(data->v[y * data->pitch + x * 4 + 0],
+							data->v[y * data->pitch + x * 4 + 2]);
 					}
 				}
 			}
 		}
 
-		return pData;
+		return data;
 	}
 
 	void saveImageFile(const std::string &filename, unsigned char *data, int cx, int cy, int byte_per_pixel)
 	{
+		{
+			std::experimental::filesystem::path path(filename);
+			auto ext = path.extension().string();
+			if (ext == ".ktx")
+			{
+
+			}
+		}
+
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
 		auto pitch = PITCH(cx * byte_per_pixel);
 		if (byte_per_pixel == 4)

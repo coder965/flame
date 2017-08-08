@@ -4203,16 +4203,6 @@ namespace tke
 		at.saveXML(filename);
 	}
 
-	//	Pipeline proceduralTerrainPipeline;
-
-	//MasterRenderer::MasterRenderer(int _cx, int _cy, Window *pWindow, VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, IndexedIndirectBuffer *indirectBuffer)
-	//{
-	//	// TODO : FIX PROCEDURAL TERRAIN
-	//	//auto mrtProceduralTerrainAction = mrtPass->addAction(&proceduralTerrainPipeline);
-	//	//mrtProceduralTerrainAction->addDrawcall(4, 0, 100 * 100, 0);
-
-	//}
-
 	void initScene()
 	{
 		for (int i = 0; i < 3; i++)

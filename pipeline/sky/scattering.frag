@@ -95,6 +95,6 @@ void main()
 
     vec3 color = vec3(spot*mie_collected + mie_factor*mie_collected + rayleigh_factor*rayleigh_collected);
 
-    outColor = vec4(mix(vec3(0.25, 0.38, 0.57), color, eye_extinction), 1.0);
+    outColor = vec4(mix(vec3(0.4, 0.38, 0.36), color, eye_extinction), 1.0);
     //outColor = vec4(1.0);
 }

@@ -1,3 +1,4 @@
+#include "..\debug.h"
 #include "..\depth.h"
 #include "..\pi.h"
 #include "..\panorama.h"
@@ -126,8 +127,10 @@ void main()
 		
 	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
 	vec4 coordWorld = u_matrix.viewInv * vec4(coordView, 1.0);
-	//outColor = vec4(coordWorld.xyz, 1.0);
-	//return;
+#if defined(DEBUG_WORLD_COORD)
+	outColor = vec4(coordWorld.xyz, 1.0);
+	return;
+#endif
 	
 	vec4 inAlbedoAlpha = texture(albedoAlphaSampler, gl_FragCoord.xy);
 	vec4 inNormalHeight = texture(normalHeightSampler, gl_FragCoord.xy);
@@ -136,10 +139,14 @@ void main()
 	vec3 albedo = inAlbedoAlpha.rgb;
 	float spec = inSpecRoughness.r;
 	albedo *= 1.0 - spec;
-	
-	vec3 normal = normalize(inNormalHeight.xyz * 2.0 - 1.0);
 	float roughness = inSpecRoughness.g;
 	float smothness = 1.0 - roughness;
+	
+	vec3 normal = normalize(inNormalHeight.xyz * 2.0 - 1.0);
+#if defined(DEBUG_NORMAL)
+	outColor = vec4(normal, 1.0);
+	return;
+#endif
 	
 	vec3 lightSumColor = vec3(0.0);
 	for (int i = 0; i < u_light.count; i++)

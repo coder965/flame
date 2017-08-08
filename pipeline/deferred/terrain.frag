@@ -1,3 +1,5 @@
+#include "..\debug.h"
+
 layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 {
 	vec3 coord;
@@ -68,8 +70,6 @@ void main()
 								normalize(vec3(LR, eps, TB))) * normal;
 
 	outAlbedoAlpha = vec4(color, 1.0);
-	//outAlbedoAlpha = vec4(normal * 0.5 + 0.5, 1.0);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);
-	//outNormalHeight = vec4(0.5, 1.0, 0.5, 0.0);
 	outSpecRoughness = vec4(0.05, 1.0, 0.0, 0.0);
 }
