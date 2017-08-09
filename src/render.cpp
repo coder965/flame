@@ -10,6 +10,7 @@
 
 #define NOMINMAX
 #include <FreeImage.h>
+#include <gli/gli.hpp>
 
 namespace tke
 {
@@ -445,7 +446,7 @@ namespace tke
 	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
 		auto view = i->getView(0, level);
-		return getFramebuffer(i->getCx(level), i->getCy(level), renderPass, 1, &view);
+		return getFramebuffer(i->levels[level].cx, i->levels[level].cy, renderPass, 1, &view);
 	}
 
 	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
@@ -1112,8 +1113,8 @@ namespace tke
 	{
 	}
 
-	Image::Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, void *_data, size_t _size, VkImageAspectFlags aspect)
-		:cx(w), cy(h), level(_level), layer(_layer), format(_format)
+	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool needGeneralLayout)
+		:format(_format)
 	{
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
 			type = eDepth;
@@ -1130,16 +1131,32 @@ namespace tke
 				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 		}
 
+		assert(_level >= 1);
+		assert(_layer >= 1);
+
+		if (_level > 1)
+			levels.resize(_level);
+
+		auto cx = _cx;
+		auto cy = _cy;
+		for (int i = 0; i < _level; i++)
+		{
+			levels[i].cx = cx;
+			levels[i].cy = cy;
+			cx >>= 1; cx = glm::max(cx, 1);
+			cy >>= 1; cy = glm::max(cy, 1);
+		}
+
 		VkResult res;
 
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = w;
-		imageInfo.extent.height = h;
+		imageInfo.extent.width = _cx;
+		imageInfo.extent.height = _cy;
 		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = level;
-		imageInfo.arrayLayers = layer;
+		imageInfo.mipLevels = _level;
+		imageInfo.arrayLayers = _layer;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
@@ -1168,28 +1185,26 @@ namespace tke
 
 		device.mtx.unlock();
 
-		size = memRequirements.size;
+		total_size = memRequirements.size;
 
-		if (_data && _size)
+		if (needGeneralLayout)
 		{
-			assert(_size <= size);
-			fillData(0, _data, _size, aspect);
+			for (int i = 0; i < levels.size(); i++)
+				transitionLayout(i, aspect, VK_IMAGE_LAYOUT_GENERAL);
 		}
-		transitionLayout(0, aspect, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	Image::Image(Type _type, VkImage _image, int w, int h, VkFormat _format)
+	Image::Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format)
 	{
 		type = _type;
 		v = _image;
-		cx = w;
-		cy = h;
+		levels[0].cx = _cx;
+		levels[0].cy = _cy;
 		format = _format;
 	}
 
 	Image::~Image()
 	{
-		delete data;
 		device.mtx.lock();
 		for (auto v : views)
 			vkDestroyImageView(device.v, v->v, nullptr);
@@ -1235,29 +1250,33 @@ namespace tke
 		layout = _layout;
 	}
 
-	void Image::fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect)
+	void Image::fillData(int _level, unsigned char *src, size_t _size, VkImageAspectFlags aspect)
 	{
 		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		StagingBuffer stagingBuffer(_size);
 
 		void* map = stagingBuffer.map(0, _size);
-		memcpy(map, data, _size);
+		memcpy(map, src, _size);
 		stagingBuffer.unmap();
+
+		levels[_level].size = _size;
 
 		VkBufferImageCopy region = {};
 		region.imageSubresource.aspectMask = aspect;
 		region.imageSubresource.mipLevel = 0;
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = getCx(_level);
-		region.imageExtent.height = getCy(_level);
+		region.imageExtent.width = levels[_level].cx;
+		region.imageExtent.height = levels[_level].cy;
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
 		auto cb = commandPool->begineOnce();
 		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		commandPool->endOnce(cb);
+
+		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
 	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -1304,35 +1323,9 @@ namespace tke
 		return view->v;
 	}
 
-	int Image::getCx(int _level) const
-	{
-		int w = cx;
-		for (;;)
-		{
-			if (_level <= 0 || w < 2)
-				break;
-			_level--;
-			w >>= 1;
-		}
-		return w;
-	}
-
-	int Image::getCy(int _level) const
-	{
-		int h = cy;
-		for (;;)
-		{
-			if (_level <= 0 || h < 2)
-				break;
-			_level--;
-			h >>= 1;
-		}
-		return h;
-	}
-
 	unsigned char Image::getR(float _x, float _y)
 	{
-		if (!data || _x < 0.f || _y < 0.f || _x >= cx || _y >= cy)
+		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
 			return 0;
 
 		auto x = glm::fract(_x);
@@ -1340,7 +1333,7 @@ namespace tke
 		auto y = glm::fract(_y);
 		int Y = glm::floor(_y);
 
-#define gd(a, b) (float)data[(a) * bytePerPixel + (b) * pitch]
+#define gd(a, b) (float)levels[0].v[(a) * byte_per_pixel + (b) * levels[0].pitch]
 		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
 #undef gd
 	}
@@ -2497,7 +2490,7 @@ namespace tke
 							break;
 						}
 					}
-					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, 0, image->level, 0, image->layer);
+					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, 0, image->levels.size(), 0, image->layer);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
@@ -2525,9 +2518,15 @@ namespace tke
 		return -1;
 	}
 
+	ImageData::ImageData()
+	{
+		levels.resize(1);
+	}
+
 	ImageData::~ImageData()
 	{
-		delete[]v;
+		for (auto &l : levels)
+			delete[]l.v;
 	}
 
 	VkFormat ImageData::getVkFormat(bool sRGB)
@@ -2558,30 +2557,199 @@ namespace tke
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	namespace KTX
-	{
-		static const char identifier[12] = {
-			0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
-		};
-	}
-
 	ImageData *createImageData(const std::string &filename)
 	{
+		std::experimental::filesystem::path path(filename);
+		auto ext = path.extension().string();
+		if (ext == ".ktx" || ext == ".dds")
 		{
-			std::experimental::filesystem::path path(filename);
-			auto ext = path.extension().string();
-			if (ext == ".ktx")
-			{
+			gli::texture Texture = gli::load(filename);
+			if (Texture.empty())
+				return nullptr;
 
+			gli::gl GL(gli::gl::PROFILE_GL33);
+			gli::gl::format const Format = GL.translate(Texture.format(), Texture.swizzles());
+			auto Target = GL.translate(Texture.target());
+			assert(!gli::is_compressed(Texture.format()) && Target == gli::TARGET_2D);
+			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
+
+			auto data = new ImageData;
+			data->file_type = ext == ".ktx" ? ImageFileTypeKTX : ImageFileTypeDDS;
+			switch (Format.External)
+			{
+			case gli::gl::EXTERNAL_RED:
+				data->channel = 1;
+				break;
+			case gli::gl::EXTERNAL_RG:
+				data->channel = 2;
+				break;
+			case gli::gl::EXTERNAL_RGB:
+				data->channel = 3;
+				break;
+			case gli::gl::EXTERNAL_BGR:
+				data->channel = 3;
+				break;
+			case gli::gl::EXTERNAL_RGBA:
+				data->channel = 4;
+				break;
+			case gli::gl::EXTERNAL_BGRA:
+				data->channel = 4;
+				break;
+			case gli::gl::EXTERNAL_RED_INTEGER:
+				data->channel = 1;
+				break;
+			case gli::gl::EXTERNAL_RG_INTEGER:
+				data->channel = 2;
+				break;
+			case gli::gl::EXTERNAL_RGB_INTEGER:
+				data->channel = 3;
+				break;
+			case gli::gl::EXTERNAL_BGR_INTEGER:
+				data->channel = 3;
+				break;
+			case gli::gl::EXTERNAL_RGBA_INTEGER:
+				data->channel = 4;
+				break;
+			case gli::gl::EXTERNAL_BGRA_INTEGER:
+				data->channel = 4;
+				break;
+			case gli::gl::EXTERNAL_DEPTH:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::EXTERNAL_DEPTH_STENCIL:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::EXTERNAL_STENCIL:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::EXTERNAL_LUMINANCE:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::EXTERNAL_ALPHA:
+				data->channel = 1;
+				break;
+			case gli::gl::EXTERNAL_LUMINANCE_ALPHA:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::EXTERNAL_SRGB_EXT:
+				data->channel = 3;
+				data->sRGB = true;
+				break;
+			case gli::gl::EXTERNAL_SRGB_ALPHA_EXT:
+				data->channel = 4;
+				data->sRGB = true;
+				break;
 			}
+			switch (Format.Type)
+			{
+			case gli::gl::TYPE_I8:
+				data->byte_per_pixel = 1;
+				break;
+			case gli::gl::TYPE_U8:
+				data->byte_per_pixel = 1;
+				break;
+			case gli::gl::TYPE_I16:
+				data->byte_per_pixel = 2;
+				break;
+			case gli::gl::TYPE_U16:
+				data->byte_per_pixel = 2;
+				break;
+			case gli::gl::TYPE_I32:
+				data->byte_per_pixel = 4;
+				break;
+			case gli::gl::TYPE_U32:
+				data->byte_per_pixel = 4;
+				break;
+			case gli::gl::TYPE_I64:
+				data->byte_per_pixel = 8;
+				break;
+			case gli::gl::TYPE_F16:
+				data->byte_per_pixel = 2;
+				break;
+			case gli::gl::TYPE_F16_OES:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_F32:
+				data->byte_per_pixel = 4;
+				break;
+			case gli::gl::TYPE_F64:
+				data->byte_per_pixel = 8;
+				break;
+			case gli::gl::TYPE_UINT32_RGB9_E5_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT32_RG11B10F_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT8_RG3B2:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT8_RG3B2_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_RGB5A1:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_RGB5A1_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_R5G6B5:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_R5G6B5_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_RGBA4:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_RGBA4_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT32_RGBA8:
+				data->byte_per_pixel = 1;
+				break;
+			case gli::gl::TYPE_UINT32_RGBA8_REV:
+				data->byte_per_pixel = 1;
+				break;
+			case gli::gl::TYPE_UINT32_RGB10A2:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT32_RGB10A2_REV:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT8_RG4_REV_GTC:
+				assert(0); // not supported yet
+				break;
+			case gli::gl::TYPE_UINT16_A1RGB5_GTC:
+				assert(0); // not supported yet
+				break;
+			}
+			data->levels.resize(Texture.levels());
+
+			for (int l = 0; l < Texture.levels(); l++)
+			{
+				glm::tvec3<size_t> Extent(Texture.extent(l));
+				data->levels[l].cx = Extent.x;
+				data->levels[l].cy = Extent.y;
+				data->levels[l].pitch = PITCH(data->levels[l].cx * data->byte_per_pixel);
+				data->levels[l].size = data->levels[l].pitch * data->levels[l].cy;
+				data->levels[l].v = new unsigned char[data->levels[l].size];
+				memcpy(data->levels[l].v, Texture.data(0, 0, l), data->levels[l].size);
+			}
+
+			return data;
 		}
 
 		auto fif = FIF_UNKNOWN;
 		fif = FreeImage_GetFileType(filename.c_str());
 		if (fif == FIF_UNKNOWN)
 			fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		if (fif == FIF_UNKNOWN) 
+		if (fif == FIF_UNKNOWN)
+		{
+			// format not support or file not exist
+			assert(false);
 			return nullptr;
+		}
 		auto dib = FreeImage_Load(fif, filename.c_str());
 		if (!dib) 
 			return nullptr;
@@ -2622,13 +2790,14 @@ namespace tke
 			data->channel = 4;
 			break;
 		}
-		data->cx = FreeImage_GetWidth(dib);
-		data->cy = FreeImage_GetHeight(dib);
 		data->byte_per_pixel = FreeImage_GetBPP(dib) / 8;
-		data->pitch = FreeImage_GetPitch(dib);
-		data->size = data->pitch * data->cy;
-		data->v = new unsigned char[data->size];
-		memcpy(data->v, FreeImage_GetBits(dib), data->size);
+		
+		data->levels[0].cx = FreeImage_GetWidth(dib);
+		data->levels[0].cy = FreeImage_GetHeight(dib);
+		data->levels[0].pitch = FreeImage_GetPitch(dib);
+		data->levels[0].size = data->levels[0].pitch * data->levels[0].cy;
+		data->levels[0].v = new unsigned char[data->levels[0].size];
+		memcpy(data->levels[0].v, FreeImage_GetBits(dib), data->levels[0].size);
 		FreeImage_Unload(dib);
 
 		if (data->channel == 4)
@@ -2638,12 +2807,12 @@ namespace tke
 				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
 				fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			{
-				for (int y = 0; y < data->cy; y++)
+				for (int y = 0; y < data->levels[0].cy; y++)
 				{
-					for (int x = 0; x < data->cx; x++)
+					for (int x = 0; x < data->levels[0].cx; x++)
 					{
-						std::swap(data->v[y * data->pitch + x * 4 + 0],
-							data->v[y * data->pitch + x * 4 + 2]);
+						std::swap(data->levels[0].v[y * data->levels[0].pitch + x * 4 + 0],
+							data->levels[0].v[y * data->levels[0].pitch + x * 4 + 2]);
 					}
 				}
 			}
@@ -2691,18 +2860,25 @@ namespace tke
 		std::unique_ptr<ImageData> d(std::move(createImageData(filename)));
 		assert(d.get());
 
-		auto i = new Image(d->cx, d->cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, d->v, d->size);
+		auto i = new Image(d->levels[0].cx, d->levels[0].cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
+		for (int l = 0; l < d->levels.size(); l++)
+		{
+			i->fillData(l, d->levels[l].v, d->levels[l].size, 0);
+			i->levels[l].pitch = d->levels[l].pitch;
+		}
 		i->full_filename = filename;
 		std::experimental::filesystem::path path(filename);
 		i->filename = path.filename().string();
-		i->bytePerPixel = d->byte_per_pixel;
-		i->pitch = d->pitch;
-		i->sRGB = sRGB;
+		i->byte_per_pixel = d->byte_per_pixel;
+		i->sRGB = sRGB || d->sRGB;
 
 		if (saveData)
 		{
-			i->data = d->v;
-			d->v = nullptr;
+			for (int l = 0; l < d->levels.size(); l++)
+			{
+				i->levels[l].v = d->levels[l].v;
+				d->levels[l].v = nullptr;
+			}
 		}
 
 		return i;
