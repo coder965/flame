@@ -831,6 +831,8 @@ namespace tke
 		model = _model;
 		boneData = new BoneData[model->bones.size()];
 		boneMatrix = new glm::mat4[model->bones.size()];
+		for (int i = 0; i < model->bones.size(); i++)
+			boneMatrix[i] = glm::mat4(1.f);
 		boneMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * model->bones.size());
 		boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
 	}
@@ -2449,7 +2451,7 @@ namespace tke
 
 				file >> bone.type;
 				file >> bone.parents;
-				file >> bone.rootCoord;
+				file & bone.rootCoord;
 
 				m->bones.push_back(bone);
 			}
@@ -2493,10 +2495,10 @@ namespace tke
 				file >> p->originCollisionFreeFlag;
 				file >> p->boneID;
 				glm::vec3 coord;
-				file >> coord;
+				file & coord;
 				p->setCoord(coord);
 				glm::vec3 euler;
-				file >> euler;
+				file & euler;
 				p->setEuler(euler);
 				file >> p->density;
 				file >> p->velocityAttenuation;
@@ -2512,13 +2514,13 @@ namespace tke
 					auto q = new Shape;
 					p->addShape(q);
 					glm::vec3 coord;
-					file >> coord;
+					file & coord;
 					q->setCoord(coord);
 					glm::vec3 euler;
-					file >> euler;
+					file & euler;
 					q->setEuler(euler);
 					glm::vec3 scale;
-					file >> scale;
+					file & scale;
 					q->setScale(scale);
 					int type;
 					file >> type;
@@ -2532,29 +2534,29 @@ namespace tke
 			{
 				auto j = new Joint;
 				glm::vec3 coord;
-				file >> coord;
+				file & coord;
 				j->setCoord(coord);
 				glm::vec3 euler;
-				file >> euler;
+				file & euler;
 				j->setEuler(euler);
 				file >> j->rigid0ID;
 				file >> j->rigid1ID;
-				file >> j->maxCoord;
-				file >> j->minCoord;
-				file >> j->maxRotation;
-				file >> j->minRotation;
-				file >> j->springConstant;
-				file >> j->sprintRotationConstant;
+				file & j->maxCoord;
+				file & j->minCoord;
+				file & j->maxRotation;
+				file & j->minRotation;
+				file & j->springConstant;
+				file & j->sprintRotationConstant;
 				m->addJoint(j);
 			}
 
-			file >> m->bounding_position;
-			file >> m->bounding_size;
+			file & m->bounding_position;
+			file & m->bounding_size;
 
-			file >> m->controller_height;
-			file >> m->controller_radius;
+			file & m->controller_height;
+			file & m->controller_radius;
 
-			file >> m->eye_position;
+			file & m->eye_position;
 
 			_model_after_process(m);
 		}
@@ -2635,7 +2637,7 @@ namespace tke
 				file << bone.name;
 				file << bone.type;
 				file << bone.parents;
-				file << bone.rootCoord;
+				file & bone.rootCoord;
 			}
 
 			file << m->iks.size();
@@ -2670,8 +2672,8 @@ namespace tke
 				file << rb->originCollisionGroupID;
 				file << rb->originCollisionFreeFlag;
 				file << rb->boneID;
-				file << rb->getCoord();
-				file << rb->getEuler();
+				file & rb->getCoord();
+				file & rb->getEuler();
 				file << rb->density;
 				file << rb->velocityAttenuation;
 				file << rb->rotationAttenuation;
@@ -2681,9 +2683,9 @@ namespace tke
 				file << rb->shapes.size();
 				for (auto &s : rb->shapes)
 				{
-					file << s->getCoord();
-					file << s->getEuler();
-					file << s->getScale();
+					file & s->getCoord();
+					file & s->getEuler();
+					file & s->getScale();
 					int type = (int)s->type;
 					file << type;
 				}
@@ -2692,25 +2694,25 @@ namespace tke
 			file << m->joints.size();
 			for (auto j : m->joints)
 			{
-				file << j->getCoord();
-				file << j->getEuler();
+				file & j->getCoord();
+				file & j->getEuler();
 				file << j->rigid0ID;
 				file << j->rigid1ID;
-				file << j->maxCoord;
-				file << j->minCoord;
-				file << j->maxRotation;
-				file << j->minRotation;
-				file << j->springConstant;
-				file << j->sprintRotationConstant;
+				file & j->maxCoord;
+				file & j->minCoord;
+				file & j->maxRotation;
+				file & j->minRotation;
+				file & j->springConstant;
+				file & j->sprintRotationConstant;
 			}
 
-			file << m->bounding_position;
-			file << m->bounding_size;
+			file & m->bounding_position;
+			file & m->bounding_size;
 
-			file << m->controller_height;
-			file << m->controller_radius;
+			file & m->controller_height;
+			file & m->controller_radius;
 
-			file << m->eye_position;
+			file & m->eye_position;
 		}
 	}
 
@@ -2727,8 +2729,8 @@ namespace tke
 				auto m = std::make_unique<BoneMotion>();
 				file > m->name;
 				file >> m->frame;
-				file >> m->coord;
-				file >> m->quaternion;
+				file & m->coord;
+				file & m->quaternion;
 				file.read(m->bezier, 64);
 			}
 		}
@@ -2742,8 +2744,8 @@ namespace tke
 			{
 				file < m->name;
 				file << m->frame;
-				file << m->coord;
-				file << m->quaternion;
+				file & m->coord;
+				file & m->quaternion;
 				file.write(m->bezier, 64);
 			}
 		}
@@ -2890,9 +2892,9 @@ namespace tke
 
 	static const float gravity = 9.81f;
 
-	Image *envrImageDownsample[3] = {};
+	static Image *envrImageDownsample[3] = {};
 
-	RenderPass *sceneRenderPass = nullptr;
+	static RenderPass *sceneRenderPass = nullptr;
 
 	Pipeline *scatteringPipeline = nullptr;
 

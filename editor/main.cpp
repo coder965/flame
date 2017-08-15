@@ -9,6 +9,8 @@
 
 int main(int argc, char** argv)
 {
+	auto a = glm::mat4(1.f);
+
 	tke::init("../", 1280, 720);
 
 	new EditorWindow;

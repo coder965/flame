@@ -18,14 +18,14 @@ typedef _W64 long TK_LONG_PTR;
 #define TK_STRUCT_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
 
 template<class T>
-inline std::ifstream& operator>>(std::ifstream &file, T &v)
+inline std::ifstream& operator&(std::ifstream &file, T &v)
 {
 	file.read((char*)&v, sizeof(T));
 	return file;
 }
 
 template<class T>
-inline std::ofstream& operator<<(std::ofstream &file, T &v)
+inline std::ofstream& operator&(std::ofstream &file, T &v)
 {
 	file.write((char*)&v, sizeof(T));
 	return file;

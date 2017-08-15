@@ -25,15 +25,15 @@ namespace tke
 			AxisZ
 		};
 
-		REFLv glm::vec3 coord;
-		REFLv glm::vec3 euler; // (yaw(y), pitch(z), roll(x))
+		REFLv glm::vec3 coord = glm::vec3(0.f);
+		REFLv glm::vec3 euler = glm::vec3(0.f); // (yaw(y), pitch(z), roll(x))
 		glm::vec4 quat = glm::vec4(0.f, 0.f, 0.f, 1.f);
 		REFLv glm::vec3 scale = glm::vec3(1.f);
 		glm::vec3 worldScale = glm::vec3(1.f);
 
-		glm::mat3 axis;
-		glm::mat4 mat;
-		glm::mat4 matInv;
+		glm::mat3 axis = glm::mat3(1.f);
+		glm::mat4 mat = glm::mat4(1.f);
+		glm::mat4 matInv = glm::mat4(1.f);
 
 		bool needUpdateAxis = false;
 		bool needUpdateEuler = false;
@@ -149,7 +149,7 @@ namespace tke
 	struct Camera : Transformer, Controller
 	{
 		CameraMode mode = CameraMode::free;
-		glm::vec3 target;
+		glm::vec3 target = glm::vec3(0.f);
 		float length = 1.f;
 
 		glm::vec3 frustumPoints[8];
@@ -225,16 +225,16 @@ namespace tke
 
 		int parents = -1;
 
-		glm::vec3 rootCoord;
-		glm::vec3 relateCoord;
+		glm::vec3 rootCoord = glm::vec3(0.f);
+		glm::vec3 relateCoord = glm::vec3(0.f);
 
 		std::vector<int> children;
 	};
 
 	struct BoneData
 	{
-		glm::mat3 rotation;
-		glm::vec3 coord;
+		glm::mat3 rotation = glm::mat3(1.f);
+		glm::vec3 coord = glm::vec3(0.f);
 	};
 
 	struct IK
@@ -250,8 +250,8 @@ namespace tke
 	{
 		std::string name;
 		int frame = 0;
-		glm::vec3 coord;
-		glm::vec4 quaternion;
+		glm::vec3 coord = glm::vec3(0.f);
+		glm::vec4 quaternion = glm::vec4(0.f, 0.f, 0.f, 1.f);
 		char bezier[64] = {};
 	};
 
@@ -345,12 +345,12 @@ namespace tke
 		std::string name;
 		int rigid0ID;
 		int rigid1ID;
-		glm::vec3 maxCoord;
-		glm::vec3 minCoord;
-		glm::vec3 maxRotation;
-		glm::vec3 minRotation;
-		glm::vec3 springConstant;
-		glm::vec3 sprintRotationConstant;
+		glm::vec3 maxCoord = glm::vec3(0.f);
+		glm::vec3 minCoord = glm::vec3(0.f);
+		glm::vec3 maxRotation = glm::vec3(0.f);
+		glm::vec3 minRotation = glm::vec3(0.f);
+		glm::vec3 springConstant = glm::vec3(0.f);
+		glm::vec3 sprintRotationConstant = glm::vec3(0.f);
 	};
 
 	REFLECTABLE struct Model
@@ -398,17 +398,17 @@ namespace tke
 
 		std::vector<Joint*> joints;
 
-		glm::vec3 maxCoord;
-		glm::vec3 minCoord;
+		glm::vec3 maxCoord = glm::vec3(0.f);
+		glm::vec3 minCoord = glm::vec3(0.f);
 
-		glm::vec3 bounding_position;
+		glm::vec3 bounding_position = glm::vec3(0.f);
 		float bounding_size = 1.f;
 
-		REFLv glm::vec3 controller_position;
+		REFLv glm::vec3 controller_position = glm::vec3(0.f);
 		REFLv float controller_height = 1.f;
 		REFLv float controller_radius = 0.5f;
 
-		REFLv glm::vec3 eye_position;
+		REFLv glm::vec3 eye_position = glm::vec3(0.f);
 
 		void loadData(bool needRigidbody);
 		void saveData(bool needRigidbody);
@@ -480,8 +480,8 @@ namespace tke
 	{
 		Rigidbody *rigidbody;
 		physx::PxRigidActor *actor = nullptr;
-		glm::mat3 rotation;
-		glm::vec3 coord;
+		glm::mat3 rotation = glm::mat3(1.f);
+		glm::vec3 coord = glm::vec3(0.f);
 
 		~RigidBodyData();
 	};
@@ -616,10 +616,6 @@ namespace tke
 		glm::uint envr_max_mipmap;
 		glm::vec4 fogcolor;
 	};
-
-	extern Image *envrImageDownsample[3];
-
-	extern RenderPass *sceneRenderPass;
 
 	extern Pipeline *scatteringPipeline;
 	extern Pipeline *downsamplePipeline;

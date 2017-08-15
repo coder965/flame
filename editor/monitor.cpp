@@ -522,14 +522,14 @@ void ModelMonitorWidget::show()
 				auto r = model->controller_radius / 0.5f;
 				auto h = model->controller_height;
 				auto mv = camera.getMatInv();
-				pc.modelview = mv * glm::translate(model->controller_position) * glm::scale(r, h, r);
+				pc.modelview = mv * glm::translate(model->controller_position) * glm::scale(glm::vec3(r, h, r));
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::cylinderModel);
 				h *= 0.5f;
-				pc.modelview = mv * glm::translate(model->controller_position - glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+				pc.modelview = mv * glm::translate(model->controller_position - glm::vec3(0.f, h, 0.f)) * glm::scale(glm::vec3(r, r, r));
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::sphereModel, 0);
-				pc.modelview = mv * glm::translate(model->controller_position + glm::vec3(0.f, h, 0.f)) * glm::scale(r, r, r);
+				pc.modelview = mv * glm::translate(model->controller_position + glm::vec3(0.f, h, 0.f)) * glm::scale(glm::vec3(r, r, r));
 				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::sphereModel, 1);
 			}
