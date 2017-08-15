@@ -116,7 +116,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\glm;D:\FreeImage\Dist\x64;D:\VulkanSDK\1.0.49.0\Include;D:\imgui;D:\PhysX-3.3-master\PhysXSDK\Include;D:\OpenAL 1.1 SDK\include;D:\IconFontCppHeaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\glm;D:\FreeImage\Dist\x64;D:\gli;D:\VulkanSDK\1.0.49.0\Include;D:\imgui;D:\PhysX-3.3-master\PhysXSDK\Include;D:\OpenAL 1.1 SDK\include;D:\IconFontCppHeaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
 /D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>

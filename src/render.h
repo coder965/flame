@@ -129,23 +129,35 @@ namespace tke
 
 	enum ImageFileType
 	{
+		ImageFileTypeNull,
 		ImageFileTypeBMP,
 		ImageFileTypeJPEG,
 		ImageFileTypePNG,
-		ImageFileTypeTARGA
+		ImageFileTypeTARGA,
+		ImageFileTypeKTX,
+		ImageFileTypeDDS
+	};
+
+	struct ImageDataLevel
+	{
+		size_t cx = 0;
+		size_t cy = 0;
+		size_t pitch = 0;
+		size_t size = 0;
+		unsigned char *v = nullptr;
 	};
 
 	struct ImageData
 	{
-		ImageFileType file_type;
-		size_t byte_per_pixel;
-		size_t channel;
-		size_t cx;
-		size_t cy;
-		size_t pitch;
-		size_t size;
-		unsigned char *v;
+		ImageFileType file_type = ImageFileTypeNull;
+		size_t byte_per_pixel = 0;
+		size_t channel = 0;
+		std::vector<ImageDataLevel> levels;
+		int layer = 1;
+		size_t total_size = 0;
+		bool sRGB = false;
 
+		ImageData();
 		~ImageData();
 		VkFormat getVkFormat(bool sRGB);
 	};
@@ -166,7 +178,7 @@ namespace tke
 		ImageView(Image *_image);
 	};
 
-	struct Image
+	struct Image : ImageData
 	{
 		enum Type
 		{
@@ -179,13 +191,6 @@ namespace tke
 		inline bool isColorType() { return type == eColor || type == eSwapchain; }
 		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 
-		int cx = 1, cy = 1;
-		unsigned char *data = nullptr;
-		size_t bytePerPixel;
-		size_t pitch;
-		size_t size;
-		int level = 1;
-		int layer = 1;
 		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 		VkImage v = 0;
 		VkDeviceMemory memory = 0;
@@ -201,14 +206,12 @@ namespace tke
 
 		int index = -1;
 
-		Image(int w, int h, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, void *_data = nullptr, size_t _size = 0, VkImageAspectFlags aspect = 0);
-		Image(Type _type, VkImage _image, int w, int h, VkFormat _format);
+		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);
+		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
 		~Image();
-		int getCx(int _level = 0) const;
-		int getCy(int _level = 0) const;
 		unsigned char getR(float x, float y);
 		void transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout);
-		void fillData(int _level, void *data, size_t _size, VkImageAspectFlags aspect);
+		void fillData(int _level, unsigned char *src, size_t _size, VkImageAspectFlags aspect);
 		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
