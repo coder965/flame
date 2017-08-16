@@ -4,9 +4,10 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtx/transform2.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform2.hpp>
 
 bool inline operator < (glm::vec3 &a, glm::vec3 &b)
 {

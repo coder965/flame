@@ -132,7 +132,7 @@
     </BuildLog>
     <Lib>
       <AdditionalLibraryDirectories>D:\FreeImage\Dist\x64;D:\VulkanSDK\1.0.49.0\Lib;D:\PhysX-3.3-master\PhysXSDK\Lib\vc14win64;D:\OpenAL 1.1 SDK\libs\Win64;D:\imgui\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;FreeImaged.lib;PhysX3CommonDEBUG_x64.lib;PhysX3DEBUG_x64.lib;PhysX3ExtensionsDEBUG.lib;PhysX3CharacterKinematicDEBUG_x64.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;FreeImaged.lib;PhysX3CommonDEBUG_x64.lib;PhysX3DEBUG_x64.lib;PhysX3ExtensionsDEBUG_mdd.lib;PhysX3CharacterKinematicDEBUG_x64.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -175,10 +175,12 @@
   <ItemGroup>
     <ClCompile Include="..\src\animation.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
+    <ClCompile Include="..\src\controller.cpp" />
     <ClCompile Include="..\src\core.cpp" />
     <ClCompile Include="..\src\entity.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
     <ClCompile Include="..\src\light.cpp" />
+    <ClCompile Include="..\src\material.cpp" />
     <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\model.cpp" />
     <ClCompile Include="..\src\object.cpp" />
@@ -187,18 +189,22 @@
     <ClCompile Include="..\src\render.cpp" />
     <ClCompile Include="..\src\scene.cpp" />
     <ClCompile Include="..\src\sound.cpp" />
+    <ClCompile Include="..\src\terrain.cpp" />
     <ClCompile Include="..\src\transformer.cpp" />
     <ClCompile Include="..\src\utils.cpp" />
+    <ClCompile Include="..\src\water.cpp" />
     <ClCompile Include="..\src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation.h" />
     <ClInclude Include="..\src\camera.h" />
+    <ClInclude Include="..\src\controller.h" />
     <ClInclude Include="..\src\core.h" />
     <ClInclude Include="..\src\define.h" />
     <ClInclude Include="..\src\entity.h" />
     <ClInclude Include="..\src\gui.h" />
     <ClInclude Include="..\src\light.h" />
+    <ClInclude Include="..\src\material.h" />
     <ClInclude Include="..\src\math.h" />
     <ClInclude Include="..\src\model.h" />
     <ClInclude Include="..\src\object.h" />
@@ -206,8 +212,10 @@
     <ClInclude Include="..\src\render.h" />
     <ClInclude Include="..\src\scene.h" />
     <ClInclude Include="..\src\sound.h" />
+    <ClInclude Include="..\src\terrain.h" />
     <ClInclude Include="..\src\transformer.h" />
     <ClInclude Include="..\src\utils.h" />
+    <ClInclude Include="..\src\water.h" />
     <ClInclude Include="..\src\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

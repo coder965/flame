@@ -73,14 +73,14 @@ void TextureEditor::show()
 			range.imageSubresource.layerCount = 1;
 			range.imageOffset.x = 0;
 			range.imageOffset.y = 0;
-			range.imageExtent.width = image->cx;
-			range.imageExtent.height = image->cy;
+			range.imageExtent.width = image->levels[0].cx;
+			range.imageExtent.height = image->levels[0].cy;
 			range.imageExtent.depth = 1;
 			vkCmdCopyImageToBuffer(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tke::stagingBuffer->v, 1, &range);
 			tke::commandPool->endOnce(cb);
 
-			auto pixel = (unsigned char*)tke::stagingBuffer->map(0, image->size);
-			tke::saveImageFile(filename, pixel, image->cx, image->cy, 4);
+			auto pixel = (unsigned char*)tke::stagingBuffer->map(0, image->levels[0].size);
+			tke::saveImageFile(filename, pixel, image->levels[0].cx, image->levels[0].cy, 4);
 			tke::stagingBuffer->unmap();
 
 			ImGui::CloseCurrentPopup();
@@ -122,7 +122,7 @@ void TextureEditor::show()
 		}
 
 		ImVec2 image_pos = ImGui::GetCursorScreenPos();
-		ImVec2 image_size = ImVec2(image->cx, image->cy);
+		ImVec2 image_size = ImVec2(image->levels[0].cx, image->levels[0].cy);
 		ImGui::InvisibleButton("canvas", image_size);
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 		draw_list->AddImage(ImTextureID(image->index), image_pos, image_pos + image_size);

@@ -37,7 +37,7 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 		image->getView(),
 		tke::plainDepthImage->getView()
 	};
-	fb_tool = tke::getFramebuffer(image->cx, image->cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	fb_tool = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool);
 
 	cbs.push_back(scene->cb_shadow->v);
@@ -111,7 +111,7 @@ void SceneMonitorWidget::show()
 		scene->save(scene->filename);
 
 	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(image->cx, image->cy);
+	ImVec2 image_size = ImVec2(image->levels[0].cx, image->levels[0].cy);
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 	draw_list->AddImage(ImTextureID(image->index), image_pos, image_pos + image_size);
@@ -379,7 +379,7 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 
 	camera.setMode(tke::CameraMode::targeting);
 
-	fb_model = tke::getFramebuffer(image->cx, image->cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	fb_model = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
 	if (model->animated)
 	{
 		animComp = new tke::AnimationComponent(model);

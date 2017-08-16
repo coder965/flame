@@ -232,7 +232,7 @@ namespace tke
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.hInstance = (HINSTANCE)hInst;
-			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->cx, iconData->cy, 1, 32, nullptr, iconData->v);
+			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->levels[0].cx, iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v);
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			RegisterClassExA(&wcex);
@@ -555,7 +555,7 @@ namespace tke
 
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*))
 	{
-		if (x < 0 || y < 0 || x > pickUpImage->cx || y > pickUpImage->cy)
+		if (x < 0 || y < 0 || x > pickUpImage->levels[0].cx || y > pickUpImage->levels[0].cy)
 			return 0;
 
 		auto cb = commandPool->begineOnce();

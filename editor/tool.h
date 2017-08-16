@@ -3,6 +3,7 @@
 #include "../src/math.h"
 #include "../src/render.h"
 #include "../src/entity.h"
+#include "../src/camera.h"
 
 struct Tool
 {

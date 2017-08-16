@@ -7,7 +7,7 @@ void DebugWidget::show()
 {
 	ImGui::BeginDock("Debug##widget", &opened);
 
-	ImGui::Image((ImTextureID)tke::debugImages[0].second->index, ImVec2(tke::debugImages[0].second->cx, tke::debugImages[0].second->cx));
+	ImGui::Image((ImTextureID)tke::debugImages[0].second->index, ImVec2(tke::debugImages[0].second->levels[0].cx, tke::debugImages[0].second->levels[0].cx));
 
 	ImGui::EndDock();
 }

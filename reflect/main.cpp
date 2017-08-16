@@ -15,8 +15,14 @@ int main(int argc, char **argv)
 	auto outputFilename = "../src/reflect.cpp";
 
 	char *inputFilenames[] = {
-		"../src/render.h",
-		"../src/entity.h"
+		"../src/transformer.h",
+		"../src/controller.h",
+		"../src/model.h",
+		"../src/object.h",
+		"../src/terrain.h",
+		"../src/water.h",
+		"../src/scene.h",
+		"../src/render.h"
 	};
 
 	if (std::experimental::filesystem::exists(outputFilename))
@@ -130,6 +136,13 @@ int main(int argc, char **argv)
 	fprintf(fout, "#include \"utils.h\"\n");
 	fprintf(fout, "#include \"render.h\"\n");
 	fprintf(fout, "#include \"entity.h\"\n");
+	fprintf(fout, "#include \"transformer.h\"\n");
+	fprintf(fout, "#include \"controller.h\"\n");
+	fprintf(fout, "#include \"model.h\"\n");
+	fprintf(fout, "#include \"object.h\"\n");
+	fprintf(fout, "#include \"terrain.h\"\n");
+	fprintf(fout, "#include \"water.h\"\n");
+	fprintf(fout, "#include \"scene.h\"\n");
 	fprintf(fout, "#include <string>\n");
 	fprintf(fout, "namespace tke{\n");
 	fprintf(fout, declString.c_str());

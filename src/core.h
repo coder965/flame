@@ -3,6 +3,7 @@
 #include "math.h"
 #include "render.h"
 #include "entity.h"
+#include "scene.h"
 
 namespace tke
 {

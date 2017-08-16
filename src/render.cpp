@@ -1123,14 +1123,6 @@ namespace tke
 		else
 			type = eColor;
 
-		if (aspect == 0)
-		{
-			if (type == eColor || type == eSwapchain)
-				aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-			else
-				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
-
 		assert(_level >= 1);
 		assert(_layer >= 1);
 
@@ -1190,7 +1182,7 @@ namespace tke
 		if (needGeneralLayout)
 		{
 			for (int i = 0; i < levels.size(); i++)
-				transitionLayout(i, aspect, VK_IMAGE_LAYOUT_GENERAL);
+				transitionLayout(i, VK_IMAGE_LAYOUT_GENERAL);
 		}
 	}
 
@@ -1216,7 +1208,7 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	void Image::transitionLayout(int _level, VkImageAspectFlags aspect, VkImageLayout _layout)
+	void Image::transitionLayout(int _level, VkImageLayout _layout)
 	{
 		auto cb = commandPool->begineOnce();
 
@@ -1227,7 +1219,7 @@ namespace tke
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = v;
-		barrier.subresourceRange.aspectMask = aspect;
+		barrier.subresourceRange.aspectMask = type == (eColor || type == eSwapchain) ? VK_IMAGE_ASPECT_COLOR_BIT : (type == eDepth ? VK_IMAGE_ASPECT_DEPTH_BIT : (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
 		barrier.subresourceRange.baseMipLevel = _level;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -1250,9 +1242,17 @@ namespace tke
 		layout = _layout;
 	}
 
-	void Image::fillData(int _level, unsigned char *src, size_t _size, VkImageAspectFlags aspect)
+	void Image::fillData(int _level, unsigned char *src, size_t _size)
 	{
-		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		if (aspect == 0)
+		{
+			if (type == eColor || type == eSwapchain)
+				aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+			else
+				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
+
+		transitionLayout(_level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		StagingBuffer stagingBuffer(_size);
 
@@ -1276,7 +1276,7 @@ namespace tke
 		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		commandPool->endOnce(cb);
 
-		transitionLayout(_level, aspect, VK_IMAGE_LAYOUT_GENERAL);
+		transitionLayout(_level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
 	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -2863,7 +2863,7 @@ namespace tke
 		auto i = new Image(d->levels[0].cx, d->levels[0].cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
 		for (int l = 0; l < d->levels.size(); l++)
 		{
-			i->fillData(l, d->levels[l].v, d->levels[l].size, 0);
+			i->fillData(l, d->levels[l].v, d->levels[l].size);
 			i->levels[l].pitch = d->levels[l].pitch;
 		}
 		i->full_filename = filename;

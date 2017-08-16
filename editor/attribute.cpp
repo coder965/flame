@@ -364,8 +364,8 @@ void AttributeWidget::show()
 		{
 			auto i = tke::textures[gameExplorer->itemIndex].get();
 			ImGui::Text("filename:%s", i->filename.c_str());
-			ImGui::Text("size:%d x %d", i->cx, i->cy);
-			ImGui::Image((ImTextureID)i->index, ImVec2(i->cx, i->cy));
+			ImGui::Text("size:%d x %d", i->levels[0].cx, i->levels[0].cy);
+			ImGui::Image((ImTextureID)i->index, ImVec2(i->levels[0].cx, i->levels[0].cy));
 		}
 			break;
 		case GameExplorer::lastItemTypeModel:

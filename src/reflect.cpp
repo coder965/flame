@@ -1,8 +1,22 @@
 #include "utils.h"
 #include "render.h"
 #include "entity.h"
+#include "transformer.h"
+#include "controller.h"
+#include "model.h"
+#include "object.h"
+#include "terrain.h"
+#include "water.h"
+#include "scene.h"
 #include <string>
 namespace tke{
+tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
+tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
+tke::ReflectionBank *Model::b = tke::addReflectionBank("Model");
+tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
+tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
+tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
+tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
 tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");
 tke::ReflectionBank *Descriptor::b = tke::addReflectionBank("Descriptor");
@@ -11,16 +25,61 @@ tke::ReflectionBank *ShaderMacro::b = tke::addReflectionBank("ShaderMacro");
 tke::ReflectionBank *Stage::b = tke::addReflectionBank("Stage");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *Pipeline::b = tke::addReflectionBank("Pipeline");
-tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
-tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
-tke::ReflectionBank *Model::b = tke::addReflectionBank("Model");
-tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
-tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
-tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
-tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 struct ReflectInit{ReflectInit(){
 tke::Enum *currentEnum = nullptr;
 tke::ReflectionBank *currentBank = nullptr;
+currentBank = Transformer::b;
+currentBank->addV<glm::vec3>("coord", offsetof(Transformer, coord));
+currentBank->addV<glm::vec3>("euler", offsetof(Transformer, euler));
+currentBank->addV<glm::vec3>("scale", offsetof(Transformer, scale));
+currentBank = Controller::b;
+currentBank->addV<float>("ang_offset", offsetof(Controller, ang_offset));
+currentBank->addV<float>("speed", offsetof(Controller, speed));
+currentBank->addV<float>("turn_speed", offsetof(Controller, turn_speed));
+currentBank = Model::b;
+currentBank->addV<std::string>("stand_animation_filename", offsetof(Model, stand_animation_filename));
+currentBank->addV<std::string>("forward_animation_filename", offsetof(Model, forward_animation_filename));
+currentBank->addV<std::string>("left_animation_filename", offsetof(Model, left_animation_filename));
+currentBank->addV<std::string>("right_animation_filename", offsetof(Model, right_animation_filename));
+currentBank->addV<std::string>("backward_animation_filename", offsetof(Model, backward_animation_filename));
+currentBank->addV<std::string>("jump_animation_filename", offsetof(Model, jump_animation_filename));
+currentBank->addV<glm::vec3>("controller_position", offsetof(Model, controller_position));
+currentBank->addV<float>("controller_height", offsetof(Model, controller_height));
+currentBank->addV<float>("controller_radius", offsetof(Model, controller_radius));
+currentBank->addV<glm::vec3>("eye_position", offsetof(Model, eye_position));
+currentEnum = tke::addReflectEnum("ObjectPhysicsType");
+currentEnum->items.emplace_back("null", (int)ObjectPhysicsType::null);
+currentEnum->items.emplace_back("static_r", (int)ObjectPhysicsType::static_r);
+currentEnum->items.emplace_back("dynamic", (int)ObjectPhysicsType::dynamic);
+currentEnum->items.emplace_back("controller", (int)ObjectPhysicsType::controller);
+currentBank = Object::b;
+currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Object, Transformer));
+currentBank->parents.emplace_back(Controller::b, TK_STRUCT_OFFSET(Object, Controller));
+currentBank->addV<std::string>("model_filename", offsetof(Object, model_filename));
+currentBank->addV<std::string>("name", offsetof(Object, name));
+currentBank->addE("ObjectPhysicsType", "physics_type", offsetof(Object, physics_type));
+currentBank = Terrain::b;
+currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Terrain, Transformer));
+currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
+currentBank->addV<std::string>("blend_map_filename", offsetof(Terrain, blend_map_filename));
+currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
+currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_map0_filename));
+currentBank->addV<std::string>("color_map1_filename", offsetof(Terrain, color_map1_filename));
+currentBank->addV<std::string>("color_map2_filename", offsetof(Terrain, color_map2_filename));
+currentBank->addV<std::string>("color_map3_filename", offsetof(Terrain, color_map3_filename));
+currentBank->addV<std::string>("normal_map0_filename", offsetof(Terrain, normal_map0_filename));
+currentBank->addV<std::string>("normal_map1_filename", offsetof(Terrain, normal_map1_filename));
+currentBank->addV<std::string>("normal_map2_filename", offsetof(Terrain, normal_map2_filename));
+currentBank->addV<std::string>("normal_map3_filename", offsetof(Terrain, normal_map3_filename));
+currentBank->addV<int>("block_cx", offsetof(Terrain, block_cx));
+currentBank->addV<float>("block_size", offsetof(Terrain, block_size));
+currentBank->addV<float>("height", offsetof(Terrain, height));
+currentBank->addV<float>("tessellation_factor", offsetof(Terrain, tessellation_factor));
+currentBank->addV<float>("texture_uv_factor", offsetof(Terrain, texture_uv_factor));
+currentBank = Water::b;
+currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Water, Transformer));
+currentBank = Scene::b;
+currentBank->addV<std::string>("name", offsetof(Scene, name));
 currentEnum = tke::addReflectEnum("StageType");
 currentEnum->items.emplace_back("vert", (int)StageType::vert);
 currentEnum->items.emplace_back("tesc", (int)StageType::tesc);
@@ -110,57 +169,5 @@ currentBank->addV<bool>("depth_clamp", offsetof(Pipeline, depth_clamp));
 currentBank->addE("PrimitiveTopology", "primitive_topology", offsetof(Pipeline, primitive_topology));
 currentBank->addE("PolygonMode", "polygon_mode", offsetof(Pipeline, polygon_mode));
 currentBank->addE("CullMode", "cull_mode", offsetof(Pipeline, cull_mode));
-currentBank = Transformer::b;
-currentBank->addV<glm::vec3>("coord", offsetof(Transformer, coord));
-currentBank->addV<glm::vec3>("euler", offsetof(Transformer, euler));
-currentBank->addV<glm::vec3>("scale", offsetof(Transformer, scale));
-currentBank = Controller::b;
-currentBank->addV<float>("ang_offset", offsetof(Controller, ang_offset));
-currentBank->addV<float>("speed", offsetof(Controller, speed));
-currentBank->addV<float>("turn_speed", offsetof(Controller, turn_speed));
-currentBank = Model::b;
-currentBank->addV<std::string>("stand_animation_filename", offsetof(Model, stand_animation_filename));
-currentBank->addV<std::string>("forward_animation_filename", offsetof(Model, forward_animation_filename));
-currentBank->addV<std::string>("left_animation_filename", offsetof(Model, left_animation_filename));
-currentBank->addV<std::string>("right_animation_filename", offsetof(Model, right_animation_filename));
-currentBank->addV<std::string>("backward_animation_filename", offsetof(Model, backward_animation_filename));
-currentBank->addV<std::string>("jump_animation_filename", offsetof(Model, jump_animation_filename));
-currentBank->addV<glm::vec3>("controller_position", offsetof(Model, controller_position));
-currentBank->addV<float>("controller_height", offsetof(Model, controller_height));
-currentBank->addV<float>("controller_radius", offsetof(Model, controller_radius));
-currentBank->addV<glm::vec3>("eye_position", offsetof(Model, eye_position));
-currentEnum = tke::addReflectEnum("ObjectPhysicsType");
-currentEnum->items.emplace_back("null", (int)ObjectPhysicsType::null);
-currentEnum->items.emplace_back("static_r", (int)ObjectPhysicsType::static_r);
-currentEnum->items.emplace_back("dynamic", (int)ObjectPhysicsType::dynamic);
-currentEnum->items.emplace_back("controller", (int)ObjectPhysicsType::controller);
-currentBank = Object::b;
-currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Object, Transformer));
-currentBank->parents.emplace_back(Controller::b, TK_STRUCT_OFFSET(Object, Controller));
-currentBank->addV<std::string>("model_filename", offsetof(Object, model_filename));
-currentBank->addV<std::string>("name", offsetof(Object, name));
-currentBank->addE("ObjectPhysicsType", "physics_type", offsetof(Object, physics_type));
-currentBank = Terrain::b;
-currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Terrain, Transformer));
-currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
-currentBank->addV<std::string>("blend_map_filename", offsetof(Terrain, blend_map_filename));
-currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
-currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_map0_filename));
-currentBank->addV<std::string>("color_map1_filename", offsetof(Terrain, color_map1_filename));
-currentBank->addV<std::string>("color_map2_filename", offsetof(Terrain, color_map2_filename));
-currentBank->addV<std::string>("color_map3_filename", offsetof(Terrain, color_map3_filename));
-currentBank->addV<std::string>("normal_map0_filename", offsetof(Terrain, normal_map0_filename));
-currentBank->addV<std::string>("normal_map1_filename", offsetof(Terrain, normal_map1_filename));
-currentBank->addV<std::string>("normal_map2_filename", offsetof(Terrain, normal_map2_filename));
-currentBank->addV<std::string>("normal_map3_filename", offsetof(Terrain, normal_map3_filename));
-currentBank->addV<int>("block_cx", offsetof(Terrain, block_cx));
-currentBank->addV<float>("block_size", offsetof(Terrain, block_size));
-currentBank->addV<float>("height", offsetof(Terrain, height));
-currentBank->addV<float>("tessellation_factor", offsetof(Terrain, tessellation_factor));
-currentBank->addV<float>("texture_uv_factor", offsetof(Terrain, texture_uv_factor));
-currentBank = Water::b;
-currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Water, Transformer));
-currentBank = Scene::b;
-currentBank->addV<std::string>("name", offsetof(Scene, name));
 }};static ReflectInit init;
 }

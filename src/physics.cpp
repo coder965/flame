@@ -2,6 +2,77 @@
 
 namespace tke
 {
+	std::string shapeTypeName(ShapeType t)
+	{
+		char *names[] = {
+			"Box",
+			"Sphere",
+			"Capsule",
+			"Plane",
+			"Convex Mesh",
+			"Triangle Mesh",
+			"Height Field"
+		};
+		return names[(int)t];
+	}
+
+	Shape::Shape()
+	{
+	}
+
+	Shape::Shape(ShapeType _type)
+		:type(_type)
+	{
+	}
+
+	float Shape::getVolume() const
+	{
+		auto size = getScale();
+		switch (type)
+		{
+		case ShapeType::box:
+			return size.x * size.y * size.z * 8.f;
+		case ShapeType::sphere:
+			return 4.f * size.x * size.x * size.x * M_PI / 3.f;
+		case ShapeType::capsule:
+			return 4.f * size.x * size.x * size.x * M_PI / 3.f + M_PI * size.x * size.x * size.y;
+		}
+		return 0.f;
+	}
+
+	Rigidbody::Rigidbody()
+	{
+	}
+
+	Rigidbody::Rigidbody(RigidbodyType _type)
+		:type(_type)
+	{
+	}
+
+	void Rigidbody::addShape(Shape *s)
+	{
+		static auto magicNumber = 0;
+		s->id = magicNumber++;
+		shapes.push_back(std::move(std::unique_ptr<Shape>(s)));
+	}
+
+	Shape *Rigidbody::removeShape(Shape *s)
+	{
+		for (auto it = shapes.begin(); it != shapes.end(); it++)
+		{
+			if ((*it).get() == s)
+			{
+				if (it > shapes.begin())
+					s = (*(it - 1)).get();
+				else
+					s = nullptr;
+				shapes.erase(it);
+				break;
+			}
+		}
+		return s;
+	}
+
 	physx::PxFoundation *pxFoundation = nullptr;
 	physx::PxPhysics *pxPhysics = nullptr;
 	physx::PxMaterial *pxDefaultMaterial = nullptr;
