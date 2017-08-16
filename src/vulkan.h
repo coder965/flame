@@ -1,0 +1,45 @@
+#pragma once
+
+#include <mutex>
+
+#define NOMINMAX
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <vulkan\vulkan.h>
+
+namespace tke
+{
+	struct Instance
+	{
+		VkInstance v;
+		std::mutex mtx;
+	};
+
+	struct Device
+	{
+		VkDevice v;
+		std::mutex mtx;
+
+		void waitIdle();
+	};
+
+	struct Queue
+	{
+		VkQueue v;
+		std::mutex mtx;
+
+		void waitIdle();
+		void submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
+	};
+
+	extern Instance inst;
+	extern VkPhysicalDevice physicalDevice;
+	extern VkPhysicalDeviceProperties physicalDeviceProperties;
+	extern Device device;
+	extern Queue graphicsQueue;
+
+	int findVkMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	void initRenderThreadData();
+
+	void initRender();
+}

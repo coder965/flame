@@ -49,8 +49,6 @@ inline std::ofstream& operator<(std::ofstream &file, std::string &str)
 
 template<size_t s> struct Sizer {};
 
-#define PITCH(x) (x % 4 == 0 ? x : 4 - x % 4 + x)
-
 // hash
 
 unsigned int _HASH(char const * str, unsigned int seed);

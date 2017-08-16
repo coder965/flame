@@ -2,10 +2,10 @@
 
 #include "gui.h"
 #include "core.h"
+#include "window.h"
 
 namespace tke
 {
-	static thread_local Window *current_window;
 	static bool need_clear = false;
 
 	bool uiAcceptedMouse = false;

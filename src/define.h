@@ -1,5 +1,7 @@
 #pragma once
 
+#include "math.h"
+
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)
 #define TKE_FOVY (60.f)
@@ -16,3 +18,22 @@
 #define TKE_SHADOWMAP_CY (2048)
 #define TKE_MAX_SHADOW_COUNT (8)
 #define TKE_MAX_WATER_COUNT (8)
+
+namespace tke
+{
+	extern int lastTime;
+	extern int nowTime;
+	extern int timeDisp;
+
+	extern std::string enginePath;
+
+	extern int resCx;
+	extern int resCy;
+
+	extern float aspect;
+
+	extern glm::mat4 matOrtho;
+	extern glm::mat4 matOrthoInv;
+	extern glm::mat4 matPerspective;
+	extern glm::mat4 matPerspectiveInv;
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../src/entity.h"
+#include "../src/window.h"
 
 #include "game.h"
 #include "monitor.h"

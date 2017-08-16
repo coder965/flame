@@ -174,35 +174,51 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\animation.cpp" />
+    <ClCompile Include="..\src\buffer.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
+    <ClCompile Include="..\src\command_buffer.cpp" />
     <ClCompile Include="..\src\controller.cpp" />
     <ClCompile Include="..\src\core.cpp" />
+    <ClCompile Include="..\src\define.cpp" />
+    <ClCompile Include="..\src\descriptor.cpp" />
     <ClCompile Include="..\src\entity.cpp" />
+    <ClCompile Include="..\src\framebuffer.cpp" />
     <ClCompile Include="..\src\gui.cpp" />
+    <ClCompile Include="..\src\image.cpp" />
+    <ClCompile Include="..\src\image_data.cpp" />
     <ClCompile Include="..\src\light.cpp" />
     <ClCompile Include="..\src\material.cpp" />
     <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\model.cpp" />
     <ClCompile Include="..\src\object.cpp" />
     <ClCompile Include="..\src\physics.cpp" />
+    <ClCompile Include="..\src\pipeline.cpp" />
     <ClCompile Include="..\src\reflect.cpp" />
     <ClCompile Include="..\src\render.cpp" />
+    <ClCompile Include="..\src\renderpass.cpp" />
     <ClCompile Include="..\src\scene.cpp" />
     <ClCompile Include="..\src\sound.cpp" />
     <ClCompile Include="..\src\terrain.cpp" />
     <ClCompile Include="..\src\transformer.cpp" />
     <ClCompile Include="..\src\utils.cpp" />
+    <ClCompile Include="..\src\vulkan.cpp" />
     <ClCompile Include="..\src\water.cpp" />
     <ClCompile Include="..\src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation.h" />
+    <ClInclude Include="..\src\buffer.h" />
     <ClInclude Include="..\src\camera.h" />
+    <ClInclude Include="..\src\commnd_buffer.h" />
     <ClInclude Include="..\src\controller.h" />
     <ClInclude Include="..\src\core.h" />
     <ClInclude Include="..\src\define.h" />
+    <ClInclude Include="..\src\descriptor.h" />
     <ClInclude Include="..\src\entity.h" />
+    <ClInclude Include="..\src\framebuffer.h" />
     <ClInclude Include="..\src\gui.h" />
+    <ClInclude Include="..\src\image.h" />
+    <ClInclude Include="..\src\image_data.h" />
     <ClInclude Include="..\src\light.h" />
     <ClInclude Include="..\src\material.h" />
     <ClInclude Include="..\src\math.h" />
@@ -210,11 +226,13 @@
     <ClInclude Include="..\src\object.h" />
     <ClInclude Include="..\src\physics.h" />
     <ClInclude Include="..\src\render.h" />
+    <ClInclude Include="..\src\renderpass.h" />
     <ClInclude Include="..\src\scene.h" />
     <ClInclude Include="..\src\sound.h" />
     <ClInclude Include="..\src\terrain.h" />
     <ClInclude Include="..\src\transformer.h" />
     <ClInclude Include="..\src\utils.h" />
+    <ClInclude Include="..\src\vulkan.h" />
     <ClInclude Include="..\src\water.h" />
     <ClInclude Include="..\src\window.h" />
   </ItemGroup>
