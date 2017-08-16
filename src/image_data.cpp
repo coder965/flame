@@ -18,34 +18,6 @@ namespace tke
 			delete[]l.v;
 	}
 
-	VkFormat ImageData::getVkFormat(bool sRGB)
-	{
-		switch (channel)
-		{
-		case 1:
-			switch (byte_per_pixel)
-			{
-			case 1:
-				return VK_FORMAT_R8_UNORM;
-			case 2:
-				return VK_FORMAT_R16_UNORM;
-			}
-			break;
-		case 4:
-			switch (byte_per_pixel)
-			{
-			case 4:
-				if (sRGB)
-					return VK_FORMAT_R8G8B8A8_SRGB;
-				else
-					return VK_FORMAT_R8G8B8A8_UNORM;
-				break;
-			}
-		}
-
-		return VK_FORMAT_UNDEFINED;
-	}
-
 	ImageData *createImageData(const std::string &filename)
 	{
 		std::experimental::filesystem::path path(filename);

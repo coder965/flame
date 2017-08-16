@@ -17,6 +17,7 @@ namespace tke
 	};
 
 	struct Image;
+	struct RenderPass;
 	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level = 0);
 
 	struct RenderPass;

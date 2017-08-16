@@ -8,6 +8,8 @@
 
 namespace tke
 {
+	const VkFormat swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
+
 	struct Instance
 	{
 		VkInstance v;
@@ -39,7 +41,7 @@ namespace tke
 
 	int findVkMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	void initRenderThreadData();
+	void initVulkanThreadData();
 
-	void initRender();
+	int initVulkan(bool debug);
 }

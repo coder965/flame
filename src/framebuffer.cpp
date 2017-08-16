@@ -13,7 +13,7 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	std::vector<Framebuffer*> framebuffers;
+	static std::vector<Framebuffer*> _framebuffers;
 
 	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
@@ -23,12 +23,12 @@ namespace tke
 
 	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
 	{
-		for (auto f : framebuffers)
+		for (auto f : _framebuffers)
 		{
 			if (f->views.size() == viewCount)
 			{
 				bool same = true;
-				for (auto i = 0; i < f->views.size(); i++)
+				for (auto i = 0; i < viewCount; i++)
 				{
 					if (f->views[i] != views[i])
 					{
@@ -64,7 +64,7 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
 
-		framebuffers.push_back(f);
+		_framebuffers.push_back(f);
 		return f;
 	}
 
@@ -73,16 +73,15 @@ namespace tke
 		f->refCount--;
 		if (f->refCount == 0)
 		{
-			for (auto it = framebuffers.begin(); it != framebuffers.end(); it++)
+			for (auto it = _framebuffers.begin(); it != _framebuffers.end(); it++)
 			{
 				if (*it == f)
 				{
-					framebuffers.erase(it);
+					_framebuffers.erase(it);
 					delete f;
 					return;
 				}
 			}
 		}
 	}
-
 }

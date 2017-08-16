@@ -2,8 +2,6 @@
 
 #include <vector>
 
-#include "..\src\entity.h"
-
 struct MonitorWidget;
 
 struct Game

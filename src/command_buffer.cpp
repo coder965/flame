@@ -3,16 +3,18 @@
 #include "commnd_buffer.h"
 #include "buffer.h"
 #include "image.h"
+#include "renderpass.h"
+#include "framebuffer.h"
+#include "model.h"
 
 namespace tke
 {
-	CommandBuffer::CommandBuffer(CommandPool *_pool, VkCommandBufferLevel level)
-		:pool(_pool)
+	CommandBuffer::CommandBuffer(VkCommandBufferLevel level)
 	{
 		VkCommandBufferAllocateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		info.level = level;
-		info.commandPool = pool->v;
+		info.commandPool = commandPool->v;
 		info.commandBufferCount = 1;
 
 		device.mtx.lock();
@@ -24,7 +26,7 @@ namespace tke
 	CommandBuffer::~CommandBuffer()
 	{
 		device.mtx.lock();
-		vkFreeCommandBuffers(device.v, pool->v, 1, &v);
+		vkFreeCommandBuffers(device.v, commandPool->v, 1, &v);
 		device.mtx.unlock();
 	}
 
@@ -238,14 +240,14 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	CommandBuffer *CommandPool::begineOnce()
+	CommandBuffer *begineOnceCommandBuffer()
 	{
-		auto cb = new CommandBuffer(this);
+		auto cb = new CommandBuffer;
 		cb->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		return cb;
 	}
 
-	void CommandPool::endOnce(CommandBuffer *cb)
+	void endOnceCommandBuffer(CommandBuffer *cb)
 	{
 		cb->end();
 
@@ -255,22 +257,22 @@ namespace tke
 		delete cb;
 	}
 
-	void CommandPool::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
 	{
-		auto cb = begineOnce();
+		auto cb = begineOnceCommandBuffer();
 		VkBufferCopy region = { srcOffset, dstOffset, size };
 		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, 1, &region);
-		endOnce(cb);
+		endOnceCommandBuffer(cb);
 	}
 
-	void CommandPool::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
 	{
-		auto cb = begineOnce();
+		auto cb = begineOnceCommandBuffer();
 		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, count, ranges);
-		endOnce(cb);
+		endOnceCommandBuffer(cb);
 	}
 
-	void CommandPool::updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &Buffer)
+	void updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &Buffer)
 	{
 		void* map = stagingBuffer->map(0, size);
 		memcpy(map, data, size);
@@ -279,9 +281,9 @@ namespace tke
 		copyBuffer(stagingBuffer->v, Buffer, size);
 	}
 
-	void CommandPool::copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
+	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
 	{
-		auto cb = begineOnce();
+		auto cb = begineOnceCommandBuffer();
 		VkImageCopy region = {};
 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.layerCount = 1;
@@ -291,9 +293,8 @@ namespace tke
 		region.extent.height = height;
 		region.extent.depth = 1;
 		vkCmdCopyImage(cb->v, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		endOnce(cb);
+		endOnceCommandBuffer(cb);
 	}
 
-	CommandPool *commandPool = nullptr;
-
+	thread_local CommandPool *commandPool = nullptr;
 }

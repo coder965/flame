@@ -1,14 +1,17 @@
 #pragma once
 
 #include "utils.h"
-#include "render.h"
+#include "vulkan.h"
 
 namespace tke
 {
+	struct RenderPass;
 	extern RenderPass *renderPass_window;
 	extern RenderPass *renderPass_window_clear;
 
 	struct GuiComponent;
+	struct Image;
+	struct Framebuffer;
 	struct Window
 	{
 		int cx = 0, cy = 0;

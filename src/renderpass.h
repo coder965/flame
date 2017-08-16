@@ -6,6 +6,12 @@
 
 namespace tke
 {
+	VkAttachmentDescription colorAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
+	VkAttachmentDescription depthAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
+	VkAttachmentDescription swapchainAttachmentDesc(VkAttachmentLoadOp loadOp);
+	VkSubpassDescription subpassDesc(int colorCount, VkAttachmentReference *pColors, VkAttachmentReference *pDepth = nullptr, int inputCount = 0, VkAttachmentReference *pInputs = nullptr);
+	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
+
 	struct RenderPass
 	{
 		VkRenderPass v;

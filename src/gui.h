@@ -10,7 +10,7 @@
 #include <IconsFontAwesome.h>
 
 #include "math.h"
-#include "render.h"
+#include "vulkan.h"
 
 namespace tke
 {
@@ -50,7 +50,7 @@ namespace tke
 
 	struct InputDialog : DialogT
 	{
-		char m_buf[MAX_PATH];
+		char m_buf[260];
 		void(*m_callback)(const std::string &);
 
 		InputDialog();
@@ -91,7 +91,7 @@ namespace tke
 
 	struct SaveFileDialog : FileDialogT
 	{
-		char filename[MAX_PATH];
+		char filename[260];
 		void(*m_callback)(const std::string &);
 
 		SaveFileDialog();
@@ -112,6 +112,7 @@ namespace tke
 	extern bool uiAcceptedKey;
 
 	struct Window;
+	struct CommandBuffer;
 	struct GuiComponent
 	{
 		Window *window;
@@ -129,6 +130,7 @@ namespace tke
 		void end();
 	};
 
+	struct Image;
 	void addGuiImage(Image *image);
 	void removeGuiImage(Image *image);
 

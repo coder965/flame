@@ -5,6 +5,7 @@
 
 namespace tke
 {
+	struct Image;
 	struct ImageView
 	{
 		Image *image;

@@ -1,7 +1,8 @@
 #include "scene.h"
 #include "math.h"
-#include "render.h"
 #include "core.h"
+#include "renderpass.h"
+#include "synchronization.h"
 
 namespace tke
 {
@@ -106,27 +107,27 @@ namespace tke
 		resource.setBuffer(staticObjectIndirectBuffer.get(), "Scene.Static.IndirectBuffer");
 		resource.setBuffer(animatedObjectIndirectBuffer.get(), "Scene.Animated.IndirectBuffer");
 
-		ds_mrt = std::make_unique<DescriptorSet>(descriptorPool, mrtPipeline);
+		ds_mrt = std::make_unique<DescriptorSet>(mrtPipeline);
 		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
-		ds_mrtAnim = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline);
+		ds_mrtAnim = std::make_unique<DescriptorSet>(mrtAnimPipeline);
 		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
-		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(descriptorPool, mrtAnimPipeline, 2);
-		ds_terrain = std::make_unique<DescriptorSet>(descriptorPool, terrainPipeline);
+		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrtAnimPipeline, 2);
+		ds_terrain = std::make_unique<DescriptorSet>(terrainPipeline);
 		terrainPipeline->linkDescriptors(ds_terrain.get(), &resource);
-		ds_water = std::make_unique<DescriptorSet>(descriptorPool, waterPipeline);
+		ds_water = std::make_unique<DescriptorSet>(waterPipeline);
 		waterPipeline->linkDescriptors(ds_water.get(), &resource);
-		ds_esm = std::make_unique<DescriptorSet>(descriptorPool, esmPipeline);
+		ds_esm = std::make_unique<DescriptorSet>(esmPipeline);
 		esmPipeline->linkDescriptors(ds_esm.get(), &resource);
-		ds_esmAnim = std::make_unique<DescriptorSet>(descriptorPool, esmAnimPipeline);
+		ds_esmAnim = std::make_unique<DescriptorSet>(esmAnimPipeline);
 		esmAnimPipeline->linkDescriptors(ds_esmAnim.get(), &resource);
-		ds_defe = std::make_unique<DescriptorSet>(descriptorPool, deferredPipeline);
+		ds_defe = std::make_unique<DescriptorSet>(deferredPipeline);
 		deferredPipeline->linkDescriptors(ds_defe.get(), &resource);
-		ds_comp = std::make_unique<DescriptorSet>(descriptorPool, composePipeline);
+		ds_comp = std::make_unique<DescriptorSet>(composePipeline);
 		composePipeline->linkDescriptors(ds_comp.get(), &resource);
 
-		cb_shadow = std::make_unique<CommandBuffer>(commandPool);
-		cb_mrt = std::make_unique<CommandBuffer>(commandPool);
-		cb_deferred = std::make_unique<CommandBuffer>(commandPool);
+		cb_shadow = std::make_unique<CommandBuffer>();
+		cb_mrt = std::make_unique<CommandBuffer>();
+		cb_deferred = std::make_unique<CommandBuffer>();
 
 		for (int i = 0; i < TKE_MAX_SHADOW_COUNT * 6; i++)
 		{
@@ -660,7 +661,7 @@ namespace tke
 				_setSunLight_attribute(this);
 
 				{
-					auto cb = commandPool->begineOnce();
+					auto cb = begineOnceCommandBuffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 					cb->beginRenderPass(renderPass_image16, fb);
@@ -670,7 +671,7 @@ namespace tke
 					cb->draw(3);
 					cb->endRenderPass();
 
-					commandPool->endOnce(cb);
+					endOnceCommandBuffer(cb);
 					releaseFramebuffer(fb);
 				}
 
@@ -683,7 +684,7 @@ namespace tke
 						{
 							for (int i = 0; i < 3; i++)
 							{
-								auto cb = commandPool->begineOnce();
+								auto cb = begineOnceCommandBuffer();
 								auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
 
 								cb->beginRenderPass(renderPass_image16, fb);
@@ -696,7 +697,7 @@ namespace tke
 								cb->draw(3);
 								cb->endRenderPass();
 
-								commandPool->endOnce(cb);
+								endOnceCommandBuffer(cb);
 								releaseFramebuffer(fb);
 							}
 						}
@@ -707,7 +708,7 @@ namespace tke
 						{
 							for (int i = 1; i < envrImage->levels.size(); i++)
 							{
-								auto cb = commandPool->begineOnce();
+								auto cb = begineOnceCommandBuffer();
 								auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
 
 								cb->beginRenderPass(renderPass_image16, fb);
@@ -720,7 +721,7 @@ namespace tke
 								cb->draw(3);
 								cb->endRenderPass();
 
-								commandPool->endOnce(cb);
+								endOnceCommandBuffer(cb);
 								releaseFramebuffer(fb);
 							}
 						}
@@ -803,8 +804,8 @@ namespace tke
 
 			}
 			stagingBuffer->unmap();
-			if (staticUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
-			if (animatedUpdateRanges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			if (staticUpdateRanges.size() > 0) copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
+			if (animatedUpdateRanges.size() > 0) copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 		if (terrain)
 		{
@@ -873,7 +874,7 @@ namespace tke
 				}
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, waterBuffer->v, ranges.size(), ranges.data());
+			if (ranges.size() > 0) copyBuffer(stagingBuffer->v, waterBuffer->v, ranges.size(), ranges.data());
 		}
 		static std::vector<Object*> staticObjects;
 		static std::vector<Object*> animatedObjects;
@@ -1024,7 +1025,7 @@ namespace tke
 				}
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, shadowBuffer->v, ranges.size(), ranges.data());
+			if (ranges.size() > 0) copyBuffer(stagingBuffer->v, shadowBuffer->v, ranges.size(), ranges.data());
 		}
 		if (lights.size() > 0)
 		{ // light attribute
@@ -1053,7 +1054,7 @@ namespace tke
 				lightIndex++;
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) commandPool->copyBuffer(stagingBuffer->v, lightBuffer->v, ranges.size(), ranges.data());
+			if (ranges.size() > 0) copyBuffer(stagingBuffer->v, lightBuffer->v, ranges.size(), ranges.data());
 		}
 
 		camera.changed = false;

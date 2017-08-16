@@ -1,43 +1,15 @@
 #pragma once
 
 #include "math.h"
-#include "render.h"
-#include "entity.h"
 #include "scene.h"
+#include "buffer.h"
+#include "image.h"
+#include "commnd_buffer.h"
+#include "descriptor.h"
+#include "pipeline.h"
 
 namespace tke
 {
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-	};
-
-	struct AnimatedVertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-
-		glm::vec4 boneWeight;
-		glm::vec4 boneID;
-	};
-
-	struct LineVertex
-	{
-		glm::vec3 position;
-		glm::vec3 color;
-	};
-
-	extern VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	extern VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
-	extern VkPipelineVertexInputStateCreateInfo vertexInputState;
-	extern VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
-	extern VkPipelineVertexInputStateCreateInfo lineVertexInputState;
-
 	extern StagingBuffer *stagingBuffer;
 	
 	extern bool needUpdateVertexBuffer;
@@ -47,10 +19,12 @@ namespace tke
 	extern std::vector<std::pair<std::string, Image*>> debugImages;
 
 	extern std::vector<std::unique_ptr<Image>> textures;
+
 	inline void addTexture(Image *i)
 	{
 		textures.push_back(std::move(std::unique_ptr<Image>(i)));
 	}
+
 	inline Image *getTexture(const std::string &_filename)
 	{
 		auto filename = std::experimental::filesystem::path(_filename).string();
@@ -170,6 +144,6 @@ namespace tke
 	void processEvents();
 	void processCmdLine(const std::string &str, bool record = true);
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
-	Err init(const std::string &path, int rcx, int rcy);
+	int init(const std::string &path, int rcx, int rcy);
 	void run();
 }

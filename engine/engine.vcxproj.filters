@@ -33,16 +33,10 @@
     <ClCompile Include="..\src\reflect.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\render.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\sound.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\entity.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\animation.cpp">
@@ -111,6 +105,21 @@
     <ClCompile Include="..\src\pipeline.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\synchronization.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sampler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\resource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\push_constant.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\core.h">
@@ -128,13 +137,7 @@
     <ClInclude Include="..\src\utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\render.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\sound.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\entity.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\define.h">
@@ -198,6 +201,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\framebuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sampler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\synchronization.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pipeline.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\push_constant.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

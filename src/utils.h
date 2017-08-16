@@ -72,15 +72,15 @@ namespace tke
 {
 	int lineNumber(const char *str);
 
-	enum class Err
+	enum Err
 	{
-		eNoErr,
-		eInvalidEnum,
-		eInvalidValue,
-		eInvalidOperation,
-		eOutOfMemory,
-		eContextLost,
-		eResourceLost
+		NoErr,
+		ErrInvalidEnum,
+		ErrInvalidValue,
+		ErrInvalidOperation,
+		ErrOutOfMemory,
+		ErrContextLost,
+		ErrResourceLost
 	};
 
 	const char *getErrorString(Err errNum);

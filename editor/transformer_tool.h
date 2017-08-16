@@ -1,7 +1,5 @@
 #pragma once
 
-#include "..\src\entity.h"
-
 #include "tool.h"
 
 struct TransformerTool : Tool

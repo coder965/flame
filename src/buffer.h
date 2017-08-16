@@ -4,6 +4,7 @@
 
 namespace tke
 {
+	struct StagingBuffer;
 	struct Buffer
 	{
 		size_t size = 0;

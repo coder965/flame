@@ -1,7 +1,39 @@
+#include "define.h"
 #include "pipeline.h"
+#include "descriptor.h"
+#include "renderpass.h"
+#include "sampler.h"
+#include "resource.h"
 
 namespace tke
 {
+	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+	VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
+	VkPipelineVertexInputStateCreateInfo vertexInputState;
+	VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
+	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
+
+	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes)
+	{
+		VkPipelineVertexInputStateCreateInfo state = {};
+		state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		state.vertexBindingDescriptionCount = bindingCount;
+		state.pVertexBindingDescriptions = pBindings;
+		state.vertexAttributeDescriptionCount = attributeCount;
+		state.pVertexAttributeDescriptions = pAttributes;
+
+		return state;
+	}
+
+	PipelineLayout::~PipelineLayout()
+	{
+		device.mtx.lock();
+		vkDestroyPipelineLayout(device.v, v, nullptr);
+		device.mtx.unlock();
+	}
+
+	static std::vector<PipelineLayout*> pipelineLayouts;
+
 	void Pipeline::loadXML(const std::string &_filename)
 	{
 		filename = _filename;
@@ -95,6 +127,32 @@ namespace tke
 		}
 
 		at.saveXML(filename);
+	}
+
+	static VkBlendFactor _vkBlendFactor(BlendFactor f)
+	{
+		switch (f)
+		{
+		case BlendFactor::zero:
+			return VK_BLEND_FACTOR_ZERO;
+		case BlendFactor::one:
+			return VK_BLEND_FACTOR_ONE;
+		case BlendFactor::src_alpha:
+			return VK_BLEND_FACTOR_SRC_ALPHA;
+		case BlendFactor::one_minus_src_alpha:
+			return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		}
+	};
+
+	static VkDescriptorType _vkDescriptorType(DescriptorType t)
+	{
+		switch (t)
+		{
+		case DescriptorType::uniform_buffer:
+			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		case DescriptorType::image_n_sampler:
+			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		}
 	}
 
 	void Pipeline::setup(RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
@@ -206,8 +264,6 @@ namespace tke
 			vkBlendAttachments.push_back(s);
 		}
 
-		_currentUboBinding.clear();
-
 		for (auto s : stages)
 		{
 			if (!s) continue;
@@ -274,52 +330,7 @@ namespace tke
 		}
 
 		for (auto set = 0; set < vkDescriptors.size(); set++)
-		{
-			bool found = false;
-			for (auto d : _descriptorSetLayouts)
-			{
-				if (d->bindings.size() == vkDescriptors[set].size())
-				{
-					bool same = true;
-					for (auto i = 0; i < d->bindings.size(); i++)
-					{
-						auto &binding = d->bindings[i];
-						if (binding.binding != vkDescriptors[set][i].binding || binding.descriptorCount != vkDescriptors[set][i].descriptorCount ||
-							binding.descriptorType != vkDescriptors[set][i].descriptorType || binding.stageFlags != vkDescriptors[set][i].stageFlags)
-						{
-							same = false;
-							break;
-						}
-					}
-					if (same)
-					{
-						descriptorSetLayouts[set] = d;
-						found = true;
-						break;
-					}
-				}
-			}
-
-			if (!found)
-			{
-				auto d = new DescriptorSetLayout;
-				d->bindings.insert(d->bindings.begin(), vkDescriptors[set].begin(), vkDescriptors[set].end());
-
-				VkDescriptorSetLayoutCreateInfo info = {};
-				info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				info.bindingCount = vkDescriptors[set].size();
-				info.pBindings = vkDescriptors[set].data();
-
-				device.mtx.lock();
-				auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &d->v);
-				assert(res == VK_SUCCESS);
-				device.mtx.unlock();
-
-				_descriptorSetLayouts.push_back(d);
-
-				descriptorSetLayouts[set] = d;
-			}
-		}
+			descriptorSetLayouts[set] = getDescriptorSetLayout(vkDescriptors[set].size(), vkDescriptors[set].data());
 
 		{
 			bool found = false;
@@ -474,7 +485,7 @@ namespace tke
 
 		if (need_default_ds)
 		{
-			descriptorSet = new DescriptorSet(descriptorPool, this);
+			descriptorSet = new DescriptorSet(this);
 			linkDescriptors(descriptorSet, &globalResource);
 		}
 	}
@@ -496,21 +507,7 @@ namespace tke
 		}
 
 		for (auto d : descriptorSetLayouts)
-		{
-			d->refCount--;
-			if (d->refCount == 0)
-			{
-				for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end(); it++)
-				{
-					if (*it == d)
-					{
-						_descriptorSetLayouts.erase(it);
-						delete d;
-						break;
-					}
-				}
-			}
-		}
+			releaseDescriptorSetLayout(d);
 
 		delete descriptorSet;
 
@@ -522,7 +519,7 @@ namespace tke
 			delete stages[i];
 	}
 
-	void Pipeline::linkDescriptors(DescriptorSet *set, ResourceBank *resource)
+	void Pipeline::linkDescriptors(DescriptorSet *set, Resource *resource)
 	{
 		for (auto &link : links)
 		{
@@ -638,5 +635,62 @@ namespace tke
 			}
 		}
 		return -1;
+	}
+
+	void initPipeline()
+	{
+		zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
+
+		{
+			// plain2dVertexInputState will be init in gui
+			static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX };
+
+			static VkVertexInputAttributeDescription attributes[] = {
+				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex2D, pos) },
+				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex2D, uv) },
+				{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(Vertex2D, col) }
+			};
+
+			plain2dVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+		}
+
+		{
+			static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
+
+			static VkVertexInputAttributeDescription attributes[] = {
+				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
+				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
+				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
+				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
+			};
+
+			vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+		}
+
+		{
+			static VkVertexInputBindingDescription bindings = { 0, sizeof(VertexAnimated), VK_VERTEX_INPUT_RATE_VERTEX };
+
+			static VkVertexInputAttributeDescription attributes[] = {
+				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, position) },
+				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexAnimated, uv) },
+				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, normal) },
+				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, tangent) },
+				{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneWeight) },
+				{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneID) }
+			};
+
+			animatedVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+		}
+
+		{
+			static VkVertexInputBindingDescription bindings = { 0, sizeof(VertexLine), VK_VERTEX_INPUT_RATE_VERTEX };
+
+			static VkVertexInputAttributeDescription attributes[] = {
+				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexLine, position) },
+				{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexLine, color) }
+			};
+
+			lineVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+		}
 	}
 }

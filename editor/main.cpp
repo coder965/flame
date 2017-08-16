@@ -1,7 +1,6 @@
 #include <string>
 
 #include "../src/core.h"
-#include "../src/entity.h"
 
 #include "editor.h"
 

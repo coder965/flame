@@ -22,7 +22,11 @@ int main(int argc, char **argv)
 		"../src/terrain.h",
 		"../src/water.h",
 		"../src/scene.h",
-		"../src/render.h"
+		"../src/descriptor.h",
+		"../src/push_constant.h",
+		"../src/stage.h",
+		"../src/pipeline.h",
+		"../src/sampler.h",
 	};
 
 	if (std::experimental::filesystem::exists(outputFilename))
@@ -37,8 +41,8 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-		if (up_to_date)
-			return 0;
+		//if (up_to_date)
+		//	return 0;
 	}
 
 	int current = -1;
@@ -134,8 +138,6 @@ int main(int argc, char **argv)
 
 	auto fout = fopen(outputFilename, "wb");
 	fprintf(fout, "#include \"utils.h\"\n");
-	fprintf(fout, "#include \"render.h\"\n");
-	fprintf(fout, "#include \"entity.h\"\n");
 	fprintf(fout, "#include \"transformer.h\"\n");
 	fprintf(fout, "#include \"controller.h\"\n");
 	fprintf(fout, "#include \"model.h\"\n");
@@ -143,6 +145,11 @@ int main(int argc, char **argv)
 	fprintf(fout, "#include \"terrain.h\"\n");
 	fprintf(fout, "#include \"water.h\"\n");
 	fprintf(fout, "#include \"scene.h\"\n");
+	fprintf(fout, "#include \"descriptor.h\"\n");
+	fprintf(fout, "#include \"push_constant.h\"\n");
+	fprintf(fout, "#include \"stage.h\"\n");
+	fprintf(fout, "#include \"pipeline.h\"\n");
+	fprintf(fout, "#include \"sampler.h\"\n");
 	fprintf(fout, "#include <string>\n");
 	fprintf(fout, "namespace tke{\n");
 	fprintf(fout, declString.c_str());

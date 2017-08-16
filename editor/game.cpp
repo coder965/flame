@@ -1,7 +1,6 @@
 #include <filesystem>
 
 #include "../src/gui.h"
-#include "../src/entity.h"
 
 #include "game.h"
 #include "editor.h"

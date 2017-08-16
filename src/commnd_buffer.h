@@ -5,7 +5,6 @@
 
 namespace tke
 {
-	struct CommandPool;
 	struct Pipeline;
 	struct RenderPass;
 	struct Framebuffer;
@@ -20,11 +19,10 @@ namespace tke
 	struct IndirectIndexBuffer;
 	struct CommandBuffer
 	{
-		CommandPool *pool;
 		VkCommandBuffer v;
 		Pipeline *currentPipeline = nullptr;
 
-		CommandBuffer(CommandPool *_pool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+		CommandBuffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 		~CommandBuffer();
 		void reset();
 		void begin(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
@@ -60,13 +58,19 @@ namespace tke
 
 		CommandPool();
 		~CommandPool();
-		CommandBuffer *begineOnce();
-		void endOnce(CommandBuffer *cb);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
-		void updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &uniformBuffer);
-		void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 	};
-	extern CommandPool *commandPool;
 
+	CommandBuffer *begineOnceCommandBuffer();
+
+	void endOnceCommandBuffer(CommandBuffer *cb);
+
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
+
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
+
+	void updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &uniformBuffer);
+
+	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+
+	thread_local extern CommandPool *commandPool;
 }

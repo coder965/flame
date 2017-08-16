@@ -2,7 +2,9 @@
 #include <filesystem>
 
 #include "math.h"
+#include "buffer.h"
 #include "image.h"
+#include "commnd_buffer.h"
 
 namespace tke
 {
@@ -117,7 +119,7 @@ namespace tke
 
 	void Image::transitionLayout(int _level, VkImageLayout _layout)
 	{
-		auto cb = commandPool->begineOnce();
+		auto cb = begineOnceCommandBuffer();
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -144,7 +146,7 @@ namespace tke
 
 		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-		commandPool->endOnce(cb);
+		endOnceCommandBuffer(cb);
 
 		layout = _layout;
 	}
@@ -171,9 +173,9 @@ namespace tke
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
-		auto cb = commandPool->begineOnce();
+		auto cb = begineOnceCommandBuffer();
 		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		commandPool->endOnce(cb);
+		endOnceCommandBuffer(cb);
 
 		transitionLayout(_level, VK_IMAGE_LAYOUT_GENERAL);
 	}
@@ -242,7 +244,34 @@ namespace tke
 		std::unique_ptr<ImageData> d(std::move(createImageData(filename)));
 		assert(d.get());
 
-		auto i = new Image(d->levels[0].cx, d->levels[0].cy, d->getVkFormat(sRGB), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
+		VkFormat _format = VK_FORMAT_UNDEFINED;
+		switch (d->channel)
+		{
+		case 1:
+			switch (d->byte_per_pixel)
+			{
+			case 1:
+				_format = VK_FORMAT_R8_UNORM;
+				break;
+			case 2:
+				_format = VK_FORMAT_R16_UNORM;
+				break;
+			}
+			break;
+		case 4:
+			switch (d->byte_per_pixel)
+			{
+			case 4:
+				if (sRGB)
+					_format = VK_FORMAT_R8G8B8A8_SRGB;
+				else
+					_format = VK_FORMAT_R8G8B8A8_UNORM;
+				break;
+			}
+		}
+		assert(_format != VK_FORMAT_UNDEFINED);
+
+		auto i = new Image(d->levels[0].cx, d->levels[0].cy, _format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
 		for (int l = 0; l < d->levels.size(); l++)
 		{
 			i->fillData(l, d->levels[l].v, d->levels[l].size);

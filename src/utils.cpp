@@ -12,6 +12,7 @@
 
 #include "math.h"
 #include "utils.h"
+#include "image_data.h"
 
 // hash
 
@@ -38,19 +39,19 @@ namespace tke
 	{
 		switch (errNum)
 		{
-		case Err::eNoErr:
+		case NoErr:
 			return "No error.";
-		case Err::eInvalidEnum:
+		case ErrInvalidEnum:
 			return "Invalid enum.";
-		case Err::eInvalidValue:
+		case ErrInvalidValue:
 			return "Invalid value.";
-		case Err::eInvalidOperation:
+		case ErrInvalidOperation:
 			return "Invalid operation.";
-		case Err::eOutOfMemory:
+		case ErrOutOfMemory:
 			return "Out of memory.";
-		case Err::eContextLost:
+		case ErrContextLost:
 			return "Context lost.";
-		case Err::eResourceLost:
+		case ErrResourceLost:
 			return "Resource lost.";
 		default:
 			return "unknow error";

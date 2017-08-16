@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "buffer.h"
+#include "commnd_buffer.h"
 
 namespace tke
 {
@@ -45,7 +46,7 @@ namespace tke
 		void* map = stagingBuffer.map(0, p->size);
 		memcpy(map, data, p->size);
 		stagingBuffer.unmap();
-		commandPool->copyBuffer(stagingBuffer.v, p->v, p->size);
+		copyBuffer(stagingBuffer.v, p->v, p->size);
 	}
 
 	static void buffer_destroy(Buffer *p)
@@ -82,7 +83,7 @@ namespace tke
 	void Buffer::update(void *data, StagingBuffer *stagingBuffer, size_t _size)
 	{
 		if (_size == 0) _size = size;
-		commandPool->updateBuffer(data, _size, stagingBuffer, v);
+		updateBuffer(data, _size, stagingBuffer, v);
 	}
 
 	void *Buffer::map(size_t offset, size_t _size)

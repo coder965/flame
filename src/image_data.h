@@ -39,7 +39,6 @@ namespace tke
 
 		ImageData();
 		~ImageData();
-		VkFormat getVkFormat(bool sRGB);
 	};
 
 	ImageData *createImageData(const std::string &filename);

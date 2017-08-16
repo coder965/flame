@@ -1,6 +1,10 @@
 #include "window.h"
+#include "image.h"
+#include "framebuffer.h"
 #include "gui.h"
 #include "define.h"
+#include "renderpass.h"
+#include "synchronization.h"
 
 namespace tke
 {

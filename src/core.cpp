@@ -4,19 +4,13 @@
 #include "define.h"
 #include "core.h"
 #include "gui.h"
-#include "entity.h"
 #include "physics.h"
 #include "sound.h"
 #include "window.h"
+#include "renderpass.h"
 
 namespace tke
 {
-	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
-	VkPipelineVertexInputStateCreateInfo vertexInputState;
-	VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
-	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
-
 	StagingBuffer *stagingBuffer = nullptr;
 
 	bool needUpdateVertexBuffer = true;
@@ -190,13 +184,13 @@ namespace tke
 		if (x < 0 || y < 0 || x > pickUpImage->levels[0].cx || y > pickUpImage->levels[0].cy)
 			return 0;
 
-		auto cb = commandPool->begineOnce();
+		auto cb = begineOnceCommandBuffer();
 		cb->beginRenderPass(renderPass_depth_clear_image8_clear, pickUpFb);
 		drawCallback(cb);
 		cb->endRenderPass();
-		commandPool->endOnce(cb);
+		endOnceCommandBuffer(cb);
 
-		cb = commandPool->begineOnce();
+		cb = begineOnceCommandBuffer();
 		VkBufferImageCopy range = {};
 		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		range.imageSubresource.layerCount = 1;
@@ -206,7 +200,7 @@ namespace tke
 		range.imageExtent.height = 1;
 		range.imageExtent.depth = 1;
 		vkCmdCopyImageToBuffer(cb->v, pickUpImage->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->v, 1, &range);
-		commandPool->endOnce(cb);
+		endOnceCommandBuffer(cb);
 
 		auto pixel = (unsigned char*)stagingBuffer->map(0, 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
@@ -238,7 +232,7 @@ namespace tke
 		unsigned int dummy;
 	};
 
-	Err init(const std::string &path, int rcx, int rcy)
+	int init(const std::string &path, int rcx, int rcy)
 	{
 		enginePath = path;
 
@@ -251,7 +245,7 @@ namespace tke
 		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, aspect, TKE_NEAR, TKE_FAR);
 		matPerspectiveInv = glm::inverse(matPerspective);
 
-		initRender(
+		initVulkan(
 #if defined(_DEBUG)
 			true
 #else
@@ -264,61 +258,6 @@ namespace tke
 		modelMaterials.push_back(defaultMaterial);
 
 		stagingBuffer = new StagingBuffer(67108864);
-
-		{
-			zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos) },
-					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv) },
-					{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col) }
-				};
-
-				plain2dVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
-					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
-					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
-					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
-				};
-
-				vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(AnimatedVertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, position) },
-					{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(AnimatedVertex, uv) },
-					{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, normal) },
-					{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(AnimatedVertex, tangent) },
-					{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneWeight) },
-					{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(AnimatedVertex, boneID) }
-				};
-
-				animatedVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-
-			{
-				static VkVertexInputBindingDescription bindings = { 0, sizeof(LineVertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-				static VkVertexInputAttributeDescription attributes[] = {
-					{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, position) },
-					{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, color) }
-				};
-
-				lineVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-			}
-		}
 
 		plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		globalResource.setImage(plainDepthImage, "Depth.Image");
@@ -438,14 +377,14 @@ namespace tke
 		//initSound();
 		initWindow();
 
-		return Err::eNoErr;
+		return NoErr;
 	}
 
 	void run()
 	{
 		lastTime = GetTickCount();
 
-		ds_maps = new DescriptorSet(descriptorPool, mrtPipeline, 1);
+		ds_maps = new DescriptorSet(mrtPipeline, 1);
 
 		for (;;)
 		{
@@ -466,7 +405,7 @@ namespace tke
 					std::vector<Vertex> staticVertexs;
 					std::vector<int> staticIndices;
 
-					std::vector<AnimatedVertex> animatedVertexs;
+					std::vector<VertexAnimated> animatedVertexs;
 					std::vector<int> animatedIndices;
 
 					for (auto &m : models)
@@ -498,7 +437,7 @@ namespace tke
 
 							for (int i = 0; i < m->positions.size(); i++)
 							{
-								AnimatedVertex vertex;
+								VertexAnimated vertex;
 								vertex.position   = i < m->positions.size()   ? m->positions[i]   : glm::vec3(0.f);
 								vertex.uv         = i < m->uvs.size()         ? m->uvs[i]         : glm::vec2(0.f);
 								vertex.normal     = i < m->normals.size()     ? m->normals[i]     : glm::vec3(0.f);
@@ -518,7 +457,7 @@ namespace tke
 					if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
 					if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
 
-					if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(AnimatedVertex) * animatedVertexs.size(), animatedVertexs.data());
+					if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(VertexAnimated) * animatedVertexs.size(), animatedVertexs.data());
 					if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
 
 					needUpdateVertexBuffer = false;

@@ -3,6 +3,7 @@
 #include "gui.h"
 #include "core.h"
 #include "window.h"
+#include "image.h"
 
 namespace tke
 {
@@ -551,7 +552,7 @@ namespace tke
 			context = ImGui::CreateContext();
 		}
 
-		cb = new CommandBuffer(commandPool);
+		cb = new CommandBuffer;
 		cb->begin();
 		cb->end();
 

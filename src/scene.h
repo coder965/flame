@@ -9,7 +9,12 @@
 #include "terrain.h"
 #include "water.h"
 #include "physics.h"
-#include "render.h"
+#include "buffer.h"
+#include "image.h"
+#include "framebuffer.h"
+#include "pipeline.h"
+#include "commnd_buffer.h"
+#include "resource.h"
 
 namespace tke
 {
@@ -142,7 +147,7 @@ namespace tke
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
 
-		ResourceBank resource;
+		Resource resource;
 
 		std::unique_ptr<Image> envrImage;
 

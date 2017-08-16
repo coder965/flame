@@ -1,13 +1,86 @@
+#include <assert.h>
+
 #include "descriptor.h"
+#include "pipeline.h"
+#include "buffer.h"
+#include "image.h"
 
 namespace tke
 {
-	DescriptorSet::DescriptorSet(DescriptorPool *_pool, Pipeline *pipeline, int index)
-		:pool(_pool), layout(pipeline->descriptorSetLayouts[index])
+	DescriptorSetLayout::~DescriptorSetLayout()
+	{
+		device.mtx.lock();
+		vkDestroyDescriptorSetLayout(device.v, v, nullptr);
+		device.mtx.unlock();
+	}
+
+	static std::vector<DescriptorSetLayout*> _descriptorSetLayouts;
+
+	DescriptorSetLayout *getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings)
+	{
+		for (auto l : _descriptorSetLayouts)
+		{
+			if (l->bindings.size() == bindingCount)
+			{
+				bool same = true;
+				for (auto i = 0; i < bindingCount; i++)
+				{
+					if (l->bindings[i].binding != bindings[i].binding || l->bindings[i].descriptorCount != bindings[i].descriptorCount ||
+						l->bindings[i].descriptorType != bindings[i].descriptorType || l->bindings[i].stageFlags != bindings[i].stageFlags)
+					{
+						same = false;
+						break;
+					}
+				}
+				if (same)
+				{
+					l->refCount++;
+					return l;
+				}
+			}
+		}
+
+		auto l = new DescriptorSetLayout;
+		for (int i = 0; i < bindingCount; i++)
+			l->bindings.push_back(bindings[i]);
+
+		VkDescriptorSetLayoutCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		info.bindingCount = bindingCount;
+		info.pBindings = l->bindings.data();
+
+		device.mtx.lock();
+		auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &l->v);
+		assert(res == VK_SUCCESS);
+		device.mtx.unlock();
+
+		_descriptorSetLayouts.push_back(l);
+		return l;
+	}
+
+	void releaseDescriptorSetLayout(DescriptorSetLayout *l)
+	{
+		l->refCount--;
+		if (l->refCount == 0)
+		{
+			for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end(); it++)
+			{
+				if (*it == l)
+				{
+					_descriptorSetLayouts.erase(it);
+					delete l;
+					break;
+				}
+			}
+		}
+	}
+
+	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index)
+		:layout(pipeline->descriptorSetLayouts[index])
 	{
 		VkDescriptorSetAllocateInfo descriptorSetInfo = {};
 		descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorSetInfo.descriptorPool = pool->v;
+		descriptorSetInfo.descriptorPool = descriptorPool->v;
 		descriptorSetInfo.descriptorSetCount = 1;
 		descriptorSetInfo.pSetLayouts = &layout->v;
 
@@ -20,7 +93,7 @@ namespace tke
 	DescriptorSet::~DescriptorSet()
 	{
 		device.mtx.lock();
-		auto res = vkFreeDescriptorSets(device.v, pool->v, 1, &v);
+		auto res = vkFreeDescriptorSets(device.v, descriptorPool->v, 1, &v);
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
 	}
@@ -91,6 +164,5 @@ namespace tke
 		vkDestroyDescriptorPool(device.v, v, nullptr);
 	}
 
-	DescriptorPool *descriptorPool = nullptr;
-
+	thread_local DescriptorPool *descriptorPool = nullptr;
 }

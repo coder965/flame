@@ -1,6 +1,4 @@
 #include "utils.h"
-#include "render.h"
-#include "entity.h"
 #include "transformer.h"
 #include "controller.h"
 #include "model.h"
@@ -8,6 +6,11 @@
 #include "terrain.h"
 #include "water.h"
 #include "scene.h"
+#include "descriptor.h"
+#include "push_constant.h"
+#include "stage.h"
+#include "pipeline.h"
+#include "sampler.h"
 #include <string>
 namespace tke{
 tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
@@ -17,12 +20,12 @@ tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
 tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
 tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
-tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
-tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");
 tke::ReflectionBank *Descriptor::b = tke::addReflectionBank("Descriptor");
-tke::ReflectionBank *DynamicState::b = tke::addReflectionBank("DynamicState");
+tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
 tke::ReflectionBank *ShaderMacro::b = tke::addReflectionBank("ShaderMacro");
 tke::ReflectionBank *Stage::b = tke::addReflectionBank("Stage");
+tke::ReflectionBank *BlendAttachment::b = tke::addReflectionBank("BlendAttachment");
+tke::ReflectionBank *DynamicState::b = tke::addReflectionBank("DynamicState");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *Pipeline::b = tke::addReflectionBank("Pipeline");
 struct ReflectInit{ReflectInit(){
@@ -80,23 +83,28 @@ currentBank = Water::b;
 currentBank->parents.emplace_back(Transformer::b, TK_STRUCT_OFFSET(Water, Transformer));
 currentBank = Scene::b;
 currentBank->addV<std::string>("name", offsetof(Scene, name));
+currentEnum = tke::addReflectEnum("DescriptorType");
+currentEnum->items.emplace_back("uniform_buffer", (int)DescriptorType::uniform_buffer);
+currentEnum->items.emplace_back("image_n_sampler", (int)DescriptorType::image_n_sampler);
+currentBank = Descriptor::b;
+currentBank->addE("DescriptorType", "type", offsetof(Descriptor, type));
+currentBank->addV<int>("binding", offsetof(Descriptor, binding));
+currentBank->addV<int>("count", offsetof(Descriptor, count));
+currentBank->addV<std::string>("name", offsetof(Descriptor, name));
+currentBank = PushConstantRange::b;
+currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
+currentBank->addV<int>("size", offsetof(PushConstantRange, size));
 currentEnum = tke::addReflectEnum("StageType");
 currentEnum->items.emplace_back("vert", (int)StageType::vert);
 currentEnum->items.emplace_back("tesc", (int)StageType::tesc);
 currentEnum->items.emplace_back("tese", (int)StageType::tese);
 currentEnum->items.emplace_back("geom", (int)StageType::geom);
 currentEnum->items.emplace_back("frag", (int)StageType::frag);
-currentEnum = tke::addReflectEnum("Format");
-currentEnum->items.emplace_back("R8G8B8A8", (int)Format::R8G8B8A8);
-currentEnum->items.emplace_back("R16G16B16A16", (int)Format::R16G16B16A16);
-currentEnum->items.emplace_back("R32G32B32A32", (int)Format::R32G32B32A32);
-currentEnum = tke::addReflectEnum("AspectFlags");
-currentEnum->items.emplace_back("color", (int)AspectFlags::color);
-currentEnum->items.emplace_back("depth", (int)AspectFlags::depth);
-currentEnum->items.emplace_back("stencil", (int)AspectFlags::stencil);
-currentBank = PushConstantRange::b;
-currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
-currentBank->addV<int>("size", offsetof(PushConstantRange, size));
+currentBank = ShaderMacro::b;
+currentBank->addE("StageType", "stage", offsetof(ShaderMacro, stage));
+currentBank->addV<std::string>("value", offsetof(ShaderMacro, value));
+currentBank = Stage::b;
+currentBank->addV<std::string>("filename", offsetof(Stage, filename));
 currentEnum = tke::addReflectEnum("PrimitiveTopology");
 currentEnum->items.emplace_back("triangle_list", (int)PrimitiveTopology::triangle_list);
 currentEnum->items.emplace_back("line_list", (int)PrimitiveTopology::line_list);
@@ -121,14 +129,6 @@ currentBank->addE("BlendFactor", "src_color", offsetof(BlendAttachment, src_colo
 currentBank->addE("BlendFactor", "dst_color", offsetof(BlendAttachment, dst_color));
 currentBank->addE("BlendFactor", "src_alpha", offsetof(BlendAttachment, src_alpha));
 currentBank->addE("BlendFactor", "dst_alpha", offsetof(BlendAttachment, dst_alpha));
-currentEnum = tke::addReflectEnum("DescriptorType");
-currentEnum->items.emplace_back("uniform_buffer", (int)DescriptorType::uniform_buffer);
-currentEnum->items.emplace_back("image_n_sampler", (int)DescriptorType::image_n_sampler);
-currentBank = Descriptor::b;
-currentBank->addE("DescriptorType", "type", offsetof(Descriptor, type));
-currentBank->addV<int>("binding", offsetof(Descriptor, binding));
-currentBank->addV<int>("count", offsetof(Descriptor, count));
-currentBank->addV<std::string>("name", offsetof(Descriptor, name));
 currentEnum = tke::addReflectEnum("VertexInputType");
 currentEnum->items.emplace_back("zero", (int)VertexInputType::zero);
 currentEnum->items.emplace_back("plain2d", (int)VertexInputType::plain2d);
@@ -140,17 +140,6 @@ currentEnum->items.emplace_back("viewport", (int)DynamicStateType::viewport);
 currentEnum->items.emplace_back("scissor", (int)DynamicStateType::scissor);
 currentBank = DynamicState::b;
 currentBank->addE("DynamicStateType", "type", offsetof(DynamicState, type));
-currentBank = ShaderMacro::b;
-currentBank->addE("StageType", "stage", offsetof(ShaderMacro, stage));
-currentBank->addV<std::string>("value", offsetof(ShaderMacro, value));
-currentBank = Stage::b;
-currentBank->addV<std::string>("filename", offsetof(Stage, filename));
-currentEnum = tke::addReflectEnum("SamplerType");
-currentEnum->items.emplace_back("none", (int)SamplerType::none);
-currentEnum->items.emplace_back("plain", (int)SamplerType::plain);
-currentEnum->items.emplace_back("plain_unnormalized", (int)SamplerType::plain_unnormalized);
-currentEnum->items.emplace_back("color", (int)SamplerType::color);
-currentEnum->items.emplace_back("color_border", (int)SamplerType::color_border);
 currentBank = LinkResource::b;
 currentBank->addV<int>("binding", offsetof(LinkResource, binding));
 currentBank->addV<int>("array_element", offsetof(LinkResource, array_element));
@@ -169,5 +158,11 @@ currentBank->addV<bool>("depth_clamp", offsetof(Pipeline, depth_clamp));
 currentBank->addE("PrimitiveTopology", "primitive_topology", offsetof(Pipeline, primitive_topology));
 currentBank->addE("PolygonMode", "polygon_mode", offsetof(Pipeline, polygon_mode));
 currentBank->addE("CullMode", "cull_mode", offsetof(Pipeline, cull_mode));
+currentEnum = tke::addReflectEnum("SamplerType");
+currentEnum->items.emplace_back("none", (int)SamplerType::none);
+currentEnum->items.emplace_back("plain", (int)SamplerType::plain);
+currentEnum->items.emplace_back("plain_unnormalized", (int)SamplerType::plain_unnormalized);
+currentEnum->items.emplace_back("color", (int)SamplerType::color);
+currentEnum->items.emplace_back("color_border", (int)SamplerType::color_border);
 }};static ReflectInit init;
 }
