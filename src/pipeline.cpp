@@ -609,7 +609,7 @@ namespace tke
 							break;
 						}
 					}
-					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, 0, image->levels.size(), 0, image->layer);
+					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, image->levels.size(), 0, image->layer);
 				}
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);

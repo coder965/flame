@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include "commnd_buffer.h"
+#include "command_buffer.h"
 #include "buffer.h"
 #include "image.h"
 #include "renderpass.h"

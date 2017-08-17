@@ -9,8 +9,8 @@
 #include "descriptor.h"
 #include "push_constant.h"
 #include "stage.h"
-#include "pipeline.h"
 #include "sampler.h"
+#include "pipeline.h"
 #include <string>
 namespace tke{
 tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
@@ -105,6 +105,12 @@ currentBank->addE("StageType", "stage", offsetof(ShaderMacro, stage));
 currentBank->addV<std::string>("value", offsetof(ShaderMacro, value));
 currentBank = Stage::b;
 currentBank->addV<std::string>("filename", offsetof(Stage, filename));
+currentEnum = tke::addReflectEnum("SamplerType");
+currentEnum->items.emplace_back("none", (int)SamplerType::none);
+currentEnum->items.emplace_back("plain", (int)SamplerType::plain);
+currentEnum->items.emplace_back("plain_unnormalized", (int)SamplerType::plain_unnormalized);
+currentEnum->items.emplace_back("color", (int)SamplerType::color);
+currentEnum->items.emplace_back("color_border", (int)SamplerType::color_border);
 currentEnum = tke::addReflectEnum("PrimitiveTopology");
 currentEnum->items.emplace_back("triangle_list", (int)PrimitiveTopology::triangle_list);
 currentEnum->items.emplace_back("line_list", (int)PrimitiveTopology::line_list);
@@ -158,11 +164,5 @@ currentBank->addV<bool>("depth_clamp", offsetof(Pipeline, depth_clamp));
 currentBank->addE("PrimitiveTopology", "primitive_topology", offsetof(Pipeline, primitive_topology));
 currentBank->addE("PolygonMode", "polygon_mode", offsetof(Pipeline, polygon_mode));
 currentBank->addE("CullMode", "cull_mode", offsetof(Pipeline, cull_mode));
-currentEnum = tke::addReflectEnum("SamplerType");
-currentEnum->items.emplace_back("none", (int)SamplerType::none);
-currentEnum->items.emplace_back("plain", (int)SamplerType::plain);
-currentEnum->items.emplace_back("plain_unnormalized", (int)SamplerType::plain_unnormalized);
-currentEnum->items.emplace_back("color", (int)SamplerType::color);
-currentEnum->items.emplace_back("color_border", (int)SamplerType::color_border);
 }};static ReflectInit init;
 }

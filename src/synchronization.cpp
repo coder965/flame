@@ -80,5 +80,4 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
 	}
-
 }

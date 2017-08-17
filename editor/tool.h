@@ -2,6 +2,8 @@
 
 #include "../src/math.h"
 #include "../src/camera.h"
+#include "../src/command_buffer.h"
+#include "../src/framebuffer.h"
 
 struct Tool
 {

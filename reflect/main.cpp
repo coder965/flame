@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 		"../src/descriptor.h",
 		"../src/push_constant.h",
 		"../src/stage.h",
-		"../src/pipeline.h",
 		"../src/sampler.h",
+		"../src/pipeline.h",
 	};
 
 	if (std::experimental::filesystem::exists(outputFilename))
@@ -41,8 +41,8 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-		//if (up_to_date)
-		//	return 0;
+		if (up_to_date)
+			return 0;
 	}
 
 	int current = -1;
@@ -148,8 +148,8 @@ int main(int argc, char **argv)
 	fprintf(fout, "#include \"descriptor.h\"\n");
 	fprintf(fout, "#include \"push_constant.h\"\n");
 	fprintf(fout, "#include \"stage.h\"\n");
-	fprintf(fout, "#include \"pipeline.h\"\n");
 	fprintf(fout, "#include \"sampler.h\"\n");
+	fprintf(fout, "#include \"pipeline.h\"\n");
 	fprintf(fout, "#include <string>\n");
 	fprintf(fout, "namespace tke{\n");
 	fprintf(fout, declString.c_str());

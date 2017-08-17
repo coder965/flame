@@ -4,7 +4,7 @@
 #include "scene.h"
 #include "buffer.h"
 #include "image.h"
-#include "commnd_buffer.h"
+#include "command_buffer.h"
 #include "descriptor.h"
 #include "pipeline.h"
 

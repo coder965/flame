@@ -118,7 +118,7 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	void DescriptorSet::setImage(int binding, int index, Image *image, VkSampler sampler, VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	void DescriptorSet::setImage(int binding, int index, Image *image, VkSampler sampler, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -129,7 +129,7 @@ namespace tke
 		write.descriptorCount = 1;
 		VkDescriptorImageInfo info;
 		info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		info.imageView = image->getView(aspect, baseLevel, levelCount, baseLayer, layerCount);
+		info.imageView = image->getView(baseLevel, levelCount, baseLayer, layerCount);
 		info.sampler = sampler;
 		write.pImageInfo = &info;
 

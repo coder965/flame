@@ -46,7 +46,7 @@ namespace tke
 		DescriptorSet(Pipeline *pipeline, int index = 0);
 		~DescriptorSet();
 		void setBuffer(int binding, int index, Buffer *buffer);
-		void setImage(int binding, int index, Image *image, VkSampler sampler, VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		void setImage(int binding, int index, Image *image, VkSampler sampler, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
 	struct DescriptorPool

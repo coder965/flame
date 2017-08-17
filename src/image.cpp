@@ -4,7 +4,7 @@
 #include "math.h"
 #include "buffer.h"
 #include "image.h"
-#include "commnd_buffer.h"
+#include "command_buffer.h"
 
 namespace tke
 {
@@ -180,15 +180,9 @@ namespace tke
 		transitionLayout(_level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	VkImageView Image::getView(VkImageAspectFlags aspect, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkImageView Image::getView(int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
-		if (aspect == 0)
-		{
-			if (type == eColor || type == eSwapchain)
-				aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-			else
-				aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
+		auto aspect = _getImageAspect(this);
 
 		for (auto view : views)
 		{

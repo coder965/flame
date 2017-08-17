@@ -53,7 +53,7 @@ namespace tke
 		unsigned char getR(float x, float y);
 		void transitionLayout(int _level, VkImageLayout _layout);
 		void fillData(int _level, unsigned char *src, size_t _size);
-		VkImageView getView(VkImageAspectFlags aspect = 0, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkImageView getView(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
 	Image *createImage(const std::string &filename, bool sRGB = false, bool saveData = false);

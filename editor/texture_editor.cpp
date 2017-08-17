@@ -33,7 +33,7 @@ void TextureEditor::show()
 		{
 			_texture_editor_remove_image(this);
 			image = new tke::Image(cx, cy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-			auto cb = tke::commandPool->begineOnce();
+			auto cb = tke::begineOnceCommandBuffer();
 			VkClearColorValue clearValue = { 0.f, 0.f, 0.f, 1.f };
 			VkImageSubresourceRange range;
 			range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -42,7 +42,7 @@ void TextureEditor::show()
 			range.baseArrayLayer = 0;
 			range.layerCount = 1;
 			vkCmdClearColorImage(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &range);
-			tke::commandPool->endOnce(cb);
+			tke::endOnceCommandBuffer(cb);
 			tke::addGuiImage(image);
 			ImGui::CloseCurrentPopup();
 		}
@@ -67,7 +67,7 @@ void TextureEditor::show()
 
 		if (ImGui::Button("Save"))
 		{
-			auto cb = tke::commandPool->begineOnce();
+			auto cb = tke::begineOnceCommandBuffer();
 			VkBufferImageCopy range = {};
 			range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			range.imageSubresource.layerCount = 1;
@@ -77,7 +77,7 @@ void TextureEditor::show()
 			range.imageExtent.height = image->levels[0].cy;
 			range.imageExtent.depth = 1;
 			vkCmdCopyImageToBuffer(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tke::stagingBuffer->v, 1, &range);
-			tke::commandPool->endOnce(cb);
+			tke::endOnceCommandBuffer(cb);
 
 			auto pixel = (unsigned char*)tke::stagingBuffer->map(0, image->levels[0].size);
 			tke::saveImageFile(filename, pixel, image->levels[0].cx, image->levels[0].cy, 4);
@@ -143,7 +143,7 @@ void TextureEditor::show()
 				pixel[3] = 255;
 				tke::stagingBuffer->unmap();
 
-				auto cb = tke::commandPool->begineOnce();
+				auto cb = tke::begineOnceCommandBuffer();
 				VkBufferImageCopy range = {};
 				range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				range.imageSubresource.layerCount = 1;
@@ -153,7 +153,7 @@ void TextureEditor::show()
 				range.imageExtent.height = 1;
 				range.imageExtent.depth = 1;
 				vkCmdCopyBufferToImage(cb->v, tke::stagingBuffer->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &range);
-				tke::commandPool->endOnce(cb);
+				tke::endOnceCommandBuffer(cb);
 			}
 		}
 		if (ImGui::Button("Remove"))

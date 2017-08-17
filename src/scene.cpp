@@ -132,7 +132,7 @@ namespace tke
 		for (int i = 0; i < TKE_MAX_SHADOW_COUNT * 6; i++)
 		{
 			VkImageView views[] = {
-				esmImage->getView(0, 0, 1, i),
+				esmImage->getView(0, 1, i),
 				esmDepthImage->getView()
 			};
 			fb_esm[i] = std::move(std::unique_ptr<Framebuffer>(getFramebuffer(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CY, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views)));
@@ -1002,7 +1002,7 @@ namespace tke
 						ranges.push_back(range);
 
 						if (defe_shad_position != -1)
-							ds_defe->setImage(defe_shad_position, shadowIndex, esmImage.get(), colorSampler, 0, 0, 1, shadowIndex, 1);
+							ds_defe->setImage(defe_shad_position, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1);
 					}
 					shadowIndex += 6;
 				}

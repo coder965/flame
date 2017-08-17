@@ -3,7 +3,7 @@
 Tool::Tool(tke::Framebuffer *_fb)
 	:fb(_fb)
 {
-	cb = new tke::CommandBuffer(tke::commandPool);
+	cb = new tke::CommandBuffer;
 }
 
 Tool::~Tool() {}

@@ -1,4 +1,5 @@
 #include "..\src\gui.h"
+#include "..\src\synchronization.h"
 
 #include "select.h"
 #include "editor.h"
@@ -26,11 +27,11 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	fb_scene = scene->createFramebuffer(image);
 	scene_renderFinished = tke::createEvent();
 
-	cb_physx = new tke::CommandBuffer(tke::commandPool);
+	cb_physx = new tke::CommandBuffer();
 	physx_renderFinished = tke::createEvent();
 
-	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
-	ds_wireframe_anim = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_wire);
+	cb_wireframe = new tke::CommandBuffer();
+	ds_wireframe_anim = new tke::DescriptorSet(tke::plainPipeline_3d_anim_wire);
 	wireframe_renderFinished = tke::createEvent();
 
 	VkImageView views[] = {
@@ -234,7 +235,7 @@ void SceneMonitorWidget::show()
 			auto lineCount = rb.getNbLines();
 			if (lineCount > 0)
 			{
-				auto vertexSize = lineCount * 2 * sizeof(tke::LineVertex);
+				auto vertexSize = lineCount * 2 * sizeof(tke::VertexLine);
 				if (!physxBuffer || physxBuffer->size < vertexSize)
 				{
 					if (physxBuffer) delete physxBuffer;
@@ -243,7 +244,7 @@ void SceneMonitorWidget::show()
 
 				{
 					auto map = physxBuffer->map(0, vertexSize);
-					auto vtx_dst = (tke::LineVertex*)map;
+					auto vtx_dst = (tke::VertexLine*)map;
 					for (int i = 0; i < lineCount; i++)
 					{
 						auto &line = rb.getLines()[i];
@@ -383,13 +384,13 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 	if (model->animated)
 	{
 		animComp = new tke::AnimationComponent(model);
-		ds_anim = new tke::DescriptorSet(tke::descriptorPool, tke::plainPipeline_3d_anim_tex);
+		ds_anim = new tke::DescriptorSet(tke::plainPipeline_3d_anim_tex);
 		ds_anim->setBuffer(0, 0, animComp->boneMatrixBuffer);
 	}
-	cb = new tke::CommandBuffer(tke::commandPool);
+	cb = new tke::CommandBuffer();
 	model_renderFinished = tke::createEvent();
 
-	cb_wireframe = new tke::CommandBuffer(tke::commandPool);
+	cb_wireframe = new tke::CommandBuffer();
 
 	cbs.push_back(cb->v);
 	cbs.push_back(cb_wireframe->v);

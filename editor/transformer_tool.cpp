@@ -1,5 +1,4 @@
 #include "../src/core.h"
-#include "../src/entity.h"
 
 #include "transformer_tool.h"
 

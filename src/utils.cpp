@@ -10,7 +10,9 @@
 #include "..\..\..\rapidxml-1.13\rapidxml_utils.hpp"
 #include "..\..\..\rapidxml-1.13\rapidxml_print.hpp"
 
+#if !defined(TKE_UTILS_NO_MATH)
 #include "math.h"
+#endif
 #include "utils.h"
 #include "image_data.h"
 
@@ -280,9 +282,10 @@ namespace tke
 			{
 				auto e = new EnumVariable(name, _reflectEnums[i], (int*)offset);
 				reflections.push_back(e);
-				break;
+				return;
 			}
 		}
+		assert(0);
 	}
 
 	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, int, void*), void *user_data, int offset)
@@ -351,6 +354,8 @@ namespace tke
 		}
 		else if (t == typeid(bool))
 			value = *(bool*)_v ? "true" : "false";
+
+#if !defined(TKE_UTILS_NO_MATH)
 		else if (t == typeid(glm::vec3))
 		{
 			auto &v = *(glm::vec3*)_v;
@@ -362,6 +367,7 @@ namespace tke
 			strZ.erase(strZ.find_last_not_of('0') + 1, std::string::npos);
 			value = strX + "/" + strY + "/" + strZ;
 		}
+#endif
 	}
 
 	void Attribute::get(const std::type_index &t, void *_v)
@@ -374,6 +380,7 @@ namespace tke
 			*(float*)_v = std::stof(value);
 		else if (t == typeid(bool))
 			*(bool*)_v = value == "true" ? true : false;
+#if !defined(TKE_UTILS_NO_MATH)
 		else if (t == typeid(glm::vec3))
 		{
 			auto &v = *(glm::vec3*)_v;
@@ -384,6 +391,7 @@ namespace tke
 			v.y = std::stof(match[2].str());
 			v.z = std::stof(match[3].str());
 		}
+#endif
 	}
 
 	AttributeTreeNode::AttributeTreeNode(const std::string &_name)
@@ -464,7 +472,7 @@ namespace tke
 			auto r = b->findReflection(a->name, 0);
 			if (!r.first)
 			{
-				printf("cannot find \"%s\" reflection from %s", a->name, b->name);
+				printf("cannot find \"%s\" reflection from %s\n", a->name.c_str(), b->name.c_str());
 				continue;
 			}
 			switch (r.first->what)

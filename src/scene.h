@@ -13,7 +13,7 @@
 #include "image.h"
 #include "framebuffer.h"
 #include "pipeline.h"
-#include "commnd_buffer.h"
+#include "command_buffer.h"
 #include "resource.h"
 
 namespace tke

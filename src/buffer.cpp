@@ -1,7 +1,7 @@
 #include <assert.h>
 
 #include "buffer.h"
-#include "commnd_buffer.h"
+#include "command_buffer.h"
 
 namespace tke
 {

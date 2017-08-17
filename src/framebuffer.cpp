@@ -17,7 +17,7 @@ namespace tke
 
 	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
-		auto view = i->getView(0, level);
+		auto view = i->getView(level);
 		return getFramebuffer(i->levels[level].cx, i->levels[level].cy, renderPass, 1, &view);
 	}
 
