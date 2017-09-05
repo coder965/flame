@@ -1,5 +1,5 @@
 #define NOMINMAX
-#include "../../FreeImage/Source/FreeImage.h"
+#include "../../FreeImage/Dist/x64/FreeImage.h"
 #include "../../gli/gli/gli.hpp"
 #include <filesystem>
 

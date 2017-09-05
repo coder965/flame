@@ -64,40 +64,30 @@ namespace tke
 		return b;
 	}
 
-	void Model::setStandAnimation(AnimationBinding *b)
+	void Model::setStateAnimation(ModelStateAnimationKind kind, AnimationBinding *b)
 	{
-		standAnimation = b;
-		stand_animation_filename = b ? b->animation->filename : "";
-	}
-
-	void Model::setForwardAnimation(AnimationBinding *b)
-	{
-		forwardAnimation = b;
-		forward_animation_filename = b ? b->animation->filename : "";
-	}
-
-	void Model::setBackwardAnimation(AnimationBinding *b)
-	{
-		backwardAnimation = b;
-		backward_animation_filename = b ? b->animation->filename : "";
-	}
-
-	void Model::setLeftAnimation(AnimationBinding *b)
-	{
-		leftAnimation = b;
-		left_animation_filename = b ? b->animation->filename : "";
-	}
-
-	void Model::setRightAnimation(AnimationBinding *b)
-	{
-		rightAnimation = b;
-		right_animation_filename = b ? b->animation->filename : "";
-	}
-
-	void Model::setJumpAnimation(AnimationBinding *b)
-	{
-		jumpAnimation = b;
-		jump_animation_filename = b ? b->animation->filename : "";
+		stateAnimations[kind] = b;
+		switch (kind)
+		{
+		case ModelStateAnimationStand:
+			stand_animation_filename = b ? b->animation->filename : "";
+			break;
+		case ModelStateAnimationForward:
+			forward_animation_filename = b ? b->animation->filename : "";
+			break;
+		case ModelStateAnimationBackward:
+			backward_animation_filename = b ? b->animation->filename : "";
+			break;
+		case ModelStateAnimationLeftward:
+			leftward_animation_filename = b ? b->animation->filename : "";
+			break;
+		case ModelStateAnimationRightward:
+			rightward_animation_filename = b ? b->animation->filename : "";
+			break;
+		case ModelStateAnimationJump:
+			jump_animation_filename = b ? b->animation->filename : "";
+			break;
+		}
 	}
 
 	void Model::addRigidbody(Rigidbody *pRigidbody)
@@ -506,17 +496,17 @@ namespace tke
 
 		Animation *a;
 		a = getAnimation(m->stand_animation_filename);
-		if (a) m->standAnimation = m->bindAnimation(a);
+		if (a) m->stateAnimations[ModelStateAnimationStand] = m->bindAnimation(a);
 		a = getAnimation(m->forward_animation_filename);
-		if (a) m->forwardAnimation = m->bindAnimation(a);
+		if (a) m->stateAnimations[ModelStateAnimationForward] = m->bindAnimation(a);
 		a = getAnimation(m->backward_animation_filename);
-		if (a) m->backwardAnimation = m->bindAnimation(a);
-		a = getAnimation(m->left_animation_filename);
-		if (a) m->leftAnimation = m->bindAnimation(a);
-		a = getAnimation(m->right_animation_filename);
-		if (a) m->rightAnimation = m->bindAnimation(a);
+		if (a) m->stateAnimations[ModelStateAnimationBackward] = m->bindAnimation(a);
+		a = getAnimation(m->leftward_animation_filename);
+		if (a) m->stateAnimations[ModelStateAnimationLeftward] = m->bindAnimation(a);
+		a = getAnimation(m->rightward_animation_filename);
+		if (a) m->stateAnimations[ModelStateAnimationRightward] = m->bindAnimation(a);
 		a = getAnimation(m->jump_animation_filename);
-		if (a) m->jumpAnimation = m->bindAnimation(a);
+		if (a) m->stateAnimations[ModelStateAnimationJump] = m->bindAnimation(a);
 	}
 
 	void initGeneralModels()
@@ -1582,8 +1572,8 @@ namespace tke
 				file > m->stand_animation_filename;
 				file > m->forward_animation_filename;
 				file > m->backward_animation_filename;
-				file > m->left_animation_filename;
-				file > m->right_animation_filename;
+				file > m->leftward_animation_filename;
+				file > m->rightward_animation_filename;
 				file > m->jump_animation_filename;
 			}
 
@@ -1766,8 +1756,8 @@ namespace tke
 				file < m->stand_animation_filename;
 				file < m->forward_animation_filename;
 				file < m->backward_animation_filename;
-				file < m->left_animation_filename;
-				file < m->right_animation_filename;
+				file < m->leftward_animation_filename;
+				file < m->rightward_animation_filename;
 				file < m->jump_animation_filename;
 			}
 

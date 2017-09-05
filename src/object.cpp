@@ -30,9 +30,9 @@ namespace tke
 			if (animationComponent)
 			{
 				if (state == Controller::State::stand)
-					animationComponent->setAnimation(model->standAnimation);
+					animationComponent->setAnimation(model->stateAnimations[ModelStateAnimationStand]);
 				else if (state == Controller::State::forward)
-					animationComponent->setAnimation(model->forwardAnimation);
+					animationComponent->setAnimation(model->stateAnimations[ModelStateAnimationForward]);
 			}
 		}
 	}

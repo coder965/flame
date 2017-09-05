@@ -8,6 +8,18 @@
 
 namespace tke
 {
+	enum ModelStateAnimationKind
+	{
+		ModelStateAnimationStand,
+		ModelStateAnimationForward,
+		ModelStateAnimationBackward,
+		ModelStateAnimationLeftward,
+		ModelStateAnimationRightward,
+		ModelStateAnimationJump,
+
+		ModelStateAnimationCount
+	};
+
 	REFLECTABLE struct Model
 	{
 		REFL_BANK;
@@ -34,18 +46,13 @@ namespace tke
 		std::vector<Bone> bones;
 		std::vector<BoneIK> iks;
 
-		std::vector<AnimationBinding*> animationBindings;
-		AnimationBinding* standAnimation = nullptr;
-		AnimationBinding* forwardAnimation = nullptr;
-		AnimationBinding* backwardAnimation = nullptr;
-		AnimationBinding* leftAnimation = nullptr;
-		AnimationBinding* rightAnimation = nullptr;
-		AnimationBinding* jumpAnimation = nullptr;
+		std::vector<AnimationBinding*> animationBindings; 
+		AnimationBinding *stateAnimations[ModelStateAnimationCount] = {};
 
 		REFLv std::string stand_animation_filename;
 		REFLv std::string forward_animation_filename;
-		REFLv std::string left_animation_filename;
-		REFLv std::string right_animation_filename;
+		REFLv std::string leftward_animation_filename;
+		REFLv std::string rightward_animation_filename;
 		REFLv std::string backward_animation_filename;
 		REFLv std::string jump_animation_filename;
 
@@ -69,12 +76,7 @@ namespace tke
 		void saveData(bool needRigidbody);
 
 		AnimationBinding *bindAnimation(Animation *a);
-		void setStandAnimation(AnimationBinding *b);
-		void setForwardAnimation(AnimationBinding *b);
-		void setBackwardAnimation(AnimationBinding *b);
-		void setLeftAnimation(AnimationBinding *b);
-		void setRightAnimation(AnimationBinding *b);
-		void setJumpAnimation(AnimationBinding *b);
+		void setStateAnimation(ModelStateAnimationKind kind, AnimationBinding *b);
 
 		void addRigidbody(Rigidbody *pRigidbody);
 		Rigidbody *deleteRigidbody(Rigidbody *pRigidbody);
