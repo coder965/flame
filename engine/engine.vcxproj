@@ -116,7 +116,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../glm;../../FreeImage/Dist/x64;../../gli;../../VulkanSDK/1.0.57.0/Include;../../imgui;../../PhysX-3.3/PhysXSDK/Include;../../OpenAL 1.1 SDK/include;../../IconFontCppHeaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
 /D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -131,8 +131,8 @@
       <Path>$(MSBuildProjectName).log</Path>
     </BuildLog>
     <Lib>
-      <AdditionalLibraryDirectories>../../FreeImage/Dist/x64;../../VulkanSDK/1.0.57.0/Lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64;../../OpenAL 1.1 SDK/libs/Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;FreeImaged.lib;PhysX3CommonDEBUG_x64.lib;PhysX3DEBUG_x64.lib;PhysX3ExtensionsDEBUG_mdd.lib;PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>../../VulkanSDK/1.0.57.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImaged.lib;../../imgui/lib/x64/Debug/lib.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

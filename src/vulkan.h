@@ -4,7 +4,7 @@
 
 #define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan\vulkan.h>
+#include "../../VulkanSDK/1.0.57.0/Include/vulkan/vulkan.h"
 
 namespace tke
 {

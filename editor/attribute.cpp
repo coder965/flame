@@ -284,6 +284,29 @@ static void _show_model(tke::Model *m)
 	if (ImGui::Button("Save Data"))
 		m->saveData(false);
 
+	auto funShowAndSelectAnim = [&](tke::Animation *a, const char *name) {
+		int index = 0;
+		for (int i = 0; i < tke::animations.size(); i++)
+		{
+			if (tke::animations[i].get() == a)
+			{
+				index = i + 1;
+				break;
+			}
+		}
+		if (ImGui::Combo("Stand Animation", &index, [](void *, int idx, const char **out_text) {
+			if (idx == 0)
+				*out_text = "[NULL]";
+			else
+				*out_text = tke::animations[idx - 1]->filename.c_str();
+			return true;
+		}, nullptr, tke::animations.size() + 1))
+		{
+			auto a = m->bindAnimation(tke::animations[index - 1].get());
+			m->setStandAnimation(a);
+		}
+	};
+
 	auto standAnimation = m->standAnimation ? m->standAnimation->animation : nullptr;
 	if (ImGui::Combo("Stand Animation", (void**)&standAnimation, [](void *, void *cur, int idx, const char **out_text) {
 		auto a = idx == 0 ? nullptr : (idx == -1 ? (tke::Animation*)cur : tke::animations[idx - 1].get());

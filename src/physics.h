@@ -1,6 +1,6 @@
 #pragma once
 
-#include <PxPhysicsAPI.h>
+#include "../../PhysX-3.3/PhysXSDK/Include/PxPhysicsAPI.h"
 
 #include "transformer.h"
 
