@@ -1,225 +1,240 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="源文件">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="src">
+      <UniqueIdentifier>{abeec3cb-865c-4c56-94a7-59a23520d8b5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    <Filter Include="src\entity">
+      <UniqueIdentifier>{41c1fac5-1640-48d0-9ae6-fe95afe024f0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="src\math">
+      <UniqueIdentifier>{5aadd756-b9e1-43a1-bcbd-023e5020e5f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\model">
+      <UniqueIdentifier>{e1e3e433-66c0-4534-bf29-65ee1558153d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\physics">
+      <UniqueIdentifier>{85f55c03-5b9c-4a84-a9dd-17045b54e544}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\render">
+      <UniqueIdentifier>{c69047f9-820a-408f-835c-efdde6815fab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\resource">
+      <UniqueIdentifier>{c81aafc0-625e-42cc-ba36-8ed5b1463af9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\sound">
+      <UniqueIdentifier>{1870b2de-db2c-40dc-bfcf-b5dbd25866db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ui">
+      <UniqueIdentifier>{236f145f-b98d-4654-a9d7-048f873b9e40}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\core.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\entity\camera.cpp">
+      <Filter>src\entity</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gui.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\entity\controller.cpp">
+      <Filter>src\entity</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\math.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\entity\light.cpp">
+      <Filter>src\entity</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\physics.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\entity\object.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\entity\scene.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\entity\terrain.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\entity\transformer.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\entity\water.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\math\math.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\model\animation.cpp">
+      <Filter>src\model</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\model\material.cpp">
+      <Filter>src\model</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\model\model.cpp">
+      <Filter>src\model</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\ui.cpp">
+      <Filter>src\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sound\sound.cpp">
+      <Filter>src\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\resource\resource.cpp">
+      <Filter>src\resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\buffer.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\command_buffer.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\descriptor.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\framebuffer.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\image.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\pipeline.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\push_constant.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\renderpass.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\sampler.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\shader.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\synchronization.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\vulkan.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\physics\physics.cpp">
+      <Filter>src\physics</Filter>
     </ClCompile>
     <ClCompile Include="..\src\reflect.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\utils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\animation.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\camera.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\light.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\model.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\object.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\scene.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\transformer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\window.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\terrain.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\water.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\controller.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\material.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\define.cpp">
-      <Filter>源文件</Filter>
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\image_data.cpp">
-      <Filter>源文件</Filter>
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\image.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\profiler.cpp">
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\buffer.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\window.cpp">
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\command_buffer.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\define.cpp">
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\vulkan.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\core.cpp">
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\descriptor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\renderpass.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\framebuffer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\pipeline.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\synchronization.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sampler.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\resource.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\stage.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\push_constant.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\src\utils.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\core.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\camera.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gui.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\controller.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\math.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\light.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\physics.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\object.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utils.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\scene.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\sound.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\terrain.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\define.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\transformer.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\animation.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\entity\water.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\camera.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\math\math.h">
+      <Filter>src\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\light.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\model\animation.h">
+      <Filter>src\model</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\model.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\model\material.h">
+      <Filter>src\model</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\object.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\model\model.h">
+      <Filter>src\model</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\scene.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\ui\ui.h">
+      <Filter>src\ui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\transformer.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\sound\sound.h">
+      <Filter>src\sound</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\window.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\resource\resource.h">
+      <Filter>src\resource</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\terrain.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\render\buffer.h">
+      <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\water.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\render\command_buffer.h">
+      <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\controller.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\render\descriptor.h">
+      <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\material.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\render\framebuffer.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\image.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\pipeline.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\push_constant.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\renderpass.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\sampler.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\shader.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\synchronization.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\vulkan.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\physics\physics.h">
+      <Filter>src\physics</Filter>
     </ClInclude>
     <ClInclude Include="..\src\image_data.h">
-      <Filter>头文件</Filter>
+      <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\image.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\window.h">
+      <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\buffer.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\define.h">
+      <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\commnd_buffer.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\core.h">
+      <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\vulkan.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\descriptor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\renderpass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\framebuffer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sampler.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\synchronization.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\pipeline.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\resource.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\stage.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\push_constant.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\utils.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

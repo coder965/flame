@@ -1,4 +1,4 @@
-#include "../src/gui.h"
+#include "../src/ui/ui.h"
 
 #include "editor.h"
 #include "game.h"

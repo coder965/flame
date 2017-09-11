@@ -3,11 +3,11 @@
 
 #include "define.h"
 #include "core.h"
-#include "gui.h"
-#include "physics.h"
-#include "sound.h"
+#include "ui/ui.h"
+#include "physics/physics.h"
+#include "sound/sound.h"
 #include "window.h"
-#include "renderpass.h"
+#include "render/renderpass.h"
 
 namespace tke
 {

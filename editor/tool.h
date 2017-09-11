@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../src/math.h"
-#include "../src/camera.h"
-#include "../src/command_buffer.h"
-#include "../src/framebuffer.h"
+#include "../src/math/math.h"
+#include "../src/entity/camera.h"
+#include "../src/render/command_buffer.h"
+#include "../src/render/framebuffer.h"
 
 struct Tool
 {

@@ -1,5 +1,5 @@
-#include "..\src\gui.h"
-#include "..\src\core.h"
+#include "../src/ui/ui.h"
+#include "../src/core.h"
 
 #include "debug.h"
 

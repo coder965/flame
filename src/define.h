@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math.h"
+#include "math/math.h"
 
 #define TKE_NEAR (0.1f)
 #define TKE_FAR (1000.f)

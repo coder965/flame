@@ -8,46 +8,36 @@
 
 #include "windows.h"
 
-std::vector<std::string> structNames;
-
 int main(int argc, char **argv)
 {
 	auto outputFilename = "../src/reflect.cpp";
 
-	char *inputFilenames[] = {
-		"../src/transformer.h",
-		"../src/controller.h",
-		"../src/model.h",
-		"../src/object.h",
-		"../src/terrain.h",
-		"../src/water.h",
-		"../src/scene.h",
-		"../src/descriptor.h",
-		"../src/push_constant.h",
-		"../src/stage.h",
-		"../src/sampler.h",
-		"../src/pipeline.h",
-	};
+	auto outputFilenameExist = std::experimental::filesystem::exists(outputFilename);
+	std::experimental::filesystem::file_time_type output_last_modification_time;
+	if (outputFilenameExist)
+		output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
+	auto up_to_date = true;
+	std::vector<std::string> inputFilenames;
 
-	if (std::experimental::filesystem::exists(outputFilename))
-	{
-		auto output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
-		auto up_to_date = true;
-		for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
+	tke::iterateDirectory("../src/", [&](const std::experimental::filesystem::path &name, bool is_directory) {
+		if (!is_directory && name.extension().string() == ".h")
 		{
-			if (output_last_modification_time <= std::experimental::filesystem::last_write_time(inputFilenames[i]))
+			if (up_to_date && outputFilenameExist)
 			{
-				up_to_date = false;
-				break;
+				if (output_last_modification_time <= std::experimental::filesystem::last_write_time(name))
+					up_to_date = false;
 			}
+			inputFilenames.push_back(name.string());
 		}
-		if (up_to_date)
-			return 0;
-	}
+	});
+
+	if (up_to_date)
+		return 0;
 
 	int current = -1;
 	std::string declString, implString, currentStructName, currentEnumName;
-	auto structExist = [](const std::string &name){
+	std::vector<std::string> structNames;
+	auto structExist = [&](const std::string &name){
 		for (auto n : structNames)
 		{
 			if (n == name)
@@ -56,7 +46,7 @@ int main(int argc, char **argv)
 		return false;
 	};
 
-	for (int i = 0; i < TK_ARRAYSIZE(inputFilenames); i++)
+	for (int i = 0; i < inputFilenames.size(); i++)
 	{
 		tke::OnceFileBuffer file(inputFilenames[i]);
 
@@ -136,30 +126,17 @@ int main(int argc, char **argv)
 		}
 	}
 
-	auto fout = fopen(outputFilename, "wb");
-	fprintf(fout, "#include \"utils.h\"\n");
-	fprintf(fout, "#include \"transformer.h\"\n");
-	fprintf(fout, "#include \"controller.h\"\n");
-	fprintf(fout, "#include \"model.h\"\n");
-	fprintf(fout, "#include \"object.h\"\n");
-	fprintf(fout, "#include \"terrain.h\"\n");
-	fprintf(fout, "#include \"water.h\"\n");
-	fprintf(fout, "#include \"scene.h\"\n");
-	fprintf(fout, "#include \"descriptor.h\"\n");
-	fprintf(fout, "#include \"push_constant.h\"\n");
-	fprintf(fout, "#include \"stage.h\"\n");
-	fprintf(fout, "#include \"sampler.h\"\n");
-	fprintf(fout, "#include \"pipeline.h\"\n");
-	fprintf(fout, "#include <string>\n");
-	fprintf(fout, "namespace tke{\n");
-	fprintf(fout, declString.c_str());
-	fprintf(fout, "struct ReflectInit{ReflectInit(){\n");
-	fprintf(fout, "tke::Enum *currentEnum = nullptr;\n");
-	fprintf(fout, "tke::ReflectionBank *currentBank = nullptr;\n");
-	fprintf(fout, implString.c_str());
-	fprintf(fout, "}};static ReflectInit init;");
-	fprintf(fout, "\n}");
-	fclose(fout);
+	std::ofstream outFile(outputFilename);
+	for (auto &fn : inputFilenames)
+		outFile << "#include \"" + fn + "\"\n";
+	outFile << "namespace tke{\n";
+	outFile << declString;
+	outFile << "struct ReflectInit{ReflectInit(){\n";
+	outFile << "tke::Enum *currentEnum = nullptr;\n";
+	outFile << "tke::ReflectionBank *currentBank = nullptr;\n";
+	outFile << implString;
+	outFile << "}};static ReflectInit _init;";
+	outFile << "\n}";
 	
 	return 0;
 }

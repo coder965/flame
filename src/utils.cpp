@@ -6,12 +6,12 @@
 #define NOMINMAX
 #include <Windows.h>
 
-#include "..\..\..\rapidxml-1.13\rapidxml.hpp"
-#include "..\..\..\rapidxml-1.13\rapidxml_utils.hpp"
-#include "..\..\..\rapidxml-1.13\rapidxml_print.hpp"
+#include "../../../rapidxml-1.13\rapidxml.hpp"
+#include "../../../rapidxml-1.13\rapidxml_utils.hpp"
+#include "../../../rapidxml-1.13\rapidxml_print.hpp"
 
 #if !defined(TKE_UTILS_NO_MATH)
-#include "math.h"
+#include "math/math.h"
 #endif
 #include "utils.h"
 #include "image_data.h"
@@ -198,20 +198,19 @@ namespace tke
 		delete data;
 	}
 
-	void iterateDirectory(const std::experimental::filesystem::path &filepath, void(*callback)(const std::experimental::filesystem::path &name, bool is_directory))
+	void iterateDirectory(const std::experimental::filesystem::path &filepath, const std::function<void(const std::experimental::filesystem::path &name, bool is_directory)> &callback, bool recursive)
 	{
 		std::experimental::filesystem::directory_iterator end_it;
 		for (std::experimental::filesystem::directory_iterator it(filepath); it != end_it; it++)
 		{
 			if (std::experimental::filesystem::is_directory(it->status()))
 			{
-				iterateDirectory(it->path(), callback);
+				if (recursive)
+					iterateDirectory(it->path(), callback);
 				callback(it->path().string(), true);
 			}
 			else
-			{
 				callback(it->path().string(), false);
-			}
 		}
 	}
 

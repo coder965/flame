@@ -1,6 +1,6 @@
 #pragma once
 
-#include "..\src\image.h"
+#include "../src/render/image.h"
 
 struct TextureEditor
 {

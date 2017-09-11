@@ -1,6 +1,6 @@
 #include <filesystem>
 
-#include "../src/gui.h"
+#include "../src/ui/ui.h"
 
 #include "game.h"
 #include "editor.h"

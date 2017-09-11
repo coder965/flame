@@ -154,9 +154,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\src\profiler.cpp" />
     <ClCompile Include="attribute.cpp" />
     <ClCompile Include="debug.cpp" />

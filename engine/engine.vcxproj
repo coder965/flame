@@ -18,6 +18,78 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\core.cpp" />
+    <ClCompile Include="..\src\define.cpp" />
+    <ClCompile Include="..\src\entity\camera.cpp" />
+    <ClCompile Include="..\src\entity\controller.cpp" />
+    <ClCompile Include="..\src\entity\light.cpp" />
+    <ClCompile Include="..\src\entity\object.cpp" />
+    <ClCompile Include="..\src\entity\scene.cpp" />
+    <ClCompile Include="..\src\entity\terrain.cpp" />
+    <ClCompile Include="..\src\entity\transformer.cpp" />
+    <ClCompile Include="..\src\entity\water.cpp" />
+    <ClCompile Include="..\src\image_data.cpp" />
+    <ClCompile Include="..\src\math\math.cpp" />
+    <ClCompile Include="..\src\model\animation.cpp" />
+    <ClCompile Include="..\src\model\material.cpp" />
+    <ClCompile Include="..\src\model\model.cpp" />
+    <ClCompile Include="..\src\physics\physics.cpp" />
+    <ClCompile Include="..\src\profiler.cpp" />
+    <ClCompile Include="..\src\reflect.cpp" />
+    <ClCompile Include="..\src\render\buffer.cpp" />
+    <ClCompile Include="..\src\render\command_buffer.cpp" />
+    <ClCompile Include="..\src\render\descriptor.cpp" />
+    <ClCompile Include="..\src\render\framebuffer.cpp" />
+    <ClCompile Include="..\src\render\image.cpp" />
+    <ClCompile Include="..\src\render\pipeline.cpp" />
+    <ClCompile Include="..\src\render\push_constant.cpp" />
+    <ClCompile Include="..\src\render\renderpass.cpp" />
+    <ClCompile Include="..\src\render\sampler.cpp" />
+    <ClCompile Include="..\src\render\shader.cpp" />
+    <ClCompile Include="..\src\render\synchronization.cpp" />
+    <ClCompile Include="..\src\render\vulkan.cpp" />
+    <ClCompile Include="..\src\resource\resource.cpp" />
+    <ClCompile Include="..\src\sound\sound.cpp" />
+    <ClCompile Include="..\src\ui\ui.cpp" />
+    <ClCompile Include="..\src\utils.cpp" />
+    <ClCompile Include="..\src\window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\core.h" />
+    <ClInclude Include="..\src\define.h" />
+    <ClInclude Include="..\src\entity\camera.h" />
+    <ClInclude Include="..\src\entity\controller.h" />
+    <ClInclude Include="..\src\entity\light.h" />
+    <ClInclude Include="..\src\entity\object.h" />
+    <ClInclude Include="..\src\entity\scene.h" />
+    <ClInclude Include="..\src\entity\terrain.h" />
+    <ClInclude Include="..\src\entity\transformer.h" />
+    <ClInclude Include="..\src\entity\water.h" />
+    <ClInclude Include="..\src\image_data.h" />
+    <ClInclude Include="..\src\math\math.h" />
+    <ClInclude Include="..\src\model\animation.h" />
+    <ClInclude Include="..\src\model\material.h" />
+    <ClInclude Include="..\src\model\model.h" />
+    <ClInclude Include="..\src\physics\physics.h" />
+    <ClInclude Include="..\src\render\buffer.h" />
+    <ClInclude Include="..\src\render\command_buffer.h" />
+    <ClInclude Include="..\src\render\descriptor.h" />
+    <ClInclude Include="..\src\render\framebuffer.h" />
+    <ClInclude Include="..\src\render\image.h" />
+    <ClInclude Include="..\src\render\pipeline.h" />
+    <ClInclude Include="..\src\render\push_constant.h" />
+    <ClInclude Include="..\src\render\renderpass.h" />
+    <ClInclude Include="..\src\render\sampler.h" />
+    <ClInclude Include="..\src\render\shader.h" />
+    <ClInclude Include="..\src\render\synchronization.h" />
+    <ClInclude Include="..\src\render\vulkan.h" />
+    <ClInclude Include="..\src\resource\resource.h" />
+    <ClInclude Include="..\src\sound\sound.h" />
+    <ClInclude Include="..\src\ui\ui.h" />
+    <ClInclude Include="..\src\utils.h" />
+    <ClInclude Include="..\src\window.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6F5FD7B3-5E83-4A48-B23D-497D31A48266}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -169,80 +241,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\animation.cpp" />
-    <ClCompile Include="..\src\buffer.cpp" />
-    <ClCompile Include="..\src\camera.cpp" />
-    <ClCompile Include="..\src\command_buffer.cpp" />
-    <ClCompile Include="..\src\controller.cpp" />
-    <ClCompile Include="..\src\core.cpp" />
-    <ClCompile Include="..\src\define.cpp" />
-    <ClCompile Include="..\src\descriptor.cpp" />
-    <ClCompile Include="..\src\framebuffer.cpp" />
-    <ClCompile Include="..\src\gui.cpp" />
-    <ClCompile Include="..\src\image.cpp" />
-    <ClCompile Include="..\src\image_data.cpp" />
-    <ClCompile Include="..\src\light.cpp" />
-    <ClCompile Include="..\src\material.cpp" />
-    <ClCompile Include="..\src\math.cpp" />
-    <ClCompile Include="..\src\model.cpp" />
-    <ClCompile Include="..\src\object.cpp" />
-    <ClCompile Include="..\src\physics.cpp" />
-    <ClCompile Include="..\src\pipeline.cpp" />
-    <ClCompile Include="..\src\push_constant.cpp" />
-    <ClCompile Include="..\src\reflect.cpp" />
-    <ClCompile Include="..\src\renderpass.cpp" />
-    <ClCompile Include="..\src\resource.cpp" />
-    <ClCompile Include="..\src\sampler.cpp" />
-    <ClCompile Include="..\src\scene.cpp" />
-    <ClCompile Include="..\src\sound.cpp" />
-    <ClCompile Include="..\src\stage.cpp" />
-    <ClCompile Include="..\src\synchronization.cpp" />
-    <ClCompile Include="..\src\terrain.cpp" />
-    <ClCompile Include="..\src\transformer.cpp" />
-    <ClCompile Include="..\src\utils.cpp" />
-    <ClCompile Include="..\src\vulkan.cpp" />
-    <ClCompile Include="..\src\water.cpp" />
-    <ClCompile Include="..\src\window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\animation.h" />
-    <ClInclude Include="..\src\buffer.h" />
-    <ClInclude Include="..\src\camera.h" />
-    <ClInclude Include="..\src\commnd_buffer.h" />
-    <ClInclude Include="..\src\controller.h" />
-    <ClInclude Include="..\src\core.h" />
-    <ClInclude Include="..\src\define.h" />
-    <ClInclude Include="..\src\descriptor.h" />
-    <ClInclude Include="..\src\framebuffer.h" />
-    <ClInclude Include="..\src\gui.h" />
-    <ClInclude Include="..\src\image.h" />
-    <ClInclude Include="..\src\image_data.h" />
-    <ClInclude Include="..\src\light.h" />
-    <ClInclude Include="..\src\material.h" />
-    <ClInclude Include="..\src\math.h" />
-    <ClInclude Include="..\src\model.h" />
-    <ClInclude Include="..\src\object.h" />
-    <ClInclude Include="..\src\physics.h" />
-    <ClInclude Include="..\src\pipeline.h" />
-    <ClInclude Include="..\src\push_constant.h" />
-    <ClInclude Include="..\src\renderpass.h" />
-    <ClInclude Include="..\src\resource.h" />
-    <ClInclude Include="..\src\sampler.h" />
-    <ClInclude Include="..\src\scene.h" />
-    <ClInclude Include="..\src\sound.h" />
-    <ClInclude Include="..\src\stage.h" />
-    <ClInclude Include="..\src\synchronization.h" />
-    <ClInclude Include="..\src\terrain.h" />
-    <ClInclude Include="..\src\transformer.h" />
-    <ClInclude Include="..\src\utils.h" />
-    <ClInclude Include="..\src\vulkan.h" />
-    <ClInclude Include="..\src\water.h" />
-    <ClInclude Include="..\src\window.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

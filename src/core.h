@@ -1,12 +1,12 @@
 #pragma once
 
 #include "math.h"
-#include "scene.h"
-#include "buffer.h"
-#include "image.h"
-#include "command_buffer.h"
-#include "descriptor.h"
-#include "pipeline.h"
+#include "entity/scene.h"
+#include "render/buffer.h"
+#include "render/image.h"
+#include "render/command_buffer.h"
+#include "render/descriptor.h"
+#include "render/pipeline.h"
 
 namespace tke
 {

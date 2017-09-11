@@ -7,6 +7,7 @@
 #include <typeindex>
 #include <memory>
 #include <filesystem>
+#include <functional>
 
 #if defined(_WIN64)
 typedef __int64 TK_LONG_PTR;
@@ -116,7 +117,7 @@ namespace tke
 		~OnceFileBuffer();
 	};
 
-	void iterateDirectory(const std::experimental::filesystem::path &filepath, void(*callback)(const std::experimental::filesystem::path &name, bool is_directory));
+	void iterateDirectory(const std::experimental::filesystem::path &filepath, const std::function<void(const std::experimental::filesystem::path &name, bool is_directory)> &callback, bool recursive = true);
 
 	struct NormalVariable;
 	struct EnumVariable;
