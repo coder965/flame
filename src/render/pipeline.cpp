@@ -7,23 +7,11 @@
 
 namespace tke
 {
-	VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
-	VkPipelineVertexInputStateCreateInfo vertexInputState;
-	VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
-	VkPipelineVertexInputStateCreateInfo lineVertexInputState;
-
-	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes)
-	{
-		VkPipelineVertexInputStateCreateInfo state = {};
-		state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		state.vertexBindingDescriptionCount = bindingCount;
-		state.pVertexBindingDescriptions = pBindings;
-		state.vertexAttributeDescriptionCount = attributeCount;
-		state.pVertexAttributeDescriptions = pAttributes;
-
-		return state;
-	}
+	static VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+	static VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
+	static VkPipelineVertexInputStateCreateInfo vertexInputState;
+	static VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
+	static VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	PipelineLayout::~PipelineLayout()
 	{
@@ -635,6 +623,18 @@ namespace tke
 			}
 		}
 		return -1;
+	}
+
+	static VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes)
+	{
+		VkPipelineVertexInputStateCreateInfo state = {};
+		state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		state.vertexBindingDescriptionCount = bindingCount;
+		state.pVertexBindingDescriptions = pBindings;
+		state.vertexAttributeDescriptionCount = attributeCount;
+		state.pVertexAttributeDescriptions = pAttributes;
+
+		return state;
 	}
 
 	void initPipeline()

@@ -60,6 +60,10 @@ bool inline operator >= (glm::vec3 a, float b)
 	return a.x >= b && a.y >= b && a.z >= b;
 }
 
+#define TKE_NEAR (0.1f)
+#define TKE_FAR (1000.f)
+#define TKE_FOVY (60.f)
+
 namespace tke
 {
 	void quaternionToMatrix(glm::vec4 &q, glm::mat3 &mat);

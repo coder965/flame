@@ -2,23 +2,6 @@
 
 #include "math/math.h"
 
-#define TKE_NEAR (0.1f)
-#define TKE_FAR (1000.f)
-#define TKE_FOVY (60.f)
-#define TKE_MAX_STATIC_OBJECT_COUNT (1024)
-#define TKE_MAX_ANIMATED_OBJECT_COUNT (8)
-#define TKE_MAX_BONE_COUNT (256)
-#define TKE_MAX_LIGHT_COUNT (256)
-#define TKE_MAX_MATERIAL_COUNT (256)
-#define TKE_MAX_TEXTURE_COUNT (256)
-#define TKE_MAX_INDIRECT_COUNT (1024)
-#define TKE_ENVR_SIZE_CX (128 * 4)
-#define TKE_ENVR_SIZE_CY (128 * 2)
-#define TKE_SHADOWMAP_CX (2048)
-#define TKE_SHADOWMAP_CY (2048)
-#define TKE_MAX_SHADOW_COUNT (8)
-#define TKE_MAX_WATER_COUNT (8)
-
 namespace tke
 {
 	struct Vertex2D
@@ -62,7 +45,7 @@ namespace tke
 	extern int resCx;
 	extern int resCy;
 
-	extern float aspect;
+	extern float screenAspect;
 
 	extern glm::mat4 matOrtho;
 	extern glm::mat4 matOrthoInv;

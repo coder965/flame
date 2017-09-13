@@ -76,8 +76,6 @@ namespace tke
 		REFLe DynamicStateType type = DynamicStateType::null;
 	};
 
-	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes);
-
 	REFLECTABLE struct LinkResource
 	{
 		REFL_BANK;

@@ -91,6 +91,19 @@ namespace tke
 	extern Pipeline *esmAnimPipeline;
 	extern Pipeline *composePipeline;
 
+	enum { MaxStaticObjectCount = 1024 };
+	enum { MaxAnimatedObjectCount = 8 };
+	enum { MaxLightCount = 256 };
+	enum { MaxWaterCount = 8 };
+	enum { MaxShadowCount = 8 };
+
+	enum { EnvrSizeCx = 128 * 4 };
+	enum { EnvrSizeCy = 128 * 4 };
+	enum { ShadowMapCx = 2048 };
+	enum { ShadowMapCy = 2048 };
+
+	enum { MaxIndirectCount = 1024 };
+
 	REFLECTABLE struct Scene
 	{
 		REFL_BANK;

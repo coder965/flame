@@ -86,8 +86,8 @@ namespace tke
 		resource.setImage(specRoughnessImage.get(), "SpecRoughness.Image");
 
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
-		staticObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_STATIC_OBJECT_COUNT);
-		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_ANIMATED_OBJECT_COUNT);
+		staticObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticObjectCount);
+		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedObjectCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof TerrainShaderStruct);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * TKE_MAX_WATER_COUNT);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));

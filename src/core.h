@@ -8,6 +8,9 @@
 #include "render/descriptor.h"
 #include "render/pipeline.h"
 
+enum { MaxMaterialCount = 256 };
+enum { MaxTextureCount = 256 };
+
 namespace tke
 {
 	extern StagingBuffer *stagingBuffer;

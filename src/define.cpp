@@ -11,7 +11,7 @@ namespace tke
 	int resCx;
 	int resCy;
 
-	float aspect;
+	float screenAspect;
 
 	glm::mat4 matOrtho;
 	glm::mat4 matOrthoInv;

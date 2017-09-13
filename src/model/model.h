@@ -20,6 +20,8 @@ namespace tke
 		ModelStateAnimationCount
 	};
 
+	enum { MaxBoneCount = 256 };
+
 	REFLECTABLE struct Model
 	{
 		REFL_BANK;
