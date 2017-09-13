@@ -54,9 +54,9 @@ namespace tke
 		auto tanHfFovy = glm::tan(glm::radians(TKE_FOVY * 0.5f));
 
 		auto _y1 = TKE_NEAR * tanHfFovy;
-		auto _z1 = _y1 * aspect;
+		auto _z1 = _y1 * screenAspect;
 		auto _y2 = TKE_FAR * tanHfFovy;
-		auto _z2 = _y2 * aspect;
+		auto _z2 = _y2 * screenAspect;
 		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + TKE_NEAR * axis[0] + coord;
 		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + TKE_NEAR * axis[0] + coord;
 		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + TKE_NEAR * axis[0] + coord;
@@ -134,7 +134,7 @@ namespace tke
 	{
 		auto l = length / TKE_NEAR;
 		auto cy = tan(glm::radians(TKE_FOVY / 2.f)) * TKE_NEAR * 2.f;
-		target += (-x * cy * aspect * l) * axis[0] + (y * cy * l) * axis[1];
+		target += (-x * cy * screenAspect * l) * axis[0] + (y * cy * l) * axis[1];
 		lookAtTarget();
 	}
 

@@ -119,10 +119,10 @@ namespace tke
 
 	void iterateDirectory(const std::experimental::filesystem::path &filepath, const std::function<void(const std::experimental::filesystem::path &name, bool is_directory)> &callback, bool recursive = true);
 
-	struct NormalVariable;
-	struct EnumVariable;
+	struct Variable;
+	struct Enum;
 
-	struct Variable
+	struct Reflection
 	{
 		enum What
 		{
@@ -132,19 +132,19 @@ namespace tke
 		What what;
 		std::string name;
 
-		Variable(What _what, const std::string &_name);
-		NormalVariable *toVar();
-		EnumVariable *toEnu();
+		Reflection(What _what, const std::string &_name);
+		Variable *toVar();
+		Enum *toEnu();
 	};
 
-	struct NormalVariable : Variable
+	struct Variable : Reflection
 	{
 		std::type_index type;
 		void *p;
 
 		template<class T>
-		NormalVariable(const std::string &_name, T *_ptr)
-			: Variable(Variable::eVariable, _name), type(typeid(T)), p(_ptr)
+		Variable(const std::string &_name, T *_ptr)
+			: Reflection(Reflection::eVariable, _name), type(typeid(T)), p(_ptr)
 		{}
 
 		void *ptr(void *base = nullptr)
@@ -168,19 +168,19 @@ namespace tke
 		EnumItem(const std::string &, int);
 	};
 
-	struct Enum
+	struct EnumType
 	{
 		std::string name;
 		std::vector<EnumItem> items;
 		void get(const std::string &src, int *dst);
 	};
 
-	struct EnumVariable : Variable
+	struct Enum : Reflection
 	{
-		Enum *pEnum;
+		EnumType *pEnum;
 		int *_ptr;
 
-		EnumVariable(const std::string &_name, Enum *_pEnum, int *p);
+		Enum(const std::string &_name, EnumType *_pEnum, int *p);
 		int *ptr(void *p = nullptr);
 	};
 
@@ -188,23 +188,23 @@ namespace tke
 	{
 		std::vector<std::pair<ReflectionBank*, int>> parents;
 		std::string name;
-		std::vector<Variable*> reflections;
+		std::vector<Reflection*> reflections;
 
 		template<class T>
 		void addV(const std::string &name, size_t offset)
 		{
-			auto v = new NormalVariable(name, (T*)offset);
+			auto v = new Variable(name, (T*)offset);
 			reflections.push_back(v);
 		}
 
 		void addE(const std::string &eName, const std::string &name, size_t offset);
 		
-		void enumertateReflections(void(*callback)(Variable*, int, void*), void *user_data, int offset);
-		std::pair<Variable*, int> findReflection(const std::string &name, int offset);
+		void enumertateReflections(void(*callback)(Reflection*, int, void*), void *user_data, int offset);
+		std::pair<Reflection*, int> findReflection(const std::string &name, int offset);
 	};
 
 	ReflectionBank *addReflectionBank(std::string str);
-	Enum *addReflectEnum(std::string str);
+	EnumType *addReflectEnumType(std::string str);
 
 	struct Attribute
 	{

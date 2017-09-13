@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 		return 0;
 
 	int current = -1;
-	std::string declString, implString, currentStructName, currentEnumName;
+	std::string declString, enumString, implString, currentStructName, currentEnumName;
 	std::vector<std::string> structNames;
 	auto structExist = [&](const std::string &name){
 		for (auto n : structNames)
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 					current = 1;
 					currentEnumName = match[4].str();
 					printf("current enum: %s\n", currentEnumName.c_str());
-					implString += "currentEnum = tke::addReflectEnum(\"" + currentEnumName + "\");\n";
+					enumString += "currentEnumType = tke::addReflectEnumType(\"" + currentEnumName + "\");\n";
 				}
 			}
 			else if (std::regex_search(line, match, pattern = R"(REFLv\s+([\w_:]+)\s+([\w_]+))"))
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 					std::string name = match[1].str();
 
 					printf("reflect: %s\n", name.c_str());
-					implString += "currentEnum->items.emplace_back(\"" + name + "\", (int)" + currentEnumName + "::" + name + ");\n";
+					enumString += "currentEnumType->items.emplace_back(\"" + name + "\", (int)" + currentEnumName + "::" + name + ");\n";
 				}
 				else if (current == 0)
 				{
@@ -132,8 +132,9 @@ int main(int argc, char **argv)
 	outFile << "namespace tke{\n";
 	outFile << declString;
 	outFile << "struct ReflectInit{ReflectInit(){\n";
-	outFile << "tke::Enum *currentEnum = nullptr;\n";
+	outFile << "tke::EnumType *currentEnumType = nullptr;\n";
 	outFile << "tke::ReflectionBank *currentBank = nullptr;\n";
+	outFile << enumString;
 	outFile << implString;
 	outFile << "}};static ReflectInit _init;";
 	outFile << "\n}";

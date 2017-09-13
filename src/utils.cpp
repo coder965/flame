@@ -214,13 +214,13 @@ namespace tke
 		}
 	}
 
-	Variable::Variable(What _what, const std::string &_name)
+	Reflection::Reflection(What _what, const std::string &_name)
 		: what(_what), name(_name)
 	{}
 
-	NormalVariable *Variable::toVar()
+	Variable *Reflection::toVar()
 	{
-		return (NormalVariable*)this;
+		return (Variable*)this;
 	}
 
 	EnumItem::EnumItem() {}
@@ -229,12 +229,12 @@ namespace tke
 		:name(n), value(v)
 	{}
 
-	EnumVariable *Variable::toEnu()
+	Enum *Reflection::toEnu()
 	{
-		return (EnumVariable*)this;
+		return (Enum*)this;
 	}
 
-	void Enum::get(const std::string &src, int *dst)
+	void EnumType::get(const std::string &src, int *dst)
 	{
 		*dst = 0;
 
@@ -260,26 +260,26 @@ namespace tke
 		}
 	}
 
-	EnumVariable::EnumVariable(const std::string &_name, Enum *_pEnum, int *p)
-		: Variable(Variable::eEnum, _name), pEnum(_pEnum), _ptr(p)
+	Enum::Enum(const std::string &_name, EnumType *_pEnum, int *p)
+		: Reflection(Reflection::eEnum, _name), pEnum(_pEnum), _ptr(p)
 	{}
 
-	int *EnumVariable::ptr(void *p)
+	int *Enum::ptr(void *p)
 	{
 		if (!p) return _ptr;
 		return (int*)((LONG_PTR)p + (LONG_PTR)_ptr);
 	}
 
 	std::vector<ReflectionBank*> _reflectionBanks;
-	std::vector<Enum*> _reflectEnums;
+	std::vector<EnumType*> _reflectEnums;
 
 	void ReflectionBank::addE(const std::string &eName, const std::string &name, size_t offset)
 	{
-		for (auto i = 0; i < _reflectEnums.size(); i++)
+		for (auto reflectEnum : _reflectEnums)
 		{
-			if (_reflectEnums[i]->name == eName)
+			if (reflectEnum->name == eName)
 			{
-				auto e = new EnumVariable(name, _reflectEnums[i], (int*)offset);
+				auto e = new Enum(name, reflectEnum, (int*)offset);
 				reflections.push_back(e);
 				return;
 			}
@@ -287,7 +287,7 @@ namespace tke
 		assert(0);
 	}
 
-	void ReflectionBank::enumertateReflections(void(*callback)(Variable*, int, void*), void *user_data, int offset)
+	void ReflectionBank::enumertateReflections(void(*callback)(Reflection*, int, void*), void *user_data, int offset)
 	{
 		for (auto r : reflections)
 			callback(r, offset, user_data);
@@ -295,7 +295,7 @@ namespace tke
 			p.first->enumertateReflections(callback, user_data, offset + p.second);
 	}
 
-	std::pair<Variable*, int> ReflectionBank::findReflection(const std::string &name, int offset)
+	std::pair<Reflection*, int> ReflectionBank::findReflection(const std::string &name, int offset)
 	{
 		for (auto r : reflections)
 		{
@@ -318,9 +318,9 @@ namespace tke
 		return bank;
 	}
 
-	Enum *addReflectEnum(std::string str)
+	EnumType *addReflectEnumType(std::string str)
 	{
-		auto _enum = new Enum;
+		auto _enum = new EnumType;
 		_enum->name = str;
 		_reflectEnums.push_back(_enum);
 		return _enum;
@@ -430,18 +430,18 @@ namespace tke
 	void AttributeTreeNode::addAttributes(void *src, ReflectionBank *b)
 	{
 		ptr = src;
-		b->enumertateReflections([](Variable *r, int offset, void *_data) {
+		b->enumertateReflections([](Reflection *r, int offset, void *_data) {
 			auto n = (AttributeTreeNode*)_data;
 
 			auto a = new Attribute;
 			a->name = r->name;
 
-			if (r->what == Variable::eVariable)
+			if (r->what == Reflection::eVariable)
 			{
 				auto v = r->toVar();
 				a->set(v->type, v->ptr((void*)((TK_LONG_PTR)n->ptr + offset)));
 			}
-			else if (r->what == Variable::eEnum)
+			else if (r->what == Reflection::eEnum)
 			{
 				auto e = r->toEnu();
 				auto v = *e->ptr(n->ptr);
@@ -476,13 +476,13 @@ namespace tke
 			}
 			switch (r.first->what)
 			{
-			case Variable::eVariable:
+			case Reflection::eVariable:
 			{
 				auto v = r.first->toVar();
 				a->get(v->type, v->ptr((void*)((TK_LONG_PTR)dst + r.second)));
 			}
 				break;
-			case Variable::eEnum:
+			case Reflection::eEnum:
 				r.first->toEnu()->pEnum->get(a->value, r.first->toEnu()->ptr(dst));
 				break;
 			}

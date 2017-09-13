@@ -68,15 +68,15 @@ namespace tke
 		pxScene = pxPhysics->createScene(pxSceneDesc);
 		pxControllerManager = PxCreateControllerManager(*pxScene);
 
-		envrImage = std::make_unique<Image>(TKE_ENVR_SIZE_CX, TKE_ENVR_SIZE_CY, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
+		envrImage = std::make_unique<Image>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
 		mainImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		depthImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		albedoAlphaImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		normalHeightImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		specRoughnessImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		esmImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, TKE_MAX_SHADOW_COUNT * 6);
+		esmImage = std::make_unique<Image>(ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, MaxShadowCount * 6);
 		debugImages.emplace_back("Esm Image", esmImage.get());
-		esmDepthImage = std::make_unique<Image>(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CX, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		esmDepthImage = std::make_unique<Image>(ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		resource.setImage(envrImage.get(), "Envr.Image");
 		resource.setImage(mainImage.get(), "Main.Image");
@@ -89,12 +89,12 @@ namespace tke
 		staticObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticObjectCount);
 		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedObjectCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof TerrainShaderStruct);
-		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * TKE_MAX_WATER_COUNT);
+		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
 		ambientBuffer = std::make_unique<UniformBuffer>(sizeof AmbientBufferShaderStruct);
-		shadowBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * TKE_MAX_SHADOW_COUNT);
-		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
-		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * TKE_MAX_INDIRECT_COUNT);
+		shadowBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxShadowCount);
+		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxIndirectCount);
+		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxIndirectCount);
 
 		resource.setBuffer(matrixBuffer.get(), "Matrix.UniformBuffer");
 		resource.setBuffer(staticObjectMatrixBuffer.get(), "StaticObjectMatrix.UniformBuffer");
@@ -129,13 +129,13 @@ namespace tke
 		cb_mrt = std::make_unique<CommandBuffer>();
 		cb_deferred = std::make_unique<CommandBuffer>();
 
-		for (int i = 0; i < TKE_MAX_SHADOW_COUNT * 6; i++)
+		for (int i = 0; i < MaxShadowCount * 6; i++)
 		{
 			VkImageView views[] = {
 				esmImage->getView(0, 1, i),
 				esmDepthImage->getView()
 			};
-			fb_esm[i] = std::move(std::unique_ptr<Framebuffer>(getFramebuffer(TKE_SHADOWMAP_CX, TKE_SHADOWMAP_CY, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views)));
+			fb_esm[i] = std::move(std::unique_ptr<Framebuffer>(getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views)));
 		}
 
 		shadowRenderFinished = createEvent();
@@ -689,8 +689,8 @@ namespace tke
 
 								cb->beginRenderPass(renderPass_image16, fb);
 								cb->bindPipeline(downsamplePipeline);
-								cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
-								auto size = glm::vec2(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1));
+								cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
+								auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 								cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
 								downsamplePipeline->descriptorSet->setImage(down_source_position, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler);
 								cb->bindDescriptorSet();
@@ -715,7 +715,7 @@ namespace tke
 								cb->bindPipeline(convolvePipeline);
 								auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 								cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
-								cb->setViewportAndScissor(TKE_ENVR_SIZE_CX >> i, TKE_ENVR_SIZE_CY >> i);
+								cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
 								convolvePipeline->descriptorSet->setImage(con_source_position, 0, envrImageDownsample[i - 1], plainSampler);
 								cb->bindDescriptorSet();
 								cb->draw(3);
@@ -1324,7 +1324,7 @@ namespace tke
 	void initScene()
 	{
 		for (int i = 0; i < 3; i++)
-			envrImageDownsample[i] = new Image(TKE_ENVR_SIZE_CX >> (i + 1), TKE_ENVR_SIZE_CY >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			envrImageDownsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		VkAttachmentDescription atts[] = {
 			colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), // main

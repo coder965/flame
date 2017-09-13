@@ -241,8 +241,8 @@ namespace tke
 
 		matOrtho = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR * 2);
 		matOrthoInv = glm::inverse(matOrtho);
-		aspect = (float)resCx / resCy;
-		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, aspect, TKE_NEAR, TKE_FAR);
+		screenAspect = (float)resCx / resCy;
+		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, screenAspect, TKE_NEAR, TKE_FAR);
 		matPerspectiveInv = glm::inverse(matPerspective);
 
 		initVulkan(
@@ -346,7 +346,7 @@ namespace tke
 		animatedIndexBuffer = new IndexBuffer();
 
 		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * TKE_MAX_MATERIAL_COUNT);
+		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
 
 		globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
 		globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
@@ -363,11 +363,11 @@ namespace tke
 			stru.depth_far = TKE_FAR;
 			stru.cx = resCx;
 			stru.cy = resCy;
-			stru.aspect = aspect;
+			stru.aspect = screenAspect;
 			stru.fovy = TKE_FOVY;
 			stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
-			stru.envrCx = TKE_ENVR_SIZE_CX;
-			stru.envrCy = TKE_ENVR_SIZE_CY;
+			stru.envrCx = EnvrSizeCx;
+			stru.envrCy = EnvrSizeCy;
 			constantBuffer->update(&stru, stagingBuffer);
 		}
 
