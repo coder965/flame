@@ -123,6 +123,9 @@ int main(int argc, char **argv)
 					implString += "currentBank->addE(\"" + eName + "\", \"" + name + "\", offsetof(" + currentStructName + ", " + name + "));\n";
 				}
 			}
+			else if (std::regex_search(line, match, pattern = R"(IMPL\s*\(\s*([\w_\d\.:\(\)]+)\s*\))"))
+			{
+			}
 		}
 	}
 

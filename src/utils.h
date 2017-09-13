@@ -287,6 +287,7 @@ namespace tke
 #define REFL_BANK static tke::ReflectionBank *b
 #define REFLv
 #define REFLe
+#define IMPL(INIT) extern
 
 	struct Observer
 	{
