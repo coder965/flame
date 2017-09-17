@@ -1,7 +1,6 @@
 #include <map>
 #include <regex>
 
-#include "define.h"
 #include "core.h"
 #include "ui/ui.h"
 #include "physics/physics.h"
@@ -11,18 +10,6 @@
 
 namespace tke
 {
-	StagingBuffer *stagingBuffer = nullptr;
-
-	bool needUpdateVertexBuffer = true;
-	bool needUpdateMaterialBuffer = true;
-	bool needUpdateTexture = true;
-
-	std::vector<std::pair<std::string, Image*>> debugImages;
-
-	std::vector<std::unique_ptr<Image>> textures;
-
-	std::vector<std::unique_ptr<Image>> modelTextures;
-
 	Image *addModelTexture(const std::string &_filename, bool sRGB)
 	{
 		auto filename = std::experimental::filesystem::path(_filename).string();
@@ -37,8 +24,6 @@ namespace tke
 		return i;
 	}
 
-	std::vector<Material*> modelMaterials;
-	Material *defaultMaterial = nullptr;
 	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha,
 		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap)
 	{
@@ -63,48 +48,6 @@ namespace tke
 		modelMaterials.push_back(m);
 		return m;
 	}
-
-	std::vector<std::unique_ptr<Animation>> animations;
-
-	std::vector<std::unique_ptr<Model>> models;
-
-	std::vector<std::unique_ptr<Scene>> scenes;
-
-	VertexBuffer *staticVertexBuffer = nullptr;
-	IndexBuffer *staticIndexBuffer = nullptr;
-
-	VertexBuffer *animatedVertexBuffer = nullptr;
-	IndexBuffer *animatedIndexBuffer = nullptr;
-
-	UniformBuffer *constantBuffer = nullptr;
-	UniformBuffer *materialBuffer = nullptr;
-
-	Image *plainDepthImage = nullptr;
-	Image *pickUpImage = nullptr;
-
-	RenderPass *renderPass_image8;
-	RenderPass *renderPass_image8_clear;
-	RenderPass *renderPass_image16;
-	RenderPass *renderPass_image16_clear;
-	RenderPass *renderPass_depth_clear;
-	RenderPass *renderPass_depth_clear_image8;
-	RenderPass *renderPass_depth_clear_image8_clear;
-	RenderPass *renderPass_depth_clear_image32f_clear;
-
-	Framebuffer *pickUpFb = nullptr;
-
-	Pipeline *plainPipeline_2d = nullptr;
-	Pipeline *plainPipeline_3d = nullptr;
-	Pipeline *plainPipeline_3d_anim = nullptr;
-	Pipeline *plainPipeline_3d_normal = nullptr;
-	Pipeline *plainPipeline_3d_tex = nullptr;
-	Pipeline *plainPipeline_3d_anim_tex = nullptr;
-	Pipeline *plainPipeline_3d_wire = nullptr;
-	Pipeline *plainPipeline_3d_anim_wire = nullptr;
-	Pipeline *plainPipeline_3d_line = nullptr;
-	int plain3d_bone_pos = -1;
-
-	DescriptorSet *ds_maps = nullptr;
 
 	std::vector<EventList*> eventLists;
 
@@ -239,10 +182,13 @@ namespace tke
 		resCx = rcx;
 		resCy = rcy;
 
-		matOrtho = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR * 2);
+		auto vkTrans = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), 
+			glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		matOrtho = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
 		matOrthoInv = glm::inverse(matOrtho);
 		screenAspect = (float)resCx / resCy;
-		matPerspective = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f)) * glm::perspective(TKE_FOVY, screenAspect, TKE_NEAR, TKE_FAR);
+		matPerspective = vkTrans * glm::perspective(fovy, screenAspect, near_plane, far_plane);
 		matPerspectiveInv = glm::inverse(matPerspective);
 
 		initVulkan(
@@ -309,34 +255,16 @@ namespace tke
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}
 
-		plainPipeline_2d = new Pipeline;
-		plainPipeline_2d->loadXML(enginePath + "pipeline/plain2d/plain2d.xml");
-		plainPipeline_2d->setup(renderPass_image8, 0, true);
+		plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_image8, 0, true);
 
-		plainPipeline_3d = new Pipeline;
-		plainPipeline_3d->loadXML(enginePath + "pipeline/plain3d/plain3d.xml");
-		plainPipeline_3d->setup(renderPass_depth_clear_image8, 0, false);
-		plainPipeline_3d_anim = new Pipeline;
-		plainPipeline_3d_anim->loadXML(enginePath + "pipeline/plain3d/plain3d_anim.xml");
-		plainPipeline_3d_anim->setup(renderPass_depth_clear_image8, 0, true);
-		plainPipeline_3d_normal = new Pipeline;
-		plainPipeline_3d_normal->loadXML(enginePath + "pipeline/plain3d/plain3d_normal.xml");
-		plainPipeline_3d_normal->setup(renderPass_depth_clear_image8, 0, false);
-		plainPipeline_3d_tex = new Pipeline;
-		plainPipeline_3d_tex->loadXML(enginePath + "pipeline/plain3d/plain3d_tex.xml");
-		plainPipeline_3d_tex->setup(renderPass_depth_clear_image8, 0, false);
-		plainPipeline_3d_anim_tex = new Pipeline;
-		plainPipeline_3d_anim_tex->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml");
-		plainPipeline_3d_anim_tex->setup(renderPass_depth_clear_image8, 0, true);
-		plainPipeline_3d_wire = new Pipeline;
-		plainPipeline_3d_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_wire.xml");
-		plainPipeline_3d_wire->setup(renderPass_image8, 0, false);
-		plainPipeline_3d_anim_wire = new Pipeline;
-		plainPipeline_3d_anim_wire->loadXML(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml");
-		plainPipeline_3d_anim_wire->setup(renderPass_image8, 0, true);
-		plainPipeline_3d_line = new Pipeline;
-		plainPipeline_3d_line->loadXML(enginePath + "pipeline/plain3d/plain3d_line.xml");
-		plainPipeline_3d_line->setup(renderPass_image8, 0, false);
+		plainPipeline_3d = new Pipeline(enginePath + "pipeline/plain3d/plain3d.xml", renderPass_depth_clear_image8, 0);
+		plainPipeline_3d_anim = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim.xml", renderPass_depth_clear_image8, 0, true);
+		plainPipeline_3d_normal = new Pipeline(enginePath + "pipeline/plain3d/plain3d_normal.xml", renderPass_depth_clear_image8, 0);
+		plainPipeline_3d_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_tex.xml", renderPass_depth_clear_image8, 0);
+		plainPipeline_3d_anim_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml", renderPass_depth_clear_image8, 0, true);
+		plainPipeline_3d_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_wire.xml", renderPass_image8, 0);
+		plainPipeline_3d_anim_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml", renderPass_image8, 0, true);
+		plainPipeline_3d_line = new Pipeline(enginePath + "pipeline/plain3d/plain3d_line.xml", renderPass_image8, 0);
 		plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 		staticVertexBuffer = new VertexBuffer();
@@ -359,13 +287,13 @@ namespace tke
 
 		{
 			ConstantBufferStruct stru;
-			stru.depth_near = TKE_NEAR;
-			stru.depth_far = TKE_FAR;
+			stru.depth_near = near_plane;
+			stru.depth_far = far_plane;
 			stru.cx = resCx;
 			stru.cy = resCy;
 			stru.aspect = screenAspect;
-			stru.fovy = TKE_FOVY;
-			stru.tanHfFovy = std::tan(glm::radians(TKE_FOVY * 0.5f));
+			stru.fovy = fovy;
+			stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
 			stru.envrCx = EnvrSizeCx;
 			stru.envrCy = EnvrSizeCy;
 			constantBuffer->update(&stru, stagingBuffer);

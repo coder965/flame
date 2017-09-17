@@ -2,9 +2,9 @@
 #include <stack>
 #include <regex>
 
-#include "../define.h"
 #include "shader.h"
 #include "pipeline.h"
+#include "../core.h"
 
 namespace tke
 {

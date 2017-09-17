@@ -2,9 +2,9 @@
 #include "render/image.h"
 #include "render/framebuffer.h"
 #include "ui/ui.h"
-#include "define.h"
 #include "render/renderpass.h"
 #include "render/synchronization.h"
+#include "core.h"
 
 namespace tke
 {

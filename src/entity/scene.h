@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../define.h"
 #include "../utils.h"
 #include "../math/math.h"
 #include "camera.h"
@@ -90,19 +89,19 @@ namespace tke
 		glm::vec4 fogcolor;
 	};
 
-	extern Pipeline *scatteringPipeline;
-	extern Pipeline *downsamplePipeline;
-	extern Pipeline *convolvePipeline;
+	IMPL(nullptr) Pipeline *scatteringPipeline;
+	IMPL(nullptr) Pipeline *downsamplePipeline;
+	IMPL(nullptr) Pipeline *convolvePipeline;
 
-	extern Pipeline *mrtPipeline;
-	extern Pipeline *mrtAnimPipeline;
-	extern Pipeline *terrainPipeline;
-	extern Pipeline *waterPipeline;
-	extern Pipeline *proceduralTerrainPipeline;
-	extern Pipeline *deferredPipeline;
-	extern Pipeline *esmPipeline;
-	extern Pipeline *esmAnimPipeline;
-	extern Pipeline *composePipeline;
+	IMPL(nullptr) Pipeline *mrtPipeline;
+	IMPL(nullptr) Pipeline *mrtAnimPipeline;
+	IMPL(nullptr) Pipeline *terrainPipeline;
+	IMPL(nullptr) Pipeline *waterPipeline;
+	IMPL(nullptr) Pipeline *proceduralTerrainPipeline;
+	IMPL(nullptr) Pipeline *deferredPipeline;
+	IMPL(nullptr) Pipeline *esmPipeline;
+	IMPL(nullptr) Pipeline *esmAnimPipeline;
+	IMPL(nullptr) Pipeline *composePipeline;
 
 	REFLECTABLE struct Scene
 	{

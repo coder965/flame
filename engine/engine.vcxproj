@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\core.cpp" />
-    <ClCompile Include="..\src\define.cpp" />
     <ClCompile Include="..\src\entity\camera.cpp" />
     <ClCompile Include="..\src\entity\controller.cpp" />
     <ClCompile Include="..\src\entity\light.cpp" />
@@ -36,7 +35,7 @@
     <ClCompile Include="..\src\model\model.cpp" />
     <ClCompile Include="..\src\physics\physics.cpp" />
     <ClCompile Include="..\src\profiler.cpp" />
-    <ClCompile Include="..\src\reflect.cpp" />
+    <ClCompile Include="..\src\REFLECT.cpp" />
     <ClCompile Include="..\src\render\buffer.cpp" />
     <ClCompile Include="..\src\render\command_buffer.cpp" />
     <ClCompile Include="..\src\render\descriptor.cpp" />
@@ -57,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\core.h" />
-    <ClInclude Include="..\src\define.h" />
     <ClInclude Include="..\src\entity\camera.h" />
     <ClInclude Include="..\src\entity\controller.h" />
     <ClInclude Include="..\src\entity\light.h" />

@@ -1,8 +1,8 @@
-#include "../define.h"
 #include "pipeline.h"
 #include "descriptor.h"
 #include "renderpass.h"
 #include "sampler.h"
+#include "../core.h"
 #include "../resource/resource.h"
 
 namespace tke
@@ -21,101 +21,6 @@ namespace tke
 	}
 
 	static std::vector<PipelineLayout*> pipelineLayouts;
-
-	void Pipeline::loadXML(const std::string &_filename)
-	{
-		filename = _filename;
-		std::experimental::filesystem::path path(filename);
-		filepath = path.parent_path().string();
-		if (filepath == "")
-			filepath = ".";
-
-		AttributeTree at("pipeline");
-		at.loadXML(filename);
-		at.obtainFromAttributes(this, b);
-
-		for (auto &c : at.children)
-		{
-			if (c->name == "blend_attachment")
-			{
-				BlendAttachment ba;
-				c->obtainFromAttributes(&ba, ba.b);
-				blendAttachments.push_back(ba);
-			}
-			else if (c->name == "dynamic")
-			{
-				DynamicState s;
-				c->obtainFromAttributes(&s, s.b);
-				dynamicStates.push_back(s);
-			}
-			else if (c->name == "link")
-			{
-				LinkResource l;
-				c->obtainFromAttributes(&l, l.b);
-				links.push_back(l);
-			}
-			else if (c->name == "stage")
-			{
-				auto s = new Stage(this);
-				c->obtainFromAttributes(s, s->b);
-				std::experimental::filesystem::path path(s->filename);
-				s->filepath = path.parent_path().string();
-				if (s->filepath == "")
-					s->filepath = ".";
-				auto ext = path.extension().string();
-				s->type = StageFlagByExt(ext);
-
-				stages[StageIndexByType(s->type)] = s;
-			}
-			else if (c->name == "macro")
-			{
-				ShaderMacro m;
-				c->obtainFromAttributes(&m, m.b);
-				shaderMacros.push_back(m);
-			}
-		}
-	}
-
-	void Pipeline::saveXML(const std::string &filename)
-	{
-		AttributeTree at("pipeline");
-		at.addAttributes(this, b);
-		for (auto &b : blendAttachments)
-		{
-			auto n = new AttributeTreeNode("blend_attachment");
-			n->addAttributes(&b, b.b);
-			at.add(n);
-		}
-		for (auto &s : dynamicStates)
-		{
-			auto n = new AttributeTreeNode("dynamic");
-			n->addAttributes(&s, s.b);
-			at.add(n);
-		}
-		for (auto &l : links)
-		{
-			auto n = new AttributeTreeNode("link");
-			n->addAttributes(&l, l.b);
-			at.add(n);
-		}
-		for (int i = 0; i < 5; i++)
-		{
-			auto s = stages[i];
-			if (!s) continue;
-
-			auto n = new AttributeTreeNode("stage");
-			n->addAttributes(s, s->b);
-			at.add(n);
-		}
-		for (auto &m : shaderMacros)
-		{
-			auto n = new AttributeTreeNode("macro");
-			n->addAttributes(&m, m.b);
-			at.add(n);
-		}
-
-		at.saveXML(filename);
-	}
 
 	static VkBlendFactor _vkBlendFactor(BlendFactor f)
 	{
@@ -143,8 +48,61 @@ namespace tke
 		}
 	}
 
-	void Pipeline::setup(RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
+	Pipeline::Pipeline(const std::string &_filename, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
 	{
+		filename = _filename;
+		std::experimental::filesystem::path path(filename);
+		filepath = path.parent_path().string();
+		if (filepath == "")
+			filepath = ".";
+
+		{
+			AttributeTree at("pipeline");
+			at.loadXML(filename);
+			at.obtainFromAttributes(this, b);
+
+			for (auto &c : at.children)
+			{
+				if (c->name == "blend_attachment")
+				{
+					BlendAttachment ba;
+					c->obtainFromAttributes(&ba, ba.b);
+					blendAttachments.push_back(ba);
+				}
+				else if (c->name == "dynamic")
+				{
+					DynamicState s;
+					c->obtainFromAttributes(&s, s.b);
+					dynamicStates.push_back(s);
+				}
+				else if (c->name == "link")
+				{
+					LinkResource l;
+					c->obtainFromAttributes(&l, l.b);
+					links.push_back(l);
+				}
+				else if (c->name == "stage")
+				{
+					auto s = new Stage(this);
+					c->obtainFromAttributes(s, s->b);
+					std::experimental::filesystem::path path(s->filename);
+					s->filepath = path.parent_path().string();
+					if (s->filepath == "")
+						s->filepath = ".";
+					auto ext = path.extension().string();
+					s->type = StageFlagByExt(ext);
+
+					stages[StageIndexByType(s->type)] = s;
+				}
+				else if (c->name == "macro")
+				{
+					ShaderMacro m;
+					c->obtainFromAttributes(&m, m.b);
+					shaderMacros.push_back(m);
+				}
+			}
+		}
+
 		if (!pVertexInputState)
 		{
 			switch (vertex_input_type)

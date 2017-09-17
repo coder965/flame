@@ -13,15 +13,33 @@ enum { MaxTextureCount = 256 };
 
 namespace tke
 {
-	extern StagingBuffer *stagingBuffer;
+	IMPL(0.1f) float near_plane;
+	IMPL(1000.f) float far_plane;
+	IMPL(60.f) float fovy;
+
+	IMPL() int lastTime;
+	IMPL() int nowTime;
+	IMPL() int timeDisp;
+
+	IMPL() std::string enginePath;
+	IMPL() int resCx;
+	IMPL() int resCy;
+	IMPL() float screenAspect;
+
+	IMPL() glm::mat4 matOrtho;
+	IMPL() glm::mat4 matOrthoInv;
+	IMPL() glm::mat4 matPerspective;
+	IMPL() glm::mat4 matPerspectiveInv;
+
+	IMPL(nullptr) StagingBuffer *stagingBuffer;
 	
-	extern bool needUpdateVertexBuffer;
-	extern bool needUpdateMaterialBuffer;
-	extern bool needUpdateTexture;
+	IMPL() bool needUpdateVertexBuffer;
+	IMPL() bool needUpdateMaterialBuffer;
+	IMPL() bool needUpdateTexture;
 
-	extern std::vector<std::pair<std::string, Image*>> debugImages;
+	IMPL() std::vector<std::pair<std::string,Image*>> debugImages;
 
-	extern std::vector<std::unique_ptr<Image>> textures;
+	IMPL() std::vector<std::unique_ptr<Image>> textures;
 
 	inline void addTexture(Image *i)
 	{
@@ -39,15 +57,15 @@ namespace tke
 		return nullptr;
 	}
 
-	extern std::vector<std::unique_ptr<Image>> modelTextures;
+	IMPL() std::vector<std::unique_ptr<Image>> modelTextures;
 	Image *addModelTexture(const std::string &filename, bool sRGB = false);
 
-	extern std::vector<Material*> modelMaterials;
-	extern Material *defaultMaterial;
+	IMPL() std::vector<Material*> modelMaterials;
+	IMPL(nullptr) Material *defaultMaterial;
 	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha, 
 		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap);
 
-	extern std::vector<std::unique_ptr<Animation>> animations;
+	IMPL() std::vector<std::unique_ptr<Animation>> animations;
 	inline Animation *getAnimation(const std::string &_filename)
 	{
 		auto filename = std::experimental::filesystem::path(_filename).string();
@@ -59,7 +77,7 @@ namespace tke
 		return nullptr;
 	}
 
-	extern std::vector<std::unique_ptr<Model>> models;
+	IMPL() std::vector<std::unique_ptr<Model>> models;
 	inline Model *getModel(const std::string &_filename)
 	{
 		auto filename = std::experimental::filesystem::path(_filename).string();
@@ -71,7 +89,7 @@ namespace tke
 		return nullptr;
 	}
 
-	extern std::vector<std::unique_ptr<Scene>> scenes;
+	IMPL() std::vector<std::unique_ptr<Scene>> scenes;
 	inline void addScene(Scene *s)
 	{
 		scenes.push_back(std::move(std::unique_ptr<Scene>(s)));
@@ -87,41 +105,41 @@ namespace tke
 		return nullptr;
 	}
 
-	extern VertexBuffer *staticVertexBuffer;
-	extern IndexBuffer *staticIndexBuffer;
+	IMPL(nullptr) VertexBuffer *staticVertexBuffer;
+	IMPL(nullptr) IndexBuffer *staticIndexBuffer;
 
-	extern VertexBuffer *animatedVertexBuffer;
-	extern IndexBuffer *animatedIndexBuffer;
+	IMPL(nullptr) VertexBuffer *animatedVertexBuffer;
+	IMPL(nullptr) IndexBuffer *animatedIndexBuffer;
 
-	extern UniformBuffer *constantBuffer;
-	extern UniformBuffer *materialBuffer;
+	IMPL(nullptr) UniformBuffer *constantBuffer;
+	IMPL(nullptr) UniformBuffer *materialBuffer;
 
-	extern Image *plainDepthImage;
-	extern Image *pickUpImage;
+	IMPL(nullptr) Image *plainDepthImage;
+	IMPL(nullptr) Image *pickUpImage;
 
-	extern RenderPass *renderPass_image8;
-	extern RenderPass *renderPass_image8_clear;
-	extern RenderPass *renderPass_image16;
-	extern RenderPass *renderPass_image16_clear;
-	extern RenderPass *renderPass_depth_clear;
-	extern RenderPass *renderPass_depth_clear_image8;
-	extern RenderPass *renderPass_depth_clear_image8_clear;
-	extern RenderPass *renderPass_depth_clear_image32f_clear;
+	IMPL(nullptr) RenderPass *renderPass_image8;
+	IMPL(nullptr) RenderPass *renderPass_image8_clear;
+	IMPL(nullptr) RenderPass *renderPass_image16;
+	IMPL(nullptr) RenderPass *renderPass_image16_clear;
+	IMPL(nullptr) RenderPass *renderPass_depth_clear;
+	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8;
+	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8_clear;
+	IMPL(nullptr) RenderPass *renderPass_depth_clear_image32f_clear;
 
-	extern Framebuffer *pickUpFb;
+	IMPL(nullptr) Framebuffer *pickUpFb;
 
-	extern Pipeline *plainPipeline_2d;
-	extern Pipeline *plainPipeline_3d;
-	extern Pipeline *plainPipeline_3d_anim;
-	extern Pipeline *plainPipeline_3d_normal;
-	extern Pipeline *plainPipeline_3d_tex;
-	extern Pipeline *plainPipeline_3d_anim_tex;
-	extern Pipeline *plainPipeline_3d_wire;
-	extern Pipeline *plainPipeline_3d_anim_wire;
-	extern Pipeline *plainPipeline_3d_line;
-	extern int plain3d_bone_pos;
+	IMPL(nullptr) Pipeline *plainPipeline_2d;
+	IMPL(nullptr) Pipeline *plainPipeline_3d;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_anim;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_normal;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_tex;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_anim_tex;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_wire;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_anim_wire;
+	IMPL(nullptr) Pipeline *plainPipeline_3d_line;
+	IMPL(-1) int plain3d_bone_pos;
 
-	extern DescriptorSet *ds_maps;
+	IMPL(nullptr) DescriptorSet *ds_maps;
 
 	typedef void(*PF_TICK)(int);
 	typedef void(*PF_EXEC)();

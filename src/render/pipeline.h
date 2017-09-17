@@ -1,12 +1,45 @@
 #pragma once
 
 #include "../utils.h"
+#include "../math/math.h"
 #include "vulkan.h"
 #include "shader.h"
 #include "sampler.h"
 
 namespace tke
 {
+	struct Vertex2D
+	{
+		glm::vec2       pos;
+		glm::vec2       uv;
+		std::uint32_t   col;
+	};
+
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+	};
+
+	struct VertexAnimated
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+
+		glm::vec4 boneWeight;
+		glm::vec4 boneID;
+	};
+
+	struct VertexLine
+	{
+		glm::vec3 position;
+		glm::vec3 color;
+	};
+
 	REFLECTABLE enum class PrimitiveTopology : int
 	{
 		null,
@@ -148,10 +181,8 @@ namespace tke
 		VkPipeline pipeline = 0;
 		DescriptorSet *descriptorSet = nullptr;
 
+		Pipeline(const std::string &_filename, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds = false);
 		~Pipeline();
-		void loadXML(const std::string &filename);
-		void saveXML(const std::string &filename);
-		void setup(RenderPass *_renderPass, int _subpassIndex, bool need_default_ds);
 		void linkDescriptors(DescriptorSet *set, Resource *resource);
 		int descriptorPosition(const std::string &name);
 	};

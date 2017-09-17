@@ -12,34 +12,15 @@ namespace tke
 
 	static RenderPass *sceneRenderPass = nullptr;
 
-	Pipeline *scatteringPipeline = nullptr;
-
-	Pipeline *downsamplePipeline = nullptr;
-
-	Pipeline *convolvePipeline = nullptr;
-
-	Pipeline *mrtPipeline;
-
-	Pipeline *mrtAnimPipeline;
 	static int mrt_bone_position = -1;
 
-	Pipeline *terrainPipeline = nullptr;
 	static int terr_heightMap_position = -1;
 	static int terr_blendMap_position = -1;
 	static int terr_colorMap_position = -1;
 	static int terr_normalMap_position = -1;
 
-	Pipeline *waterPipeline = nullptr;
-
-	Pipeline *deferredPipeline = nullptr;
 	static int defe_envr_position = -1;
 	static int defe_shad_position = -1;
-
-	Pipeline *esmPipeline = nullptr;
-
-	Pipeline *esmAnimPipeline = nullptr;
-
-	Pipeline *composePipeline = nullptr;
 
 	struct MatrixBufferShaderStruct
 	{
@@ -984,14 +965,15 @@ namespace tke
 						}
 						auto halfWidth = (vMax.z - vMin.z) * 0.5f;
 						auto halfHeight = (vMax.y - vMin.y) * 0.5f;
-						auto halfDepth = glm::max(vMax.x - vMin.x, TKE_NEAR) * 0.5f;
+						auto halfDepth = glm::max(vMax.x - vMin.x, near_plane) * 0.5f;
 						auto center = lighAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
-						//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
+						//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * 
+						glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
 						auto shadowMatrix = glm::mat4(1.f, 0.f, 0.f, 0.f,
 							0.f, 1.f, 0.f, 0.f,
 							0.f, 0.f, 0.5f, 0.f,
 							0.f, 0.f, 0.5f, 1.f) *
-							glm::ortho(-1.f, 1.f, -1.f, 1.f, TKE_NEAR, TKE_FAR) * glm::lookAt(camera.target + glm::vec3(0, 0, 100), camera.target, glm::vec3(0, 1, 0));
+							glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) * glm::lookAt(camera.target + glm::vec3(0, 0, 100), camera.target, glm::vec3(0, 1, 0));
 
 						auto srcOffset = sizeof(glm::mat4) * ranges.size();
 						memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));
@@ -1013,7 +995,7 @@ namespace tke
 						glm::mat4 shadowMatrix[6];
 
 						auto coord = l->getCoord();
-						auto proj = glm::perspective(90.f, 1.f, TKE_NEAR, TKE_FAR);
+						auto proj = glm::perspective(90.f, 1.f, near_plane, far_plane);
 						shadowMatrix[0] = proj * glm::lookAt(coord, coord + glm::vec3(1, 0, 0), glm::vec3(0, -1, 0));
 						shadowMatrix[1] = proj * glm::lookAt(coord, coord + glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0));
 						shadowMatrix[2] = proj * glm::lookAt(coord, coord + glm::vec3(0, 1, 0), glm::vec3(0, 0, 1));
@@ -1199,51 +1181,6 @@ namespace tke
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
 	{
-		//WIN32_FIND_DATA fd;
-		//HANDLE hFind;
-
-		//hFind = FindFirstFile(sprintf("%s\\pano.*", dir), &fd);
-		//if (hFind != INVALID_HANDLE_VALUE)
-		//{
-		//	auto pImage = createImage(sprintf("%s\\%s", dir, fd.cFileName), true);
-		//	if (pImage)
-		//	{
-		//		delete skyImage;
-		//		skyImage = pImage;
-		//	}
-		//	FindClose(hFind);
-		//}
-
-		//std::vector<std::string> mipmapNames;
-		//for (int i = 0; i < 100; i++)
-		//{
-		//	hFind = FindFirstFile(sprintf("%s\\rad%d.*", dir, i), &fd);
-		//	if (hFind == INVALID_HANDLE_VALUE)
-		//		break;
-		//	FindClose(hFind);
-		//	mipmapNames.push_back(sprintf("%s\\%s", dir, fd.cFileName));
-		//}
-		//auto pImage = createImage(mipmapNames, true);
-		//if (pImage)
-		//{
-		//	strcpy(pImage->m_fileName, dir);
-		//	delete radianceImage;
-		//	radianceImage = pImage;
-		//}
-
-		//hFind = FindFirstFile(sprintf("%s\\irr.*", dir), &fd);
-		//if (hFind != INVALID_HANDLE_VALUE)
-		//{
-		//	auto pImage = createImage(sprintf("%s\\%s", dir, fd.cFileName), true);
-		//	if (pImage)
-		//	{
-		//		delete irradianceImage;
-		//		irradianceImage = pImage;
-		//	}
-		//	FindClose(hFind);
-		//}
-
-		//strcpy(skyName, dir);
 
 		needUpdateSky = true;
 	}
@@ -1355,59 +1292,23 @@ namespace tke
 
 		sceneRenderPass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
 
-		scatteringPipeline = new Pipeline;
-		scatteringPipeline->loadXML(enginePath + "pipeline/sky/scattering.xml");
-		scatteringPipeline->setup(renderPass_image16, 0, false);
-
-		downsamplePipeline = new Pipeline;
-		downsamplePipeline->loadXML(enginePath + "pipeline/sky/downsample.xml");
-		downsamplePipeline->setup(renderPass_image16, 0, true);
-
-		convolvePipeline = new Pipeline;
-		convolvePipeline->loadXML(enginePath + "pipeline/sky/convolve.xml");
-		convolvePipeline->setup(renderPass_image16, 0, true);
-
-		mrtPipeline = new Pipeline;
-		mrtPipeline->loadXML(enginePath + "pipeline/deferred/mrt.xml");
-		mrtPipeline->setup(sceneRenderPass, 0, false);
-
-		mrtAnimPipeline = new Pipeline;
-		mrtAnimPipeline->loadXML(enginePath + "pipeline/deferred/mrt_anim.xml");
-		mrtAnimPipeline->setup(sceneRenderPass, 0, false);
+		scatteringPipeline = new Pipeline(enginePath + "pipeline/sky/scattering.xml", renderPass_image16, 0);
+		downsamplePipeline = new Pipeline(enginePath + "pipeline/sky/downsample.xml", renderPass_image16, 0, true);
+		convolvePipeline = new Pipeline(enginePath + "pipeline/sky/convolve.xml", renderPass_image16, 0);
+		mrtPipeline = new Pipeline(enginePath + "pipeline/deferred/mrt.xml", sceneRenderPass, 0);
+		mrtAnimPipeline = new Pipeline(enginePath + "pipeline/deferred/mrt_anim.xml", sceneRenderPass, 0);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
-
-		terrainPipeline = new Pipeline;
-		terrainPipeline->loadXML(enginePath + "pipeline/deferred/terrain.xml");
-		terrainPipeline->setup(sceneRenderPass, 0, false);
+		terrainPipeline = new Pipeline(enginePath + "pipeline/deferred/terrain.xml", sceneRenderPass, 0);
 		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
 		terr_blendMap_position = terrainPipeline->descriptorPosition("blendMap");
 		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
 		terr_normalMap_position = terrainPipeline->descriptorPosition("normalMaps");
-
-		waterPipeline = new Pipeline;
-		waterPipeline->loadXML(enginePath + "pipeline/deferred/water.xml");
-		waterPipeline->setup(sceneRenderPass, 0, false);
-
-		//proceduralTerrainPipeline = new Pipeline;
-		//proceduralTerrainPipeline->loadXML(enginePath + "pipeline/deferred/procedural_terrain.xml");
-		//proceduralTerrainPipeline->setup(sceneRenderPass, 1);
-
-		esmPipeline = new Pipeline;
-		esmPipeline->loadXML(enginePath + "pipeline/esm/esm.xml");
-		esmPipeline->setup(renderPass_depth_clear_image8_clear, 0, false);
-
-		esmAnimPipeline = new Pipeline;
-		esmAnimPipeline->loadXML(enginePath + "pipeline/esm/esm_anim.xml");
-		esmAnimPipeline->setup(renderPass_depth_clear_image8_clear, 0, false);
-
-		deferredPipeline = new Pipeline;
-		deferredPipeline->loadXML(enginePath + "pipeline/deferred/deferred.xml");
-		deferredPipeline->setup(sceneRenderPass, 1, false);
+		waterPipeline = new Pipeline(enginePath + "pipeline/deferred/water.xml", sceneRenderPass, 0);
+		esmPipeline = new Pipeline(enginePath + "pipeline/esm/esm.xml", renderPass_depth_clear_image8_clear, 0);
+		esmAnimPipeline = new Pipeline(enginePath + "pipeline/esm/esm_anim.xml", renderPass_depth_clear_image8_clear, 0);
+		deferredPipeline = new Pipeline(enginePath + "pipeline/deferred/deferred.xml", sceneRenderPass, 1);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 		defe_shad_position = deferredPipeline->descriptorPosition("shadowSampler");
-
-		composePipeline = new Pipeline;
-		composePipeline->loadXML(enginePath + "pipeline/compose/compose.xml");
-		composePipeline->setup(sceneRenderPass, 2, false);
+		composePipeline = new Pipeline(enginePath + "pipeline/compose/compose.xml", sceneRenderPass, 2);
 	}
 }

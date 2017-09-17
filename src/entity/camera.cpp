@@ -1,6 +1,5 @@
 #include "camera.h"
 #include "object.h"
-#include "../define.h"
 #include "../core.h"
 
 namespace tke
@@ -51,20 +50,20 @@ namespace tke
 
 	void Camera::updateFrustum()
 	{
-		auto tanHfFovy = glm::tan(glm::radians(TKE_FOVY * 0.5f));
+		auto tanHfFovy = glm::tan(glm::radians(fovy * 0.5f));
 
-		auto _y1 = TKE_NEAR * tanHfFovy;
+		auto _y1 = near_plane * tanHfFovy;
 		auto _z1 = _y1 * screenAspect;
-		auto _y2 = TKE_FAR * tanHfFovy;
+		auto _y2 = far_plane * tanHfFovy;
 		auto _z2 = _y2 * screenAspect;
-		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + TKE_NEAR * axis[0] + coord;
-		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + TKE_NEAR * axis[0] + coord;
-		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + TKE_NEAR * axis[0] + coord;
-		frustumPoints[3] = -_z1 * axis[2] + -_y1 * axis[1] + TKE_NEAR * axis[0] + coord;
-		frustumPoints[4] = -_z2 * axis[2] + _y2 * axis[1] + TKE_FAR * axis[0] + coord;
-		frustumPoints[5] = _z2 * axis[2] + _y2 * axis[1] + TKE_FAR * axis[0] + coord;
-		frustumPoints[6] = _z2 * axis[2] + -_y2 * axis[1] + TKE_FAR * axis[0] + coord;
-		frustumPoints[7] = -_z2 * axis[2] + -_y2 * axis[1] + TKE_FAR * axis[0] + coord;
+		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
+		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
+		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
+		frustumPoints[3] = -_z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
+		frustumPoints[4] = -_z2 * axis[2] + _y2 * axis[1] + far_plane * axis[0] + coord;
+		frustumPoints[5] = _z2 * axis[2] + _y2 * axis[1] + far_plane * axis[0] + coord;
+		frustumPoints[6] = _z2 * axis[2] + -_y2 * axis[1] + far_plane * axis[0] + coord;
+		frustumPoints[7] = -_z2 * axis[2] + -_y2 * axis[1] + far_plane * axis[0] + coord;
 		for (int i = 0; i < 4; i++)
 		{
 			auto y = frustumPoints[i + 4].y;
@@ -132,8 +131,8 @@ namespace tke
 
 	void Camera::moveByCursor(float x, float y)
 	{
-		auto l = length / TKE_NEAR;
-		auto cy = tan(glm::radians(TKE_FOVY / 2.f)) * TKE_NEAR * 2.f;
+		auto l = length / near_plane;
+		auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
 		target += (-x * cy * screenAspect * l) * axis[0] + (y * cy * l) * axis[1];
 		lookAtTarget();
 	}
