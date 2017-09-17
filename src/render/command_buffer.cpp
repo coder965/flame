@@ -173,9 +173,9 @@ namespace tke
 		vkCmdExecuteCommands(v, 1, &cmd);
 	}
 
-	void CommandBuffer::pushConstant(StageType stage, int offset, int size, void *src)
+	void CommandBuffer::pushConstant(VkShaderStageFlags stage, int offset, int size, void *src)
 	{
-		vkCmdPushConstants(v, currentPipeline->pipelineLayout->v, vkStage(stage), offset, size, src);
+		vkCmdPushConstants(v, currentPipeline->pipelineLayout->v, stage, offset, size, src);
 	}
 
 	void CommandBuffer::draw(int vertexCount, int firstVertex, int instanceCount, int firstInstance)

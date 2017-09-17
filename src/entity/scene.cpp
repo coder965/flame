@@ -648,7 +648,7 @@ namespace tke
 					cb->beginRenderPass(renderPass_image16, fb);
 					cb->bindPipeline(scatteringPipeline);
 					auto dir = sunLight->getAxis()[2];
-					cb->pushConstant(tke::StageType::frag, 0, sizeof(dir), &dir);
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
 					cb->draw(3);
 					cb->endRenderPass();
 
@@ -672,7 +672,7 @@ namespace tke
 								cb->bindPipeline(downsamplePipeline);
 								cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 								auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
-								cb->pushConstant(StageType::frag, 0, sizeof glm::vec2, &size);
+								cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
 								downsamplePipeline->descriptorSet->setImage(down_source_position, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler);
 								cb->bindDescriptorSet();
 								cb->draw(3);
@@ -695,7 +695,7 @@ namespace tke
 								cb->beginRenderPass(renderPass_image16, fb);
 								cb->bindPipeline(convolvePipeline);
 								auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-								cb->pushConstant(StageType::frag, 0, sizeof(float), &data);
+								cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 								cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
 								convolvePipeline->descriptorSet->setImage(con_source_position, 0, envrImageDownsample[i - 1], plainSampler);
 								cb->bindDescriptorSet();

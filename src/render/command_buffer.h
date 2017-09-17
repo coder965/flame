@@ -41,7 +41,7 @@ namespace tke
 		void bindDescriptorSet();
 		void bindDescriptorSet(VkDescriptorSet *sets, int index = 0, int count = 1);
 		void execSecondaryCmd(VkCommandBuffer cmd);
-		void pushConstant(StageType stage, int offset, int size, void *src);
+		void pushConstant(VkShaderStageFlags stage, int offset, int size, void *src);
 		void draw(int vertexCount, int firstVertex = 0, int instanceCount = 1, int firstInstance = 0);
 		void drawIndex(int indexCount, int firstIndex = 0, int vertexOffset = 0, int instanceCount = 1, int firstInstance = 0);
 		void drawModel(Model *m, int gIndex = -1, int instanceCount = 1, int firstInstance = 0);

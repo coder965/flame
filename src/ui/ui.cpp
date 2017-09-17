@@ -464,7 +464,7 @@ namespace tke
 		cb->bindPipeline(plainPipeline_2d);
 		cb->bindDescriptorSet();
 
-		cb->pushConstant(StageType::vert, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 		int vtx_offset = 0;
 		int idx_offset = 0;

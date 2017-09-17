@@ -93,7 +93,7 @@ void draw_pickup_frame(tke::CommandBuffer *cb)
 		data.proj = tke::matPerspective;
 		data.modelview = currentScene->camera.getMatInv() * object->getMat();
 		data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
-		cb->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(data), &data);
+		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
 		cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
 	}
 }
@@ -268,7 +268,7 @@ void SceneMonitorWidget::show()
 				cb_physx->bindPipeline(tke::plainPipeline_3d_line);
 
 				glm::mat4 mvp = tke::matPerspective * scene->camera.getMatInv();
-				cb_physx->pushConstant(tke::StageType::vert, 0, sizeof(glm::mat4), &mvp);
+				cb_physx->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
 				cb_physx->draw(lineCount * 2);
 			}
 
@@ -347,7 +347,7 @@ void SceneMonitorWidget::show()
 				}
 				pc.modelview = scene->camera.getMatInv() * obj->getMat();
 				pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(model);
 			}
 
@@ -481,7 +481,7 @@ void ModelMonitorWidget::show()
 		}pc;
 		pc.proj = tke::matPerspective;
 		pc.modelview = camera.getMatInv();
-		cb->pushConstant(tke::StageType::vert, 0, sizeof(pc), &pc);
+		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
 		int gIndex = 0;
 		for (auto &g : model->geometries)
 		{
@@ -524,14 +524,14 @@ void ModelMonitorWidget::show()
 				auto h = model->controller_height;
 				auto mv = camera.getMatInv();
 				pc.modelview = mv * glm::translate(model->controller_position) * glm::scale(glm::vec3(r, h, r));
-				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::cylinderModel);
 				h *= 0.5f;
 				pc.modelview = mv * glm::translate(model->controller_position - glm::vec3(0.f, h, 0.f)) * glm::scale(glm::vec3(r, r, r));
-				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::sphereModel, 0);
 				pc.modelview = mv * glm::translate(model->controller_position + glm::vec3(0.f, h, 0.f)) * glm::scale(glm::vec3(r, r, r));
-				cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+				cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 				cb_wireframe->drawModel(tke::sphereModel, 1);
 			}
 		}
@@ -540,7 +540,7 @@ void ModelMonitorWidget::show()
 		{
 			pc.modelview = camera.getMatInv() * glm::translate(model->eye_position);
 			pc.color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-			cb_wireframe->pushConstant(tke::StageType((int)tke::StageType::vert | (int)tke::StageType::frag), 0, sizeof(pc), &pc);
+			cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 			cb_wireframe->drawModel(tke::sphereModel);
 		}
 

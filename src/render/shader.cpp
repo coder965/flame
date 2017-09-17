@@ -3,7 +3,6 @@
 #include <regex>
 
 #include "shader.h"
-#include "pipeline.h"
 #include "../core.h"
 
 namespace tke
@@ -16,11 +15,6 @@ namespace tke
 	}
 
 	static std::vector<ShaderModule*> shaderModules;
-
-	Stage::Stage(Pipeline *_parent)
-	{
-		parent = _parent;
-	}
 
 	static bool _findDefine(const std::vector<std::string> &vec, const std::string &def, bool b)
 	{
@@ -46,23 +40,31 @@ namespace tke
 
 	static std::string _last_compiled_stage_text;
 
-	void Stage::create()
+	Stage::Stage(const std::string &_filename, const std::vector<std::string> &defines, 
+		std::vector<int> &descriptor_set_bindings, const std::vector<std::unique_ptr<Stage>> &siblings)
 	{
-		std::vector<std::string> defines;
-		for (auto &m : parent->shaderMacros)
 		{
-			if (((int)m.stage & (int)type))
-				defines.push_back(m.value);
+			std::experimental::filesystem::path path(_filename);
+			auto ext = path.extension().string();
+			if (ext == ".vert")
+				type = StageType::vert;
+			else if (ext == ".tesc")
+				type = StageType::tesc;
+			else if (ext == ".tese")
+				type = StageType::tese;
+			else if (ext == ".geom")
+				type = StageType::geom;
+			else if (ext == ".frag")
+				type = StageType::frag;
+
+			// format the shader path, so that they can reuse if they refer the same one
+			filename = std::experimental::filesystem::canonical(path).string();
 		}
 
-		// format the shader path, so that they can reuse if they refer the same one
-		auto stageFilename = std::experimental::filesystem::canonical(parent->filepath + "/" + filename).string();
 		for (auto m : shaderModules)
 		{
-			if (m->filename == stageFilename)
+			if (m->filename == filename && defines.size() == m->defines.size())
 			{
-				if (defines.size() != m->defines.size()) continue;
-
 				bool same = true;
 				for (int i = 0; i < defines.size(); i++)
 				{
@@ -83,15 +85,15 @@ namespace tke
 		}
 
 		module = new ShaderModule;
-		module->filename = stageFilename;
+		module->filename = filename;
 		module->defines.insert(module->defines.begin(), defines.begin(), defines.end());
 		shaderModules.push_back(module);
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
 		{
-			auto file_path = std::experimental::filesystem::path(stageFilename).parent_path().string();
-			tke::OnceFileBuffer file(stageFilename);
+			auto file_path = std::experimental::filesystem::path(filename).parent_path().string();
+			tke::OnceFileBuffer file(filename);
 
 			std::stringstream ss(file.data);
 
@@ -181,15 +183,6 @@ namespace tke
 				{
 					states.pop();
 				}
-				else if (states.top().first && std::regex_search(line, match, pattern = R"(#define\s+([\w_]*))"))
-				{
-					defines.push_back(match[1].str());
-
-					stageText += line + "\n";
-
-					fullLineNum += 1;
-					lineNum++;
-				}
 				else if (states.top().first && std::regex_search(line, match, pattern = R"(#include\s+\"([\w\.\\]*)\")"))
 				{
 					tke::OnceFileBuffer includeFile(file_path + "/" + match[1].str());
@@ -205,44 +198,40 @@ namespace tke
 				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\((\s*set\s*=\s*([0-9]+)\s*,\s*)?\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+)\s*(\[\s*([0-9]+)\s*\])?)"))
 				{
 					auto set = match[2].matched ? std::stoi(match[2].str()) : 0;
-					if (set >= parent->descriptor_set_bindings.size())
-						parent->descriptor_set_bindings.resize(set + 1);
+					if (set >= descriptor_set_bindings.size())
+						descriptor_set_bindings.resize(set + 1);
 					if (set >= module->descriptors.size())
 						module->descriptors.resize(set + 1);
 
 					Descriptor d;
 					d.name = match[8].str();
 					d.binding = -1;
-					for (int i = 0; i < 5; i++)
+					for (auto &s : siblings)
 					{
-						if (parent->stages[i])
+						if (s->module->descriptors.size() > set)
 						{
-							auto s = parent->stages[i];
-							if (s->type != type && s->module && s->module->descriptors.size() > set)
+							for (auto &_d : s->module->descriptors[set])
 							{
-								for (auto &_d : s->module->descriptors[set])
+								if (_d.name == d.name)
 								{
-									if (_d.name == d.name)
-									{
-										d.binding = _d.binding;
-										d.type = _d.type;
-										d.count = _d.count;
-										break;
-									}
-								}
-								if (d.binding != -1)
+									d.binding = _d.binding;
+									d.type = _d.type;
+									d.count = _d.count;
 									break;
+								}
 							}
+							if (d.binding != -1)
+								break;
 						}
 					}
 
 					if (d.binding == -1)
 					{
-						d.binding = parent->descriptor_set_bindings[set];
+						d.binding = descriptor_set_bindings[set];
 						d.type = match[7].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
 						d.count = match[10].matched ? std::stoi(match[10].str()) : 1;
 						module->descriptors[set].push_back(d);
-						parent->descriptor_set_bindings[set]++;
+						descriptor_set_bindings[set]++;
 					}
 					else
 					{
@@ -271,7 +260,21 @@ namespace tke
 				file.close();
 			}
 
-			tke::exec("cmd", std::string("/C glslangValidator ") + enginePath + "src/my_glslValidator_config.conf -V temp.glsl -S " + tke::StageNameByType(type) + " -q -o temp.spv > output.txt");
+			std::string stageName;
+			if (type == StageType::vert)
+				stageName = "vert";
+			else if (type == StageType::tesc)
+				stageName = "tesc";
+			else if (type == StageType::tese)
+				stageName = "tese";
+			else if (type == StageType::geom)
+				stageName = "geom";
+			else if (type == StageType::frag)
+				stageName = "frag";
+
+			tke::exec("cmd", std::string("/C glslangValidator ") + 
+				enginePath + "src/my_glslValidator_config.conf -V temp.glsl -S " + stageName +
+				" -q -o temp.spv > output.txt");
 
 			bool error = false;
 
@@ -437,7 +440,7 @@ namespace tke
 			else
 			{
 				assert(false);
-				MessageBox(NULL, output.c_str(), stageFilename.c_str(), 0);
+				MessageBox(NULL, output.c_str(), filename.c_str(), 0);
 				exit(1);
 			}
 

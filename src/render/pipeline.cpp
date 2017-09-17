@@ -48,6 +48,17 @@ namespace tke
 		}
 	}
 
+	static VkShaderStageFlags _toVkStage(StageType f)
+	{
+		VkShaderStageFlags v = 0;
+		if ((int)f & (int)StageType::vert) v |= VK_SHADER_STAGE_VERTEX_BIT;
+		if ((int)f & (int)StageType::tesc) v |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+		if ((int)f & (int)StageType::tese) v |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+		if ((int)f & (int)StageType::geom) v |= VK_SHADER_STAGE_GEOMETRY_BIT;
+		if ((int)f & (int)StageType::frag) v |= VK_SHADER_STAGE_FRAGMENT_BIT;
+		return v;
+	}
+
 	Pipeline::Pipeline(const std::string &_filename, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
 	{
 		filename = _filename;
@@ -55,6 +66,13 @@ namespace tke
 		filepath = path.parent_path().string();
 		if (filepath == "")
 			filepath = ".";
+
+		std::vector<VkPipelineColorBlendAttachmentState> vkBlendAttachments;
+		std::vector<VkDynamicState> vkDynamicStates;
+		std::vector<std::vector<VkDescriptorSetLayoutBinding>> vkDescriptors;
+		std::vector<VkPushConstantRange> vkPushConstantRanges;
+		std::vector<int> descriptor_set_bindings;
+		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 
 		{
 			AttributeTree at("pipeline");
@@ -67,13 +85,30 @@ namespace tke
 				{
 					BlendAttachment ba;
 					c->obtainFromAttributes(&ba, ba.b);
-					blendAttachments.push_back(ba);
+
+					VkPipelineColorBlendAttachmentState s = {};
+					s.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+					s.blendEnable = ba.enable;
+					s.srcColorBlendFactor = _vkBlendFactor(ba.src_color);
+					s.dstColorBlendFactor = _vkBlendFactor(ba.dst_color);
+					s.srcAlphaBlendFactor = _vkBlendFactor(ba.src_alpha);
+					s.dstAlphaBlendFactor = _vkBlendFactor(ba.dst_alpha);
+					vkBlendAttachments.push_back(s);
 				}
 				else if (c->name == "dynamic")
 				{
 					DynamicState s;
 					c->obtainFromAttributes(&s, s.b);
-					dynamicStates.push_back(s);
+
+					switch (s.type)
+					{
+					case DynamicStateType::viewport:
+						vkDynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+						break;
+					case DynamicStateType::scissor:
+						vkDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+						break;
+					}
 				}
 				else if (c->name == "link")
 				{
@@ -83,23 +118,73 @@ namespace tke
 				}
 				else if (c->name == "stage")
 				{
-					auto s = new Stage(this);
-					c->obtainFromAttributes(s, s->b);
-					std::experimental::filesystem::path path(s->filename);
-					s->filepath = path.parent_path().string();
-					if (s->filepath == "")
-						s->filepath = ".";
-					auto ext = path.extension().string();
-					s->type = StageFlagByExt(ext);
+					auto s = new Stage(filepath + "/" + c->firstAttribute("filename")->value, shaderDefines, 
+						descriptor_set_bindings, stages);
 
-					stages[StageIndexByType(s->type)] = s;
+					{
+						VkPipelineShaderStageCreateInfo info = {};
+						info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+						info.pName = "main";
+						info.stage = (VkShaderStageFlagBits)_toVkStage(s->type);
+						info.module = s->module->v;
+						vkStages.push_back(info);
+
+						if (vkDescriptors.size() < s->module->descriptors.size())
+						{
+							vkDescriptors.resize(s->module->descriptors.size());
+							descriptorSetLayouts.resize(s->module->descriptors.size());
+						}
+
+						for (auto set = 0; set < s->module->descriptors.size(); set++)
+						{
+							for (auto &d : s->module->descriptors[set])
+							{
+								auto found = false;
+								for (auto &b : vkDescriptors[set])
+								{
+									if (b.binding == d.binding)
+									{
+										b.stageFlags |= _toVkStage(s->type);
+										found = true;
+										break;
+									}
+								}
+								if (found) continue;
+
+								VkDescriptorSetLayoutBinding b = {};
+								b.descriptorType = _vkDescriptorType(d.type);
+								b.binding = d.binding;
+								b.descriptorCount = d.count;
+								b.stageFlags = _toVkStage(s->type);
+								vkDescriptors[set].push_back(b);
+							}
+						}
+						for (auto &p : s->module->pushConstantRanges)
+						{
+							auto found = false;
+							for (auto &r : vkPushConstantRanges)
+							{
+								if (r.offset == p.offset & r.size == p.size)
+								{
+									r.stageFlags |= _toVkStage(s->type);
+									found = true;
+									break;
+								}
+							}
+							if (found) continue;
+
+							VkPushConstantRange r = {};
+							r.offset = p.offset;
+							r.size = p.size;
+							r.stageFlags = _toVkStage(s->type);
+							vkPushConstantRanges.push_back(r);
+						}
+					}
+
+					stages.push_back(std::unique_ptr<Stage>(s));
 				}
-				else if (c->name == "macro")
-				{
-					ShaderMacro m;
-					c->obtainFromAttributes(&m, m.b);
-					shaderMacros.push_back(m);
-				}
+				else if (c->name == "define")
+					shaderDefines.push_back(c->value);
 			}
 		}
 
@@ -137,18 +222,6 @@ namespace tke
 		{
 			vkDynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 			vkDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-		}
-		for (auto &s : dynamicStates)
-		{
-			switch (s.type)
-			{
-			case DynamicStateType::viewport:
-				vkDynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-				break;
-			case DynamicStateType::scissor:
-				vkDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-				break;
-			}
 		}
 
 		switch (primitive_topology)
@@ -191,88 +264,6 @@ namespace tke
 		case CullMode::front_and_back:
 			vkCullMode = VK_CULL_MODE_FRONT_AND_BACK;
 			break;
-		}
-
-		vkBlendAttachments.clear();
-		vkDescriptors.clear();
-		vkPushConstantRanges.clear();
-		vkStages.clear();
-
-		for (auto &b : blendAttachments)
-		{
-			VkPipelineColorBlendAttachmentState s = {};
-			s.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-			s.blendEnable = b.enable;
-			s.srcColorBlendFactor = _vkBlendFactor(b.src_color);
-			s.dstColorBlendFactor = _vkBlendFactor(b.dst_color);
-			s.srcAlphaBlendFactor = _vkBlendFactor(b.src_alpha);
-			s.dstAlphaBlendFactor = _vkBlendFactor(b.dst_alpha);
-			vkBlendAttachments.push_back(s);
-		}
-
-		for (auto s : stages)
-		{
-			if (!s) continue;
-
-			s->create();
-
-			VkPipelineShaderStageCreateInfo info = {};
-			info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			info.pName = "main";
-			info.stage = (VkShaderStageFlagBits)vkStage(s->type);
-			info.module = s->module->v;
-			vkStages.push_back(info);
-
-			if (vkDescriptors.size() < s->module->descriptors.size())
-			{
-				vkDescriptors.resize(s->module->descriptors.size());
-				descriptorSetLayouts.resize(s->module->descriptors.size());
-			}
-
-			for (auto set = 0; set < s->module->descriptors.size(); set++)
-			{
-				for (auto &d : s->module->descriptors[set])
-				{
-					auto found = false;
-					for (auto &b : vkDescriptors[set])
-					{
-						if (b.binding == d.binding)
-						{
-							b.stageFlags |= vkStage(s->type);
-							found = true;
-							break;
-						}
-					}
-					if (found) continue;
-
-					VkDescriptorSetLayoutBinding b = {};
-					b.descriptorType = _vkDescriptorType(d.type);
-					b.binding = d.binding;
-					b.descriptorCount = d.count;
-					b.stageFlags = vkStage(s->type);
-					vkDescriptors[set].push_back(b);
-				}
-			}
-			for (auto &p : s->module->pushConstantRanges)
-			{
-				auto found = false;
-				for (auto &r : vkPushConstantRanges)
-				{
-					if (r.offset == p.offset & r.size == p.size)
-					{
-						r.stageFlags |= vkStage(s->type);
-						found = true;
-						break;
-					}
-				}
-				if (found) continue;
-
-				VkPushConstantRange r = {};
-				r.offset = p.offset;
-				r.size = p.size;
-				r.stageFlags = vkStage(s->type);
-				vkPushConstantRanges.push_back(r);
-			}
 		}
 
 		for (auto set = 0; set < vkDescriptors.size(); set++)
@@ -460,9 +451,6 @@ namespace tke
 		device.mtx.lock();
 		vkDestroyPipeline(device.v, pipeline, nullptr);
 		device.mtx.unlock();
-
-		for (int i = 0; i < 5; i++)
-			delete stages[i];
 	}
 
 	void Pipeline::linkDescriptors(DescriptorSet *set, Resource *resource)
@@ -472,10 +460,10 @@ namespace tke
 			if (link.binding == -1)
 			{
 				bool found = false;
-				for (auto s : stages)
+				for (auto &s : stages)
 				{
 					if (found) break;
-					if (!s) continue;
+
 					for (auto set = 0; set < s->module->descriptors.size(); set++)
 					{
 						for (auto &d : s->module->descriptors[set])
@@ -497,10 +485,10 @@ namespace tke
 			if (link.type == DescriptorType::null)
 			{
 				bool found = false;
-				for (auto s : stages)
+				for (auto &s : stages)
 				{
 					if (found) break;
-					if (!s) continue;
+
 					for (auto set = 0; set < s->module->descriptors.size(); set++)
 					{
 						for (auto &d : s->module->descriptors[set])
@@ -567,10 +555,8 @@ namespace tke
 
 	int Pipeline::descriptorPosition(const std::string &name)
 	{
-		for (auto s : stages)
+		for (auto &s : stages)
 		{
-			if (!s) continue;
-
 			for (auto set = 0; set < s->module->descriptors.size(); set++)
 			{
 				for (auto &d : s->module->descriptors[set])

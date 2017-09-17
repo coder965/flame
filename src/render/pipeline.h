@@ -156,28 +156,20 @@ namespace tke
 		REFLe PolygonMode polygon_mode = PolygonMode::fill;
 		REFLe CullMode cull_mode = CullMode::back;
 
-		std::vector<BlendAttachment> blendAttachments;
-		std::vector<DynamicState> dynamicStates;
 		std::vector<LinkResource> links;
-		std::vector<int> descriptor_set_bindings;
-		Stage *stages[5] = {};
+		std::vector<std::unique_ptr<Stage>> stages;
 
-		std::vector<ShaderMacro> shaderMacros;
+		std::vector<std::string> shaderDefines;
 
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
 		VkCullModeFlagBits vkCullMode = VK_CULL_MODE_BACK_BIT;
-		std::vector<VkPipelineColorBlendAttachmentState> vkBlendAttachments;
-		std::vector<std::vector<VkDescriptorSetLayoutBinding>> vkDescriptors;
 		std::vector<DescriptorSetLayout*> descriptorSetLayouts;
-		std::vector<VkPushConstantRange> vkPushConstantRanges;
 		PipelineLayout *pipelineLayout = nullptr;
 
 		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
 		RenderPass *renderPass;
 		int subpassIndex;
-		std::vector<VkDynamicState> vkDynamicStates;
-		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 		VkPipeline pipeline = 0;
 		DescriptorSet *descriptorSet = nullptr;
 
