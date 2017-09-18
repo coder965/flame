@@ -5,7 +5,7 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="AnimatedObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-  <macro stage="vert frag" value="ANIM" />
+  <define>ANIM</define>
 	<stage filename="mrt.vert"/>
 	<stage filename="mrt.frag"/>
 </pipeline>

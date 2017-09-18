@@ -111,8 +111,6 @@ tke::ReflectionBank *DynamicState::b = tke::addReflectionBank("DynamicState");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *Pipeline::b = tke::addReflectionBank("Pipeline");
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
-tke::ReflectionBank *ShaderMacro::b = tke::addReflectionBank("ShaderMacro");
-tke::ReflectionBank *Stage::b = tke::addReflectionBank("Stage");
 struct ReflectInit{ReflectInit(){
 tke::EnumType *currentEnumType = nullptr;
 tke::ReflectionBank *currentBank = nullptr;
@@ -242,10 +240,5 @@ currentBank->addE("CullMode", "cull_mode", offsetof(Pipeline, cull_mode));
 currentBank = PushConstantRange::b;
 currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
 currentBank->addV<int>("size", offsetof(PushConstantRange, size));
-currentBank = ShaderMacro::b;
-currentBank->addE("StageType", "stage", offsetof(ShaderMacro, stage));
-currentBank->addV<std::string>("value", offsetof(ShaderMacro, value));
-currentBank = Stage::b;
-currentBank->addV<std::string>("filename", offsetof(Stage, filename));
 }};static ReflectInit _init;
 }
