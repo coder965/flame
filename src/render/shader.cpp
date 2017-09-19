@@ -94,7 +94,6 @@ namespace tke
 		{
 			auto file_path = std::experimental::filesystem::path(filename).parent_path().string();
 			tke::OnceFileBuffer file(filename);
-
 			std::stringstream ss(file.data);
 
 			int lineNum = 0;

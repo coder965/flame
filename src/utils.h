@@ -71,6 +71,14 @@ struct EnsureConst
 
 namespace tke
 {
+	inline size_t file_length(std::ifstream &f)
+	{
+		f.seekg(0, std::ios::end);
+		auto s = f.tellg();
+		f.seekg(0, std::ios::beg);
+		return s;
+	}
+
 	int lineNumber(const char *str);
 
 	enum Err
