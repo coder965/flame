@@ -82,7 +82,7 @@ namespace tke
 		if (messageCode == 61) return VK_FALSE; // Some descriptor maybe used before any update, never mind
 		if (messageCode == 15) return VK_FALSE; // Shader requires VkPhysicalDeviceFeatures::tessellationShader but is not enabled on the device, never mind
 
-		if (messageCode == 52) return VK_FALSE; // At Draw time the active render pass is incompatible w/ gfx pipeline
+		if (messageCode == 52 || messageCode == 440402828) return VK_FALSE; // At Draw time the active render pass is incompatible w/ gfx pipeline
 
 												// ignore above
 
@@ -94,7 +94,7 @@ namespace tke
 		if (messageCode == 63) return VK_FALSE; // vkBeginCommandBuffer(): Secondary Command Buffers may perform better if a valid framebuffer parameter is specified.
 		if (messageCode == 14) return VK_FALSE;
 		if (messageCode == 12) return VK_FALSE; // Push constant range covering variable starting at offset not accessible from stage
-		if (messageCode == 4) return VK_TRUE; //Pipeline needs renderpass information
+		if (messageCode == 4) return VK_FALSE;  //Pipeline needs renderpass information
 
 		return VK_FALSE;
 	}

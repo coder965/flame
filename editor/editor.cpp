@@ -294,57 +294,57 @@ void EditorWindow::renderEvent()
 	}
 	ImGui::EndMainMenuBar();
 
-	//if (gameExplorer)
-	//{
-	//	gameExplorer->show();
-	//	if (!gameExplorer->opened)
-	//	{
-	//		delete gameExplorer;
-	//		gameExplorer = nullptr;
-	//	}
-	//}
+	if (gameExplorer)
+	{
+		gameExplorer->show();
+		if (!gameExplorer->opened)
+		{
+			delete gameExplorer;
+			gameExplorer = nullptr;
+		}
+	}
 
-	//if (attributeWidget)
-	//{
-	//	attributeWidget->show();
-	//	if (!attributeWidget->opened)
-	//	{
-	//		delete attributeWidget;
-	//		attributeWidget = nullptr;
-	//	}
-	//}
+	if (attributeWidget)
+	{
+		attributeWidget->show();
+		if (!attributeWidget->opened)
+		{
+			delete attributeWidget;
+			attributeWidget = nullptr;
+		}
+	}
 
-	//if (debugWidget)
-	//{
-	//	debugWidget->show();
-	//	if (!debugWidget->opened)
-	//	{
-	//		delete debugWidget;
-	//		debugWidget = nullptr;
-	//	}
-	//}
+	if (debugWidget)
+	{
+		debugWidget->show();
+		if (!debugWidget->opened)
+		{
+			delete debugWidget;
+			debugWidget = nullptr;
+		}
+	}
 
-	//if (textureEditor)
-	//{
-	//	textureEditor->show();
-	//	if (!textureEditor->opened)
-	//	{
-	//		delete textureEditor;
-	//		textureEditor = nullptr;
-	//	}
-	//}
+	if (textureEditor)
+	{
+		textureEditor->show();
+		if (!textureEditor->opened)
+		{
+			delete textureEditor;
+			textureEditor = nullptr;
+		}
+	}
 
-	////for (auto m : monitorWidgets)
-	////{
-	////	m->show();
-	////	cbs.insert(cbs.begin(), m->cbs.begin(), m->cbs.end());
-	////	ui->waitEvents.push_back(m->renderFinished);
-	////}
+	for (auto m : monitorWidgets)
+	{
+		m->show();
+		cbs.insert(cbs.begin(), m->cbs.begin(), m->cbs.end());
+		ui->waitEvents.push_back(m->renderFinished);
+	}
 
-	//ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
-	//ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-	//ImGui::Text("FPS:%d", getFPS());
-	//ImGui::End();
+	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
+	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+	ImGui::Text("FPS:%d", getFPS());
+	ImGui::End();
 
 	ui->end();
 

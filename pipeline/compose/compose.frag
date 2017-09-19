@@ -1,6 +1,6 @@
 #include "..\debug.h"
 
-uniform sampler2D source;
+layout(binding = 0) uniform sampler2D source;
 
 layout(location = 0) out vec4 outColor;
 

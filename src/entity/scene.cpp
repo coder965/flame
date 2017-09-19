@@ -1294,7 +1294,7 @@ namespace tke
 
 		scatteringPipeline = new Pipeline(enginePath + "pipeline/sky/scattering.xml", renderPass_image16, 0);
 		downsamplePipeline = new Pipeline(enginePath + "pipeline/sky/downsample.xml", renderPass_image16, 0, true);
-		convolvePipeline = new Pipeline(enginePath + "pipeline/sky/convolve.xml", renderPass_image16, 0);
+		convolvePipeline = new Pipeline(enginePath + "pipeline/sky/convolve.xml", renderPass_image16, 0, true);
 		mrtPipeline = new Pipeline(enginePath + "pipeline/deferred/mrt.xml", sceneRenderPass, 0);
 		mrtAnimPipeline = new Pipeline(enginePath + "pipeline/deferred/mrt_anim.xml", sceneRenderPass, 0);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
