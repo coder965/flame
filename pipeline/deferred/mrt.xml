@@ -5,7 +5,7 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="StaticObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-	<stage filename="mrt.vert"/>
-	<stage filename="mrt.frag"/>
+  <shader filename="mrt.vert"/>
+  <shader filename="mrt.frag"/>
 </pipeline>
 

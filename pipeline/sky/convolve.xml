@@ -1,5 +1,5 @@
 <pipeline name="Convolve.Pipeline" cx="0" cy="0" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<stage filename="../fullscreenUv.vert"/>
-	<stage filename="convolve.frag"/>
+  <shader filename="../fullscreenUv.vert"/>
+  <shader filename="convolve.frag"/>
 </pipeline>
 

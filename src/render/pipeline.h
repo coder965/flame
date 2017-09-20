@@ -159,8 +159,6 @@ namespace tke
 		std::vector<LinkResource> links;
 		std::vector<std::shared_ptr<Shader>> shaders;
 
-		std::vector<std::string> shaderDefines;
-
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
 		VkCullModeFlagBits vkCullMode = VK_CULL_MODE_BACK_BIT;

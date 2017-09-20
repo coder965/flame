@@ -3,7 +3,7 @@
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="StaticObjectMatrix.UniformBuffer" sampler="none"/>
   <link binding="-1" array_element="0" descriptor_name="SHADOW" resource_name="Shadow.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-	<stage filename="esm.vert"/>
-	<stage filename="esm.frag"/>
+  <shader filename="esm.vert"/>
+  <shader filename="esm.frag"/>
 </pipeline>
 

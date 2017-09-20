@@ -4,9 +4,9 @@
   <blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="WATER" resource_name="Water.UniformBuffer" sampler="none"/>
-	<stage filename="water.vert"/>
-	<stage filename="water.tesc"/>
-	<stage filename="water.tese"/>
-	<stage filename="water.frag"/>
+  <shader filename="water.vert"/>
+  <shader filename="water.tesc"/>
+  <shader filename="water.tese"/>
+  <shader filename="water.frag"/>
 </pipeline>
 

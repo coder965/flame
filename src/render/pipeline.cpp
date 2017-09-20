@@ -115,8 +115,16 @@ namespace tke
 					c->obtainFromAttributes(&l, l.b);
 					links.push_back(l);
 				}
-				else if (c->name == "stage")
+				else if (c->name == "shader")
 				{
+					std::vector<std::string> shaderDefines;
+
+					for (auto &cc : c->children)
+					{
+						if (cc->name == "define")
+							shaderDefines.push_back(cc->value);
+					}
+
 					auto shader_filename = filepath + "/" + c->firstAttribute("filename")->value;
 
 					std::shared_ptr<Shader> s;
@@ -214,8 +222,6 @@ namespace tke
 
 					shaders.push_back(s);
 				}
-				else if (c->name == "define")
-					shaderDefines.push_back(c->value);
 			}
 		}
 

@@ -4,9 +4,9 @@
   <blend_attachment enable="false" src_color="zero" dst_color="zero" src_alpha="zero" dst_alpha="zero"/>
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="TERRAIN" resource_name="Terrain.UniformBuffer" sampler="none"/>
-	<stage filename="terrain.vert"/>
-	<stage filename="terrain.tesc"/>
-	<stage filename="terrain.tese"/>
-	<stage filename="terrain.frag"/>
+	<shader filename="terrain.vert"/>
+  <shader filename="terrain.tesc"/>
+  <shader filename="terrain.tese"/>
+  <shader filename="terrain.frag"/>
 </pipeline>
 

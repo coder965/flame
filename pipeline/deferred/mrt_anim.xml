@@ -5,8 +5,11 @@
 	<link binding="-1" array_element="0" descriptor_name="MATRIX" resource_name="Matrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="AnimatedObjectMatrix.UniformBuffer" sampler="none"/>
 	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-  <define>ANIM</define>
-	<stage filename="mrt.vert"/>
-	<stage filename="mrt.frag"/>
+  <shader filename="mrt.vert">
+    <define>ANIM</define>
+  </shader>
+  <shader filename="mrt.frag">
+    <define>ANIM</define>
+  </shader>
 </pipeline>
 

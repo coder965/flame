@@ -9,9 +9,10 @@
 	<link binding="-1" array_element="0" descriptor_name="normalHeightSampler" resource_name="NormalHeight.Image" sampler="plain_unnormalized"/>
 	<link binding="-1" array_element="0" descriptor_name="specRoughnessSampler" resource_name="SpecRoughness.Image" sampler="plain_unnormalized"/>
   <link binding="-1" array_element="0" descriptor_name="SHADOW" resource_name="Shadow.UniformBuffer" sampler="none"/>
-  <macro stage="frag" value="USE_PBR" />
-  <macro stage="frag" value="USE_IBL" />
-	<stage filename="../fullscreenView.vert"/>
-	<stage filename="deferred.frag"/>
+  <shader filename="../fullscreenView.vert"/>
+  <shader filename="deferred.frag">
+    <macro stage="frag" value="USE_PBR" />
+    <macro stage="frag" value="USE_IBL" />
+  </shader>
 </pipeline>
 
