@@ -36,6 +36,7 @@ namespace tke
 	extern Instance inst;
 	extern VkPhysicalDevice physicalDevice;
 	extern VkPhysicalDeviceProperties physicalDeviceProperties;
+	extern VkPhysicalDeviceFeatures physicalDeviceFeatures;
 	extern Device device;
 	extern Queue graphicsQueue;
 

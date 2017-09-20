@@ -218,45 +218,44 @@ namespace tke
 			pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		}
 
+		initWindow();
+
+		if (!only_2d)
 		{
 			auto att0 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+			auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
+			auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
 			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
+			VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
+			VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
+			VkAttachmentDescription atts0[] = {
+				att0,
+				att6
+			};
+			VkAttachmentDescription atts1[] = {
+				att1,
+				att6
+			};
+			VkAttachmentDescription atts2[] = {
+				att7,
+				att6
+			};
 			renderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
 			renderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
-
-			if (!only_2d)
-			{
-				auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-				auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-				auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-				auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
-				VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
-				VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
-				VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
-				VkAttachmentDescription atts0[] = {
-					att0,
-					att6
-				};
-				VkAttachmentDescription atts1[] = {
-					att1,
-					att6
-				};
-				VkAttachmentDescription atts2[] = {
-					att7,
-					att6
-				};
-				renderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
-				renderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
-				renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
-				renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
-				renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
-				renderPass_depth_clear_image32f_clear = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
-			}
+			renderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
+			renderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
+			renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
+			renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
+			renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
+			renderPass_depth_clear_image32f_clear = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
 		}
 
 		if (!only_2d)
@@ -268,7 +267,7 @@ namespace tke
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}
 
-		plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_image8, 0, true);
+		plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_window, 0, true);
 
 		if (!only_2d)
 		{
@@ -320,7 +319,6 @@ namespace tke
 		}
 
 		//initSound();
-		initWindow();
 
 		return NoErr;
 	}

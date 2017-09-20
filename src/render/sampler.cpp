@@ -25,7 +25,7 @@ namespace tke
 			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			samplerInfo.anisotropyEnable = VK_FALSE;
-			samplerInfo.maxAnisotropy = 0;
+			samplerInfo.maxAnisotropy = 1.f;
 			samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			samplerInfo.unnormalizedCoordinates = VK_FALSE;
 			samplerInfo.compareEnable = VK_FALSE;
@@ -48,7 +48,7 @@ namespace tke
 			info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			info.anisotropyEnable = VK_FALSE;
-			info.maxAnisotropy = 0;
+			info.maxAnisotropy = 1.f;
 			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			info.unnormalizedCoordinates = VK_TRUE;
 			info.compareEnable = VK_FALSE;
@@ -71,7 +71,7 @@ namespace tke
 			info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			info.anisotropyEnable = VK_TRUE;
-			info.maxAnisotropy = 16;
+			info.maxAnisotropy = 16.f;
 			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			info.unnormalizedCoordinates = VK_FALSE;
 			info.compareEnable = VK_FALSE;
@@ -94,7 +94,7 @@ namespace tke
 			info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			info.anisotropyEnable = VK_TRUE;
-			info.maxAnisotropy = 16;
+			info.maxAnisotropy = 16.f;
 			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			info.unnormalizedCoordinates = VK_FALSE;
 			info.compareEnable = VK_FALSE;
@@ -117,7 +117,7 @@ namespace tke
 			info.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
 			info.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
 			info.anisotropyEnable = VK_TRUE;
-			info.maxAnisotropy = 16;
+			info.maxAnisotropy = 16.f;
 			info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			info.unnormalizedCoordinates = VK_FALSE;
 			info.compareEnable = VK_FALSE;

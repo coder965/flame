@@ -361,9 +361,7 @@ void EditorWindow::renderEvent()
 			it = monitorWidgets.erase(it);
 		}
 		else
-		{
 			it++;
-		}
 	}
 
 	cbs.clear();

@@ -363,7 +363,7 @@ namespace tke
 	{
 		auto att0 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 		auto att1 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-		VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+		VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 		VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
 		renderPass_window = new RenderPass(1, &att0, 1, &subpass0);
 		renderPass_window_clear = new RenderPass(1, &att1, 1, &subpass0);

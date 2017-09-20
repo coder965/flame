@@ -44,6 +44,7 @@ namespace tke
 	Instance inst;
 	VkPhysicalDevice physicalDevice;
 	VkPhysicalDeviceProperties physicalDeviceProperties;
+	VkPhysicalDeviceFeatures physicalDeviceFeatures;
 	Device device;
 	Queue graphicsQueue;
 	static VkPhysicalDeviceMemoryProperties memProperties;
@@ -69,8 +70,8 @@ namespace tke
 		const char* pMessage,
 		void* pUserData)
 	{
-		if (messageCode == 0) return VK_FALSE; // descriptor set bind warmming
 		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
+		if (messageCode == 0) return VK_FALSE; // descriptor set bind warmming
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
 		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
 		if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
@@ -150,6 +151,8 @@ namespace tke
 		if (res != VkResult::VK_SUCCESS)
 			return ErrContextLost;
 
+		VkPhysicalDeviceFeatures features;
+
 		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 		unsigned int queueFamilyPropertyCount = 0;
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
@@ -167,6 +170,13 @@ namespace tke
 		std::vector<VkDeviceQueueCreateInfo> queueInfos;
 		queueInfos.push_back(queueInfo);
 
+		unsigned int extensionCount;
+
+
+		vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
 		std::vector<char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		VkDeviceCreateInfo deviceInfo = {};
 		deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -174,12 +184,11 @@ namespace tke
 		deviceInfo.queueCreateInfoCount = queueInfos.size();
 		deviceInfo.enabledExtensionCount = deviceExtensions.size();
 		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
+		deviceInfo.pEnabledFeatures = &physicalDeviceFeatures;
 		res = vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &device.v);
 		assert(res == VK_SUCCESS);
 
 		vkGetDeviceQueue(device.v, 0, 0, &graphicsQueue.v);
-
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
 		commandPool = new CommandPool;
 		descriptorPool = new DescriptorPool;
