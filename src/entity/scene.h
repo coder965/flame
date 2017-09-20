@@ -196,7 +196,7 @@ namespace tke
 		std::unique_ptr<CommandBuffer> cb_mrt;
 		std::unique_ptr<CommandBuffer> cb_deferred;
 
-		std::unique_ptr<Framebuffer> fb_esm[MaxShadowCount * 6];
+		std::shared_ptr<Framebuffer> fb_esm[MaxShadowCount * 6];
 
 		VkEvent shadowRenderFinished;
 		VkEvent mrtRenderFinished;
@@ -216,7 +216,7 @@ namespace tke
 		void setSunDir(const glm::vec2 &);
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);
-		Framebuffer *createFramebuffer(Image *dst);
+		std::shared_ptr<Framebuffer> createFramebuffer(Image *dst);
 		void show(Framebuffer *fb, VkEvent signalEvent);
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void load(const std::string &filename);

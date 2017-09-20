@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include "vulkan.h"
 
@@ -11,18 +12,13 @@ namespace tke
 		int cx, cy;
 		std::vector<VkImageView> views;
 		VkFramebuffer v;
-		int refCount = 1;
 
 		~Framebuffer();
 	};
 
 	struct Image;
 	struct RenderPass;
-	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level = 0);
 
-	struct RenderPass;
-	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views);
-
-	void releaseFramebuffer(Framebuffer *f);
-
+	std::shared_ptr<Framebuffer> getFramebuffer(Image *i, RenderPass *renderPass, int level = 0);
+	std::shared_ptr<Framebuffer> getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views);
 }

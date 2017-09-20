@@ -128,7 +128,7 @@ namespace tke
 			return 0;
 
 		auto cb = begineOnceCommandBuffer();
-		cb->beginRenderPass(renderPass_depth_clear_image8_clear, pickUpFb);
+		cb->beginRenderPass(renderPass_depth_clear_image8_clear, pickUpFb.get());
 		drawCallback(cb);
 		cb->endRenderPass();
 		endOnceCommandBuffer(cb);

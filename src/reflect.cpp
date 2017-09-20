@@ -74,7 +74,7 @@ RenderPass *renderPass_depth_clear = nullptr;
 RenderPass *renderPass_depth_clear_image8 = nullptr;
 RenderPass *renderPass_depth_clear_image8_clear = nullptr;
 RenderPass *renderPass_depth_clear_image32f_clear = nullptr;
-Framebuffer *pickUpFb = nullptr;
+std::shared_ptr<Framebuffer> pickUpFb;
 Pipeline *plainPipeline_2d = nullptr;
 Pipeline *plainPipeline_3d = nullptr;
 Pipeline *plainPipeline_3d_anim = nullptr;

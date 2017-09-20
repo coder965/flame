@@ -140,8 +140,6 @@ namespace tke
 	{
 		destroyFence(frameDone);
 		destroySemaphore(imageAvailable);
-		for (int i = 0; i < 2; i++)
-			releaseFramebuffer(framebuffers[i]);
 		destroySwapchain();
 	}
 

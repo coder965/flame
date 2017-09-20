@@ -116,7 +116,7 @@ namespace tke
 				esmImage->getView(0, 1, i),
 				esmDepthImage->getView()
 			};
-			fb_esm[i] = std::move(std::unique_ptr<Framebuffer>(getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views)));
+			fb_esm[i] = getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views);
 		}
 
 		shadowRenderFinished = createEvent();
@@ -494,7 +494,7 @@ namespace tke
 		needUpdateAmbientBuffer = true;
 	}
 
-	Framebuffer *Scene::createFramebuffer(Image *dst)
+	std::shared_ptr<Framebuffer> Scene::createFramebuffer(Image *dst)
 	{
 		VkImageView views[] = {
 			mainImage->getView(),
@@ -645,7 +645,7 @@ namespace tke
 					auto cb = begineOnceCommandBuffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
-					cb->beginRenderPass(renderPass_image16, fb);
+					cb->beginRenderPass(renderPass_image16, fb.get());
 					cb->bindPipeline(scatteringPipeline);
 					auto dir = sunLight->getAxis()[2];
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
@@ -653,7 +653,6 @@ namespace tke
 					cb->endRenderPass();
 
 					endOnceCommandBuffer(cb);
-					releaseFramebuffer(fb);
 				}
 
 				{ // update IBL
@@ -668,7 +667,7 @@ namespace tke
 								auto cb = begineOnceCommandBuffer();
 								auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
 
-								cb->beginRenderPass(renderPass_image16, fb);
+								cb->beginRenderPass(renderPass_image16, fb.get());
 								cb->bindPipeline(downsamplePipeline);
 								cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 								auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
@@ -679,7 +678,6 @@ namespace tke
 								cb->endRenderPass();
 
 								endOnceCommandBuffer(cb);
-								releaseFramebuffer(fb);
 							}
 						}
 
@@ -692,7 +690,7 @@ namespace tke
 								auto cb = begineOnceCommandBuffer();
 								auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
 
-								cb->beginRenderPass(renderPass_image16, fb);
+								cb->beginRenderPass(renderPass_image16, fb.get());
 								cb->bindPipeline(convolvePipeline);
 								auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 								cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
@@ -703,13 +701,12 @@ namespace tke
 								cb->endRenderPass();
 
 								endOnceCommandBuffer(cb);
-								releaseFramebuffer(fb);
 							}
 						}
 					}
 				}
 			}
-			break;
+				break;
 			case SkyType::panorama:
 				// TODO : FIX SKY FROM FILE
 				//if (skyImage)

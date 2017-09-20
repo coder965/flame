@@ -454,7 +454,7 @@ namespace tke
 			cb->waitEvents(current_window->ui->waitEvents.size(), current_window->ui->waitEvents.data());
 
 		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
-		cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, current_window->framebuffers[current_window->imageIndex], need_clear ? &clear_value : nullptr);
+		cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, current_window->framebuffers[current_window->imageIndex].get(), need_clear ? &clear_value : nullptr);
 
 		cb->setViewportAndScissor(current_window->cx, current_window->cy);
 

@@ -26,13 +26,13 @@ struct MonitorWidget
 struct SceneMonitorWidget : MonitorWidget
 {
 	tke::Image *image;
-	tke::Framebuffer *fb_image;
+	std::shared_ptr<tke::Framebuffer> fb_image;
 
 	tke::Scene *scene;
 	bool showSelectedWireframe = true;
 	bool viewPhysx = false;
 	tke::Object *last_obj = nullptr;
-	tke::Framebuffer *fb_scene;
+	std::shared_ptr<tke::Framebuffer> fb_scene;
 	VkEvent scene_renderFinished;
 
 	tke::OnceVertexBuffer *physxBuffer = nullptr;
@@ -43,7 +43,7 @@ struct SceneMonitorWidget : MonitorWidget
 	tke::DescriptorSet *ds_wireframe_anim;
 	VkEvent wireframe_renderFinished;
 
-	tke::Framebuffer *fb_tool;
+	std::shared_ptr<tke::Framebuffer> fb_tool;
 	TransformerTool *transformerTool;
 
 	bool follow = false;
@@ -56,12 +56,12 @@ struct SceneMonitorWidget : MonitorWidget
 struct ModelMonitorWidget : MonitorWidget
 {
 	tke::Image *image;
-	tke::Framebuffer *fb_image;
+	std::shared_ptr<tke::Framebuffer> fb_image;
 
 	tke::Model *model;
 	bool showController = false;
 	bool showEyePosition = false;
-	tke::Framebuffer *fb_model;
+	std::shared_ptr<tke::Framebuffer> fb_model;
 	tke::Camera camera;
 	tke::AnimationComponent *animComp = nullptr;
 	tke::CommandBuffer *cb;

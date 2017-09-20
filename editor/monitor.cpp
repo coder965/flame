@@ -39,7 +39,7 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 		tke::plainDepthImage->getView()
 	};
 	fb_tool = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
-	transformerTool = new TransformerTool(fb_tool);
+	transformerTool = new TransformerTool(fb_tool.get());
 
 	cbs.push_back(scene->cb_shadow->v);
 	cbs.push_back(scene->cb_deferred->v);
@@ -50,10 +50,8 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 
 SceneMonitorWidget::~SceneMonitorWidget()
 {
-	tke::releaseFramebuffer(fb_scene);
 	tke::destroyEvent(scene_renderFinished);
 
-	tke::releaseFramebuffer(fb_image);
 	tke::removeGuiImage(image);
 	delete image;
 
@@ -64,7 +62,6 @@ SceneMonitorWidget::~SceneMonitorWidget()
 	delete ds_wireframe_anim;
 	tke::destroyEvent(wireframe_renderFinished);
 
-	tke::releaseFramebuffer(fb_tool);
 	delete transformerTool;
 }
 
@@ -211,7 +208,7 @@ void SceneMonitorWidget::show()
 
 	ImGui::EndDock();
 
-	scene->show(fb_scene, scene_renderFinished);
+	scene->show(fb_scene.get(), scene_renderFinished);
 
 	{ // view physx
 		cb_physx->reset();
@@ -221,7 +218,7 @@ void SceneMonitorWidget::show()
 
 		if (viewPhysx)
 		{
-			cb_physx->beginRenderPass(tke::renderPass_image8, fb_image);
+			cb_physx->beginRenderPass(tke::renderPass_image8, fb_image.get());
 
 			auto &rb = scene->pxScene->getRenderBuffer();
 
@@ -324,7 +321,7 @@ void SceneMonitorWidget::show()
 			auto model = obj->model;
 			auto animated = model->animated;
 
-			cb_wireframe->beginRenderPass(tke::renderPass_image8, fb_image);
+			cb_wireframe->beginRenderPass(tke::renderPass_image8, fb_image.get());
 
 			struct
 			{
@@ -398,11 +395,9 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 
 ModelMonitorWidget::~ModelMonitorWidget()
 {
-	tke::releaseFramebuffer(fb_image);
 	tke::removeGuiImage(image);
 	delete image;
 
-	tke::releaseFramebuffer(fb_model);
 	delete animComp;
 	delete cb;
 	delete ds_anim;
@@ -457,7 +452,7 @@ void ModelMonitorWidget::show()
 			{ 0.f, 0.7f, 0.6f, 1.f },
 			{ 1.f, 0 },
 		};
-		cb->beginRenderPass(tke::renderPass_depth_clear_image8_clear, fb_model, clearValues);
+		cb->beginRenderPass(tke::renderPass_depth_clear_image8_clear, fb_model.get(), clearValues);
 		auto animated = model->animated;
 		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
 		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
@@ -510,7 +505,7 @@ void ModelMonitorWidget::show()
 
 		cb_wireframe->waitEvents(1, &model_renderFinished);
 
-		cb_wireframe->beginRenderPass(tke::renderPass_image8, fb_image);
+		cb_wireframe->beginRenderPass(tke::renderPass_image8, fb_image.get());
 
 		cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
 		cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);

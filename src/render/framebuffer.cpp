@@ -13,38 +13,42 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	static std::vector<Framebuffer*> _framebuffers;
+	static std::vector<std::weak_ptr<Framebuffer>> _framebuffers;
 
-	Framebuffer *getFramebuffer(Image *i, RenderPass *renderPass, int level)
+	std::shared_ptr<Framebuffer> getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
 		auto view = i->getView(level);
 		return getFramebuffer(i->levels[level].cx, i->levels[level].cy, renderPass, 1, &view);
 	}
 
-	Framebuffer *getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
+	std::shared_ptr<Framebuffer> getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
 	{
-		for (auto f : _framebuffers)
+		for (auto it = _framebuffers.begin(); it != _framebuffers.end(); )
 		{
-			if (f->views.size() == viewCount)
+			auto f = it->lock();
+
+			if (f)
 			{
-				bool same = true;
-				for (auto i = 0; i < viewCount; i++)
+				if (f->views.size() == viewCount)
 				{
-					if (f->views[i] != views[i])
+					bool same = true;
+					for (auto i = 0; i < viewCount; i++)
 					{
-						same = false;
-						break;
+						if (f->views[i] != views[i])
+						{
+							same = false;
+							break;
+						}
 					}
-				}
-				if (same)
-				{
-					f->refCount++;
-					return f;
+					if (same)
+						return f;
 				}
 			}
+			else
+				it = _framebuffers.erase(it);
 		}
 
-		auto f = new Framebuffer;
+		auto f = std::make_shared<Framebuffer>();
 		f->cx = cx;
 		f->cy = cy;
 		for (int i = 0; i < viewCount; i++)
@@ -66,22 +70,5 @@ namespace tke
 
 		_framebuffers.push_back(f);
 		return f;
-	}
-
-	void releaseFramebuffer(Framebuffer *f)
-	{
-		f->refCount--;
-		if (f->refCount == 0)
-		{
-			for (auto it = _framebuffers.begin(); it != _framebuffers.end(); it++)
-			{
-				if (*it == f)
-				{
-					_framebuffers.erase(it);
-					delete f;
-					return;
-				}
-			}
-		}
 	}
 }

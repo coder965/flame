@@ -166,7 +166,7 @@ namespace tke
 	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8_clear;
 	IMPL(nullptr) RenderPass *renderPass_depth_clear_image32f_clear;
 
-	IMPL(nullptr) Framebuffer *pickUpFb;
+	IMPL() std::shared_ptr<Framebuffer> pickUpFb;
 
 	IMPL(nullptr) Pipeline *plainPipeline_2d;
 	IMPL(nullptr) Pipeline *plainPipeline_3d;

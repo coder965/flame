@@ -34,7 +34,7 @@ namespace tke
 		VkSurfaceKHR surface;
 		VkSwapchainKHR swapchain;
 		Image *images = nullptr;
-		Framebuffer *framebuffers[2];
+		std::shared_ptr<Framebuffer> framebuffers[2];
 
 		VkSemaphore imageAvailable;
 		unsigned int imageIndex = 0;
