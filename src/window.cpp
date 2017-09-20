@@ -85,7 +85,7 @@ namespace tke
 					current_window->createSwapchain();
 				}
 			}
-			break;
+				break;
 			case WM_DESTROY:
 				current_window->dead = true;
 				break;

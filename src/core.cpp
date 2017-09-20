@@ -175,21 +175,26 @@ namespace tke
 		unsigned int dummy;
 	};
 
-	int init(const std::string &path, int rcx, int rcy)
-	{
-		enginePath = path;
+	static bool _only_2d;
 
+	int init(const std::string &path, int rcx, int rcy, bool only_2d)
+	{
+		_only_2d = only_2d;
+
+		enginePath = path;
 		resCx = rcx;
 		resCy = rcy;
-
-		auto vkTrans = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f), 
-			glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		matOrtho = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
-		matOrthoInv = glm::inverse(matOrtho);
 		screenAspect = (float)resCx / resCy;
-		matPerspective = vkTrans * glm::perspective(fovy, screenAspect, near_plane, far_plane);
-		matPerspectiveInv = glm::inverse(matPerspective);
+
+		if (!only_2d)
+		{
+			auto vkTrans = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f),
+				glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f));
+			matOrtho = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
+			matOrthoInv = glm::inverse(matOrtho);
+			matPerspective = vkTrans * glm::perspective(fovy, screenAspect, near_plane, far_plane);
+			matPerspectiveInv = glm::inverse(matPerspective);
+		}
 
 		initVulkan(
 #if defined(_DEBUG)
@@ -199,54 +204,62 @@ namespace tke
 #endif
 		);
 
-		defaultMaterial = new Material;
-		defaultMaterial->sceneIndex = 0;
-		modelMaterials.push_back(defaultMaterial);
-
 		stagingBuffer = new StagingBuffer(67108864);
 
-		plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		globalResource.setImage(plainDepthImage, "Depth.Image");
+		if (!only_2d)
+		{
+			defaultMaterial = new Material;
+			defaultMaterial->sceneIndex = 0;
+			modelMaterials.push_back(defaultMaterial);
 
-		pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+			plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			globalResource.setImage(plainDepthImage, "Depth.Image");
+
+			pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		}
 
 		{
 			auto att0 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att1 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
 			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-			VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
-			VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
-			VkAttachmentDescription atts0[] = {
-				att0,
-				att6
-			};
-			VkAttachmentDescription atts1[] = {
-				att1,
-				att6
-			};
-			VkAttachmentDescription atts2[] = {
-				att7,
-				att6
-			};
 			renderPass_image8 = new RenderPass(1, &att0, 1, &subpass0);
 			renderPass_image8_clear = new RenderPass(1, &att1, 1, &subpass0);
-			renderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
-			renderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
-			renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
-			renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
-			renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
-			renderPass_depth_clear_image32f_clear = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
+
+			if (!only_2d)
+			{
+				auto att2 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+				auto att3 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+				auto att4 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+				auto att5 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
+				auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
+				auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
+				VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
+				VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
+				VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
+				VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
+				VkAttachmentDescription atts0[] = {
+					att0,
+					att6
+				};
+				VkAttachmentDescription atts1[] = {
+					att1,
+					att6
+				};
+				VkAttachmentDescription atts2[] = {
+					att7,
+					att6
+				};
+				renderPass_image16 = new RenderPass(1, &att2, 1, &subpass0);
+				renderPass_image16_clear = new RenderPass(1, &att3, 1, &subpass0);
+				renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
+				renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
+				renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
+				renderPass_depth_clear_image32f_clear = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
+			}
 		}
 
+		if (!only_2d)
 		{
 			VkImageView views[] = {
 				pickUpImage->getView(),
@@ -257,51 +270,55 @@ namespace tke
 
 		plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_image8, 0, true);
 
-		plainPipeline_3d = new Pipeline(enginePath + "pipeline/plain3d/plain3d.xml", renderPass_depth_clear_image8, 0);
-		plainPipeline_3d_anim = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim.xml", renderPass_depth_clear_image8, 0, true);
-		plainPipeline_3d_normal = new Pipeline(enginePath + "pipeline/plain3d/plain3d_normal.xml", renderPass_depth_clear_image8, 0);
-		plainPipeline_3d_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_tex.xml", renderPass_depth_clear_image8, 0);
-		plainPipeline_3d_anim_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml", renderPass_depth_clear_image8, 0, true);
-		plainPipeline_3d_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_wire.xml", renderPass_image8, 0);
-		plainPipeline_3d_anim_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml", renderPass_image8, 0, true);
-		plainPipeline_3d_line = new Pipeline(enginePath + "pipeline/plain3d/plain3d_line.xml", renderPass_image8, 0);
-		plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
-
-		staticVertexBuffer = new VertexBuffer();
-		staticIndexBuffer = new IndexBuffer();
-
-		animatedVertexBuffer = new VertexBuffer();
-		animatedIndexBuffer = new IndexBuffer();
-
-		constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
-
-		globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
-		globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
-
-		globalResource.setBuffer(animatedVertexBuffer, "Animated.VertexBuffer");
-		globalResource.setBuffer(animatedIndexBuffer, "Animated.IndexBuffer");
-
-		globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
-		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
-
+		if (!only_2d)
 		{
-			ConstantBufferStruct stru;
-			stru.depth_near = near_plane;
-			stru.depth_far = far_plane;
-			stru.cx = resCx;
-			stru.cy = resCy;
-			stru.aspect = screenAspect;
-			stru.fovy = fovy;
-			stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
-			stru.envrCx = EnvrSizeCx;
-			stru.envrCy = EnvrSizeCy;
-			constantBuffer->update(&stru, stagingBuffer);
+			plainPipeline_3d = new Pipeline(enginePath + "pipeline/plain3d/plain3d.xml", renderPass_depth_clear_image8, 0);
+			plainPipeline_3d_anim = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim.xml", renderPass_depth_clear_image8, 0, true);
+			plainPipeline_3d_normal = new Pipeline(enginePath + "pipeline/plain3d/plain3d_normal.xml", renderPass_depth_clear_image8, 0);
+			plainPipeline_3d_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_tex.xml", renderPass_depth_clear_image8, 0);
+			plainPipeline_3d_anim_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml", renderPass_depth_clear_image8, 0, true);
+			plainPipeline_3d_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_wire.xml", renderPass_image8, 0);
+			plainPipeline_3d_anim_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml", renderPass_image8, 0, true);
+			plainPipeline_3d_line = new Pipeline(enginePath + "pipeline/plain3d/plain3d_line.xml", renderPass_image8, 0);
+			plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
+
+			staticVertexBuffer = new VertexBuffer();
+			staticIndexBuffer = new IndexBuffer();
+
+			animatedVertexBuffer = new VertexBuffer();
+			animatedIndexBuffer = new IndexBuffer();
+
+			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
+			materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
+
+			globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
+			globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
+
+			globalResource.setBuffer(animatedVertexBuffer, "Animated.VertexBuffer");
+			globalResource.setBuffer(animatedIndexBuffer, "Animated.IndexBuffer");
+
+			globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
+			globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
+
+			{
+				ConstantBufferStruct stru;
+				stru.depth_near = near_plane;
+				stru.depth_far = far_plane;
+				stru.cx = resCx;
+				stru.cy = resCy;
+				stru.aspect = screenAspect;
+				stru.fovy = fovy;
+				stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
+				stru.envrCx = EnvrSizeCx;
+				stru.envrCy = EnvrSizeCy;
+				constantBuffer->update(&stru, stagingBuffer);
+			}
+
+			initScene();
+			initGeneralModels();
+			initPhysics();
 		}
 
-		initScene();
-		initGeneralModels();
-		initPhysics();
 		//initSound();
 		initWindow();
 
@@ -312,7 +329,8 @@ namespace tke
 	{
 		lastTime = GetTickCount();
 
-		ds_maps = new DescriptorSet(mrtPipeline, 1);
+		if (!_only_2d)
+			ds_maps = new DescriptorSet(mrtPipeline, 1);
 
 		for (;;)
 		{
@@ -328,99 +346,102 @@ namespace tke
 			}
 			else
 			{
-				if (needUpdateVertexBuffer)
+				if (!_only_2d)
 				{
-					std::vector<Vertex> staticVertexs;
-					std::vector<int> staticIndices;
-
-					std::vector<VertexAnimated> animatedVertexs;
-					std::vector<int> animatedIndices;
-
-					for (auto &m : models)
+					if (needUpdateVertexBuffer)
 					{
-						if (!m->animated)
+						std::vector<Vertex> staticVertexs;
+						std::vector<int> staticIndices;
+
+						std::vector<VertexAnimated> animatedVertexs;
+						std::vector<int> animatedIndices;
+
+						for (auto &m : models)
 						{
-							m->vertexBase = staticVertexs.size();
-							m->indiceBase = staticIndices.size();
-
-							for (int i = 0; i < m->positions.size(); i++)
+							if (!m->animated)
 							{
-								Vertex vertex;
-								vertex.position = i < m->positions.size() ? m->positions[i] : glm::vec3(0.f);
-								vertex.uv       = i < m->uvs.size()       ? m->uvs[i]       : glm::vec2(0.f);
-								vertex.normal   = i < m->normals.size()   ? m->normals[i]   : glm::vec3(0.f);
-								vertex.tangent  = i < m->tangents.size()  ? m->tangents[i]  : glm::vec3(0.f);
+								m->vertexBase = staticVertexs.size();
+								m->indiceBase = staticIndices.size();
 
-								staticVertexs.push_back(vertex);
+								for (int i = 0; i < m->positions.size(); i++)
+								{
+									Vertex vertex;
+									vertex.position = i < m->positions.size() ? m->positions[i] : glm::vec3(0.f);
+									vertex.uv = i < m->uvs.size() ? m->uvs[i] : glm::vec2(0.f);
+									vertex.normal = i < m->normals.size() ? m->normals[i] : glm::vec3(0.f);
+									vertex.tangent = i < m->tangents.size() ? m->tangents[i] : glm::vec3(0.f);
+
+									staticVertexs.push_back(vertex);
+								}
+								for (int i = 0; i < m->indices.size(); i++)
+								{
+									staticIndices.push_back(m->indices[i]);
+								}
 							}
-							for (int i = 0; i < m->indices.size(); i++)
+							else
 							{
-								staticIndices.push_back(m->indices[i]);
+								m->vertexBase = animatedVertexs.size();
+								m->indiceBase = animatedIndices.size();
+
+								for (int i = 0; i < m->positions.size(); i++)
+								{
+									VertexAnimated vertex;
+									vertex.position = i < m->positions.size() ? m->positions[i] : glm::vec3(0.f);
+									vertex.uv = i < m->uvs.size() ? m->uvs[i] : glm::vec2(0.f);
+									vertex.normal = i < m->normals.size() ? m->normals[i] : glm::vec3(0.f);
+									vertex.tangent = i < m->tangents.size() ? m->tangents[i] : glm::vec3(0.f);
+									vertex.boneWeight = i < m->boneWeights.size() ? m->boneWeights[i] : glm::vec4(0.f);
+									vertex.boneID = i < m->boneIDs.size() ? m->boneIDs[i] : glm::vec4(0.f);
+
+									animatedVertexs.push_back(vertex);
+								}
+								for (int i = 0; i < m->indices.size(); i++)
+								{
+									animatedIndices.push_back(m->indices[i]);
+								}
 							}
 						}
-						else
+
+						if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
+						if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
+
+						if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(VertexAnimated) * animatedVertexs.size(), animatedVertexs.data());
+						if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
+
+						needUpdateVertexBuffer = false;
+					}
+					if (needUpdateTexture)
+					{
+						static int map_position = -1;
+						if (map_position == -1 && mrtPipeline) map_position = mrtPipeline->descriptorPosition("maps");
+						if (map_position != -1)
 						{
-							m->vertexBase = animatedVertexs.size();
-							m->indiceBase = animatedIndices.size();
-
-							for (int i = 0; i < m->positions.size(); i++)
-							{
-								VertexAnimated vertex;
-								vertex.position   = i < m->positions.size()   ? m->positions[i]   : glm::vec3(0.f);
-								vertex.uv         = i < m->uvs.size()         ? m->uvs[i]         : glm::vec2(0.f);
-								vertex.normal     = i < m->normals.size()     ? m->normals[i]     : glm::vec3(0.f);
-								vertex.tangent    = i < m->tangents.size()    ? m->tangents[i]    : glm::vec3(0.f);
-								vertex.boneWeight = i < m->boneWeights.size() ? m->boneWeights[i] : glm::vec4(0.f);
-								vertex.boneID     = i < m->boneIDs.size()     ? m->boneIDs[i]     : glm::vec4(0.f);
-
-								animatedVertexs.push_back(vertex);
-							}
-							for (int i = 0; i < m->indices.size(); i++)
-							{
-								animatedIndices.push_back(m->indices[i]);
-							}
+							for (int index = 0; index < modelTextures.size(); index++)
+								ds_maps->setImage(map_position, index, modelTextures[index].get(), colorSampler);
+							needUpdateTexture = false;
 						}
 					}
-
-					if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
-					if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
-
-					if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(VertexAnimated) * animatedVertexs.size(), animatedVertexs.data());
-					if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
-
-					needUpdateVertexBuffer = false;
-				}
-				if (needUpdateTexture)
-				{
-					static int map_position = -1;
-					if (map_position == -1 && mrtPipeline) map_position = mrtPipeline->descriptorPosition("maps");
-					if (map_position != -1)
+					if (needUpdateMaterialBuffer)
 					{
-						for (int index = 0; index < modelTextures.size(); index++)
-							ds_maps->setImage(map_position, index, modelTextures[index].get(), colorSampler);
-						needUpdateTexture = false;
-					}
-				}
-				if (needUpdateMaterialBuffer)
-				{
-					if (modelMaterials.size() > 0)
-					{
-						std::unique_ptr<MaterialShaderStruct> mts(new MaterialShaderStruct[modelMaterials.size()]);
-
-						for (int i = 0; i < modelMaterials.size(); i++)
+						if (modelMaterials.size() > 0)
 						{
-							auto m = modelMaterials[i];
+							std::unique_ptr<MaterialShaderStruct> mts(new MaterialShaderStruct[modelMaterials.size()]);
 
-							mts.get()[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-							mts.get()[i].specRoughnessCompress = m->spec + (m->roughness << 8);
-							mts.get()[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-								((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-								((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+							for (int i = 0; i < modelMaterials.size(); i++)
+							{
+								auto m = modelMaterials[i];
+
+								mts.get()[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
+								mts.get()[i].specRoughnessCompress = m->spec + (m->roughness << 8);
+								mts.get()[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
+									((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
+									((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+							}
+
+							materialBuffer->update(mts.get(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
 						}
-
-						materialBuffer->update(mts.get(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
+						needUpdateMaterialBuffer = false;
 					}
-					needUpdateMaterialBuffer = false;
 				}
 
 				if (current_window->dead)

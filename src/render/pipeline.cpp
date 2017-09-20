@@ -149,6 +149,7 @@ namespace tke
 								if (same)
 									goto next_shader;
 							}
+
 							it++;
 						}
 						else
@@ -342,6 +343,8 @@ namespace tke
 							break;
 						}
 					}
+
+					it++;
 				}
 				else
 					it = pipelineLayouts.erase(it);
@@ -544,7 +547,7 @@ namespace tke
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:uniform buffer)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
-			break;
+				break;
 			case DescriptorType::image_n_sampler:
 			{
 				auto image = resource->getImage(link.resource_name);
@@ -575,7 +578,7 @@ namespace tke
 				else
 					printf("%s: unable to link resource %s (binding:%d, type:combined image sampler)\n", filename.c_str(), link.resource_name.c_str(), link.binding);
 			}
-			break;
+				break;
 			}
 		}
 	}

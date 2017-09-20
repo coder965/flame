@@ -18,7 +18,7 @@ namespace tke
 
 	std::shared_ptr<DescriptorSetLayout> getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings)
 	{
-		for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end; )
+		for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end(); )
 		{
 			auto l = it->lock();
 
@@ -39,6 +39,8 @@ namespace tke
 					if (same)
 						return l;
 				}
+
+				it++;
 			}
 			else
 				it = _descriptorSetLayouts.erase(it);
@@ -63,7 +65,7 @@ namespace tke
 	}
 
 	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index)
-		:layout(pipeline->descriptorSetLayouts[index])
+		:layout(pipeline->descriptorSetLayouts[index].get())
 	{
 		VkDescriptorSetAllocateInfo descriptorSetInfo = {};
 		descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -128,10 +130,8 @@ namespace tke
 	DescriptorPool::DescriptorPool()
 	{
 		VkDescriptorPoolSize descriptorPoolSizes[] = {
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10000 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 128 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2048 },
 		};
 
 		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
@@ -139,7 +139,7 @@ namespace tke
 		descriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		descriptorPoolInfo.poolSizeCount = ARRAYSIZE(descriptorPoolSizes);
 		descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
-		descriptorPoolInfo.maxSets = 256;
+		descriptorPoolInfo.maxSets = 64;
 		device.mtx.lock();
 		auto res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &v);
 		device.mtx.unlock();

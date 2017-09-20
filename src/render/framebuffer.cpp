@@ -43,6 +43,8 @@ namespace tke
 					if (same)
 						return f;
 				}
+
+				it++;
 			}
 			else
 				it = _framebuffers.erase(it);

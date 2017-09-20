@@ -2,6 +2,6 @@
   <animation1 filename="D:/miku/walk.vmd"/>
   <model1 filename="D:/miku/miku.pmd"/>
   <dir path="res" />
-  <scene filename="scene_1.scene" />
-  <scene filename="scene_2.scene" />
+  <scene1 filename="scene_1.scene" />
+  <scene1 filename="scene_2.scene" />
 </data>

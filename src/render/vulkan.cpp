@@ -29,11 +29,11 @@ namespace tke
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		info.pWaitDstStageMask = &waitStage;
 		info.waitSemaphoreCount = waitSemaphore ? 1 : 0;
-		info.pWaitSemaphores = &waitSemaphore;
+		info.pWaitSemaphores = waitSemaphore ? &waitSemaphore : nullptr;
 		info.commandBufferCount = count;
 		info.pCommandBuffers = cmds;
 		info.signalSemaphoreCount = signalSemaphore ? 1 : 0;
-		info.pSignalSemaphores = &signalSemaphore;
+		info.pSignalSemaphores = signalSemaphore ? &signalSemaphore : nullptr;
 
 		graphicsQueue.mtx.lock();
 		auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, fence);
