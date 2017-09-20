@@ -14,33 +14,37 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	static std::vector<DescriptorSetLayout*> _descriptorSetLayouts;
+	static std::vector<std::weak_ptr<DescriptorSetLayout>> _descriptorSetLayouts;
 
-	DescriptorSetLayout *getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings)
+	std::shared_ptr<DescriptorSetLayout> getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings)
 	{
-		for (auto l : _descriptorSetLayouts)
+		for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end; )
 		{
-			if (l->bindings.size() == bindingCount)
+			auto l = it->lock();
+
+			if (l)
 			{
-				bool same = true;
-				for (auto i = 0; i < bindingCount; i++)
+				if (l->bindings.size() == bindingCount)
 				{
-					if (l->bindings[i].binding != bindings[i].binding || l->bindings[i].descriptorCount != bindings[i].descriptorCount ||
-						l->bindings[i].descriptorType != bindings[i].descriptorType || l->bindings[i].stageFlags != bindings[i].stageFlags)
+					bool same = true;
+					for (auto i = 0; i < bindingCount; i++)
 					{
-						same = false;
-						break;
+						if (l->bindings[i].binding != bindings[i].binding || l->bindings[i].descriptorCount != bindings[i].descriptorCount ||
+							l->bindings[i].descriptorType != bindings[i].descriptorType || l->bindings[i].stageFlags != bindings[i].stageFlags)
+						{
+							same = false;
+							break;
+						}
 					}
-				}
-				if (same)
-				{
-					l->refCount++;
-					return l;
+					if (same)
+						return l;
 				}
 			}
+			else
+				it = _descriptorSetLayouts.erase(it);
 		}
 
-		auto l = new DescriptorSetLayout;
+		auto l = std::make_shared<DescriptorSetLayout>();
 		for (int i = 0; i < bindingCount; i++)
 			l->bindings.push_back(bindings[i]);
 
@@ -56,23 +60,6 @@ namespace tke
 
 		_descriptorSetLayouts.push_back(l);
 		return l;
-	}
-
-	void releaseDescriptorSetLayout(DescriptorSetLayout *l)
-	{
-		l->refCount--;
-		if (l->refCount == 0)
-		{
-			for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end(); it++)
-			{
-				if (*it == l)
-				{
-					_descriptorSetLayouts.erase(it);
-					delete l;
-					break;
-				}
-			}
-		}
 	}
 
 	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index)

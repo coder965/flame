@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "../utils.h"
 #include "vulkan.h"
 
@@ -26,14 +28,11 @@ namespace tke
 	{
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
 		VkDescriptorSetLayout v;
-		int refCount = 1;
 
 		~DescriptorSetLayout();
 	};
 
-	DescriptorSetLayout *getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings);
-
-	void releaseDescriptorSetLayout(DescriptorSetLayout *l);
+	std::shared_ptr<DescriptorSetLayout> getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings);
 
 	struct Pipeline;
 	struct Buffer;

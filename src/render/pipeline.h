@@ -128,7 +128,6 @@ namespace tke
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 		std::vector<VkPushConstantRange> pushConstantRanges;
 		VkPipelineLayout v;
-		int refCount = 1;
 
 		~PipelineLayout();
 	};
@@ -162,8 +161,8 @@ namespace tke
 		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
 		VkCullModeFlagBits vkCullMode = VK_CULL_MODE_BACK_BIT;
-		std::vector<DescriptorSetLayout*> descriptorSetLayouts;
-		PipelineLayout *pipelineLayout = nullptr;
+		std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts;
+		std::shared_ptr<PipelineLayout> pipelineLayout;
 
 		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
 		RenderPass *renderPass;

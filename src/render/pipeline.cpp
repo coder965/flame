@@ -20,7 +20,7 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	static std::vector<PipelineLayout*> pipelineLayouts;
+	static std::vector<std::weak_ptr<PipelineLayout>> pipelineLayouts;
 
 	static VkBlendFactor _vkBlendFactor(BlendFactor f)
 	{
@@ -308,41 +308,48 @@ namespace tke
 
 		{
 			bool found = false;
-			for (auto p : pipelineLayouts)
+			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); )
 			{
-				if (p->descriptorSetLayouts.size() == descriptorSetLayouts.size() && p->pushConstantRanges.size() == vkPushConstantRanges.size())
+				auto p = it->lock();
+
+				if (p)
 				{
-					bool same = true;
-					for (auto i = 0; i < descriptorSetLayouts.size(); i++)
+					if (p->descriptorSetLayouts.size() == descriptorSetLayouts.size() && p->pushConstantRanges.size() == vkPushConstantRanges.size())
 					{
-						if (p->descriptorSetLayouts[i] != descriptorSetLayouts[i]->v)
+						bool same = true;
+						for (auto i = 0; i < descriptorSetLayouts.size(); i++)
 						{
-							same = false;
+							if (p->descriptorSetLayouts[i] != descriptorSetLayouts[i]->v)
+							{
+								same = false;
+								break;
+							}
+						}
+						for (auto i = 0; i < vkPushConstantRanges.size(); i++)
+						{
+							auto &pc = p->pushConstantRanges[i];
+							if (pc.offset != vkPushConstantRanges[i].offset || pc.size != vkPushConstantRanges[i].size ||
+								pc.stageFlags != vkPushConstantRanges[i].stageFlags)
+							{
+								same = false;
+								break;
+							}
+						}
+						if (same)
+						{
+							pipelineLayout = p;
+							found = true;
 							break;
 						}
-					}
-					for (auto i = 0; i < vkPushConstantRanges.size(); i++)
-					{
-						auto &pc = p->pushConstantRanges[i];
-						if (pc.offset != vkPushConstantRanges[i].offset || pc.size != vkPushConstantRanges[i].size ||
-							pc.stageFlags != vkPushConstantRanges[i].stageFlags)
-						{
-							same = false;
-							break;
-						}
-					}
-					if (same)
-					{
-						pipelineLayout = p;
-						found = true;
-						break;
 					}
 				}
+				else
+					it = pipelineLayouts.erase(it);
 			}
 
 			if (!found)
 			{
-				auto p = new PipelineLayout;
+				auto p = std::make_shared <PipelineLayout>();
 				for (auto d : descriptorSetLayouts)
 					p->descriptorSetLayouts.push_back(d->v);
 				p->pushConstantRanges.insert(p->pushConstantRanges.begin(), vkPushConstantRanges.begin(), vkPushConstantRanges.end());
@@ -466,23 +473,6 @@ namespace tke
 
 	Pipeline::~Pipeline()
 	{
-		pipelineLayout->refCount--;
-		if (pipelineLayout->refCount == 0)
-		{
-			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); it++)
-			{
-				if (*it == pipelineLayout)
-				{
-					pipelineLayouts.erase(it);
-					delete pipelineLayout;
-					break;
-				}
-			}
-		}
-
-		for (auto d : descriptorSetLayouts)
-			releaseDescriptorSetLayout(d);
-
 		delete descriptorSet;
 
 		device.mtx.lock();
