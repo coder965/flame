@@ -438,12 +438,29 @@ namespace tke
 				const ImDrawList* cmd_list = draw_data->CmdLists[n];
 				memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
 				memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+
+				auto a = cmd_list->IdxBuffer.Data[0];
+				auto b = cmd_list->IdxBuffer.Data[1];
+				auto c = cmd_list->IdxBuffer.Data[2];
+
+				auto aa = cmd_list->VtxBuffer.Data[0];
+				auto bb = cmd_list->VtxBuffer.Data[1];
+				auto cc = cmd_list->VtxBuffer.Data[2];
+
 				vtx_dst += cmd_list->VtxBuffer.Size;
 				idx_dst += cmd_list->IdxBuffer.Size;
 			}
 			vertexBuffer->unmap();
 			indexBuffer->unmap();
 		}
+		VkMappedMemoryRange range[2] = {};
+		range[0].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		range[0].memory = vertexBuffer->memory;
+		range[0].size = VK_WHOLE_SIZE;
+		range[1].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		range[1].memory = indexBuffer->memory;
+		range[1].size = VK_WHOLE_SIZE;
+		auto err = vkFlushMappedMemoryRanges(device.v, 2, range);
 
 		auto cb = current_window->ui->cb;
 
@@ -485,9 +502,12 @@ namespace tke
 						ImMax((int32_t)(pcmd->ClipRect.y), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
-					cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					//cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					cb->drawIndex(3, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					break;
 				}
 				idx_offset += pcmd->ElemCount;
+				break;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}

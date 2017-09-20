@@ -203,136 +203,136 @@ void EditorWindow::renderEvent()
 
 	ui->begin(true);
 
-	ImGui::BeginMainMenuBar();
-	if (ImGui::BeginMenu("File"))
-	{
-		if (ImGui::BeginMenu("New"))
-		{
-			if (ImGui::MenuItem("Game"))
-			{
-			}
-			if (ImGui::MenuItem("Renderer"))
-			{
-			}
-			if (ImGui::MenuItem("Scene"))
-			{
-			}
-			ImGui::EndMenu();
-		}
-		if (ImGui::MenuItem("Save Selected Item"))
-		{
-		}
-		if (ImGui::MenuItem("Save Selected Item As"))
-		{
-		}
-		if (ImGui::MenuItem("Save All"))
-		{
-		}
-		if (ImGui::MenuItem("Open In Explorer"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Edit"))
-	{
-		if (ImGui::MenuItem("Undo"))
-		{
-		}
-		if (ImGui::MenuItem("Redo"))
-		{
-		}
-		if (ImGui::MenuItem("Cut"))
-		{
-		}
-		if (ImGui::MenuItem("Copy"))
-		{
-		}
-		if (ImGui::MenuItem("Paste"))
-		{
-		}
-		if (ImGui::MenuItem("Remove"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("View"))
-	{
-		if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
-		{
-			openGameExplorer();
-		}
-		if (ImGui::MenuItem("Output"))
-		{
-		}
-		if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
-		{
-			openAttributeWidget();
-		}
-		if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
-		{
-			openDebugWidget();
-		}
-		if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
-		{
-			openTextureEditor();
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Build"))
-	{
-		if (ImGui::MenuItem("Build"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Debug"))
-	{
-		if (ImGui::MenuItem("Update Changes"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	ImGui::EndMainMenuBar();
+	//ImGui::BeginMainMenuBar();
+	//if (ImGui::BeginMenu("File"))
+	//{
+	//	if (ImGui::BeginMenu("New"))
+	//	{
+	//		if (ImGui::MenuItem("Game"))
+	//		{
+	//		}
+	//		if (ImGui::MenuItem("Renderer"))
+	//		{
+	//		}
+	//		if (ImGui::MenuItem("Scene"))
+	//		{
+	//		}
+	//		ImGui::EndMenu();
+	//	}
+	//	if (ImGui::MenuItem("Save Selected Item"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Save Selected Item As"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Save All"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Open In Explorer"))
+	//	{
+	//	}
+	//	ImGui::EndMenu();
+	//}
+	//if (ImGui::BeginMenu("Edit"))
+	//{
+	//	if (ImGui::MenuItem("Undo"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Redo"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Cut"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Copy"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Paste"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Remove"))
+	//	{
+	//	}
+	//	ImGui::EndMenu();
+	//}
+	//if (ImGui::BeginMenu("View"))
+	//{
+	//	if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
+	//	{
+	//		openGameExplorer();
+	//	}
+	//	if (ImGui::MenuItem("Output"))
+	//	{
+	//	}
+	//	if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
+	//	{
+	//		openAttributeWidget();
+	//	}
+	//	if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
+	//	{
+	//		openDebugWidget();
+	//	}
+	//	if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
+	//	{
+	//		openTextureEditor();
+	//	}
+	//	ImGui::EndMenu();
+	//}
+	//if (ImGui::BeginMenu("Build"))
+	//{
+	//	if (ImGui::MenuItem("Build"))
+	//	{
+	//	}
+	//	ImGui::EndMenu();
+	//}
+	//if (ImGui::BeginMenu("Debug"))
+	//{
+	//	if (ImGui::MenuItem("Update Changes"))
+	//	{
+	//	}
+	//	ImGui::EndMenu();
+	//}
+	//ImGui::EndMainMenuBar();
 
-	if (gameExplorer)
-	{
-		gameExplorer->show();
-		if (!gameExplorer->opened)
-		{
-			delete gameExplorer;
-			gameExplorer = nullptr;
-		}
-	}
+	//if (gameExplorer)
+	//{
+	//	gameExplorer->show();
+	//	if (!gameExplorer->opened)
+	//	{
+	//		delete gameExplorer;
+	//		gameExplorer = nullptr;
+	//	}
+	//}
 
-	if (attributeWidget)
-	{
-		attributeWidget->show();
-		if (!attributeWidget->opened)
-		{
-			delete attributeWidget;
-			attributeWidget = nullptr;
-		}
-	}
+	//if (attributeWidget)
+	//{
+	//	attributeWidget->show();
+	//	if (!attributeWidget->opened)
+	//	{
+	//		delete attributeWidget;
+	//		attributeWidget = nullptr;
+	//	}
+	//}
 
-	if (debugWidget)
-	{
-		debugWidget->show();
-		if (!debugWidget->opened)
-		{
-			delete debugWidget;
-			debugWidget = nullptr;
-		}
-	}
+	//if (debugWidget)
+	//{
+	//	debugWidget->show();
+	//	if (!debugWidget->opened)
+	//	{
+	//		delete debugWidget;
+	//		debugWidget = nullptr;
+	//	}
+	//}
 
-	if (textureEditor)
-	{
-		textureEditor->show();
-		if (!textureEditor->opened)
-		{
-			delete textureEditor;
-			textureEditor = nullptr;
-		}
-	}
+	//if (textureEditor)
+	//{
+	//	textureEditor->show();
+	//	if (!textureEditor->opened)
+	//	{
+	//		delete textureEditor;
+	//		textureEditor = nullptr;
+	//	}
+	//}
 
 	for (auto m : monitorWidgets)
 	{
