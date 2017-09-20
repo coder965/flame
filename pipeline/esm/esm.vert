@@ -1,16 +1,16 @@
-layout(binding = TKE_UBO_BINDING) uniform OBJECT
+layout(binding = 2) uniform OBJECT
 {
 	mat4 matrix[8];
 }u_object;
 
 #if defined(ANIM)
-layout(set = 2, binding = TKE_UBO_BINDING) uniform BONE
+layout(set = 2, binding = 0) uniform BONE
 {
 	mat4 matrix[256];
 }u_bone[8];
 #endif
 
-layout(binding = TKE_UBO_BINDING) uniform SHADOW
+layout(binding = 8) uniform SHADOW
 {
 	mat4 matrix[8];
 }u_shadow;

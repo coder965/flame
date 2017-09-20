@@ -1,4 +1,4 @@
-layout(binding = TKE_UBO_BINDING) uniform TERRAIN
+layout(binding = 4) uniform TERRAIN
 {
 	vec3 coord;
 	int blockCx;
@@ -9,7 +9,7 @@ layout(binding = TKE_UBO_BINDING) uniform TERRAIN
 	float mapDimension;
 }u_terrain;
 
-layout(binding = TKE_UBO_BINDING) uniform MATRIX
+layout(binding = 2) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -21,7 +21,7 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout (binding = TKE_UBO_BINDING) uniform sampler2D heightMap;
+layout (binding = 17) uniform sampler2D heightMap;
 
 layout(quads, equal_spacing, ccw) in;
 

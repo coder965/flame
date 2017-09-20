@@ -111,6 +111,7 @@ tke::ReflectionBank *DynamicState::b = tke::addReflectionBank("DynamicState");
 tke::ReflectionBank *LinkResource::b = tke::addReflectionBank("LinkResource");
 tke::ReflectionBank *Pipeline::b = tke::addReflectionBank("Pipeline");
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
+std::vector<std::weak_ptr<Shader>> loaded_shaders;
 struct ReflectInit{ReflectInit(){
 tke::EnumType *currentEnumType = nullptr;
 tke::ReflectionBank *currentBank = nullptr;

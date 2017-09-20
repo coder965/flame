@@ -1,6 +1,6 @@
 #include "..\esm.h"
 
-layout(binding = TKE_UBO_BINDING) uniform CONSTANT
+layout(binding = 0) uniform CONSTANT
 {
 	float near;
 	float far;
@@ -23,12 +23,12 @@ struct Material
 	uint dummy;
 };
 
-layout(binding = TKE_UBO_BINDING) uniform MATERIAL
+layout(binding = 1) uniform MATERIAL
 {
 	Material material[256];
 }u_material;
 
-layout(set = 1, binding = TKE_UBO_BINDING) uniform sampler2D maps[256];
+layout(set = 1, binding = 0) uniform sampler2D maps[256];
 
 layout(location = 0) in vec2 inTexcoord;
 layout(location = 1) in flat uint inMaterialID;

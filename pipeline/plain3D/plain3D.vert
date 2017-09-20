@@ -8,7 +8,7 @@ layout(push_constant) uniform PushConstant
 }pc;
 
 #if defined(ANIM)
-layout(binding = TKE_UBO_BINDING) uniform BONE
+layout(set = 2, binding = 0) uniform BONE
 {
 	mat4 matrix[256];
 }u_bone;

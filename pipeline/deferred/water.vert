@@ -9,7 +9,7 @@ struct Water
 	float mapDimension;
 };
 
-layout(binding = TKE_UBO_BINDING) uniform WATER
+layout(binding = 5) uniform WATER
 {
 	Water d[8];
 }u_water;

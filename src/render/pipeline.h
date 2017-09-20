@@ -157,7 +157,7 @@ namespace tke
 		REFLe CullMode cull_mode = CullMode::back;
 
 		std::vector<LinkResource> links;
-		std::vector<std::unique_ptr<Stage>> stages;
+		std::vector<std::shared_ptr<Shader>> shaders;
 
 		std::vector<std::string> shaderDefines;
 

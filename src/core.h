@@ -8,6 +8,46 @@
 #include "render/descriptor.h"
 #include "render/pipeline.h"
 
+/*
+
+UBO:
+
+Constant - 0, 0
+Material - 0, 1
+
+Matrix - 0, 2
+StaticObjectMatrix - 0, 3
+AnimatedObjectMatrix - 0, 3
+Terrain - 0, 4
+Water - 0, 5
+Light - 0, 6
+Ambient - 0, 7
+Shadow - 0, 8
+
+Bone - 2, 0
+
+Texture:
+
+Envr - 0, 9
+Main - 0, 10
+Depth - 0, 11
+AlbedoAlpha - 0, 12
+NormalHeight - 0, 13
+SpecRoughness - 0, 14
+Esm - 0, 15
+Ao - 0, 16
+
+--Terrain Special--
+HeightMap - 0, 17
+BlendMap - 0, 18
+ColorMaps - 0, 19
+NormalMaps - 0, 20
+--Terrain Special--
+
+Maps - 1, 0
+
+*/
+
 enum { MaxMaterialCount = 256 };
 enum { MaxTextureCount = 256 };
 

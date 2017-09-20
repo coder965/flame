@@ -1,4 +1,4 @@
-layout(binding = TKE_UBO_BINDING) uniform MATRIX
+layout(binding = 2) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -10,13 +10,13 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = TKE_UBO_BINDING) uniform OBJECT
+layout(binding = 3) uniform OBJECT
 {
 	mat4 matrix[8];
 }u_object;
 
 #if defined(ANIM)
-layout(set = 2, binding = TKE_UBO_BINDING) uniform BONE
+layout(set = 2, binding = 0) uniform BONE
 {
 	mat4 matrix[256];
 }u_bone[8];

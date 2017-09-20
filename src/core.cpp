@@ -405,16 +405,15 @@ namespace tke
 				{
 					if (modelMaterials.size() > 0)
 					{
-						std::unique_ptr<MaterialShaderStruct[]> mts(new MaterialShaderStruct[modelMaterials.size()]);
+						std::unique_ptr<MaterialShaderStruct> mts(new MaterialShaderStruct[modelMaterials.size()]);
 
 						for (int i = 0; i < modelMaterials.size(); i++)
 						{
 							auto m = modelMaterials[i];
 
-							MaterialShaderStruct mt;
-							mts[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-							mts[i].specRoughnessCompress = m->spec + (m->roughness << 8);
-							mts[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
+							mts.get()[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
+							mts.get()[i].specRoughnessCompress = m->spec + (m->roughness << 8);
+							mts.get()[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
 								((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
 								((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
 						}

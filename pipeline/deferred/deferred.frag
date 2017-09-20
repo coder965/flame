@@ -8,7 +8,7 @@
 #define USE_PHONG
 #endif
 
-layout(binding = TKE_UBO_BINDING) uniform CONSTANT
+layout(binding = 0) uniform CONSTANT
 {
 	float near;
 	float far;
@@ -21,7 +21,7 @@ layout(binding = TKE_UBO_BINDING) uniform CONSTANT
 	float envrCy;
 }u_constant;
 
-layout(binding = TKE_UBO_BINDING) uniform MATRIX
+layout(binding = 2) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -33,13 +33,6 @@ layout(binding = TKE_UBO_BINDING) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = TKE_UBO_BINDING) uniform AMBIENT
-{
-	vec3 color;
-	uint envr_max_mipmap;
-	vec4 fogColor;
-}u_ambient;
-
 struct Light
 {
 	vec4 coord;
@@ -47,24 +40,31 @@ struct Light
 	vec4 spotData;
 };
 
-layout(binding = TKE_UBO_BINDING) uniform LIGHT
+layout(binding = 6) uniform LIGHT
 {
 	uint count;
 	Light lights[256];
 }u_light;
 
-layout(binding = TKE_UBO_BINDING) uniform SHADOW
+layout(binding = 7) uniform AMBIENT
+{
+	vec3 color;
+	uint envr_max_mipmap;
+	vec4 fogColor;
+}u_ambient;
+
+layout(binding = 8) uniform SHADOW
 {
 	mat4 matrix[8];
 }u_shadow;
 
-layout(binding = TKE_UBO_BINDING) uniform sampler2D envrSampler;
-layout(binding = TKE_UBO_BINDING) uniform sampler2D depthSampler;
-layout(binding = TKE_UBO_BINDING) uniform sampler2D albedoAlphaSampler;
-layout(binding = TKE_UBO_BINDING) uniform sampler2D normalHeightSampler;
-layout(binding = TKE_UBO_BINDING) uniform sampler2D specRoughnessSampler;
-layout(binding = TKE_UBO_BINDING) uniform sampler2D shadowSampler[48];
-layout(binding = TKE_UBO_BINDING) uniform sampler2D aoSampler;
+layout(binding = 9) uniform sampler2D envrSampler;
+layout(binding = 11) uniform sampler2D depthSampler;
+layout(binding = 12) uniform sampler2D albedoAlphaSampler;
+layout(binding = 13) uniform sampler2D normalHeightSampler;
+layout(binding = 14) uniform sampler2D specRoughnessSampler;
+layout(binding = 15) uniform sampler2D shadowSampler[48];
+layout(binding = 16) uniform sampler2D aoSampler;
 
 layout(location = 0) in vec3 inViewDir;
 

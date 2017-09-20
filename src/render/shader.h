@@ -17,28 +17,19 @@ namespace tke
 		REFLe frag = 1 << 4
 	};
 
-	struct ShaderModule
+	struct Shader
 	{
+		StageType type;
 		std::string filename;
 		std::vector<std::string> defines;
+		VkShaderModule vkModule;
 
 		std::vector<std::vector<Descriptor>> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
-		VkShaderModule v;
-		int refCount = 1;
 
-		~ShaderModule();
+		Shader(const std::string &_filename, const std::vector<std::string> &_defines);
+		~Shader();
 	};
 
-	struct Stage
-	{
-		std::string filename;
-		StageType type;
-
-		ShaderModule *module = nullptr;
-
-		Stage(const std::string &_filename, const std::vector<std::string> &defines, 
-			std::vector<int> &descriptor_set_bindings, const std::vector<std::unique_ptr<Stage>> &siblings);
-		~Stage();
-	};
+	IMPL() std::vector<std::weak_ptr<Shader>> loaded_shaders;
 }

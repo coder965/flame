@@ -9,12 +9,12 @@ struct Water
 	float mapDimension;
 };
 
-layout(binding = TKE_UBO_BINDING) uniform WATER
+layout(binding = 5) uniform WATER
 {
 	Water d[8];
 }u_water;
 
-layout(binding = TKE_UBO_BINDING) uniform MATRIX
+layout(binding = 2) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;

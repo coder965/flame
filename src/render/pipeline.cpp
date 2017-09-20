@@ -71,7 +71,6 @@ namespace tke
 		std::vector<VkDynamicState> vkDynamicStates;
 		std::vector<std::vector<VkDescriptorSetLayoutBinding>> vkDescriptors;
 		std::vector<VkPushConstantRange> vkPushConstantRanges;
-		std::vector<int> descriptor_set_bindings;
 		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
 
 		{
@@ -118,26 +117,58 @@ namespace tke
 				}
 				else if (c->name == "stage")
 				{
-					auto s = new Stage(filepath + "/" + c->firstAttribute("filename")->value, shaderDefines, 
-						descriptor_set_bindings, stages);
+					auto shader_filename = filepath + "/" + c->firstAttribute("filename")->value;
+
+					std::shared_ptr<Shader> s;
+
+					for (auto it = loaded_shaders.begin(); it != loaded_shaders.end(); )
+					{
+						s = it->lock();
+						if (s)
+						{
+							if (s->filename == shader_filename && s->defines.size() == shaderDefines.size())
+							{
+								bool same = true;
+								for (int i = 0; i < shaderDefines.size(); i++)
+								{
+									if (s->defines[i] != shaderDefines[i])
+									{
+										same = false;
+										break;
+									}
+								}
+
+								if (same)
+									goto next_shader;
+							}
+							it++;
+						}
+						else
+							it = loaded_shaders.erase(it);
+					}
+
+					s = std::make_shared<Shader>(shader_filename, shaderDefines);
+					loaded_shaders.push_back(s);
+
+					next_shader:
 
 					{
 						VkPipelineShaderStageCreateInfo info = {};
 						info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 						info.pName = "main";
 						info.stage = (VkShaderStageFlagBits)_toVkStage(s->type);
-						info.module = s->module->v;
+						info.module = s->vkModule;
 						vkStages.push_back(info);
 
-						if (vkDescriptors.size() < s->module->descriptors.size())
+						if (vkDescriptors.size() < s->descriptors.size())
 						{
-							vkDescriptors.resize(s->module->descriptors.size());
-							descriptorSetLayouts.resize(s->module->descriptors.size());
+							vkDescriptors.resize(s->descriptors.size());
+							descriptorSetLayouts.resize(s->descriptors.size());
 						}
 
-						for (auto set = 0; set < s->module->descriptors.size(); set++)
+						for (auto set = 0; set < s->descriptors.size(); set++)
 						{
-							for (auto &d : s->module->descriptors[set])
+							for (auto &d : s->descriptors[set])
 							{
 								auto found = false;
 								for (auto &b : vkDescriptors[set])
@@ -159,7 +190,7 @@ namespace tke
 								vkDescriptors[set].push_back(b);
 							}
 						}
-						for (auto &p : s->module->pushConstantRanges)
+						for (auto &p : s->pushConstantRanges)
 						{
 							auto found = false;
 							for (auto &r : vkPushConstantRanges)
@@ -181,7 +212,7 @@ namespace tke
 						}
 					}
 
-					stages.push_back(std::unique_ptr<Stage>(s));
+					shaders.push_back(s);
 				}
 				else if (c->name == "define")
 					shaderDefines.push_back(c->value);
@@ -460,13 +491,13 @@ namespace tke
 			if (link.binding == -1)
 			{
 				bool found = false;
-				for (auto &s : stages)
+				for (auto &s : shaders)
 				{
 					if (found) break;
 
-					for (auto set = 0; set < s->module->descriptors.size(); set++)
+					for (auto set = 0; set < s->descriptors.size(); set++)
 					{
-						for (auto &d : s->module->descriptors[set])
+						for (auto &d : s->descriptors[set])
 						{
 							if (d.name == link.descriptor_name)
 							{
@@ -485,13 +516,13 @@ namespace tke
 			if (link.type == DescriptorType::null)
 			{
 				bool found = false;
-				for (auto &s : stages)
+				for (auto &s : shaders)
 				{
 					if (found) break;
 
-					for (auto set = 0; set < s->module->descriptors.size(); set++)
+					for (auto set = 0; set < s->descriptors.size(); set++)
 					{
-						for (auto &d : s->module->descriptors[set])
+						for (auto &d : s->descriptors[set])
 						{
 							if (d.binding == link.binding)
 							{
@@ -555,11 +586,11 @@ namespace tke
 
 	int Pipeline::descriptorPosition(const std::string &name)
 	{
-		for (auto &s : stages)
+		for (auto &s : shaders)
 		{
-			for (auto set = 0; set < s->module->descriptors.size(); set++)
+			for (auto set = 0; set < s->descriptors.size(); set++)
 			{
-				for (auto &d : s->module->descriptors[set])
+				for (auto &d : s->descriptors[set])
 				{
 					if (d.name == name)
 						return d.binding;

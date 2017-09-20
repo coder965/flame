@@ -7,15 +7,6 @@
 
 namespace tke
 {
-	ShaderModule::~ShaderModule()
-	{
-		device.mtx.lock();
-		vkDestroyShaderModule(device.v, v, nullptr);
-		device.mtx.unlock();
-	}
-
-	static std::vector<ShaderModule*> shaderModules;
-
 	static bool _findDefine(const std::vector<std::string> &vec, const std::string &def, bool b)
 	{
 		if (b)
@@ -40,8 +31,7 @@ namespace tke
 
 	static std::string _last_compiled_stage_text;
 
-	Stage::Stage(const std::string &_filename, const std::vector<std::string> &defines, 
-		std::vector<int> &descriptor_set_bindings, const std::vector<std::unique_ptr<Stage>> &siblings)
+	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines)
 	{
 		{
 			std::experimental::filesystem::path path(_filename);
@@ -61,33 +51,7 @@ namespace tke
 			filename = std::experimental::filesystem::canonical(path).string();
 		}
 
-		for (auto m : shaderModules)
-		{
-			if (m->filename == filename && defines.size() == m->defines.size())
-			{
-				bool same = true;
-				for (int i = 0; i < defines.size(); i++)
-				{
-					if (defines[i] != m->defines[i])
-					{
-						same = false;
-						break;
-					}
-				}
-
-				if (same)
-				{
-					m->refCount++;
-					module = m;
-					return;
-				}
-			}
-		}
-
-		module = new ShaderModule;
-		module->filename = filename;
-		module->defines.insert(module->defines.begin(), defines.begin(), defines.end());
-		shaderModules.push_back(module);
+		defines.insert(defines.begin(), _defines.begin(), _defines.end());
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
@@ -194,49 +158,18 @@ namespace tke
 					fullLineNum += includeFileLineNum;
 					lineNum++;
 				}
-				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\((\s*set\s*=\s*([0-9]+)\s*,\s*)?\s*binding\s*=\s*((TKE_UBO_BINDING)|([0-9]+))\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+)\s*(\[\s*([0-9]+)\s*\])?)"))
+				else if (states.top().first && std::regex_search(line, match, pattern = R"(layout\s*\((\s*set\s*=\s*([0-9]+)\s*,\s*)?\s*binding\s*=\s*([0-9]+)\s*\)\s*uniform\s+((sampler2D)\s+)?([\w_]+)\s*(\[\s*([0-9]+)\s*\])?)"))
 				{
 					auto set = match[2].matched ? std::stoi(match[2].str()) : 0;
-					if (set >= descriptor_set_bindings.size())
-						descriptor_set_bindings.resize(set + 1);
-					if (set >= module->descriptors.size())
-						module->descriptors.resize(set + 1);
+					if (set >= descriptors.size())
+						descriptors.resize(set + 1);
 
 					Descriptor d;
-					d.name = match[8].str();
-					d.binding = -1;
-					for (auto &s : siblings)
-					{
-						if (s->module->descriptors.size() > set)
-						{
-							for (auto &_d : s->module->descriptors[set])
-							{
-								if (_d.name == d.name)
-								{
-									d.binding = _d.binding;
-									d.type = _d.type;
-									d.count = _d.count;
-									break;
-								}
-							}
-							if (d.binding != -1)
-								break;
-						}
-					}
-
-					if (d.binding == -1)
-					{
-						d.binding = descriptor_set_bindings[set];
-						d.type = match[7].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
-						d.count = match[10].matched ? std::stoi(match[10].str()) : 1;
-						module->descriptors[set].push_back(d);
-						descriptor_set_bindings[set]++;
-					}
-					else
-					{
-						module->descriptors[set].push_back(d);
-					}
-					line = std::regex_replace(line, pattern = R"(TKE_UBO_BINDING)", std::to_string(d.binding));
+					d.name = match[6].str();
+					d.binding = std::stoi(match[3].str());
+					d.type = match[5].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
+					d.count = match[8].matched ? std::stoi(match[8].str()) : 1;
+					descriptors[set].push_back(d);
 
 					stageText += line + "\n";
 
@@ -414,7 +347,7 @@ namespace tke
 							tke::PushConstantRange p;
 							p.offset = 0; // 0 always
 							p.size = r.size;
-							module->pushConstantRanges.push_back(p);
+							pushConstantRanges.push_back(p);
 						}
 						break;
 					}
@@ -430,7 +363,7 @@ namespace tke
 				shaderModuleCreateInfo.pCode = (uint32_t*)file.data;
 
 				device.mtx.lock();
-				auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &module->v);
+				auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &vkModule);
 				assert(res == VK_SUCCESS);
 				device.mtx.unlock();
 
@@ -448,20 +381,10 @@ namespace tke
 		}
 	}
 
-	Stage::~Stage()
+	Shader::~Shader()
 	{
-		module->refCount--;
-		if (module->refCount == 0)
-		{
-			for (auto it = shaderModules.begin(); it != shaderModules.end(); it++)
-			{
-				if (*it == module)
-				{
-					shaderModules.erase(it);
-					delete module;
-					return;
-				}
-			}
-		}
+		device.mtx.lock();
+		vkDestroyShaderModule(device.v, vkModule, nullptr);
+		device.mtx.unlock();
 	}
 }

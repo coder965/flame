@@ -1,4 +1,4 @@
-layout(binding = TKE_UBO_BINDING) uniform TERRAIN
+layout(binding = 4) uniform TERRAIN
 {
 	vec3 coord;
 	int blockCx;

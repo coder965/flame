@@ -8,7 +8,7 @@ layout(push_constant) uniform PushConstant
 #endif
 
 #if defined(USE_TEX)
-layout(set = 1, binding = TKE_UBO_BINDING) uniform sampler2D maps[256];
+layout(set = 1, binding = 0) uniform sampler2D maps[256];
 #endif
 
 #if defined(USE_TEX)
