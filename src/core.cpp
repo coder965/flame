@@ -177,7 +177,7 @@ namespace tke
 
 	static bool _only_2d;
 
-	int init(const std::string &path, int rcx, int rcy, bool only_2d)
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, bool only_2d)
 	{
 		_only_2d = only_2d;
 
@@ -196,13 +196,7 @@ namespace tke
 			matPerspectiveInv = glm::inverse(matPerspective);
 		}
 
-		initVulkan(
-#if defined(_DEBUG)
-			true
-#else
-			false
-#endif
-		);
+		initVulkan(vulkan_debug);
 
 		stagingBuffer = new StagingBuffer(67108864);
 

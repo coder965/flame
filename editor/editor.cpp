@@ -17,6 +17,8 @@ EditorWindow::EditorWindow()
 {
 	mainWindow = this;
 
+	return;
+
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	game.load();

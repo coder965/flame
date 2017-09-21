@@ -205,6 +205,6 @@ namespace tke
 	void processEvents();
 	void processCmdLine(const std::string &str, bool record = true);
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
-	int init(const std::string &path, int rcx, int rcy, bool only_2d = false);
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, bool only_2d = false);
 	void run();
 }

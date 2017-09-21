@@ -502,12 +502,12 @@ namespace tke
 						ImMax((int32_t)(pcmd->ClipRect.y), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
-					//cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
-					cb->drawIndex(3, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
-					break;
+					cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					//cb->drawIndex(3, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					//break;
 				}
 				idx_offset += pcmd->ElemCount;
-				break;
+				//break;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
@@ -545,16 +545,16 @@ namespace tke
 			context = ImGui::GetCurrentContext();
 
 			ImGuiIO& io = ImGui::GetIO();
-			io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
-			static const ImWchar icons_ranges[] = { 
-				ICON_MIN_FA, 
-				ICON_MAX_FA, 
-				0 
-			};
-			ImFontConfig icons_config; 
-			icons_config.MergeMode = true; 
-			icons_config.PixelSnapH = true;
-			io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/fontawesome-webfont.ttf", 16.0f, &icons_config, icons_ranges);
+			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
+			//static const ImWchar icons_ranges[] = { 
+			//	ICON_MIN_FA, 
+			//	ICON_MAX_FA, 
+			//	0 
+			//};
+			//ImFontConfig icons_config; 
+			//icons_config.MergeMode = true; 
+			//icons_config.PixelSnapH = true;
+			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/fontawesome-webfont.ttf", 16.0f, &icons_config, icons_ranges);
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
@@ -563,14 +563,11 @@ namespace tke
 
 			if (texture_position == -1) texture_position = plainPipeline_2d->descriptorPosition("images");
 
-			for (int i = 0; i < 128; i++)
-				plainPipeline_2d->descriptorSet->setImage(texture_position, i, fontImage, colorSampler);
+			plainPipeline_2d->descriptorSet->setImage(texture_position, 0, fontImage, colorSampler);
 
 		}
 		else
-		{
 			context = ImGui::CreateContext();
-		}
 
 		cb = new CommandBuffer;
 		cb->begin();

@@ -111,16 +111,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -152,6 +152,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -189,6 +191,7 @@
       <AdditionalIncludeDirectories>../../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
 /D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -202,7 +205,7 @@
     </BuildLog>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/x64/Debug/lib.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Debug/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3Common_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3Extensions.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematic_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -224,20 +227,27 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS
+ %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>../../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/x64/Debug/lib.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Release/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
