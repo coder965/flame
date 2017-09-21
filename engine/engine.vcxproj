@@ -191,7 +191,7 @@
       <AdditionalIncludeDirectories>../../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
 /D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -237,6 +237,7 @@
       <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS
  %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>../../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -246,7 +247,7 @@
       <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/x64/Debug/lib.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Release/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Release/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3Common_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3Extensions.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematic_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
