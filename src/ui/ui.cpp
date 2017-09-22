@@ -503,11 +503,8 @@ namespace tke
 						ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
 					cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
-					//cb->drawIndex(3, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
-					//break;
 				}
 				idx_offset += pcmd->ElemCount;
-				//break;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}

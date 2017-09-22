@@ -191,7 +191,7 @@
       <AdditionalIncludeDirectories>../../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D  _CRT_SECURE_NO_DEPRECATE 
 /D _CRT_NONSTDC_NO_DEPRECATE %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -205,7 +205,7 @@
     </BuildLog>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Debug/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3Common_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3Extensions.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematic_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../../VulkanSDK/1.0.61.0/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Debug/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
