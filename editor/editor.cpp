@@ -201,9 +201,7 @@ void EditorWindow::openTextureEditor()
 
 void EditorWindow::renderEvent()
 {
-	beginFrame();
-
-	ui->begin(true);
+	beginFrame(true);
 
 	//ImGui::BeginMainMenuBar();
 	//if (ImGui::BeginMenu("File"))
@@ -348,10 +346,6 @@ void EditorWindow::renderEvent()
 	ImGui::Text("FPS:%d", getFPS());
 	ImGui::End();
 
-	ui->end();
-
-	cbs.push_back(ui->cb->v);
-
 	endFrame();
 
 	for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
@@ -365,9 +359,6 @@ void EditorWindow::renderEvent()
 		else
 			it++;
 	}
-
-	cbs.clear();
-	ui->waitEvents.clear();
 }
 
 EditorWindow *mainWindow = nullptr;

@@ -328,16 +328,25 @@ namespace tke
 		return FPS;
 	}
 
-	void Window::beginFrame()
+	void Window::beginFrame(bool clearBackground)
 	{
 		device.mtx.lock();
 		auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &imageIndex);
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
+
+		if (ui)
+			ui->begin(clearBackground);
 	}
 
 	void Window::endFrame()
 	{
+		if (ui)
+		{
+			ui->end();
+			cbs.push_back(ui->cb->v);
+		}
+
 		tke::graphicsQueue.submit(cbs.size(), cbs.data(), imageAvailable, 0, frameDone);
 		waitFence(frameDone);
 
@@ -351,6 +360,10 @@ namespace tke
 		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
 		assert(res == VK_SUCCESS);
 		graphicsQueue.mtx.unlock();
+
+		cbs.clear();
+		if (ui)
+			ui->waitEvents.clear();
 	}
 
 	void Window::show()

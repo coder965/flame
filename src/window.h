@@ -64,7 +64,7 @@ namespace tke
 		void createSwapchain();
 		void destroySwapchain();
 		int getFPS();
-		void beginFrame();
+		void beginFrame(bool clearBackground);
 		void endFrame();
 		void show();
 	};

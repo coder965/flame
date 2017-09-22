@@ -126,7 +126,7 @@ namespace tke
 		void onKeyDown(int);
 		void onKeyUp(int);
 		void onChar(int);
-		void begin(bool _need_clear = false);
+		void begin(bool _need_clear);
 		void end();
 	};
 
