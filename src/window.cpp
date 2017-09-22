@@ -108,7 +108,7 @@ namespace tke
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	Window::Window(int _cx, int _cy, const std::string &title, bool hasFrame, bool hasUi, unsigned int windowStyle)
+	Window::Window(int _cx, int _cy, const std::string &title, WindowStyle style, bool hasUi)
 		:cx(_cx), cy(_cy)
 	{
 		static bool first = true;
@@ -131,20 +131,24 @@ namespace tke
 			delete iconData;
 		}
 
-		if (hasFrame)
+		unsigned int win32WindowStyle = 0;
+
+		if (style != WindowStyleNoFrameNoResize)
 		{
 			RECT rect = { 0, 0, _cx, _cy };
 			AdjustWindowRect(&rect, WS_CAPTION, false);
 			_cx = rect.right - rect.left;
 			_cy = rect.bottom - rect.top;
 
-			windowStyle |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+			win32WindowStyle |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+
+			if (style == WindowStyleHasFrameCanResize)
+				win32WindowStyle |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
 		else
-		{
-			windowStyle |= WS_POPUP;
-		}
-		hWnd = CreateWindowA("tke_wnd", title.c_str(), windowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, (HINSTANCE)hInst, NULL);
+			win32WindowStyle |= WS_POPUP;
+
+		hWnd = CreateWindowA("tke_wnd", title.c_str(), win32WindowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, (HINSTANCE)hInst, NULL);
 
 		_create_window(this, hasUi);
 	}

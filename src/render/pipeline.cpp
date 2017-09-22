@@ -7,11 +7,19 @@
 
 namespace tke
 {
-	static VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	static VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
-	static VkPipelineVertexInputStateCreateInfo vertexInputState;
-	static VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
-	static VkPipelineVertexInputStateCreateInfo lineVertexInputState;
+	PipelineCreateInfo &PipelineCreateInfo::cx(int v)
+	{
+		_cx = v;
+
+		return *this;
+	}
+
+	PipelineCreateInfo &PipelineCreateInfo::cy(int v)
+	{
+		_cy = v;
+
+		return *this;
+	}
 
 	PipelineLayout::~PipelineLayout()
 	{

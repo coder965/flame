@@ -132,13 +132,28 @@ namespace tke
 		~PipelineLayout();
 	};
 
+	IMPL() VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo vertexInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo lineVertexInputState;
+
+	struct PipelineCreateInfo
+	{
+		int _cx = 0;
+		int _cy = 0;
+		VkPipelineVertexInputStateCreateInfo *pVertexInputState = &zeroVertexInputState;
+
+		PipelineCreateInfo &cx(int v);
+		PipelineCreateInfo &cy(int v);
+	};
+
 	struct Resource;
 	struct RenderPass;
 	REFLECTABLE struct Pipeline
 	{
 		REFL_BANK;
 
-		REFLv std::string name;
 		std::string filename;
 		std::string filepath;
 

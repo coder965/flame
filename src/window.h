@@ -9,6 +9,13 @@ namespace tke
 	extern RenderPass *renderPass_window;
 	extern RenderPass *renderPass_window_clear;
 
+	enum WindowStyle
+	{
+		WindowStyleNoFrameNoResize,
+		WindowStyleHasFrameNoResize,
+		WindowStyleHasFrameCanResize
+	};
+
 	struct GuiComponent;
 	struct Image;
 	struct Framebuffer;
@@ -59,7 +66,7 @@ namespace tke
 		virtual void renderEvent();
 
 		Window(int _cx, int _cy, HWND _hWnd, bool hasUi = false);
-		Window(int _cx, int _cy, const std::string &title, bool hasFrame = true, bool hasUi = false, unsigned int windowStyle = 0);
+		Window(int _cx, int _cy, const std::string &title, WindowStyle style, bool hasUi = false);
 		virtual ~Window();
 		void createSwapchain();
 		void destroySwapchain();

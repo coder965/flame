@@ -13,7 +13,7 @@ MonitorWidget *lastMonitorWidget = nullptr;
 tke::Image *titleImage = nullptr;
 
 EditorWindow::EditorWindow()
-	:Window(800, 600, "TK Engine Editor", true, true, WS_THICKFRAME)
+	:Window(800, 600, "TK Engine Editor", tke::WindowStyleHasFrameNoResize, true)
 {
 	mainWindow = this;
 
