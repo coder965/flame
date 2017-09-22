@@ -13,6 +13,19 @@ namespace tke
 
 	static void _create_window(Window *p, bool hasUi)
 	{
+		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
+		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		surfaceInfo.hinstance = (HINSTANCE)hInst;
+		surfaceInfo.hwnd = (HWND)p->hWnd;
+		auto res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &p->surface);
+		assert(res == VK_SUCCESS);
+
+		VkBool32 supported;
+		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, p->surface, &supported);
+
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, p->surface, &surfaceCapabilities);
+
 		p->createSwapchain();
 
 		p->imageAvailable = createSemaphore();
@@ -141,6 +154,12 @@ namespace tke
 		destroyFence(frameDone);
 		destroySemaphore(imageAvailable);
 		destroySwapchain();
+		device.mtx.lock();
+		vkDestroySwapchainKHR(device.v, swapchain, nullptr);
+		device.mtx.unlock();
+		inst.mtx.lock();
+		vkDestroySurfaceKHR(inst.v, surface, nullptr);
+		inst.mtx.unlock();
 	}
 
 	void Window::createSwapchain()
@@ -149,19 +168,6 @@ namespace tke
 
 		inst.mtx.lock();
 		device.mtx.lock();
-
-		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
-		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		surfaceInfo.hinstance = (HINSTANCE)hInst;
-		surfaceInfo.hwnd = (HWND)hWnd;
-		res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &surface);
-		assert(res == VK_SUCCESS);
-
-		VkBool32 supported;
-		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, surface, &supported);
-
-		VkSurfaceCapabilitiesKHR surfaceCapabilities;
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 
 		unsigned int physicalDeviceSurfaceFormatCount = 0;
 		std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
@@ -183,7 +189,7 @@ namespace tke
 		swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+		swapchainInfo.oldSwapchain = swapchain;
 		swapchainInfo.clipped = true;
 		res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
 		assert(res == VK_SUCCESS);
@@ -196,24 +202,20 @@ namespace tke
 		device.mtx.unlock();
 		inst.mtx.unlock();
 
-		images = (Image*)malloc(sizeof(Image) * 2);
-
 		for (int i = 0; i < 2; i++)
 		{
-			new (&images[i]) Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
-			framebuffers[i] = getFramebuffer(&images[i], renderPass_window);
+			images[i] = new Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
+			framebuffers[i] = getFramebuffer(images[i], renderPass_window);
 		}
 	}
 
 	void Window::destroySwapchain()
 	{
-		delete images;
-		inst.mtx.lock();
-		device.mtx.lock();
-		vkDestroySwapchainKHR(device.v, swapchain, nullptr);
-		vkDestroySurfaceKHR(inst.v, surface, nullptr);
-		device.mtx.unlock();
-		inst.mtx.unlock();
+		for (int i = 0; i < 2; i++)
+		{
+			delete images[i];
+			images[i] = nullptr;
+		}
 	}
 
 	void Window::keyDownEvent(int wParam)
