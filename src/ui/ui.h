@@ -7,7 +7,7 @@
 #include "../../imgui/imgui_operator.h"
 #include "../../imgui/imgui_tab.h"
 #include "../../imgui/imgui_dock.h"
-#include "../../IconFontCppHeaders/IconsFontAwesome.h"
+//#include "../../IconFontCppHeaders/IconsFontAwesome.h"
 
 #include "../math/math.h"
 #include "../render/vulkan.h"
