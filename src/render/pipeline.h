@@ -142,10 +142,37 @@ namespace tke
 	{
 		int _cx = 0;
 		int _cy = 0;
-		VkPipelineVertexInputStateCreateInfo *pVertexInputState = &zeroVertexInputState;
+		VkPipelineVertexInputStateCreateInfo *_vertex_input = &zeroVertexInputState;
+		int _patch_control_points = 0;
+		bool _depth_test = false;
+		bool _depth_write = false;
+		bool _depth_clamp = false;
+		VkPrimitiveTopology _primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		VkPolygonMode _polygonMode = VK_POLYGON_MODE_FILL;
+		VkCullModeFlagBits _cullMode = VK_CULL_MODE_BACK_BIT;
+		std::vector<VkPipelineColorBlendAttachmentState> _blendAttachmentStates;
+		std::vector<VkDynamicState> _dynamicStates;
+		std::vector<std::pair<std::string, std::vector<std::string>>> _shaders;
 
-		PipelineCreateInfo &cx(int v);
+		inline PipelineCreateInfo &cx(int v) { _cx = v; return *this; }
 		PipelineCreateInfo &cy(int v);
+		PipelineCreateInfo &vertex_input(VkPipelineVertexInputStateCreateInfo *v);
+		PipelineCreateInfo &patch_control_points(int v);
+		PipelineCreateInfo &depth_test(bool v);
+		PipelineCreateInfo &depth_write(bool v);
+		PipelineCreateInfo &depth_clamp(bool v);
+		PipelineCreateInfo &primitiveTopology(VkPrimitiveTopology v);
+		PipelineCreateInfo &polygonMode(VkPolygonMode v);
+		PipelineCreateInfo &cullMode(VkCullModeFlagBits v);
+		PipelineCreateInfo &addBlendAttachmentState(bool enable, 
+			VkBlendFactor fsrc_color = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_color = VK_BLEND_FACTOR_ZERO, 
+			VkBlendFactor fsrc_alpha = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_alpha = VK_BLEND_FACTOR_ZERO);
+		PipelineCreateInfo &addDynamicState(VkDynamicState v);
+		inline PipelineCreateInfo &addShader(const std::string &filename, const std::initializer_list<std::string> &defines)
+		{
+			_shaders.emplace_back(filename, defines);
+			return *this;
+		}
 	};
 
 	struct Resource;
@@ -173,9 +200,6 @@ namespace tke
 		std::vector<LinkResource> links;
 		std::vector<std::shared_ptr<Shader>> shaders;
 
-		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
-		VkCullModeFlagBits vkCullMode = VK_CULL_MODE_BACK_BIT;
 		std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts;
 		std::shared_ptr<PipelineLayout> pipelineLayout;
 

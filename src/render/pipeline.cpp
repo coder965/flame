@@ -7,20 +7,6 @@
 
 namespace tke
 {
-	PipelineCreateInfo &PipelineCreateInfo::cx(int v)
-	{
-		_cx = v;
-
-		return *this;
-	}
-
-	PipelineCreateInfo &PipelineCreateInfo::cy(int v)
-	{
-		_cy = v;
-
-		return *this;
-	}
-
 	PipelineLayout::~PipelineLayout()
 	{
 		device.mtx.lock();
@@ -270,6 +256,7 @@ namespace tke
 			vkDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 		}
 
+		VkPrimitiveTopology vkPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		switch (primitive_topology)
 		{
 		case PrimitiveTopology::triangle_list:
@@ -286,6 +273,7 @@ namespace tke
 			break;
 		}
 
+		VkPolygonMode vkPolygonMode = VK_POLYGON_MODE_FILL;
 		switch (polygon_mode)
 		{
 		case PolygonMode::fill:
@@ -296,6 +284,7 @@ namespace tke
 			break;
 		}
 
+		VkCullModeFlagBits vkCullMode = VK_CULL_MODE_BACK_BIT;
 		switch (cull_mode)
 		{
 		case CullMode::none:

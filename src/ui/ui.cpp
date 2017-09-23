@@ -429,23 +429,13 @@ namespace tke
 		}
 
 		{
-			auto vtx_map = vertexBuffer->map(0, vertex_size);
-			auto idx_map = indexBuffer->map(0, index_size);
-			auto vtx_dst = (ImDrawVert*)vtx_map;
-			auto idx_dst = (ImDrawIdx*)idx_map;
+			auto vtx_dst = (ImDrawVert*)vertexBuffer->map(0, vertex_size);
+			auto idx_dst = (ImDrawIdx*)indexBuffer->map(0, index_size);
 			for (int n = 0; n < draw_data->CmdListsCount; n++)
 			{
 				const ImDrawList* cmd_list = draw_data->CmdLists[n];
 				memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
 				memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-
-				auto a = cmd_list->IdxBuffer.Data[0];
-				auto b = cmd_list->IdxBuffer.Data[1];
-				auto c = cmd_list->IdxBuffer.Data[2];
-
-				auto aa = cmd_list->VtxBuffer.Data[0];
-				auto bb = cmd_list->VtxBuffer.Data[1];
-				auto cc = cmd_list->VtxBuffer.Data[2];
 
 				vtx_dst += cmd_list->VtxBuffer.Size;
 				idx_dst += cmd_list->IdxBuffer.Size;
@@ -453,14 +443,6 @@ namespace tke
 			vertexBuffer->unmap();
 			indexBuffer->unmap();
 		}
-		VkMappedMemoryRange range[2] = {};
-		range[0].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		range[0].memory = vertexBuffer->memory;
-		range[0].size = VK_WHOLE_SIZE;
-		range[1].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		range[1].memory = indexBuffer->memory;
-		range[1].size = VK_WHOLE_SIZE;
-		auto err = vkFlushMappedMemoryRanges(device.v, 2, range);
 
 		auto cb = current_window->ui->cb;
 
