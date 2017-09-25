@@ -7,21 +7,12 @@
 
 namespace tke
 {
-	REFLECTABLE enum class DescriptorType : int
+	struct Descriptor
 	{
-		null,
-		REFLe uniform_buffer = 1 << 0,
-		REFLe image_n_sampler = 1 << 1
-	};
-
-	REFLECTABLE struct Descriptor
-	{
-		REFL_BANK;
-
-		REFLe DescriptorType type = DescriptorType::uniform_buffer;
-		REFLv int binding = 0;
-		REFLv int count = 0;
-		REFLv std::string name;
+		VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+		int binding = 0;
+		int count = 0;
+		std::string name;
 	};
 
 	struct DescriptorSetLayout

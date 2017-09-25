@@ -7,19 +7,9 @@
 
 namespace tke
 {
-	REFLECTABLE enum class StageType : int
-	{
-		null,
-		REFLe vert = 1 << 0,
-		REFLe tesc = 1 << 1,
-		REFLe tese = 1 << 2,
-		REFLe geom = 1 << 3,
-		REFLe frag = 1 << 4
-	};
-
 	struct Shader
 	{
-		StageType type;
+		VkShaderStageFlagBits stage;
 		std::string filename;
 		std::vector<std::string> defines;
 		VkShaderModule vkModule;

@@ -16,29 +16,6 @@ namespace tke
 
 	static std::vector<std::weak_ptr<PipelineLayout>> pipelineLayouts;
 
-	static VkDescriptorType _vkDescriptorType(DescriptorType t)
-	{
-		switch (t)
-		{
-		case DescriptorType::uniform_buffer:
-			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		case DescriptorType::image_n_sampler:
-			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		}
-	}
-
-	static VkShaderStageFlags _toVkStage(StageType f)
-	{
-		VkShaderStageFlags v = 0;
-		if ((int)f & (int)StageType::vert) v |= VK_SHADER_STAGE_VERTEX_BIT;
-		if ((int)f & (int)StageType::tesc) v |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-		if ((int)f & (int)StageType::tese) v |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-		if ((int)f & (int)StageType::geom) v |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		if ((int)f & (int)StageType::frag) v |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		return v;
-	}
-
-
 	Pipeline::Pipeline(PipelineCreateInfo &info, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
 	{
 		std::vector<std::vector<VkDescriptorSetLayoutBinding>> vkDescriptors;
@@ -85,7 +62,7 @@ namespace tke
 				VkPipelineShaderStageCreateInfo info = {};
 				info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 				info.pName = "main";
-				info.stage = (VkShaderStageFlagBits)_toVkStage(s->type);
+				info.stage = s->stage;
 				info.module = s->vkModule;
 				vkStages.push_back(info);
 
@@ -104,7 +81,7 @@ namespace tke
 						{
 							if (b.binding == d.binding)
 							{
-								b.stageFlags |= _toVkStage(s->type);
+								b.stageFlags |= s->stage;
 								found = true;
 								break;
 							}
@@ -112,10 +89,10 @@ namespace tke
 						if (found) continue;
 
 						VkDescriptorSetLayoutBinding b = {};
-						b.descriptorType = _vkDescriptorType(d.type);
+						b.descriptorType = d.type;
 						b.binding = d.binding;
 						b.descriptorCount = d.count;
-						b.stageFlags = _toVkStage(s->type);
+						b.stageFlags = s->stage;
 						vkDescriptors[set].push_back(b);
 					}
 				}
@@ -126,7 +103,7 @@ namespace tke
 					{
 						if (r.offset == p.offset & r.size == p.size)
 						{
-							r.stageFlags |= _toVkStage(s->type);
+							r.stageFlags |= s->stage;
 							found = true;
 							break;
 						}
@@ -136,7 +113,7 @@ namespace tke
 					VkPushConstantRange r = {};
 					r.offset = p.offset;
 					r.size = p.size;
-					r.stageFlags = _toVkStage(s->type);
+					r.stageFlags = s->stage;
 					vkPushConstantRanges.push_back(r);
 				}
 			}
@@ -359,7 +336,7 @@ namespace tke
 					int cut = 1;
 				//assert(found);
 			}
-			if (link.type == DescriptorType::null)
+			if (link.type == VK_DESCRIPTOR_TYPE_MAX_ENUM)
 			{
 				bool found = false;
 				for (auto &s : shaders)
@@ -386,7 +363,7 @@ namespace tke
 
 			switch (link.type)
 			{
-			case DescriptorType::uniform_buffer:
+			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 			{
 				auto buffer = resource->getBuffer(link.resource_name);
 				if (buffer)
@@ -395,33 +372,11 @@ namespace tke
 					printf("unable to link resource %s (binding:%d, type:uniform buffer)\n", link.resource_name.c_str(), link.binding);
 			}
 				break;
-			case DescriptorType::image_n_sampler:
+			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 			{
 				auto image = resource->getImage(link.resource_name);
 				if (image)
-				{
-					if (link.vkSampler == 0)
-					{
-						switch (link.sampler)
-						{
-						case SamplerType::none:
-							break;
-						case SamplerType::plain:
-							link.vkSampler = plainSampler;
-							break;
-						case SamplerType::plain_unnormalized:
-							link.vkSampler = plainUnnormalizedSampler;
-							break;
-						case SamplerType::color:
-							link.vkSampler = colorSampler;
-							break;
-						case SamplerType::color_border:
-							link.vkSampler = colorBorderSampler;
-							break;
-						}
-					}
 					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, image->levels.size(), 0, image->layer);
-				}
 				else
 					printf("unable to link resource %s (binding:%d, type:combined image sampler)\n", link.resource_name.c_str(), link.binding);
 			}

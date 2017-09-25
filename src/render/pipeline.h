@@ -40,17 +40,14 @@ namespace tke
 		glm::vec3 color;
 	};
 
-	REFLECTABLE struct LinkResource
+	struct LinkResource
 	{
-		REFL_BANK;
+		int binding = -1;
+		int array_element = 0;
+		std::string descriptor_name;
+		std::string resource_name;
 
-		REFLv int binding = -1;
-		REFLv int array_element = 0;
-		REFLv std::string descriptor_name;
-		REFLv std::string resource_name;
-		REFLe SamplerType sampler = SamplerType::none;
-
-		DescriptorType type = DescriptorType::null;
+		VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		VkSampler vkSampler = 0;
 	};
 
@@ -132,10 +129,8 @@ namespace tke
 
 	struct Resource;
 	struct RenderPass;
-	REFLECTABLE struct Pipeline
+	struct Pipeline
 	{
-		REFL_BANK;
-
 		std::vector<LinkResource> links;
 		std::vector<std::shared_ptr<Shader>> shaders;
 

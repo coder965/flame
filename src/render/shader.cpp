@@ -37,15 +37,15 @@ namespace tke
 			std::experimental::filesystem::path path(_filename);
 			auto ext = path.extension().string();
 			if (ext == ".vert")
-				type = StageType::vert;
+				stage = VK_SHADER_STAGE_VERTEX_BIT;
 			else if (ext == ".tesc")
-				type = StageType::tesc;
+				stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 			else if (ext == ".tese")
-				type = StageType::tese;
+				stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 			else if (ext == ".geom")
-				type = StageType::geom;
+				stage = VK_SHADER_STAGE_GEOMETRY_BIT;
 			else if (ext == ".frag")
-				type = StageType::frag;
+				stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 			// format the shader path, so that they can reuse if they refer the same one
 			filename = std::experimental::filesystem::canonical(path).string();
@@ -167,7 +167,7 @@ namespace tke
 					Descriptor d;
 					d.name = match[6].str();
 					d.binding = std::stoi(match[3].str());
-					d.type = match[5].matched ? DescriptorType::image_n_sampler : DescriptorType::uniform_buffer;
+					d.type = match[5].matched ? VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					d.count = match[8].matched ? std::stoi(match[8].str()) : 1;
 					descriptors[set].push_back(d);
 
@@ -193,15 +193,15 @@ namespace tke
 			}
 
 			std::string stageName;
-			if (type == StageType::vert)
+			if (stage == VK_SHADER_STAGE_VERTEX_BIT)
 				stageName = "vert";
-			else if (type == StageType::tesc)
+			else if (stage == VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
 				stageName = "tesc";
-			else if (type == StageType::tese)
+			else if (stage == VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
 				stageName = "tese";
-			else if (type == StageType::geom)
+			else if (stage == VK_SHADER_STAGE_GEOMETRY_BIT)
 				stageName = "geom";
-			else if (type == StageType::frag)
+			else if (stage == VK_SHADER_STAGE_FRAGMENT_BIT)
 				stageName = "frag";
 
 			tke::exec("cmd", std::string("/C glslangValidator ") + 
