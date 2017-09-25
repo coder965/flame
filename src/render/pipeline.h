@@ -153,24 +153,48 @@ namespace tke
 		std::vector<VkPipelineColorBlendAttachmentState> _blendAttachmentStates;
 		std::vector<VkDynamicState> _dynamicStates;
 		std::vector<std::pair<std::string, std::vector<std::string>>> _shaders;
+		std::vector<LinkResource> links;
 
 		inline PipelineCreateInfo &cx(int v) { _cx = v; return *this; }
-		PipelineCreateInfo &cy(int v);
-		PipelineCreateInfo &vertex_input(VkPipelineVertexInputStateCreateInfo *v);
-		PipelineCreateInfo &patch_control_points(int v);
-		PipelineCreateInfo &depth_test(bool v);
-		PipelineCreateInfo &depth_write(bool v);
-		PipelineCreateInfo &depth_clamp(bool v);
-		PipelineCreateInfo &primitiveTopology(VkPrimitiveTopology v);
-		PipelineCreateInfo &polygonMode(VkPolygonMode v);
-		PipelineCreateInfo &cullMode(VkCullModeFlagBits v);
-		PipelineCreateInfo &addBlendAttachmentState(bool enable, 
-			VkBlendFactor fsrc_color = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_color = VK_BLEND_FACTOR_ZERO, 
-			VkBlendFactor fsrc_alpha = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_alpha = VK_BLEND_FACTOR_ZERO);
-		PipelineCreateInfo &addDynamicState(VkDynamicState v);
-		inline PipelineCreateInfo &addShader(const std::string &filename, const std::initializer_list<std::string> &defines)
+		inline PipelineCreateInfo &cy(int v) { _cy = v; return *this; }
+		inline PipelineCreateInfo &vertex_input(VkPipelineVertexInputStateCreateInfo *v) { _vertex_input = v; return *this; }
+		inline PipelineCreateInfo &patch_control_points(int v) { _patch_control_points = v; return *this; }
+		inline PipelineCreateInfo &depth_test(bool v) { _depth_test = v; return *this; }
+		inline PipelineCreateInfo &depth_write(bool v) { _depth_write = v; return *this; }
+		inline PipelineCreateInfo &depth_clamp(bool v) { _depth_clamp = v; return *this; }
+		inline PipelineCreateInfo &primitiveTopology(VkPrimitiveTopology v) { _primitiveTopology = v; return *this; }
+		inline PipelineCreateInfo &polygonMode(VkPolygonMode v) { _polygonMode = v; return *this; }
+		inline PipelineCreateInfo &cullMode(VkCullModeFlagBits v) { _cullMode = v; return *this; }
+		inline PipelineCreateInfo &addBlendAttachmentState(bool enable,
+			VkBlendFactor fsrc_color = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_color = VK_BLEND_FACTOR_ZERO,
+			VkBlendFactor fsrc_alpha = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_alpha = VK_BLEND_FACTOR_ZERO)
+		{
+			_blendAttachmentStates.push_back({enable,
+				fsrc_color, fdst_color, VK_BLEND_OP_ADD,
+				fsrc_alpha, fdst_alpha, VK_BLEND_OP_ADD,
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT});
+			return *this;
+		}
+		inline PipelineCreateInfo &addDynamicState(VkDynamicState v) 
+		{ 
+			_dynamicStates.emplace_back(v);
+			return *this; 
+		}
+		inline PipelineCreateInfo &addShader(const std::string &filename, 
+			const std::initializer_list<std::string> &defines)
 		{
 			_shaders.emplace_back(filename, defines);
+			return *this;
+		}
+		inline PipelineCreateInfo &addLink(const std::string &descriptor_name,
+			const std::string &resource_name, int array_element, VkSampler sampler)
+		{
+			LinkResource l;
+			l.descriptor_name = descriptor_name;
+			l.resource_name = resource_name;
+			l.array_element = array_element;
+			l.vkSampler = sampler;
+			links.push_back(l);
 			return *this;
 		}
 	};
@@ -203,12 +227,13 @@ namespace tke
 		std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts;
 		std::shared_ptr<PipelineLayout> pipelineLayout;
 
-		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
+		//VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
 		RenderPass *renderPass;
 		int subpassIndex;
 		VkPipeline pipeline = 0;
 		DescriptorSet *descriptorSet = nullptr;
 
+		Pipeline(PipelineCreateInfo &info, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds = false);
 		Pipeline(const std::string &_filename, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds = false);
 		~Pipeline();
 		void linkDescriptors(DescriptorSet *set, Resource *resource);

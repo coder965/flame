@@ -53,6 +53,292 @@ namespace tke
 		return v;
 	}
 
+
+	Pipeline::Pipeline(PipelineCreateInfo &info, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
+	{
+		std::vector<std::vector<VkDescriptorSetLayoutBinding>> vkDescriptors;
+		std::vector<VkPushConstantRange> vkPushConstantRanges;
+		std::vector<VkPipelineShaderStageCreateInfo> vkStages;
+
+		for (auto &sdesc : info._shaders)
+		{
+			std::shared_ptr<Shader> s;
+
+			for (auto it = loaded_shaders.begin(); it != loaded_shaders.end(); )
+			{
+				s = it->lock();
+				if (s)
+				{
+					if (s->filename == sdesc.first && s->defines.size() == sdesc.second.size())
+					{
+						bool same = true;
+						for (int i = 0; i < sdesc.second.size(); i++)
+						{
+							if (s->defines[i] != sdesc.second[i])
+							{
+								same = false;
+								break;
+							}
+						}
+
+						if (same)
+							goto next_shader;
+					}
+
+					it++;
+				}
+				else
+					it = loaded_shaders.erase(it);
+			}
+
+			s = std::make_shared<Shader>(sdesc.first, sdesc.second);
+			loaded_shaders.push_back(s);
+
+		next_shader:
+
+			{
+				VkPipelineShaderStageCreateInfo info = {};
+				info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+				info.pName = "main";
+				info.stage = (VkShaderStageFlagBits)_toVkStage(s->type);
+				info.module = s->vkModule;
+				vkStages.push_back(info);
+
+				if (vkDescriptors.size() < s->descriptors.size())
+				{
+					vkDescriptors.resize(s->descriptors.size());
+					descriptorSetLayouts.resize(s->descriptors.size());
+				}
+
+				for (auto set = 0; set < s->descriptors.size(); set++)
+				{
+					for (auto &d : s->descriptors[set])
+					{
+						auto found = false;
+						for (auto &b : vkDescriptors[set])
+						{
+							if (b.binding == d.binding)
+							{
+								b.stageFlags |= _toVkStage(s->type);
+								found = true;
+								break;
+							}
+						}
+						if (found) continue;
+
+						VkDescriptorSetLayoutBinding b = {};
+						b.descriptorType = _vkDescriptorType(d.type);
+						b.binding = d.binding;
+						b.descriptorCount = d.count;
+						b.stageFlags = _toVkStage(s->type);
+						vkDescriptors[set].push_back(b);
+					}
+				}
+				for (auto &p : s->pushConstantRanges)
+				{
+					auto found = false;
+					for (auto &r : vkPushConstantRanges)
+					{
+						if (r.offset == p.offset & r.size == p.size)
+						{
+							r.stageFlags |= _toVkStage(s->type);
+							found = true;
+							break;
+						}
+					}
+					if (found) continue;
+
+					VkPushConstantRange r = {};
+					r.offset = p.offset;
+					r.size = p.size;
+					r.stageFlags = _toVkStage(s->type);
+					vkPushConstantRanges.push_back(r);
+				}
+			}
+
+			shaders.push_back(s);
+		}
+
+		renderPass = _renderPass;
+		subpassIndex = _subpassIndex;
+
+		if (cx == -1)
+			cx = tke::resCx;
+		if (cy == -1)
+			cy = tke::resCy;
+
+		if (cx == 0 && cy == 0)
+		{
+			info._dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+			info._dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+		}
+
+		for (auto set = 0; set < vkDescriptors.size(); set++)
+			descriptorSetLayouts[set] = getDescriptorSetLayout(vkDescriptors[set].size(), vkDescriptors[set].data());
+
+		{
+			bool found = false;
+			for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); )
+			{
+				auto p = it->lock();
+
+				if (p)
+				{
+					if (p->descriptorSetLayouts.size() == descriptorSetLayouts.size() && p->pushConstantRanges.size() == vkPushConstantRanges.size())
+					{
+						bool same = true;
+						for (auto i = 0; i < descriptorSetLayouts.size(); i++)
+						{
+							if (p->descriptorSetLayouts[i] != descriptorSetLayouts[i]->v)
+							{
+								same = false;
+								break;
+							}
+						}
+						for (auto i = 0; i < vkPushConstantRanges.size(); i++)
+						{
+							auto &pc = p->pushConstantRanges[i];
+							if (pc.offset != vkPushConstantRanges[i].offset || pc.size != vkPushConstantRanges[i].size ||
+								pc.stageFlags != vkPushConstantRanges[i].stageFlags)
+							{
+								same = false;
+								break;
+							}
+						}
+						if (same)
+						{
+							pipelineLayout = p;
+							found = true;
+							break;
+						}
+					}
+
+					it++;
+				}
+				else
+					it = pipelineLayouts.erase(it);
+			}
+
+			if (!found)
+			{
+				auto p = std::make_shared <PipelineLayout>();
+				for (auto d : descriptorSetLayouts)
+					p->descriptorSetLayouts.push_back(d->v);
+				p->pushConstantRanges.insert(p->pushConstantRanges.begin(), vkPushConstantRanges.begin(), vkPushConstantRanges.end());
+
+				VkPipelineLayoutCreateInfo info = {};
+				info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+				info.setLayoutCount = p->descriptorSetLayouts.size();
+				info.pSetLayouts = p->descriptorSetLayouts.data();
+				info.pushConstantRangeCount = p->pushConstantRanges.size();
+				info.pPushConstantRanges = p->pushConstantRanges.data();
+
+				device.mtx.lock();
+				auto res = vkCreatePipelineLayout(device.v, &info, nullptr, &p->v);
+				assert(res == VK_SUCCESS);
+				device.mtx.unlock();
+
+				pipelineLayouts.push_back(p);
+
+				pipelineLayout = p;
+			}
+		}
+
+		VkPipelineInputAssemblyStateCreateInfo assemblyState = {};
+		assemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		assemblyState.topology = info._primitiveTopology;
+		assemblyState.primitiveRestartEnable = VK_FALSE;
+
+		VkPipelineTessellationStateCreateInfo tessState = {};
+		tessState.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+		tessState.patchControlPoints = info._patch_control_points;
+
+		VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilState.depthTestEnable = depth_test;
+		depthStencilState.depthWriteEnable = depth_write;
+		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+
+		VkViewport viewport;
+		viewport.width = (float)cx;
+		viewport.height = (float)cy;
+		viewport.minDepth = (float)0.0f;
+		viewport.maxDepth = (float)1.0f;
+		viewport.x = 0;
+		viewport.y = 0;
+
+		VkRect2D scissor;
+		scissor.extent.width = cx;
+		scissor.extent.height = cy;
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+
+		VkPipelineViewportStateCreateInfo viewportState = {};
+		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportState.viewportCount = 1;
+		viewportState.scissorCount = 1;
+		viewportState.pScissors = &scissor;
+		viewportState.pViewports = &viewport;
+
+		VkPipelineRasterizationStateCreateInfo rasterState = {};
+		rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterState.polygonMode = info._polygonMode;
+		rasterState.cullMode = info._cullMode;
+		rasterState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterState.depthClampEnable = info._depth_clamp;
+		rasterState.rasterizerDiscardEnable = VK_FALSE;
+		rasterState.lineWidth = 1.f;
+		rasterState.depthBiasEnable = VK_FALSE;
+
+		VkPipelineColorBlendStateCreateInfo blendState = {};
+		if (info._blendAttachmentStates.size() == 0)
+			info.addBlendAttachmentState(false);
+
+		blendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		blendState.logicOpEnable = VK_FALSE;
+		blendState.logicOp = VK_LOGIC_OP_COPY;
+		blendState.attachmentCount = info._blendAttachmentStates.size();
+		blendState.pAttachments = info._blendAttachmentStates.data();
+
+		VkPipelineMultisampleStateCreateInfo multisampleState = {};
+		multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampleState.sampleShadingEnable = VK_FALSE;
+		multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+		VkPipelineDynamicStateCreateInfo dynamicState = {};
+		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicState.dynamicStateCount = info._dynamicStates.size();
+		dynamicState.pDynamicStates = info._dynamicStates.data();
+
+		VkGraphicsPipelineCreateInfo pipelineInfo = {};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipelineInfo.layout = pipelineLayout->v;
+		pipelineInfo.stageCount = vkStages.size();
+		pipelineInfo.pStages = vkStages.data();
+		pipelineInfo.pVertexInputState = info._vertex_input;
+		pipelineInfo.pInputAssemblyState = &assemblyState;
+		pipelineInfo.pTessellationState = info._patch_control_points ? &tessState : nullptr;
+		pipelineInfo.pDepthStencilState = &depthStencilState;
+		pipelineInfo.pViewportState = &viewportState;
+		pipelineInfo.pRasterizationState = &rasterState;
+		pipelineInfo.pColorBlendState = &blendState;
+		pipelineInfo.renderPass = renderPass->v;
+		pipelineInfo.subpass = subpassIndex;
+		pipelineInfo.pMultisampleState = &multisampleState;
+		pipelineInfo.pDynamicState = info._dynamicStates.size() ? &dynamicState : nullptr;
+
+		device.mtx.lock();
+		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);
+		assert(res == VK_SUCCESS);
+		device.mtx.unlock();
+
+		if (need_default_ds)
+		{
+			descriptorSet = new DescriptorSet(this);
+			linkDescriptors(descriptorSet, &globalResource);
+		}
+	}
+
 	Pipeline::Pipeline(const std::string &_filename, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds)
 	{
 		filename = _filename;
@@ -220,6 +506,7 @@ namespace tke
 			}
 		}
 
+		VkPipelineVertexInputStateCreateInfo *pVertexInputState = nullptr;
 		if (!pVertexInputState)
 		{
 			switch (vertex_input_type)

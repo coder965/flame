@@ -261,7 +261,15 @@ namespace tke
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}
 
-		plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_window, 0, true);
+		//plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_window, 0, true);
+		plainPipeline_2d = new Pipeline(PipelineCreateInfo()
+			.vertex_input(&plain2dVertexInputState)
+			.cullMode(VK_CULL_MODE_NONE)
+			.addBlendAttachmentState(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+			.addDynamicState(VK_DYNAMIC_STATE_SCISSOR)
+			.addShader(enginePath + "pipeline/plain2d/plain2d.vert", {})
+			.addShader(enginePath + "pipeline/plain2d/plain2d.frag", {}),
+			renderPass_window, 0, true);
 
 		if (!only_2d)
 		{

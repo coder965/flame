@@ -160,9 +160,9 @@ void SceneMonitorWidget::show()
 	}
 
 	{
-		char *names[] = {
-			ICON_FA_MOUSE_POINTER, "M", "R", "S"
-		};
+		//char *names[] = {
+		//	ICON_FA_MOUSE_POINTER, "M", "R", "S"
+		//};
 		for (int i = 0; i < 4; i++)
 		{
 			auto needPopup = false;
@@ -173,7 +173,7 @@ void SceneMonitorWidget::show()
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(0.f, 0.8f, 0.8f).Value);
 				needPopup = true;
 			}
-			if (ImGui::Button(names[i])) transformerTool->mode = TransformerTool::Mode(i);
+			//if (ImGui::Button(names[i])) transformerTool->mode = TransformerTool::Mode(i);
 			if (needPopup) ImGui::PopStyleColor(3);
 			if (i < 3) ImGui::SameLine();
 		}
