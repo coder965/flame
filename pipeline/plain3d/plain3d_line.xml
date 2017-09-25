@@ -1,5 +1,0 @@
-<pipeline name="Plain3d.Pipeline" cx="-1" cy="-1" vertex_input_type="line" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="line_list" polygon_mode="line" cull_mode="none">
-  <shader filename="plain3d_line.vert"/>
-  <shader filename="plain3d_line.frag"/>
-</pipeline>
-

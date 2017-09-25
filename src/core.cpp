@@ -261,7 +261,6 @@ namespace tke
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
 		}
 
-		//plainPipeline_2d = new Pipeline(enginePath + "pipeline/plain2d/plain2d.xml", renderPass_window, 0, true);
 		plainPipeline_2d = new Pipeline(PipelineCreateInfo()
 			.vertex_input(&plain2dVertexInputState)
 			.cullMode(VK_CULL_MODE_NONE)
@@ -273,14 +272,71 @@ namespace tke
 
 		if (!only_2d)
 		{
-			plainPipeline_3d = new Pipeline(enginePath + "pipeline/plain3d/plain3d.xml", renderPass_depth_clear_image8, 0);
-			plainPipeline_3d_anim = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim.xml", renderPass_depth_clear_image8, 0, true);
-			plainPipeline_3d_normal = new Pipeline(enginePath + "pipeline/plain3d/plain3d_normal.xml", renderPass_depth_clear_image8, 0);
-			plainPipeline_3d_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_tex.xml", renderPass_depth_clear_image8, 0);
-			plainPipeline_3d_anim_tex = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_tex.xml", renderPass_depth_clear_image8, 0, true);
-			plainPipeline_3d_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_wire.xml", renderPass_image8, 0);
-			plainPipeline_3d_anim_wire = new Pipeline(enginePath + "pipeline/plain3d/plain3d_anim_wire.xml", renderPass_image8, 0, true);
-			plainPipeline_3d_line = new Pipeline(enginePath + "pipeline/plain3d/plain3d_line.xml", renderPass_image8, 0);
+			plainPipeline_3d = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {}), 
+				renderPass_depth_clear_image8, 0);
+			plainPipeline_3d_anim = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&animatedVertexInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {"ANIM"})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {"ANIM"}), 
+				renderPass_depth_clear_image8, 0, true);
+			plainPipeline_3d_normal = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {"USE_NORMAL"})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {"USE_NORMAL"}),
+				renderPass_depth_clear_image8, 0);
+			plainPipeline_3d_tex = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {"USE_TEX"})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {"USE_TEX"}), 
+				renderPass_depth_clear_image8, 0);
+			plainPipeline_3d_anim_tex = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&animatedVertexInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
+				renderPass_depth_clear_image8, 0, true);
+			plainPipeline_3d_wire = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexInputState)
+				.polygonMode(VK_POLYGON_MODE_LINE)
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {}), 
+				renderPass_image8, 0);
+			plainPipeline_3d_anim_wire = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&animatedVertexInputState)
+				.polygonMode(VK_POLYGON_MODE_LINE)
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "pipeline/plain3d/plain3d.vert", {"ANIM"})
+				.addShader(enginePath + "pipeline/plain3d/plain3d.frag", {"ANIM"}),
+				renderPass_image8, 0, true);
+			plainPipeline_3d_line = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&lineVertexInputState)
+				.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+				.polygonMode(VK_POLYGON_MODE_LINE)
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "pipeline/plain3d/plain3d_line.vert", {})
+				.addShader(enginePath + "pipeline/plain3d/plain3d_line.frag", {}), 
+				renderPass_image8, 0);
 			plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 			staticVertexBuffer = new VertexBuffer();
