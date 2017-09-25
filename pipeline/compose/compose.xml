@@ -1,6 +1,0 @@
-<pipeline name="compose.Pipeline" cx="-1" cy="-1" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<link binding="-1" array_element="0" descriptor_name="source" resource_name="Main.Image" sampler="plain_unnormalized"/>
-	<shader filename="../fullscreen.vert"/>
-  <shader filename="compose.frag"/>
-</pipeline>
-

@@ -1,5 +1,0 @@
-<pipeline name="Scattering.Pipeline" cx="512" cy="256" patch_control_points="0" depth_test="false" depth_write="false" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="none">
-	<shader filename="../fullscreenUv.vert"/>
-  <shader filename="scattering.frag"/>
-</pipeline>
-

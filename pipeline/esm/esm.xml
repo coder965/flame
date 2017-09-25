@@ -1,9 +1,0 @@
-<pipeline name="Depth.Pipeline" cx="2048" cy="2048" vertex_input_type="normal" depth_test="true" depth_write="true" depth_clamp="false" primitive_topology="triangle_list" polygon_mode="fill" cull_mode="back">
-  <link binding="-1" array_element="0" descriptor_name="CONSTANT" resource_name="Constant.UniformBuffer" sampler="none"/>
-	<link binding="-1" array_element="0" descriptor_name="OBJECT" resource_name="StaticObjectMatrix.UniformBuffer" sampler="none"/>
-  <link binding="-1" array_element="0" descriptor_name="SHADOW" resource_name="Shadow.UniformBuffer" sampler="none"/>
-	<link binding="-1" array_element="0" descriptor_name="MATERIAL" resource_name="Material.UniformBuffer" sampler="none"/>
-  <shader filename="esm.vert"/>
-  <shader filename="esm.frag"/>
-</pipeline>
-

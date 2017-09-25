@@ -1289,23 +1289,135 @@ namespace tke
 
 		sceneRenderPass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
 
-		scatteringPipeline = new Pipeline(enginePath + "pipeline/sky/scattering.xml", renderPass_image16, 0);
-		downsamplePipeline = new Pipeline(enginePath + "pipeline/sky/downsample.xml", renderPass_image16, 0, true);
-		convolvePipeline = new Pipeline(enginePath + "pipeline/sky/convolve.xml", renderPass_image16, 0, true);
-		mrtPipeline = new Pipeline(enginePath + "pipeline/deferred/mrt.xml", sceneRenderPass, 0);
-		mrtAnimPipeline = new Pipeline(enginePath + "pipeline/deferred/mrt_anim.xml", sceneRenderPass, 0);
+		scatteringPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(512).cy(256)
+			.cullMode(VK_CULL_MODE_NONE)
+			.addShader(enginePath + "pipeline/fullscreenUv.vert", {})
+			.addShader(enginePath + "pipeline/sky/scattering.frag", {}), 
+			renderPass_image16, 0);
+		downsamplePipeline = new Pipeline(PipelineCreateInfo()
+			.cullMode(VK_CULL_MODE_NONE)
+			.addShader(enginePath + "pipeline/fullscreenUv.vert", {})
+			.addShader(enginePath + "pipeline/sky/downsample.frag", {})
+			, renderPass_image16, 0, true);
+		convolvePipeline = new Pipeline(PipelineCreateInfo()
+			.cullMode(VK_CULL_MODE_NONE)
+			.addShader(enginePath + "pipeline/fullscreenUv.vert", {})
+			.addShader(enginePath + "pipeline/sky/convolve.frag", {}), 
+			renderPass_image16, 0, true);
+		mrtPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(-1).cy(-1)
+			.vertex_input(&vertexInputState)
+			.depth_test(true)
+			.depth_write(true)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addShader(enginePath + "pipeline/deferred/mrt.vert", {})
+			.addShader(enginePath + "pipeline/deferred/mrt.frag", {})
+			.addLink("MATRIX", "Matrix.UniformBuffer")
+			.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
+			.addLink("MATERIAL", "Material.UniformBuffer"),
+			sceneRenderPass, 0);
+		mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(-1).cy(-1)
+			.vertex_input(&animatedVertexInputState)
+			.depth_test(true)
+			.depth_write(true)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addShader(enginePath + "pipeline/deferred/mrt.vert", {"ANIM"})
+			.addShader(enginePath + "pipeline/deferred/mrt.frag", {"ANIM"})
+			.addLink("MATRIX", "Matrix.UniformBuffer")
+			.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
+			.addLink("MATERIAL", "Material.UniformBuffer"), 
+			sceneRenderPass, 0);
 		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
-		terrainPipeline = new Pipeline(enginePath + "pipeline/deferred/terrain.xml", sceneRenderPass, 0);
+		terrainPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(-1).cy(-1)
+			.patch_control_points(4)
+			.depth_test(true)
+			.depth_write(true)
+			.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addShader(enginePath + "pipeline/deferred/terrain.vert", {})
+			.addShader(enginePath + "pipeline/deferred/terrain.tesc", {})
+			.addShader(enginePath + "pipeline/deferred/terrain.tese", {})
+			.addShader(enginePath + "pipeline/deferred/terrain.frag", {})
+			.addLink("MATRIX", "Matrix.UniformBuffer")
+			.addLink("TERRAIN", "Terrain.UniformBuffer"), 
+			sceneRenderPass, 0);
 		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
 		terr_blendMap_position = terrainPipeline->descriptorPosition("blendMap");
 		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
 		terr_normalMap_position = terrainPipeline->descriptorPosition("normalMaps");
-		waterPipeline = new Pipeline(enginePath + "pipeline/deferred/water.xml", sceneRenderPass, 0);
-		esmPipeline = new Pipeline(enginePath + "pipeline/esm/esm.xml", renderPass_depth_clear_image8_clear, 0);
-		esmAnimPipeline = new Pipeline(enginePath + "pipeline/esm/esm_anim.xml", renderPass_depth_clear_image8_clear, 0);
-		deferredPipeline = new Pipeline(enginePath + "pipeline/deferred/deferred.xml", sceneRenderPass, 1);
+		waterPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(-1).cy(-1)
+			.patch_control_points(4)
+			.depth_test(true)
+			.depth_write(true)
+			.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addBlendAttachmentState(false)
+			.addShader(enginePath + "pipeline/deferred/water.vert", {})
+			.addShader(enginePath + "pipeline/deferred/water.tesc", {})
+			.addShader(enginePath + "pipeline/deferred/water.tese", {})
+			.addShader(enginePath + "pipeline/deferred/water.frag", {})
+			.addLink("MATRIX", "Matrix.UniformBuffer")
+			.addLink("WATER", "Water.UniformBuffer"), 
+			sceneRenderPass, 0);
+		esmPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(2048).cy(2048)
+			.vertex_input(&vertexInputState)
+			.depth_test(true)
+			.depth_write(true)
+			.addShader(enginePath + "pipeline/esm/esm.vert", {})
+			.addShader(enginePath + "pipeline/esm/esm.frag", {})
+			.addLink("CONSTANT", "Constant.UniformBuffer")
+			.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
+			.addLink("SHADOW", "Shadow.UniformBuffer")
+			.addLink("MATERIAL", "Material.UniformBuffer"), 
+			renderPass_depth_clear_image8_clear, 0);
+		esmAnimPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(2048).cy(2048)
+			.vertex_input(&animatedVertexInputState)
+			.depth_test(true)
+			.depth_write(true)
+			.addShader(enginePath + "pipeline/esm/esm.vert", {"ANIM"})
+			.addShader(enginePath + "pipeline/esm/esm.frag", {"ANIM"})
+			.addLink("CONSTANT", "Constant.UniformBuffer")
+			.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
+			.addLink("SHADOW", "Shadow.UniformBuffer")
+			.addLink("MATERIAL", "Material.UniformBuffer"), 
+			renderPass_depth_clear_image8_clear, 0);
+		deferredPipeline = new Pipeline(PipelineCreateInfo()
+			.cx(-1).cy(-1)
+			.cullMode(VK_CULL_MODE_NONE)
+			.addShader(enginePath + "pipeline/fullscreenView.vert", {})
+			.addShader(enginePath + "pipeline/deferred/deferred.frag", {"USE_PBR", "USE_IBL"})
+			.addLink("CONSTANT", "Constant.UniformBuffer")
+			.addLink("MATRIX", "Matrix.UniformBuffer")
+			.addLink("AMBIENT", "Ambient.UniformBuffer")
+			.addLink("LIGHT", "Light.UniformBuffer")
+			.addLink("envrSampler", "Envr.Image", 0, colorSampler)
+			.addLink("depthSampler", "Depth.Image", 0, plainUnnormalizedSampler)
+			.addLink("albedoAlphaSampler", "AlbedoAlpha.Image", 0, plainUnnormalizedSampler)
+			.addLink("normalHeightSampler", "NormalHeight.Image", 0, plainUnnormalizedSampler)
+			.addLink("specRoughnessSampler", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
+			.addLink("SHADOW", "Shadow.UniformBuffer"), 
+			sceneRenderPass, 1);
 		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
 		defe_shad_position = deferredPipeline->descriptorPosition("shadowSampler");
-		composePipeline = new Pipeline(enginePath + "pipeline/compose/compose.xml", sceneRenderPass, 2);
+		composePipeline = new Pipeline(PipelineCreateInfo()
+			.cx(-1).cy(-1)
+			.cullMode(VK_CULL_MODE_NONE)
+			.addShader(enginePath + "pipeline/fullscreen.vert", {})
+			.addShader(enginePath + "pipeline/compose/compose.frag", {})
+			.addLink("source", "Main.Image", 0, plainUnnormalizedSampler), 
+			sceneRenderPass, 2);
 	}
 }
