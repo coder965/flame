@@ -1292,18 +1292,18 @@ namespace tke
 		scatteringPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(512).cy(256)
 			.cullMode(VK_CULL_MODE_NONE)
-			.addShader(enginePath + "pipeline/fullscreenUv.vert", {})
-			.addShader(enginePath + "pipeline/sky/scattering.frag", {}), 
+			.addShader(enginePath + "shader/fullscreenUv.vert", {})
+			.addShader(enginePath + "shader/sky/scattering.frag", {}), 
 			renderPass_image16, 0);
 		downsamplePipeline = new Pipeline(PipelineCreateInfo()
 			.cullMode(VK_CULL_MODE_NONE)
-			.addShader(enginePath + "pipeline/fullscreenUv.vert", {})
-			.addShader(enginePath + "pipeline/sky/downsample.frag", {})
+			.addShader(enginePath + "shader/fullscreenUv.vert", {})
+			.addShader(enginePath + "shader/sky/downsample.frag", {})
 			, renderPass_image16, 0, true);
 		convolvePipeline = new Pipeline(PipelineCreateInfo()
 			.cullMode(VK_CULL_MODE_NONE)
-			.addShader(enginePath + "pipeline/fullscreenUv.vert", {})
-			.addShader(enginePath + "pipeline/sky/convolve.frag", {}), 
+			.addShader(enginePath + "shader/fullscreenUv.vert", {})
+			.addShader(enginePath + "shader/sky/convolve.frag", {}), 
 			renderPass_image16, 0, true);
 		mrtPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
@@ -1313,8 +1313,8 @@ namespace tke
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
-			.addShader(enginePath + "pipeline/deferred/mrt.vert", {})
-			.addShader(enginePath + "pipeline/deferred/mrt.frag", {})
+			.addShader(enginePath + "shader/deferred/mrt.vert", {})
+			.addShader(enginePath + "shader/deferred/mrt.frag", {})
 			.addLink("MATRIX", "Matrix.UniformBuffer")
 			.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
 			.addLink("MATERIAL", "Material.UniformBuffer"),
@@ -1327,8 +1327,8 @@ namespace tke
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
-			.addShader(enginePath + "pipeline/deferred/mrt.vert", {"ANIM"})
-			.addShader(enginePath + "pipeline/deferred/mrt.frag", {"ANIM"})
+			.addShader(enginePath + "shader/deferred/mrt.vert", {"ANIM"})
+			.addShader(enginePath + "shader/deferred/mrt.frag", {"ANIM"})
 			.addLink("MATRIX", "Matrix.UniformBuffer")
 			.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
 			.addLink("MATERIAL", "Material.UniformBuffer"), 
@@ -1343,10 +1343,10 @@ namespace tke
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
-			.addShader(enginePath + "pipeline/deferred/terrain.vert", {})
-			.addShader(enginePath + "pipeline/deferred/terrain.tesc", {})
-			.addShader(enginePath + "pipeline/deferred/terrain.tese", {})
-			.addShader(enginePath + "pipeline/deferred/terrain.frag", {})
+			.addShader(enginePath + "shader/deferred/terrain.vert", {})
+			.addShader(enginePath + "shader/deferred/terrain.tesc", {})
+			.addShader(enginePath + "shader/deferred/terrain.tese", {})
+			.addShader(enginePath + "shader/deferred/terrain.frag", {})
 			.addLink("MATRIX", "Matrix.UniformBuffer")
 			.addLink("TERRAIN", "Terrain.UniformBuffer"), 
 			sceneRenderPass, 0);
@@ -1363,10 +1363,10 @@ namespace tke
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
 			.addBlendAttachmentState(false)
-			.addShader(enginePath + "pipeline/deferred/water.vert", {})
-			.addShader(enginePath + "pipeline/deferred/water.tesc", {})
-			.addShader(enginePath + "pipeline/deferred/water.tese", {})
-			.addShader(enginePath + "pipeline/deferred/water.frag", {})
+			.addShader(enginePath + "shader/deferred/water.vert", {})
+			.addShader(enginePath + "shader/deferred/water.tesc", {})
+			.addShader(enginePath + "shader/deferred/water.tese", {})
+			.addShader(enginePath + "shader/deferred/water.frag", {})
 			.addLink("MATRIX", "Matrix.UniformBuffer")
 			.addLink("WATER", "Water.UniformBuffer"), 
 			sceneRenderPass, 0);
@@ -1375,8 +1375,8 @@ namespace tke
 			.vertex_input(&vertexInputState)
 			.depth_test(true)
 			.depth_write(true)
-			.addShader(enginePath + "pipeline/esm/esm.vert", {})
-			.addShader(enginePath + "pipeline/esm/esm.frag", {})
+			.addShader(enginePath + "shader/esm/esm.vert", {})
+			.addShader(enginePath + "shader/esm/esm.frag", {})
 			.addLink("CONSTANT", "Constant.UniformBuffer")
 			.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
 			.addLink("SHADOW", "Shadow.UniformBuffer")
@@ -1387,8 +1387,8 @@ namespace tke
 			.vertex_input(&animatedVertexInputState)
 			.depth_test(true)
 			.depth_write(true)
-			.addShader(enginePath + "pipeline/esm/esm.vert", {"ANIM"})
-			.addShader(enginePath + "pipeline/esm/esm.frag", {"ANIM"})
+			.addShader(enginePath + "shader/esm/esm.vert", {"ANIM"})
+			.addShader(enginePath + "shader/esm/esm.frag", {"ANIM"})
 			.addLink("CONSTANT", "Constant.UniformBuffer")
 			.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
 			.addLink("SHADOW", "Shadow.UniformBuffer")
@@ -1397,8 +1397,8 @@ namespace tke
 		deferredPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
 			.cullMode(VK_CULL_MODE_NONE)
-			.addShader(enginePath + "pipeline/fullscreenView.vert", {})
-			.addShader(enginePath + "pipeline/deferred/deferred.frag", {"USE_PBR", "USE_IBL"})
+			.addShader(enginePath + "shader/fullscreenView.vert", {})
+			.addShader(enginePath + "shader/deferred/deferred.frag", {"USE_PBR", "USE_IBL"})
 			.addLink("CONSTANT", "Constant.UniformBuffer")
 			.addLink("MATRIX", "Matrix.UniformBuffer")
 			.addLink("AMBIENT", "Ambient.UniformBuffer")
@@ -1415,8 +1415,8 @@ namespace tke
 		composePipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
 			.cullMode(VK_CULL_MODE_NONE)
-			.addShader(enginePath + "pipeline/fullscreen.vert", {})
-			.addShader(enginePath + "pipeline/compose/compose.frag", {})
+			.addShader(enginePath + "shader/fullscreen.vert", {})
+			.addShader(enginePath + "shader/compose/compose.frag", {})
 			.addLink("source", "Main.Image", 0, plainUnnormalizedSampler), 
 			sceneRenderPass, 2);
 	}
