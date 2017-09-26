@@ -12,16 +12,6 @@ namespace tke
 
 	static RenderPass *sceneRenderPass = nullptr;
 
-	static int mrt_bone_position = -1;
-
-	static int terr_heightMap_position = -1;
-	static int terr_blendMap_position = -1;
-	static int terr_colorMap_position = -1;
-	static int terr_normalMap_position = -1;
-
-	static int defe_envr_position = -1;
-	static int defe_shad_position = -1;
-
 	struct MatrixBufferShaderStruct
 	{
 		glm::mat4 proj;
@@ -655,55 +645,41 @@ namespace tke
 					endOnceCommandBuffer(cb);
 				}
 
-				{ // update IBL
-					if (defe_envr_position != -1)
-					{
-						static int down_source_position = -1;
-						if (down_source_position == -1) down_source_position = downsamplePipeline->descriptorPosition("source");
-						if (down_source_position != -1)
-						{
-							for (int i = 0; i < 3; i++)
-							{
-								auto cb = begineOnceCommandBuffer();
-								auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
+				// update IBL
+				for (int i = 0; i < 3; i++)
+				{
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
 
-								cb->beginRenderPass(renderPass_image16, fb.get());
-								cb->bindPipeline(downsamplePipeline);
-								cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
-								auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
-								cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-								downsamplePipeline->descriptorSet->setImage(down_source_position, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler);
-								cb->bindDescriptorSet();
-								cb->draw(3);
-								cb->endRenderPass();
+					cb->beginRenderPass(renderPass_image16, fb.get());
+					cb->bindPipeline(downsamplePipeline);
+					cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
+					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
+					downsamplePipeline->descriptorSet->setImage(0, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler);
+					cb->bindDescriptorSet();
+					cb->draw(3);
+					cb->endRenderPass();
 
-								endOnceCommandBuffer(cb);
-							}
-						}
+					endOnceCommandBuffer(cb);
+				}
 
-						static int con_source_position = -1;
-						if (con_source_position == -1) con_source_position = convolvePipeline->descriptorPosition("source");
-						if (con_source_position != -1)
-						{
-							for (int i = 1; i < envrImage->levels.size(); i++)
-							{
-								auto cb = begineOnceCommandBuffer();
-								auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
+				for (int i = 1; i < envrImage->levels.size(); i++)
+				{
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
 
-								cb->beginRenderPass(renderPass_image16, fb.get());
-								cb->bindPipeline(convolvePipeline);
-								auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-								cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
-								cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
-								convolvePipeline->descriptorSet->setImage(con_source_position, 0, envrImageDownsample[i - 1], plainSampler);
-								cb->bindDescriptorSet();
-								cb->draw(3);
-								cb->endRenderPass();
+					cb->beginRenderPass(renderPass_image16, fb.get());
+					cb->bindPipeline(convolvePipeline);
+					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
+					cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
+					convolvePipeline->descriptorSet->setImage(0, 0, envrImageDownsample[i - 1], plainSampler);
+					cb->bindDescriptorSet();
+					cb->draw(3);
+					cb->endRenderPass();
 
-								endOnceCommandBuffer(cb);
-							}
-						}
-					}
+					endOnceCommandBuffer(cb);
 				}
 			}
 				break;
@@ -800,25 +776,19 @@ namespace tke
 
 				terrainBuffer->update(&stru, stagingBuffer);
 
-				if (terr_heightMap_position != -1 && terrain->heightMap)
-					ds_terrain->setImage(terr_heightMap_position, 0, terrain->heightMap, colorBorderSampler);
-				if (terr_blendMap_position != -1 && terrain->blendMap)
-					ds_terrain->setImage(terr_blendMap_position, 0, terrain->blendMap, colorBorderSampler);
-				if (terr_colorMap_position != -1)
+				if (terrain->heightMap)
+					ds_terrain->setImage(TerrainHeightMapBinding, 0, terrain->heightMap, colorBorderSampler);
+				if (terrain->blendMap)
+					ds_terrain->setImage(TerrainBlendMapBinding, 0, terrain->blendMap, colorBorderSampler);
+				for (int i = 0; i < 4; i++)
 				{
-					for (int i = 0; i < 4; i++)
-					{
-						if (terrain->colorMaps[i])
-							ds_terrain->setImage(terr_colorMap_position, i, terrain->colorMaps[i], colorWrapSampler);
-					}
+					if (terrain->colorMaps[i])
+						ds_terrain->setImage(TerrainColorMapsBinding, i, terrain->colorMaps[i], colorWrapSampler);
 				}
-				if (terr_normalMap_position != -1)
+				for (int i = 0; i < 4; i++)
 				{
-					for (int i = 0; i < 4; i++)
-					{
-						if (terrain->normalMaps[i])
-							ds_terrain->setImage(terr_normalMap_position, i, terrain->normalMaps[i], colorWrapSampler);
-					}
+					if (terrain->normalMaps[i])
+						ds_terrain->setImage(TerrainNormalMapsBinding, i, terrain->normalMaps[i], colorWrapSampler);
 				}
 			}
 		}
@@ -904,8 +874,7 @@ namespace tke
 							animatedCommands.push_back(command);
 						}
 
-						if (mrt_bone_position != -1)
-							ds_mrtAnim_bone->setBuffer(mrt_bone_position, animatedIndex, o->animationComponent->boneMatrixBuffer);
+						ds_mrtAnim_bone->setBuffer(0, animatedIndex, o->animationComponent->boneMatrixBuffer);
 
 						animatedObjects.push_back(o.get());
 						animatedIndex++;
@@ -980,8 +949,7 @@ namespace tke
 						range.size = sizeof(glm::mat4);
 						ranges.push_back(range);
 
-						if (defe_shad_position != -1)
-							ds_defe->setImage(defe_shad_position, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1);
+						ds_defe->setImage(ShadowImageBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1);
 					}
 					shadowIndex += 6;
 				}
@@ -1333,7 +1301,6 @@ namespace tke
 			.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
 			.addLink("MATERIAL", "Material.UniformBuffer"), 
 			sceneRenderPass, 0);
-		mrt_bone_position = mrtAnimPipeline->descriptorPosition("BONE");
 		terrainPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
 			.patch_control_points(4)
@@ -1350,10 +1317,6 @@ namespace tke
 			.addLink("MATRIX", "Matrix.UniformBuffer")
 			.addLink("TERRAIN", "Terrain.UniformBuffer"), 
 			sceneRenderPass, 0);
-		terr_heightMap_position = terrainPipeline->descriptorPosition("heightMap");
-		terr_blendMap_position = terrainPipeline->descriptorPosition("blendMap");
-		terr_colorMap_position = terrainPipeline->descriptorPosition("colorMaps");
-		terr_normalMap_position = terrainPipeline->descriptorPosition("normalMaps");
 		waterPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
 			.patch_control_points(4)
@@ -1410,8 +1373,6 @@ namespace tke
 			.addLink("specRoughnessSampler", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
 			.addLink("SHADOW", "Shadow.UniformBuffer"), 
 			sceneRenderPass, 1);
-		defe_envr_position = deferredPipeline->descriptorPosition("envrSampler");
-		defe_shad_position = deferredPipeline->descriptorPosition("shadowSampler");
 		composePipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
 			.cullMode(VK_CULL_MODE_NONE)

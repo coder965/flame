@@ -4,6 +4,7 @@
 
 #include "shader.h"
 #include "../core.h"
+#include "../../SPIRV-Cross/spirv_glsl.hpp"
 
 namespace tke
 {
@@ -33,8 +34,12 @@ namespace tke
 
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines)
 	{
+		std::experimental::filesystem::path path(_filename);
+		// format the shader path, so that they can reuse if they refer the same one
+		filename = std::experimental::filesystem::canonical(path).string();
+		defines = _defines;
+
 		{
-			std::experimental::filesystem::path path(_filename);
 			auto ext = path.extension().string();
 			if (ext == ".vert")
 				stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -46,25 +51,99 @@ namespace tke
 				stage = VK_SHADER_STAGE_GEOMETRY_BIT;
 			else if (ext == ".frag")
 				stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-			// format the shader path, so that they can reuse if they refer the same one
-			filename = std::experimental::filesystem::canonical(path).string();
 		}
 
-		defines.insert(defines.begin(), _defines.begin(), _defines.end());
+		auto shaderFileLastModificationTime = std::experimental::filesystem::last_write_time(path);
+
+		auto spvFilename = filename;
+		for (auto &d : defines)
+			spvFilename += "." + d;
+		spvFilename += ".spv";
+
+		bool spvUpToDate = false;
+		if (std::experimental::filesystem::exists(spvFilename))
+		{
+			if (std::experimental::filesystem::last_write_time(spvFilename) > shaderFileLastModificationTime)
+				spvUpToDate = true;
+			else
+				std::experimental::filesystem::remove(spvFilename);
+		}
+
+		if (!spvUpToDate)
+		{
+			std::string cmd_str("glslc ");
+			cmd_str += filename + " ";
+			for (auto &d : defines)
+				cmd_str += "-D" + d + " ";
+			cmd_str += " -flimit-file ";
+			cmd_str += enginePath + "shader/my_config.conf";
+			cmd_str += " -fauto-bind-uniforms ";
+			cmd_str += " -o " + spvFilename;
+			system(cmd_str.c_str());
+			if (!std::experimental::filesystem::exists(spvFilename))
+			{
+				assert(0); // shader compile error
+				return;
+			}
+		}
+
+		// do reflection
+		{
+			std::ifstream spv_file(spvFilename, std::ios::binary);
+			auto size = tke::file_length(spv_file);
+			std::vector<unsigned int> spv_data(size / sizeof(unsigned int));
+			spv_file.read((char*)spv_data.data(), size);
+
+			spirv_cross::CompilerGLSL glsl(std::move(spv_data));
+
+			spirv_cross::ShaderResources resources = glsl.get_shader_resources();
+
+			for (auto &r : resources.uniform_buffers)
+			{
+				unsigned int set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
+				unsigned int binding = glsl.get_decoration(r.id, spv::DecorationBinding);
+
+				if (set >= descriptors.size())
+					descriptors.resize(set + 1);
+
+				Descriptor d;
+				//d.name = match[6].str();
+				d.binding = binding;
+				d.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				d.count = 1;
+				descriptors[set].push_back(d);
+			}
+			for (auto &r : resources.sampled_images)
+			{
+				unsigned int set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
+				unsigned int binding = glsl.get_decoration(r.id, spv::DecorationBinding);
+
+				if (set >= descriptors.size())
+					descriptors.resize(set + 1);
+
+				Descriptor d;
+				//d.name = match[6].str();
+				d.binding = binding;
+				d.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				d.count = 1;
+				descriptors[set].push_back(d);
+			}
+			for (auto &r : resources.push_constant_buffers)
+			{
+				unsigned int set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
+				unsigned int binding = glsl.get_decoration(r.id, spv::DecorationBinding);
+			}
+		}
 
 		// Warnning:push constants in different stages must be merged, or else they would not reflect properly.
 
 		{
-			auto file_path = std::experimental::filesystem::path(filename).parent_path().string();
+			auto file_path = path.parent_path().string();
 			tke::OnceFileBuffer file(filename);
 			std::stringstream ss(file.data);
 
 			int lineNum = 0;
 			std::string stageText = "";
-			stageText += "#version 450 core\n"; lineNum++;
-			stageText += "#extension GL_ARB_separate_shader_objects : enable\n"; lineNum++;
-			stageText += "#extension GL_ARB_shading_language_420pack : enable\n\n"; lineNum++;
 			for (auto &m : defines)
 			{
 				stageText += "#define " + m + "\n";

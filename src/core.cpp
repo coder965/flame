@@ -337,7 +337,6 @@ namespace tke
 				.addShader(enginePath + "shader/plain3d/plain3d_line.vert", {})
 				.addShader(enginePath + "shader/plain3d/plain3d_line.frag", {}), 
 				renderPass_image8, 0);
-			plain3d_bone_pos = plainPipeline_3d_anim_wire->descriptorPosition("BONE");
 
 			staticVertexBuffer = new VertexBuffer();
 			staticIndexBuffer = new IndexBuffer();

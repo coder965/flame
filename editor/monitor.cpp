@@ -78,7 +78,7 @@ void draw_pickup_frame(tke::CommandBuffer *cb)
 		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim : tke::plainPipeline_3d);
 		if (animated)
 		{
-			tke::plainPipeline_3d_anim->descriptorSet->setBuffer(tke::plain3d_bone_pos, 0, object->animationComponent->boneMatrixBuffer);
+			tke::plainPipeline_3d_anim->descriptorSet->setBuffer(0, 0, object->animationComponent->boneMatrixBuffer);
 			cb->bindDescriptorSet();
 		}
 		struct
@@ -339,7 +339,7 @@ void SceneMonitorWidget::show()
 				if (animated)
 				{
 					if (last_obj != obj)
-						ds_wireframe_anim->setBuffer(tke::plain3d_bone_pos, 0, obj->animationComponent->boneMatrixBuffer);
+						ds_wireframe_anim->setBuffer(0, 0, obj->animationComponent->boneMatrixBuffer);
 					cb_wireframe->bindDescriptorSet(&ds_wireframe_anim->v);
 				}
 				pc.modelview = scene->camera.getMatInv() * obj->getMat();

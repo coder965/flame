@@ -403,8 +403,6 @@ namespace tke
 		saveFileDialog.show();
 	}
 
-	static int texture_position = -1;
-
 	static void _gui_renderer(ImDrawData* draw_data)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -540,9 +538,7 @@ namespace tke
 			fontImage->fillData(0, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
-			if (texture_position == -1) texture_position = plainPipeline_2d->descriptorPosition("images");
-
-			plainPipeline_2d->descriptorSet->setImage(texture_position, 0, fontImage, colorSampler);
+			plainPipeline_2d->descriptorSet->setImage(0, 0, fontImage, colorSampler);
 
 		}
 		else
@@ -702,7 +698,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			plainPipeline_2d->descriptorSet->setImage(texture_position, _images[index]->index, _images[index], colorSampler);
+			plainPipeline_2d->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
 		}
 	}
 
@@ -720,7 +716,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			plainPipeline_2d->descriptorSet->setImage(texture_position, _images[index]->index, _images[index], colorSampler);
+			plainPipeline_2d->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
 		}
 	}
 

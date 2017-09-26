@@ -84,7 +84,6 @@ Pipeline *plainPipeline_3d_anim_tex = nullptr;
 Pipeline *plainPipeline_3d_wire = nullptr;
 Pipeline *plainPipeline_3d_anim_wire = nullptr;
 Pipeline *plainPipeline_3d_line = nullptr;
-int plain3d_bone_pos = -1;
 DescriptorSet *ds_maps = nullptr;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
