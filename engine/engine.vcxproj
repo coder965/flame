@@ -205,7 +205,7 @@
     </BuildLog>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../../VulkanSDK/1.0.61.1/Lib/vulkan-1.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Debug/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../../VulkanSDK/1.0.61.1/Lib/vulkan-1.lib;../../SPIRV-Cross/Debug/spirv-cross-core.lib;../../SPIRV-Cross/Debug/spirv-cross-cpp.lib;../../SPIRV-Cross/Debug/spirv-cross-glsl.lib;../../FreeImage/Dist/x64/FreeImage.lib;../../imgui/lib/Debug/Imgui.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CommonDEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3DEBUG_x64.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3ExtensionsDEBUG_mdd.lib;../../PhysX-3.3/PhysXSDK/Lib/vc14win64/PhysX3CharacterKinematicDEBUG_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
