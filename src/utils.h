@@ -52,14 +52,12 @@ template<size_t s> struct Sizer {};
 
 // hash
 
-unsigned int _HASH(char const * str, unsigned int seed);
+constexpr unsigned int _HASH(char const * str, unsigned int seed)
+{
+	return 0 == *str ? seed : _HASH(str + 1, seed ^ (*str + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
+}
 
 #define HASH(x) (_HASH(x, 0))
-
-constexpr unsigned int _CHASH(char const * str, unsigned int seed)
-{
-	return 0 == *str ? seed : _CHASH(str + 1, seed ^ (*str + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
-}
 
 template <unsigned int N>
 struct EnsureConst
@@ -67,7 +65,7 @@ struct EnsureConst
 	static const unsigned int value = N;
 };
 
-#define CHASH(x) (EnsureConst<_CHASH(x, 0)>::value)
+#define CHASH(x) (EnsureConst<_HASH(x, 0)>::value)
 
 namespace tke
 {
