@@ -34,8 +34,20 @@ inline std::ofstream& operator&(std::ofstream &file, T &v)
 
 inline std::ifstream& operator>(std::ifstream &file, std::string &str)
 {
-	int size;
-	file >> size;
+	int size = 0;
+	int q = 1;
+	for (int i = 0; i < 4; i++)
+	{
+		unsigned char byte;
+		file.read((char*)&byte, 1);
+		if (byte >= 128)
+		{
+			byte -= 128;
+			i = 4;
+		}
+		size += q * byte;
+		q *= 128;
+	}
 	str.resize(size);
 	file.read((char*)str.data(), size);
 	return file;
@@ -43,7 +55,18 @@ inline std::ifstream& operator>(std::ifstream &file, std::string &str)
 
 inline std::ofstream& operator<(std::ofstream &file, std::string &str)
 {
-	file << str.size();
+	int size = str.size();
+	for (int i = 0; i < 4; i++)
+	{
+		unsigned char byte = size % 128;
+		size /= 128;
+		if (size > 0)
+			byte += 128;
+		else
+			i = 4;
+		file.write((char*)&byte, 1);
+
+	}
 	file.write((char*)str.data(), str.size());
 	return file;
 }
