@@ -41,10 +41,9 @@ inline std::ifstream& operator>(std::ifstream &file, std::string &str)
 		unsigned char byte;
 		file.read((char*)&byte, 1);
 		if (byte >= 128)
-		{
 			byte -= 128;
+		else
 			i = 4;
-		}
 		size += q * byte;
 		q *= 128;
 	}
