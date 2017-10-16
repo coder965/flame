@@ -8,6 +8,7 @@
 #include <memory>
 #include <filesystem>
 #include <functional>
+#include <chrono>
 
 #if defined(_WIN64)
 typedef __int64 TK_LONG_PTR;
@@ -91,6 +92,11 @@ struct EnsureConst
 
 namespace tke
 {
+	inline long long now_time_ms()
+	{
+		return std::chrono::system_clock::now().time_since_epoch().count() / 10000;
+	}
+
 	inline size_t file_length(std::ifstream &f)
 	{
 		f.seekg(0, std::ios::end);
