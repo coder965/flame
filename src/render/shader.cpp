@@ -53,7 +53,6 @@ namespace tke
 				cmd_str += "-D" + d + " ";
 			cmd_str += " -flimit-file ";
 			cmd_str += enginePath + "shader/my_config.conf";
-			cmd_str += " -fauto-bind-uniforms ";
 			cmd_str += " -o " + spvFilename;
 			system(cmd_str.c_str());
 			if (!std::experimental::filesystem::exists(spvFilename))
@@ -150,7 +149,8 @@ namespace tke
 				d.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				d.name = r.name;
 				d.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
-				d.count = glsl.get_type(r.type_id).array[0];
+				auto type = glsl.get_type(r.type_id);
+				d.count = type.array.size() > 0 ? type.array[0] : 1;
 				descriptors[set].push_back(d);
 
 				resFile < d.name;
@@ -170,7 +170,8 @@ namespace tke
 				d.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				d.name = r.name;
 				d.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
-				d.count = glsl.get_type(r.type_id).array[0];
+				auto type = glsl.get_type(r.type_id);
+				d.count = type.array.size() > 0 ? type.array[0] : 1;
 				descriptors[set].push_back(d);
 
 				resFile < d.name;
