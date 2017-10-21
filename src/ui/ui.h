@@ -5,8 +5,6 @@
 #include "../../imgui/imgui.h"
 #include "../../imgui/imgui_internal.h"
 #include "../../imgui/imgui_operator.h"
-#include "../../imgui/imgui_tab.h"
-#include "../../imgui/imgui_dock.h"
 //#include "../../IconFontCppHeaders/IconsFontAwesome.h"
 
 #include "../math/math.h"

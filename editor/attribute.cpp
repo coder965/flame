@@ -328,8 +328,6 @@ static void _show_model(tke::Model *m)
 
 void AttributeWidget::show()
 {
-	ImGui::BeginDock("Attribute", &opened);
-
 	switch (lastWindowType)
 	{
 	case LastWindowTypeGameExplorer:
@@ -354,72 +352,62 @@ void AttributeWidget::show()
 	case LastWindowTypeMonitor:
 		if (lastMonitorWidget->mode == MonitorWidget::ModeScene)
 		{
-			ImGui::BeginTabBar("##tab_monitor");
-
 			auto m = (SceneMonitorWidget*)lastMonitorWidget;
 
-			if (ImGui::AddTab("Scene"))
-				_show_scene(m->scene);
+			_show_scene(m->scene);
+			ImGui::Separator();
+
 			if (selectedItem)
 			{
-				if (ImGui::AddTab("Select"))
+				switch (selectedItem.type)
 				{
-					switch (selectedItem.type)
+				case ItemTypeObject:
+				{
+					auto o = selectedItem.toObject();
+
+					auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
+					ImGui::Text("model:%s", modelName.c_str());
+
+					auto coord = o->getCoord();
+					if (ImGui::DragFloat3("coord", &coord[0]))
+						o->setCoord(coord);
+					auto euler = o->getEuler();
+					if (ImGui::DragFloat3("euler", &euler[0]))
+						o->setEuler(euler);
+					auto scale = o->getScale();
+					if (ImGui::DragFloat3("scale", &scale[0]))
+						o->setScale(scale);
+
+					ImGui::DragFloat("ang offset", &o->ang_offset);
+					ImGui::DragFloat("speed", &o->speed);
+					ImGui::DragFloat("turn speed", &o->turn_speed);
+
+					if (o->model->animated)
 					{
-					case ItemTypeObject:
-					{
-						auto o = selectedItem.toObject();
+						static int boneID = -1;
+						if (boneID >= o->model->bones.size()) boneID = -1;
 
-						auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
-						ImGui::Text("model:%s", modelName.c_str());
-
-						auto coord = o->getCoord();
-						if (ImGui::DragFloat3("coord", &coord[0]))
-							o->setCoord(coord);
-						auto euler = o->getEuler();
-						if (ImGui::DragFloat3("euler", &euler[0]))
-							o->setEuler(euler);
-						auto scale = o->getScale();
-						if (ImGui::DragFloat3("scale", &scale[0]))
-							o->setScale(scale);
-
-						ImGui::DragFloat("ang offset", &o->ang_offset);
-						ImGui::DragFloat("speed", &o->speed);
-						ImGui::DragFloat("turn speed", &o->turn_speed);
-
-						if (o->model->animated)
+						if (ImGui::TreeNode("Bones Motion"))
 						{
-							static int boneID = -1;
-							if (boneID >= o->model->bones.size()) boneID = -1;
-
-							if (ImGui::TreeNode("Bones Motion"))
+							for (int i = 0; i < o->model->bones.size(); i++)
 							{
-								for (int i = 0; i < o->model->bones.size(); i++)
-								{
-									auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
-									if (ImGui::Selectable(str.c_str(), i == boneID))
-										boneID = i;
-								}
-
-								ImGui::TreePop();
+								auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
+								if (ImGui::Selectable(str.c_str(), i == boneID))
+									boneID = i;
 							}
+
+							ImGui::TreePop();
 						}
 					}
+				}
 					break;
-					}
 				}
 			}
-
-			ImGui::EndTabBar();
 		}
 		else if (lastMonitorWidget->mode == MonitorWidget::ModeModel)
-		{
 			_show_model(((ModelMonitorWidget*)lastMonitorWidget)->model);
-		}
 		break;
 	}
-
-	ImGui::EndDock();
 }
 
 AttributeWidget *attributeWidget = nullptr;
