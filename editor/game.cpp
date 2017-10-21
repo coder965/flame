@@ -85,7 +85,8 @@ Game game;
 
 void GameExplorer::show()
 {
-	ImGui::BeginDock("Game Explorer", &opened);
+	ImGui::Begin("Game Explorer", &opened);
+
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeGameExplorer;
 
@@ -148,7 +149,7 @@ void GameExplorer::show()
 		ImGui::TreePop();
 	}
 
-	ImGui::EndDock();
+	ImGui::End();
 }
 
 GameExplorer *gameExplorer = nullptr;

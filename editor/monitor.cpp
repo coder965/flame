@@ -98,7 +98,8 @@ void draw_pickup_frame(tke::CommandBuffer *cb)
 void SceneMonitorWidget::show()
 {
 	std::string title = "Monitor - " + scene->name;
-	ImGui::BeginDock(title.c_str(), &opened);
+	ImGui::Begin(title.c_str(), &opened);
+
 	if (ImGui::IsWindowFocused())
 	{
 		lastWindowType = LastWindowTypeMonitor;
@@ -206,7 +207,7 @@ void SceneMonitorWidget::show()
 		}
 	}
 
-	ImGui::EndDock();
+	ImGui::End();
 
 	scene->show(fb_scene.get(), scene_renderFinished);
 
@@ -409,7 +410,8 @@ ModelMonitorWidget::~ModelMonitorWidget()
 void ModelMonitorWidget::show()
 {
 	std::string title = "Monitor - " + model->filename;
-	ImGui::BeginDock(title.c_str(), &opened);
+	ImGui::Begin(title.c_str(), &opened);
+
 	if (ImGui::IsWindowFocused())
 	{
 		lastWindowType = LastWindowTypeMonitor;
@@ -439,7 +441,7 @@ void ModelMonitorWidget::show()
 	ImGui::Checkbox("Show Controller", &showController);
 	ImGui::Checkbox("Show Eye Position", &showEyePosition);
 
-	ImGui::EndDock();
+	ImGui::End();
 
 	if (camera.changed)
 		camera.lookAtTarget();

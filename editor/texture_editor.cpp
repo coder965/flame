@@ -15,7 +15,7 @@ static void _texture_editor_remove_image(TextureEditor *e)
 
 void TextureEditor::show()
 {
-	ImGui::BeginDock("Texture Editor", &opened);
+	ImGui::Begin("Texture Editor", &opened);
 
 	if (ImGui::Button("New"))
 		ImGui::OpenPopup("Image Attribute");
@@ -164,7 +164,7 @@ void TextureEditor::show()
 		ImGui::Text("[No Image]");
 	}
 
-	ImGui::EndDock();
+	ImGui::End();
 }
 
 TextureEditor *textureEditor = nullptr;

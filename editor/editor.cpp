@@ -95,8 +95,6 @@ EditorWindow::EditorWindow()
 			}
 		}
 	}
-
-	tke::loadGuiDock("ui_dock.xml");
 }
 
 EditorWindow::~EditorWindow()
@@ -155,8 +153,6 @@ EditorWindow::~EditorWindow()
 		}
 		at.saveXML("ui.xml");
 	}
-
-	tke::saveGuiDock("ui_dock.xml");
 }
 
 void EditorWindow::openGameExplorer()

@@ -328,6 +328,8 @@ static void _show_model(tke::Model *m)
 
 void AttributeWidget::show()
 {
+	ImGui::Begin("Attribute", &opened);
+
 	switch (lastWindowType)
 	{
 	case LastWindowTypeGameExplorer:
@@ -408,6 +410,8 @@ void AttributeWidget::show()
 			_show_model(((ModelMonitorWidget*)lastMonitorWidget)->model);
 		break;
 	}
+
+	ImGui::End();
 }
 
 AttributeWidget *attributeWidget = nullptr;
