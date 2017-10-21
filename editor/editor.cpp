@@ -17,8 +17,6 @@ EditorWindow::EditorWindow()
 {
 	mainWindow = this;
 
-	return;
-
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	game.load();
@@ -294,45 +292,45 @@ void EditorWindow::renderEvent()
 	}
 	ImGui::EndMainMenuBar();
 
-	//if (gameExplorer)
-	//{
-	//	gameExplorer->show();
-	//	if (!gameExplorer->opened)
-	//	{
-	//		delete gameExplorer;
-	//		gameExplorer = nullptr;
-	//	}
-	//}
+	if (gameExplorer)
+	{
+		gameExplorer->show();
+		if (!gameExplorer->opened)
+		{
+			delete gameExplorer;
+			gameExplorer = nullptr;
+		}
+	}
 
-	//if (attributeWidget)
-	//{
-	//	attributeWidget->show();
-	//	if (!attributeWidget->opened)
-	//	{
-	//		delete attributeWidget;
-	//		attributeWidget = nullptr;
-	//	}
-	//}
+	if (attributeWidget)
+	{
+		attributeWidget->show();
+		if (!attributeWidget->opened)
+		{
+			delete attributeWidget;
+			attributeWidget = nullptr;
+		}
+	}
 
-	//if (debugWidget)
-	//{
-	//	debugWidget->show();
-	//	if (!debugWidget->opened)
-	//	{
-	//		delete debugWidget;
-	//		debugWidget = nullptr;
-	//	}
-	//}
+	if (debugWidget)
+	{
+		debugWidget->show();
+		if (!debugWidget->opened)
+		{
+			delete debugWidget;
+			debugWidget = nullptr;
+		}
+	}
 
-	//if (textureEditor)
-	//{
-	//	textureEditor->show();
-	//	if (!textureEditor->opened)
-	//	{
-	//		delete textureEditor;
-	//		textureEditor = nullptr;
-	//	}
-	//}
+	if (textureEditor)
+	{
+		textureEditor->show();
+		if (!textureEditor->opened)
+		{
+			delete textureEditor;
+			textureEditor = nullptr;
+		}
+	}
 
 	for (auto m : monitorWidgets)
 	{

@@ -136,48 +136,33 @@ namespace tke
 
 			std::ofstream resFile(resFilename, std::ios::binary);
 
+			auto _process_descriptor_resource = [&](VkDescriptorType desc_type, spirv_cross::Resource &r){
+				auto set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
+				if (set >= descriptors.size())
+					descriptors.resize(set + 1);
+				resFile & set;
+
+				Descriptor d;
+				d.type = desc_type;
+				d.name = r.name;
+				d.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
+				auto type = glsl.get_type(r.type_id);
+				d.count = type.array.size() > 0 ? type.array[0] : 1;
+				descriptors[set].push_back(d);
+
+				resFile < d.name;
+				resFile & d.binding;
+				resFile & d.count;
+			};
+
 			int uboCount = resources.uniform_buffers.size();
 			resFile & uboCount;
 			for (auto &r : resources.uniform_buffers)
-			{
-				int set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
-				if (set >= descriptors.size())
-					descriptors.resize(set + 1);
-				resFile & set;
-
-				Descriptor d;
-				d.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				d.name = r.name;
-				d.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
-				auto type = glsl.get_type(r.type_id);
-				d.count = type.array.size() > 0 ? type.array[0] : 1;
-				descriptors[set].push_back(d);
-
-				resFile < d.name;
-				resFile & d.binding;
-				resFile & d.count;
-			}
+				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, r);
 			int imageCount = resources.sampled_images.size();
 			resFile & imageCount;
 			for (auto &r : resources.sampled_images)
-			{
-				int set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
-				if (set >= descriptors.size())
-					descriptors.resize(set + 1);
-				resFile & set;
-
-				Descriptor d;
-				d.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				d.name = r.name;
-				d.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
-				auto type = glsl.get_type(r.type_id);
-				d.count = type.array.size() > 0 ? type.array[0] : 1;
-				descriptors[set].push_back(d);
-
-				resFile < d.name;
-				resFile & d.binding;
-				resFile & d.count;
-			}
+				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, r);
 
 			int pcSize = 0;
 			for (auto &r : resources.push_constant_buffers)
