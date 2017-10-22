@@ -1,7 +1,7 @@
 <data>
   <animation1 filename="D:/miku/walk.vmd"/>
   <model1 filename="D:/miku/miku.pmd"/>
-  <dir1 path="res" />
+  <dir path="res" />
   <scene filename="scene_1.scene" />
   <scene1 filename="scene_2.scene" />
 </data>
