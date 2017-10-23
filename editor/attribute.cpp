@@ -29,6 +29,7 @@ static void _show_scene(tke::Scene *s)
 
 			ImGui::EndPopup();
 		}
+
 		auto ambientColor = s->ambientColor;
 		if (ImGui::DragFloat3("Ambient Color", &ambientColor[0], 0.1f, 0.f, 100.f))
 			s->setAmbientColor(ambientColor);

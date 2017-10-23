@@ -122,9 +122,9 @@ namespace tke
 		}
 
 		if (info._cx == -1)
-			info._cx = tke::resCx;
+			info._cx = resCx;
 		if (info._cy == -1)
-			info._cy = tke::resCy;
+			info._cy = resCy;
 
 		if (info._cx == 0 && info._cy == 0)
 		{
@@ -290,6 +290,8 @@ namespace tke
 		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
+
+		links = info.links;
 
 		if (need_default_ds)
 		{

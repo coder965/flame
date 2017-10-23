@@ -1103,12 +1103,12 @@ namespace tke
 			cb_deferred->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animatedIndirectCount);
 		}
 		// terrain
-		//if (terrain)
-		//{
-		//	cb_deferred->bindPipeline(terrainPipeline);
-		//	cb_deferred->bindDescriptorSet(&ds_terrain->v);
-		//	cb_deferred->draw(4, 0, terrain->block_cx * terrain->block_cx);
-		//}
+		if (terrain)
+		{
+			cb_deferred->bindPipeline(terrainPipeline);
+			cb_deferred->bindDescriptorSet(&ds_terrain->v);
+			cb_deferred->draw(4, 0, terrain->block_cx * terrain->block_cx);
+		}
 		// water
 		if (waters.size() > 0)
 		{
@@ -1127,10 +1127,10 @@ namespace tke
 		//	esmImage.get(), 0, 1, 0, TKE_MAX_SHADOW_COUNT * 8);
 
 		// deferred
-		//cb_deferred->nextSubpass();
-		//cb_deferred->bindPipeline(deferredPipeline);
-		//cb_deferred->bindDescriptorSet(&ds_defe->v);
-		//cb_deferred->draw(3);
+		cb_deferred->nextSubpass();
+		cb_deferred->bindPipeline(deferredPipeline);
+		cb_deferred->bindDescriptorSet(&ds_defe->v);
+		cb_deferred->draw(3);
 
 		// compose
 		cb_deferred->nextSubpass();

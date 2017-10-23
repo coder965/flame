@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv)
 {
-	tke::init(false, "../", 1280, 720, false);
+	tke::init(false, "../", 1280, 720, true);
 
 	new EditorWindow;
 	mainWindow->show();

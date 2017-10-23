@@ -19,7 +19,7 @@ EditorWindow::EditorWindow()
 
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
-	game.load();
+	//game.load();
 
 	for (auto &i : tke::debugImages)
 		tke::addGuiImage(i.second);
@@ -37,32 +37,32 @@ EditorWindow::EditorWindow()
 					if (opened)
 						openGameExplorer();
 				}
-				else if (c->name == "MonitorWidget")
-				{
-					tke::Attribute *a;
-					a = c->firstAttribute("scene_filename");
-					if (a)
-					{
-						auto s = tke::getScene(a->value);
-						if (s)
-						{
-							auto w = openSceneMonitorWidget(s);
-							a = c->firstAttribute("follow");
-							if (a)
-								a->get(&w->follow);
-						}
-					}
-					else
-					{
-						a = c->firstAttribute("model_filename");
-						if (a)
-						{
-							auto m = tke::getModel(a->value);
-							if (m)
-								openModelMonitorWidget(m);
-						}
-					}
-				}
+				//else if (c->name == "MonitorWidget")
+				//{
+				//	tke::Attribute *a;
+				//	a = c->firstAttribute("scene_filename");
+				//	if (a)
+				//	{
+				//		auto s = tke::getScene(a->value);
+				//		if (s)
+				//		{
+				//			auto w = openSceneMonitorWidget(s);
+				//			a = c->firstAttribute("follow");
+				//			if (a)
+				//				a->get(&w->follow);
+				//		}
+				//	}
+				//	else
+				//	{
+				//		a = c->firstAttribute("model_filename");
+				//		if (a)
+				//		{
+				//			auto m = tke::getModel(a->value);
+				//			if (m)
+				//				openModelMonitorWidget(m);
+				//		}
+				//	}
+				//}
 				else if (c->name == "AttributeWidget")
 				{
 					bool opened;
