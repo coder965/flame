@@ -186,6 +186,13 @@
     <ClInclude Include="tool.h" />
     <ClInclude Include="transformer_tool.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="data.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="scene_1.scene" />
+    <None Include="scene_2.scene" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

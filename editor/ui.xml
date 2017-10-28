@@ -1,5 +1,6 @@
 <data>
 	<GameExplorer opened="true"/>
+	<MonitorWidget scene_filename="scene_1.scene" follow="false"/>
 	<AttributeWidget opened="true"/>
 	<DebugWidget opened="false"/>
 	<TextureEditor opened="false"/>

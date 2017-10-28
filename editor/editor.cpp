@@ -13,13 +13,13 @@ MonitorWidget *lastMonitorWidget = nullptr;
 tke::Image *titleImage = nullptr;
 
 EditorWindow::EditorWindow()
-	:Window(800, 600, "TK Engine Editor", tke::WindowStyleHasFrameNoResize, true)
+	:Window(800, 600, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, true)
 {
 	mainWindow = this;
 
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
-	//game.load();
+	game.load();
 
 	for (auto &i : tke::debugImages)
 		tke::addGuiImage(i.second);
