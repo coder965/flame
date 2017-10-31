@@ -16,21 +16,16 @@ namespace tke
 		WindowStyleHasFrameCanResize
 	};
 
-	struct GuiComponent;
 	struct Image;
 	struct Framebuffer;
 	struct Window
 	{
-
 		Window(int _cx, int _cy, const std::string &title, WindowStyle style);
 		void createSwapchain();
-		void destroySwapchain();
 		void beginFrame(bool clearBackground);
 		void endFrame();
 		void show();
 	};
-
-	extern Window* current_window;
 
 	void initWindow();
 }

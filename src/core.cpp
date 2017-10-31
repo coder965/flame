@@ -323,6 +323,7 @@ namespace tke
 		}
 
 		//initSound();
+		initUi();
 
 		return NoErr;
 	}

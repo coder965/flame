@@ -7,7 +7,7 @@ static void _texture_editor_remove_image(TextureEditor *e)
 {
 	if (e->image)
 	{
-		tke::removeGuiImage(e->image);
+		tke::removeUiImage(e->image);
 		delete e->image;
 		e->image = nullptr;
 	}
@@ -43,7 +43,7 @@ void TextureEditor::show()
 			range.layerCount = 1;
 			vkCmdClearColorImage(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &range);
 			tke::endOnceCommandBuffer(cb);
-			tke::addGuiImage(image);
+			tke::addUiImage(image);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();

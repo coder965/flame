@@ -22,7 +22,7 @@ EditorWindow::EditorWindow()
 	game.load();
 
 	for (auto &i : tke::debugImages)
-		tke::addGuiImage(i.second);
+		tke::addUiImage(i.second);
 
 	{
 		tke::AttributeTree at("data", "ui.xml");
@@ -332,7 +332,7 @@ void EditorWindow::renderEvent()
 	{
 		m->show();
 		tke::cbs.insert(tke::cbs.begin(), m->cbs.begin(), m->cbs.end());
-		tke::ui->waitEvents.push_back(m->renderFinished);
+		tke::ui_waitEvents.push_back(m->renderFinished);
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));

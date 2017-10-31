@@ -9,400 +9,6 @@ namespace tke
 {
 	static bool need_clear = false;
 
-	bool uiAcceptedMouse = false;
-	bool uiAcceptedKey = false;
-
-	void DialogT::begin()
-	{
-		if (state == State::eNeedOpen)
-		{
-			state = State::eOpened;
-			ImGui::OpenPopup(name.c_str());
-		}
-	}
-
-	void DialogT::end()
-	{
-		if (state == State::eOpened)
-		{
-			state = State::eClosed;
-			ImGui::CloseCurrentPopup();
-		}
-	}
-
-	YesNoDialog::YesNoDialog()
-	{
-		name = "YesNoDialog";
-	}
-
-	void YesNoDialog::start(const std::string &text, void(*callback)(bool))
-	{
-		m_text = text;
-		m_callback = callback;
-		state = State::eNeedOpen;
-	}
-
-	void YesNoDialog::show()
-	{
-		begin();
-		if (state != State::eOpened)
-			return;
-
-		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
-		{
-			uiAcceptedMouse = true;
-			uiAcceptedKey = true;
-
-			ImGui::Text(m_text.c_str());
-			if (ImGui::Button("Yes", ImVec2(120, 0)))
-			{
-				m_callback(true);
-				end();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("No", ImVec2(120, 0)))
-			{
-				m_callback(false);
-				end();
-			}
-			ImGui::EndPopup();
-		}
-	}
-
-	MessageDialog::MessageDialog()
-	{
-		name = "MessageDialog";
-	}
-
-	void MessageDialog::add(const std::string &text)
-	{
-		texts.push_back(text);
-	}
-
-	void MessageDialog::show()
-	{
-		if (texts.size() > 0)
-			state = State::eNeedOpen;
-
-		begin();
-		if (state != State::eOpened)
-			return;
-
-		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
-		{
-			uiAcceptedMouse = true;
-			uiAcceptedKey = true;
-
-			auto ok = false;
-			if (ImGui::Button("Ok##0", ImVec2(120, 0)))
-				ok = true;
-			ImGui::TextUnformatted(texts[0].c_str());
-			if (ImGui::Button("Ok##1", ImVec2(120, 0)))
-				ok = true;
-			if (ok)
-			{
-				texts.erase(texts.begin());
-				end();
-			}
-			ImGui::EndPopup();
-		}
-	}
-
-	InputDialog::InputDialog()
-	{
-		name = "InputDialog";
-	}
-
-	void InputDialog::start(void(*callback)(const std::string &))
-	{
-		m_callback = callback;
-		m_buf[0] = 0;
-
-		state = State::eNeedOpen;
-	}
-
-	void InputDialog::show()
-	{
-		begin();
-		if (state != State::eOpened)
-			return;
-
-		if (ImGui::BeginPopupModal(name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
-		{
-			uiAcceptedMouse = true;
-			uiAcceptedKey = true;
-
-			ImGui::InputText("Input:", m_buf, MAX_PATH);
-			if (ImGui::Button("OK", ImVec2(120, 0)))
-			{
-				m_callback(m_buf);
-				end();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0)))
-				end();
-			ImGui::EndPopup();
-		}
-	}
-
-	void FileDialogT::search()
-	{
-		m_dirs.clear();
-		m_files.clear();
-		WIN32_FIND_DATA fd;
-		HANDLE hFind = FindFirstFile((m_path + "*.*").c_str(), &fd);
-		if (INVALID_HANDLE_VALUE == hFind)
-		{
-			return;
-		}
-		for (;;)
-		{
-			if (fd.cFileName[0] != '.')
-			{
-				if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-					m_dirs.push_back(fd.cFileName);
-				else
-					m_files.push_back(fd.cFileName);
-			}
-			if (!FindNextFile(hFind, &fd))
-				break;
-		}
-		FindClose(hFind);
-	}
-
-	DirectoryDialog::DirectoryDialog()
-	{
-		name = "DirectoryDialog";
-	}
-
-	void DirectoryDialog::search()
-	{
-		m_dirs.clear();
-		WIN32_FIND_DATA fd;
-		HANDLE hFind = FindFirstFile((m_path + "*.*").c_str(), &fd);
-		if (INVALID_HANDLE_VALUE == hFind)
-			return;
-		for (;;)
-		{
-			if (fd.cFileName[0] != '.')
-			{
-				if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-					m_dirs.push_back(fd.cFileName);
-			}
-			if (!FindNextFile(hFind, &fd))
-				break;
-		}
-		FindClose(hFind);
-	}
-
-	void DirectoryDialog::start(void(*callback)(const std::string &))
-	{
-		m_path.clear();
-		search();
-		m_callback = callback;
-
-		state = State::eNeedOpen;
-	}
-
-	void DirectoryDialog::show()
-	{
-		begin();
-		if (state != State::eOpened)
-			return;
-
-		bool changeDir = false;
-		if (ImGui::BeginPopupModal("DirectoryDialog", nullptr, 0))
-		{
-			uiAcceptedMouse = true;
-			uiAcceptedKey = true;
-
-			ImGui::Text("Path:%s*.*", m_path.c_str());
-			ImGui::SameLine();
-			if (ImGui::Button("Up"))
-			{
-				m_path += "../";
-				search();
-			}
-			if (ImGui::Button("Home"))
-			{
-				m_path.clear();
-				search();
-			}
-			for (auto d : m_dirs)
-			{
-				if (ImGui::Selectable(d.c_str(), false, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
-				{
-					if (ImGui::IsMouseDoubleClicked(0))
-					{
-						m_path += d + "/";
-						changeDir = true;
-					}
-					m_currentPath = d;
-				}
-			}
-			ImGui::Text("Name:", m_currentPath);
-			if (ImGui::Button("Ok", ImVec2(120, 0)))
-			{
-				m_callback(m_path + m_currentPath);
-				end();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0)))
-				end();
-
-			ImGui::EndPopup();
-		}
-		if (state != State::eClosed && changeDir)
-			search();
-	}
-
-	OpenFileDialog::OpenFileDialog()
-	{
-		name = "OpenFileDialog";
-	}
-
-	void OpenFileDialog::start(void(*callback)(const std::string &))
-	{
-		m_path.clear();
-		search();
-		m_callback = callback;
-
-		state = State::eNeedOpen;
-	}
-
-	void OpenFileDialog::show()
-	{
-		begin();
-		if (state != State::eOpened)
-			return;
-
-		bool changeDir = false;
-		if (ImGui::BeginPopupModal("OpenFileDialog", NULL, 0))
-		{
-			uiAcceptedMouse = true;
-			uiAcceptedKey = true;
-
-			ImGui::Text("Path:%s*.*", m_path.c_str());
-			ImGui::SameLine();
-			if (ImGui::Button("Up"))
-			{
-				m_path += "../";
-				search();
-			}
-			if (ImGui::Button("Home"))
-			{
-				m_path.clear();
-				search();
-			}
-			for (auto d : m_dirs)
-			{
-				if (ImGui::Selectable(("+" + d).c_str(), false, ImGuiSelectableFlags_DontClosePopups))
-				{
-					m_path += d + "/";
-					changeDir = true;
-				}
-			}
-			for (auto f : m_files)
-			{
-				if (ImGui::Selectable(f.c_str()))
-				{
-					m_callback(m_path + f);
-					end();
-				}
-			}
-			if (ImGui::Button("Cancel", ImVec2(120, 0)))
-				end();
-
-			ImGui::EndPopup();
-		}
-		if (state != State::eClosed && changeDir)
-			search();
-	}
-
-	SaveFileDialog::SaveFileDialog()
-	{
-		name = "SaveFileDialog";
-	}
-
-	void SaveFileDialog::start(void(*callback)(const std::string &))
-	{
-		m_path.clear();
-		search();
-		m_callback = callback;
-
-		state = State::eNeedOpen;
-	}
-
-	void SaveFileDialog::show()
-	{
-		begin();
-		if (state != State::eOpened)
-			return;
-
-		bool changeDir = false;
-		if (ImGui::BeginPopupModal("SaveFileDialog", nullptr, 0))
-		{
-			uiAcceptedMouse = true;
-			uiAcceptedKey = true;
-
-			ImGui::Text("Path:%s*.*", m_path.c_str());
-			ImGui::SameLine();
-			if (ImGui::Button("Up"))
-			{
-				m_path += "../";
-				search();
-			}
-			if (ImGui::Button("Home"))
-			{
-				m_path.clear();
-				search();
-			}
-			for (auto d : m_dirs)
-			{
-				if (ImGui::Selectable(("+" + d).c_str(), false, ImGuiSelectableFlags_DontClosePopups))
-				{
-					m_path += d + "/";
-					changeDir = true;
-				}
-			}
-			for (auto f : m_files)
-			{
-				if (ImGui::Selectable(f.c_str(), false, ImGuiSelectableFlags_DontClosePopups))
-					strcpy(filename, f.c_str());
-			}
-			ImGui::InputText("Name", filename, 50);
-			if (ImGui::Button("Ok", ImVec2(120, 0)))
-			{
-				m_callback(m_path + filename);
-				end();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0)))
-				end();
-
-			ImGui::EndPopup();
-		}
-		if (state != State::eClosed && changeDir)
-			search();
-	}
-
-	YesNoDialog yesNoDialog;
-	MessageDialog messageDialog;
-	InputDialog inputDialog;
-	DirectoryDialog directoryDialog;
-	OpenFileDialog openFileDialog;
-	SaveFileDialog saveFileDialog;
-
-	void showDialogs()
-	{
-		yesNoDialog.show();
-		messageDialog.show();
-		inputDialog.show();
-		directoryDialog.show();
-		openFileDialog.show();
-		saveFileDialog.show();
-	}
-
 	static void _gui_renderer(ImDrawData* draw_data)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -442,26 +48,25 @@ namespace tke
 			indexBuffer->unmap();
 		}
 
-		auto cb = ui->cb;
+		ui_cb->reset();
+		ui_cb->begin();
 
-		cb->reset();
-		cb->begin();
+		if (ui_waitEvents.size() > 0)
+			ui_cb->waitEvents(ui_waitEvents.size(), ui_waitEvents.data());
 
-		if (ui->waitEvents.size() > 0)
-			cb->waitEvents(ui->waitEvents.size(), ui->waitEvents.data());
+		VkClearValue clear_value = { bkColor.r, bkColor.g, bkColor.b };
+		ui_cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, 
+			window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
 
-		VkClearValue clear_value = { ui->bkColor.r, ui->bkColor.g, ui->bkColor.b };
-		cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
+		ui_cb->setViewportAndScissor(window_cx, window_cy);
 
-		cb->setViewportAndScissor(window_cx, window_cy);
+		ui_cb->bindVertexBuffer(vertexBuffer);
+		ui_cb->bindIndexBuffer(indexBuffer);
 
-		cb->bindVertexBuffer(vertexBuffer);
-		cb->bindIndexBuffer(indexBuffer);
+		ui_cb->bindPipeline(plainPipeline_2d);
+		ui_cb->bindDescriptorSet();
 
-		cb->bindPipeline(plainPipeline_2d);
-		cb->bindDescriptorSet();
-
-		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		ui_cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -478,26 +83,26 @@ namespace tke
 				}
 				else
 				{
-					cb->setScissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
+					ui_cb->setScissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
 						ImMax((int32_t)(pcmd->ClipRect.y), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
-					cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					ui_cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 				}
 				idx_offset += pcmd->ElemCount;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
 
-		cb->endRenderPass();
+		ui_cb->endRenderPass();
 
-		if (ui->waitEvents.size())
+		if (ui_cb->waitEvents.size())
 		{
-			for (auto &e : ui->waitEvents)
-				cb->resetEvent(e);
+			for (auto &e : ui_cb->waitEvents)
+				ui_cb->resetEvent(e);
 		}
 
-		cb->end();
+		ui_cb->end();
 	}
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
@@ -511,17 +116,10 @@ namespace tke
 	}
 
 	static Image *fontImage;
-	GuiComponent::GuiComponent(Window *_window)
-		:window(_window)
+	void initUi()
 	{
-		static bool first = true;
-		if (first)
+		ImGuiIO& io = ImGui::GetIO();
 		{
-			first = false;
-
-			context = ImGui::GetCurrentContext();
-
-			ImGuiIO& io = ImGui::GetIO();
 			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
 			//static const ImWchar icons_ranges[] = { 
 			//	ICON_MIN_FA, 
@@ -534,23 +132,18 @@ namespace tke
 			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/fontawesome-webfont.ttf", 16.0f, &icons_config, icons_ranges);
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
+			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, 
+				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 			fontImage->fillData(0, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
 			plainPipeline_2d->descriptorSet->setImage(0, 0, fontImage, colorSampler);
-
 		}
-		else
-			context = ImGui::CreateContext();
 
-		cb = new CommandBuffer;
-		cb->begin();
-		cb->end();
-
-		ImGui::SetCurrentContext(context);
-
-		ImGuiIO& io = ImGui::GetIO();
+		ui_cb = new CommandBuffer;
+		ui_cb->begin();
+		ui_cb->end();
+		
 		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 		io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
 		io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
@@ -575,7 +168,7 @@ namespace tke
 		io.GetClipboardTextFn = _GetClipboardCallback;
 	}
 
-	void GuiComponent::onKeyDown(int k)
+	void ui_onKeyDown(int k)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeysDown[k] = true;
@@ -586,7 +179,7 @@ namespace tke
 		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
 	}
 
-	void GuiComponent::onKeyUp(int k)
+	void ui_onKeyUp(int k)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeysDown[k] = false;
@@ -597,21 +190,21 @@ namespace tke
 		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
 	}
 
-	void GuiComponent::onChar(int c)
+	void ui_onChar(int c)
 	{
 		if (c == VK_TAB)
 			return;
+
 		ImGuiIO& io = ImGui::GetIO();
 		if (c > 0 && c < 0x10000)
 			io.AddInputCharacter((unsigned short)c);
 	}
 
-	void GuiComponent::begin(bool _need_clear)
+	void beginUi(bool _need_clear)
 	{
 		static int last_time = 0;
 		if (last_time == 0) last_time = nowTime;
 
-		current_window = window;
 		need_clear = _need_clear;
 
 		uiAcceptedMouse = false;
@@ -636,7 +229,7 @@ namespace tke
 		ImGui::NewFrame();
 	}
 
-	void GuiComponent::end()
+	void endUi()
 	{
 		ImGui::Render();
 
@@ -646,7 +239,7 @@ namespace tke
 
 	static std::vector<Image*> _images;
 
-	void addGuiImage(Image *image)
+	void addUiImage(Image *image)
 	{
 		_images.push_back(image);
 
@@ -657,7 +250,7 @@ namespace tke
 		}
 	}
 
-	void removeGuiImage(Image *image)
+	void removeUiImage(Image *image)
 	{
 		for (auto it = _images.begin(); it != _images.end(); it++)
 		{

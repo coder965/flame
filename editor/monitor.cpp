@@ -22,7 +22,7 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	fb_image = tke::getFramebuffer(image, tke::renderPass_image8);
-	tke::addGuiImage(image);
+	tke::addUiImage(image);
 
 	fb_scene = scene->createFramebuffer(image);
 	scene_renderFinished = tke::createEvent();
@@ -52,7 +52,7 @@ SceneMonitorWidget::~SceneMonitorWidget()
 {
 	tke::destroyEvent(scene_renderFinished);
 
-	tke::removeGuiImage(image);
+	tke::removeUiImage(image);
 	delete image;
 
 	delete cb_physx;
@@ -374,7 +374,7 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 		tke::plainDepthImage->getView()
 	};
 	fb_image = tke::getFramebuffer(image, tke::renderPass_image8);
-	tke::addGuiImage(image);
+	tke::addUiImage(image);
 
 	camera.setMode(tke::CameraMode::targeting);
 
@@ -396,7 +396,7 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 
 ModelMonitorWidget::~ModelMonitorWidget()
 {
-	tke::removeGuiImage(image);
+	tke::removeUiImage(image);
 	delete image;
 
 	delete animComp;

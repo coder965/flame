@@ -145,6 +145,10 @@ VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
 std::vector<std::weak_ptr<Shader>> loaded_shaders;
+bool uiAcceptedMouse;
+bool uiAcceptedKey;
+CommandBuffer *ui_cb;
+std::vector<VkEvent> ui_waitEvents;
 struct ReflectInit{ReflectInit(){
 tke::EnumType *currentEnumType = nullptr;
 tke::ReflectionBank *currentBank = nullptr;

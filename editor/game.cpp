@@ -17,7 +17,7 @@ void Game::load()
 			if (i)
 			{
 				tke::addTexture(i);
-				tke::addGuiImage(i);
+				tke::addUiImage(i);
 			}
 		}
 		else if (c->name == "model")
@@ -52,7 +52,7 @@ void Game::load()
 						if (i)
 						{
 							tke::addTexture(i);
-							tke::addGuiImage(i);
+							tke::addUiImage(i);
 						}
 					}
 					else if (ext == ".obj" || ext == ".pmd" || ext == ".dae" || ext == ".tkm")

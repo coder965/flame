@@ -13,114 +13,115 @@ namespace tke
 
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		if (current_window)
+		switch (message)
 		{
-			switch (message)
+		case WM_LBUTTONDOWN:
+			mouseLeft.pressing = true;
+			mouseLeft.justDown = true;
+			mouseLeft.justUp = false;
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseLeftDown)
+				onMouseLeftDown(mouseX, mouseY);
+			SetCapture(hWnd);
+			break;
+		case WM_LBUTTONUP:
+			mouseLeft.pressing = false;
+			mouseLeft.justDown = false;
+			mouseLeft.justUp = true;
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseLeftUp)
+				onMouseLeftUp(mouseX, mouseY);
+			ReleaseCapture();
+			break;
+		case WM_MBUTTONDOWN:
+			mouseMiddle.pressing = true;
+			mouseMiddle.justDown = true;
+			mouseMiddle.justUp = false;
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseMiddleDown)
+				onMouseMiddleDown(mouseX, mouseY);
+			SetCapture(hWnd);
+			break;
+		case WM_MBUTTONUP:
+			mouseMiddle.pressing = false;
+			mouseMiddle.justDown = false;
+			mouseMiddle.justUp = true;
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseMiddleUp)
+				onMouseMiddleUp(mouseX, mouseY);
+			ReleaseCapture();
+			break;
+		case WM_RBUTTONDOWN:
+			mouseRight.pressing = true;
+			mouseRight.justDown = true;
+			mouseRight.justUp = false;
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseRightDown)
+				onMouseRightDown(mouseX, mouseY);
+			SetCapture(hWnd);
+			break;
+		case WM_RBUTTONUP:
+			mouseRight.pressing = false;
+			mouseRight.justDown = false;
+			mouseRight.justUp = true;
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseRightUp)
+				onMouseRightUp(mouseX, mouseY);
+			ReleaseCapture();
+			break;
+		case WM_MOUSEMOVE:
+			mouseX = LOWORD(lParam);
+			mouseY = HIWORD(lParam);
+			if (onMouseMove)
+				onMouseMove(mouseX, mouseY);
+			break;
+		case WM_MOUSEWHEEL:
+			mouseScroll += (short)HIWORD(wParam);
+			if (onMouseWheel)
+				onMouseWheel(mouseScroll);
+			break;
+		case WM_KEYDOWN:
+			keyStates[wParam].pressing = true;
+			keyStates[wParam].justDown = true;
+			keyStates[wParam].justUp = false;
+			ui_onKeyDown(wParam);
+			if (onKeyDown)
+				onKeyDown(wParam);
+			break;
+		case WM_KEYUP:
+			keyStates[wParam].pressing = false;
+			keyStates[wParam].justDown = false;
+			keyStates[wParam].justUp = true;
+			ui_onKeyUp(wParam);
+			if (onKeyUp)
+				onKeyUp(wParam);
+			break;
+		case WM_CHAR:
+			ui_onChar(wParam);
+			break;
+		case WM_SIZE:
+		{
+			auto cx = std::max(LOWORD(lParam), (WORD)1);
+			auto cy = std::max(HIWORD(lParam), (WORD)1);
+			if (cx != window_cx || cy != window_cy)
 			{
-			case WM_LBUTTONDOWN:
-				mouseLeft.pressing = true;
-				mouseLeft.justDown = true;
-				mouseLeft.justUp = false;
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseLeftDown)
-					onMouseLeftDown(mouseX, mouseY);
-				SetCapture(hWnd);
-				break;
-			case WM_LBUTTONUP:
-				mouseLeft.pressing = false;
-				mouseLeft.justDown = false;
-				mouseLeft.justUp = true;
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseLeftUp)
-					onMouseLeftUp(mouseX, mouseY);
-				ReleaseCapture();
-				break;
-			case WM_MBUTTONDOWN:
-				mouseMiddle.pressing = true;
-				mouseMiddle.justDown = true;
-				mouseMiddle.justUp = false;
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseMiddleDown)
-					onMouseMiddleDown(mouseX, mouseY);
-				SetCapture(hWnd);
-				break;
-			case WM_MBUTTONUP:
-				mouseMiddle.pressing = false;
-				mouseMiddle.justDown = false;
-				mouseMiddle.justUp = true;
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseMiddleUp)
-					onMouseMiddleUp(mouseX, mouseY);
-				ReleaseCapture();
-				break;
-			case WM_RBUTTONDOWN:
-				mouseRight.pressing = true;
-				mouseRight.justDown = true;
-				mouseRight.justUp = false;
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseRightDown)
-					onMouseRightDown(mouseX, mouseY);
-				SetCapture(hWnd);
-				break;
-			case WM_RBUTTONUP:
-				mouseRight.pressing = false;
-				mouseRight.justDown = false;
-				mouseRight.justUp = true;
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseRightUp)
-					onMouseRightUp(mouseX, mouseY);
-				ReleaseCapture();
-				break;
-			case WM_MOUSEMOVE:
-				mouseX = LOWORD(lParam);
-				mouseY = HIWORD(lParam);
-				if (onMouseMove)
-					onMouseMove(mouseX, mouseY);
-				break;
-			case WM_MOUSEWHEEL:
-				mouseScroll += (short)HIWORD(wParam);
-				if (onMouseWheel)
-					onMouseWheel(mouseScroll);
-				break;
-			case WM_KEYDOWN:
-				keyStates[wParam].pressing = true;
-				keyStates[wParam].justDown = true;
-				keyStates[wParam].justUp = false;
-				ui->onKeyDown(wParam);
-				if (onKeyDown)
-					onKeyDown(wParam);
-				break;
-			case WM_KEYUP:
-				keyStates[wParam].pressing = false;
-				keyStates[wParam].justDown = false;
-				keyStates[wParam].justUp = true;
-				ui->onKeyUp(wParam);
-				if (onKeyUp)
-					onKeyUp(wParam);
-				break;
-			case WM_CHAR:
-				ui->onChar(wParam);
-				break;
-			case WM_SIZE:
-			{
-				auto cx = std::max(LOWORD(lParam), (WORD)1);
-				auto cy = std::max(HIWORD(lParam), (WORD)1);
-				if (cx != window_cx || cy != window_cy)
+				window_cx = cx;
+				window_cy = cy;
+				for (int i = 0; i < 2; i++)
 				{
-					window_cx = cx;
-					window_cy = cy;
-					current_window->destroySwapchain();
-					current_window->createSwapchain();
+					delete window_images[i];
+					window_images[i] = nullptr;
 				}
+				current_window->createSwapchain();
 			}
-				break;
-			}
+		}
+			break;
 		}
 
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -189,14 +190,10 @@ namespace tke
 
 		window_imageAvailable = createSemaphore();
 		frameDone = createFence();
-
-		ui = new GuiComponent(this);
 	}
 
 	void Window::createSwapchain()
 	{
-		VkResult res;
-
 		inst.mtx.lock();
 		device.mtx.lock();
 
@@ -222,7 +219,7 @@ namespace tke
 		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		swapchainInfo.oldSwapchain = swapchain;
 		swapchainInfo.clipped = true;
-		res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
+		auto res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
 		assert(res == VK_SUCCESS);
 
 		VkImage vkImages[2];
@@ -240,15 +237,6 @@ namespace tke
 		}
 	}
 
-	void Window::destroySwapchain()
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			delete window_images[i];
-			window_images[i] = nullptr;
-		}
-	}
-
 	void Window::beginFrame(bool clearBackground)
 	{
 		device.mtx.lock();
@@ -256,13 +244,13 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
 
-		ui->begin(clearBackground);
+		beginUi(clearBackground);
 	}
 
 	void Window::endFrame()
 	{
-		ui->end();
-		cbs.push_back(ui->cb->v);
+		endUi();
+		cbs.push_back(ui_cb->v);
 
 		tke::graphicsQueue.submit(cbs.size(), cbs.data(), window_imageAvailable, 0, frameDone);
 		waitFence(frameDone);
@@ -279,7 +267,7 @@ namespace tke
 		graphicsQueue.mtx.unlock();
 
 		cbs.clear();
-		ui->waitEvents.clear();
+		ui_waitEvents.clear();
 	}
 
 	void Window::show()
