@@ -49,61 +49,6 @@ namespace tke
 		return m;
 	}
 
-	std::vector<EventList*> eventLists;
-
-	void addEventList(EventList *p)
-	{
-		eventLists.push_back(p);
-	}
-
-	void removeEventList(EventList *p)
-	{
-		for (auto it = eventLists.begin(); it != eventLists.end(); it++)
-		{
-			if (*it == p)
-			{
-				eventLists.erase(it);
-				return;
-			}
-		}
-	}
-
-	void processEvents()
-	{
-		for (auto it = eventLists.begin(); it != eventLists.end(); )
-		{
-			auto list = *it;
-
-			if (list->currentEventIndex >= list->events.size())
-			{
-				if (list->repeat)
-				{
-					list->currentEventIndex = 0;
-				}
-				else
-				{
-					delete list;
-					it = eventLists.erase(it);
-					continue;
-				}
-				it++;
-				continue;
-			}
-
-			Event &e = list->events[list->currentEventIndex];
-			e.currentTime += timeDisp;
-			if (e.tickFunc) e.tickFunc(e.currentTime);
-
-			if (e.currentTime >= e.duration)
-			{
-				if (e.execFunc) e.execFunc();
-				list->currentEventIndex++;
-			}
-
-			it++;
-		}
-	}
-
 	void processCmdLine(const std::string &str, bool record)
 	{
 		static std::string last_cmd;
@@ -373,6 +318,8 @@ namespace tke
 			initScene();
 			initGeneralModels();
 			initPhysics();
+
+			ds_maps = new DescriptorSet(mrtPipeline, 1);
 		}
 
 		//initSound();
@@ -380,22 +327,27 @@ namespace tke
 		return NoErr;
 	}
 
+	static unsigned int _lastTime = 0;
+
 	void run()
 	{
-		lastTime = GetTickCount();
-
-		if (!_only_2d)
-			ds_maps = new DescriptorSet(mrtPipeline, 1);
-
 		for (;;)
 		{
 			nowTime = GetTickCount();
-			timeDisp = nowTime - lastTime;
-			processEvents();
+			static unsigned int frameCount = 0;
+			frameCount++;
+			if (nowTime - _lastTime >= 1000)
+			{
+				FPS = std::max(frameCount, 1U);
+				_lastTime = nowTime;
+				frameCount = 0;
+			}
 
 			MSG msg;
 			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
+				if (msg.message == WM_QUIT)
+					return;
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -499,27 +451,26 @@ namespace tke
 					}
 				}
 
-				if (current_window->dead)
-				{
-					delete current_window;
-					return;
-				}
-				else
-				{
-					current_window->mouseDispX = current_window->mouseX - current_window->mousePrevX;
-					current_window->mouseDispY = current_window->mouseY - current_window->mousePrevY;
+				mouseDispX = mouseX - mousePrevX;
+				mouseDispY = mouseY - mousePrevY;
 
-					current_window->renderEvent();
-					current_window->frameCount++;
+				onRender();
 
-					current_window->mouseLeft.justDown = false;
-					current_window->mouseLeft.justUp = false;
-					current_window->mousePrevX = current_window->mouseX;
-					current_window->mousePrevY = current_window->mouseY;
-					current_window->mouseScroll = 0;
+				mouseLeft.justDown = false;
+				mouseLeft.justUp = false;
+				mouseMiddle.justDown = false;
+				mouseMiddle.justUp = false;
+				mouseRight.justDown = false;
+				mouseRight.justUp = false;
+				mousePrevX = mouseX;
+				mousePrevY = mouseY;
+				mouseScroll = 0;
+				for (int i = 0; i < ARRAYSIZE(keyStates); i++)
+				{
+					keyStates[i].justDown = false;
+					keyStates[i].justUp = false;
 				}
 			}
-			lastTime = nowTime;
 		}
 	}
 }

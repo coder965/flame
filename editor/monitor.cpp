@@ -116,28 +116,28 @@ void SceneMonitorWidget::show()
 	draw_list->AddImage(ImTextureID(image->index), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
-		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
+		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
-			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
+			auto distX = (float)tke::mouseDispX / (float)tke::resCx;
+			auto distY = (float)tke::mouseDispY / (float)tke::resCy;
+			if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
 				scene->camera.moveByCursor(distX, distY);
-			else if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
+			else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
 				scene->camera.scroll(distX);
-			else if (mainWindow->mouseMiddle.pressing)
+			else if (tke::mouseMiddle.pressing)
 				scene->camera.rotateByCursor(distX, distY);
-			else if (!mainWindow->keyStates[VK_SHIFT].pressing && !mainWindow->keyStates[VK_CONTROL].pressing)
+			else if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
 			{
-				if (mainWindow->mouseLeft.pressing)
-					transformerTool->mouseMove(mainWindow->mouseDispX, mainWindow->mouseDispY);
+				if (tke::mouseLeft.pressing)
+					transformerTool->mouseMove(tke::mouseDispX, tke::mouseDispY);
 			}
 		}
-		if (mainWindow->mouseLeft.justDown)
+		if (tke::mouseLeft.justDown)
 		{
-			if (!mainWindow->keyStates[VK_SHIFT].pressing && !mainWindow->keyStates[VK_CONTROL].pressing)
+			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
 			{
-				auto x = mainWindow->mouseX - image_pos.x;
-				auto y = mainWindow->mouseY - image_pos.y;
+				auto x = tke::mouseX - image_pos.x;
+				auto y = tke::mouseY - image_pos.y;
 				if (!transformerTool->leftDown(x, y))
 				{
 					currentScene = scene;
@@ -154,10 +154,10 @@ void SceneMonitorWidget::show()
 	auto obj = selectedItem.toObject();
 	if (obj)
 	{
-		obj->setState(tke::Controller::State::forward, mainWindow->keyStates[VK_UP].pressing);
-		obj->setState(tke::Controller::State::backward, mainWindow->keyStates[VK_DOWN].pressing);
-		obj->setState(tke::Controller::State::left, mainWindow->keyStates[VK_LEFT].pressing);
-		obj->setState(tke::Controller::State::right, mainWindow->keyStates[VK_RIGHT].pressing);
+		obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
+		obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
+		obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
+		obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
 	}
 
 	{
@@ -422,18 +422,18 @@ void ModelMonitorWidget::show()
 	ImVec2 image_pos = ImGui::GetItemRectMin();
 	if (ImGui::IsItemHovered())
 	{
-		if (mainWindow->mouseDispX != 0 || mainWindow->mouseDispY != 0)
+		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)mainWindow->mouseDispX / (float)tke::resCx;
-			auto distY = (float)mainWindow->mouseDispY / (float)tke::resCy;
-			if (mainWindow->keyStates[VK_SHIFT].pressing && mainWindow->mouseMiddle.pressing)
+			auto distX = (float)tke::mouseDispX / (float)tke::resCx;
+			auto distY = (float)tke::mouseDispY / (float)tke::resCy;
+			if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
 				camera.moveByCursor(distX, distY);
-			else if (mainWindow->keyStates[VK_CONTROL].pressing && mainWindow->mouseMiddle.pressing)
+			else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
 				camera.scroll(distX);
-			else if (mainWindow->mouseMiddle.pressing)
+			else if (tke::mouseMiddle.pressing)
 				camera.rotateByCursor(distX, distY);
 		}
-		if (mainWindow->mouseLeft.justDown)
+		if (tke::mouseLeft.justDown)
 		{
 		}
 	}

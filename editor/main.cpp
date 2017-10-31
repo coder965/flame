@@ -12,7 +12,6 @@ int main(int argc, char** argv)
 
 	new EditorWindow;
 	mainWindow->show();
-	ShowWindow((HWND)mainWindow->hWnd, SW_SHOWMAXIMIZED);
 	tke::run();
 
 	return 0;

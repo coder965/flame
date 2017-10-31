@@ -11,36 +11,6 @@ namespace tke
 	RenderPass *renderPass_window;
 	RenderPass *renderPass_window_clear;
 
-	static void _create_window(Window *p, bool hasUi)
-	{
-		VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
-		surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		surfaceInfo.hinstance = (HINSTANCE)hInst;
-		surfaceInfo.hwnd = (HWND)p->hWnd;
-		auto res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &p->surface);
-		assert(res == VK_SUCCESS);
-
-		VkBool32 supported;
-		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, p->surface, &supported);
-
-		VkSurfaceCapabilitiesKHR surfaceCapabilities;
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, p->surface, &surfaceCapabilities);
-
-		p->createSwapchain();
-
-		p->imageAvailable = createSemaphore();
-		p->frameDone = createFence();
-
-		if (hasUi)
-			p->ui = new GuiComponent(p);
-	}
-
-	Window::Window(int _cx, int _cy, HWND _hWnd, bool hasUi)
-		:cx(_cx), cy(_cy), hWnd(_hWnd)
-	{
-		_create_window(this, hasUi);
-	}
-
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (current_window)
@@ -48,59 +18,107 @@ namespace tke
 			switch (message)
 			{
 			case WM_LBUTTONDOWN:
-				current_window->mouseLeftDownEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseLeft.pressing = true;
+				mouseLeft.justDown = true;
+				mouseLeft.justUp = false;
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseLeftDown)
+					onMouseLeftDown(mouseX, mouseY);
 				SetCapture(hWnd);
 				break;
 			case WM_LBUTTONUP:
-				current_window->mouseLeftUpEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseLeft.pressing = false;
+				mouseLeft.justDown = false;
+				mouseLeft.justUp = true;
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseLeftUp)
+					onMouseLeftUp(mouseX, mouseY);
 				ReleaseCapture();
 				break;
 			case WM_MBUTTONDOWN:
-				current_window->mouseMiddleDownEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseMiddle.pressing = true;
+				mouseMiddle.justDown = true;
+				mouseMiddle.justUp = false;
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseMiddleDown)
+					onMouseMiddleDown(mouseX, mouseY);
 				SetCapture(hWnd);
 				break;
 			case WM_MBUTTONUP:
-				current_window->mouseMiddleUpEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseMiddle.pressing = false;
+				mouseMiddle.justDown = false;
+				mouseMiddle.justUp = true;
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseMiddleUp)
+					onMouseMiddleUp(mouseX, mouseY);
 				ReleaseCapture();
 				break;
 			case WM_RBUTTONDOWN:
-				current_window->mouseRightDownEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseRight.pressing = true;
+				mouseRight.justDown = true;
+				mouseRight.justUp = false;
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseRightDown)
+					onMouseRightDown(mouseX, mouseY);
 				SetCapture(hWnd);
 				break;
 			case WM_RBUTTONUP:
-				current_window->mouseRightUpEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseRight.pressing = false;
+				mouseRight.justDown = false;
+				mouseRight.justUp = true;
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseRightUp)
+					onMouseRightUp(mouseX, mouseY);
 				ReleaseCapture();
 				break;
 			case WM_MOUSEMOVE:
-				current_window->mouseMoveEvent(LOWORD(lParam), HIWORD(lParam));
+				mouseX = LOWORD(lParam);
+				mouseY = HIWORD(lParam);
+				if (onMouseMove)
+					onMouseMove(mouseX, mouseY);
 				break;
 			case WM_MOUSEWHEEL:
-				current_window->mouseWheelEvent((short)HIWORD(wParam));
+				mouseScroll += (short)HIWORD(wParam);
+				if (onMouseWheel)
+					onMouseWheel(mouseScroll);
 				break;
 			case WM_KEYDOWN:
-				current_window->keyDownEvent(wParam);
+				keyStates[wParam].pressing = true;
+				keyStates[wParam].justDown = true;
+				keyStates[wParam].justUp = false;
+				ui->onKeyDown(wParam);
+				if (onKeyDown)
+					onKeyDown(wParam);
 				break;
 			case WM_KEYUP:
-				current_window->keyUpEvent(wParam);
+				keyStates[wParam].pressing = false;
+				keyStates[wParam].justDown = false;
+				keyStates[wParam].justUp = true;
+				ui->onKeyUp(wParam);
+				if (onKeyUp)
+					onKeyUp(wParam);
 				break;
 			case WM_CHAR:
-				current_window->charEvent(wParam);
+				ui->onChar(wParam);
 				break;
 			case WM_SIZE:
 			{
-				auto cx = glm::max(LOWORD(lParam), (WORD)1);
-				auto cy = glm::max(HIWORD(lParam), (WORD)1);
-				if (cx != current_window->cx || cy != current_window->cy)
+				auto cx = std::max(LOWORD(lParam), (WORD)1);
+				auto cy = std::max(HIWORD(lParam), (WORD)1);
+				if (cx != window_cx || cy != window_cy)
 				{
-					current_window->cx = cx;
-					current_window->cy = cy;
+					window_cx = cx;
+					window_cy = cy;
 					current_window->destroySwapchain();
 					current_window->createSwapchain();
 				}
 			}
-				break;
-			case WM_DESTROY:
-				current_window->dead = true;
 				break;
 			}
 		}
@@ -108,9 +126,11 @@ namespace tke
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	Window::Window(int _cx, int _cy, const std::string &title, WindowStyle style, bool hasUi)
-		:cx(_cx), cy(_cy)
+	Window::Window(int _cx, int _cy, const std::string &title, WindowStyle style)
 	{
+		window_cx = _cx;
+		window_cy = _cy;
+
 		static bool first = true;
 		if (first)
 		{
@@ -131,7 +151,7 @@ namespace tke
 			delete iconData;
 		}
 
-		unsigned int win32WindowStyle = 0;
+		unsigned int win32WindowStyle = WS_VISIBLE;
 
 		if (style != WindowStyleNoFrameNoResize)
 		{
@@ -150,20 +170,27 @@ namespace tke
 
 		hWnd = CreateWindowA("tke_wnd", title.c_str(), win32WindowStyle, (screenCx - _cx) / 2, (screenCy - _cy) / 2, _cx, _cy, NULL, NULL, (HINSTANCE)hInst, NULL);
 
-		_create_window(this, hasUi);
-	}
+		{
+			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
+			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surfaceInfo.hinstance = (HINSTANCE)hInst;
+			surfaceInfo.hwnd = (HWND)hWnd;
+			auto res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &window_surface);
+			assert(res == VK_SUCCESS);
 
-	Window::~Window()
-	{
-		destroyFence(frameDone);
-		destroySemaphore(imageAvailable);
-		destroySwapchain();
-		device.mtx.lock();
-		vkDestroySwapchainKHR(device.v, swapchain, nullptr);
-		device.mtx.unlock();
-		inst.mtx.lock();
-		vkDestroySurfaceKHR(inst.v, surface, nullptr);
-		inst.mtx.unlock();
+			VkBool32 supported;
+			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, window_surface, &supported);
+
+			VkSurfaceCapabilitiesKHR surfaceCapabilities;
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, window_surface, &surfaceCapabilities);
+		}
+
+		createSwapchain();
+
+		window_imageAvailable = createSemaphore();
+		frameDone = createFence();
+
+		ui = new GuiComponent(this);
 	}
 
 	void Window::createSwapchain()
@@ -175,18 +202,18 @@ namespace tke
 
 		unsigned int physicalDeviceSurfaceFormatCount = 0;
 		std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &physicalDeviceSurfaceFormatCount, nullptr);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, window_surface, &physicalDeviceSurfaceFormatCount, nullptr);
 		physicalDeviceSurfaceFormats.resize(physicalDeviceSurfaceFormatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &physicalDeviceSurfaceFormatCount, physicalDeviceSurfaceFormats.data());
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, window_surface, &physicalDeviceSurfaceFormatCount, physicalDeviceSurfaceFormats.data());
 
 		VkSwapchainCreateInfoKHR swapchainInfo = {};
 		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapchainInfo.surface = surface;
+		swapchainInfo.surface = window_surface;
 		swapchainInfo.minImageCount = 2;
 		swapchainInfo.imageFormat = swapchainFormat;
 		swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		swapchainInfo.imageExtent.width = cx;
-		swapchainInfo.imageExtent.height = cy;
+		swapchainInfo.imageExtent.width = window_cx;
+		swapchainInfo.imageExtent.height = window_cy;
 		swapchainInfo.imageArrayLayers = 1;
 		swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -208,8 +235,8 @@ namespace tke
 
 		for (int i = 0; i < 2; i++)
 		{
-			images[i] = new Image(Image::eSwapchain, vkImages[i], cx, cy, swapchainFormat);
-			framebuffers[i] = getFramebuffer(images[i], renderPass_window);
+			window_images[i] = new Image(Image::eSwapchain, vkImages[i], window_cx, window_cy, swapchainFormat);
+			window_framebuffers[i] = getFramebuffer(window_images[i], renderPass_window);
 		}
 	}
 
@@ -217,148 +244,34 @@ namespace tke
 	{
 		for (int i = 0; i < 2; i++)
 		{
-			delete images[i];
-			images[i] = nullptr;
+			delete window_images[i];
+			window_images[i] = nullptr;
 		}
-	}
-
-	void Window::keyDownEvent(int wParam)
-	{
-		keyStates[wParam].pressing = true;
-		keyStates[wParam].justDown = true;
-		keyStates[wParam].justUp = false;
-		if (ui)
-			ui->onKeyDown(wParam);
-	}
-
-	void Window::keyUpEvent(int wParam)
-	{
-		keyStates[wParam].pressing = false;
-		keyStates[wParam].justDown = false;
-		keyStates[wParam].justUp = true;
-		if (ui)
-			ui->onKeyUp(wParam);
-	}
-
-	void Window::charEvent(int wParam)
-	{
-		if (ui)
-			ui->onChar(wParam);
-	}
-
-	void Window::mouseLeftDownEvent(int x, int y)
-	{
-		if (nowTime - lastClickTime < 300)
-			doubleClicked = true;
-		else
-			doubleClicked = false;
-		lastClickTime = nowTime;
-
-		mouseLeft.pressing = true;
-		mouseLeft.justDown = true;
-		mouseLeft.justUp = false;
-
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseLeftUpEvent(int x, int y)
-	{
-		mouseLeft.pressing = false;
-		mouseLeft.justDown = false;
-		mouseLeft.justUp = true;
-
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseMiddleDownEvent(int x, int y)
-	{
-		mouseMiddle.pressing = true;
-
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseMiddleUpEvent(int x, int y)
-	{
-		mouseMiddle.pressing = false;
-
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseRightDownEvent(int x, int y)
-	{
-		mouseRight.pressing = true;
-
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseRightUpEvent(int x, int y)
-	{
-		mouseRight.pressing = false;
-
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseMoveEvent(int x, int y)
-	{
-		mouseX = x;
-		mouseY = y;
-	}
-
-	void Window::mouseWheelEvent(int v)
-	{
-		mouseScroll += v;
-	}
-
-	void Window::renderEvent() {}
-
-	int Window::getFPS()
-	{
-		static auto FPS = 0;
-		static auto lastTime = 0;
-		static auto lastFrame = 0;
-
-		if (nowTime - lastTime >= 1000)
-		{
-			FPS = frameCount - lastFrame;
-			lastFrame = frameCount;
-			lastTime = nowTime;
-		}
-		return FPS;
 	}
 
 	void Window::beginFrame(bool clearBackground)
 	{
 		device.mtx.lock();
-		auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &imageIndex);
+		auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
 		assert(res == VK_SUCCESS);
 		device.mtx.unlock();
 
-		if (ui)
-			ui->begin(clearBackground);
+		ui->begin(clearBackground);
 	}
 
 	void Window::endFrame()
 	{
-		if (ui)
-		{
-			ui->end();
-			cbs.push_back(ui->cb->v);
-		}
+		ui->end();
+		cbs.push_back(ui->cb->v);
 
-		tke::graphicsQueue.submit(cbs.size(), cbs.data(), imageAvailable, 0, frameDone);
+		tke::graphicsQueue.submit(cbs.size(), cbs.data(), window_imageAvailable, 0, frameDone);
 		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
 		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.swapchainCount = 1;
 		info.pSwapchains = &swapchain;
-		info.pImageIndices = &imageIndex;
+		info.pImageIndices = &window_imageIndex;
 
 		graphicsQueue.mtx.lock();
 		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
@@ -366,13 +279,11 @@ namespace tke
 		graphicsQueue.mtx.unlock();
 
 		cbs.clear();
-		if (ui)
-			ui->waitEvents.clear();
+		ui->waitEvents.clear();
 	}
 
 	void Window::show()
 	{
-		ShowWindow((HWND)hWnd, SW_NORMAL);
 		current_window = this;
 	}
 

@@ -92,6 +92,10 @@ struct EnsureConst
 
 namespace tke
 {
+	typedef void(*PF_EVENT0)();
+	typedef void(*PF_EVENT1)(int);
+	typedef void(*PF_EVENT2)(int, int);
+
 	inline long long now_time_ms()
 	{
 		return std::chrono::system_clock::now().time_since_epoch().count() / 10000;

@@ -128,10 +128,10 @@ void TextureEditor::show()
 		draw_list->AddImage(ImTextureID(image->index), image_pos, image_pos + image_size);
 		if (ImGui::IsItemHovered())
 		{
-			if (mainWindow->mouseLeft.pressing && penId != -1)
+			if (tke::mouseLeft.pressing && penId != -1)
 			{
-				auto x = mainWindow->mouseX - image_pos.x;
-				auto y = mainWindow->mouseY - image_pos.y;
+				auto x = tke::mouseX - image_pos.x;
+				auto y = tke::mouseY - image_pos.y;
 
 				auto pixel = (unsigned char*)tke::stagingBuffer->map(0, 4);
 				memset(pixel, 0, 4);

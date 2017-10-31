@@ -19,14 +19,12 @@ extern tke::Image *titleImage;
 struct EditorWindow : tke::Window
 {
 	EditorWindow();
-	virtual ~EditorWindow() override;
 	void openGameExplorer();
 	SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
 	ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);
 	void openAttributeWidget();
 	void openDebugWidget();
 	void openTextureEditor();
-	virtual void renderEvent() override;
 };
 
 extern EditorWindow *mainWindow;

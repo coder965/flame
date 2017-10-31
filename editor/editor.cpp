@@ -13,7 +13,7 @@ MonitorWidget *lastMonitorWidget = nullptr;
 tke::Image *titleImage = nullptr;
 
 EditorWindow::EditorWindow()
-	:Window(800, 600, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, true)
+	:Window(800, 600, "TK Engine Editor", tke::WindowStyleHasFrameCanResize)
 {
 	mainWindow = this;
 
@@ -331,13 +331,13 @@ void EditorWindow::renderEvent()
 	for (auto m : monitorWidgets)
 	{
 		m->show();
-		cbs.insert(cbs.begin(), m->cbs.begin(), m->cbs.end());
-		ui->waitEvents.push_back(m->renderFinished);
+		tke::cbs.insert(tke::cbs.begin(), m->cbs.begin(), m->cbs.end());
+		tke::ui->waitEvents.push_back(m->renderFinished);
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
 	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-	ImGui::Text("FPS:%d", getFPS());
+	ImGui::Text("FPS:%d", tke::FPS);
 	ImGui::End();
 
 	endFrame();

@@ -442,18 +442,18 @@ namespace tke
 			indexBuffer->unmap();
 		}
 
-		auto cb = current_window->ui->cb;
+		auto cb = ui->cb;
 
 		cb->reset();
 		cb->begin();
 
-		if (current_window->ui->waitEvents.size() > 0)
-			cb->waitEvents(current_window->ui->waitEvents.size(), current_window->ui->waitEvents.data());
+		if (ui->waitEvents.size() > 0)
+			cb->waitEvents(ui->waitEvents.size(), ui->waitEvents.data());
 
-		VkClearValue clear_value = { current_window->ui->bkColor.r, current_window->ui->bkColor.g, current_window->ui->bkColor.b };
-		cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, current_window->framebuffers[current_window->imageIndex].get(), need_clear ? &clear_value : nullptr);
+		VkClearValue clear_value = { ui->bkColor.r, ui->bkColor.g, ui->bkColor.b };
+		cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
 
-		cb->setViewportAndScissor(current_window->cx, current_window->cy);
+		cb->setViewportAndScissor(window_cx, window_cy);
 
 		cb->bindVertexBuffer(vertexBuffer);
 		cb->bindIndexBuffer(indexBuffer);
@@ -491,9 +491,9 @@ namespace tke
 
 		cb->endRenderPass();
 
-		if (current_window->ui->waitEvents.size())
+		if (ui->waitEvents.size())
 		{
-			for (auto &e : current_window->ui->waitEvents)
+			for (auto &e : ui->waitEvents)
 				cb->resetEvent(e);
 		}
 
@@ -619,19 +619,19 @@ namespace tke
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		io.DisplaySize = ImVec2((float)window->cx, (float)window->cy);
+		io.DisplaySize = ImVec2((float)window_cx, (float)window_cy);
 		io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
 		io.DeltaTime = (float)((nowTime - last_time) / 1000.f);
 		last_time = nowTime;
 
-		io.MousePos = ImVec2((float)window->mouseX, (float)window->mouseY);
+		io.MousePos = ImVec2((float)mouseX, (float)mouseY);
 
-		io.MouseDown[0] = window->mouseLeft.pressing;
-		io.MouseDown[1] = window->mouseRight.pressing;
-		io.MouseDown[2] = window->mouseMiddle.pressing;
+		io.MouseDown[0] = mouseLeft.pressing;
+		io.MouseDown[1] = mouseRight.pressing;
+		io.MouseDown[2] = mouseMiddle.pressing;
 
-		io.MouseWheel = window->mouseScroll / 120;
+		io.MouseWheel = mouseScroll / 120;
 
 		ImGui::NewFrame();
 	}

@@ -507,7 +507,7 @@ namespace tke
 		}
 
 		// update physics (controller should move first, then simulate, and then get the result coord)
-		auto dist = (timeDisp) / 1000.f;
+		auto dist = 1.f / FPS;
 		if (dist > 0.f)
 		{
 			for (auto &o : objects) // set controller coord

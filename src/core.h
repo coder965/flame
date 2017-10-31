@@ -52,9 +52,7 @@ namespace tke
 	IMPL(1000.f) float far_plane;
 	IMPL(60.f) float fovy;
 
-	IMPL() int lastTime;
 	IMPL() int nowTime;
-	IMPL() int timeDisp;
 
 	IMPL() std::string enginePath;
 	IMPL() int resCx;
@@ -175,30 +173,49 @@ namespace tke
 
 	IMPL(nullptr) DescriptorSet *ds_maps;
 
-	typedef void(*PF_TICK)(int);
-	typedef void(*PF_EXEC)();
-
-	struct Event
-	{
-		PF_TICK tickFunc = nullptr;
-		int duration = 1;
-		PF_EXEC execFunc = nullptr;
-
-		int currentTime = 0;
-	};
-
-	struct EventList
-	{
-		std::vector<Event> events;
-		bool repeat = false;
-		int currentEventIndex = 0;
-	};
-
-	void addEventList(EventList *);
-	void removeEventList(EventList *);
-	void processEvents();
-	void processCmdLine(const std::string &str, bool record = true);
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
+
+	void processCmdLine(const std::string &str, bool record = true);
+
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, bool only_2d = false);
+
+	struct GuiComponent;
+
+	IMPL() HWND hWnd;
+	IMPL() int window_cx;
+	IMPL() int window_cy;
+	IMPL() KeyState mouseLeft;
+	IMPL() KeyState mouseMiddle;
+	IMPL() KeyState mouseRight;
+	IMPL() int mouseX; 
+	IMPL() int mouseY;
+	IMPL() int mousePrevX;
+	IMPL() int mousePrevY;
+	IMPL() int mouseDispX;
+	IMPL() int mouseDispY;
+	IMPL() int mouseScroll;
+	IMPL() KeyState keyStates[256];
+	IMPL() VkSurfaceKHR window_surface;
+	IMPL() VkSwapchainKHR swapchain;
+	IMPL() Image *window_images[2];
+	IMPL() std::shared_ptr<Framebuffer> window_framebuffers[2];
+	IMPL() VkSemaphore window_imageAvailable;
+	IMPL() uint32_t window_imageIndex;
+	IMPL() std::vector<VkCommandBuffer> cbs;
+	IMPL() VkFence frameDone;
+	IMPL() uint32_t FPS;
+	IMPL() PF_EVENT1 onKeyDown;
+	IMPL() PF_EVENT1 onKeyUp;
+	IMPL() PF_EVENT1 onChar;
+	IMPL() PF_EVENT2 onMouseLeftDown;
+	IMPL() PF_EVENT2 onMouseLeftUp;
+	IMPL() PF_EVENT2 onMouseMiddleDown;
+	IMPL() PF_EVENT2 onMouseMiddleUp;
+	IMPL() PF_EVENT2 onMouseRightDown;
+	IMPL() PF_EVENT2 onMouseRightUp;
+	IMPL() PF_EVENT2 onMouseMove;
+	IMPL() PF_EVENT1 onMouseWheel;
+	IMPL() PF_EVENT0 onRender;
+	IMPL() GuiComponent *ui;
 	void run();
 }
