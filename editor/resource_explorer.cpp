@@ -2,10 +2,12 @@
 
 #include "../src/ui/ui.h"
 
-#include "game.h"
+#include "resource_explorer.h"
 #include "editor.h"
 
-void Game::load()
+ResourceExplorer *resourceExplorer = nullptr;
+
+void load_resource()
 {
 	tke::AttributeTree at("data", "data.xml");
 	for (auto &c : at.children)
@@ -76,14 +78,12 @@ void Game::load()
 	}
 }
 
-void Game::save()
+void save_resource()
 {
 
 }
 
-Game game;
-
-void GameExplorer::show()
+void ResourceExplorer::show()
 {
 	ImGui::Begin("Game Explorer", &opened);
 
@@ -128,7 +128,7 @@ void GameExplorer::show()
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
-					mainWindow->openModelMonitorWidget(m);
+					openModelMonitorWidget(m);
 			}
 		}
 		ImGui::TreePop();
@@ -143,7 +143,7 @@ void GameExplorer::show()
 				lastItemType = lastItemTypeScene;
 				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
-					mainWindow->openSceneMonitorWidget(s);
+					openSceneMonitorWidget(s);
 			}
 		}
 		ImGui::TreePop();
@@ -151,5 +151,3 @@ void GameExplorer::show()
 
 	ImGui::End();
 }
-
-GameExplorer *gameExplorer = nullptr;

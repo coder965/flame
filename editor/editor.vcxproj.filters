@@ -21,9 +21,6 @@
     <ClCompile Include="editor.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="game.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -40,6 +37,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="tool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="resource_explorer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,9 +59,6 @@
     <ClInclude Include="editor.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="game.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="monitor.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -69,6 +66,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="texture_editor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="resource_explorer.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

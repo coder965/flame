@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <set>
 
 #include "../utils.h"
 #include "vulkan.h"
@@ -64,12 +65,31 @@ namespace tke
 
 	}
 
+	struct _vulkan_error
+	{
+		VkDebugReportObjectTypeEXT objectType;
+		uint64_t object;
+		size_t location;
+		int32_t messageCode;
+	};
+
+	bool operator<(const _vulkan_error &a, const _vulkan_error &b)
+	{
+		return a.messageCode < b.messageCode;
+	}
+
+	std::set<_vulkan_error> _vulkan_errors;
+
 	static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location,
 		int32_t messageCode,
 		const char* pLayerPrefix,
 		const char* pMessage,
 		void* pUserData)
 	{
+		auto pr = _vulkan_errors.insert({objectType, object, location, messageCode});
+		if (pr.second)
+			printf("%s\n", pMessage);
+
 		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
 		if (messageCode == 0) return VK_FALSE; // descriptor set bind warmming
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind

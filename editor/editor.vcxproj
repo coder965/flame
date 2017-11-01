@@ -165,7 +165,7 @@
     <ClCompile Include="attribute.cpp" />
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="editor.cpp" />
-    <ClCompile Include="game.cpp" />
+    <ClCompile Include="resource_explorer.cpp" />
     <ClCompile Include="main.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
@@ -179,7 +179,7 @@
     <ClInclude Include="attribute.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="editor.h" />
-    <ClInclude Include="game.h" />
+    <ClInclude Include="resource_explorer.h" />
     <ClInclude Include="monitor.h" />
     <ClInclude Include="select.h" />
     <ClInclude Include="texture_editor.h" />

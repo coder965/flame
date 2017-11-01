@@ -4,15 +4,10 @@
 
 struct MonitorWidget;
 
-struct Game
-{
-	void load();
-	void save();
-};
+void load_resource();
+void save_resource();
 
-extern Game game;
-
-struct GameExplorer
+struct ResourceExplorer
 {
 	enum LastItemType
 	{
@@ -30,4 +25,4 @@ struct GameExplorer
 	void show();
 };
 
-extern GameExplorer *gameExplorer;
+extern ResourceExplorer *resourceExplorer;

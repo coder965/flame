@@ -334,21 +334,21 @@ void AttributeWidget::show()
 	switch (lastWindowType)
 	{
 	case LastWindowTypeGameExplorer:
-		switch (gameExplorer->lastItemType)
+		switch (resourceExplorer->lastItemType)
 		{
-		case GameExplorer::lastItemTypeTexture:
+		case ResourceExplorer::lastItemTypeTexture:
 		{
-			auto i = tke::textures[gameExplorer->itemIndex].get();
+			auto i = tke::textures[resourceExplorer->itemIndex].get();
 			ImGui::Text("filename:%s", i->filename.c_str());
 			ImGui::Text("size:%d x %d", i->levels[0].cx, i->levels[0].cy);
 			ImGui::Image((ImTextureID)i->index, ImVec2(i->levels[0].cx, i->levels[0].cy));
 		}
 			break;
-		case GameExplorer::lastItemTypeModel:
-			_show_model(tke::models[gameExplorer->itemIndex].get());
+		case ResourceExplorer::lastItemTypeModel:
+			_show_model(tke::models[resourceExplorer->itemIndex].get());
 			break;
-		case GameExplorer::lastItemTypeScene:
-			_show_scene(tke::scenes[gameExplorer->itemIndex].get());
+		case ResourceExplorer::lastItemTypeScene:
+			_show_scene(tke::scenes[resourceExplorer->itemIndex].get());
 			break;
 		}
 		break;

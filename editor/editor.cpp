@@ -1,7 +1,6 @@
 #include "../src/ui/ui.h"
 
 #include "editor.h"
-#include "game.h"
 #include "monitor.h"
 #include "attribute.h"
 #include "debug.h"
@@ -12,13 +11,11 @@ MonitorWidget *lastMonitorWidget = nullptr;
 
 tke::Image *titleImage = nullptr;
 
-EditorWindow::EditorWindow()
+void setupEditor()
 {
-	mainWindow = this;
-
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
-	game.load();
+	load_resource();
 
 	for (auto &i : tke::debugImages)
 		tke::addUiImage(i.second);
@@ -152,16 +149,16 @@ EditorWindow::EditorWindow()
 		}
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
-				mainWindow->openGameExplorer();
+			if (ImGui::MenuItem("Game Explorer", nullptr, resourceExplorer != nullptr))
+				openGameExplorer();
 			if (ImGui::MenuItem("Output"))
 				;
 			if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
-				mainWindow->openAttributeWidget();
+				openAttributeWidget();
 			if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
-				mainWindow->openDebugWidget();
+				openDebugWidget();
 			if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
-				mainWindow->openTextureEditor();
+				openTextureEditor();
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Build"))
@@ -180,13 +177,13 @@ EditorWindow::EditorWindow()
 		}
 		ImGui::EndMainMenuBar();
 
-		if (gameExplorer)
+		if (resourceExplorer)
 		{
-			gameExplorer->show();
-			if (!gameExplorer->opened)
+			resourceExplorer->show();
+			if (!resourceExplorer->opened)
 			{
-				delete gameExplorer;
-				gameExplorer = nullptr;
+				delete resourceExplorer;
+				resourceExplorer = nullptr;
 			}
 		}
 
@@ -252,7 +249,7 @@ EditorWindow::EditorWindow()
 			tke::AttributeTree at("data");
 			{
 				auto n = new tke::AttributeTreeNode("GameExplorer");
-				n->addAttribute("opened", gameExplorer ? "true" : "false");
+				n->addAttribute("opened", resourceExplorer ? "true" : "false");
 				at.add(n);
 			}
 			for (auto m : monitorWidgets)
@@ -305,45 +302,43 @@ EditorWindow::EditorWindow()
 	};
 }
 
-void EditorWindow::openGameExplorer()
+void openGameExplorer()
 {
-	if (!gameExplorer)
-		gameExplorer = new GameExplorer;
+	if (!resourceExplorer)
+		resourceExplorer = new ResourceExplorer;
 }
 
-SceneMonitorWidget *EditorWindow::openSceneMonitorWidget(tke::Scene *s)
+SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s)
 {
 	auto w = new SceneMonitorWidget(s);
 	monitorWidgets.push_back(w);
 	return w;
 }
 
-ModelMonitorWidget *EditorWindow::openModelMonitorWidget(tke::Model *m)
+ModelMonitorWidget *openModelMonitorWidget(tke::Model *m)
 {
 	auto w = new ModelMonitorWidget(m);
 	monitorWidgets.push_back(w);
 	return w;
 }
 
-void EditorWindow::openAttributeWidget()
+void openAttributeWidget()
 {
 	if (!attributeWidget)
 		attributeWidget = new AttributeWidget;
 }
 
-void EditorWindow::openDebugWidget()
+void openDebugWidget()
 {
 	if (!debugWidget)
 		debugWidget = new DebugWidget;
 }
 
-void EditorWindow::openTextureEditor()
+void openTextureEditor()
 {
 	if (!textureEditor)
 		textureEditor = new TextureEditor;
 }
-
-EditorWindow *mainWindow = nullptr;
 
 void ObjectCreationSetting::load(tke::AttributeTreeNode *n)
 {

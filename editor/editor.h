@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game.h"
+#include "resource_explorer.h"
 #include "monitor.h"
 
 enum LastWindowType
@@ -14,18 +14,14 @@ extern MonitorWidget *lastMonitorWidget;
 
 extern tke::Image *titleImage;
 
-struct EditorWindow
-{
-	EditorWindow();
-	void openGameExplorer();
-	SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
-	ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);
-	void openAttributeWidget();
-	void openDebugWidget();
-	void openTextureEditor();
-};
+void setupEditor();
 
-extern EditorWindow *mainWindow;
+void openGameExplorer();
+SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
+ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);
+void openAttributeWidget();
+void openDebugWidget();
+void openTextureEditor();
 
 struct ObjectCreationSetting
 {
