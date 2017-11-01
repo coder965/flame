@@ -117,9 +117,6 @@
     <ClCompile Include="..\src\image_data.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\profiler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\core.cpp">
       <Filter>src</Filter>
     </ClCompile>

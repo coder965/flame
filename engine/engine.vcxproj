@@ -36,7 +36,6 @@
     <ClCompile Include="..\src\model\material.cpp" />
     <ClCompile Include="..\src\model\model.cpp" />
     <ClCompile Include="..\src\physics\physics.cpp" />
-    <ClCompile Include="..\src\profiler.cpp" />
     <ClCompile Include="..\src\REFLECT.cpp" />
     <ClCompile Include="..\src\render\buffer.cpp" />
     <ClCompile Include="..\src\render\command_buffer.cpp" />
