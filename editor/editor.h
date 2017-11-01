@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../src/window.h"
-
 #include "game.h"
 #include "monitor.h"
 
@@ -16,7 +14,7 @@ extern MonitorWidget *lastMonitorWidget;
 
 extern tke::Image *titleImage;
 
-struct EditorWindow : tke::Window
+struct EditorWindow
 {
 	EditorWindow();
 	void openGameExplorer();

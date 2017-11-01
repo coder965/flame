@@ -120,9 +120,6 @@
     <ClCompile Include="..\src\profiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\window.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\core.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -225,9 +222,6 @@
       <Filter>src\physics</Filter>
     </ClInclude>
     <ClInclude Include="..\src\image_data.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\window.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\core.h">

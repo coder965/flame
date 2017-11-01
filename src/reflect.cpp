@@ -30,7 +30,6 @@
 #include "..\src\sound\sound.h"
 #include "..\src\ui\ui.h"
 #include "..\src\utils.h"
-#include "..\src\window.h"
 namespace tke{
 float near_plane = 0.1f;
 float far_plane = 1000.f;
@@ -72,6 +71,8 @@ RenderPass *renderPass_depth_clear = nullptr;
 RenderPass *renderPass_depth_clear_image8 = nullptr;
 RenderPass *renderPass_depth_clear_image8_clear = nullptr;
 RenderPass *renderPass_depth_clear_image32f_clear = nullptr;
+RenderPass *renderPass_window = nullptr;
+RenderPass *renderPass_window_clear = nullptr;
 std::shared_ptr<Framebuffer> pickUpFb;
 Pipeline *plainPipeline_2d = nullptr;
 Pipeline *plainPipeline_3d = nullptr;
@@ -106,19 +107,19 @@ uint32_t window_imageIndex;
 std::vector<VkCommandBuffer> cbs;
 VkFence frameDone;
 uint32_t FPS;
-PF_EVENT1 onKeyDown;
-PF_EVENT1 onKeyUp;
-PF_EVENT1 onChar;
-PF_EVENT2 onMouseLeftDown;
-PF_EVENT2 onMouseLeftUp;
-PF_EVENT2 onMouseMiddleDown;
-PF_EVENT2 onMouseMiddleUp;
-PF_EVENT2 onMouseRightDown;
-PF_EVENT2 onMouseRightUp;
-PF_EVENT2 onMouseMove;
-PF_EVENT1 onMouseWheel;
-PF_EVENT0 onRender;
-GuiComponent *ui;
+PF_EVENT1 onKeyDown = nullptr;
+PF_EVENT1 onKeyUp = nullptr;
+PF_EVENT1 onChar = nullptr;
+PF_EVENT2 onMouseLeftDown = nullptr;
+PF_EVENT2 onMouseLeftUp = nullptr;
+PF_EVENT2 onMouseMiddleDown = nullptr;
+PF_EVENT2 onMouseMiddleUp = nullptr;
+PF_EVENT2 onMouseRightDown = nullptr;
+PF_EVENT2 onMouseRightUp = nullptr;
+PF_EVENT2 onMouseMove = nullptr;
+PF_EVENT1 onMouseWheel = nullptr;
+PF_EVENT0 onRender = nullptr;
+PF_EVENT0 onDestroy = nullptr;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 Pipeline *scatteringPipeline = nullptr;
@@ -149,6 +150,7 @@ bool uiAcceptedMouse;
 bool uiAcceptedKey;
 CommandBuffer *ui_cb;
 std::vector<VkEvent> ui_waitEvents;
+glm::vec3 bkColor = glm::vec3(0.69f,0.76f,0.79f);
 struct ReflectInit{ReflectInit(){
 tke::EnumType *currentEnumType = nullptr;
 tke::ReflectionBank *currentBank = nullptr;

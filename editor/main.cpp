@@ -8,10 +8,8 @@
 
 int main(int argc, char** argv)
 {
-	tke::init(false, "../", 1280, 720, false);
-
+	tke::init(false, "../", 1280, 720, 800, 600, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, false);
 	new EditorWindow;
-	mainWindow->show();
 	tke::run();
 
 	return 0;

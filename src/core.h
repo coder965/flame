@@ -158,6 +158,8 @@ namespace tke
 	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8;
 	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8_clear;
 	IMPL(nullptr) RenderPass *renderPass_depth_clear_image32f_clear;
+	IMPL(nullptr) RenderPass *renderPass_window;
+	IMPL(nullptr) RenderPass *renderPass_window_clear;
 
 	IMPL() std::shared_ptr<Framebuffer> pickUpFb;
 
@@ -177,9 +179,14 @@ namespace tke
 
 	void processCmdLine(const std::string &str, bool record = true);
 
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, bool only_2d = false);
+	enum WindowStyle
+	{
+		WindowStyleNoFrameNoResize,
+		WindowStyleHasFrameNoResize,
+		WindowStyleHasFrameCanResize
+	};
 
-	struct GuiComponent;
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, WindowStyle window_style, bool only_2d = false);
 
 	IMPL() HWND hWnd;
 	IMPL() int window_cx;
@@ -204,18 +211,21 @@ namespace tke
 	IMPL() std::vector<VkCommandBuffer> cbs;
 	IMPL() VkFence frameDone;
 	IMPL() uint32_t FPS;
-	IMPL() PF_EVENT1 onKeyDown;
-	IMPL() PF_EVENT1 onKeyUp;
-	IMPL() PF_EVENT1 onChar;
-	IMPL() PF_EVENT2 onMouseLeftDown;
-	IMPL() PF_EVENT2 onMouseLeftUp;
-	IMPL() PF_EVENT2 onMouseMiddleDown;
-	IMPL() PF_EVENT2 onMouseMiddleUp;
-	IMPL() PF_EVENT2 onMouseRightDown;
-	IMPL() PF_EVENT2 onMouseRightUp;
-	IMPL() PF_EVENT2 onMouseMove;
-	IMPL() PF_EVENT1 onMouseWheel;
-	IMPL() PF_EVENT0 onRender;
-	IMPL() GuiComponent *ui;
+	IMPL(nullptr) PF_EVENT1 onKeyDown;
+	IMPL(nullptr) PF_EVENT1 onKeyUp;
+	IMPL(nullptr) PF_EVENT1 onChar;
+	IMPL(nullptr) PF_EVENT2 onMouseLeftDown;
+	IMPL(nullptr) PF_EVENT2 onMouseLeftUp;
+	IMPL(nullptr) PF_EVENT2 onMouseMiddleDown;
+	IMPL(nullptr) PF_EVENT2 onMouseMiddleUp;
+	IMPL(nullptr) PF_EVENT2 onMouseRightDown;
+	IMPL(nullptr) PF_EVENT2 onMouseRightUp;
+	IMPL(nullptr) PF_EVENT2 onMouseMove;
+	IMPL(nullptr) PF_EVENT1 onMouseWheel;
+	IMPL(nullptr) PF_EVENT0 onRender;
+	IMPL(nullptr) PF_EVENT0 onDestroy;
+
+	void beginFrame(bool clearBackground);
+	void endFrame();
 	void run();
 }

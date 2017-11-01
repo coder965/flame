@@ -2,7 +2,6 @@
 
 #include "ui.h"
 #include "../core.h"
-#include "../window.h"
 #include "../render/image.h"
 
 namespace tke
@@ -96,9 +95,9 @@ namespace tke
 
 		ui_cb->endRenderPass();
 
-		if (ui_cb->waitEvents.size())
+		if (ui_waitEvents.size())
 		{
-			for (auto &e : ui_cb->waitEvents)
+			for (auto &e : ui_waitEvents)
 				ui_cb->resetEvent(e);
 		}
 

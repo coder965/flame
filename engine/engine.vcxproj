@@ -54,7 +54,6 @@
     <ClCompile Include="..\src\sound\sound.cpp" />
     <ClCompile Include="..\src\ui\ui.cpp" />
     <ClCompile Include="..\src\utils.cpp" />
-    <ClCompile Include="..\src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\imgui\imgui.h" />
@@ -89,7 +88,6 @@
     <ClInclude Include="..\src\sound\sound.h" />
     <ClInclude Include="..\src\ui\ui.h" />
     <ClInclude Include="..\src\utils.h" />
-    <ClInclude Include="..\src\window.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6F5FD7B3-5E83-4A48-B23D-497D31A48266}</ProjectGuid>

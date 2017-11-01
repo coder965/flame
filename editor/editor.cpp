@@ -13,7 +13,6 @@ MonitorWidget *lastMonitorWidget = nullptr;
 tke::Image *titleImage = nullptr;
 
 EditorWindow::EditorWindow()
-	:Window(800, 600, "TK Engine Editor", tke::WindowStyleHasFrameCanResize)
 {
 	mainWindow = this;
 
@@ -95,64 +94,215 @@ EditorWindow::EditorWindow()
 			}
 		}
 	}
-}
 
-EditorWindow::~EditorWindow()
-{
-	{
-		tke::AttributeTree at("data");
+	tke::onRender = []() {
+		tke::beginFrame(true);
+
+		ImGui::BeginMainMenuBar();
+		if (ImGui::BeginMenu("File"))
 		{
-			auto n = new tke::AttributeTreeNode("GameExplorer");
-			n->addAttribute("opened", gameExplorer ? "true" : "false");
-			at.add(n);
+			if (ImGui::BeginMenu("New"))
+			{
+				if (ImGui::MenuItem("Game"))
+				{
+				}
+				if (ImGui::MenuItem("Renderer"))
+				{
+				}
+				if (ImGui::MenuItem("Scene"))
+				{
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::MenuItem("Save Selected Item"))
+			{
+			}
+			if (ImGui::MenuItem("Save Selected Item As"))
+			{
+			}
+			if (ImGui::MenuItem("Save All"))
+			{
+			}
+			if (ImGui::MenuItem("Open In Explorer"))
+			{
+			}
+			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("Edit"))
+		{
+			if (ImGui::MenuItem("Undo"))
+			{
+			}
+			if (ImGui::MenuItem("Redo"))
+			{
+			}
+			if (ImGui::MenuItem("Cut"))
+			{
+			}
+			if (ImGui::MenuItem("Copy"))
+			{
+			}
+			if (ImGui::MenuItem("Paste"))
+			{
+			}
+			if (ImGui::MenuItem("Remove"))
+			{
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
+				mainWindow->openGameExplorer();
+			if (ImGui::MenuItem("Output"))
+				;
+			if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
+				mainWindow->openAttributeWidget();
+			if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
+				mainWindow->openDebugWidget();
+			if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
+				mainWindow->openTextureEditor();
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Build"))
+		{
+			if (ImGui::MenuItem("Build"))
+			{
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Debug"))
+		{
+			if (ImGui::MenuItem("Update Changes"))
+			{
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+
+		if (gameExplorer)
+		{
+			gameExplorer->show();
+			if (!gameExplorer->opened)
+			{
+				delete gameExplorer;
+				gameExplorer = nullptr;
+			}
+		}
+
+		if (attributeWidget)
+		{
+			attributeWidget->show();
+			if (!attributeWidget->opened)
+			{
+				delete attributeWidget;
+				attributeWidget = nullptr;
+			}
+		}
+
+		if (debugWidget)
+		{
+			debugWidget->show();
+			if (!debugWidget->opened)
+			{
+				delete debugWidget;
+				debugWidget = nullptr;
+			}
+		}
+
+		if (textureEditor)
+		{
+			textureEditor->show();
+			if (!textureEditor->opened)
+			{
+				delete textureEditor;
+				textureEditor = nullptr;
+			}
+		}
+
 		for (auto m : monitorWidgets)
 		{
-			auto n = new tke::AttributeTreeNode("MonitorWidget");
-			if (m->mode == MonitorWidget::ModeScene)
+			m->show();
+			tke::cbs.insert(tke::cbs.begin(), m->cbs.begin(), m->cbs.end());
+			tke::ui_waitEvents.push_back(m->renderFinished);
+		}
+
+		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetItemsLineHeightWithSpacing()));
+		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::Text("FPS:%d", tke::FPS);
+		ImGui::End();
+
+		tke::endFrame();
+
+		for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
+		{
+			auto m = *it;
+			if (!m->opened)
 			{
-				auto w = (SceneMonitorWidget*)m;
-				n->addAttribute("scene_filename", w->scene->filename);
-				n->addAttribute("follow", &w->follow);
+				delete m;
+				it = monitorWidgets.erase(it);
 			}
-			else if (m->mode == MonitorWidget::ModeModel)
+			else
+				it++;
+		}
+	};
+
+	tke::onDestroy = []() {
+		{
+			tke::AttributeTree at("data");
 			{
-				n->addAttribute("model_filename", ((ModelMonitorWidget*)m)->model->filename);
+				auto n = new tke::AttributeTreeNode("GameExplorer");
+				n->addAttribute("opened", gameExplorer ? "true" : "false");
+				at.add(n);
 			}
-			at.add(n);
+			for (auto m : monitorWidgets)
+			{
+				auto n = new tke::AttributeTreeNode("MonitorWidget");
+				if (m->mode == MonitorWidget::ModeScene)
+				{
+					auto w = (SceneMonitorWidget*)m;
+					n->addAttribute("scene_filename", w->scene->filename);
+					n->addAttribute("follow", &w->follow);
+				}
+				else if (m->mode == MonitorWidget::ModeModel)
+				{
+					n->addAttribute("model_filename", ((ModelMonitorWidget*)m)->model->filename);
+				}
+				at.add(n);
+			}
+			{
+				auto n = new tke::AttributeTreeNode("AttributeWidget");
+				n->addAttribute("opened", attributeWidget ? "true" : "false");
+				at.add(n);
+			}
+			{
+				auto n = new tke::AttributeTreeNode("DebugWidget");
+				n->addAttribute("opened", debugWidget ? "true" : "false");
+				at.add(n);
+			}
+			{
+				auto n = new tke::AttributeTreeNode("TextureEditor");
+				n->addAttribute("opened", textureEditor ? "true" : "false");
+				at.add(n);
+			}
+			{
+				auto n = new tke::AttributeTreeNode("object_creation_setting");
+				ocs.save(n);
+				at.add(n);
+			}
+			{
+				auto n = new tke::AttributeTreeNode("terrain_creation_setting");
+				tcs.save(n);
+				at.add(n);
+			}
+			if (SelectObject)
+			{
+				auto n = new tke::AttributeTreeNode("select");
+				at.add(n);
+			}
+			at.saveXML("ui.xml");
 		}
-		{
-			auto n = new tke::AttributeTreeNode("AttributeWidget");
-			n->addAttribute("opened", attributeWidget ? "true" : "false");
-			at.add(n);
-		}
-		{
-			auto n = new tke::AttributeTreeNode("DebugWidget");
-			n->addAttribute("opened", debugWidget ? "true" : "false");
-			at.add(n);
-		}
-		{
-			auto n = new tke::AttributeTreeNode("TextureEditor");
-			n->addAttribute("opened", textureEditor ? "true" : "false");
-			at.add(n);
-		}
-		{
-			auto n = new tke::AttributeTreeNode("object_creation_setting");
-			ocs.save(n);
-			at.add(n);
-		}
-		{
-			auto n = new tke::AttributeTreeNode("terrain_creation_setting");
-			tcs.save(n);
-			at.add(n);
-		}
-		if (SelectObject)
-		{
-			auto n = new tke::AttributeTreeNode("select");
-			at.add(n);
-		}
-		at.saveXML("ui.xml");
-	}
+	};
 }
 
 void EditorWindow::openGameExplorer()
@@ -191,168 +341,6 @@ void EditorWindow::openTextureEditor()
 {
 	if (!textureEditor)
 		textureEditor = new TextureEditor;
-}
-
-void EditorWindow::renderEvent()
-{
-	beginFrame(true);
-
-	ImGui::BeginMainMenuBar();
-	if (ImGui::BeginMenu("File"))
-	{
-		if (ImGui::BeginMenu("New"))
-		{
-			if (ImGui::MenuItem("Game"))
-			{
-			}
-			if (ImGui::MenuItem("Renderer"))
-			{
-			}
-			if (ImGui::MenuItem("Scene"))
-			{
-			}
-			ImGui::EndMenu();
-		}
-		if (ImGui::MenuItem("Save Selected Item"))
-		{
-		}
-		if (ImGui::MenuItem("Save Selected Item As"))
-		{
-		}
-		if (ImGui::MenuItem("Save All"))
-		{
-		}
-		if (ImGui::MenuItem("Open In Explorer"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Edit"))
-	{
-		if (ImGui::MenuItem("Undo"))
-		{
-		}
-		if (ImGui::MenuItem("Redo"))
-		{
-		}
-		if (ImGui::MenuItem("Cut"))
-		{
-		}
-		if (ImGui::MenuItem("Copy"))
-		{
-		}
-		if (ImGui::MenuItem("Paste"))
-		{
-		}
-		if (ImGui::MenuItem("Remove"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("View"))
-	{
-		if (ImGui::MenuItem("Game Explorer", nullptr, gameExplorer != nullptr))
-		{
-			openGameExplorer();
-		}
-		if (ImGui::MenuItem("Output"))
-		{
-		}
-		if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
-		{
-			openAttributeWidget();
-		}
-		if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
-		{
-			openDebugWidget();
-		}
-		if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
-		{
-			openTextureEditor();
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Build"))
-	{
-		if (ImGui::MenuItem("Build"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Debug"))
-	{
-		if (ImGui::MenuItem("Update Changes"))
-		{
-		}
-		ImGui::EndMenu();
-	}
-	ImGui::EndMainMenuBar();
-
-	if (gameExplorer)
-	{
-		gameExplorer->show();
-		if (!gameExplorer->opened)
-		{
-			delete gameExplorer;
-			gameExplorer = nullptr;
-		}
-	}
-
-	if (attributeWidget)
-	{
-		attributeWidget->show();
-		if (!attributeWidget->opened)
-		{
-			delete attributeWidget;
-			attributeWidget = nullptr;
-		}
-	}
-
-	if (debugWidget)
-	{
-		debugWidget->show();
-		if (!debugWidget->opened)
-		{
-			delete debugWidget;
-			debugWidget = nullptr;
-		}
-	}
-
-	if (textureEditor)
-	{
-		textureEditor->show();
-		if (!textureEditor->opened)
-		{
-			delete textureEditor;
-			textureEditor = nullptr;
-		}
-	}
-
-	for (auto m : monitorWidgets)
-	{
-		m->show();
-		tke::cbs.insert(tke::cbs.begin(), m->cbs.begin(), m->cbs.end());
-		tke::ui_waitEvents.push_back(m->renderFinished);
-	}
-
-	ImGui::SetNextWindowPos(ImVec2(0, cy - ImGui::GetItemsLineHeightWithSpacing()));
-	ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-	ImGui::Text("FPS:%d", tke::FPS);
-	ImGui::End();
-
-	endFrame();
-
-	for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
-	{
-		auto m = *it;
-		if (!m->opened)
-		{
-			delete m;
-			it = monitorWidgets.erase(it);
-		}
-		else
-			it++;
-	}
 }
 
 EditorWindow *mainWindow = nullptr;

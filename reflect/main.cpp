@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 					implString += "currentBank->addE(\"" + eName + "\", \"" + name + "\", offsetof(" + currentStructName + ", " + name + "));\n";
 				}
 			}
-			else if (std::regex_search(line, match, pattern = R"(IMPL\s*\(\s*([\w_\-\.:\(\)]+)?\s*\)\s*([\w_:\<\>\*\,]+)\s+([\w_\*\[\]\(\)]+))"))
+			else if (std::regex_search(line, match, pattern = R"(IMPL\s*\(\s*([\w_\-\.:\(\)\,]+)?\s*\)\s*([\w_:\<\>\*\,]+)\s+([\w_\*\[\]\(\)]+))"))
 			{
 				defineString += match[2].str() + " " + match[3].str();
 				if (match[1].matched)
