@@ -35,7 +35,7 @@ namespace tke
 		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 		VkImage v = 0;
 		VkDeviceMemory memory = 0;
-		VkImageLayout layout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+		VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
 
 		std::vector<ImageView*> views;

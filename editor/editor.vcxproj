@@ -161,7 +161,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\profiler.cpp" />
     <ClCompile Include="attribute.cpp" />
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="editor.cpp" />

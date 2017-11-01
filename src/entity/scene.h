@@ -21,7 +21,7 @@ namespace tke
 	enum { MaxAnimatedObjectCount = 8 };
 	enum { MaxLightCount = 256 };
 	enum { MaxWaterCount = 8 };
-	enum { MaxShadowCount = 8 };
+	enum { MaxShadowCount = 4 };
 
 	enum { EnvrSizeCx = 128 * 4 };
 	enum { EnvrSizeCy = 128 * 4 };

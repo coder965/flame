@@ -27,9 +27,6 @@
     <ClCompile Include="monitor.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\profiler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="select.cpp">
       <Filter>src</Filter>
     </ClCompile>
