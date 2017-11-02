@@ -611,8 +611,8 @@ namespace tke
 			camera.updateFrustum();
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
-			//stru.proj = matPerspective;
-			//stru.projInv = matPerspectiveInv;
+			stru.proj = matPerspective;
+			stru.projInv = matPerspectiveInv;
 			stru.view = camera.getMatInv();
 			stru.viewInv = camera.getMat();
 			stru.projView = stru.proj * stru.view;

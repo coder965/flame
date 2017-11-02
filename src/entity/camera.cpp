@@ -172,5 +172,4 @@ namespace tke
 		}
 		addEuler(euler);
 	}
-
 }

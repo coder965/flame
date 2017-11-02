@@ -24,7 +24,7 @@ namespace tke
 	enum { MaxShadowCount = 4 };
 
 	enum { EnvrSizeCx = 128 * 4 };
-	enum { EnvrSizeCy = 128 * 4 };
+	enum { EnvrSizeCy = 128 * 2 };
 	enum { ShadowMapCx = 2048 };
 	enum { ShadowMapCy = 2048 };
 
