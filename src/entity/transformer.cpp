@@ -169,25 +169,25 @@ namespace tke
 		{
 		case AxisX:
 		{
-			auto m = glm::mat3(glm::rotate(angle, axis[0]));
+			auto m = glm::mat3(glm::rotate(glm::radians(angle), axis[0]));
 			axis[1] = glm::normalize(m * axis[1]);
 			axis[2] = glm::normalize(m * axis[2]);
 		}
-		break;
+			break;
 		case AxisY:
 		{
-			auto m = glm::mat3(glm::rotate(angle, axis[1]));
+			auto m = glm::mat3(glm::rotate(glm::radians(angle), axis[1]));
 			axis[0] = glm::normalize(m * axis[0]);
 			axis[2] = glm::normalize(m * axis[2]);
 		}
-		break;
+			break;
 		case AxisZ:
 		{
-			auto m = glm::mat3(glm::rotate(angle, axis[2]));
+			auto m = glm::mat3(glm::rotate(glm::radians(angle), axis[2]));
 			axis[1] = glm::normalize(m * axis[1]);
 			axis[0] = glm::normalize(m * axis[0]);
 		}
-		break;
+			break;
 		}
 
 		needUpdateAxis = false;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "math.h"
 #include "entity/scene.h"
 #include "render/buffer.h"
 #include "render/image.h"

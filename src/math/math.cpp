@@ -123,13 +123,13 @@ namespace tke
 	{
 		using namespace glm;
 		auto x = vec3(1.f, 0.f, 0.f), y = vec3(0.f, 1.f, 0.f), z = vec3(0.f, 0.f, 1.f);
-		auto matYaw = mat3(glm::rotate(e.x, y));
+		auto matYaw = mat3(glm::rotate(glm::radians(e.x), y));
 		x = matYaw * x;
 		z = matYaw * z;
-		auto matPitch = mat3(glm::rotate(e.y, z));
+		auto matPitch = mat3(glm::rotate(glm::radians(e.y), z));
 		x = matPitch * x;
 		y = matPitch * y;
-		auto matRoll = mat3(glm::rotate(e.z, x));
+		auto matRoll = mat3(glm::rotate(glm::radians(e.z), x));
 		y = matRoll * y;
 		z = matRoll * z;
 		mat[0] = x;
@@ -141,13 +141,13 @@ namespace tke
 	{
 		using namespace glm;
 		auto x = vec3(1.f, 0.f, 0.f), y = vec3(0.f, 1.f, 0.f), z = vec3(0.f, 0.f, 1.f);
-		auto matYaw = mat3(glm::rotate(e.x, y));
+		auto matYaw = mat3(glm::rotate(glm::radians(e.x), y));
 		x = matYaw * x;
 		z = matYaw * z;
-		auto matPitch = mat3(glm::rotate(e.y, x));
+		auto matPitch = mat3(glm::rotate(glm::radians(e.y), x));
 		z = matPitch * z;
 		y = matPitch * y;
-		auto matRoll = mat3(glm::rotate(e.z, z));
+		auto matRoll = mat3(glm::rotate(glm::radians(e.z), z));
 		y = matRoll * y;
 		x = matRoll * x;
 		mat[0] = x;

@@ -245,7 +245,7 @@ void SceneMonitorWidget::show()
 					auto vtx_dst = (tke::VertexLine*)map;
 					for (int i = 0; i < lineCount; i++)
 					{
-						auto &line = rb.getLines()[i];
+						auto &line = rb.getLines()[i];					
 						vtx_dst[0].position.x = line.pos0.x;
 						vtx_dst[0].position.y = line.pos0.y;
 						vtx_dst[0].position.z = line.pos0.z;
@@ -262,6 +262,7 @@ void SceneMonitorWidget::show()
 					}
 					physxBuffer->unmap();
 				}
+
 				cb_physx->bindVertexBuffer(physxBuffer);
 				cb_physx->bindPipeline(tke::plainPipeline_3d_line);
 

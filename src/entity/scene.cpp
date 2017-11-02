@@ -611,13 +611,13 @@ namespace tke
 			camera.updateFrustum();
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
-			stru.proj = matPerspective;
-			stru.projInv = matPerspective;
+			//stru.proj = matPerspective;
+			//stru.projInv = matPerspectiveInv;
 			stru.view = camera.getMatInv();
 			stru.viewInv = camera.getMat();
 			stru.projView = stru.proj * stru.view;
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
-			memcpy(stru.frustumPlanes, camera.frustumPlanes, sizeof(glm::vec4) * 6);
+			memcpy(stru.frustumPlanes, camera.frustumPlanes, sizeof(MatrixBufferShaderStruct::frustumPlanes));
 			stru.viewportDim = glm::vec2(resCx, resCy);
 			matrixBuffer->update(&stru, stagingBuffer);
 		}
