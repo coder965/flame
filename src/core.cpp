@@ -665,9 +665,7 @@ namespace tke
 									animatedVertexs.push_back(vertex);
 								}
 								for (int i = 0; i < m->indices.size(); i++)
-								{
 									animatedIndices.push_back(m->indices[i]);
-								}
 							}
 						}
 

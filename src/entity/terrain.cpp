@@ -3,10 +3,10 @@
 
 namespace tke
 {
-	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_blendMap,
+	Terrain::Terrain(bool _use_physx, Image *_heightMap, Image *_normalMap, Image *_blendMap,
 		Image *_colorMap0, Image *_colorMap1, Image *_colorMap2, Image *_colorMap3,
 		Image *_normalMap0, Image *_normalMap1, Image *_normalMap2, Image *_normalMap3)
-		:use_physx(_use_physx), blendMap(_blendMap), heightMap(_heightMap)
+		:use_physx(_use_physx), blendMap(_blendMap), normalMap(_normalMap), heightMap(_heightMap)
 	{
 		colorMaps[0] = _colorMap0;
 		colorMaps[1] = _colorMap1;
@@ -18,6 +18,8 @@ namespace tke
 		normalMaps[3] = _normalMap3;
 		if (heightMap)
 			height_map_filename = heightMap->filename;
+		if (normalMap)
+			normal_map_filename = normalMap->filename;
 		if (_colorMap0)
 			color_map0_filename = _colorMap0->filename;
 		if (_colorMap1)

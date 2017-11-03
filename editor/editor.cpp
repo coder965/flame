@@ -81,13 +81,9 @@ void setupEditor()
 						openTextureEditor();
 				}
 				else if (c->name == "object_creation_setting")
-				{
 					ocs.load(c.get());
-				}
 				else if (c->name == "terrain_creation_setting")
-				{
 					tcs.load(c.get());
-				}
 			}
 		}
 	}
@@ -96,57 +92,6 @@ void setupEditor()
 		tke::beginFrame(true);
 
 		ImGui::BeginMainMenuBar();
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::BeginMenu("New"))
-			{
-				if (ImGui::MenuItem("Game"))
-				{
-				}
-				if (ImGui::MenuItem("Renderer"))
-				{
-				}
-				if (ImGui::MenuItem("Scene"))
-				{
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::MenuItem("Save Selected Item"))
-			{
-			}
-			if (ImGui::MenuItem("Save Selected Item As"))
-			{
-			}
-			if (ImGui::MenuItem("Save All"))
-			{
-			}
-			if (ImGui::MenuItem("Open In Explorer"))
-			{
-			}
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Edit"))
-		{
-			if (ImGui::MenuItem("Undo"))
-			{
-			}
-			if (ImGui::MenuItem("Redo"))
-			{
-			}
-			if (ImGui::MenuItem("Cut"))
-			{
-			}
-			if (ImGui::MenuItem("Copy"))
-			{
-			}
-			if (ImGui::MenuItem("Paste"))
-			{
-			}
-			if (ImGui::MenuItem("Remove"))
-			{
-			}
-			ImGui::EndMenu();
-		}
 		if (ImGui::BeginMenu("View"))
 		{
 			if (ImGui::MenuItem("Game Explorer", nullptr, resourceExplorer != nullptr))
@@ -159,20 +104,6 @@ void setupEditor()
 				openDebugWidget();
 			if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
 				openTextureEditor();
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Build"))
-		{
-			if (ImGui::MenuItem("Build"))
-			{
-			}
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Debug"))
-		{
-			if (ImGui::MenuItem("Update Changes"))
-			{
-			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();

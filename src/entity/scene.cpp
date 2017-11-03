@@ -113,9 +113,9 @@ namespace tke
 		mrtRenderFinished = createEvent();
 
 		sunLight = new Light(LightType::parallax);
-		sunLight->shadow = true;
-		_setSunLight_attribute(this);
-		addLight(sunLight);
+		//sunLight->shadow = true;
+		//_setSunLight_attribute(this);
+		//addLight(sunLight);
 	}
 
 	Scene::~Scene()
@@ -609,6 +609,7 @@ namespace tke
 			camera.lookAtTarget();
 		if (camera.changed)
 			camera.updateFrustum();
+
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
 			stru.proj = matPerspective;
@@ -778,6 +779,8 @@ namespace tke
 
 				if (terrain->heightMap)
 					ds_terrain->setImage(TerrainHeightMapBinding, 0, terrain->heightMap, colorBorderSampler);
+				if (terrain->normalMap)
+					ds_terrain->setImage(TerrainNormalMapBinding, 0, terrain->normalMap, colorBorderSampler);
 				if (terrain->blendMap)
 					ds_terrain->setImage(TerrainBlendMapBinding, 0, terrain->blendMap, colorBorderSampler);
 				for (int i = 0; i < 4; i++)
@@ -1180,6 +1183,7 @@ namespace tke
 				auto t = new Terrain;
 				c->obtainFromAttributes(t, t->b);
 				t->heightMap = getTexture(t->height_map_filename);
+				t->normalMap = getTexture(t->normal_map_filename);
 				t->blendMap = getTexture(t->blend_map_filename);
 				t->colorMaps[0] = getTexture(t->color_map0_filename);
 				t->colorMaps[1] = getTexture(t->color_map1_filename);

@@ -261,23 +261,23 @@ namespace tke
 		memcpy(data->levels[0].v, FreeImage_GetBits(dib), data->levels[0].size);
 		FreeImage_Unload(dib);
 
-		if (data->channel == 4)
-		{
-			if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
-				fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
-				fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
-				fif == FREE_IMAGE_FORMAT::FIF_PNG)
-			{
-				for (int y = 0; y < data->levels[0].cy; y++)
-				{
-					for (int x = 0; x < data->levels[0].cx; x++)
-					{
-						std::swap(data->levels[0].v[y * data->levels[0].pitch + x * 4 + 0],
-							data->levels[0].v[y * data->levels[0].pitch + x * 4 + 2]);
-					}
-				}
-			}
-		}
+		//if (data->channel == 4)
+		//{
+		//	if (fif == FREE_IMAGE_FORMAT::FIF_BMP ||
+		//		fif == FREE_IMAGE_FORMAT::FIF_TARGA ||
+		//		fif == FREE_IMAGE_FORMAT::FIF_JPEG ||
+		//		fif == FREE_IMAGE_FORMAT::FIF_PNG)
+		//	{
+		//		for (int y = 0; y < data->levels[0].cy; y++)
+		//		{
+		//			for (int x = 0; x < data->levels[0].cx; x++)
+		//			{
+		//				std::swap(data->levels[0].v[y * data->levels[0].pitch + x * 4 + 0],
+		//					data->levels[0].v[y * data->levels[0].pitch + x * 4 + 2]);
+		//			}
+		//		}
+		//	}
+		//}
 
 		return data;
 	}

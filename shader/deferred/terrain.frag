@@ -28,9 +28,10 @@ layout(binding = 2) uniform MATRIX
 }u_matrix;
 
 layout(binding = 17) uniform sampler2D heightMap;
-layout(binding = 18) uniform sampler2D blendMap;
-layout(binding = 19) uniform sampler2D colorMaps[4];
-layout(binding = 20) uniform sampler2D normalMaps[4];
+layout(binding = 18) uniform sampler2D normalMap;
+layout(binding = 19) uniform sampler2D blendMap;
+layout(binding = 20) uniform sampler2D colorMaps[4];
+layout(binding = 21) uniform sampler2D normalMaps[4];
 
 layout (location = 0) in vec2 inUV;
 
@@ -42,6 +43,30 @@ float getHeight(vec2 UV)
 {
 	return texture(heightMap, UV).r * u_terrain.height;
 }
+
+/*
+mat3 rotate_matrix(float angle, vec3 axis)
+{
+	float c = cos(angle);
+	float s = sin(angle);
+	vec3 temp((1.0 - c) * axis);
+
+	mat3 Rotate;
+	Rotate[0][0] = c + temp[0] * axis[0];
+	Rotate[0][1] = temp[0] * axis[1] + s * axis[2];
+	Rotate[0][2] = temp[0] * axis[2] - s * axis[1];
+
+	Rotate[1][0] = temp[1] * axis[0] - s * axis[2];
+	Rotate[1][1] = c + temp[1] * axis[1];
+	Rotate[1][2] = temp[1] * axis[2] + s * axis[0];
+
+	Rotate[2][0] = temp[2] * axis[0] + s * axis[1];
+	Rotate[2][1] = temp[2] * axis[1] - s * axis[0];
+	Rotate[2][2] = c + temp[2] * axis[2];
+
+	return Rotate;
+}
+*/
 
 void main()
 {
@@ -57,6 +82,7 @@ void main()
 	color += texture(colorMaps[1], tilledUV).rgb * blend.g;
 	color += texture(colorMaps[2], tilledUV).rgb * blend.b;
 	color += texture(colorMaps[3], tilledUV).rgb * blend.a;
+	/*
 	vec3 normal = vec3(0);
 	normal += (texture(normalMaps[0], tilledUV).xyz * 2.0 - 1.0) * blend.r;
 	normal += (texture(normalMaps[1], tilledUV).xyz * 2.0 - 1.0) * blend.g;
@@ -68,10 +94,10 @@ void main()
 	float eps = (u_terrain.blockCx * u_terrain.blockSize) * step.x * 2.0;
 	float LR  = getHeight(inUV - step.xy) - getHeight(inUV + step.xy);
 	float TB  = getHeight(inUV - step.yx) - getHeight(inUV + step.yx);
+	*/
 	
-	normal = normalMatrix * mat3(normalize(vec3(eps, LR, 0.0)), 
-								normalize(vec3(0.0, TB, eps)), 
-								normalize(vec3(LR, eps, TB))) * normal;
+	vec3 samNormal = texture(normalMap, inUV).xyz * 2.0 - 1.0;
+	vec3 normal = normalMatrix * vec3(-samNormal.x, samNormal.z, -samNormal.y);
 
 	outAlbedoAlpha = vec4(color, 1.0);
 	outNormalHeight = vec4(normal * 0.5 + 0.5, 0.0);

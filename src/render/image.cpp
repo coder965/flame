@@ -248,9 +248,9 @@ namespace tke
 			{
 			case 4:
 				if (sRGB)
-					_format = VK_FORMAT_R8G8B8A8_SRGB;
+					_format = VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
 				else
-					_format = VK_FORMAT_R8G8B8A8_UNORM;
+					_format = VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
 				break;
 			}
 		}

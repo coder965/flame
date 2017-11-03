@@ -114,7 +114,7 @@ namespace tke
 		std::string filepath;
 
 		SkyType skyType = SkyType::atmosphere_scattering;
-		glm::vec2 sunDir = glm::vec2(0.f, -90.f);
+		glm::vec2 sunDir = glm::vec2(0.f, 0.f);
 		float atmosphereSunE = 20.f;
 		float atmosphereInnerRadius = 10.f; // The inner (planetary) radius
 		float atmosphereOuterRadius = 10.25f; // The outer (atmosphere) radius
