@@ -9,64 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="transformer_tool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="attribute.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="debug.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="editor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="monitor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="select.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="texture_editor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="tool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="resource_explorer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="transformer_tool.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="tool.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="attribute.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="debug.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="editor.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="monitor.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="select.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="texture_editor.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="resource_explorer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <Xml Include="data.xml">
       <Filter>res</Filter>
     </Xml>
@@ -78,5 +20,69 @@
     <None Include="scene_2.scene">
       <Filter>res</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\attribute.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\debug.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\editor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\monitor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource_explorer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\select.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\texture_editor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\transformer_tool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\terrain_editor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\attribute.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\editor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\monitor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource_explorer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\select.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\texture_editor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tool.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\transformer_tool.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain_editor.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

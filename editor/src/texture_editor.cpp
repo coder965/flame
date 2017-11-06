@@ -1,4 +1,4 @@
-#include "../src/ui/ui.h"
+#include "../../src/ui/ui.h"
 
 #include "editor.h"
 #include "texture_editor.h"

@@ -1,5 +1,5 @@
-#include "../src/ui/ui.h"
-#include "../src/render/synchronization.h"
+#include "../../src/ui/ui.h"
+#include "../../src/render/synchronization.h"
 
 #include "select.h"
 #include "editor.h"

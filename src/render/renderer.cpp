@@ -2,15 +2,13 @@
 
 namespace tke
 {
-	Renderer::Renderer(Scene *_scene)
-		:scene(_scene)
+	Renderer::Renderer()
 	{
 	}
 
-	WireframeRenderer::WireframeRenderer(Scene *_scene)
-		: Renderer(_scene)
+	WireframeRenderer::WireframeRenderer()
 	{
-
+		cb = std::make_unique<CommandBuffer>();
 	}
 
 	void WireframeRenderer::render()
@@ -18,8 +16,7 @@ namespace tke
 
 	}
 
-	DeferredRenderer::DeferredRenderer(Scene *_scene)
-		: Renderer(_scene)
+	DeferredRenderer::DeferredRenderer()
 	{
 
 	}

@@ -1,36 +1,38 @@
 #pragma once
 
+#include <memory>
+
 #include "vulkan.h"
+#include "command_buffer.h"
 
 namespace tke
 {
-	struct Scene;
-
 	struct Renderer
 	{
-		Scene *scene;
 		VkEvent renderFinished;
 
-		Renderer(Scene *_scene);
+		Renderer();
 		virtual void render() = 0;
 
 	};
 
 	struct PlainRenderer : Renderer
 	{
-		PlainRenderer(Scene *_scene);
+		PlainRenderer();
 		virtual void render() override;
 	};
 
 	struct WireframeRenderer : Renderer
 	{
-		WireframeRenderer(Scene *_scene);
+		std::unique_ptr<CommandBuffer> cb;
+
+		WireframeRenderer();
 		virtual void render() override;
 	};
 
 	struct DeferredRenderer : Renderer
 	{
-		DeferredRenderer(Scene *_scene);
+		DeferredRenderer();
 		virtual void render() override;
 	};
 }

@@ -1,5 +1,5 @@
-#include "../src/ui/ui.h"
-#include "../src/core.h"
+#include "../../src/ui/ui.h"
+#include "../../src/core.h"
 
 #include "editor.h"
 #include "monitor.h"
@@ -14,7 +14,7 @@ tke::Image *titleImage = nullptr;
 
 int main(int argc, char** argv)
 {
-	tke::init(false, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, false);
+	tke::init(true, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, false);
 
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
