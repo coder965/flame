@@ -106,7 +106,7 @@ namespace tke
 				esmImage->getView(0, 1, i),
 				esmDepthImage->getView()
 			};
-			fb_esm[i] = getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depth_clear_image32f_clear, TK_ARRAYSIZE(views), views);
+			fb_esm[i] = getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depthC_image32fC, TK_ARRAYSIZE(views), views);
 		}
 
 		shadowRenderFinished = createEvent();
@@ -1027,7 +1027,7 @@ namespace tke
 				{ 1.f, 0 },
 				{ 1.f, 1.f, 1.f, 1.f }
 			};
-			cb_shadow->beginRenderPass(renderPass_depth_clear_image32f_clear, fb_esm[i].get(), clearValues);
+			cb_shadow->beginRenderPass(renderPass_depthC_image32fC, fb_esm[i].get(), clearValues);
 			// static
 			if (staticObjects.size() > 0)
 			{
@@ -1348,7 +1348,7 @@ namespace tke
 			.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
 			.addLink("SHADOW", "Shadow.UniformBuffer")
 			.addLink("MATERIAL", "Material.UniformBuffer"), 
-			renderPass_depth_clear_image8_clear, 0);
+			renderPass_depthC_image8C, 0);
 		esmAnimPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(2048).cy(2048)
 			.vertex_input(&animatedVertexInputState)
@@ -1360,7 +1360,7 @@ namespace tke
 			.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
 			.addLink("SHADOW", "Shadow.UniformBuffer")
 			.addLink("MATERIAL", "Material.UniformBuffer"), 
-			renderPass_depth_clear_image8_clear, 0);
+			renderPass_depthC_image8C, 0);
 		deferredPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
 			.cullMode(VK_CULL_MODE_NONE)

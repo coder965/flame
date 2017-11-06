@@ -54,7 +54,7 @@ namespace tke
 			ui_cb->waitEvents(ui_waitEvents.size(), ui_waitEvents.data());
 
 		VkClearValue clear_value = { bkColor.r, bkColor.g, bkColor.b };
-		ui_cb->beginRenderPass(need_clear ? renderPass_window_clear : renderPass_window, 
+		ui_cb->beginRenderPass(need_clear ? renderPass_windowC : renderPass_window, 
 			window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
 
 		ui_cb->setViewportAndScissor(window_cx, window_cy);
@@ -62,7 +62,7 @@ namespace tke
 		ui_cb->bindVertexBuffer(vertexBuffer);
 		ui_cb->bindIndexBuffer(indexBuffer);
 
-		ui_cb->bindPipeline(plainPipeline_2d);
+		ui_cb->bindPipeline(pipeline_ui);
 		ui_cb->bindDescriptorSet();
 
 		ui_cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
@@ -136,7 +136,7 @@ namespace tke
 			fontImage->fillData(0, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
-			plainPipeline_2d->descriptorSet->setImage(0, 0, fontImage, colorSampler);
+			pipeline_ui->descriptorSet->setImage(0, 0, fontImage, colorSampler);
 		}
 
 		ui_cb = new CommandBuffer;
@@ -245,7 +245,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			plainPipeline_2d->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
+			pipeline_ui->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
 		}
 	}
 
@@ -263,7 +263,7 @@ namespace tke
 		for (int index = 0; index < _images.size(); index++)
 		{
 			_images[index]->index = index + 1;
-			plainPipeline_2d->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
+			pipeline_ui->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
 		}
 	}
 }

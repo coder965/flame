@@ -31,14 +31,14 @@ SceneMonitorWidget::SceneMonitorWidget(tke::Scene *_scene)
 	physx_renderFinished = tke::createEvent();
 
 	cb_wireframe = new tke::CommandBuffer();
-	ds_wireframe_anim = new tke::DescriptorSet(tke::plainPipeline_3d_anim_wire);
+	ds_wireframe_anim = new tke::DescriptorSet(tke::pipeline_wireframe_anim);
 	wireframe_renderFinished = tke::createEvent();
 
 	VkImageView views[] = {
 		image->getView(),
-		tke::plainDepthImage->getView()
+		tke::depthImage->getView()
 	};
-	fb_tool = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	fb_tool = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depthC_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool.get());
 
 	cbs.push_back(scene->cb_shadow->v);
@@ -75,10 +75,10 @@ void draw_pickup_frame(tke::CommandBuffer *cb)
 		auto animated = model->animated;
 		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
 		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
-		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim : tke::plainPipeline_3d);
+		cb->bindPipeline(animated ? tke::pipeline_plain_anim : tke::pipeline_plain);
 		if (animated)
 		{
-			tke::plainPipeline_3d_anim->descriptorSet->setBuffer(0, 0, object->animationComponent->boneMatrixBuffer);
+			tke::pipeline_plain_anim->descriptorSet->setBuffer(0, 0, object->animationComponent->boneMatrixBuffer);
 			cb->bindDescriptorSet();
 		}
 		struct
@@ -264,7 +264,7 @@ void SceneMonitorWidget::show()
 				}
 
 				cb_physx->bindVertexBuffer(physxBuffer);
-				cb_physx->bindPipeline(tke::plainPipeline_3d_line);
+				cb_physx->bindPipeline(tke::pipeline_lines);
 
 				glm::mat4 mvp = tke::matPerspective * scene->camera.getMatInv();
 				cb_physx->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
@@ -337,7 +337,7 @@ void SceneMonitorWidget::show()
 			{
 				cb_wireframe->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
 				cb_wireframe->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
-				cb_wireframe->bindPipeline(animated ? tke::plainPipeline_3d_anim_wire : tke::plainPipeline_3d_wire);
+				cb_wireframe->bindPipeline(animated ? tke::pipeline_wireframe_anim : tke::pipeline_wireframe);
 				if (animated)
 				{
 					if (last_obj != obj)
@@ -372,18 +372,18 @@ ModelMonitorWidget::ModelMonitorWidget(tke::Model *_model)
 	image = new tke::Image(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	VkImageView views[] = {
 		image->getView(),
-		tke::plainDepthImage->getView()
+		tke::depthImage->getView()
 	};
 	fb_image = tke::getFramebuffer(image, tke::renderPass_image8);
 	tke::addUiImage(image);
 
 	camera.setMode(tke::CameraMode::targeting);
 
-	fb_model = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depth_clear_image8, ARRAYSIZE(views), views);
+	fb_model = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depthC_image8, ARRAYSIZE(views), views);
 	if (model->animated)
 	{
 		animComp = new tke::AnimationComponent(model);
-		ds_anim = new tke::DescriptorSet(tke::plainPipeline_3d_anim_tex);
+		ds_anim = new tke::DescriptorSet(tke::pipeline_tex_anim);
 		ds_anim->setBuffer(0, 0, animComp->boneMatrixBuffer);
 	}
 	cb = new tke::CommandBuffer();
@@ -455,11 +455,11 @@ void ModelMonitorWidget::show()
 			{ 0.f, 0.7f, 0.6f, 1.f },
 			{ 1.f, 0 },
 		};
-		cb->beginRenderPass(tke::renderPass_depth_clear_image8_clear, fb_model.get(), clearValues);
+		cb->beginRenderPass(tke::renderPass_depthC_image8C, fb_model.get(), clearValues);
 		auto animated = model->animated;
 		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
 		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
-		cb->bindPipeline(animated ? tke::plainPipeline_3d_anim_tex : tke::plainPipeline_3d_tex);
+		cb->bindPipeline(animated ? tke::pipeline_tex_anim : tke::pipeline_tex);
 		if (animated)
 		{
 			VkDescriptorSet sets[] = {
@@ -512,7 +512,7 @@ void ModelMonitorWidget::show()
 
 		cb_wireframe->bindVertexBuffer(tke::staticVertexBuffer);
 		cb_wireframe->bindIndexBuffer(tke::staticIndexBuffer);
-		cb_wireframe->bindPipeline(tke::plainPipeline_3d_wire);
+		cb_wireframe->bindPipeline(tke::pipeline_wireframe);
 
 		if (showController)
 		{

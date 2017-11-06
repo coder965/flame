@@ -16,6 +16,12 @@ namespace tke
 
 	};
 
+	struct PlainRenderer : Renderer
+	{
+		PlainRenderer(Scene *_scene);
+		virtual void render() override;
+	};
+
 	struct WireframeRenderer : Renderer
 	{
 		WireframeRenderer(Scene *_scene);

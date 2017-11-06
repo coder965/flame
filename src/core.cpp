@@ -73,7 +73,7 @@ namespace tke
 			return 0;
 
 		auto cb = begineOnceCommandBuffer();
-		cb->beginRenderPass(renderPass_depth_clear_image8_clear, pickUpFb.get());
+		cb->beginRenderPass(renderPass_depthC_image8C, pickUpFb.get());
 		drawCallback(cb);
 		cb->endRenderPass();
 		endOnceCommandBuffer(cb);
@@ -312,8 +312,8 @@ namespace tke
 			defaultMaterial->sceneIndex = 0;
 			modelMaterials.push_back(defaultMaterial);
 
-			plainDepthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			globalResource.setImage(plainDepthImage, "Depth.Image");
+			depthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			globalResource.setImage(depthImage, "Depth.Image");
 
 			pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		}
@@ -324,7 +324,7 @@ namespace tke
 			VkAttachmentReference col_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
 			renderPass_window = new RenderPass(1, &att0, 1, &subpass0);
-			renderPass_window_clear = new RenderPass(1, &att1, 1, &subpass0);
+			renderPass_windowC = new RenderPass(1, &att1, 1, &subpass0);
 
 			if (!only_2d)
 			{
@@ -353,13 +353,13 @@ namespace tke
 					att6
 				};
 				renderPass_image8 = new RenderPass(1, &att2, 1, &subpass0);
-				renderPass_image8_clear = new RenderPass(1, &att3, 1, &subpass0);
+				renderPass_image8C = new RenderPass(1, &att3, 1, &subpass0);
 				renderPass_image16 = new RenderPass(1, &att4, 1, &subpass0);
-				renderPass_image16_clear = new RenderPass(1, &att5, 1, &subpass0);
-				renderPass_depth_clear = new RenderPass(1, &att6, 1, &subpass1);
-				renderPass_depth_clear_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
-				renderPass_depth_clear_image8_clear = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
-				renderPass_depth_clear_image32f_clear = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
+				renderPass_image16C = new RenderPass(1, &att5, 1, &subpass0);
+				renderPass_depthC = new RenderPass(1, &att6, 1, &subpass1);
+				renderPass_depthC_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
+				renderPass_depthC_image8C = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
+				renderPass_depthC_image32fC = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
 			}
 		}
 
@@ -367,63 +367,63 @@ namespace tke
 		{
 			VkImageView views[] = {
 				pickUpImage->getView(),
-				plainDepthImage->getView()
+				depthImage->getView()
 			};
-			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depth_clear_image8_clear, ARRAYSIZE(views), views);
+			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, ARRAYSIZE(views), views);
 		}
 
-		plainPipeline_2d = new Pipeline(PipelineCreateInfo()
+		pipeline_ui = new Pipeline(PipelineCreateInfo()
 			.vertex_input(&plain2dVertexInputState)
 			.cullMode(VK_CULL_MODE_NONE)
 			.addBlendAttachmentState(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
 			.addDynamicState(VK_DYNAMIC_STATE_SCISSOR)
-			.addShader(enginePath + "shader/plain2d/plain2d.vert", {})
-			.addShader(enginePath + "shader/plain2d/plain2d.frag", {}),
+			.addShader(enginePath + "shader/ui.vert", {})
+			.addShader(enginePath + "shader/ui.frag", {}),
 			renderPass_window, 0, true);
 
 		if (!only_2d)
 		{
-			plainPipeline_3d = new Pipeline(PipelineCreateInfo()
+			pipeline_plain = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}), 
-				renderPass_depth_clear_image8, 0);
-			plainPipeline_3d_anim = new Pipeline(PipelineCreateInfo()
+				renderPass_depthC_image8, 0);
+			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&animatedVertexInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}), 
-				renderPass_depth_clear_image8, 0, true);
-			plainPipeline_3d_normal = new Pipeline(PipelineCreateInfo()
+				renderPass_depthC_image8, 0, true);
+			pipeline_headlight = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_NORMAL"}),
-				renderPass_depth_clear_image8, 0);
-			plainPipeline_3d_tex = new Pipeline(PipelineCreateInfo()
+				renderPass_depthC_image8, 0);
+			pipeline_tex = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_TEX"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_TEX"}), 
-				renderPass_depth_clear_image8, 0);
-			plainPipeline_3d_anim_tex = new Pipeline(PipelineCreateInfo()
+				renderPass_depthC_image8, 0);
+			pipeline_tex_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&animatedVertexInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
-				renderPass_depth_clear_image8, 0, true);
-			plainPipeline_3d_wire = new Pipeline(PipelineCreateInfo()
+				renderPass_depthC_image8, 0, true);
+			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
@@ -431,7 +431,7 @@ namespace tke
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}), 
 				renderPass_image8, 0);
-			plainPipeline_3d_anim_wire = new Pipeline(PipelineCreateInfo()
+			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&animatedVertexInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
@@ -439,7 +439,7 @@ namespace tke
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
 				renderPass_image8, 0, true);
-			plainPipeline_3d_line = new Pipeline(PipelineCreateInfo()
+			pipeline_lines = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&lineVertexInputState)
 				.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)

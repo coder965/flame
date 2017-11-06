@@ -26,7 +26,7 @@ static void draw(tke::CommandBuffer *cb)
 
 	cb->bindVertexBuffer(tke::staticVertexBuffer);
 	cb->bindIndexBuffer(tke::staticIndexBuffer);
-	cb->bindPipeline(currentDrawPolicy == 0 ? tke::plainPipeline_3d_normal : tke::plainPipeline_3d);
+	cb->bindPipeline(currentDrawPolicy == 0 ? tke::pipeline_headlight : tke::pipeline_plain);
 	cb->bindDescriptorSet();
 
 	struct
@@ -107,7 +107,7 @@ void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent, VkEvent signa
 
 	cb->waitEvents(1, &waitEvent);
 
-	cb->beginRenderPass(tke::renderPass_depth_clear_image8, fb);
+	cb->beginRenderPass(tke::renderPass_depthC_image8, fb);
 
 	currentTransformerTool = this;
 	currentCamera = camera;

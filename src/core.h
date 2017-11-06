@@ -147,31 +147,31 @@ namespace tke
 	IMPL(nullptr) UniformBuffer *constantBuffer;
 	IMPL(nullptr) UniformBuffer *materialBuffer;
 
-	IMPL(nullptr) Image *plainDepthImage;
+	IMPL(nullptr) Image *depthImage;
 	IMPL(nullptr) Image *pickUpImage;
 
 	IMPL(nullptr) RenderPass *renderPass_image8;
-	IMPL(nullptr) RenderPass *renderPass_image8_clear;
+	IMPL(nullptr) RenderPass *renderPass_image8C;
 	IMPL(nullptr) RenderPass *renderPass_image16;
-	IMPL(nullptr) RenderPass *renderPass_image16_clear;
-	IMPL(nullptr) RenderPass *renderPass_depth_clear;
-	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8;
-	IMPL(nullptr) RenderPass *renderPass_depth_clear_image8_clear;
-	IMPL(nullptr) RenderPass *renderPass_depth_clear_image32f_clear;
+	IMPL(nullptr) RenderPass *renderPass_image16C;
+	IMPL(nullptr) RenderPass *renderPass_depthC;
+	IMPL(nullptr) RenderPass *renderPass_depthC_image8;
+	IMPL(nullptr) RenderPass *renderPass_depthC_image8C;
+	IMPL(nullptr) RenderPass *renderPass_depthC_image32fC;
 	IMPL(nullptr) RenderPass *renderPass_window;
-	IMPL(nullptr) RenderPass *renderPass_window_clear;
+	IMPL(nullptr) RenderPass *renderPass_windowC;
 
 	IMPL() std::shared_ptr<Framebuffer> pickUpFb;
 
-	IMPL(nullptr) Pipeline *plainPipeline_2d;
-	IMPL(nullptr) Pipeline *plainPipeline_3d;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_anim;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_normal;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_tex;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_anim_tex;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_wire;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_anim_wire;
-	IMPL(nullptr) Pipeline *plainPipeline_3d_line;
+	IMPL(nullptr) Pipeline *pipeline_ui;
+	IMPL(nullptr) Pipeline *pipeline_plain;
+	IMPL(nullptr) Pipeline *pipeline_plain_anim;
+	IMPL(nullptr) Pipeline *pipeline_headlight;
+	IMPL(nullptr) Pipeline *pipeline_tex;
+	IMPL(nullptr) Pipeline *pipeline_tex_anim;
+	IMPL(nullptr) Pipeline *pipeline_wireframe;
+	IMPL(nullptr) Pipeline *pipeline_wireframe_anim;
+	IMPL(nullptr) Pipeline *pipeline_lines;
 
 	IMPL(nullptr) DescriptorSet *ds_maps;
 
