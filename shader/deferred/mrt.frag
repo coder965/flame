@@ -12,7 +12,7 @@ struct Material
 	uint dummy;
 };
 
-layout(binding = 2) uniform MATERIAL
+layout(binding = 1) uniform MATERIAL
 {
 	Material material[256];
 }u_material;

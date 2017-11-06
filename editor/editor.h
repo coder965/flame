@@ -14,8 +14,6 @@ extern MonitorWidget *lastMonitorWidget;
 
 extern tke::Image *titleImage;
 
-void setupEditor();
-
 void openGameExplorer();
 SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
 ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);

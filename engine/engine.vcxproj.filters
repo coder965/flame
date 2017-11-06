@@ -132,6 +132,12 @@
     <ClCompile Include="..\..\imgui\imgui_draw.cpp">
       <Filter>src\ui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\render\renderer.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\entity\sky.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -229,6 +235,12 @@
     </ClInclude>
     <ClInclude Include="..\..\imgui\imgui.h">
       <Filter>src\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\renderer.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\entity\sky.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

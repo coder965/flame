@@ -165,9 +165,6 @@
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="editor.cpp" />
     <ClCompile Include="resource_explorer.cpp" />
-    <ClCompile Include="main.cpp">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
     <ClCompile Include="monitor.cpp" />
     <ClCompile Include="select.cpp" />
     <ClCompile Include="texture_editor.cpp" />

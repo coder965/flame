@@ -82,6 +82,7 @@ void main()
 	color += texture(colorMaps[1], tilledUV).rgb * blend.g;
 	color += texture(colorMaps[2], tilledUV).rgb * blend.b;
 	color += texture(colorMaps[3], tilledUV).rgb * blend.a;
+	
 	/*
 	vec3 normal = vec3(0);
 	normal += (texture(normalMaps[0], tilledUV).xyz * 2.0 - 1.0) * blend.r;
@@ -94,7 +95,12 @@ void main()
 	float eps = (u_terrain.blockCx * u_terrain.blockSize) * step.x * 2.0;
 	float LR  = getHeight(inUV - step.xy) - getHeight(inUV + step.xy);
 	float TB  = getHeight(inUV - step.yx) - getHeight(inUV + step.yx);
-	*/
+	
+	normal = normalMatrix * mat3(normalize(vec3(eps, LR, 0.0)),
+ 								normalize(vec3(0.0, TB, eps)),
+ 								normalize(vec3(LR, eps, TB))) * normal;
+*/
+	
 	
 	vec3 samNormal = texture(normalMap, inUV).xyz * 2.0 - 1.0;
 	vec3 normal = normalMatrix * vec3(-samNormal.x, samNormal.z, -samNormal.y);

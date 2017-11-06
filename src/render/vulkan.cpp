@@ -91,6 +91,7 @@ namespace tke
 			printf("%s\n", pMessage);
 
 		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
+		if (messageCode == 10) return VK_FALSE; // Dest AccessMask 0 [None] must have required access bit 4096 [VK_ACCESS_TRANSFER_WRITE_BIT]  when layout is VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, unless the app has previously added a barrier for this transition.
 		if (messageCode == 0) return VK_FALSE; // descriptor set bind warmming
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
 		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind

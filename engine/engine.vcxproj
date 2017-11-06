@@ -27,6 +27,7 @@
     <ClCompile Include="..\src\entity\light.cpp" />
     <ClCompile Include="..\src\entity\object.cpp" />
     <ClCompile Include="..\src\entity\scene.cpp" />
+    <ClCompile Include="..\src\entity\sky.cpp" />
     <ClCompile Include="..\src\entity\terrain.cpp" />
     <ClCompile Include="..\src\entity\transformer.cpp" />
     <ClCompile Include="..\src\entity\water.cpp" />
@@ -44,6 +45,7 @@
     <ClCompile Include="..\src\render\image.cpp" />
     <ClCompile Include="..\src\render\pipeline.cpp" />
     <ClCompile Include="..\src\render\push_constant.cpp" />
+    <ClCompile Include="..\src\render\renderer.cpp" />
     <ClCompile Include="..\src\render\renderpass.cpp" />
     <ClCompile Include="..\src\render\sampler.cpp" />
     <ClCompile Include="..\src\render\shader.cpp" />
@@ -62,6 +64,7 @@
     <ClInclude Include="..\src\entity\light.h" />
     <ClInclude Include="..\src\entity\object.h" />
     <ClInclude Include="..\src\entity\scene.h" />
+    <ClInclude Include="..\src\entity\sky.h" />
     <ClInclude Include="..\src\entity\terrain.h" />
     <ClInclude Include="..\src\entity\transformer.h" />
     <ClInclude Include="..\src\entity\water.h" />
@@ -78,6 +81,7 @@
     <ClInclude Include="..\src\render\image.h" />
     <ClInclude Include="..\src\render\pipeline.h" />
     <ClInclude Include="..\src\render\push_constant.h" />
+    <ClInclude Include="..\src\render\renderer.h" />
     <ClInclude Include="..\src\render\renderpass.h" />
     <ClInclude Include="..\src\render\sampler.h" />
     <ClInclude Include="..\src\render\shader.h" />

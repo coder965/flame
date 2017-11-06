@@ -1,4 +1,5 @@
 #include "../src/ui/ui.h"
+#include "../src/core.h"
 
 #include "editor.h"
 #include "monitor.h"
@@ -11,8 +12,10 @@ MonitorWidget *lastMonitorWidget = nullptr;
 
 tke::Image *titleImage = nullptr;
 
-void setupEditor()
+int main(int argc, char** argv)
 {
+	tke::init(false, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, false);
+
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	load_resource();
@@ -231,6 +234,10 @@ void setupEditor()
 			at.saveXML("ui.xml");
 		}
 	};
+
+	tke::run();
+
+	return 0;
 }
 
 void openGameExplorer()

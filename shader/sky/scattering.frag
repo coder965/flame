@@ -15,7 +15,7 @@ layout(push_constant) uniform PushConstant
 }pc;
 
 const vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131); // air
-const float rayleigh_brightness = 3.3, mie_brightness = 0.1, spot_brightness = 100.0, scatter_strength = 0.028, rayleigh_strength = 0.139, mie_strength = 0.0264;
+const float rayleigh_brightness = 3.3, mie_brightness = 0.1, spot_brightness = 1000.0, scatter_strength = 0.028, rayleigh_strength = 0.139, mie_strength = 0.0264;
 const float rayleigh_collection_power = 0.81, mie_collection_power = 0.39, mie_distribution = 0.63;
     
 const float surface_height = 0.99;

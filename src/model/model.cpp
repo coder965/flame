@@ -393,7 +393,7 @@ namespace tke
 		for (int i = 0; i < axisSubdiv; i++)
 		{
 			float ang = i * 360.f / axisSubdiv;
-			glm::mat3 R = glm::mat3(glm::rotate(-ang, glm::vec3(0.f, 1.f, 0.f)));
+			glm::mat3 R = glm::mat3(glm::rotate(glm::radians(-ang), glm::vec3(0.f, 1.f, 0.f)));
 			for (int j = 0; j < heightSubdiv; j++)
 			{
 				auto secang = glm::radians(j * 360.f / heightSubdiv);
@@ -516,7 +516,7 @@ namespace tke
 			triangleModel->name = "triangle";
 			triangleModel->filename = "[triangle]";
 
-			addTriangleVertex(triangleModel, glm::mat3(), glm::vec3());
+			addTriangleVertex(triangleModel, glm::mat3(1.f), glm::vec3(0.f));
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
@@ -533,7 +533,7 @@ namespace tke
 			cubeModel->name = "cube";
 			cubeModel->filename = "[cube]";
 
-			addCubeVertex(cubeModel, glm::mat3(), glm::vec3(), 1.f);
+			addCubeVertex(cubeModel, glm::mat3(1.f), glm::vec3(0.f), 1.f);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
@@ -556,7 +556,7 @@ namespace tke
 			sphereModel->name = "sphere";
 			sphereModel->filename = "[sphere]";
 
-			addSphereVertex(sphereModel, glm::mat3(), glm::vec3(), 0.5f, 32, 32);
+			addSphereVertex(sphereModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 32, 32);
 
 			auto g0 = std::make_unique<Geometry>();
 			g0->material = defaultMaterial;
@@ -584,7 +584,7 @@ namespace tke
 			cylinderModel->name = "cylinder";
 			cylinderModel->filename = "[cylinder]";
 
-			addCylinderVertex(cylinderModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
+			addCylinderVertex(cylinderModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
@@ -607,7 +607,7 @@ namespace tke
 			coneModel->name = "cone";
 			coneModel->filename = "[cone]";
 
-			addConeVertex(coneModel, glm::mat3(), glm::vec3(), 0.5f, 0.5f, 32);
+			addConeVertex(coneModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
@@ -624,7 +624,7 @@ namespace tke
 			arrowModel->name = "arrow";
 			arrowModel->filename = "[arrow]";
 
-			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
+			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
 
 			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
 			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
@@ -644,7 +644,7 @@ namespace tke
 			torusModel->name = "torus";
 			torusModel->filename = "[torus]";
 
-			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
+			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
 
 			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
 
@@ -663,7 +663,7 @@ namespace tke
 			hamerModel->name = "hammer";
 			hamerModel->filename = "[hammer]";
 
-			glm::mat3 matR = glm::mat3(glm::rotate(-90.f, glm::vec3(0.f, 0.f, 1.f)));
+			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
 
 			addCylinderVertex(hamerModel, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
 			int ic0 = hamerModel->indices.size();

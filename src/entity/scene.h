@@ -3,6 +3,7 @@
 #include "../utils.h"
 #include "../math/math.h"
 #include "camera.h"
+#include "sky.h"
 #include "light.h"
 #include "object.h"
 #include "terrain.h"
@@ -29,13 +30,6 @@ namespace tke
 	enum { ShadowMapCy = 2048 };
 
 	enum { MaxIndirectCount = 1024 };
-
-	enum class SkyType
-	{
-		null,
-		atmosphere_scattering = 1 << 0,
-		panorama = 1 << 1
-	};
 
 	struct LightShaderStruct
 	{
