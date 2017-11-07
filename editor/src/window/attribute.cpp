@@ -1,7 +1,7 @@
-#include "../../src/ui/ui.h"
+#include "../../../src/ui/ui.h"
 
-#include "editor.h"
-#include "select.h"
+#include "../editor.h"
+#include "../select.h"
 #include "attribute.h"
 
 static void _show_scene(tke::Scene *s)

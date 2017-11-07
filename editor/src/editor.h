@@ -1,7 +1,7 @@
 #pragma once
 
-#include "resource_explorer.h"
-#include "monitor.h"
+#include "window/resource_explorer.h"
+#include "window/monitor.h"
 
 enum LastWindowType
 {

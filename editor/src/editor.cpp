@@ -2,9 +2,9 @@
 #include "../../src/core.h"
 
 #include "editor.h"
-#include "monitor.h"
-#include "attribute.h"
-#include "texture_editor.h"
+#include "window/monitor.h"
+#include "window/attribute.h"
+#include "window/texture_editor.h"
 
 LastWindowType lastWindowType = LastWindowTypeNull;
 MonitorWidget *lastMonitorWidget = nullptr;

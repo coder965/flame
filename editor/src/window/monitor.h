@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../src/core.h"
-#include "select.h"
-#include "transformer_tool.h"
+#include "../../../src/core.h"
+#include "../select.h"
+#include "../tool/transformer_tool.h"
 
 struct MonitorWidget
 {

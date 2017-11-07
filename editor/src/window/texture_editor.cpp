@@ -1,6 +1,6 @@
-#include "../../src/ui/ui.h"
+#include "../../../src/ui/ui.h"
 
-#include "editor.h"
+#include "../editor.h"
 #include "texture_editor.h"
 
 static void _texture_editor_remove_image(TextureEditor *e)

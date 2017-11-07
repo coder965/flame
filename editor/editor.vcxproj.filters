@@ -55,6 +55,9 @@
     <ClCompile Include="src\window\texture_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
+    <ClCompile Include="src\window\window.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\editor.h">
@@ -82,6 +85,9 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="src\window\texture_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\window\window.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>

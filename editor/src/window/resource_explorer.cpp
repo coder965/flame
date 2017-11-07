@@ -1,9 +1,9 @@
 #include <filesystem>
 
-#include "../../src/ui/ui.h"
+#include "../../../src/ui/ui.h"
 
 #include "resource_explorer.h"
-#include "editor.h"
+#include "../editor.h"
 
 ResourceExplorer *resourceExplorer = nullptr;
 
