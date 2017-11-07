@@ -4,7 +4,6 @@
 #include "editor.h"
 #include "monitor.h"
 #include "attribute.h"
-#include "debug.h"
 #include "texture_editor.h"
 
 LastWindowType lastWindowType = LastWindowTypeNull;
@@ -69,13 +68,6 @@ int main(int argc, char** argv)
 					if (opened)
 						openAttributeWidget();
 				}
-				else if (c->name == "DebugWidget")
-				{
-					bool opened;
-					c->firstAttribute("opened")->get(&opened);
-					if (opened)
-						openDebugWidget();
-				}
 				else if (c->name == "TextureEditor")
 				{
 					bool opened;
@@ -99,12 +91,8 @@ int main(int argc, char** argv)
 		{
 			if (ImGui::MenuItem("Game Explorer", nullptr, resourceExplorer != nullptr))
 				openGameExplorer();
-			if (ImGui::MenuItem("Output"))
-				;
 			if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
 				openAttributeWidget();
-			if (ImGui::MenuItem("Debug", nullptr, debugWidget != nullptr))
-				openDebugWidget();
 			if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
 				openTextureEditor();
 			ImGui::EndMenu();
@@ -128,16 +116,6 @@ int main(int argc, char** argv)
 			{
 				delete attributeWidget;
 				attributeWidget = nullptr;
-			}
-		}
-
-		if (debugWidget)
-		{
-			debugWidget->show();
-			if (!debugWidget->opened)
-			{
-				delete debugWidget;
-				debugWidget = nullptr;
 			}
 		}
 
@@ -207,11 +185,6 @@ int main(int argc, char** argv)
 				at.add(n);
 			}
 			{
-				auto n = new tke::AttributeTreeNode("DebugWidget");
-				n->addAttribute("opened", debugWidget ? "true" : "false");
-				at.add(n);
-			}
-			{
 				auto n = new tke::AttributeTreeNode("TextureEditor");
 				n->addAttribute("opened", textureEditor ? "true" : "false");
 				at.add(n);
@@ -264,12 +237,6 @@ void openAttributeWidget()
 {
 	if (!attributeWidget)
 		attributeWidget = new AttributeWidget;
-}
-
-void openDebugWidget()
-{
-	if (!debugWidget)
-		debugWidget = new DebugWidget;
 }
 
 void openTextureEditor()

@@ -7,6 +7,12 @@
     <Filter Include="res">
       <UniqueIdentifier>{9794f7b4-4266-4995-a535-1f6bd413c99f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\tool">
+      <UniqueIdentifier>{e5ff0cc1-bb12-46bc-aa51-c54cf38b2211}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\window">
+      <UniqueIdentifier>{99f33b0a-7ac9-4096-9f8b-0fae8a5d1b91}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="data.xml">
@@ -22,67 +28,61 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\attribute.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\debug.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\editor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\monitor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\resource_explorer.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\select.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\texture_editor.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\tool\tool.cpp">
+      <Filter>src\tool</Filter>
     </ClCompile>
-    <ClCompile Include="src\tool.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\tool\transformer_tool.cpp">
+      <Filter>src\tool</Filter>
     </ClCompile>
-    <ClCompile Include="src\transformer_tool.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\window\attribute.cpp">
+      <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\terrain_editor.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\window\monitor.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
+    <ClCompile Include="src\window\resource_explorer.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
+    <ClCompile Include="src\window\terrain_editor.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
+    <ClCompile Include="src\window\texture_editor.cpp">
+      <Filter>src\window</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\attribute.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\debug.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\editor.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\monitor.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\resource_explorer.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\select.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\texture_editor.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\tool\tool.h">
+      <Filter>src\tool</Filter>
     </ClInclude>
-    <ClInclude Include="src\tool.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\tool\transformer_tool.h">
+      <Filter>src\tool</Filter>
     </ClInclude>
-    <ClInclude Include="src\transformer_tool.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\window\attribute.h">
+      <Filter>src\window</Filter>
     </ClInclude>
-    <ClInclude Include="src\terrain_editor.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\window\monitor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\window\resource_explorer.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\window\terrain_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\window\texture_editor.h">
+      <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

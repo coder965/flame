@@ -18,7 +18,6 @@ void openGameExplorer();
 SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
 ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);
 void openAttributeWidget();
-void openDebugWidget();
 void openTextureEditor();
 
 struct ObjectCreationSetting
