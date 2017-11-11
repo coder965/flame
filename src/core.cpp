@@ -145,7 +145,6 @@ namespace tke
 		swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-		swapchainInfo.oldSwapchain = swapchain;
 		swapchainInfo.clipped = true;
 		auto res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
 		assert(res == VK_SUCCESS);
@@ -272,10 +271,14 @@ namespace tke
 					delete window_images[i];
 					window_images[i] = nullptr;
 				}
+				vkDestroySwapchainKHR(device.v, swapchain, nullptr);
 				_create_swapchain();
 			}
 		}
-		break;
+			break;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
 		}
 
 		return DefWindowProc(hWnd, message, wParam, lParam);
