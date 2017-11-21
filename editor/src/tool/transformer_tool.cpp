@@ -9,9 +9,10 @@ TransformerTool::TransformerTool(tke::Framebuffer *_fb)
 
 static TransformerTool *currentTransformerTool = nullptr;
 static tke::Camera *currentCamera = nullptr;
-static int currentDrawPolicy = 0;
-static void draw(tke::CommandBuffer *cb)
+static void draw(tke::CommandBuffer *cb, void *user_data)
 {
+	auto currentDrawPolicy = (int)user_data;
+
 	if (!currentTransformerTool->transformer || currentTransformerTool->mode == TransformerTool::ModeNull)
 		return;
 
@@ -57,8 +58,7 @@ bool TransformerTool::leftDown(int x, int y)
 {
 	if (!transformer)
 		return false;
-	currentDrawPolicy = 1;
-	auto index = tke::pickUp(x, y, draw);
+	auto index = tke::pickUp(x, y, draw, (void*)1);
 	selectedAxis = index - 1;
 	return index != 0;
 }
@@ -111,8 +111,7 @@ void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent, VkEvent signa
 
 	currentTransformerTool = this;
 	currentCamera = camera;
-	currentDrawPolicy = 0;
-	draw(cb);
+	draw(cb, (void*)0);
 
 	cb->endRenderPass();
 

@@ -17,7 +17,9 @@ typedef _W64 long TK_LONG_PTR;
 #endif
 
 #define TK_ARRAYSIZE(_ARR)      ((int)(sizeof(_ARR)/sizeof(*_ARR)))
-#define TK_STRUCT_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
+#define TK_DERIVE_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
+
+// file
 
 template<class T>
 inline std::ifstream& operator&(std::ifstream &file, T &v)

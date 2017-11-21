@@ -2,12 +2,12 @@
 #include "../../src/core.h"
 
 #include "editor.h"
-#include "window/monitor.h"
+#include "window/scene_editor.h"
 #include "window/attribute.h"
 #include "window/texture_editor.h"
 
 LastWindowType lastWindowType = LastWindowTypeNull;
-MonitorWidget *lastMonitorWidget = nullptr;
+SceneEditor *lastMonitorWidget = nullptr;
 
 tke::Image *titleImage = nullptr;
 
@@ -15,70 +15,37 @@ int main(int argc, char** argv)
 {
 	tke::init(true, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, false);
 
+	initWindow();
+
+	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
+
 	titleImage = tke::createImage("../misc/title.jpg", true);
 
 	load_resource();
-
-	for (auto &i : tke::debugImages)
-		tke::addUiImage(i.second);
 
 	{
 		tke::AttributeTree at("data", "ui.xml");
 		if (at.good)
 		{
-			for (auto &c : at.children)
+			for (auto &n : at.children)
 			{
-				if (c->name == "GameExplorer")
+				if (n->name == "window")
 				{
-					bool opened;
-					c->firstAttribute("opened")->get(&opened);
-					if (opened)
-						openGameExplorer();
+					Window *w = nullptr;
+					for (auto c : windowClasses)
+					{
+						if (w) break;
+						auto a = n->firstAttribute("type");
+						if (a && a->value == c->getName())
+							w = c->load(n.get());
+					}
+					if (w)
+						windows.push_back(std::move(std::unique_ptr<Window>(w)));
 				}
-				//else if (c->name == "MonitorWidget")
-				//{
-				//	tke::Attribute *a;
-				//	a = c->firstAttribute("scene_filename");
-				//	if (a)
-				//	{
-				//		auto s = tke::getScene(a->value);
-				//		if (s)
-				//		{
-				//			auto w = openSceneMonitorWidget(s);
-				//			a = c->firstAttribute("follow");
-				//			if (a)
-				//				a->get(&w->follow);
-				//		}
-				//	}
-				//	else
-				//	{
-				//		a = c->firstAttribute("model_filename");
-				//		if (a)
-				//		{
-				//			auto m = tke::getModel(a->value);
-				//			if (m)
-				//				openModelMonitorWidget(m);
-				//		}
-				//	}
-				//}
-				else if (c->name == "AttributeWidget")
-				{
-					bool opened;
-					c->firstAttribute("opened")->get(&opened);
-					if (opened)
-						openAttributeWidget();
-				}
-				else if (c->name == "TextureEditor")
-				{
-					bool opened;
-					c->firstAttribute("opened")->get(&opened);
-					if (opened)
-						openTextureEditor();
-				}
-				else if (c->name == "object_creation_setting")
-					ocs.load(c.get());
-				else if (c->name == "terrain_creation_setting")
-					tcs.load(c.get());
+				else if (n->name == "object_creation_setting")
+					ocs.load(n.get());
+				else if (n->name == "terrain_creation_setting")
+					tcs.load(n.get());
 			}
 		}
 	}
@@ -89,12 +56,9 @@ int main(int argc, char** argv)
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Game Explorer", nullptr, resourceExplorer != nullptr))
+			if (ImGui::MenuItem("Resource Explorer", nullptr, resourceExplorer != nullptr))
 				openGameExplorer();
-			if (ImGui::MenuItem("Attribute", nullptr, attributeWidget != nullptr))
-				openAttributeWidget();
-			if (ImGui::MenuItem("Texture Editor", nullptr, textureEditor != nullptr))
-				openTextureEditor();
+
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -109,16 +73,6 @@ int main(int argc, char** argv)
 			}
 		}
 
-		if (attributeWidget)
-		{
-			attributeWidget->show();
-			if (!attributeWidget->opened)
-			{
-				delete attributeWidget;
-				attributeWidget = nullptr;
-			}
-		}
-
 		if (textureEditor)
 		{
 			textureEditor->show();
@@ -129,12 +83,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-		for (auto m : monitorWidgets)
-		{
-			m->show();
-			tke::cbs.insert(tke::cbs.begin(), m->cbs.begin(), m->cbs.end());
-			tke::ui_waitEvents.push_back(m->renderFinished);
-		}
+		for (auto &w : windows)
+			w->show();
 
 		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetItemsLineHeightWithSpacing()));
 		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
@@ -143,14 +93,10 @@ int main(int argc, char** argv)
 
 		tke::endFrame();
 
-		for (auto it = monitorWidgets.begin(); it != monitorWidgets.end(); )
+		for (auto it = windows.begin(); it != windows.end(); )
 		{
-			auto m = *it;
-			if (!m->opened)
-			{
-				delete m;
-				it = monitorWidgets.erase(it);
-			}
+			if (!(*it)->opened)
+				it = windows.erase(it);
 			else
 				it++;
 		}
@@ -159,34 +105,11 @@ int main(int argc, char** argv)
 	tke::onDestroy = []() {
 		{
 			tke::AttributeTree at("data");
+			for (auto &w : windows)
 			{
-				auto n = new tke::AttributeTreeNode("GameExplorer");
-				n->addAttribute("opened", resourceExplorer ? "true" : "false");
-				at.add(n);
-			}
-			for (auto m : monitorWidgets)
-			{
-				auto n = new tke::AttributeTreeNode("MonitorWidget");
-				if (m->mode == MonitorWidget::ModeScene)
-				{
-					auto w = (SceneMonitorWidget*)m;
-					n->addAttribute("scene_filename", w->scene->filename);
-					n->addAttribute("follow", &w->follow);
-				}
-				else if (m->mode == MonitorWidget::ModeModel)
-				{
-					n->addAttribute("model_filename", ((ModelMonitorWidget*)m)->model->filename);
-				}
-				at.add(n);
-			}
-			{
-				auto n = new tke::AttributeTreeNode("AttributeWidget");
-				n->addAttribute("opened", attributeWidget ? "true" : "false");
-				at.add(n);
-			}
-			{
-				auto n = new tke::AttributeTreeNode("TextureEditor");
-				n->addAttribute("opened", textureEditor ? "true" : "false");
+				auto n = new tke::AttributeTreeNode("window");
+				n->addAttribute("type", w->pClass->getName());
+				w->save(n);
 				at.add(n);
 			}
 			{
@@ -217,20 +140,6 @@ void openGameExplorer()
 {
 	if (!resourceExplorer)
 		resourceExplorer = new ResourceExplorer;
-}
-
-SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s)
-{
-	auto w = new SceneMonitorWidget(s);
-	monitorWidgets.push_back(w);
-	return w;
-}
-
-ModelMonitorWidget *openModelMonitorWidget(tke::Model *m)
-{
-	auto w = new ModelMonitorWidget(m);
-	monitorWidgets.push_back(w);
-	return w;
 }
 
 void openAttributeWidget()

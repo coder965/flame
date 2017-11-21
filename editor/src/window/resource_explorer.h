@@ -1,13 +1,20 @@
 #pragma once
 
 #include <vector>
+#include "window.h"
 
-struct MonitorWidget;
+struct ResourceExplorerClass : WindowClass
+{
+	virtual std::string getName() override;
+	virtual Window *load(tke::AttributeTreeNode *n) override;
+};
+
+extern ResourceExplorerClass resourceExplorerClass;
 
 void load_resource();
 void save_resource();
 
-struct ResourceExplorer
+struct ResourceExplorer : Window
 {
 	enum LastItemType
 	{
@@ -22,7 +29,8 @@ struct ResourceExplorer
 	int itemIndex = -1;
 	bool opened = true;
 
-	void show();
+	ResourceExplorer();
+	virtual void show() override;
 };
 
 extern ResourceExplorer *resourceExplorer;

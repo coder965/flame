@@ -5,6 +5,19 @@
 #include "resource_explorer.h"
 #include "../editor.h"
 
+std::string ResourceExplorerClass::getName()
+{
+	return "resource explorer";
+}
+
+Window *ResourceExplorerClass::load(tke::AttributeTreeNode *n)
+{
+	resourceExplorer = new ResourceExplorer;
+	return resourceExplorer;
+}
+
+ResourceExplorerClass resourceExplorerClass;
+
 ResourceExplorer *resourceExplorer = nullptr;
 
 void load_resource()
@@ -83,9 +96,13 @@ void save_resource()
 
 }
 
+ResourceExplorer::ResourceExplorer()
+	:Window(&resourceExplorerClass)
+{}
+
 void ResourceExplorer::show()
 {
-	ImGui::Begin("Game Explorer", &opened);
+	ImGui::Begin("Resource Explorer", &opened);
 
 	if (ImGui::IsWindowFocused())
 		lastWindowType = LastWindowTypeGameExplorer;
@@ -127,8 +144,6 @@ void ResourceExplorer::show()
 			{
 				lastItemType = lastItemTypeModel;
 				itemIndex = i;
-				if (ImGui::IsMouseDoubleClicked(0))
-					openModelMonitorWidget(m);
 			}
 		}
 		ImGui::TreePop();
@@ -143,7 +158,7 @@ void ResourceExplorer::show()
 				lastItemType = lastItemTypeScene;
 				itemIndex = i;
 				if (ImGui::IsMouseDoubleClicked(0))
-					openSceneMonitorWidget(s);
+					windows.push_back(std::move(std::make_unique<SceneEditor>(s)));
 			}
 		}
 		ImGui::TreePop();

@@ -18,8 +18,8 @@ void TextureEditor::show()
 	ImGui::Begin("Texture Editor", &opened);
 
 	if (ImGui::Button("New"))
-		ImGui::OpenPopup("Image Attribute");
-	if (ImGui::BeginPopupModal("Image Attribute", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		ImGui::OpenPopup("Image Attributes");
+	if (ImGui::BeginPopupModal("Image Attributes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		static int cx = 512;
 		static int cy = 512;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "window/resource_explorer.h"
-#include "window/monitor.h"
+#include "window/scene_editor.h"
 
 enum LastWindowType
 {
@@ -10,13 +10,11 @@ enum LastWindowType
 	LastWindowTypeMonitor
 };
 extern LastWindowType lastWindowType;
-extern MonitorWidget *lastMonitorWidget;
+extern SceneEditor *lastMonitorWidget;
 
 extern tke::Image *titleImage;
 
 void openGameExplorer();
-SceneMonitorWidget *openSceneMonitorWidget(tke::Scene *s);
-ModelMonitorWidget *openModelMonitorWidget(tke::Model *m);
 void openAttributeWidget();
 void openTextureEditor();
 

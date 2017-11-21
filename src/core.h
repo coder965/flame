@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include "entity/scene.h"
 #include "render/buffer.h"
 #include "render/image.h"
@@ -69,8 +70,6 @@ namespace tke
 	IMPL() bool needUpdateVertexBuffer;
 	IMPL() bool needUpdateMaterialBuffer;
 	IMPL() bool needUpdateTexture;
-
-	IMPL() std::vector<std::pair<std::string,Image*>> debugImages;
 
 	IMPL() std::vector<std::unique_ptr<Image>> textures;
 
@@ -175,7 +174,7 @@ namespace tke
 
 	IMPL(nullptr) DescriptorSet *ds_maps;
 
-	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*));
+	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*, void *), void *user_data);
 
 	void processCmdLine(const std::string &str, bool record = true);
 

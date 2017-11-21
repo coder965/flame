@@ -1,4 +1,2 @@
-<scene name="1">
-	<terrain1 use_physx="false" blend_map_filename="res/blend.png" height_map_filename="res/heightmap.jpg" normal_map_filename="res/terrain0_normal.jpg" color_map0_filename="res/terrain0.jpg" color_map1_filename="res/terrain1.jpg" color_map2_filename="res/terrain2.jpg" color_map3_filename="res/terrain3.jpg" normal_map0_filename="res/terrain0_normal.jpg" normal_map1_filename="" normal_map2_filename="" normal_map3_filename="" block_cx="64" block_size="16." height="100." tessellation_factor="0.75" texture_uv_factor="4."/>
-</scene>
+<scene name="1"/>
 

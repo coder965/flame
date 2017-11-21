@@ -67,14 +67,14 @@ namespace tke
 		}
 	}
 
-	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*))
+	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*, void*), void *user_data)
 	{
 		if (x < 0 || y < 0 || x > pickUpImage->levels[0].cx || y > pickUpImage->levels[0].cy)
 			return 0;
 
 		auto cb = begineOnceCommandBuffer();
 		cb->beginRenderPass(renderPass_depthC_image8C, pickUpFb.get());
-		drawCallback(cb);
+		drawCallback(cb, user_data);
 		cb->endRenderPass();
 		endOnceCommandBuffer(cb);
 
@@ -288,6 +288,8 @@ namespace tke
 
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, WindowStyle window_style, bool only_2d)
 	{
+		auto init_start_time = GetTickCount();
+
 		_only_2d = only_2d;
 
 		enginePath = path;
@@ -551,6 +553,8 @@ namespace tke
 
 		window_imageAvailable = createSemaphore();
 		frameDone = createFence();
+
+		printf("engine init finished - %d ms\n", GetTickCount() - init_start_time);
 
 		return NoErr;
 	}

@@ -60,7 +60,7 @@ namespace tke
 		ui_cb->setViewportAndScissor(window_cx, window_cy);
 
 		ui_cb->bindVertexBuffer(vertexBuffer);
-		ui_cb->bindIndexBuffer(indexBuffer);
+		ui_cb->bindIndexBuffer(indexBuffer, VK_INDEX_TYPE_UINT16);
 
 		ui_cb->bindPipeline(pipeline_ui);
 		ui_cb->bindDescriptorSet();

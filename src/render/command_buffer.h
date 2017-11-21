@@ -35,8 +35,8 @@ namespace tke
 		void setScissor(int x, int y, int cx, int cy);
 		void bindVertexBuffer(VertexBuffer *b);
 		void bindVertexBuffer(OnceVertexBuffer *b);
-		void bindIndexBuffer(IndexBuffer *b);
-		void bindIndexBuffer(OnceIndexBuffer *b);
+		void bindIndexBuffer(IndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);
+		void bindIndexBuffer(OnceIndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);
 		void bindPipeline(Pipeline *p);
 		void bindDescriptorSet();
 		void bindDescriptorSet(VkDescriptorSet *sets, int index = 0, int count = 1);

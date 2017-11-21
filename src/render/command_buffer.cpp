@@ -142,14 +142,14 @@ namespace tke
 		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
 	}
 
-	void CommandBuffer::bindIndexBuffer(IndexBuffer *b)
+	void CommandBuffer::bindIndexBuffer(IndexBuffer *b, VkIndexType type)
 	{
-		vkCmdBindIndexBuffer(v, b->v, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(v, b->v, 0, type);
 	}
 
-	void CommandBuffer::bindIndexBuffer(OnceIndexBuffer *b)
+	void CommandBuffer::bindIndexBuffer(OnceIndexBuffer *b, VkIndexType type)
 	{
-		vkCmdBindIndexBuffer(v, b->v, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(v, b->v, 0, type);
 	}
 
 	void CommandBuffer::bindPipeline(Pipeline *p)
