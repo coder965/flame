@@ -32,17 +32,21 @@ int main(int argc, char **argv)
 		output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
 	std::vector<std::string> inputFilenames;
 
-	tke::iterateDirectory("../src/", [&](const std::experimental::filesystem::path &name, bool is_directory) {
-		if (!is_directory && name.extension().string() == ".h")
+	{
+		std::experimental::filesystem::recursive_directory_iterator end_it;
+		for (std::experimental::filesystem::recursive_directory_iterator it("../src/"); it != end_it; it++)
 		{
-			if (up_to_date && outputFilenameExist)
+			if (!std::experimental::filesystem::is_directory(it->status()) && it->path().extension().string() == ".h")
 			{
-				if (output_last_modification_time <= std::experimental::filesystem::last_write_time(name))
-					up_to_date = false;
+				if (up_to_date && outputFilenameExist)
+				{
+					if (output_last_modification_time <= std::experimental::filesystem::last_write_time(it->path()))
+						up_to_date = false;
+				}
+				inputFilenames.push_back(it->path().string());
 			}
-			inputFilenames.push_back(name.string());
 		}
-	});
+	}
 
 	if (up_to_date)
 		return 0;

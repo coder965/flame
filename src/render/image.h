@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "vulkan.h"
 #include "../image_data.h"
 
@@ -40,12 +42,13 @@ namespace tke
 
 		std::vector<ImageView*> views;
 
-		std::string full_filename;
+		std::vector<std::unique_ptr<VkDescriptorImageInfo>> infos;
+
 		std::string filename;
 
 		bool sRGB = false;
 
-		int index = -1;
+		int index = 0;
 
 		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);
 		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
@@ -54,7 +57,8 @@ namespace tke
 		void transitionLayout(int _level, VkImageLayout _layout);
 		void fillData(int _level, unsigned char *src, size_t _size);
 		VkImageView getView(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkDescriptorImageInfo *getInfo(VkImageView view, VkSampler sampler);
 	};
 
-	Image *createImage(const std::string &filename, bool sRGB = false, bool saveData = false);
+	std::shared_ptr<Image> createImage(const std::string &filename, bool sRGB = false, bool saveData = false);
 }

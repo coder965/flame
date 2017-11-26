@@ -58,6 +58,9 @@
     <ClCompile Include="src\window\scene_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
+    <ClCompile Include="src\window\dir_selector.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\editor.h">
@@ -88,6 +91,9 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="src\window\scene_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\window\dir_selector.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>

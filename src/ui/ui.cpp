@@ -120,15 +120,16 @@ namespace tke
 		ImGuiIO& io = ImGui::GetIO();
 		{
 			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
-			//static const ImWchar icons_ranges[] = { 
-			//	ICON_MIN_FA, 
-			//	ICON_MAX_FA, 
-			//	0 
-			//};
-			//ImFontConfig icons_config; 
-			//icons_config.MergeMode = true; 
-			//icons_config.PixelSnapH = true;
-			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/fontawesome-webfont.ttf", 16.0f, &icons_config, icons_ranges);
+			io.Fonts->AddFontDefault();
+			static const ImWchar icons_ranges[] = { 
+				ICON_MIN_FA, 
+				ICON_MAX_FA, 
+				0 
+			};
+			ImFontConfig icons_config; 
+			icons_config.MergeMode = true; 
+			icons_config.PixelSnapH = true;
+			io.Fonts->AddFontFromFileTTF((enginePath + "misc/icon.ttf").c_str(), 16.0f, &icons_config, icons_ranges);
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 			fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, 
@@ -136,7 +137,7 @@ namespace tke
 			fontImage->fillData(0, pixels, width * height * 4);
 			io.Fonts->TexID = (void*)0; // image index
 
-			pipeline_ui->descriptorSet->setImage(0, 0, fontImage, colorSampler);
+			updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, 0, fontImage, colorSampler));
 		}
 
 		ui_cb = new CommandBuffer;
@@ -236,34 +237,33 @@ namespace tke
 		uiAcceptedKey = ImGui::IsAnyItemActive();
 	}
 
-	static std::vector<Image*> _images;
+	static std::shared_ptr<Image> _images[127];
 
-	void addUiImage(Image *image)
+	void addUiImage(std::shared_ptr<Image> image)
 	{
-		_images.push_back(image);
-
-		for (int index = 0; index < _images.size(); index++)
+		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
-			_images[index]->index = index + 1;
-			pipeline_ui->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
+			if (!_images[i])
+			{
+				image->index = i + 1;
+				_images[i] = image;
+				updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, image->index, image.get(), colorSampler));
+				return;
+			}
 		}
 	}
 
 	void removeUiImage(Image *image)
 	{
-		for (auto it = _images.begin(); it != _images.end(); it++)
+		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
-			if (*it == image)
+			if (_images[i] && _images[i].get() == image)
 			{
-				_images.erase(it);
-				break;
+				addAfterFrameEvent(std::bind([&](int i){
+					_images[i].reset();
+				}, i));
+				return;
 			}
-		}
-
-		for (int index = 0; index < _images.size(); index++)
-		{
-			_images[index]->index = index + 1;
-			pipeline_ui->descriptorSet->setImage(0, _images[index]->index, _images[index], colorSampler);
 		}
 	}
 }

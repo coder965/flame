@@ -64,6 +64,10 @@ namespace tke
 		memoryProperty = _memoryProperty;
 
 		buffer_create(this);
+
+		info.offset = 0;
+		info.buffer = v;
+		info.range = size;
 	}
 
 	Buffer::~Buffer()

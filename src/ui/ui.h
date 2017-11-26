@@ -9,7 +9,7 @@
 #include "../../imgui/imgui.h"
 #include "../../imgui/imgui_internal.h"
 
-//#include "../../IconFontCppHeaders/IconsFontAwesome.h"
+#include "../../IconFontCppHeaders/IconsFontAwesome.h"
 
 static inline ImVec2 operator+(const ImVec2& lhs, const float& rhs) { return ImVec2(lhs.x + rhs, lhs.y + rhs); }
 static inline ImVec2 operator-(const ImVec2& lhs, const float& rhs) { return ImVec2(lhs.x - rhs, lhs.y - rhs); }
@@ -54,6 +54,6 @@ namespace tke
 	void ui_onChar(int);
 	void beginUi(bool _need_clear);
 	void endUi();
-	void addUiImage(Image *image);
+	void addUiImage(std::shared_ptr<Image> image);
 	void removeUiImage(Image *image);
 }

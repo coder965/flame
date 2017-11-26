@@ -1712,17 +1712,17 @@ namespace tke
 					if (g->material->albedoAlphaMap)
 					{
 						std::string dst = dstFilepath + "/" + g->material->albedoAlphaMap->filename;
-						CopyFile(g->material->albedoAlphaMap->full_filename.c_str(), dst.c_str(), false);
+						CopyFile(g->material->albedoAlphaMap->filename.c_str(), dst.c_str(), false);
 					}
 					if (g->material->normalHeightMap)
 					{
 						std::string dst = dstFilepath + "/" + g->material->normalHeightMap->filename;
-						CopyFile(g->material->normalHeightMap->full_filename.c_str(), dst.c_str(), false);
+						CopyFile(g->material->normalHeightMap->filename.c_str(), dst.c_str(), false);
 					}
 					if (g->material->specRoughnessMap)
 					{
 						std::string dst = dstFilepath + "/" + g->material->specRoughnessMap->filename;
-						CopyFile(g->material->specRoughnessMap->full_filename.c_str(), dst.c_str(), false);
+						CopyFile(g->material->specRoughnessMap->filename.c_str(), dst.c_str(), false);
 					}
 				}
 			}

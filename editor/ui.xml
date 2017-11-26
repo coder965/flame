@@ -1,6 +1,6 @@
 <data>
 	<window type="scene editor" filename="scene_1.scene" follow="false"/>
-	<object_creation_setting modelIndex="0" use_camera_position="false" use_camera_target_position="false" coord="0./0./0." randCX="false" randCY="false" randCZ="false" coordRandRange="1." euler="0./0./0." randRX="false" randRY="false" randRZ="false" eulerRandRange="360.000031" scale="1./1./1." randSX="false" randSY="false" randSZ="false" scaleRandRange="1." same_scale_rand="false" physxType="0"/>
+	<object_creation_setting modelIndex="0" use_camera_position="true" use_camera_target_position="true" coord="0./0./0." euler="0./0./0." scale="1./1./1." physxType="0"/>
 	<terrain_creation_setting coord="0./0./0." heightMapIndex="0" blendMapIndex="0" colorMap0Index="0" colorMap1Index="0" colorMap2Index="0" colorMap3Index="0" height="100." usePhysx="false"/>
 	<select/>
 </data>

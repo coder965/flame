@@ -87,7 +87,7 @@ namespace tke
 		device.mtx.unlock();
 	}
 
-	void DescriptorSet::setBuffer(int binding, int index, Buffer *buffer)
+	VkWriteDescriptorSet DescriptorSet::bufferWrite(int binding, int index, Buffer *buffer)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -96,18 +96,11 @@ namespace tke
 		write.dstArrayElement = index;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		write.descriptorCount = 1;
-		VkDescriptorBufferInfo info;
-		info.offset = 0;
-		info.buffer = buffer->v;
-		info.range = buffer->size;
-		write.pBufferInfo = &info;
-
-		device.mtx.lock();
-		vkUpdateDescriptorSets(device.v, 1, &write, 0, nullptr);
-		device.mtx.unlock();
+		write.pBufferInfo = &buffer->info;
+		return write;
 	}
 
-	void DescriptorSet::setImage(int binding, int index, Image *image, VkSampler sampler, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkWriteDescriptorSet DescriptorSet::imageWrite(int binding, int index, Image *image, VkSampler sampler, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -116,14 +109,17 @@ namespace tke
 		write.dstArrayElement = index;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		write.descriptorCount = 1;
-		VkDescriptorImageInfo info;
-		info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		info.imageView = image->getView(baseLevel, levelCount, baseLayer, layerCount);
-		info.sampler = sampler;
-		write.pImageInfo = &info;
+		write.pImageInfo = image->getInfo(image->getView(baseLevel, levelCount, baseLayer, layerCount), sampler);
+		return write;
+	}
+
+	void updateDescriptorSets(int count, VkWriteDescriptorSet *writes)
+	{
+		if (count <= 0)
+			return;
 
 		device.mtx.lock();
-		vkUpdateDescriptorSets(device.v, 1, &write, 0, nullptr);
+		vkUpdateDescriptorSets(device.v, count, writes, 0, nullptr);
 		device.mtx.unlock();
 	}
 

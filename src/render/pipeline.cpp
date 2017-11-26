@@ -311,6 +311,7 @@ namespace tke
 
 	void Pipeline::linkDescriptors(DescriptorSet *set, Resource *resource)
 	{
+		std::vector<VkWriteDescriptorSet> writes;
 		for (auto &link : links)
 		{
 			if (link.binding == -1)
@@ -369,7 +370,7 @@ namespace tke
 			{
 				auto buffer = resource->getBuffer(link.resource_name);
 				if (buffer)
-					set->setBuffer(link.binding, link.array_element, buffer);
+					writes.push_back(set->bufferWrite(link.binding, link.array_element, buffer));
 				else
 					printf("unable to link resource %s (binding:%d, type:uniform buffer)\n", link.resource_name.c_str(), link.binding);
 			}
@@ -378,13 +379,14 @@ namespace tke
 			{
 				auto image = resource->getImage(link.resource_name);
 				if (image)
-					set->setImage(link.binding, link.array_element, image, link.vkSampler, 0, image->levels.size(), 0, image->layer);
+					writes.push_back(set->imageWrite(link.binding, link.array_element, image, link.vkSampler, 0, image->levels.size(), 0, image->layer));
 				else
 					printf("unable to link resource %s (binding:%d, type:combined image sampler)\n", link.resource_name.c_str(), link.binding);
 			}
 				break;
 			}
 		}
+		updateDescriptorSets(writes.size(), writes.data());
 	}
 
 	int Pipeline::descriptorPosition(const std::string &name)

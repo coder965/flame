@@ -12,16 +12,10 @@ namespace tke
 {
 	Image *addModelTexture(const std::string &_filename, bool sRGB)
 	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		for (auto &i : modelTextures)
-		{
-			if (i->full_filename == filename)
-				return i.get();
-		}
-		auto i = createImage(filename, sRGB);
+		auto i = createImage(_filename, sRGB);
 		i->index = modelTextures.size();
-		modelTextures.push_back(std::move(std::unique_ptr<Image>(i)));
-		return i;
+		modelTextures.push_back(i);
+		return i.get();
 	}
 
 	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha,
@@ -286,7 +280,7 @@ namespace tke
 
 	static bool _only_2d;
 
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, WindowStyle window_style, bool only_2d)
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int window_style, bool only_2d)
 	{
 		auto init_start_time = GetTickCount();
 
@@ -517,7 +511,7 @@ namespace tke
 
 		unsigned int win32WindowStyle = WS_VISIBLE;
 
-		if (window_style != WindowStyleNoFrameNoResize)
+		if (window_style & WindowStyleFrame)
 		{
 			RECT rect = {0, 0, _window_cx, _window_cy};
 			AdjustWindowRect(&rect, WS_CAPTION, false);
@@ -526,7 +520,7 @@ namespace tke
 
 			win32WindowStyle |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
-			if (window_style == WindowStyleHasFrameCanResize)
+			if (window_style & WindowStyleResize)
 				win32WindowStyle |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
 		else
@@ -569,6 +563,8 @@ namespace tke
 		beginUi(clearBackground);
 	}
 
+	static std::vector<std::function<void()>> _afterFrameEvents;
+
 	void endFrame()
 	{
 		endUi();
@@ -590,6 +586,15 @@ namespace tke
 
 		cbs.clear();
 		ui_waitEvents.clear();
+
+		for (auto &e : _afterFrameEvents)
+			e();
+		_afterFrameEvents.clear();
+	}
+
+	void addAfterFrameEvent(std::function<void()> e)
+	{
+		_afterFrameEvents.push_back(e);
 	}
 
 	static unsigned int _lastTime = 0;
@@ -690,8 +695,10 @@ namespace tke
 						if (map_position == -1 && mrtPipeline) map_position = mrtPipeline->descriptorPosition("maps");
 						if (map_position != -1)
 						{
+							std::vector<VkWriteDescriptorSet> writes;
 							for (int index = 0; index < modelTextures.size(); index++)
-								ds_maps->setImage(map_position, index, modelTextures[index].get(), colorSampler);
+								writes.push_back(ds_maps->imageWrite(map_position, index, modelTextures[index].get(), colorSampler));
+							updateDescriptorSets(writes.size(), writes.data());
 							needUpdateTexture = false;
 						}
 					}

@@ -157,7 +157,7 @@ namespace tke
 		~OnceFileBuffer();
 	};
 
-	void iterateDirectory(const std::experimental::filesystem::path &filepath, const std::function<void(const std::experimental::filesystem::path &name, bool is_directory)> &callback, bool recursive = true);
+	bool isImageFile(const std::string &ext);
 
 	struct Variable;
 	struct Enum;

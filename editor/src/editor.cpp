@@ -2,24 +2,20 @@
 #include "../../src/core.h"
 
 #include "editor.h"
+#include "window/dir_selector.h"
 #include "window/scene_editor.h"
 #include "window/attribute.h"
 #include "window/texture_editor.h"
 
-LastWindowType lastWindowType = LastWindowTypeNull;
-SceneEditor *lastMonitorWidget = nullptr;
-
-tke::Image *titleImage = nullptr;
+std::experimental::filesystem::path project_path;
 
 int main(int argc, char** argv)
 {
-	tke::init(true, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleHasFrameCanResize, false);
-
-	initWindow();
+	tke::init(true, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
 
 	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
 
-	titleImage = tke::createImage("../misc/title.jpg", true);
+	initWindow();
 
 	load_resource();
 
@@ -54,24 +50,40 @@ int main(int argc, char** argv)
 		tke::beginFrame(true);
 
 		ImGui::BeginMainMenuBar();
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("New Project"))
+				;
+			if (ImGui::MenuItem("Open Project"))
+			{
+				DirSelector::open("c:\\", [](std::string path) {
+					project_path = path;
+					if (resourceExplorer)
+					{
+						resourceExplorer->path = project_path;
+						resourceExplorer->refresh();
+					}
+				});
+			}
+			if (ImGui::MenuItem("Save Project"))
+				;
+
+			ImGui::EndMenu();
+		}
 		if (ImGui::BeginMenu("View"))
 		{
 			if (ImGui::MenuItem("Resource Explorer", nullptr, resourceExplorer != nullptr))
-				openGameExplorer();
+			{
+				if (!resourceExplorer)
+				{
+					resourceExplorer = new ResourceExplorer;
+					windows.push_back(std::move(std::unique_ptr<Window>(resourceExplorer)));
+				}
+			}
 
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
-
-		if (resourceExplorer)
-		{
-			resourceExplorer->show();
-			if (!resourceExplorer->opened)
-			{
-				delete resourceExplorer;
-				resourceExplorer = nullptr;
-			}
-		}
 
 		if (textureEditor)
 		{
@@ -107,6 +119,8 @@ int main(int argc, char** argv)
 			tke::AttributeTree at("data");
 			for (auto &w : windows)
 			{
+				if (!w->pClass)
+					continue;
 				auto n = new tke::AttributeTreeNode("window");
 				n->addAttribute("type", w->pClass->getName());
 				w->save(n);
@@ -136,24 +150,6 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-void openGameExplorer()
-{
-	if (!resourceExplorer)
-		resourceExplorer = new ResourceExplorer;
-}
-
-void openAttributeWidget()
-{
-	if (!attributeWidget)
-		attributeWidget = new AttributeWidget;
-}
-
-void openTextureEditor()
-{
-	if (!textureEditor)
-		textureEditor = new TextureEditor;
-}
-
 void ObjectCreationSetting::load(tke::AttributeTreeNode *n)
 {
 	for (auto &a : n->attributes)
@@ -166,36 +162,10 @@ void ObjectCreationSetting::load(tke::AttributeTreeNode *n)
 			a->get(&use_camera_target_position);
 		else if (a->name == "coord")
 			a->get(&coord);
-		else if (a->name == "randCX")
-			a->get(&randC[0]);
-		else if (a->name == "randCY")
-			a->get(&randC[1]);
-		else if (a->name == "randCZ")
-			a->get(&randC[2]);
-		else if (a->name == "coordRandRange")
-			a->get(&coordRandRange);
 		else if (a->name == "euler")
 			a->get(&euler);
-		else if (a->name == "randRX")
-			a->get(&randR[0]);
-		else if (a->name == "randRY")
-			a->get(&randR[1]);
-		else if (a->name == "randRZ")
-			a->get(&randR[2]);
-		else if (a->name == "eulerRandRange")
-			a->get(&eulerRandRange);
 		else if (a->name == "scale")
 			a->get(&scale);
-		else if (a->name == "randSX")
-			a->get(&randS[0]);
-		else if (a->name == "randSY")
-			a->get(&randS[1]);
-		else if (a->name == "randSZ")
-			a->get(&randS[2]);
-		else if (a->name == "scaleRandRange")
-			a->get(&scaleRandRange);
-		else if (a->name == "same_scale_rand")
-			a->get(&same_scale_rand);
 		else if (a->name == "physxType")
 			a->get(&physxType);
 	}
@@ -207,21 +177,8 @@ void ObjectCreationSetting::save(tke::AttributeTreeNode *n)
 	n->addAttribute("use_camera_position", &use_camera_position);
 	n->addAttribute("use_camera_target_position", &use_camera_target_position);
 	n->addAttribute("coord", &coord);
-	n->addAttribute("randCX", &randC[0]);
-	n->addAttribute("randCY", &randC[1]);
-	n->addAttribute("randCZ", &randC[2]);
-	n->addAttribute("coordRandRange", &coordRandRange);
 	n->addAttribute("euler", &euler);
-	n->addAttribute("randRX", &randR[0]);
-	n->addAttribute("randRY", &randR[1]);
-	n->addAttribute("randRZ", &randR[2]);
-	n->addAttribute("eulerRandRange", &eulerRandRange);
 	n->addAttribute("scale", &scale);
-	n->addAttribute("randSX", &randS[0]);
-	n->addAttribute("randSY", &randS[1]);
-	n->addAttribute("randSZ", &randS[2]);
-	n->addAttribute("scaleRandRange", &scaleRandRange);
-	n->addAttribute("same_scale_rand", &same_scale_rand);
 	n->addAttribute("physxType", &physxType);
 }
 

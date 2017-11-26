@@ -17,7 +17,7 @@ struct SceneEditor : Window
 {
 	tke::Scene *scene;
 
-	tke::Image *image;
+	std::shared_ptr<tke::Image> image;
 	std::shared_ptr<tke::Framebuffer> fb_image;
 
 	tke::Object *last_obj = nullptr;

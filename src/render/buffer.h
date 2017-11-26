@@ -14,6 +14,8 @@ namespace tke
 		VkBufferUsageFlags usage;
 		VkMemoryPropertyFlags memoryProperty;
 
+		VkDescriptorBufferInfo info;
+
 		Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		~Buffer();
 		void recreate(size_t _size, void *data = nullptr);

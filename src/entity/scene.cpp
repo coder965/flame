@@ -656,7 +656,7 @@ namespace tke
 					cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-					downsamplePipeline->descriptorSet->setImage(0, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler);
+					updateDescriptorSets(1, &downsamplePipeline->descriptorSet->imageWrite(0, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler));
 					cb->bindDescriptorSet();
 					cb->draw(3);
 					cb->endRenderPass();
@@ -674,7 +674,7 @@ namespace tke
 					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 					cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
-					convolvePipeline->descriptorSet->setImage(0, 0, envrImageDownsample[i - 1], plainSampler);
+					updateDescriptorSets(1, &convolvePipeline->descriptorSet->imageWrite(0, 0, envrImageDownsample[i - 1], plainSampler));
 					cb->bindDescriptorSet();
 					cb->draw(3);
 					cb->endRenderPass();
@@ -761,6 +761,9 @@ namespace tke
 			if (staticUpdateRanges.size() > 0) copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
 			if (animatedUpdateRanges.size() > 0) copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
+
+		std::vector<VkWriteDescriptorSet> writes;
+
 		if (terrain)
 		{
 			if (terrain->changed)
@@ -777,20 +780,20 @@ namespace tke
 				terrainBuffer->update(&stru, stagingBuffer);
 
 				if (terrain->heightMap)
-					ds_terrain->setImage(TerrainHeightMapBinding, 0, terrain->heightMap, colorBorderSampler);
+					writes.push_back(ds_terrain->imageWrite(TerrainHeightMapBinding, 0, terrain->heightMap, colorBorderSampler));
 				if (terrain->normalMap)
-					ds_terrain->setImage(TerrainNormalMapBinding, 0, terrain->normalMap, colorBorderSampler);
+					writes.push_back(ds_terrain->imageWrite(TerrainNormalMapBinding, 0, terrain->normalMap, colorBorderSampler));
 				if (terrain->blendMap)
-					ds_terrain->setImage(TerrainBlendMapBinding, 0, terrain->blendMap, colorBorderSampler);
+					writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, 0, terrain->blendMap, colorBorderSampler));
 				for (int i = 0; i < 4; i++)
 				{
 					if (terrain->colorMaps[i])
-						ds_terrain->setImage(TerrainColorMapsBinding, i, terrain->colorMaps[i], colorWrapSampler);
+						writes.push_back(ds_terrain->imageWrite(TerrainColorMapsBinding, i, terrain->colorMaps[i], colorWrapSampler));
 				}
 				for (int i = 0; i < 4; i++)
 				{
 					if (terrain->normalMaps[i])
-						ds_terrain->setImage(TerrainNormalMapsBinding, i, terrain->normalMaps[i], colorWrapSampler);
+						writes.push_back(ds_terrain->imageWrite(TerrainNormalMapsBinding, i, terrain->normalMaps[i], colorWrapSampler));
 				}
 			}
 		}
@@ -876,7 +879,7 @@ namespace tke
 							animatedCommands.push_back(command);
 						}
 
-						ds_mrtAnim_bone->setBuffer(0, animatedIndex, o->animationComponent->boneMatrixBuffer);
+						writes.push_back(ds_mrtAnim_bone->bufferWrite(0, animatedIndex, o->animationComponent->boneMatrixBuffer));
 
 						animatedObjects.push_back(o.get());
 						animatedIndex++;
@@ -951,7 +954,7 @@ namespace tke
 						range.size = sizeof(glm::mat4);
 						ranges.push_back(range);
 
-						ds_defe->setImage(ShadowImageBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1);
+						writes.push_back(ds_defe->imageWrite(ShadowImageBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1));
 					}
 					shadowIndex += 6;
 				}
@@ -1005,6 +1008,8 @@ namespace tke
 			stagingBuffer->unmap();
 			if (ranges.size() > 0) copyBuffer(stagingBuffer->v, lightBuffer->v, ranges.size(), ranges.data());
 		}
+
+		updateDescriptorSets(writes.size(), writes.data());
 
 		camera.changed = false;
 		for (auto &l : lights)
@@ -1181,17 +1186,17 @@ namespace tke
 			{
 				auto t = new Terrain;
 				c->obtainFromAttributes(t, t->b);
-				t->heightMap = getTexture(t->height_map_filename);
-				t->normalMap = getTexture(t->normal_map_filename);
-				t->blendMap = getTexture(t->blend_map_filename);
-				t->colorMaps[0] = getTexture(t->color_map0_filename);
-				t->colorMaps[1] = getTexture(t->color_map1_filename);
-				t->colorMaps[2] = getTexture(t->color_map2_filename);
-				t->colorMaps[3] = getTexture(t->color_map3_filename);
-				t->normalMaps[0] = getTexture(t->normal_map0_filename);
-				t->normalMaps[1] = getTexture(t->normal_map1_filename);
-				t->normalMaps[2] = getTexture(t->normal_map2_filename);
-				t->normalMaps[3] = getTexture(t->normal_map3_filename);
+				//t->heightMap = getTexture(t->height_map_filename);
+				//t->normalMap = getTexture(t->normal_map_filename);
+				//t->blendMap = getTexture(t->blend_map_filename);
+				//t->colorMaps[0] = getTexture(t->color_map0_filename);
+				//t->colorMaps[1] = getTexture(t->color_map1_filename);
+				//t->colorMaps[2] = getTexture(t->color_map2_filename);
+				//t->colorMaps[3] = getTexture(t->color_map3_filename);
+				//t->normalMaps[0] = getTexture(t->normal_map0_filename);
+				//t->normalMaps[1] = getTexture(t->normal_map1_filename);
+				//t->normalMaps[2] = getTexture(t->normal_map2_filename);
+				//t->normalMaps[3] = getTexture(t->normal_map3_filename);
 				t->needUpdateAxis = true;
 				t->needUpdateQuat = true;
 				t->needUpdateMat = true;

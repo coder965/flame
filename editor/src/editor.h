@@ -1,38 +1,20 @@
 #pragma once
 
+#include <filesystem>
+
 #include "window/resource_explorer.h"
 #include "window/scene_editor.h"
 
-enum LastWindowType
-{
-	LastWindowTypeNull,
-	LastWindowTypeGameExplorer,
-	LastWindowTypeMonitor
-};
-extern LastWindowType lastWindowType;
-extern SceneEditor *lastMonitorWidget;
-
-extern tke::Image *titleImage;
-
-void openGameExplorer();
-void openAttributeWidget();
-void openTextureEditor();
+extern std::experimental::filesystem::path project_path;
 
 struct ObjectCreationSetting
 {
 	int modelIndex = 0;
 	bool use_camera_position = false;
 	bool use_camera_target_position = false;
-	glm::vec3 coord;
-	bool randC[3] = {};
-	float coordRandRange = 1.f;
-	glm::vec3 euler;
-	bool randR[3] = {};
-	float eulerRandRange = 360.f;
+	glm::vec3 coord = glm::vec3(0.f);
+	glm::vec3 euler = glm::vec3(0.f);
 	glm::vec3 scale = glm::vec3(1.f);
-	bool randS[3] = {};
-	float scaleRandRange = 1.f;
-	bool same_scale_rand = false;
 	int physxType = 0;
 
 	void load(tke::AttributeTreeNode *n);

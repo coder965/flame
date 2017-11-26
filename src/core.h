@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+
 #include "entity/scene.h"
 #include "render/buffer.h"
 #include "render/image.h"
@@ -71,25 +72,7 @@ namespace tke
 	IMPL() bool needUpdateMaterialBuffer;
 	IMPL() bool needUpdateTexture;
 
-	IMPL() std::vector<std::unique_ptr<Image>> textures;
-
-	inline void addTexture(Image *i)
-	{
-		textures.push_back(std::move(std::unique_ptr<Image>(i)));
-	}
-
-	inline Image *getTexture(const std::string &_filename)
-	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		for (auto &i : textures)
-		{
-			if (i->full_filename == filename)
-				return i.get();
-		}
-		return nullptr;
-	}
-
-	IMPL() std::vector<std::unique_ptr<Image>> modelTextures;
+	IMPL() std::vector<std::shared_ptr<Image>> modelTextures;
 	Image *addModelTexture(const std::string &filename, bool sRGB = false);
 
 	IMPL() std::vector<Material*> modelMaterials;
@@ -180,12 +163,11 @@ namespace tke
 
 	enum WindowStyle
 	{
-		WindowStyleNoFrameNoResize,
-		WindowStyleHasFrameNoResize,
-		WindowStyleHasFrameCanResize
+		WindowStyleFrame = 1 << 0,
+		WindowStyleResize = 1 << 1
 	};
 
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, WindowStyle window_style, bool only_2d = false);
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int window_style, bool only_2d = false);
 
 	IMPL() HWND hWnd;
 	IMPL() int window_cx;
@@ -226,5 +208,8 @@ namespace tke
 
 	void beginFrame(bool clearBackground);
 	void endFrame();
+
+	void addAfterFrameEvent(std::function<void()> e);
+
 	void run();
 }

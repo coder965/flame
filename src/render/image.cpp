@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <filesystem>
+#include <map>
 
+#include "../utils.h"
 #include "../math/math.h"
 #include "buffer.h"
 #include "image.h"
@@ -209,6 +211,21 @@ namespace tke
 		return view->v;
 	}
 
+	VkDescriptorImageInfo *Image::getInfo(VkImageView view, VkSampler sampler)
+	{
+		for (auto &i : infos)
+		{
+			if (i->imageView == view && i->sampler == sampler)
+				return i.get();
+		}
+		auto i = new VkDescriptorImageInfo;
+		i->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		i->imageView = view;
+		i->sampler = sampler;
+		infos.push_back(std::move(std::unique_ptr<VkDescriptorImageInfo>(i)));
+		return i;
+	}
+
 	unsigned char Image::getR(float _x, float _y)
 	{
 		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
@@ -224,8 +241,19 @@ namespace tke
 #undef gd
 	}
 
-	Image *createImage(const std::string &filename, bool sRGB, bool saveData)
+	static std::map<unsigned int, std::weak_ptr<Image>> _images;
+
+	std::shared_ptr<Image> createImage(const std::string &filename, bool sRGB, bool saveData)
 	{
+		auto hash = HASH(filename.c_str());
+		auto it = _images.find(hash);
+		if (it != _images.end())
+		{
+			auto s = it->second.lock();
+			if (s)
+				return s;
+		}
+
 		std::unique_ptr<ImageData> d(std::move(createImageData(filename)));
 		assert(d.get());
 
@@ -256,15 +284,13 @@ namespace tke
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
-		auto i = new Image(d->levels[0].cx, d->levels[0].cy, _format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
+		auto i = std::make_shared<Image>(d->levels[0].cx, d->levels[0].cy, _format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
 		for (int l = 0; l < d->levels.size(); l++)
 		{
 			i->fillData(l, d->levels[l].v, d->levels[l].size);
 			i->levels[l].pitch = d->levels[l].pitch;
 		}
-		i->full_filename = filename;
-		std::experimental::filesystem::path path(filename);
-		i->filename = path.filename().string();
+		i->filename = filename;
 		i->byte_per_pixel = d->byte_per_pixel;
 		i->sRGB = sRGB || d->sRGB;
 
@@ -277,6 +303,7 @@ namespace tke
 			}
 		}
 
+		_images[hash] = i;
 		return i;
 	}
 }

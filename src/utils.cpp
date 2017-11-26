@@ -191,20 +191,12 @@ namespace tke
 		delete data;
 	}
 
-	void iterateDirectory(const std::experimental::filesystem::path &filepath, const std::function<void(const std::experimental::filesystem::path &name, bool is_directory)> &callback, bool recursive)
+	bool isImageFile(const std::string &ext)
 	{
-		std::experimental::filesystem::directory_iterator end_it;
-		for (std::experimental::filesystem::directory_iterator it(filepath); it != end_it; it++)
-		{
-			if (std::experimental::filesystem::is_directory(it->status()))
-			{
-				if (recursive)
-					iterateDirectory(it->path(), callback);
-				callback(it->path().string(), true);
-			}
-			else
-				callback(it->path().string(), false);
-		}
+		if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png"
+			|| ext == ".tga" || ext == ".dds" || ext == ".ktx")
+			return true;
+		return false;
 	}
 
 	Reflection::Reflection(What _what, const std::string &_name)
