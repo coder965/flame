@@ -45,9 +45,6 @@ enum
 	BoneBindingSet
 };
 
-enum { MaxMaterialCount = 256 };
-enum { MaxTextureCount = 256 };
-
 namespace tke
 {
 	IMPL(0.1f) float near_plane;
@@ -68,17 +65,7 @@ namespace tke
 
 	IMPL(nullptr) StagingBuffer *stagingBuffer;
 	
-	IMPL() bool needUpdateVertexBuffer;
-	IMPL() bool needUpdateMaterialBuffer;
-	IMPL() bool needUpdateTexture;
-
-	IMPL() std::vector<std::shared_ptr<Image>> modelTextures;
-	Image *addModelTexture(const std::string &filename, bool sRGB = false);
-
-	IMPL() std::vector<Material*> modelMaterials;
-	IMPL(nullptr) Material *defaultMaterial;
-	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha, 
-		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap);
+	IMPL(true) bool needUpdateVertexBuffer;
 
 	IMPL() std::vector<std::unique_ptr<Animation>> animations;
 	inline Animation *getAnimation(const std::string &_filename)
@@ -127,7 +114,6 @@ namespace tke
 	IMPL(nullptr) IndexBuffer *animatedIndexBuffer;
 
 	IMPL(nullptr) UniformBuffer *constantBuffer;
-	IMPL(nullptr) UniformBuffer *materialBuffer;
 
 	IMPL(nullptr) Image *depthImage;
 	IMPL(nullptr) Image *pickUpImage;
@@ -154,8 +140,6 @@ namespace tke
 	IMPL(nullptr) Pipeline *pipeline_wireframe;
 	IMPL(nullptr) Pipeline *pipeline_wireframe_anim;
 	IMPL(nullptr) Pipeline *pipeline_lines;
-
-	IMPL(nullptr) DescriptorSet *ds_maps;
 
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*, void *), void *user_data);
 

@@ -6,8 +6,6 @@
 
 static void _show_model(tke::Model *m)
 {
-	auto modelName = tke::translate(936, CP_UTF8, m->name.c_str());
-	ImGui::Text("name:%s", modelName.c_str());
 	ImGui::Text("filename:%s", m->filename.c_str());
 	ImGui::Text("indice count:%d", m->indices.size());
 	ImGui::Text("indice base:%d", m->indiceBase);

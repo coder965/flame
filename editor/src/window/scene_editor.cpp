@@ -525,7 +525,7 @@ void SceneEditor::show()
 
 			auto o = selectedItem.toObject();
 
-			auto modelName = tke::translate(936, CP_UTF8, o->model->name.c_str());
+			auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
 			ImGui::Text("model:%s", modelName.c_str());
 
 			auto coord = o->getCoord();

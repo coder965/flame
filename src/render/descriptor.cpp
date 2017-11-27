@@ -60,8 +60,8 @@ namespace tke
 		return l;
 	}
 
-	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index)
-		:layout(pipeline->descriptorSetLayouts[index].get())
+	DescriptorSet::DescriptorSet(DescriptorSetLayout *_layout)
+		:layout(_layout)
 	{
 		VkDescriptorSetAllocateInfo descriptorSetInfo = {};
 		descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -71,6 +71,11 @@ namespace tke
 
 		auto res = vkAllocateDescriptorSets(vk_device.v, &descriptorSetInfo, &v);
 		assert(res == VK_SUCCESS);
+	}
+
+	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index)
+		:DescriptorSet(pipeline->descriptorSetLayouts[index].get())
+	{
 	}
 
 	DescriptorSet::~DescriptorSet()

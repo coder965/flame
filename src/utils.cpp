@@ -196,7 +196,7 @@ namespace tke
 		if (ext == ".txt" || 
 			ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp" || ext == ".cxx"|| ext == ".inl" ||
 			ext == ".glsl" || ext == ".vert" || ext == ".tesc" || ext == ".tese" || ext == ".geom" || ext == ".frag" || ext == ".hlsl" ||
-			ext == ".xml" || ext == ".json" || ext == ".ini" || 
+			ext == ".xml" || ext == ".json" || ext == ".ini" || ext == ".log" ||
 			ext == ".htm" || ext == ".html" || ext == ".css" ||
 			ext == ".sln" || ext == ".vcxproj")
 			return true;
@@ -205,8 +205,8 @@ namespace tke
 
 	bool isImageFile(const std::string &ext)
 	{
-		if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png"
-			|| ext == ".tga" || ext == ".dds" || ext == ".ktx")
+		if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" ||
+			ext == ".tga" || ext == ".dds" || ext == ".ktx")
 			return true;
 		return false;
 	}

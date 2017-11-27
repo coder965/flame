@@ -95,6 +95,9 @@ void ResourceExplorer::refresh()
 			else
 			{
 				auto i = std::make_unique<ResourceExplorerFileListItem>();
+
+				i->file_size = std::experimental::filesystem::file_size(it->path());
+
 				auto ext = it->path().extension().string();
 				const char *prefix;
 				if (tke::isTextFile(ext))
@@ -111,6 +114,7 @@ void ResourceExplorer::refresh()
 					prefix = ICON_FA_FILE_O" ";
 				i->value = str;
 				i->name = prefix + str;
+
 				file_list.push_back(std::move(i));
 			}
 		}
@@ -157,7 +161,7 @@ void ResourceExplorer::show()
 		ImGui::PopStyleColor();
 		ImGui::Separator();
 
-		ImGui::BeginChild("list", ImVec2(0, 0), true);
+		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing() - 1), true);
 		int index = 0;
 		for (auto &i : dir_list)
 		{
@@ -182,7 +186,7 @@ void ResourceExplorer::show()
 				case ResourceExplorerFileListItem::FileTypeImage:
 					if (!i->image)
 					{
-						i->image = tke::createImage((path / i->value).string());
+						i->image = tke::getImage((path / i->value).string());
 						tke::addUiImage(i->image.get());
 					}
 					break;
@@ -191,6 +195,12 @@ void ResourceExplorer::show()
 			index++;
 		}
 		ImGui::EndChild();
+
+		if (list_index != -1 && list_index >= dir_list.size())
+		{
+			auto i = file_list[list_index - dir_list.size()].get();
+			ImGui::Text("%d", i->file_size);
+		}
 
 		ImGui::EndChild();
 

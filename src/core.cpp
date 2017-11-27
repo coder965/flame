@@ -10,39 +10,6 @@
 
 namespace tke
 {
-	Image *addModelTexture(const std::string &_filename, bool sRGB)
-	{
-		auto i = createImage(_filename, sRGB);
-		i->index = modelTextures.size();
-		modelTextures.push_back(i);
-		return i.get();
-	}
-
-	Material *addModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB, unsigned char alpha,
-		unsigned char spec, unsigned char roughness, Image *albedoAlphaMap, Image *normalHeightMap, Image *specRoughnessMap)
-	{
-		for (auto m : modelMaterials)
-		{
-			if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
-				&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
-				&& m->normalHeightMap == normalHeightMap)
-				return m;
-		}
-		auto m = new Material;
-		m->albedoR = albedoR;
-		m->albedoG = albedoG;
-		m->albedoB = albedoB;
-		m->alpha = alpha;
-		m->spec = spec;
-		m->roughness = roughness;
-		m->albedoAlphaMap = albedoAlphaMap;
-		m->normalHeightMap = normalHeightMap;
-		m->specRoughnessMap = specRoughnessMap;
-		m->sceneIndex = modelMaterials.size();
-		modelMaterials.push_back(m);
-		return m;
-	}
-
 	void processCmdLine(const std::string &str, bool record)
 	{
 		static std::string last_cmd;
@@ -102,16 +69,6 @@ namespace tke
 		float tanHfFovy;
 		float envrCx;
 		float envrCy;
-	};
-
-	struct MaterialShaderStruct
-	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
-
-		unsigned int mapIndex;
-
-		unsigned int dummy;
 	};
 
 	static void _create_swapchain()
@@ -301,10 +258,6 @@ namespace tke
 
 		if (!only_2d)
 		{
-			defaultMaterial = new Material;
-			defaultMaterial->sceneIndex = 0;
-			modelMaterials.push_back(defaultMaterial);
-
 			depthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			globalResource.setImage(depthImage, "Depth.Image");
 
@@ -449,7 +402,6 @@ namespace tke
 			animatedIndexBuffer = new IndexBuffer();
 
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-			materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
 
 			globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
 			globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
@@ -475,10 +427,8 @@ namespace tke
 			}
 
 			initScene();
-			initGeneralModels();
+			initModel();
 			initPhysics();
-
-			ds_maps = new DescriptorSet(mrtPipeline, 1);
 		}
 
 		//initSound();
@@ -636,9 +586,7 @@ namespace tke
 									staticVertexs.push_back(vertex);
 								}
 								for (int i = 0; i < m->indices.size(); i++)
-								{
 									staticIndices.push_back(m->indices[i]);
-								}
 							}
 							else
 							{
@@ -662,47 +610,17 @@ namespace tke
 							}
 						}
 
-						if (staticVertexs.size() > 0) staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
-						if (staticIndices.size() > 0) staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
+						if (staticVertexs.size() > 0) 
+							staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
+						if (staticIndices.size() > 0) 
+							staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
 
-						if (animatedVertexs.size() > 0) animatedVertexBuffer->recreate(sizeof(VertexAnimated) * animatedVertexs.size(), animatedVertexs.data());
-						if (animatedIndices.size() > 0) animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
+						if (animatedVertexs.size() > 0) 
+							animatedVertexBuffer->recreate(sizeof(VertexAnimated) * animatedVertexs.size(), animatedVertexs.data());
+						if (animatedIndices.size() > 0) 
+							animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
 
 						needUpdateVertexBuffer = false;
-					}
-					if (needUpdateTexture)
-					{
-						static int map_position = -1;
-						if (map_position == -1 && mrtPipeline) map_position = mrtPipeline->descriptorPosition("maps");
-						if (map_position != -1)
-						{
-							std::vector<VkWriteDescriptorSet> writes;
-							for (int index = 0; index < modelTextures.size(); index++)
-								writes.push_back(ds_maps->imageWrite(map_position, index, modelTextures[index].get(), colorSampler));
-							updateDescriptorSets(writes.size(), writes.data());
-							needUpdateTexture = false;
-						}
-					}
-					if (needUpdateMaterialBuffer)
-					{
-						if (modelMaterials.size() > 0)
-						{
-							std::unique_ptr<MaterialShaderStruct> mts(new MaterialShaderStruct[modelMaterials.size()]);
-
-							for (int i = 0; i < modelMaterials.size(); i++)
-							{
-								auto m = modelMaterials[i];
-
-								mts.get()[i].albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-								mts.get()[i].specRoughnessCompress = m->spec + (m->roughness << 8);
-								mts.get()[i].mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-									((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-									((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
-							}
-
-							materialBuffer->update(mts.get(), stagingBuffer, sizeof(MaterialShaderStruct) * modelMaterials.size());
-						}
-						needUpdateMaterialBuffer = false;
 					}
 				}
 

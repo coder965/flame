@@ -758,8 +758,10 @@ namespace tke
 
 			}
 			stagingBuffer->unmap();
-			if (staticUpdateRanges.size() > 0) copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
-			if (animatedUpdateRanges.size() > 0) copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			if (staticUpdateRanges.size() > 0) 
+				copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
+			if (animatedUpdateRanges.size() > 0) 
+				copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 
 		std::vector<VkWriteDescriptorSet> writes;
@@ -1040,7 +1042,7 @@ namespace tke
 				cb_shadow->bindPipeline(esmPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esm->v,
-					ds_maps->v
+					ds_textures->v
 				};
 				cb_shadow->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 				for (int oId = 0; oId < staticObjects.size(); oId++)
@@ -1059,7 +1061,7 @@ namespace tke
 				cb_shadow->bindPipeline(esmAnimPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esmAnim->v,
-					ds_maps->v,
+					ds_textures->v,
 					ds_mrtAnim_bone->v
 				};
 				cb_shadow->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
@@ -1090,7 +1092,7 @@ namespace tke
 			cb_deferred->bindPipeline(mrtPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
-				ds_maps->v
+				ds_textures->v
 			};
 			cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 			cb_deferred->drawIndirectIndex(staticObjectIndirectBuffer.get(), staticIndirectCount);
@@ -1103,7 +1105,7 @@ namespace tke
 			cb_deferred->bindPipeline(mrtAnimPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
-				ds_maps->v,
+				ds_textures->v,
 				ds_mrtAnim_bone->v
 			};
 			cb_deferred->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));

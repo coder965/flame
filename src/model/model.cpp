@@ -125,15 +125,14 @@ namespace tke
 	{
 		models.push_back(std::move(std::unique_ptr<Model>(m)));
 		needUpdateVertexBuffer = true;
-		needUpdateMaterialBuffer = true;
-		needUpdateTexture = true;
 	}
 
 	void addTriangleVertex(Model *m, glm::mat3 rotation, glm::vec3 center)
 	{
 		int baseVertex = m->positions.size();
 
-		m->positions.insert(m->positions.end(), { center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f) });
+		m->positions.insert(m->positions.end(), 
+		{ center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f) });
 		m->normals.insert(m->normals.end(), 3, glm::vec3(0.f, 1.f, 0.f));
 		for (int i = 0; i < 3; i++) m->indices.push_back(baseVertex + i);
 	}
@@ -423,16 +422,7 @@ namespace tke
 		}
 	}
 
-	Model *triangleModel = nullptr;
-	Model *cubeModel = nullptr;
-	Model *sphereModel = nullptr;
-	Model *cylinderModel = nullptr;
-	Model *coneModel = nullptr;
-	Model *arrowModel = nullptr;
-	Model *torusModel = nullptr;
-	Model *hamerModel = nullptr;
-
-	static void _model_after_process(Model *m)
+	static void _process_model(Model *m)
 	{
 		m->maxCoord = m->positions[0];
 		m->minCoord = m->positions[0];
@@ -494,8 +484,7 @@ namespace tke
 			}
 		}
 
-		Animation *a;
-		a = getAnimation(m->stand_animation_filename);
+		auto a = getAnimation(m->stand_animation_filename);
 		if (a) m->stateAnimations[ModelStateAnimationStand] = m->bindAnimation(a);
 		a = getAnimation(m->forward_animation_filename);
 		if (a) m->stateAnimations[ModelStateAnimationForward] = m->bindAnimation(a);
@@ -509,184 +498,7 @@ namespace tke
 		if (a) m->stateAnimations[ModelStateAnimationJump] = m->bindAnimation(a);
 	}
 
-	void initGeneralModels()
-	{
-		{
-			triangleModel = new Model;
-			triangleModel->name = "triangle";
-			triangleModel->filename = "[triangle]";
-
-			addTriangleVertex(triangleModel, glm::mat3(1.f), glm::vec3(0.f));
-
-			auto g = std::make_unique<Geometry>();
-			g->material = defaultMaterial;
-			g->indiceCount = triangleModel->indices.size();
-			triangleModel->geometries.push_back(std::move(g));
-
-			_model_after_process(triangleModel);
-
-			_add_model(triangleModel);
-		}
-
-		{
-			cubeModel = new Model;
-			cubeModel->name = "cube";
-			cubeModel->filename = "[cube]";
-
-			addCubeVertex(cubeModel, glm::mat3(1.f), glm::vec3(0.f), 1.f);
-
-			auto g = std::make_unique<Geometry>();
-			g->material = defaultMaterial;
-			g->indiceCount = cubeModel->indices.size();
-			cubeModel->geometries.push_back(std::move(g));
-
-			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			cubeModel->addRigidbody(pRigidbody);
-			auto s = new Shape(ShapeType::box);
-			s->setScale(glm::vec3(0.5f));
-			pRigidbody->addShape(s);
-
-			_model_after_process(cubeModel);
-
-			_add_model(cubeModel);
-		}
-
-		{
-			sphereModel = new Model;
-			sphereModel->name = "sphere";
-			sphereModel->filename = "[sphere]";
-
-			addSphereVertex(sphereModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 32, 32);
-
-			auto g0 = std::make_unique<Geometry>();
-			g0->material = defaultMaterial;
-			g0->indiceCount = sphereModel->indices.size() / 2;
-			auto g1 = std::make_unique<Geometry>();
-			g1->material = defaultMaterial;
-			g1->indiceBase = g0->indiceCount;
-			g1->indiceCount = g0->indiceCount;
-			sphereModel->geometries.push_back(std::move(g0));
-			sphereModel->geometries.push_back(std::move(g1));
-
-			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			sphereModel->addRigidbody(pRigidbody);
-			auto s = new Shape(ShapeType::sphere);
-			s->setScale(glm::vec3(0.5f));
-			pRigidbody->addShape(s);
-
-			_model_after_process(sphereModel);
-
-			_add_model(sphereModel);
-		}
-
-		{
-			cylinderModel = new Model;
-			cylinderModel->name = "cylinder";
-			cylinderModel->filename = "[cylinder]";
-
-			addCylinderVertex(cylinderModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
-
-			auto g = std::make_unique<Geometry>();
-			g->material = defaultMaterial;
-			g->indiceCount = cylinderModel->indices.size();
-			cylinderModel->geometries.push_back(std::move(g));
-
-			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			cylinderModel->addRigidbody(pRigidbody);
-			auto s = new Shape(ShapeType::capsule);
-			s->setScale(glm::vec3(0.5f));
-			pRigidbody->addShape(s);
-
-			_model_after_process(cylinderModel);
-
-			_add_model(cylinderModel);
-		}
-
-		{
-			coneModel = new Model;
-			coneModel->name = "cone";
-			coneModel->filename = "[cone]";
-
-			addConeVertex(coneModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
-
-			auto g = std::make_unique<Geometry>();
-			g->material = defaultMaterial;
-			g->indiceCount = coneModel->indices.size();
-			coneModel->geometries.push_back(std::move(g));
-
-			_model_after_process(coneModel);
-
-			_add_model(coneModel);
-		}
-
-		{
-			arrowModel = new Model;
-			arrowModel->name = "arrow";
-			arrowModel->filename = "[arrow]";
-
-			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
-
-			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
-			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
-
-			auto g = std::make_unique<Geometry>();
-			g->material = defaultMaterial;
-			g->indiceCount = arrowModel->indices.size();
-			arrowModel->geometries.push_back(std::move(g));
-
-			_model_after_process(arrowModel);
-
-			_add_model(arrowModel);
-		}
-
-		{
-			torusModel = new Model;
-			torusModel->name = "torus";
-			torusModel->filename = "[torus]";
-
-			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
-
-			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
-
-			auto g = std::make_unique<Geometry>();
-			g->material = defaultMaterial;
-			g->indiceCount = torusModel->indices.size();
-			torusModel->geometries.push_back(std::move(g));
-
-			_model_after_process(torusModel);
-
-			_add_model(torusModel);
-		}
-
-		{
-			hamerModel = new Model;
-			hamerModel->name = "hammer";
-			hamerModel->filename = "[hammer]";
-
-			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
-
-			addCylinderVertex(hamerModel, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
-			int ic0 = hamerModel->indices.size();
-			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
-			int ic1 = hamerModel->indices.size();
-
-			auto g0 = std::make_unique<Geometry>();
-			g0->material = defaultMaterial;
-			g0->indiceCount = ic0;
-			auto g1 = std::make_unique<Geometry>();
-			g1->material = defaultMaterial;
-			g1->indiceBase = ic0;
-			g1->indiceCount = ic1 - ic0;
-			hamerModel->geometries.push_back(std::move(g0));
-			hamerModel->geometries.push_back(std::move(g1));
-
-			_model_after_process(hamerModel);
-
-			_add_model(hamerModel);
-		}
-	}
-
-
+	std::vector<Model*> generalModels;
 
 	namespace OBJ
 	{
@@ -695,8 +507,6 @@ namespace tke
 			std::ifstream file(filename);
 
 			int currentIndex = 0;
-
-			std::vector<std::pair<std::string, Material*>> materials;
 
 			Geometry *currentGeometry = nullptr;
 
@@ -778,18 +588,11 @@ namespace tke
 				{
 					std::string name;
 					ss >> name;
-					for (auto &_m : materials)
-					{
-						if (name == _m.first)
-						{
-							auto g = std::make_unique<Geometry>();
-							currentGeometry = g.get();
-							currentGeometry->material = _m.second;
-							currentGeometry->indiceBase = currentIndex;
-							m->geometries.push_back(std::move(g));
-							break;
-						}
-					}
+					auto g = std::make_unique<Geometry>();
+					currentGeometry = g.get();
+					currentGeometry->material = getModelMaterial(name);
+					currentGeometry->indiceBase = currentIndex;
+					m->geometries.push_back(std::move(g));
 				}
 				else if (token == "mtllib")
 				{
@@ -802,8 +605,8 @@ namespace tke
 
 						std::string mtlName;
 						unsigned char spec, roughness;
-						Image *albedoAlphaMap = nullptr;
-						Image *normalHeightMap = nullptr;
+						std::shared_ptr<Image> albedoAlphaMap;
+						std::shared_ptr<Image> normalHeightMap;
 
 						while (!file.eof())
 						{
@@ -830,25 +633,25 @@ namespace tke
 							{
 								std::string filename;
 								ss >> filename;
-								albedoAlphaMap = addModelTexture(m->filepath + "/" + filename, true);
+								albedoAlphaMap = getModelTexture(m->filepath + "/" + filename, true);
 							}
 							else if (token == "map_bump")
 							{
 								std::string filename;
 								ss >> filename;
-								normalHeightMap = addModelTexture(m->filepath + "/" + filename);
+								normalHeightMap = getModelTexture(m->filepath + "/" + filename);
 							}
 						}
 
-						auto _m = addModelMaterial(255, 255, 255, 255, spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
-						materials.emplace_back(mtlName, _m);
+						auto m = getModelMaterial(255, 255, 255, 255, spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
+						m->name = mtlName;
 					}
 				}
 			}
 
 			m->loadData(true);
 
-			_model_after_process(m);
+			_process_model(m);
 		}
 	}
 
@@ -969,8 +772,6 @@ namespace tke
 
 			Header header;
 			file.read((char*)&header, sizeof(Header));
-			m->name = japaneseToChinese(header.name);
-			m->comment = japaneseToChinese(header.comment);
 
 			int vertexCount;
 			file & vertexCount;
@@ -1020,8 +821,8 @@ namespace tke
 				file.read((char*)&data, sizeof(MaterialData));
 
 				auto g = std::make_unique<Geometry>();
-				g->material = addModelMaterial(data.diffuse.r * 255, data.diffuse.g * 255, data.diffuse.b * 255, data.diffuse.a * 255,
-					0, 255, addModelTexture(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
+				g->material = getModelMaterial(data.diffuse.r * 255, data.diffuse.g * 255, data.diffuse.b * 255, data.diffuse.a * 255,
+					0, 255, getModelTexture(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
 				g->indiceBase = currentIndiceVertex;
 				g->indiceCount = data.indiceCount;
 
@@ -1211,7 +1012,7 @@ namespace tke
 
 			m->loadData(false);
 
-			_model_after_process(m);
+			_process_model(m);
 		}
 	}
 
@@ -1463,7 +1264,7 @@ namespace tke
 			g->indiceCount = m->indices.size();
 			m->geometries.push_back(std::move(g));
 
-			_model_after_process(m);
+			_process_model(m);
 		}
 	}
 
@@ -1523,10 +1324,10 @@ namespace tke
 				file > specRoughnessMapName;
 
 				auto g = std::make_unique<Geometry>();
-				g->material = addModelMaterial(albedoR, albedoG, albedoB, alpha, spec, roughness,
-					addModelTexture(m->filepath + "/" + albedoAlphaMapName, true),
-					addModelTexture(m->filepath + "/" + normalHeightMapName, true),
-					addModelTexture(m->filepath + "/" + specRoughnessMapName, true));
+				g->material = getModelMaterial(albedoR, albedoG, albedoB, alpha, spec, roughness,
+					getModelTexture(m->filepath + "/" + albedoAlphaMapName, true),
+					getModelTexture(m->filepath + "/" + normalHeightMapName, true),
+					getModelTexture(m->filepath + "/" + specRoughnessMapName, true));
 				file & g->indiceBase;
 				file & g->indiceCount;
 				file & g->visible;
@@ -1653,7 +1454,7 @@ namespace tke
 
 			file & m->eye_position;
 
-			_model_after_process(m);
+			_process_model(m);
 		}
 
 		void save(Model *m, const std::string &filename, bool copyTexture)
@@ -1817,16 +1618,118 @@ namespace tke
 		}
 	}
 
+	struct MaterialShaderStruct
+	{
+		unsigned int albedoAlphaCompress;
+		unsigned int specRoughnessCompress;
+
+		unsigned int mapIndex;
+
+		unsigned int dummy;
+	};
+
+	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
+		unsigned char alpha, unsigned char spec, unsigned char roughness, 
+		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap)
+	{
+		for (int i = 0; i < MaxMaterialCount; i++)
+		{
+			auto m = modelMaterials[i].lock();
+			if (m)
+			{
+				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
+					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
+					&& m->normalHeightMap == normalHeightMap)
+					return m;
+			}
+		}
+
+		for (int i = 0; i < MaxMaterialCount; i++)
+		{
+			if (!modelMaterials[i].lock())
+			{
+				auto m = std::make_shared<Material>();
+				m->albedoR = albedoR;
+				m->albedoG = albedoG;
+				m->albedoB = albedoB;
+				m->alpha = alpha;
+				m->spec = spec;
+				m->roughness = roughness;
+				m->albedoAlphaMap = albedoAlphaMap;
+				m->normalHeightMap = normalHeightMap;
+				m->specRoughnessMap = specRoughnessMap;
+				m->sceneIndex = i;
+				modelMaterials[i] = m;
+
+				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(MaterialShaderStruct));
+				MaterialShaderStruct stru;
+				stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
+				stru.specRoughnessCompress = m->spec + (m->roughness << 8);
+				stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
+					((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
+					((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+				memcpy(map, &stru, sizeof(MaterialShaderStruct));
+				stagingBuffer->unmap();
+
+				VkBufferCopy range = {};
+				range.srcOffset = 0;
+				range.dstOffset = sizeof(MaterialShaderStruct) * i;
+				range.size = sizeof(MaterialShaderStruct);
+
+				copyBuffer(stagingBuffer->v, materialBuffer->v, 1, &range);
+
+				return m;
+			}
+		}
+	}
+
+	std::shared_ptr<Material> getModelMaterial(const std::string name)
+	{
+		for (int i = 0; i < MaxMaterialCount; i++)
+		{
+			auto m = modelMaterials[i].lock();
+			if (m && m->name == name)
+				return m;
+		}
+		return std::shared_ptr<Material>();
+	}
+
+	std::shared_ptr<Image> getModelTexture(const std::string &_filename, bool sRGB)
+	{
+		for (int i = 0; i < MaxTextureCount; i++)
+		{
+			auto t = modelTextures[i].lock();
+			if (t)
+			{
+				if (t->filename == _filename)
+					return t;
+			}
+		}
+
+		for (int i = 0; i < MaxTextureCount; i++)
+		{
+			if (!modelTextures[i].lock())
+			{
+				auto t = getImage(_filename, sRGB);
+				t->index = i;
+				modelTextures[i] = t;
+
+				updateDescriptorSets(1, &ds_textures->imageWrite(0, i, t.get(), colorSampler));
+
+				return t;
+			}
+		}
+	}
+
 	Model *createModel(const std::string &_filename)
 	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		if (!std::experimental::filesystem::exists(filename))
+		std::experimental::filesystem::path path(_filename);
+		if (!std::experimental::filesystem::exists(path))
 		{
-			std::cout << "Model File Lost:" << filename;
+			std::cout << "Model File Lost:" << _filename;
 			return nullptr;
 		}
 
-		std::experimental::filesystem::path path(filename);
 		auto ext = path.extension().string();
 		void(*load_func)(Model *, const std::string &) = nullptr;
 		if (ext == ".obj")
@@ -1844,15 +1747,203 @@ namespace tke
 		}
 
 		auto m = new Model;
-		m->filename = filename;
+		m->filename = _filename;
 		m->filepath = path.parent_path().string();
 		if (m->filepath == "")
 			m->filepath = ".";
-		load_func(m, filename);
+		load_func(m, _filename);
 
 		_add_model(m);
 
 		return m;
 	}
 
+	static std::shared_ptr<DescriptorSetLayout> _textures_layout;
+
+	void initModel()
+	{
+		defaultMaterial = std::make_shared<Material>();
+		defaultMaterial->sceneIndex = 0;
+		modelMaterials[0] = defaultMaterial;
+
+		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
+
+		{
+			VkDescriptorSetLayoutBinding binding;
+			binding.binding = 0;
+			binding.descriptorCount = MaxTextureCount;
+			binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			binding.pImmutableSamplers = nullptr;
+			_textures_layout = getDescriptorSetLayout(1, &binding);
+		}
+
+		ds_textures = new DescriptorSet(_textures_layout.get());
+
+		{
+			triangleModel = new Model;
+			triangleModel->filename = "[triangle]";
+
+			addTriangleVertex(triangleModel, glm::mat3(1.f), glm::vec3(0.f));
+
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = triangleModel->indices.size();
+			triangleModel->geometries.push_back(std::move(g));
+
+			_process_model(triangleModel);
+
+			_add_model(triangleModel);
+		}
+
+		{
+			cubeModel = new Model;
+			cubeModel->filename = "[cube]";
+
+			addCubeVertex(cubeModel, glm::mat3(1.f), glm::vec3(0.f), 1.f);
+
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = cubeModel->indices.size();
+			cubeModel->geometries.push_back(std::move(g));
+
+			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
+			cubeModel->addRigidbody(pRigidbody);
+			auto s = new Shape(ShapeType::box);
+			s->setScale(glm::vec3(0.5f));
+			pRigidbody->addShape(s);
+
+			_process_model(cubeModel);
+
+			_add_model(cubeModel);
+		}
+
+		{
+			sphereModel = new Model;
+			sphereModel->filename = "[sphere]";
+
+			addSphereVertex(sphereModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 32, 32);
+
+			auto g0 = std::make_unique<Geometry>();
+			g0->material = defaultMaterial;
+			g0->indiceCount = sphereModel->indices.size() / 2;
+			auto g1 = std::make_unique<Geometry>();
+			g1->material = defaultMaterial;
+			g1->indiceBase = g0->indiceCount;
+			g1->indiceCount = g0->indiceCount;
+			sphereModel->geometries.push_back(std::move(g0));
+			sphereModel->geometries.push_back(std::move(g1));
+
+			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
+			sphereModel->addRigidbody(pRigidbody);
+			auto s = new Shape(ShapeType::sphere);
+			s->setScale(glm::vec3(0.5f));
+			pRigidbody->addShape(s);
+
+			_process_model(sphereModel);
+
+			_add_model(sphereModel);
+		}
+
+		{
+			cylinderModel = new Model;
+			cylinderModel->filename = "[cylinder]";
+
+			addCylinderVertex(cylinderModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
+
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = cylinderModel->indices.size();
+			cylinderModel->geometries.push_back(std::move(g));
+
+			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
+			cylinderModel->addRigidbody(pRigidbody);
+			auto s = new Shape(ShapeType::capsule);
+			s->setScale(glm::vec3(0.5f));
+			pRigidbody->addShape(s);
+
+			_process_model(cylinderModel);
+
+			_add_model(cylinderModel);
+		}
+
+		{
+			coneModel = new Model;
+			coneModel->filename = "[cone]";
+
+			addConeVertex(coneModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
+
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = coneModel->indices.size();
+			coneModel->geometries.push_back(std::move(g));
+
+			_process_model(coneModel);
+
+			_add_model(coneModel);
+		}
+
+		{
+			arrowModel = new Model;
+			arrowModel->filename = "[arrow]";
+
+			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
+
+			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
+			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
+
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = arrowModel->indices.size();
+			arrowModel->geometries.push_back(std::move(g));
+
+			_process_model(arrowModel);
+
+			_add_model(arrowModel);
+		}
+
+		{
+			torusModel = new Model;
+			torusModel->filename = "[torus]";
+
+			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
+
+			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
+
+			auto g = std::make_unique<Geometry>();
+			g->material = defaultMaterial;
+			g->indiceCount = torusModel->indices.size();
+			torusModel->geometries.push_back(std::move(g));
+
+			_process_model(torusModel);
+
+			_add_model(torusModel);
+		}
+
+		{
+			hamerModel = new Model;
+			hamerModel->filename = "[hammer]";
+
+			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
+
+			addCylinderVertex(hamerModel, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
+			int ic0 = hamerModel->indices.size();
+			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
+			int ic1 = hamerModel->indices.size();
+
+			auto g0 = std::make_unique<Geometry>();
+			g0->material = defaultMaterial;
+			g0->indiceCount = ic0;
+			auto g1 = std::make_unique<Geometry>();
+			g1->material = defaultMaterial;
+			g1->indiceBase = ic0;
+			g1->indiceCount = ic1 - ic0;
+			hamerModel->geometries.push_back(std::move(g0));
+			hamerModel->geometries.push_back(std::move(g1));
+
+			_process_model(hamerModel);
+
+			_add_model(hamerModel);
+		}
+	}
 }

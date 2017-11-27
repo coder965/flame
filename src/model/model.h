@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../utils.h"
-#include "math.h"
+#include "../render/descriptor.h"
 #include "material.h"
 #include "animation.h"
 #include "../physics/physics.h"
@@ -20,14 +20,14 @@ namespace tke
 		ModelStateAnimationCount
 	};
 
+	enum { MaxMaterialCount = 256 };
+	enum { MaxTextureCount = 256 };
 	enum { MaxBoneCount = 256 };
 
 	REFLECTABLE struct Model
 	{
 		REFL_BANK;
 
-		std::string name;
-		std::string comment;
 		std::string filename;
 		std::string filepath;
 		bool animated = false;
@@ -93,16 +93,29 @@ namespace tke
 	void addConeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
 	void addTorusVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
 
-	extern Model *triangleModel;
-	extern Model *cubeModel;
-	extern Model *sphereModel;
-	extern Model *cylinderModel;
-	extern Model *coneModel;
-	extern Model *arrowModel;
-	extern Model *torusModel;
-	extern Model *hamerModel;
+	IMPL(nullptr) Model *triangleModel;
+	IMPL(nullptr) Model *cubeModel;
+	IMPL(nullptr) Model *sphereModel;
+	IMPL(nullptr) Model *cylinderModel;
+	IMPL(nullptr) Model *coneModel;
+	IMPL(nullptr) Model *arrowModel;
+	IMPL(nullptr) Model *torusModel;
+	IMPL(nullptr) Model *hamerModel;
 
-	void initGeneralModels();
+	extern std::vector<Model*> generalModels;
 
+	IMPL() std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
+	IMPL(nullptr) std::shared_ptr<Material> defaultMaterial;
+	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
+		unsigned char alpha, unsigned char spec, unsigned char roughness, 
+		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap);
+	std::shared_ptr<Material> getModelMaterial(const std::string name);
+	IMPL(nullptr) UniformBuffer *materialBuffer;
+
+	IMPL() std::weak_ptr<Image> modelTextures[MaxTextureCount];
+	std::shared_ptr<Image> getModelTexture(const std::string &filename, bool sRGB = false);
+	IMPL(nullptr) DescriptorSet *ds_textures;
+
+	void initModel();
 	Model *createModel(const std::string &filename);
 }

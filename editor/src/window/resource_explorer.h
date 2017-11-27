@@ -26,6 +26,8 @@ struct ResourceExplorerFileListItem
 	std::string value;
 	std::string name;
 
+	int file_size;
+
 	enum FileType
 	{
 		FileTypeFile,

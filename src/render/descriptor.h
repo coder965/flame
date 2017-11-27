@@ -36,6 +36,8 @@ namespace tke
 		VkDescriptorSet v;
 
 		// must call in main thread
+		DescriptorSet(DescriptorSetLayout *_layout);
+		// must call in main thread
 		DescriptorSet(Pipeline *pipeline, int index = 0);
 		// must call in main thread
 		~DescriptorSet();

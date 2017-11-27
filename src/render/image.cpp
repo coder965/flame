@@ -234,15 +234,14 @@ namespace tke
 
 	static std::map<unsigned int, std::weak_ptr<Image>> _images;
 
-	std::shared_ptr<Image> createImage(const std::string &filename, bool sRGB, bool saveData)
+	std::shared_ptr<Image> getImage(const std::string &filename, bool sRGB, bool saveData)
 	{
 		auto hash = HASH(filename.c_str());
 		auto it = _images.find(hash);
 		if (it != _images.end())
 		{
 			auto s = it->second.lock();
-			if (s)
-				return s;
+			if (s) return s;
 		}
 
 		std::unique_ptr<ImageData> d(std::move(createImageData(filename)));
