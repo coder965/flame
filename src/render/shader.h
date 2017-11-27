@@ -17,7 +17,9 @@ namespace tke
 		std::vector<std::vector<Descriptor>> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
 
+		// must call in main thread
 		Shader(const std::string &_filename, const std::vector<std::string> &_defines);
+		// must call in main thread
 		~Shader();
 	};
 

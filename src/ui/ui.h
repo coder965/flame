@@ -54,6 +54,6 @@ namespace tke
 	void ui_onChar(int);
 	void beginUi(bool _need_clear);
 	void endUi();
-	void addUiImage(std::shared_ptr<Image> image);
+	void addUiImage(Image*image);
 	void removeUiImage(Image *image);
 }

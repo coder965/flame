@@ -37,7 +37,7 @@ SceneEditor::SceneEditor(tke::Scene *_scene)
 
 	image = std::make_shared<tke::Image>(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	fb_image = tke::getFramebuffer(image.get(), tke::renderPass_image8);
-	tke::addUiImage(image);
+	tke::addUiImage(image.get());
 
 	fb_scene = scene->createFramebuffer(image.get());
 	scene_renderFinished = tke::createEvent();

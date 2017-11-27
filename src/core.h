@@ -206,10 +206,10 @@ namespace tke
 	IMPL(nullptr) PF_EVENT0 onRender;
 	IMPL(nullptr) PF_EVENT0 onDestroy;
 
+	// must call main thread
 	void beginFrame(bool clearBackground);
+	// must call main thread
 	void endFrame();
-
-	void addAfterFrameEvent(std::function<void()> e);
 
 	void run();
 }

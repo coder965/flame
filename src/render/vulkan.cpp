@@ -42,11 +42,11 @@ namespace tke
 		graphicsQueue.mtx.unlock();
 	}
 
-	Instance inst;
+	VkInstance vk_instance;
 	VkPhysicalDevice physicalDevice;
 	VkPhysicalDeviceProperties physicalDeviceProperties;
 	VkPhysicalDeviceFeatures physicalDeviceFeatures;
-	Device device;
+	Device vk_device;
 	Queue graphicsQueue;
 	static VkPhysicalDeviceMemoryProperties memProperties;
 
@@ -58,11 +58,6 @@ namespace tke
 				return i;
 		}
 		return -1;
-	}
-
-	void initVulkanThreadData()
-	{
-
 	}
 
 	struct _vulkan_error
@@ -147,13 +142,13 @@ namespace tke
 		instInfo.ppEnabledExtensionNames = instExtensions.data();
 		instInfo.enabledLayerCount = instLayers.size();
 		instInfo.ppEnabledLayerNames = instLayers.data();
-		res = vkCreateInstance(&instInfo, nullptr, &inst.v);
+		res = vkCreateInstance(&instInfo, nullptr, &vk_instance);
 		if (res != VkResult::VK_SUCCESS)
 			return ErrContextLost;
 
 		if (debug)
 		{
-			static auto _vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(inst.v, "vkCreateDebugReportCallbackEXT"));
+			static auto _vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(vk_instance, "vkCreateDebugReportCallbackEXT"));
 
 			VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
 			callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
@@ -163,12 +158,12 @@ namespace tke
 			callbackCreateInfo.pUserData = nullptr;
 
 			VkDebugReportCallbackEXT callback;
-			res = _vkCreateDebugReportCallbackEXT(inst.v, &callbackCreateInfo, nullptr, &callback);
+			res = _vkCreateDebugReportCallbackEXT(vk_instance, &callbackCreateInfo, nullptr, &callback);
 			assert(res == VK_SUCCESS);
 		}
 
 		uint32_t gpuCount = 1;
-		res = vkEnumeratePhysicalDevices(inst.v, &gpuCount, &physicalDevice);
+		res = vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &physicalDevice);
 		if (res != VkResult::VK_SUCCESS)
 			return ErrContextLost;
 
@@ -206,10 +201,10 @@ namespace tke
 		deviceInfo.enabledExtensionCount = deviceExtensions.size();
 		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		deviceInfo.pEnabledFeatures = &physicalDeviceFeatures;
-		res = vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &device.v);
+		res = vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &vk_device.v);
 		assert(res == VK_SUCCESS);
 
-		vkGetDeviceQueue(device.v, 0, 0, &graphicsQueue.v);
+		vkGetDeviceQueue(vk_device.v, 0, 0, &graphicsQueue.v);
 
 		commandPool = new CommandPool;
 		descriptorPool = new DescriptorPool;

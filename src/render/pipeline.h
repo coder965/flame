@@ -140,7 +140,9 @@ namespace tke
 		VkPipeline pipeline = 0;
 		DescriptorSet *descriptorSet = nullptr;
 
+		// must call in main thread
 		Pipeline(PipelineCreateInfo &info, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds = false);
+		// must call in main thread
 		~Pipeline();
 		void linkDescriptors(DescriptorSet *set, Resource *resource);
 		int descriptorPosition(const std::string &name);

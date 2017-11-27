@@ -9,9 +9,7 @@ namespace tke
 {
 	PipelineLayout::~PipelineLayout()
 	{
-		device.mtx.lock();
-		vkDestroyPipelineLayout(device.v, v, nullptr);
-		device.mtx.unlock();
+		vkDestroyPipelineLayout(vk_device.v, v, nullptr);
 	}
 
 	static std::vector<std::weak_ptr<PipelineLayout>> pipelineLayouts;
@@ -192,10 +190,8 @@ namespace tke
 				info.pushConstantRangeCount = p->pushConstantRanges.size();
 				info.pPushConstantRanges = p->pushConstantRanges.data();
 
-				device.mtx.lock();
-				auto res = vkCreatePipelineLayout(device.v, &info, nullptr, &p->v);
+				auto res = vkCreatePipelineLayout(vk_device.v, &info, nullptr, &p->v);
 				assert(res == VK_SUCCESS);
-				device.mtx.unlock();
 
 				pipelineLayouts.push_back(p);
 
@@ -286,10 +282,8 @@ namespace tke
 		pipelineInfo.pMultisampleState = &multisampleState;
 		pipelineInfo.pDynamicState = info._dynamicStates.size() ? &dynamicState : nullptr;
 
-		device.mtx.lock();
-		auto res = vkCreateGraphicsPipelines(device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);
+		auto res = vkCreateGraphicsPipelines(vk_device.v, 0, 1, &pipelineInfo, nullptr, &pipeline);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 
 		links = info.links;
 
@@ -304,9 +298,7 @@ namespace tke
 	{
 		delete descriptorSet;
 
-		device.mtx.lock();
-		vkDestroyPipeline(device.v, pipeline, nullptr);
-		device.mtx.unlock();
+		vkDestroyPipeline(vk_device.v, pipeline, nullptr);
 	}
 
 	void Pipeline::linkDescriptors(DescriptorSet *set, Resource *resource)

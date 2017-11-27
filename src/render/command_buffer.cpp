@@ -17,17 +17,13 @@ namespace tke
 		info.commandPool = commandPool->v;
 		info.commandBufferCount = 1;
 
-		device.mtx.lock();
-		auto res = vkAllocateCommandBuffers(device.v, &info, &v);
+		auto res = vkAllocateCommandBuffers(vk_device.v, &info, &v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 	}
 
 	CommandBuffer::~CommandBuffer()
 	{
-		device.mtx.lock();
-		vkFreeCommandBuffers(device.v, commandPool->v, 1, &v);
-		device.mtx.unlock();
+		vkFreeCommandBuffers(vk_device.v, commandPool->v, 1, &v);
 	}
 
 	void CommandBuffer::reset()
@@ -227,17 +223,13 @@ namespace tke
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		info.queueFamilyIndex = 0;
-		device.mtx.lock();
-		auto res = vkCreateCommandPool(device.v, &info, nullptr, &v);
-		device.mtx.unlock();
+		auto res = vkCreateCommandPool(vk_device.v, &info, nullptr, &v);
 		assert(res == VK_SUCCESS);
 	}
 
 	CommandPool::~CommandPool()
 	{
-		device.mtx.lock();
-		vkDestroyCommandPool(device.v, v, nullptr);
-		device.mtx.unlock();
+		vkDestroyCommandPool(vk_device.v, v, nullptr);
 	}
 
 	CommandBuffer *begineOnceCommandBuffer()
@@ -296,5 +288,5 @@ namespace tke
 		endOnceCommandBuffer(cb);
 	}
 
-	thread_local CommandPool *commandPool = nullptr;
+	CommandPool *commandPool = nullptr;
 }

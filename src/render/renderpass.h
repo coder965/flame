@@ -17,7 +17,9 @@ namespace tke
 		VkRenderPass v;
 		std::vector<VkClearValue> clearValues;
 
+		// must call in main thread
 		RenderPass(int attachmentCount, VkAttachmentDescription *pAttachments, int subpassCount, VkSubpassDescription *pSubpasses, int dependencyCount = 0, VkSubpassDependency *pDependencies = nullptr);
+		// must call in main thread
 		~RenderPass();
 	};
 }

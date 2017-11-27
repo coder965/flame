@@ -20,9 +20,11 @@ namespace tke
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
 		VkDescriptorSetLayout v;
 
+		// must call in main thread
 		~DescriptorSetLayout();
 	};
 
+	// must call in main thread
 	std::shared_ptr<DescriptorSetLayout> getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings);
 
 	struct Pipeline;
@@ -33,7 +35,9 @@ namespace tke
 		DescriptorSetLayout *layout;
 		VkDescriptorSet v;
 
+		// must call in main thread
 		DescriptorSet(Pipeline *pipeline, int index = 0);
+		// must call in main thread
 		~DescriptorSet();
 		VkWriteDescriptorSet bufferWrite(int binding, int index, Buffer *buffer);
 		VkWriteDescriptorSet imageWrite(int binding, int index, Image *image, VkSampler sampler, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
@@ -45,9 +49,11 @@ namespace tke
 	{
 		VkDescriptorPool v;
 
+		// must call in main thread
 		DescriptorPool();
+		// must call in main thread
 		~DescriptorPool();
 	};
 
-	thread_local extern DescriptorPool *descriptorPool;
+	extern DescriptorPool *descriptorPool;
 }

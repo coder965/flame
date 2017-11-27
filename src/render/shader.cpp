@@ -70,10 +70,8 @@ namespace tke
 			shaderModuleCreateInfo.codeSize = spvFile.length;
 			shaderModuleCreateInfo.pCode = (uint32_t*)spvFile.data;
 
-			device.mtx.lock();
-			auto res = vkCreateShaderModule(device.v, &shaderModuleCreateInfo, nullptr, &vkModule);
+			auto res = vkCreateShaderModule(vk_device.v, &shaderModuleCreateInfo, nullptr, &vkModule);
 			assert(res == VK_SUCCESS);
-			device.mtx.unlock();
 		}
 
 		auto resFilename = spvFilename + ".res";
@@ -180,8 +178,6 @@ namespace tke
 
 	Shader::~Shader()
 	{
-		device.mtx.lock();
-		vkDestroyShaderModule(device.v, vkModule, nullptr);
-		device.mtx.unlock();
+		vkDestroyShaderModule(vk_device.v, vkModule, nullptr);
 	}
 }

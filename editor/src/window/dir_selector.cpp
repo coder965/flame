@@ -48,7 +48,6 @@ void DirSelector::open(const std::string &default_dir, const std::function<void(
 			break;
 		}
 	}
-	w->refresh();
 	w->callback = _callback;
 	windows.push_back(std::move(w));
 }
@@ -61,10 +60,16 @@ void DirSelector::show()
 		ImGui::SetNextWindowSize(ImVec2(800, 600));
 		first = false;
 	}
+
+	if (need_refresh)
+	{
+		refresh();
+		need_refresh = false;
+	}
+
 	if (ImGui::BeginPopupModal("Dir Selector"))
 	{
 		const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
-		bool need_refresh = false;
 
 		ImGui::PushItemWidth(100);
 		if (ImGui::Combo("##driver", &driverIndex, drivers, TK_ARRAYSIZE(drivers)))
@@ -113,8 +118,6 @@ void DirSelector::show()
 			}
 		}
 		ImGui::EndChild();
-		if (need_refresh)
-			refresh();
 
 		static float okButtonWidth = 100;
 		static float cancelButtonWidth = 100;

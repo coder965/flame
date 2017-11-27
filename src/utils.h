@@ -157,6 +157,7 @@ namespace tke
 		~OnceFileBuffer();
 	};
 
+	bool isTextFile(const std::string &ext);
 	bool isImageFile(const std::string &ext);
 
 	struct Variable;

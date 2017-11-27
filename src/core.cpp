@@ -116,9 +116,6 @@ namespace tke
 
 	static void _create_swapchain()
 	{
-		inst.mtx.lock();
-		device.mtx.lock();
-
 		unsigned int physicalDeviceSurfaceFormatCount = 0;
 		std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
 		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, window_surface, &physicalDeviceSurfaceFormatCount, nullptr);
@@ -140,16 +137,13 @@ namespace tke
 		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		swapchainInfo.clipped = true;
-		auto res = vkCreateSwapchainKHR(device.v, &swapchainInfo, nullptr, &swapchain);
+		auto res = vkCreateSwapchainKHR(vk_device.v, &swapchainInfo, nullptr, &swapchain);
 		assert(res == VK_SUCCESS);
 
 		VkImage vkImages[2];
 		uint32_t imageCount = 0;
-		vkGetSwapchainImagesKHR(device.v, swapchain, &imageCount, nullptr);
-		vkGetSwapchainImagesKHR(device.v, swapchain, &imageCount, vkImages);
-
-		device.mtx.unlock();
-		inst.mtx.unlock();
+		vkGetSwapchainImagesKHR(vk_device.v, swapchain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(vk_device.v, swapchain, &imageCount, vkImages);
 
 		for (int i = 0; i < 2; i++)
 		{
@@ -265,7 +259,7 @@ namespace tke
 					delete window_images[i];
 					window_images[i] = nullptr;
 				}
-				vkDestroySwapchainKHR(device.v, swapchain, nullptr);
+				vkDestroySwapchainKHR(vk_device.v, swapchain, nullptr);
 				_create_swapchain();
 			}
 		}
@@ -533,7 +527,7 @@ namespace tke
 			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			surfaceInfo.hinstance = (HINSTANCE)hInst;
 			surfaceInfo.hwnd = (HWND)hWnd;
-			auto res = vkCreateWin32SurfaceKHR(inst.v, &surfaceInfo, nullptr, &window_surface);
+			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surfaceInfo, nullptr, &window_surface);
 			assert(res == VK_SUCCESS);
 
 			VkBool32 supported;
@@ -555,15 +549,11 @@ namespace tke
 
 	void beginFrame(bool clearBackground)
 	{
-		device.mtx.lock();
-		auto res = vkAcquireNextImageKHR(device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
+		auto res = vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 
 		beginUi(clearBackground);
 	}
-
-	static std::vector<std::function<void()>> _afterFrameEvents;
 
 	void endFrame()
 	{
@@ -586,15 +576,6 @@ namespace tke
 
 		cbs.clear();
 		ui_waitEvents.clear();
-
-		for (auto &e : _afterFrameEvents)
-			e();
-		_afterFrameEvents.clear();
-	}
-
-	void addAfterFrameEvent(std::function<void()> e)
-	{
-		_afterFrameEvents.push_back(e);
 	}
 
 	static unsigned int _lastTime = 0;

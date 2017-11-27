@@ -9,9 +9,7 @@ namespace tke
 {
 	DescriptorSetLayout::~DescriptorSetLayout()
 	{
-		device.mtx.lock();
-		vkDestroyDescriptorSetLayout(device.v, v, nullptr);
-		device.mtx.unlock();
+		vkDestroyDescriptorSetLayout(vk_device.v, v, nullptr);
 	}
 
 	static std::vector<std::weak_ptr<DescriptorSetLayout>> _descriptorSetLayouts;
@@ -55,10 +53,8 @@ namespace tke
 		info.bindingCount = bindingCount;
 		info.pBindings = l->bindings.data();
 
-		device.mtx.lock();
-		auto res = vkCreateDescriptorSetLayout(device.v, &info, nullptr, &l->v);
+		auto res = vkCreateDescriptorSetLayout(vk_device.v, &info, nullptr, &l->v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 
 		_descriptorSetLayouts.push_back(l);
 		return l;
@@ -73,18 +69,14 @@ namespace tke
 		descriptorSetInfo.descriptorSetCount = 1;
 		descriptorSetInfo.pSetLayouts = &layout->v;
 
-		device.mtx.lock();
-		auto res = vkAllocateDescriptorSets(device.v, &descriptorSetInfo, &v);
+		auto res = vkAllocateDescriptorSets(vk_device.v, &descriptorSetInfo, &v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 	}
 
 	DescriptorSet::~DescriptorSet()
 	{
-		device.mtx.lock();
-		auto res = vkFreeDescriptorSets(device.v, descriptorPool->v, 1, &v);
+		auto res = vkFreeDescriptorSets(vk_device.v, descriptorPool->v, 1, &v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 	}
 
 	VkWriteDescriptorSet DescriptorSet::bufferWrite(int binding, int index, Buffer *buffer)
@@ -118,9 +110,9 @@ namespace tke
 		if (count <= 0)
 			return;
 
-		device.mtx.lock();
-		vkUpdateDescriptorSets(device.v, count, writes, 0, nullptr);
-		device.mtx.unlock();
+		vk_device.mtx.lock();
+		vkUpdateDescriptorSets(vk_device.v, count, writes, 0, nullptr);
+		vk_device.mtx.unlock();
 	}
 
 	DescriptorPool::DescriptorPool()
@@ -136,16 +128,14 @@ namespace tke
 		descriptorPoolInfo.poolSizeCount = ARRAYSIZE(descriptorPoolSizes);
 		descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
 		descriptorPoolInfo.maxSets = 64;
-		device.mtx.lock();
-		auto res = vkCreateDescriptorPool(device.v, &descriptorPoolInfo, nullptr, &v);
-		device.mtx.unlock();
+		auto res = vkCreateDescriptorPool(vk_device.v, &descriptorPoolInfo, nullptr, &v);
 		assert(res == VK_SUCCESS);
 	}
 
 	DescriptorPool::~DescriptorPool()
 	{
-		vkDestroyDescriptorPool(device.v, v, nullptr);
+		vkDestroyDescriptorPool(vk_device.v, v, nullptr);
 	}
 
-	thread_local DescriptorPool *descriptorPool = nullptr;
+	DescriptorPool *descriptorPool = nullptr;
 }

@@ -10,12 +10,6 @@ namespace tke
 {
 	const VkFormat swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
-	struct Instance
-	{
-		VkInstance v;
-		std::mutex mtx;
-	};
-
 	struct Device
 	{
 		VkDevice v;
@@ -33,16 +27,14 @@ namespace tke
 		void submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
 	};
 
-	extern Instance inst;
+	extern VkInstance vk_instance;
 	extern VkPhysicalDevice physicalDevice;
 	extern VkPhysicalDeviceProperties physicalDeviceProperties;
 	extern VkPhysicalDeviceFeatures physicalDeviceFeatures;
-	extern Device device;
+	extern Device vk_device;
 	extern Queue graphicsQueue;
 
 	int findVkMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-	void initVulkanThreadData();
 
 	int initVulkan(bool debug);
 }

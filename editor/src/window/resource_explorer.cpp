@@ -66,7 +66,6 @@ ResourceExplorer::ResourceExplorer()
 	:Window(&resourceExplorerClass)
 {
 	path = project_path;
-	refresh();
 }
 
 ResourceExplorer::~ResourceExplorer()
@@ -98,7 +97,12 @@ void ResourceExplorer::refresh()
 				auto i = std::make_unique<ResourceExplorerFileListItem>();
 				auto ext = it->path().extension().string();
 				const char *prefix;
-				if (tke::isImageFile(ext))
+				if (tke::isTextFile(ext))
+				{
+					i->file_type = ResourceExplorerFileListItem::FileTypeText;
+					prefix = ICON_FA_FILE_TEXT_O" ";
+				}
+				else if (tke::isImageFile(ext))
 				{
 					i->file_type = ResourceExplorerFileListItem::FileTypeImage;
 					prefix = ICON_FA_FILE_IMAGE_O" ";
@@ -117,12 +121,17 @@ void ResourceExplorer::show()
 {
 	ImGui::Begin("Resource Explorer", &opened);
 
+	if (need_refresh)
+	{
+		refresh();
+		need_refresh = false;
+	}
+
 	if (project_path == "")
 		ImGui::Text("No project opened.");
 	else
 	{
 		const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
-		bool need_refresh = false;
 
 		ImGui::BeginChild("left", ImVec2(300, 0));
 
@@ -174,7 +183,7 @@ void ResourceExplorer::show()
 					if (!i->image)
 					{
 						i->image = tke::createImage((path / i->value).string());
-						tke::addUiImage(i->image);
+						tke::addUiImage(i->image.get());
 					}
 					break;
 				}
@@ -196,9 +205,6 @@ void ResourceExplorer::show()
 				break;
 			}
 		}
-
-		if (need_refresh)
-			refresh();
 
 		//if (ImGui::TreeNode("Textures"))
 		//{

@@ -7,21 +7,17 @@ namespace tke
 {
 	static void buffer_create(Buffer *p)
 	{
-		VkResult res;
-
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bufferInfo.size = p->size;
 		bufferInfo.usage = p->usage;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		device.mtx.lock();
-
-		res = vkCreateBuffer(device.v, &bufferInfo, nullptr, &p->v);
+		auto res = vkCreateBuffer(vk_device.v, &bufferInfo, nullptr, &p->v);
 		assert(res == VK_SUCCESS);
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device.v, p->v, &memRequirements);
+		vkGetBufferMemoryRequirements(vk_device.v, p->v, &memRequirements);
 
 		assert(p->size <= memRequirements.size);
 
@@ -30,13 +26,11 @@ namespace tke
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findVkMemoryType(memRequirements.memoryTypeBits, p->memoryProperty);
 
-		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &p->memory);
+		res = vkAllocateMemory(vk_device.v, &allocInfo, nullptr, &p->memory);
 		assert(res == VK_SUCCESS);
 
-		res = vkBindBufferMemory(device.v, p->v, p->memory, 0);
+		res = vkBindBufferMemory(vk_device.v, p->v, p->memory, 0);
 		assert(res == VK_SUCCESS);
-
-		device.mtx.unlock();
 	}
 
 	static void buffer_copy(Buffer *p, void *data)
@@ -51,10 +45,8 @@ namespace tke
 
 	static void buffer_destroy(Buffer *p)
 	{
-		device.mtx.lock();
-		vkFreeMemory(device.v, p->memory, nullptr);
-		vkDestroyBuffer(device.v, p->v, nullptr);
-		device.mtx.unlock();
+		vkFreeMemory(vk_device.v, p->memory, nullptr);
+		vkDestroyBuffer(vk_device.v, p->v, nullptr);
 	}
 
 	Buffer::Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty)
@@ -93,18 +85,18 @@ namespace tke
 	void *Buffer::map(size_t offset, size_t _size)
 	{
 		void *map;
-		device.mtx.lock();
-		auto res = vkMapMemory(device.v, memory, offset, _size, 0, &map);
+		vk_device.mtx.lock();
+		auto res = vkMapMemory(vk_device.v, memory, offset, _size, 0, &map);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
+		vk_device.mtx.unlock();
 		return map;
 	}
 
 	void Buffer::unmap()
 	{
-		device.mtx.lock();
-		vkUnmapMemory(device.v, memory);
-		device.mtx.unlock();
+		vk_device.mtx.lock();
+		vkUnmapMemory(vk_device.v, memory);
+		vk_device.mtx.unlock();
 	}
 
 	StagingBuffer::StagingBuffer(size_t _size)

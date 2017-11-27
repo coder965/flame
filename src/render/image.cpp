@@ -4,6 +4,7 @@
 
 #include "../utils.h"
 #include "../math/math.h"
+#include "../core.h"
 #include "buffer.h"
 #include "image.h"
 #include "command_buffer.h"
@@ -41,8 +42,6 @@ namespace tke
 			cy >>= 1; cy = glm::max(cy, 1);
 		}
 
-		VkResult res;
-
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -58,26 +57,22 @@ namespace tke
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		device.mtx.lock();
-
-		res = vkCreateImage(device.v, &imageInfo, nullptr, &v);
+		auto res = vkCreateImage(vk_device.v, &imageInfo, nullptr, &v);
 		assert(res == VK_SUCCESS);
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device.v, v, &memRequirements);
+		vkGetImageMemoryRequirements(vk_device.v, v, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findVkMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		res = vkAllocateMemory(device.v, &allocInfo, nullptr, &memory);
+		res = vkAllocateMemory(vk_device.v, &allocInfo, nullptr, &memory);
 		assert(res == VK_SUCCESS);
 
-		res = vkBindImageMemory(device.v, v, memory, 0);
+		res = vkBindImageMemory(vk_device.v, v, memory, 0);
 		assert(res == VK_SUCCESS);
-
-		device.mtx.unlock();
 
 		total_size = memRequirements.size;
 
@@ -99,15 +94,13 @@ namespace tke
 
 	Image::~Image()
 	{
-		device.mtx.lock();
-		for (auto v : views)
-			vkDestroyImageView(device.v, v->v, nullptr);
+		for (auto &v : views)
+			vkDestroyImageView(vk_device.v, v->v, nullptr);
 		if (type != Type::eSwapchain)
 		{
-			vkFreeMemory(device.v, memory, nullptr);
-			vkDestroyImage(device.v, v, nullptr);
+			vkFreeMemory(vk_device.v, memory, nullptr);
+			vkDestroyImage(vk_device.v, v, nullptr);
 		}
-		device.mtx.unlock();
 	}
 
 	static VkImageAspectFlags _getImageAspect(Image *i)
@@ -177,7 +170,7 @@ namespace tke
 	{
 		auto aspect = _getImageAspect(this);
 
-		for (auto view : views)
+		for (auto &view : views)
 		{
 			if (view->aspect == aspect && view->baseLevel == baseLevel && view->levelCount == levelCount &&
 				view->baseLayer == baseLayer && view->layerCount == layerCount)
@@ -202,12 +195,10 @@ namespace tke
 		info.subresourceRange.baseArrayLayer = baseLayer;
 		info.subresourceRange.layerCount = layerCount;
 
-		device.mtx.lock();
-		auto res = vkCreateImageView(device.v, &info, nullptr, &view->v);
+		auto res = vkCreateImageView(vk_device.v, &info, nullptr, &view->v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 
-		views.push_back(view);
+		views.push_back(std::move(std::unique_ptr<ImageView>(view)));
 		return view->v;
 	}
 

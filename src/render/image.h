@@ -40,7 +40,7 @@ namespace tke
 		VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-		std::vector<ImageView*> views;
+		std::vector<std::unique_ptr<ImageView>> views;
 
 		std::vector<std::unique_ptr<VkDescriptorImageInfo>> infos;
 
@@ -50,8 +50,10 @@ namespace tke
 
 		int index = 0;
 
+		// must call in main thread
 		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);
 		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
+		// must call in main thread
 		~Image();
 		unsigned char getR(float x, float y);
 		void transitionLayout(int _level, VkImageLayout _layout);

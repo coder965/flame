@@ -28,8 +28,9 @@ struct ResourceExplorerFileListItem
 
 	enum FileType
 	{
-		FileTypeFile = 0,
-		FileTypeImage = 1
+		FileTypeFile,
+		FileTypeText,
+		FileTypeImage
 	};
 	FileType file_type = FileTypeFile;
 
@@ -44,6 +45,7 @@ struct ResourceExplorer : Window
 	std::vector<std::unique_ptr<ResourceExplorerDirListItem>> dir_list;
 	std::vector<std::unique_ptr<ResourceExplorerFileListItem>> file_list;
 	int list_index = -1;
+	bool need_refresh = true;
 
 	ResourceExplorer();
 	virtual ~ResourceExplorer() override;

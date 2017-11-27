@@ -191,6 +191,18 @@ namespace tke
 		delete data;
 	}
 
+	bool isTextFile(const std::string &ext)
+	{
+		if (ext == ".txt" || 
+			ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp" || ext == ".cxx"|| ext == ".inl" ||
+			ext == ".glsl" || ext == ".vert" || ext == ".tesc" || ext == ".tese" || ext == ".geom" || ext == ".frag" || ext == ".hlsl" ||
+			ext == ".xml" || ext == ".json" || ext == ".ini" || 
+			ext == ".htm" || ext == ".html" || ext == ".css" ||
+			ext == ".sln" || ext == ".vcxproj")
+			return true;
+		return false;
+	}
+
 	bool isImageFile(const std::string &ext)
 	{
 		if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png"

@@ -91,17 +91,13 @@ namespace tke
 		info.dependencyCount = dependencyCount;
 		info.pDependencies = pDependencies;
 
-		device.mtx.lock();
-		auto res = vkCreateRenderPass(device.v, &info, nullptr, &v);
+		auto res = vkCreateRenderPass(vk_device.v, &info, nullptr, &v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 	}
 
 	RenderPass::~RenderPass()
 	{
-		device.mtx.lock();
-		vkDestroyRenderPass(device.v, v, nullptr);
-		device.mtx.unlock();
+		vkDestroyRenderPass(vk_device.v, v, nullptr);
 	}
 
 }

@@ -35,7 +35,7 @@ namespace tke
 			samplerInfo.minLod = 0.0f;
 			samplerInfo.maxLod = 0.0f;
 
-			res = vkCreateSampler(device.v, &samplerInfo, nullptr, &plainSampler);
+			res = vkCreateSampler(vk_device.v, &samplerInfo, nullptr, &plainSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -58,7 +58,7 @@ namespace tke
 			info.minLod = 0.0f;
 			info.maxLod = 0.0f;
 
-			res = vkCreateSampler(device.v, &info, nullptr, &plainUnnormalizedSampler);
+			res = vkCreateSampler(vk_device.v, &info, nullptr, &plainUnnormalizedSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -81,7 +81,7 @@ namespace tke
 			info.minLod = 0.f;
 			info.maxLod = 128.f;
 
-			res = vkCreateSampler(device.v, &info, nullptr, &colorSampler);
+			res = vkCreateSampler(vk_device.v, &info, nullptr, &colorSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -104,7 +104,7 @@ namespace tke
 			info.minLod = 0.f;
 			info.maxLod = 128.f;
 
-			res = vkCreateSampler(device.v, &info, nullptr, &colorBorderSampler);
+			res = vkCreateSampler(vk_device.v, &info, nullptr, &colorBorderSampler);
 			assert(res == VK_SUCCESS);
 		}
 
@@ -127,7 +127,7 @@ namespace tke
 			info.minLod = 0.f;
 			info.maxLod = 128.f;
 
-			res = vkCreateSampler(device.v, &info, nullptr, &colorWrapSampler);
+			res = vkCreateSampler(vk_device.v, &info, nullptr, &colorWrapSampler);
 			assert(res == VK_SUCCESS);
 		}
 

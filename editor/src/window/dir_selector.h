@@ -18,6 +18,7 @@ struct DirSelector : Window
 	int list_index = -1;
 	std::string selected_path;
 	std::function<void(std::string)> callback;
+	bool need_refresh = true;
 	bool first = true;
 	
 	DirSelector();

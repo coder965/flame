@@ -237,9 +237,9 @@ namespace tke
 		uiAcceptedKey = ImGui::IsAnyItemActive();
 	}
 
-	static std::shared_ptr<Image> _images[127];
+	static Image *_images[127];
 
-	void addUiImage(std::shared_ptr<Image> image)
+	void addUiImage(Image *image)
 	{
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
@@ -247,7 +247,7 @@ namespace tke
 			{
 				image->index = i + 1;
 				_images[i] = image;
-				updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, image->index, image.get(), colorSampler));
+				updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, image->index, image, colorSampler));
 				return;
 			}
 		}
@@ -257,11 +257,9 @@ namespace tke
 	{
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
-			if (_images[i] && _images[i].get() == image)
+			if (_images[i] == image)
 			{
-				addAfterFrameEvent(std::bind([&](int i){
-					_images[i].reset();
-				}, i));
+				_images[i] = nullptr;
 				return;
 			}
 		}

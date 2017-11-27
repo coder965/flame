@@ -22,7 +22,9 @@ namespace tke
 		VkCommandBuffer v;
 		Pipeline *currentPipeline = nullptr;
 
+		// must call in main thread
 		CommandBuffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+		// must call in main thread
 		~CommandBuffer();
 		void reset();
 		void begin(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
@@ -56,7 +58,9 @@ namespace tke
 	{
 		VkCommandPool v;
 
+		// must call in main thread
 		CommandPool();
+		// must call in main thread
 		~CommandPool();
 	};
 
@@ -72,5 +76,5 @@ namespace tke
 
 	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 
-	thread_local extern CommandPool *commandPool;
+	extern CommandPool *commandPool;
 }

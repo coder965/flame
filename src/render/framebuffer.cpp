@@ -8,9 +8,7 @@ namespace tke
 {
 	Framebuffer::~Framebuffer()
 	{
-		device.mtx.lock();
-		vkDestroyFramebuffer(device.v, v, nullptr);
-		device.mtx.unlock();
+		vkDestroyFramebuffer(vk_device.v, v, nullptr);
 	}
 
 	static std::vector<std::weak_ptr<Framebuffer>> _framebuffers;
@@ -65,10 +63,8 @@ namespace tke
 		info.attachmentCount = viewCount;
 		info.pAttachments = views;
 
-		device.mtx.lock();
-		auto res = vkCreateFramebuffer(device.v, &info, nullptr, &f->v);
+		auto res = vkCreateFramebuffer(vk_device.v, &info, nullptr, &f->v);
 		assert(res == VK_SUCCESS);
-		device.mtx.unlock();
 
 		_framebuffers.push_back(f);
 		return f;
