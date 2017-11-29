@@ -8,32 +8,6 @@
 
 namespace tke
 {
-	struct Vertex2D
-	{
-		glm::vec2       pos;
-		glm::vec2       uv;
-		std::uint32_t   col;
-	};
-
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-	};
-
-	struct VertexAnimated
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-
-		glm::vec4 boneWeight;
-		glm::vec4 boneID;
-	};
-
 	struct VertexLine
 	{
 		glm::vec3 position;
@@ -61,9 +35,6 @@ namespace tke
 	};
 
 	IMPL() VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	IMPL() VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
-	IMPL() VkPipelineVertexInputStateCreateInfo vertexInputState;
-	IMPL() VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 	IMPL() VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	struct PipelineCreateInfo
@@ -147,6 +118,8 @@ namespace tke
 		void linkDescriptors(DescriptorSet *set, Resource *resource);
 		int descriptorPosition(const std::string &name);
 	};
+
+	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes);
 
 	void initPipeline();
 }

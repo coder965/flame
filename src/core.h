@@ -41,7 +41,7 @@ enum
 
 enum
 {
-	MapsBindingSet = 1,
+	TexturesBindingSet = 1,
 	BoneBindingSet
 };
 
@@ -131,7 +131,6 @@ namespace tke
 
 	IMPL() std::shared_ptr<Framebuffer> pickUpFb;
 
-	IMPL(nullptr) Pipeline *pipeline_ui;
 	IMPL(nullptr) Pipeline *pipeline_plain;
 	IMPL(nullptr) Pipeline *pipeline_plain_anim;
 	IMPL(nullptr) Pipeline *pipeline_headlight;

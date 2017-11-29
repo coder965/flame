@@ -155,11 +155,14 @@ int main(int argc, char **argv)
 	for (auto &fn : inputFilenames)
 		outFile << "#include \"" + fn + "\"\n";
 	outFile << "namespace tke{\n";
+	outFile << "//define:\n";
 	outFile << defineString;
 	outFile << "struct ReflectInit{ReflectInit(){\n";
 	outFile << "tke::EnumType *currentEnumType = nullptr;\n";
 	outFile << "tke::ReflectionBank *currentBank = nullptr;\n";
+	outFile << "//enum:\n";
 	outFile << enumString;
+	outFile << "//impl:\n";
 	outFile << implString;
 	outFile << "}};static ReflectInit _init;";
 	outFile << "\n}";

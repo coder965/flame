@@ -22,9 +22,7 @@ namespace tke
 		if (std::regex_search(string, sm, pat))
 		{
 			if (sm[0].str() == "r")
-			{
 				processCmdLine(last_cmd.c_str(), false);
-			}
 		}
 	}
 
@@ -256,14 +254,6 @@ namespace tke
 
 		stagingBuffer = new StagingBuffer(67108864);
 
-		if (!only_2d)
-		{
-			depthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			globalResource.setImage(depthImage, "Depth.Image");
-
-			pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		}
-
 		{
 			auto att0 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att1 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -309,26 +299,21 @@ namespace tke
 			}
 		}
 
+		initUi();
+
 		if (!only_2d)
 		{
+			depthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			globalResource.setImage(depthImage, "Depth.Image");
+
+			pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+
 			VkImageView views[] = {
 				pickUpImage->getView(),
 				depthImage->getView()
 			};
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, ARRAYSIZE(views), views);
-		}
 
-		pipeline_ui = new Pipeline(PipelineCreateInfo()
-			.vertex_input(&plain2dVertexInputState)
-			.cullMode(VK_CULL_MODE_NONE)
-			.addBlendAttachmentState(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
-			.addDynamicState(VK_DYNAMIC_STATE_SCISSOR)
-			.addShader(enginePath + "shader/ui.vert", {})
-			.addShader(enginePath + "shader/ui.frag", {}),
-			renderPass_window, 0, true);
-
-		if (!only_2d)
-		{
 			pipeline_plain = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexInputState)
@@ -339,7 +324,7 @@ namespace tke
 				renderPass_depthC_image8, 0);
 			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&animatedVertexInputState)
+				.vertex_input(&vertexAnimatedInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
@@ -363,7 +348,7 @@ namespace tke
 				renderPass_depthC_image8, 0);
 			pipeline_tex_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&animatedVertexInputState)
+				.vertex_input(&vertexAnimatedInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
@@ -379,7 +364,7 @@ namespace tke
 				renderPass_image8, 0);
 			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&animatedVertexInputState)
+				.vertex_input(&vertexAnimatedInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
 				.cullMode(VK_CULL_MODE_NONE)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
@@ -432,7 +417,6 @@ namespace tke
 		}
 
 		//initSound();
-		initUi();
 
 		window_cx = _window_cx;
 		window_cy = _window_cy;

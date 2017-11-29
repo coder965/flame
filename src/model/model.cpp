@@ -121,25 +121,130 @@ namespace tke
 		joints.push_back(pJoint);
 	}
 
+	struct MaterialShaderStruct
+	{
+		unsigned int albedoAlphaCompress;
+		unsigned int specRoughnessCompress;
+
+		unsigned int mapIndex;
+
+		unsigned int dummy;
+	};
+
+	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
+		unsigned char alpha, unsigned char spec, unsigned char roughness,
+		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap)
+	{
+		for (int i = 0; i < MaxMaterialCount; i++)
+		{
+			auto m = modelMaterials[i].lock();
+			if (m)
+			{
+				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
+					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
+					&& m->normalHeightMap == normalHeightMap)
+					return m;
+			}
+		}
+
+		for (int i = 0; i < MaxMaterialCount; i++)
+		{
+			if (!modelMaterials[i].lock())
+			{
+				auto m = std::make_shared<Material>();
+				m->albedoR = albedoR;
+				m->albedoG = albedoG;
+				m->albedoB = albedoB;
+				m->alpha = alpha;
+				m->spec = spec;
+				m->roughness = roughness;
+				m->albedoAlphaMap = albedoAlphaMap;
+				m->normalHeightMap = normalHeightMap;
+				m->specRoughnessMap = specRoughnessMap;
+				m->sceneIndex = i;
+				modelMaterials[i] = m;
+
+				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(MaterialShaderStruct));
+				MaterialShaderStruct stru;
+				stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
+				stru.specRoughnessCompress = m->spec + (m->roughness << 8);
+				stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
+					((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
+					((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+				memcpy(map, &stru, sizeof(MaterialShaderStruct));
+				stagingBuffer->unmap();
+
+				VkBufferCopy range = {};
+				range.srcOffset = 0;
+				range.dstOffset = sizeof(MaterialShaderStruct) * i;
+				range.size = sizeof(MaterialShaderStruct);
+
+				copyBuffer(stagingBuffer->v, materialBuffer->v, 1, &range);
+
+				return m;
+			}
+		}
+	}
+
+	std::shared_ptr<Material> getModelMaterial(const std::string name)
+	{
+		for (int i = 0; i < MaxMaterialCount; i++)
+		{
+			auto m = modelMaterials[i].lock();
+			if (m && m->name == name)
+				return m;
+		}
+		return std::shared_ptr<Material>();
+	}
+
+	std::shared_ptr<Image> getModelTexture(const std::string &_filename, bool sRGB)
+	{
+		for (int i = 0; i < MaxTextureCount; i++)
+		{
+			auto t = modelTextures[i].lock();
+			if (t)
+			{
+				if (t->filename == _filename)
+					return t;
+			}
+		}
+
+		for (int i = 0; i < MaxTextureCount; i++)
+		{
+			if (!modelTextures[i].lock())
+			{
+				auto t = getImage(_filename, sRGB);
+				t->index = i;
+				modelTextures[i] = t;
+
+				updateDescriptorSets(1, &ds_textures->imageWrite(0, i, t.get(), colorSampler));
+
+				return t;
+			}
+		}
+	}
+
 	static void _add_model(Model *m)
 	{
 		models.push_back(std::move(std::unique_ptr<Model>(m)));
 		needUpdateVertexBuffer = true;
 	}
 
-	void addTriangleVertex(Model *m, glm::mat3 rotation, glm::vec3 center)
+	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center)
 	{
-		int baseVertex = m->positions.size();
+		int baseVertex = positions.size();
 
-		m->positions.insert(m->positions.end(), 
-		{ center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f) });
-		m->normals.insert(m->normals.end(), 3, glm::vec3(0.f, 1.f, 0.f));
-		for (int i = 0; i < 3; i++) m->indices.push_back(baseVertex + i);
+		positions.insert(positions.end(),  { 
+			center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f) 
+		});
+		normals.insert(normals.end(), 3, glm::vec3(0.f, 1.f, 0.f));
+		for (int i = 0; i < 3; i++) 
+			indices.push_back(baseVertex + i);
 	}
 
-	void addCubeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float length)
+	void addCubeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float length)
 	{
-		int baseVertex = m->positions.size();
+		int baseVertex = positions.size();
 
 		glm::vec3 a = center + rotation * (glm::vec3(0.5f, -0.5f, 0.5f) * length);
 		glm::vec3 b = center + rotation * (glm::vec3(0.5f, -0.5f, -0.5f) * length);
@@ -150,7 +255,7 @@ namespace tke
 		glm::vec3 g = center + rotation * (glm::vec3(-0.5f, 0.5f, -0.5f) * length);
 		glm::vec3 h = center + rotation * (glm::vec3(-0.5f, 0.5f, 0.5f) * length);
 
-		m->positions.insert(m->positions.end(), {
+		positions.insert(positions.end(), {
 			a, b, c, d,
 			e, f, g, h,
 			c, d, g, h,
@@ -159,12 +264,12 @@ namespace tke
 			b, c, f, g
 		});
 
-		m->normals.insert(m->normals.end(), 4, rotation * glm::vec3(1.f, 0.f, 0.f));
-		m->normals.insert(m->normals.end(), 4, rotation * glm::vec3(-1.f, 0.f, 0.f));
-		m->normals.insert(m->normals.end(), 4, rotation * glm::vec3(0.f, 1.f, 0.f));
-		m->normals.insert(m->normals.end(), 4, rotation * glm::vec3(0.f, -1.f, 0.f));
-		m->normals.insert(m->normals.end(), 4, rotation * glm::vec3(0.f, 0.f, 1.f));
-		m->normals.insert(m->normals.end(), 4, rotation * glm::vec3(0.f, 0.f, -1.f));
+		normals.insert(normals.end(), 4, rotation * glm::vec3(1.f, 0.f, 0.f));
+		normals.insert(normals.end(), 4, rotation * glm::vec3(-1.f, 0.f, 0.f));
+		normals.insert(normals.end(), 4, rotation * glm::vec3(0.f, 1.f, 0.f));
+		normals.insert(normals.end(), 4, rotation * glm::vec3(0.f, -1.f, 0.f));
+		normals.insert(normals.end(), 4, rotation * glm::vec3(0.f, 0.f, 1.f));
+		normals.insert(normals.end(), 4, rotation * glm::vec3(0.f, 0.f, -1.f));
 
 		std::vector<int> list = {
 			3, 0, 1, 3, 1, 2,
@@ -175,12 +280,13 @@ namespace tke
 			21, 20, 22, 21, 22, 23
 		};
 
-		for (auto &i : list) i += baseVertex;
+		for (auto &i : list) 
+			i += baseVertex;
 
-		m->indices.insert(m->indices.end(), list.begin(), list.end());
+		indices.insert(indices.end(), list.begin(), list.end());
 	}
 
-	void addSphereVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv)
+	void addSphereVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv)
 	{
 		std::vector<std::vector<int>> indexs;
 		indexs.resize(horiSubdiv + 1);
@@ -193,28 +299,28 @@ namespace tke
 				auto ringRadius = cos(radian) * radius;
 				auto height = sin(radian) * radius;
 				auto ang = glm::radians(i * 360.f / vertSubdiv);
-				auto index = m->positions.size();
+				auto index = positions.size();
 				indexs[level].push_back(index);
 				glm::vec3 v = rotation * glm::vec3(cos(ang) * ringRadius, height, sin(ang) * ringRadius);
-				m->positions.push_back(center + v);
-				m->normals.push_back(glm::normalize(v));
+				positions.push_back(center + v);
+				normals.push_back(glm::normalize(v));
 			}
 		}
 
 		{
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[0].push_back(index);
 			glm::vec3 v = rotation * glm::vec3(0.f, -radius, 0.f);
-			m->positions.push_back(center + v);
-			m->normals.push_back(glm::normalize(v));
+			positions.push_back(center + v);
+			normals.push_back(glm::normalize(v));
 		}
 
 		{
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[horiSubdiv].push_back(index);
 			glm::vec3 v = rotation * glm::vec3(0.f, radius, 0.f);
-			m->positions.push_back(center + v);
-			m->normals.push_back(glm::normalize(v));
+			positions.push_back(center + v);
+			normals.push_back(glm::normalize(v));
 		}
 
 		for (int level = 0; level < horiSubdiv; level++)
@@ -225,9 +331,9 @@ namespace tke
 				{
 					auto ii = i + 1; if (ii == vertSubdiv) ii = 0;
 
-					m->indices.push_back(indexs[0][0]);
-					m->indices.push_back(indexs[1][i]);
-					m->indices.push_back(indexs[1][ii]);
+					indices.push_back(indexs[0][0]);
+					indices.push_back(indexs[1][i]);
+					indices.push_back(indexs[1][ii]);
 				}
 			}
 			else if (level == horiSubdiv - 1)
@@ -236,9 +342,9 @@ namespace tke
 				{
 					auto ii = i + 1; if (ii == vertSubdiv) ii = 0;
 
-					m->indices.push_back(indexs[horiSubdiv - 1][i]);
-					m->indices.push_back(indexs[horiSubdiv][0]);
-					m->indices.push_back(indexs[horiSubdiv - 1][ii]);
+					indices.push_back(indexs[horiSubdiv - 1][i]);
+					indices.push_back(indexs[horiSubdiv][0]);
+					indices.push_back(indexs[horiSubdiv - 1][ii]);
 				}
 			}
 			else
@@ -247,19 +353,19 @@ namespace tke
 				{
 					auto ii = i + 1; if (ii == vertSubdiv) ii = 0;
 
-					m->indices.push_back(indexs[level][i]);
-					m->indices.push_back(indexs[level + 1][i]);
-					m->indices.push_back(indexs[level][ii]);
+					indices.push_back(indexs[level][i]);
+					indices.push_back(indexs[level + 1][i]);
+					indices.push_back(indexs[level][ii]);
 
-					m->indices.push_back(indexs[level][ii]);
-					m->indices.push_back(indexs[level + 1][i]);
-					m->indices.push_back(indexs[level + 1][ii]);
+					indices.push_back(indexs[level][ii]);
+					indices.push_back(indexs[level + 1][i]);
+					indices.push_back(indexs[level + 1][ii]);
 				}
 			}
 		}
 	}
 
-	void addCylinderVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, int subdiv)
+	void addCylinderVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, int subdiv)
 	{
 		std::vector<std::vector<int>> indexs;
 		indexs.resize(4);
@@ -268,123 +374,127 @@ namespace tke
 		for (int i = 0; i < subdiv; i++)
 		{
 			auto ang = glm::radians(i * 360.f / subdiv);
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[0].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(cos(ang) * radius, halfHeight, sin(ang) * radius) + center);
-			m->normals.push_back(rotation * glm::vec3(0.f, 1.f, 0.f));
+			positions.push_back(rotation * glm::vec3(cos(ang) * radius, halfHeight, sin(ang) * radius) + center);
+			normals.push_back(rotation * glm::vec3(0.f, 1.f, 0.f));
 		}
 
 		// bottom cap
 		for (int i = 0; i < subdiv; i++)
 		{
 			auto ang = glm::radians(i * 360.f / subdiv);
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[1].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(cos(ang) * radius, -halfHeight, sin(ang) * radius) + center);
-			m->normals.push_back(rotation * glm::vec3(0.f, -1.f, 0.f));
+			positions.push_back(rotation * glm::vec3(cos(ang) * radius, -halfHeight, sin(ang) * radius) + center);
+			normals.push_back(rotation * glm::vec3(0.f, -1.f, 0.f));
 		}
 
 		// top
 		for (int i = 0; i < subdiv; i++)
 		{
 			auto ang = glm::radians(i * 360.f / subdiv);
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[2].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(cos(ang) * radius, halfHeight, sin(ang) * radius) + center);
-			m->normals.push_back(rotation * glm::vec3(cos(ang), 0.f, sin(ang)));
+			positions.push_back(rotation * glm::vec3(cos(ang) * radius, halfHeight, sin(ang) * radius) + center);
+			normals.push_back(rotation * glm::vec3(cos(ang), 0.f, sin(ang)));
 		}
 
 		// bottom
 		for (int i = 0; i < subdiv; i++)
 		{
 			auto ang = glm::radians(i * 360.f / subdiv);
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[3].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(cos(ang) * radius, -halfHeight, sin(ang) * radius) + center);
-			m->normals.push_back(rotation * glm::vec3(cos(ang), 0.f, sin(ang)));
+			positions.push_back(rotation * glm::vec3(cos(ang) * radius, -halfHeight, sin(ang) * radius) + center);
+			normals.push_back(rotation * glm::vec3(cos(ang), 0.f, sin(ang)));
 		}
 
 		// top cap
 		for (int i = 1; i < subdiv - 1; i++)
 		{
-			m->indices.push_back(indexs[0][i]);
-			m->indices.push_back(indexs[0][0]);
-			m->indices.push_back(indexs[0][i + 1]);
+			indices.push_back(indexs[0][i]);
+			indices.push_back(indexs[0][0]);
+			indices.push_back(indexs[0][i + 1]);
 		}
 
 		// bottom cap
 		for (int i = 1; i < subdiv - 1; i++)
 		{
-			m->indices.push_back(indexs[1][i + 1]);
-			m->indices.push_back(indexs[1][0]);
-			m->indices.push_back(indexs[1][i]);
+			indices.push_back(indexs[1][i + 1]);
+			indices.push_back(indexs[1][0]);
+			indices.push_back(indexs[1][i]);
 		}
 
 		// middle
 		for (int i = 0; i < subdiv; i++)
 		{
-			auto ii = i + 1; if (ii == subdiv) ii = 0;
+			auto ii = i + 1; 
+			if (ii == subdiv) 
+				ii = 0;
 
-			m->indices.push_back(indexs[2][i]);
-			m->indices.push_back(indexs[2][ii]);
-			m->indices.push_back(indexs[3][i]);
+			indices.push_back(indexs[2][i]);
+			indices.push_back(indexs[2][ii]);
+			indices.push_back(indexs[3][i]);
 
-			m->indices.push_back(indexs[2][ii]);
-			m->indices.push_back(indexs[3][ii]);
-			m->indices.push_back(indexs[3][i]);
+			indices.push_back(indexs[2][ii]);
+			indices.push_back(indexs[3][ii]);
+			indices.push_back(indexs[3][i]);
 		}
 	}
 
-	void addConeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv)
+	void addConeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv)
 	{
 		std::vector<std::vector<int>> indexs;
 		indexs.resize(3);
 
 		// top
 		{
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[0].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(0.f, height, 0.f) + center);
-			m->normals.push_back(rotation * glm::vec3(0.f, 1.f, 0.f));
+			positions.push_back(rotation * glm::vec3(0.f, height, 0.f) + center);
+			normals.push_back(rotation * glm::vec3(0.f, 1.f, 0.f));
 		}
 
 		// cap
 		for (int i = 0; i < subdiv; i++)
 		{
 			auto ang = glm::radians(i * 360.f / subdiv);
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[1].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(cos(ang) * radius, 0.f, sin(ang) * radius) + center);
-			m->normals.push_back(rotation * glm::vec3(0.f, -1.f, 0.f));
+			positions.push_back(rotation * glm::vec3(cos(ang) * radius, 0.f, sin(ang) * radius) + center);
+			normals.push_back(rotation * glm::vec3(0.f, -1.f, 0.f));
 		}
 
 		for (int i = 0; i < subdiv; i++)
 		{
 			auto ang = glm::radians(i * 360.f / subdiv);
-			auto index = m->positions.size();
+			auto index = positions.size();
 			indexs[2].push_back(index);
-			m->positions.push_back(rotation * glm::vec3(cos(ang) * radius, 0.f, sin(ang) * radius) + center);
-			m->normals.push_back(rotation * glm::vec3(cos(ang), 0.f, sin(ang)));
+			positions.push_back(rotation * glm::vec3(cos(ang) * radius, 0.f, sin(ang) * radius) + center);
+			normals.push_back(rotation * glm::vec3(cos(ang), 0.f, sin(ang)));
 		}
 
 		for (int i = 0; i < subdiv; i++)
 		{
-			auto ii = i + 1; if (ii == subdiv) ii = 0;
+			auto ii = i + 1; 
+			if (ii == subdiv) 
+				ii = 0;
 
-			m->indices.push_back(indexs[2][i]);
-			m->indices.push_back(indexs[0][0]);
-			m->indices.push_back(indexs[2][ii]);
+			indices.push_back(indexs[2][i]);
+			indices.push_back(indexs[0][0]);
+			indices.push_back(indexs[2][ii]);
 		}
 
 		for (int i = 1; i < subdiv - 1; i++)
 		{
-			m->indices.push_back(indexs[1][i + 1]);
-			m->indices.push_back(indexs[1][0]);
-			m->indices.push_back(indexs[1][i]);
+			indices.push_back(indexs[1][i + 1]);
+			indices.push_back(indexs[1][0]);
+			indices.push_back(indexs[1][i]);
 		}
 	}
 
-	void addTorusVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv)
+	void addTorusVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv)
 	{
 		std::vector<std::vector<int>> indexs;
 		indexs.resize(axisSubdiv);
@@ -396,10 +506,10 @@ namespace tke
 			for (int j = 0; j < heightSubdiv; j++)
 			{
 				auto secang = glm::radians(j * 360.f / heightSubdiv);
-				auto index = m->positions.size();
+				auto index = positions.size();
 				indexs[i].push_back(index);
-				m->positions.push_back(rotation * (center + R * (glm::vec3(cos(secang) * sectionRadius + radius, sin(secang) * sectionRadius, 0.f))));
-				m->normals.push_back(rotation * R * glm::vec3(cos(secang), sin(secang), 0.f));
+				positions.push_back(rotation * (center + R * (glm::vec3(cos(secang) * sectionRadius + radius, sin(secang) * sectionRadius, 0.f))));
+				normals.push_back(rotation * R * glm::vec3(cos(secang), sin(secang), 0.f));
 			}
 		}
 
@@ -411,13 +521,13 @@ namespace tke
 			{
 				auto jj = j + 1; if (jj == heightSubdiv) jj = 0;
 
-				m->indices.push_back(indexs[i][j]);
-				m->indices.push_back(indexs[i][jj]);
-				m->indices.push_back(indexs[ii][j]);
+				indices.push_back(indexs[i][j]);
+				indices.push_back(indexs[i][jj]);
+				indices.push_back(indexs[ii][j]);
 
-				m->indices.push_back(indexs[i][jj]);
-				m->indices.push_back(indexs[ii][jj]);
-				m->indices.push_back(indexs[ii][j]);
+				indices.push_back(indexs[i][jj]);
+				indices.push_back(indexs[ii][jj]);
+				indices.push_back(indexs[ii][j]);
 			}
 		}
 	}
@@ -618,17 +728,11 @@ namespace tke
 							ss >> token;
 
 							if (token == "newmtl")
-							{
 								ss >> mtlName;
-							}
 							else if (token == "tk_spec")
-							{
 								ss >> spec;
-							}
 							else if (token == "tk_roughness")
-							{
 								ss >> roughness;
-							}
 							else if (token == "map_Kd")
 							{
 								std::string filename;
@@ -1183,7 +1287,7 @@ namespace tke
 									str = match.suffix();
 								}
 							}
-							break;
+								break;
 							case 2:
 							{
 								std::vector<glm::ivec2> ids;
@@ -1217,7 +1321,7 @@ namespace tke
 									str = match.suffix();
 								}
 							}
-							break;
+								break;
 							case 3:
 							{
 								std::vector<glm::ivec3> ids;
@@ -1252,7 +1356,7 @@ namespace tke
 									str = match.suffix();
 								}
 							}
-							break;
+								break;
 							}
 						}
 					}
@@ -1618,109 +1722,6 @@ namespace tke
 		}
 	}
 
-	struct MaterialShaderStruct
-	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
-
-		unsigned int mapIndex;
-
-		unsigned int dummy;
-	};
-
-	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
-		unsigned char alpha, unsigned char spec, unsigned char roughness, 
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap)
-	{
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			auto m = modelMaterials[i].lock();
-			if (m)
-			{
-				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
-					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
-					&& m->normalHeightMap == normalHeightMap)
-					return m;
-			}
-		}
-
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			if (!modelMaterials[i].lock())
-			{
-				auto m = std::make_shared<Material>();
-				m->albedoR = albedoR;
-				m->albedoG = albedoG;
-				m->albedoB = albedoB;
-				m->alpha = alpha;
-				m->spec = spec;
-				m->roughness = roughness;
-				m->albedoAlphaMap = albedoAlphaMap;
-				m->normalHeightMap = normalHeightMap;
-				m->specRoughnessMap = specRoughnessMap;
-				m->sceneIndex = i;
-				modelMaterials[i] = m;
-
-				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(MaterialShaderStruct));
-				MaterialShaderStruct stru;
-				stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-				stru.specRoughnessCompress = m->spec + (m->roughness << 8);
-				stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-					((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-					((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
-				memcpy(map, &stru, sizeof(MaterialShaderStruct));
-				stagingBuffer->unmap();
-
-				VkBufferCopy range = {};
-				range.srcOffset = 0;
-				range.dstOffset = sizeof(MaterialShaderStruct) * i;
-				range.size = sizeof(MaterialShaderStruct);
-
-				copyBuffer(stagingBuffer->v, materialBuffer->v, 1, &range);
-
-				return m;
-			}
-		}
-	}
-
-	std::shared_ptr<Material> getModelMaterial(const std::string name)
-	{
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			auto m = modelMaterials[i].lock();
-			if (m && m->name == name)
-				return m;
-		}
-		return std::shared_ptr<Material>();
-	}
-
-	std::shared_ptr<Image> getModelTexture(const std::string &_filename, bool sRGB)
-	{
-		for (int i = 0; i < MaxTextureCount; i++)
-		{
-			auto t = modelTextures[i].lock();
-			if (t)
-			{
-				if (t->filename == _filename)
-					return t;
-			}
-		}
-
-		for (int i = 0; i < MaxTextureCount; i++)
-		{
-			if (!modelTextures[i].lock())
-			{
-				auto t = getImage(_filename, sRGB);
-				t->index = i;
-				modelTextures[i] = t;
-
-				updateDescriptorSets(1, &ds_textures->imageWrite(0, i, t.get(), colorSampler));
-
-				return t;
-			}
-		}
-	}
-
 	Model *createModel(const std::string &_filename)
 	{
 		std::experimental::filesystem::path path(_filename);
@@ -1762,6 +1763,34 @@ namespace tke
 
 	void initModel()
 	{
+		{
+			static VkVertexInputBindingDescription bindings = {0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
+
+			static VkVertexInputAttributeDescription attributes[] = {
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
+				{1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)},
+				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)},
+				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)}
+			};
+
+			vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+		}
+
+		{
+			static VkVertexInputBindingDescription bindings = {0, sizeof(VertexAnimated), VK_VERTEX_INPUT_RATE_VERTEX};
+
+			static VkVertexInputAttributeDescription attributes[] = {
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, position)},
+				{1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexAnimated, uv)},
+				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, normal)},
+				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, tangent)},
+				{4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneWeight)},
+				{5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneID)}
+			};
+
+			vertexAnimatedInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+		}
+
 		defaultMaterial = std::make_shared<Material>();
 		defaultMaterial->sceneIndex = 0;
 		modelMaterials[0] = defaultMaterial;

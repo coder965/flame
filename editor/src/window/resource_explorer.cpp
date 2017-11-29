@@ -25,15 +25,6 @@ void load_resource()
 	//tke::AttributeTree at("data", "data.xml");
 	//for (auto &c : at.children)
 	//{
-	//	if (c->name == "texture")
-	//	{
-	//		auto a = c->firstAttribute("filename");
-	//		auto i = tke::createImage(a->value, false, true);
-	//		if (i)
-	//		{
-	//			tke::addUiImage(i.get());
-	//		}
-	//	}
 	//	else if (c->name == "model")
 	//	{
 	//		auto a = c->firstAttribute("filename");

@@ -24,6 +24,25 @@ namespace tke
 	enum { MaxTextureCount = 256 };
 	enum { MaxBoneCount = 256 };
 
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+	};
+
+	struct VertexAnimated
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+
+		glm::vec4 boneWeight;
+		glm::vec4 boneID;
+	};
+
 	REFLECTABLE struct Model
 	{
 		REFL_BANK;
@@ -35,13 +54,19 @@ namespace tke
 		int vertexBase = 0;
 		int indiceBase = 0;
 
-		std::vector<glm::vec3> positions;
-		std::vector<glm::vec2> uvs;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec3> tangents;
-		std::vector<glm::vec4> boneWeights;
-		std::vector<glm::vec4> boneIDs;
-		std::vector<int> indices;
+		union
+		{
+			Vertex		   *stat = nullptr;
+			VertexAnimated *anim;
+		}vertex;
+		int *indices = nullptr;
+		//std::vector<glm::vec3> positions;
+		//std::vector<glm::vec2> uvs;
+		//std::vector<glm::vec3> normals;
+		//std::vector<glm::vec3> tangents;
+		//std::vector<glm::vec4> boneWeights;
+		//std::vector<glm::vec4> boneIDs;
+		//std::vector<int> indices;
 
 		std::vector<std::unique_ptr<Geometry>> geometries;
 
@@ -86,23 +111,8 @@ namespace tke
 		void addJoint(Joint *pJoint);
 	};
 
-	void addTriangleVertex(Model *m, glm::mat3 rotation, glm::vec3 center);
-	void addCubeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float length);
-	void addSphereVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv);
-	void addCylinderVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, int subdiv);
-	void addConeVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
-	void addTorusVertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
-
-	IMPL(nullptr) Model *triangleModel;
-	IMPL(nullptr) Model *cubeModel;
-	IMPL(nullptr) Model *sphereModel;
-	IMPL(nullptr) Model *cylinderModel;
-	IMPL(nullptr) Model *coneModel;
-	IMPL(nullptr) Model *arrowModel;
-	IMPL(nullptr) Model *torusModel;
-	IMPL(nullptr) Model *hamerModel;
-
-	extern std::vector<Model*> generalModels;
+	IMPL() VkPipelineVertexInputStateCreateInfo vertexInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo vertexAnimatedInputState;
 
 	IMPL() std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
 	IMPL(nullptr) std::shared_ptr<Material> defaultMaterial;
@@ -116,6 +126,24 @@ namespace tke
 	std::shared_ptr<Image> getModelTexture(const std::string &filename, bool sRGB = false);
 	IMPL(nullptr) DescriptorSet *ds_textures;
 
-	void initModel();
+	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center);
+	void addCubeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float length);
+	void addSphereVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv);
+	void addCylinderVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, int subdiv);
+	void addConeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
+	void addTorusVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
+
+	IMPL(nullptr) Model *triangleModel;
+	IMPL(nullptr) Model *cubeModel;
+	IMPL(nullptr) Model *sphereModel;
+	IMPL(nullptr) Model *cylinderModel;
+	IMPL(nullptr) Model *coneModel;
+	IMPL(nullptr) Model *arrowModel;
+	IMPL(nullptr) Model *torusModel;
+	IMPL(nullptr) Model *hamerModel;
+
+	extern std::vector<Model*> basicModels;
+
 	Model *createModel(const std::string &filename);
+	void initModel();
 }

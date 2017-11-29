@@ -33,6 +33,7 @@
 #include "..\src\ui\ui.h"
 #include "..\src\utils.h"
 namespace tke{
+//define:
 float near_plane = 0.1f;
 float far_plane = 1000.f;
 float fovy = 60.f;
@@ -68,7 +69,6 @@ RenderPass *renderPass_depthC_image32fC = nullptr;
 RenderPass *renderPass_window = nullptr;
 RenderPass *renderPass_windowC = nullptr;
 std::shared_ptr<Framebuffer> pickUpFb;
-Pipeline *pipeline_ui = nullptr;
 Pipeline *pipeline_plain = nullptr;
 Pipeline *pipeline_plain_anim = nullptr;
 Pipeline *pipeline_headlight = nullptr;
@@ -132,6 +132,13 @@ tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
 tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
 tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
 tke::ReflectionBank *Model::b = tke::addReflectionBank("Model");
+VkPipelineVertexInputStateCreateInfo vertexInputState;
+VkPipelineVertexInputStateCreateInfo vertexAnimatedInputState;
+std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
+std::shared_ptr<Material> defaultMaterial = nullptr;
+UniformBuffer *materialBuffer = nullptr;
+std::weak_ptr<Image> modelTextures[MaxTextureCount];
+DescriptorSet *ds_textures = nullptr;
 Model *triangleModel = nullptr;
 Model *cubeModel = nullptr;
 Model *sphereModel = nullptr;
@@ -140,15 +147,7 @@ Model *coneModel = nullptr;
 Model *arrowModel = nullptr;
 Model *torusModel = nullptr;
 Model *hamerModel = nullptr;
-std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
-std::shared_ptr<Material> defaultMaterial = nullptr;
-UniformBuffer *materialBuffer = nullptr;
-std::weak_ptr<Image> modelTextures[MaxTextureCount];
-DescriptorSet *ds_textures = nullptr;
 VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-VkPipelineVertexInputStateCreateInfo plain2dVertexInputState;
-VkPipelineVertexInputStateCreateInfo vertexInputState;
-VkPipelineVertexInputStateCreateInfo animatedVertexInputState;
 VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
 std::vector<std::weak_ptr<Shader>> loaded_shaders;
@@ -160,6 +159,7 @@ glm::vec3 bkColor = glm::vec3(0.69f,0.76f,0.79f);
 struct ReflectInit{ReflectInit(){
 tke::EnumType *currentEnumType = nullptr;
 tke::ReflectionBank *currentBank = nullptr;
+//enum:
 currentEnumType = tke::addReflectEnumType("ObjectPhysicsType");
 currentEnumType->items.emplace_back("null", (int)ObjectPhysicsType::null);
 currentEnumType->items.emplace_back("static_r", (int)ObjectPhysicsType::static_r);
@@ -171,6 +171,7 @@ currentEnumType->items.emplace_back("plain", (int)SamplerType::plain);
 currentEnumType->items.emplace_back("plain_unnormalized", (int)SamplerType::plain_unnormalized);
 currentEnumType->items.emplace_back("color", (int)SamplerType::color);
 currentEnumType->items.emplace_back("color_border", (int)SamplerType::color_border);
+//impl:
 currentBank = Controller::b;
 currentBank->addV<float>("ang_offset", offsetof(Controller, ang_offset));
 currentBank->addV<float>("speed", offsetof(Controller, speed));

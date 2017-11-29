@@ -1,20 +1,16 @@
 <6>角色控制器有很严重卡顿（查看NV的地形例子）
 <7>editor : 窗口拥有统一的父类
-<9>remove : texture
 <10>editor : remove : attribute widget
 <11>editor : 双击texture，在texture editor中打开
-<12>editor : 主菜单中增加添加texture功能
 <13>editor : 重做texture editor，不再拥有texture，而只是编辑功能
 <14>editor : 增加新的model editor
-<15>editor : rename : monitor =》scene editor，并增加是否渲染选项
+<15>editor : scene editor增加是否渲染选项
 <16>实现延迟renderer
 <17>实现线框renderer
 <18>remove : 观察者
 <19>scene : 使用shared ptr 管理entity
 <20>editor : 使用weak ptr 实现select
 <21>实现以节点为基础的动画系统
-<24>model等移动到resource中
-<25>增加remove all ui images函数
 <26>ik的限制（转化为任意欧拉角，然后限定角度）
 <27>角色穿戴系统：武器，衣服
 <28>粒子系统（face to camera，animation，fire）

@@ -1299,7 +1299,7 @@ namespace tke
 			sceneRenderPass, 0);
 		mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
-			.vertex_input(&animatedVertexInputState)
+			.vertex_input(&vertexAnimatedInputState)
 			.depth_test(true)
 			.depth_write(true)
 			.addBlendAttachmentState(false)
@@ -1357,7 +1357,7 @@ namespace tke
 			renderPass_depthC_image8C, 0);
 		esmAnimPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(2048).cy(2048)
-			.vertex_input(&animatedVertexInputState)
+			.vertex_input(&vertexAnimatedInputState)
 			.depth_test(true)
 			.depth_write(true)
 			.addShader(enginePath + "shader/esm/esm.vert", {"ANIM"})

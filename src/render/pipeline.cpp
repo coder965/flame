@@ -397,7 +397,7 @@ namespace tke
 		return -1;
 	}
 
-	static VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes)
+	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes)
 	{
 		VkPipelineVertexInputStateCreateInfo state = {};
 		state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -412,47 +412,6 @@ namespace tke
 	void initPipeline()
 	{
 		zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
-
-		{
-			// plain2dVertexInputState will be init in gui
-			static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX };
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex2D, pos) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex2D, uv) },
-				{ 2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(Vertex2D, col) }
-			};
-
-			plain2dVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-		}
-
-		{
-			static VkVertexInputBindingDescription bindings = { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
-				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
-				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) }
-			};
-
-			vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-		}
-
-		{
-			static VkVertexInputBindingDescription bindings = { 0, sizeof(VertexAnimated), VK_VERTEX_INPUT_RATE_VERTEX };
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, position) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexAnimated, uv) },
-				{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, normal) },
-				{ 3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, tangent) },
-				{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneWeight) },
-				{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneID) }
-			};
-
-			animatedVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-		}
 
 		{
 			static VkVertexInputBindingDescription bindings = { 0, sizeof(VertexLine), VK_VERTEX_INPUT_RATE_VERTEX };
