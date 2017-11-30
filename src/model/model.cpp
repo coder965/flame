@@ -69,24 +69,24 @@ namespace tke
 		stateAnimations[kind] = b;
 		switch (kind)
 		{
-		case ModelStateAnimationStand:
-			stand_animation_filename = b ? b->animation->filename : "";
-			break;
-		case ModelStateAnimationForward:
-			forward_animation_filename = b ? b->animation->filename : "";
-			break;
-		case ModelStateAnimationBackward:
-			backward_animation_filename = b ? b->animation->filename : "";
-			break;
-		case ModelStateAnimationLeftward:
-			leftward_animation_filename = b ? b->animation->filename : "";
-			break;
-		case ModelStateAnimationRightward:
-			rightward_animation_filename = b ? b->animation->filename : "";
-			break;
-		case ModelStateAnimationJump:
-			jump_animation_filename = b ? b->animation->filename : "";
-			break;
+			case ModelStateAnimationStand:
+				stand_animation_filename = b ? b->animation->filename : "";
+				break;
+			case ModelStateAnimationForward:
+				forward_animation_filename = b ? b->animation->filename : "";
+				break;
+			case ModelStateAnimationBackward:
+				backward_animation_filename = b ? b->animation->filename : "";
+				break;
+			case ModelStateAnimationLeftward:
+				leftward_animation_filename = b ? b->animation->filename : "";
+				break;
+			case ModelStateAnimationRightward:
+				rightward_animation_filename = b ? b->animation->filename : "";
+				break;
+			case ModelStateAnimationJump:
+				jump_animation_filename = b ? b->animation->filename : "";
+				break;
 		}
 	}
 
@@ -234,11 +234,11 @@ namespace tke
 	{
 		int baseVertex = positions.size();
 
-		positions.insert(positions.end(),  { 
-			center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f) 
+		positions.insert(positions.end(), {
+			center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f)
 		});
 		normals.insert(normals.end(), 3, glm::vec3(0.f, 1.f, 0.f));
-		for (int i = 0; i < 3; i++) 
+		for (int i = 0; i < 3; i++)
 			indices.push_back(baseVertex + i);
 	}
 
@@ -280,7 +280,7 @@ namespace tke
 			21, 20, 22, 21, 22, 23
 		};
 
-		for (auto &i : list) 
+		for (auto &i : list)
 			i += baseVertex;
 
 		indices.insert(indices.end(), list.begin(), list.end());
@@ -429,8 +429,8 @@ namespace tke
 		// middle
 		for (int i = 0; i < subdiv; i++)
 		{
-			auto ii = i + 1; 
-			if (ii == subdiv) 
+			auto ii = i + 1;
+			if (ii == subdiv)
 				ii = 0;
 
 			indices.push_back(indexs[2][i]);
@@ -477,8 +477,8 @@ namespace tke
 
 		for (int i = 0; i < subdiv; i++)
 		{
-			auto ii = i + 1; 
-			if (ii == subdiv) 
+			auto ii = i + 1;
+			if (ii == subdiv)
 				ii = 0;
 
 			indices.push_back(indexs[2][i]);
@@ -532,21 +532,19 @@ namespace tke
 		}
 	}
 
-	static void _process_model(Model *m)
+	static void _process_model(Model *m, bool generateTangent)
 	{
-		m->maxCoord = m->positions[0];
-		m->minCoord = m->positions[0];
-		for (int i = 1; i < m->positions.size(); i++)
+		m->maxCoord = m->vertex_stat[0].position;
+		m->minCoord = m->vertex_stat[0].position;
+		for (int i = 1; i < m->vertex_count; i++)
 		{
-			m->maxCoord = glm::max(m->maxCoord, m->positions[i]);
-			m->minCoord = glm::min(m->minCoord, m->positions[i]);
+			m->maxCoord = glm::max(m->maxCoord, m->vertex_stat[i].position);
+			m->minCoord = glm::min(m->minCoord, m->vertex_stat[i].position);
 		}
 
-		if (m->tangents.size() == 0 && m->uvs.size() > 0)
+		if (generateTangent)
 		{
-			m->tangents.resize(m->positions.size());
-
-			for (int i = 0; i < m->indices.size(); i += 3)
+			for (int i = 0; i < m->vertex_count; i += 3)
 			{
 				int id[3] = {
 					m->indices[i],
@@ -554,14 +552,14 @@ namespace tke
 					m->indices[i + 2]
 				};
 
-				auto u0 = m->uvs[id[1]].s - m->uvs[id[0]].s;
-				auto v0 = m->uvs[id[1]].t - m->uvs[id[0]].t;
+				auto u0 = m->vertex_stat[id[1]].uv.s - m->vertex_stat[id[0]].uv.s;
+				auto v0 = m->vertex_stat[id[1]].uv.t - m->vertex_stat[id[0]].uv.t;
 
-				auto u1 = m->uvs[id[2]].s - m->uvs[id[0]].s;
-				auto v1 = m->uvs[id[2]].t - m->uvs[id[0]].t;
+				auto u1 = m->vertex_stat[id[2]].uv.s - m->vertex_stat[id[0]].uv.s;
+				auto v1 = m->vertex_stat[id[2]].uv.t - m->vertex_stat[id[0]].uv.t;
 
-				auto e0 = m->positions[id[1]] - m->positions[id[0]];
-				auto e1 = m->positions[id[2]] - m->positions[id[0]];
+				auto e0 = m->vertex_stat[id[1]].position - m->vertex_stat[id[0]].position;
+				auto e1 = m->vertex_stat[id[2]].position - m->vertex_stat[id[0]].position;
 
 				auto d = u0 * v1 - u1 * v0;
 				if (d == 0.f) continue;
@@ -570,15 +568,15 @@ namespace tke
 				if (glm::length(tangent) > 0.f)
 				{
 					tangent = glm::normalize(tangent);
-					m->tangents[id[0]] = tangent;
-					m->tangents[id[1]] = tangent;
-					m->tangents[id[2]] = tangent;
+					m->vertex_stat[id[0]].tangent = tangent;
+					m->vertex_stat[id[1]].tangent = tangent;
+					m->vertex_stat[id[2]].tangent = tangent;
 				}
 				else
 				{
-					m->tangents[id[0]] = glm::vec3();
-					m->tangents[id[1]] = glm::vec3();
-					m->tangents[id[2]] = glm::vec3();
+					m->vertex_stat[id[0]].tangent = glm::vec3(0.f);
+					m->vertex_stat[id[1]].tangent = glm::vec3(0.f);
+					m->vertex_stat[id[2]].tangent = glm::vec3(0.f);
 				}
 			}
 		}
@@ -624,6 +622,9 @@ namespace tke
 			std::vector<glm::vec2> rawTexcoords;
 			std::vector<glm::vec3> rawNormals;
 			std::vector<glm::ivec3> rawIndexs;
+
+			std::vector<VertexStat> vertexs;
+			std::vector<int> indices;
 
 			while (!file.eof())
 			{
@@ -682,14 +683,17 @@ namespace tke
 						}
 						if (index == -1)
 						{
-							index = m->positions.size();
-							m->positions.push_back(rawPositions[ids[0]]);
-							m->uvs.push_back(ids[1] != -1 ? rawTexcoords[ids[1]] : glm::vec2(0.f));
-							m->normals.push_back(ids[2] != -1 ? rawNormals[ids[2]] : glm::vec3(0.f));
+							index = m->vertex_count;
+							vertexs.push_back({
+								rawPositions[ids[0]],
+								ids[1] != -1 ? rawTexcoords[ids[1]] : glm::vec2(0.f),
+								ids[2] != -1 ? rawNormals[ids[2]] : glm::vec3(0.f),
+								glm::vec3(0.f)
+							});
 							rawIndexs.push_back(ids);
 
 						}
-						m->indices.push_back(index);
+						indices.push_back(index);
 						currentIndex++;
 						currentGeometry->indiceCount++;
 					}
@@ -753,9 +757,16 @@ namespace tke
 				}
 			}
 
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			memcpy(m->vertex_stat, vertexs.data(), sizeof(VertexStat) * m->vertex_count);
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
+
 			m->loadData(true);
 
-			_process_model(m);
+			_process_model(m, true);
 		}
 	}
 
@@ -877,35 +888,29 @@ namespace tke
 			Header header;
 			file.read((char*)&header, sizeof(Header));
 
-			int vertexCount;
-			file & vertexCount;
-			assert(vertexCount > 0);
-			m->positions.resize(vertexCount);
-			m->normals.resize(vertexCount);
-			m->uvs.resize(vertexCount);
-			m->boneWeights.resize(vertexCount);
-			m->boneIDs.resize(vertexCount);
-			for (int i = 0; i < vertexCount; i++)
+			file & m->vertex_count;
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			m->vertex_anim = new VertexAnim[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
 			{
 				VertexData data;
 				file.read((char*)&data, sizeof(VertexData));
-				m->positions[i] = data.position;
-				m->positions[i].z *= -1.f;
-				m->normals[i] = data.normal;
-				m->normals[i].z *= -1.f;
-				m->uvs[i] = data.uv;
-				m->uvs[i].y = 1.f - m->uvs[i].y;
+				m->vertex_stat[i].position = data.position;
+				m->vertex_stat[i].position.z *= -1.f;
+				m->vertex_stat[i].normal = data.normal;
+				m->vertex_stat[i].normal.z *= -1.f;
+				m->vertex_stat[i].uv = data.uv;
+				m->vertex_stat[i].uv.y = 1.f - m->vertex_stat[i].uv.y;
 				float fWeight = data.weight / 100.f;
-				m->boneWeights[i].x = fWeight;
-				m->boneWeights[i].y = 1.f - fWeight;
-				m->boneIDs[i].x = data.boneID0 + 0.5f;
-				m->boneIDs[i].y = data.boneID1 + 0.5f;
+				m->vertex_anim[i].bone_weight.x = fWeight;
+				m->vertex_anim[i].bone_weight.y = 1.f - fWeight;
+				m->vertex_anim[i].bone_ID.x = data.boneID0;
+				m->vertex_anim[i].bone_ID.y = data.boneID1;
 			}
 
-			int indiceCount;
-			file & indiceCount;
-			m->indices.resize(indiceCount);
-			for (int i = 0; i < indiceCount; i += 3)
+			file & m->indice_count;
+			m->indices = new int[m->indice_count];
+			for (int i = 0; i < m->indice_count; i += 3)
 			{
 				unsigned short indice;
 				file & indice;
@@ -1066,19 +1071,19 @@ namespace tke
 				auto q = new Shape;
 				switch (data.type)
 				{
-				case 0: q->type = ShapeType::sphere; break;
-				case 1: q->type = ShapeType::box; break;
-				case 2: q->type = ShapeType::capsule; break;
+					case 0: q->type = ShapeType::sphere; break;
+					case 1: q->type = ShapeType::box; break;
+					case 2: q->type = ShapeType::capsule; break;
 				}
 				switch (q->type)
 				{
-				case ShapeType::sphere:
-					data.size.y = data.size.z = data.size.x;
-					break;
-				case ShapeType::capsule:
-					data.size.y *= 0.5f;
-					data.size.z = data.size.x;
-					break;
+					case ShapeType::sphere:
+						data.size.y = data.size.z = data.size.x;
+						break;
+					case ShapeType::capsule:
+						data.size.y *= 0.5f;
+						data.size.z = data.size.x;
+						break;
 				}
 				q->setScale(data.size);
 				auto v = q->getVolume();
@@ -1116,7 +1121,7 @@ namespace tke
 
 			m->loadData(false);
 
-			_process_model(m);
+			_process_model(m, true);
 		}
 	}
 
@@ -1162,6 +1167,9 @@ namespace tke
 			n = n->firstNode("mesh"); assert(n);
 			std::vector<std::unique_ptr<Source>> sources;
 			VertexInfo vertex_info;
+
+			std::vector<VertexStat> vertexs;
+			std::vector<int> indices;
 			for (auto &c : n->children)
 			{
 				if (c->name == "source")
@@ -1268,107 +1276,122 @@ namespace tke
 						{
 							auto str = cc->value;
 							std::smatch match;
-							assert(element_count_per_vertex > 0);
-							assert(element_count_per_vertex <= 3);
+							assert(element_count_per_vertex > 0 && element_count_per_vertex <= 3);
 							switch (element_count_per_vertex)
 							{
-							case 1:
-							{
-								std::regex pattern(R"([0-9]+)");
-								auto indice_count = vcount.size() * 3;
-								while (std::regex_search(str, match, pattern) && indice_count > 0)
+								case 1:
 								{
-									auto index = std::stoi(match[0].str());
-									m->positions.push_back(sources[position_source_index]->v3(index));
-									m->uvs.push_back(glm::vec2(0.f));
-									m->normals.push_back(glm::vec3(0.f));
-									m->indices.push_back(index);
-									indice_count--;
-									str = match.suffix();
-								}
-							}
-								break;
-							case 2:
-							{
-								std::vector<glm::ivec2> ids;
-								std::regex pattern(R"(([0-9]+)\s+([0-9]+))");
-								auto indice_count = vcount.size() * 3;
-								while (std::regex_search(str, match, pattern) && indice_count > 0)
-								{
-									glm::ivec2 id;
-									id[0] = std::stoi(match[1].str());
-									id[1] = std::stoi(match[2].str());
-									auto index = -1;
-									for (int i = 0; i < ids.size(); i++)
+									std::regex pattern(R"([0-9]+)");
+									auto indice_count = vcount.size() * 3;
+									while (std::regex_search(str, match, pattern) && indice_count > 0)
 									{
-										if (id == ids[i])
+										auto index = std::stoi(match[0].str());
+										vertexs.push_back({
+											sources[position_source_index]->v3(index),
+											glm::vec2(0.f),
+											glm::vec3(0.f),
+											glm::vec3(0.f)
+										});
+										indices.push_back(index);
+										indice_count--;
+										str = match.suffix();
+									}
+									break;
+								}
+								case 2:
+								{
+									std::vector<glm::ivec2> ids;
+									std::regex pattern(R"(([0-9]+)\s+([0-9]+))");
+									auto indice_count = vcount.size() * 3;
+									while (std::regex_search(str, match, pattern) && indice_count > 0)
+									{
+										glm::ivec2 id;
+										id[0] = std::stoi(match[1].str());
+										id[1] = std::stoi(match[2].str());
+										auto index = -1;
+										for (int i = 0; i < ids.size(); i++)
 										{
-											index = i;
-											break;
+											if (id == ids[i])
+											{
+												index = i;
+												break;
+											}
 										}
-									}
-									if (index == -1)
-									{
-										index = m->positions.size();
-										m->positions.push_back(sources[position_source_index]->v3(id[position_offset]));
-										m->uvs.push_back(uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]));
-										m->normals.push_back(normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]));
-										ids.push_back(id);
-
-									}
-									m->indices.push_back(index);
-									indice_count--;
-									str = match.suffix();
-								}
-							}
-								break;
-							case 3:
-							{
-								std::vector<glm::ivec3> ids;
-								std::regex pattern(R"(([0-9]+)\s+([0-9]+)\s+([0-9]+))");
-								auto indice_count = vcount.size() * 3;
-								while (std::regex_search(str, match, pattern) && indice_count > 0)
-								{
-									glm::ivec3 id;
-									id[0] = std::stoi(match[1].str());
-									id[1] = std::stoi(match[2].str());
-									id[2] = std::stoi(match[3].str());
-									auto index = -1;
-									for (int i = 0; i < ids.size(); i++)
-									{
-										if (id == ids[i])
+										if (index == -1)
 										{
-											index = i;
-											break;
-										}
-									}
-									if (index == -1)
-									{
-										index = m->positions.size();
-										m->positions.push_back(sources[position_source_index]->v3(id[position_offset]));
-										m->uvs.push_back(uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]));
-										m->normals.push_back(normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]));
-										ids.push_back(id);
+											index = vertexs.size();
+											vertexs.push_back({
+												sources[position_source_index]->v3(id[position_offset]),
+												uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]),
+												normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]),
+												glm::vec3(0.f)
+											});
+											ids.push_back(id);
 
+										}
+										indices.push_back(index);
+										indice_count--;
+										str = match.suffix();
 									}
-									m->indices.push_back(index);
-									indice_count--;
-									str = match.suffix();
+									break;
 								}
-							}
-								break;
+								case 3:
+								{
+									std::vector<glm::ivec3> ids;
+									std::regex pattern(R"(([0-9]+)\s+([0-9]+)\s+([0-9]+))");
+									auto indice_count = vcount.size() * 3;
+									while (std::regex_search(str, match, pattern) && indice_count > 0)
+									{
+										glm::ivec3 id;
+										id[0] = std::stoi(match[1].str());
+										id[1] = std::stoi(match[2].str());
+										id[2] = std::stoi(match[3].str());
+										auto index = -1;
+										for (int i = 0; i < ids.size(); i++)
+										{
+											if (id == ids[i])
+											{
+												index = i;
+												break;
+											}
+										}
+										if (index == -1)
+										{
+											index = vertexs.size();
+											vertexs.push_back({
+												sources[position_source_index]->v3(id[position_offset]),
+												uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]),
+												normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]),
+												glm::vec3(0.f)
+											});
+											ids.push_back(id);
+
+										}
+										indices.push_back(index);
+										indice_count--;
+										str = match.suffix();
+									}
+									break;
+								}
 							}
 						}
 					}
 				}
 			}
 
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			memcpy(m->vertex_stat, vertexs.data(), sizeof(VertexStat) * m->vertex_count);
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
+
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = m->indices.size();
+			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			_process_model(m);
+			_process_model(m, true);
 		}
 	}
 
@@ -1380,33 +1403,22 @@ namespace tke
 
 			file & m->animated;
 
-			int vertexCount;
-			int indiceCount;
-
-			file & vertexCount;
-			file & indiceCount;
-			if (vertexCount > 0)
+			file & m->vertex_count;
+			file & m->indice_count;
+			if (m->vertex_count > 0)
 			{
-				m->positions.resize(vertexCount);
-				m->uvs.resize(vertexCount);
-				m->normals.resize(vertexCount);
-				m->tangents.resize(vertexCount);
-				file.read((char*)m->positions.data(), vertexCount * sizeof(glm::vec3));
-				file.read((char*)m->uvs.data(), vertexCount * sizeof(glm::vec2));
-				file.read((char*)m->normals.data(), vertexCount * sizeof(glm::vec3));
-				file.read((char*)m->tangents.data(), vertexCount * sizeof(glm::vec3));
+				m->vertex_stat = new VertexStat[m->vertex_count];
+				file.read((char*)m->vertex_stat, sizeof(VertexStat) * m->vertex_count);
 				if (m->animated)
 				{
-					m->boneWeights.resize(vertexCount);
-					m->boneIDs.resize(vertexCount);
-					file.read((char*)m->boneWeights.data(), vertexCount * sizeof(glm::vec4));
-					file.read((char*)m->boneIDs.data(), vertexCount * sizeof(glm::ivec4));
+					m->vertex_anim = new VertexAnim[m->vertex_count];
+					file.read((char*)m->vertex_anim, sizeof(VertexAnim) * m->vertex_count);
 				}
 			}
-			if (indiceCount > 0)
+			if (m->indice_count > 0)
 			{
-				m->indices.reserve(indiceCount);
-				file.read((char*)m->indices.data(), indiceCount * sizeof(int));
+				m->indices = new int[m->indice_count];
+				file.read((char*)m->indices, sizeof(int) * m->indice_count);
 			}
 
 			int geometryCount;
@@ -1558,7 +1570,7 @@ namespace tke
 
 			file & m->eye_position;
 
-			_process_model(m);
+			_process_model(m, false);
 		}
 
 		void save(Model *m, const std::string &filename, bool copyTexture)
@@ -1573,27 +1585,16 @@ namespace tke
 
 			file & m->animated;;
 
-			int vertexCount = m->positions.size();
-			int indiceCount = m->indices.size();
-
-			file & vertexCount;
-			file & indiceCount;
-			if (vertexCount > 0)
+			file & m->vertex_count;
+			file & m->indice_count;
+			if (m->vertex_count > 0)
 			{
-				file.write((char*)m->positions.data(), vertexCount * sizeof glm::vec3);
-				file.write((char*)m->uvs.data(), vertexCount * sizeof glm::vec2);
-				file.write((char*)m->normals.data(), vertexCount * sizeof glm::vec3);
-				file.write((char*)m->tangents.data(), vertexCount * sizeof glm::vec3);
+				file.write((char*)m->vertex_stat, sizeof(VertexStat) * m->vertex_count);
 				if (m->animated)
-				{
-					file.write((char*)m->boneWeights.data(), vertexCount * sizeof glm::vec4);
-					file.write((char*)m->boneIDs.data(), vertexCount * sizeof glm::ivec4);
-				}
+					file.write((char*)m->vertex_anim, sizeof(VertexAnim) * m->vertex_count);
 			}
-			if (indiceCount > 0)
-			{
-				file.write((char*)m->indices.data(), vertexCount * sizeof(int));
-			}
+			if (m->indice_count > 0)
+				file.write((char*)m->indices, sizeof(int) * m->indice_count);
 
 			int geometryCount = m->geometries.size();
 			file & geometryCount;
@@ -1764,31 +1765,34 @@ namespace tke
 	void initModel()
 	{
 		{
-			static VkVertexInputBindingDescription bindings = {0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
+			static VkVertexInputBindingDescription bindings = {0, sizeof(VertexStat), VK_VERTEX_INPUT_RATE_VERTEX};
 
 			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)},
-				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)},
-				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)}
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStat, position)},
+				{1, 0, VK_FORMAT_R32G32_SFLOAT,	   offsetof(VertexStat, uv)},
+				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStat, normal)},
+				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStat, tangent)}
 			};
 
-			vertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			vertexStatInputState = vertexStateInfo(1, &bindings, TK_ARRAYSIZE(attributes), attributes);
 		}
 
 		{
-			static VkVertexInputBindingDescription bindings = {0, sizeof(VertexAnimated), VK_VERTEX_INPUT_RATE_VERTEX};
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, position)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexAnimated, uv)},
-				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, normal)},
-				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexAnimated, tangent)},
-				{4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneWeight)},
-				{5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnimated, boneID)}
+			static VkVertexInputBindingDescription bindings[] = {
+				{0, sizeof(VertexStat), VK_VERTEX_INPUT_RATE_VERTEX},
+				{1, sizeof(VertexAnim), VK_VERTEX_INPUT_RATE_VERTEX}
 			};
 
-			vertexAnimatedInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+			static VkVertexInputAttributeDescription attributes[] = {
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(VertexStat, position)},
+				{1, 0, VK_FORMAT_R32G32_SFLOAT,       offsetof(VertexStat, uv)},
+				{2, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(VertexStat, normal)},
+				{3, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(VertexStat, tangent)},
+				{4, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnim, bone_weight)},
+				{5, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexAnim, bone_ID)}
+			};
+
+			vertexAnimInputState = vertexStateInfo(TK_ARRAYSIZE(bindings), bindings, TK_ARRAYSIZE(attributes), attributes);
 		}
 
 		defaultMaterial = std::make_shared<Material>();
@@ -1810,155 +1814,335 @@ namespace tke
 		ds_textures = new DescriptorSet(_textures_layout.get());
 
 		{
-			triangleModel = new Model;
-			triangleModel->filename = "[triangle]";
+			auto m = new Model;
+			m->filename = "[triangle]";
 
-			addTriangleVertex(triangleModel, glm::mat3(1.f), glm::vec3(0.f));
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
+
+			addTriangleVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f));
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = triangleModel->indices.size();
-			triangleModel->geometries.push_back(std::move(g));
+			g->indiceCount = m->indice_count;
+			m->geometries.push_back(std::move(g));
 
-			_process_model(triangleModel);
+			_process_model(m, true);
 
-			_add_model(triangleModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			triangleModel = m;
 		}
 
 		{
-			cubeModel = new Model;
-			cubeModel->filename = "[cube]";
+			auto m = new Model;
+			m->filename = "[cube]";
 
-			addCubeVertex(cubeModel, glm::mat3(1.f), glm::vec3(0.f), 1.f);
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
+
+			addCubeVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 1.f);
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = cubeModel->indices.size();
-			cubeModel->geometries.push_back(std::move(g));
+			g->indiceCount = m->indice_count;
+			m->geometries.push_back(std::move(g));
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			cubeModel->addRigidbody(pRigidbody);
+			m->addRigidbody(pRigidbody);
 			auto s = new Shape(ShapeType::box);
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
-			_process_model(cubeModel);
+			_process_model(m, true);
 
-			_add_model(cubeModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			cubeModel = m;
 		}
 
 		{
-			sphereModel = new Model;
-			sphereModel->filename = "[sphere]";
+			auto m = new Model;
+			m->filename = "[sphere]";
 
-			addSphereVertex(sphereModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 32, 32);
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
+
+			addSphereVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 32, 32);
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g0 = std::make_unique<Geometry>();
 			g0->material = defaultMaterial;
-			g0->indiceCount = sphereModel->indices.size() / 2;
+			g0->indiceCount = m->indice_count / 2;
 			auto g1 = std::make_unique<Geometry>();
 			g1->material = defaultMaterial;
 			g1->indiceBase = g0->indiceCount;
 			g1->indiceCount = g0->indiceCount;
-			sphereModel->geometries.push_back(std::move(g0));
-			sphereModel->geometries.push_back(std::move(g1));
+			m->geometries.push_back(std::move(g0));
+			m->geometries.push_back(std::move(g1));
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			sphereModel->addRigidbody(pRigidbody);
+			m->addRigidbody(pRigidbody);
 			auto s = new Shape(ShapeType::sphere);
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
-			_process_model(sphereModel);
+			_process_model(m, true);
 
-			_add_model(sphereModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			sphereModel = m;
 		}
 
 		{
-			cylinderModel = new Model;
-			cylinderModel->filename = "[cylinder]";
+			auto m = new Model;
+			m->filename = "[cylinder]";
 
-			addCylinderVertex(cylinderModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
+
+			addCylinderVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = cylinderModel->indices.size();
-			cylinderModel->geometries.push_back(std::move(g));
+			g->indiceCount = m->indice_count;
+			m->geometries.push_back(std::move(g));
 
 			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			cylinderModel->addRigidbody(pRigidbody);
+			m->addRigidbody(pRigidbody);
 			auto s = new Shape(ShapeType::capsule);
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
-			_process_model(cylinderModel);
+			_process_model(m, true);
 
-			_add_model(cylinderModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			cylinderModel = m;
 		}
 
 		{
-			coneModel = new Model;
-			coneModel->filename = "[cone]";
+			auto m = new Model;
+			m->filename = "[cone]";
 
-			addConeVertex(coneModel, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
+
+			addConeVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = coneModel->indices.size();
-			coneModel->geometries.push_back(std::move(g));
+			g->indiceCount = m->indice_count;
+			m->geometries.push_back(std::move(g));
 
-			_process_model(coneModel);
+			_process_model(m, true);
 
-			_add_model(coneModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			coneModel = m;
 		}
 
 		{
-			arrowModel = new Model;
-			arrowModel->filename = "[arrow]";
+			auto m = new Model;
+			m->filename = "[arrow]";
+
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
 
 			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
 
-			addCylinderVertex(arrowModel, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
-			addConeVertex(arrowModel, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
+			addCylinderVertex(vertexs, normals, indices, matR, glm::vec3(0.4f, 0.f, 0.f), 0.4f, 0.01f, 32);
+			addConeVertex(vertexs, normals, indices, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = arrowModel->indices.size();
-			arrowModel->geometries.push_back(std::move(g));
+			g->indiceCount = m->indice_count;
+			m->geometries.push_back(std::move(g));
 
-			_process_model(arrowModel);
+			_process_model(m, true);
 
-			_add_model(arrowModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			arrowModel = m;
 		}
 
 		{
-			torusModel = new Model;
-			torusModel->filename = "[torus]";
+			auto m = new Model;
+			m->filename = "[torus]";
+
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
 
 			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
 
-			addTorusVertex(torusModel, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
+			addTorusVertex(vertexs, normals, indices, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = std::make_unique<Geometry>();
 			g->material = defaultMaterial;
-			g->indiceCount = torusModel->indices.size();
-			torusModel->geometries.push_back(std::move(g));
+			g->indiceCount = m->indice_count;
+			m->geometries.push_back(std::move(g));
 
-			_process_model(torusModel);
+			_process_model(m, true);
 
-			_add_model(torusModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			torusModel = m;
 		}
 
 		{
-			hamerModel = new Model;
-			hamerModel->filename = "[hammer]";
+			auto m = new Model;
+			m->filename = "[hammer]";
+
+			std::vector<glm::vec3> vertexs;
+			std::vector<glm::vec3> normals;
+			std::vector<int> indices;
 
 			glm::mat3 matR = glm::mat3(glm::rotate(glm::radians(-90.f), glm::vec3(0.f, 0.f, 1.f)));
 
-			addCylinderVertex(hamerModel, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
-			int ic0 = hamerModel->indices.size();
-			addCubeVertex(hamerModel, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
-			int ic1 = hamerModel->indices.size();
+			addCylinderVertex(vertexs, normals, indices, matR, glm::vec3(0.45f, 0.f, 0.f), 0.45f, 0.01f, 32);
+			int ic0 = indices.size();
+			addCubeVertex(vertexs, normals, indices, matR, glm::vec3(0.9f, 0.f, 0.f), 0.1f);
+			int ic1 = indices.size();
+
+			m->vertex_count = vertexs.size();
+			m->vertex_stat = new VertexStat[m->vertex_count];
+			for (int i = 0; i < m->vertex_count; i++)
+			{
+				m->vertex_stat[i] = {
+					vertexs[i],
+					glm::vec2(0.f),
+					normals[i],
+					glm::vec3(0.f)
+				};
+			}
+			m->indice_count = indices.size();
+			m->indices = new int[m->indice_count];
+			memcpy(m->indices, indices.data(), sizeof(int) * m->indice_count);
 
 			auto g0 = std::make_unique<Geometry>();
 			g0->material = defaultMaterial;
@@ -1967,12 +2151,16 @@ namespace tke
 			g1->material = defaultMaterial;
 			g1->indiceBase = ic0;
 			g1->indiceCount = ic1 - ic0;
-			hamerModel->geometries.push_back(std::move(g0));
-			hamerModel->geometries.push_back(std::move(g1));
+			m->geometries.push_back(std::move(g0));
+			m->geometries.push_back(std::move(g1));
 
-			_process_model(hamerModel);
+			_process_model(m, true);
 
-			_add_model(hamerModel);
+			_add_model(m);
+
+			basicModels.push_back(m);
+
+			hamerModel = m;
 		}
 	}
 }

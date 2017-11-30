@@ -1,11 +1,10 @@
 #include <string>
 
-#include "../src/core.h"
+#include "../src/math/math.h"
 
 int main(int argc, char** argv)
 {
-
-	tke::init("../", 800, 600);
+	auto v = glm::vec3(0.f);
 
 	return 0;
 }

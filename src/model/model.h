@@ -24,7 +24,7 @@ namespace tke
 	enum { MaxTextureCount = 256 };
 	enum { MaxBoneCount = 256 };
 
-	struct Vertex
+	struct VertexStat
 	{
 		glm::vec3 position;
 		glm::vec2 uv;
@@ -32,15 +32,10 @@ namespace tke
 		glm::vec3 tangent;
 	};
 
-	struct VertexAnimated
+	struct VertexAnim
 	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-		glm::vec3 tangent;
-
-		glm::vec4 boneWeight;
-		glm::vec4 boneID;
+		glm::vec4 bone_weight;
+		glm::vec4 bone_ID;
 	};
 
 	REFLECTABLE struct Model
@@ -54,19 +49,11 @@ namespace tke
 		int vertexBase = 0;
 		int indiceBase = 0;
 
-		union
-		{
-			Vertex		   *stat = nullptr;
-			VertexAnimated *anim;
-		}vertex;
+		int vertex_count = 0;
+		VertexStat *vertex_stat = nullptr;
+		VertexAnim *vertex_anim = nullptr;
+		int indice_count = 0;
 		int *indices = nullptr;
-		//std::vector<glm::vec3> positions;
-		//std::vector<glm::vec2> uvs;
-		//std::vector<glm::vec3> normals;
-		//std::vector<glm::vec3> tangents;
-		//std::vector<glm::vec4> boneWeights;
-		//std::vector<glm::vec4> boneIDs;
-		//std::vector<int> indices;
 
 		std::vector<std::unique_ptr<Geometry>> geometries;
 
@@ -111,8 +98,8 @@ namespace tke
 		void addJoint(Joint *pJoint);
 	};
 
-	IMPL() VkPipelineVertexInputStateCreateInfo vertexInputState;
-	IMPL() VkPipelineVertexInputStateCreateInfo vertexAnimatedInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo vertexStatInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
 
 	IMPL() std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
 	IMPL(nullptr) std::shared_ptr<Material> defaultMaterial;
