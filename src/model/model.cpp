@@ -2,6 +2,7 @@
 #include <regex>
 #include <iostream>
 #include <algorithm>
+#include <map>
 
 #include "model.h"
 #include "../core.h"
@@ -51,20 +52,75 @@ namespace tke
 		at.saveXML(filename + ".xml");
 	}
 
-	AnimationBinding *Model::bindAnimation(Animation *a)
+	std::shared_ptr<AnimationBinding> Model::bindAnimation(std::shared_ptr<Animation> a)
 	{
-		for (auto b : animationBindings)
+		for (auto it = animation_bindings.begin(); it != animation_bindings.end(); )
 		{
-			if (b->animation == a)
-				return b;
+			if (!it->lock())
+				it = animation_bindings.erase(it);
+			else
+				it++;
 		}
 
-		auto b = a->bindTo(this);
-		animationBindings.push_back(b);
+		for (auto &b : animation_bindings)
+		{
+			auto s = b.lock();
+			if (s->animation == a)
+				return s;
+		}
+
+		auto b = std::make_shared<AnimationBinding>();
+		b->animation = a;
+		for (auto &bm : a->motions)
+		{
+			b->frameTotal = glm::max(b->frameTotal, bm->frame);
+
+			int boneID = -1;
+			for (int iBone = 0; iBone < bones.size(); iBone++)
+			{
+				if (bm->name == bones[iBone].name)
+				{
+					boneID = iBone;
+					break;
+				}
+			}
+			if (boneID == -1) 
+				continue;
+
+			BoneMotionTrack *t = nullptr;
+			for (auto &_t : b->tracks)
+			{
+				if (_t->boneID == boneID)
+				{
+					t = _t.get();
+					break;
+				}
+			}
+			if (!t)
+			{
+				auto ut = std::make_unique<BoneMotionTrack>();
+				t = ut.get();
+				t->boneID = boneID;
+				t->motions.push_back(bm.get());
+				b->tracks.push_back(std::move(ut));
+			}
+			else
+			{
+				std::vector<BoneMotion*>::iterator it;
+				for (it = t->motions.begin(); it != t->motions.end(); it++)
+				{
+					if ((*it)->frame > bm->frame)
+						break;
+				}
+				t->motions.insert(it, bm.get());
+			}
+		}
+
+		animation_bindings.push_back(b);
 		return b;
 	}
 
-	void Model::setStateAnimation(ModelStateAnimationKind kind, AnimationBinding *b)
+	void Model::setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b)
 	{
 		stateAnimations[kind] = b;
 		switch (kind)
@@ -222,12 +278,6 @@ namespace tke
 				return t;
 			}
 		}
-	}
-
-	static void _add_model(Model *m)
-	{
-		models.push_back(std::move(std::unique_ptr<Model>(m)));
-		needUpdateVertexBuffer = true;
 	}
 
 	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center)
@@ -592,21 +642,22 @@ namespace tke
 			}
 		}
 
-		auto a = getAnimation(m->stand_animation_filename);
-		if (a) m->stateAnimations[ModelStateAnimationStand] = m->bindAnimation(a);
-		a = getAnimation(m->forward_animation_filename);
-		if (a) m->stateAnimations[ModelStateAnimationForward] = m->bindAnimation(a);
-		a = getAnimation(m->backward_animation_filename);
-		if (a) m->stateAnimations[ModelStateAnimationBackward] = m->bindAnimation(a);
-		a = getAnimation(m->leftward_animation_filename);
-		if (a) m->stateAnimations[ModelStateAnimationLeftward] = m->bindAnimation(a);
-		a = getAnimation(m->rightward_animation_filename);
-		if (a) m->stateAnimations[ModelStateAnimationRightward] = m->bindAnimation(a);
-		a = getAnimation(m->jump_animation_filename);
-		if (a) m->stateAnimations[ModelStateAnimationJump] = m->bindAnimation(a);
+		if (m->animated)
+		{
+			auto a = getAnimation(m->stand_animation_filename);
+			if (a) m->stateAnimations[ModelStateAnimationStand] = m->bindAnimation(a);
+			a = getAnimation(m->forward_animation_filename);
+			if (a) m->stateAnimations[ModelStateAnimationForward] = m->bindAnimation(a);
+			a = getAnimation(m->backward_animation_filename);
+			if (a) m->stateAnimations[ModelStateAnimationBackward] = m->bindAnimation(a);
+			a = getAnimation(m->leftward_animation_filename);
+			if (a) m->stateAnimations[ModelStateAnimationLeftward] = m->bindAnimation(a);
+			a = getAnimation(m->rightward_animation_filename);
+			if (a) m->stateAnimations[ModelStateAnimationRightward] = m->bindAnimation(a);
+			a = getAnimation(m->jump_animation_filename);
+			if (a) m->stateAnimations[ModelStateAnimationJump] = m->bindAnimation(a);
+		}
 	}
-
-	std::vector<Model*> generalModels;
 
 	namespace OBJ
 	{
@@ -1723,14 +1774,86 @@ namespace tke
 		}
 	}
 
-	Model *createModel(const std::string &_filename)
+	std::map<unsigned int, std::weak_ptr<Model>> _models;
+	void _processVertexAndIndexBuffer()
 	{
-		std::experimental::filesystem::path path(_filename);
-		if (!std::experimental::filesystem::exists(path))
+		auto vertex_stat_count = 0;
+		auto vertex_anim_count = 0;
+		auto indice_count = 0;
+
+		for (auto &m : _models)
 		{
-			std::cout << "Model File Lost:" << _filename;
-			return nullptr;
+			auto s = m.second.lock();
+			if (s)
+			{
+				vertex_stat_count += s->vertex_count;
+				if (s->animated)
+					vertex_anim_count += s->vertex_count;
+				indice_count += s->indice_count;
+			}
 		}
+
+		auto vss = vertex_stat_count > 0 ? sizeof(VertexStat) * vertex_stat_count : 1;
+		auto vas = vertex_anim_count > 0 ? sizeof(VertexAnim) * vertex_anim_count : 1;
+		auto is = indice_count > 0 ? sizeof(int) * indice_count : 1;
+		vertexStatBuffer->recreate(vss);
+		vertexAnimBuffer->recreate(vas);
+		indexBuffer->recreate(is);
+		StagingBuffer stagingBuffer(vss + vas + is);
+
+		auto vs_map = stagingBuffer.map(0, vss);
+		auto va_map = stagingBuffer.map(vss, vas);
+		auto i_map = stagingBuffer.map(vss + vas, is);
+		auto vertex_offset = 0;
+		auto indice_offset = 0;
+		for (auto &m : _models)
+		{
+			auto s = m.second.lock();
+			if (s)
+			{
+				if (s->animated)
+				{
+					s->vertexBase = vertex_offset;
+					s->indiceBase = indice_offset;
+					memcpy(vs_map, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
+					memcpy(va_map, s->vertex_anim, sizeof(VertexAnim) * s->vertex_count);
+					memcpy(i_map, s->indices, sizeof(int) * s->indice_count);
+					vertex_offset += s->vertex_count;
+					indice_offset += s->indice_count;
+				}
+			}
+		}
+		for (auto &m : _models)
+		{
+			auto s = m.second.lock();
+			if (s)
+			{
+				if (!s->animated)
+				{
+					s->vertexBase = vertex_offset;
+					s->indiceBase = indice_offset;
+					memcpy(vs_map, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
+					memcpy(i_map, s->indices, sizeof(int) * s->indice_count);
+					vertex_offset += s->vertex_count;
+					indice_offset += s->indice_count;
+				}
+			}
+		}
+	}
+
+	std::shared_ptr<Model> getModel(const std::string &filename)
+	{
+		auto hash = HASH(filename.c_str());
+		auto it = _models.find(hash);
+		if (it != _models.end())
+		{
+			auto s = it->second.lock();
+			if (s) return s;
+		}
+
+		std::experimental::filesystem::path path(filename);
+		if (!std::experimental::filesystem::exists(path))
+			return nullptr;
 
 		auto ext = path.extension().string();
 		void(*load_func)(Model *, const std::string &) = nullptr;
@@ -1743,20 +1866,18 @@ namespace tke
 		else if (ext == ".tkm")
 			load_func = &TKM::load;
 		else
-		{
-			std::cout << "Model Format Not Support:" << ext;
 			return nullptr;
-		}
 
-		auto m = new Model;
-		m->filename = _filename;
+		auto m = std::make_shared<Model>();
+		m->filename = filename;
 		m->filepath = path.parent_path().string();
 		if (m->filepath == "")
 			m->filepath = ".";
-		load_func(m, _filename);
+		load_func(m.get(), filename);
 
-		_add_model(m);
+		addBeforeFrameEvent(_processVertexAndIndexBuffer, 0, EventTypeOnlyOne);
 
+		_models[hash] = m;
 		return m;
 	}
 
@@ -1795,11 +1916,16 @@ namespace tke
 			vertexAnimInputState = vertexStateInfo(TK_ARRAYSIZE(bindings), bindings, TK_ARRAYSIZE(attributes), attributes);
 		}
 
+		vertexStatBuffer = new VertexBuffer();
+		vertexAnimBuffer = new VertexBuffer();
+		indexBuffer = new IndexBuffer();
+
 		defaultMaterial = std::make_shared<Material>();
 		defaultMaterial->sceneIndex = 0;
 		modelMaterials[0] = defaultMaterial;
 
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
+		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
 
 		{
 			VkDescriptorSetLayoutBinding binding;
@@ -1814,7 +1940,7 @@ namespace tke
 		ds_textures = new DescriptorSet(_textures_layout.get());
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[triangle]";
 
 			std::vector<glm::vec3> vertexs;
@@ -1843,9 +1969,7 @@ namespace tke
 			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -1853,7 +1977,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[cube]";
 
 			std::vector<glm::vec3> vertexs;
@@ -1888,9 +2012,7 @@ namespace tke
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -1898,7 +2020,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[sphere]";
 
 			std::vector<glm::vec3> vertexs;
@@ -1938,9 +2060,7 @@ namespace tke
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -1948,7 +2068,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[cylinder]";
 
 			std::vector<glm::vec3> vertexs;
@@ -1983,9 +2103,7 @@ namespace tke
 			s->setScale(glm::vec3(0.5f));
 			pRigidbody->addShape(s);
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -1993,7 +2111,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[cone]";
 
 			std::vector<glm::vec3> vertexs;
@@ -2022,9 +2140,7 @@ namespace tke
 			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -2032,7 +2148,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[arrow]";
 
 			std::vector<glm::vec3> vertexs;
@@ -2064,9 +2180,7 @@ namespace tke
 			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -2074,7 +2188,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[torus]";
 
 			std::vector<glm::vec3> vertexs;
@@ -2105,9 +2219,7 @@ namespace tke
 			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
@@ -2115,7 +2227,7 @@ namespace tke
 		}
 
 		{
-			auto m = new Model;
+			auto m = std::make_shared<Model>();
 			m->filename = "[hammer]";
 
 			std::vector<glm::vec3> vertexs;
@@ -2154,13 +2266,13 @@ namespace tke
 			m->geometries.push_back(std::move(g0));
 			m->geometries.push_back(std::move(g1));
 
-			_process_model(m, true);
-
-			_add_model(m);
+			_process_model(m.get(), true);
 
 			basicModels.push_back(m);
 
 			hamerModel = m;
 		}
+
+		addBeforeFrameEvent(_processVertexAndIndexBuffer, 0, EventTypeOnlyOne);
 	}
 }

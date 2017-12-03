@@ -15,7 +15,7 @@ extern SceneEditorClass sceneEditorClass;
 
 struct SceneEditor : Window
 {
-	tke::Scene *scene;
+	std::shared_ptr<tke::Scene> scene;
 
 	std::shared_ptr<tke::Image> image;
 	std::shared_ptr<tke::Framebuffer> fb_image;
@@ -42,7 +42,7 @@ struct SceneEditor : Window
 
 	bool follow = false;
 
-	SceneEditor(tke::Scene *_scene);
+	SceneEditor(std::shared_ptr<tke::Scene> _scene);
 	~SceneEditor();
 	virtual void show() override;
 	virtual void save(tke::AttributeTreeNode *) override;

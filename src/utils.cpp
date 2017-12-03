@@ -211,6 +211,20 @@ namespace tke
 		return false;
 	}
 
+	bool isModelFile(const std::string &ext)
+	{
+		if (ext == ".obj" || ext == ".pmd" || ext == ".pmx" || ext == ".tkm")
+			return true;
+		return false;
+	}
+
+	bool isSceneFile(const std::string &ext)
+	{
+		if (ext == ".tks")
+			return true;
+		return false;
+	}
+
 	Reflection::Reflection(What _what, const std::string &_name)
 		: what(_what), name(_name)
 	{}

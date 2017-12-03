@@ -7,9 +7,8 @@ namespace tke
 {
 	REFLECTABLE enum class ObjectPhysicsType
 	{
-		REFLe null,
-		REFLe static_r = 1 << 0, // cannot use with dynamic bit
-		REFLe dynamic = 1 << 1, // cannot use with static bit
+		REFLe enable,
+		REFLe dynamic = 1 << 0,
 		REFLe controller = 1 << 2
 	};
 
@@ -28,11 +27,11 @@ namespace tke
 		REFL_BANK;
 
 		REFLv std::string model_filename;
-		Model *model = nullptr;
+		std::shared_ptr<Model> model;
 
 		REFLv std::string name;
 
-		REFLe ObjectPhysicsType physics_type = ObjectPhysicsType::null; // cannot change
+		REFLv std::uint32_t physics_type = 0; // cannot change
 
 		std::unique_ptr<AnimationComponent> animationComponent;
 		std::vector<ObjectRigidBodyData> rigidbodyDatas;
@@ -42,7 +41,7 @@ namespace tke
 		int sceneIndex = -1;
 
 		Object();
-		Object(Model *_model, ObjectPhysicsType _physicsType = ObjectPhysicsType::null);
+		Object(std::shared_ptr<Model> _model, unsigned int _physicsType = 0);
 		~Object();
 		void setState(Controller::State _s, bool enable);
 	};

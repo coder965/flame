@@ -174,13 +174,25 @@ void ResourceExplorer::show()
 				list_index = index;
 				switch (i->file_type)
 				{
-				case ResourceExplorerFileListItem::FileTypeImage:
-					if (!i->image)
-					{
-						i->image = tke::getImage((path / i->value).string());
-						tke::addUiImage(i->image.get());
-					}
-					break;
+					case ResourceExplorerFileListItem::FileTypeImage:
+						if (!i->image)
+						{
+							i->image = tke::getImage((path / i->value).string());
+							if (i->image)
+								tke::addUiImage(i->image.get());
+						}
+						break;
+					case ResourceExplorerFileListItem::FileTypeScene:
+						if (ImGui::IsMouseDoubleClicked(0))
+						{
+							auto s = tke::getScene((path / i->value).string());
+							if (s)
+							{
+								auto w = new SceneEditor(s);
+								windows.push_back(std::move(std::unique_ptr<Window>(w)));
+							}
+						}
+						break;
 				}
 			}
 			index++;
@@ -201,25 +213,12 @@ void ResourceExplorer::show()
 			auto i = file_list[list_index - dir_list.size()].get();
 			switch (i->file_type)
 			{
-			case ResourceExplorerFileListItem::FileTypeImage:
-				ImGui::Image((ImTextureID)i->image->index, ImVec2(i->image->levels[0].cx, i->image->levels[0].cy));
-				break;
+				case ResourceExplorerFileListItem::FileTypeImage:
+					ImGui::Image((ImTextureID)i->image->index, ImVec2(i->image->levels[0].cx, i->image->levels[0].cy));
+					break;
 			}
 		}
 
-		//if (ImGui::TreeNode("Textures"))
-		//{
-		//	for (int i = 0; i < tke::textures.size(); i++)
-		//	{
-		//		auto t = tke::textures[i].get();
-		//		if (ImGui::Selectable(t->filename.c_str(), lastItemType == lastItemTypeTexture && itemIndex == i))
-		//		{
-		//			lastItemType = lastItemTypeTexture;
-		//			itemIndex = i;
-		//		}
-		//	}
-		//	ImGui::TreePop();
-		//}
 		//if (ImGui::TreeNode("Animations"))
 		//{
 		//	for (int i = 0; i < tke::animations.size(); i++)

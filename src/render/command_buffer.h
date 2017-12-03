@@ -36,6 +36,7 @@ namespace tke
 		void setViewportAndScissor(int cx, int cy);
 		void setScissor(int x, int y, int cx, int cy);
 		void bindVertexBuffer(VertexBuffer *b);
+		void bindVertexBuffer(VkBuffer *b, int count, VkDeviceSize *offsets);
 		void bindVertexBuffer(OnceVertexBuffer *b);
 		void bindIndexBuffer(IndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);
 		void bindIndexBuffer(OnceIndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);

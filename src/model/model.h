@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../utils.h"
+#include "../render/buffer.h"
 #include "../render/descriptor.h"
 #include "material.h"
 #include "animation.h"
@@ -60,8 +61,8 @@ namespace tke
 		std::vector<Bone> bones;
 		std::vector<BoneIK> iks;
 
-		std::vector<AnimationBinding*> animationBindings; 
-		AnimationBinding *stateAnimations[ModelStateAnimationCount] = {};
+		std::vector<std::weak_ptr<AnimationBinding>> animation_bindings;
+		std::shared_ptr<AnimationBinding> stateAnimations[ModelStateAnimationCount];
 
 		REFLv std::string stand_animation_filename;
 		REFLv std::string forward_animation_filename;
@@ -89,8 +90,8 @@ namespace tke
 		void loadData(bool needRigidbody);
 		void saveData(bool needRigidbody);
 
-		AnimationBinding *bindAnimation(Animation *a);
-		void setStateAnimation(ModelStateAnimationKind kind, AnimationBinding *b);
+		std::shared_ptr<AnimationBinding> bindAnimation(std::shared_ptr<Animation> a);
+		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 
 		void addRigidbody(Rigidbody *pRigidbody);
 		Rigidbody *deleteRigidbody(Rigidbody *pRigidbody);
@@ -100,6 +101,10 @@ namespace tke
 
 	IMPL() VkPipelineVertexInputStateCreateInfo vertexStatInputState;
 	IMPL() VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
+
+	IMPL(nullptr) VertexBuffer *vertexStatBuffer;
+	IMPL(nullptr) VertexBuffer *vertexAnimBuffer;
+	IMPL(nullptr) IndexBuffer *indexBuffer;
 
 	IMPL() std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
 	IMPL(nullptr) std::shared_ptr<Material> defaultMaterial;
@@ -120,17 +125,17 @@ namespace tke
 	void addConeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
 	void addTorusVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
 
-	IMPL(nullptr) Model *triangleModel;
-	IMPL(nullptr) Model *cubeModel;
-	IMPL(nullptr) Model *sphereModel;
-	IMPL(nullptr) Model *cylinderModel;
-	IMPL(nullptr) Model *coneModel;
-	IMPL(nullptr) Model *arrowModel;
-	IMPL(nullptr) Model *torusModel;
-	IMPL(nullptr) Model *hamerModel;
+	IMPL() std::shared_ptr<Model> triangleModel;
+	IMPL() std::shared_ptr<Model> cubeModel;
+	IMPL() std::shared_ptr<Model> sphereModel;
+	IMPL() std::shared_ptr<Model> cylinderModel;
+	IMPL() std::shared_ptr<Model> coneModel;
+	IMPL() std::shared_ptr<Model> arrowModel;
+	IMPL() std::shared_ptr<Model> torusModel;
+	IMPL() std::shared_ptr<Model> hamerModel;
 
-	extern std::vector<Model*> basicModels;
+	IMPL() std::vector<std::shared_ptr<Model>> basicModels;
 
-	Model *createModel(const std::string &filename);
+	std::shared_ptr<Model> getModel(const std::string &filename);
 	void initModel();
 }

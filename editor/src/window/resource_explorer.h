@@ -32,7 +32,9 @@ struct ResourceExplorerFileListItem
 	{
 		FileTypeFile,
 		FileTypeText,
-		FileTypeImage
+		FileTypeImage,
+		FileTypeModel,
+		FileTypeScene
 	};
 	FileType file_type = FileTypeFile;
 

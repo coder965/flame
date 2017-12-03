@@ -38,10 +38,6 @@ int main(int argc, char** argv)
 					if (w)
 						windows.push_back(std::move(std::unique_ptr<Window>(w)));
 				}
-				else if (n->name == "object_creation_setting")
-					ocs.load(n.get());
-				else if (n->name == "terrain_creation_setting")
-					tcs.load(n.get());
 			}
 		}
 	}
@@ -126,16 +122,6 @@ int main(int argc, char** argv)
 				w->save(n);
 				at.add(n);
 			}
-			{
-				auto n = new tke::AttributeTreeNode("object_creation_setting");
-				ocs.save(n);
-				at.add(n);
-			}
-			{
-				auto n = new tke::AttributeTreeNode("terrain_creation_setting");
-				tcs.save(n);
-				at.add(n);
-			}
 			if (SelectObject)
 			{
 				auto n = new tke::AttributeTreeNode("select");
@@ -149,96 +135,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-void ObjectCreationSetting::load(tke::AttributeTreeNode *n)
-{
-	for (auto &a : n->attributes)
-	{
-		if (a->name == "modelIndex")
-			a->get(&modelIndex);
-		else if (a->name == "use_camera_position")
-			a->get(&use_camera_position);
-		else if (a->name == "use_camera_target_position")
-			a->get(&use_camera_target_position);
-		else if (a->name == "coord")
-			a->get(&coord);
-		else if (a->name == "euler")
-			a->get(&euler);
-		else if (a->name == "scale")
-			a->get(&scale);
-		else if (a->name == "physxType")
-			a->get(&physxType);
-	}
-}
-
-void ObjectCreationSetting::save(tke::AttributeTreeNode *n)
-{
-	n->addAttribute("modelIndex", &modelIndex);
-	n->addAttribute("use_camera_position", &use_camera_position);
-	n->addAttribute("use_camera_target_position", &use_camera_target_position);
-	n->addAttribute("coord", &coord);
-	n->addAttribute("euler", &euler);
-	n->addAttribute("scale", &scale);
-	n->addAttribute("physxType", &physxType);
-}
-
-ObjectCreationSetting ocs;
-
-void TerrainCreationSetting::load(tke::AttributeTreeNode *n)
-{
-	for (auto &a : n->attributes)
-	{
-		if (a->name == "coord")
-			a->get(&coord);
-		else if (a->name == "heightMapIndex")
-			a->get(&heightMapIndex);
-		else if (a->name == "blendMapIndex")
-			a->get(&blendMapIndex);
-		else if (a->name == "colorMap0Index")
-			a->get(&colorMap0Index);
-		else if (a->name == "colorMap1Index")
-			a->get(&colorMap1Index);
-		else if (a->name == "colorMap2Index")
-			a->get(&colorMap2Index);
-		else if (a->name == "colorMap3Index")
-			a->get(&colorMap3Index);
-		else if (a->name == "height")
-			a->get(&height);
-		else if (a->name == "usePhysx")
-			a->get(&usePhysx);
-	}
-}
-
-void TerrainCreationSetting::save(tke::AttributeTreeNode *n)
-{
-	n->addAttribute("coord", &coord);
-	n->addAttribute("heightMapIndex", &heightMapIndex);
-	n->addAttribute("blendMapIndex", &blendMapIndex);
-	n->addAttribute("colorMap0Index", &colorMap0Index);
-	n->addAttribute("colorMap1Index", &colorMap1Index);
-	n->addAttribute("colorMap2Index", &colorMap2Index);
-	n->addAttribute("colorMap3Index", &colorMap3Index);
-	n->addAttribute("height", &height);
-	n->addAttribute("usePhysx", &usePhysx);
-}
-
-TerrainCreationSetting tcs;
-
-void WaterCreationSetting::load(tke::AttributeTreeNode *n)
-{
-	for (auto &a : n->attributes)
-	{
-		if (a->name == "coord")
-			a->get(&coord);
-		else if (a->name == "height")
-			a->get(&height);
-	}
-}
-
-void WaterCreationSetting::save(tke::AttributeTreeNode *n)
-{
-	n->addAttribute("coord", &coord);
-	n->addAttribute("height", &height);
-}
-
-WaterCreationSetting wcs;

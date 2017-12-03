@@ -159,6 +159,8 @@ namespace tke
 
 	bool isTextFile(const std::string &ext);
 	bool isImageFile(const std::string &ext);
+	bool isModelFile(const std::string &ext);
+	bool isSceneFile(const std::string &ext);
 
 	struct Variable;
 	struct Enum;

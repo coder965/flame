@@ -244,14 +244,15 @@ namespace tke
 			if (s) return s;
 		}
 
-		std::unique_ptr<ImageData> d(std::move(createImageData(filename)));
-		assert(d.get());
+		auto image_data = createImageData(filename);
+		if (!image_data)
+			return nullptr;
 
 		VkFormat _format = VK_FORMAT_UNDEFINED;
-		switch (d->channel)
+		switch (image_data->channel)
 		{
 		case 1:
-			switch (d->byte_per_pixel)
+			switch (image_data->byte_per_pixel)
 			{
 			case 1:
 				_format = VK_FORMAT_R8_UNORM;
@@ -262,7 +263,7 @@ namespace tke
 			}
 			break;
 		case 4:
-			switch (d->byte_per_pixel)
+			switch (image_data->byte_per_pixel)
 			{
 			case 4:
 				if (sRGB)
@@ -274,22 +275,23 @@ namespace tke
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
-		auto i = std::make_shared<Image>(d->levels[0].cx, d->levels[0].cy, _format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, d->levels.size(), 1, false);
-		for (int l = 0; l < d->levels.size(); l++)
+		auto i = std::make_shared<Image>(image_data->levels[0].cx, image_data->levels[0].cy, 
+			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_data->levels.size(), 1, false);
+		for (int l = 0; l < image_data->levels.size(); l++)
 		{
-			i->fillData(l, d->levels[l].v, d->levels[l].size);
-			i->levels[l].pitch = d->levels[l].pitch;
+			i->fillData(l, image_data->levels[l].v.get(), image_data->levels[l].size);
+			i->levels[l].pitch = image_data->levels[l].pitch;
 		}
 		i->filename = filename;
-		i->byte_per_pixel = d->byte_per_pixel;
-		i->sRGB = sRGB || d->sRGB;
+		i->byte_per_pixel = image_data->byte_per_pixel;
+		i->sRGB = sRGB || image_data->sRGB;
 
 		if (saveData)
 		{
-			for (int l = 0; l < d->levels.size(); l++)
+			for (int l = 0; l < image_data->levels.size(); l++)
 			{
-				i->levels[l].v = d->levels[l].v;
-				d->levels[l].v = nullptr;
+				i->levels[l].v = std::move(image_data->levels[l].v);
+				image_data->levels[l].v = nullptr;
 			}
 		}
 

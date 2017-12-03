@@ -1,3 +1,5 @@
+#include <map>
+
 #include "scene.h"
 #include "../math/math.h"
 #include "../core.h"
@@ -178,7 +180,7 @@ namespace tke
 		mtx.lock();
 
 		// since object can move to somewhere first, we create physics component here
-		if (((int)o->physics_type & (int)ObjectPhysicsType::static_r) || ((int)o->physics_type & (int)ObjectPhysicsType::dynamic))
+		if (o->physics_type != 0)
 		{
 			if (m->rigidbodies.size() > 0)
 			{
@@ -207,7 +209,7 @@ namespace tke
 						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
 						physx::PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2]))));
 					rigTrans = objTrans * rigTrans;
-					auto actor = (((int)o->physics_type & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
+					auto actor = ((o->physics_type & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
 						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
 
 					for (auto &s : r->shapes)
@@ -299,7 +301,7 @@ namespace tke
 			//		}
 		}
 
-		if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
+		if (o->physics_type & (int)ObjectPhysicsType::controller)
 		{
 			auto c = m->controller_position * o->getScale() + o->getCoord();
 			physx::PxCapsuleControllerDesc capsuleDesc;
@@ -511,7 +513,7 @@ namespace tke
 		{
 			for (auto &o : objects) // set controller coord
 			{
-				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
+				if (o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					glm::vec3 e, c;
 					o->move(o->getEuler().x, c, e);
@@ -529,7 +531,7 @@ namespace tke
 			pxScene->fetchResults(true);
 			for (auto &o : objects)
 			{
-				if ((int)o->physics_type & (int)ObjectPhysicsType::dynamic)
+				if (o->physics_type & (int)ObjectPhysicsType::dynamic)
 				{
 					auto pModel = o->model;
 
@@ -594,7 +596,7 @@ namespace tke
 					}
 				}
 
-				if ((int)o->physics_type & (int)ObjectPhysicsType::controller)
+				if (o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					auto p = o->pxController->getPosition();
 					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->getScale();
@@ -1034,11 +1036,23 @@ namespace tke
 				{ 1.f, 1.f, 1.f, 1.f }
 			};
 			cb_shadow->beginRenderPass(renderPass_depthC_image32fC, fb_esm[i].get(), clearValues);
+
+			{
+				VkBuffer buffers[] = {
+					vertexStatBuffer->v,
+					vertexAnimBuffer->v
+				};
+				VkDeviceSize offsets[] = {
+					0,
+					1
+				};
+				cb_shadow->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
+			}
+			cb_shadow->bindIndexBuffer(indexBuffer);
+
 			// static
 			if (staticObjects.size() > 0)
 			{
-				cb_shadow->bindVertexBuffer(staticVertexBuffer);
-				cb_shadow->bindIndexBuffer(staticIndexBuffer);
 				cb_shadow->bindPipeline(esmPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esm->v,
@@ -1050,14 +1064,12 @@ namespace tke
 					auto o = staticObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-						cb_shadow->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						cb_shadow->drawModel(m.get(), gId, 1, (i << 28) + (oId << 8) + gId);
 				}
 			}
 			// animated
 			if (animatedObjects.size() > 0)
 			{
-				cb_shadow->bindVertexBuffer(animatedVertexBuffer);
-				cb_shadow->bindIndexBuffer(animatedIndexBuffer);
 				cb_shadow->bindPipeline(esmAnimPipeline);
 				VkDescriptorSet sets[] = {
 					ds_esmAnim->v,
@@ -1070,7 +1082,7 @@ namespace tke
 					auto o = animatedObjects[oId];
 					auto m = o->model;
 					for (int gId = 0; gId < m->geometries.size(); gId++)
-						cb_shadow->drawModel(m, gId, 1, (i << 28) + (oId << 8) + gId);
+						cb_shadow->drawModel(m.get(), gId, 1, (i << 28) + (oId << 8) + gId);
 				}
 			}
 			cb_shadow->endRenderPass();
@@ -1083,12 +1095,23 @@ namespace tke
 
 		cb_deferred->beginRenderPass(sceneRenderPass, fb);
 
+		{
+			VkBuffer buffers[] = {
+				vertexStatBuffer->v,
+				vertexAnimBuffer->v
+			};
+			VkDeviceSize offsets[] = {
+				0,
+				1
+			};
+			cb_shadow->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
+		}
+		cb_shadow->bindIndexBuffer(indexBuffer);
+
 		// mrt
 		// static
 		if (staticIndirectCount > 0)
 		{
-			cb_deferred->bindVertexBuffer(staticVertexBuffer);
-			cb_deferred->bindIndexBuffer(staticIndexBuffer);
 			cb_deferred->bindPipeline(mrtPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
@@ -1100,8 +1123,6 @@ namespace tke
 		// animated
 		if (animatedIndirectCount)
 		{
-			cb_deferred->bindVertexBuffer(animatedVertexBuffer);
-			cb_deferred->bindIndexBuffer(animatedIndexBuffer);
 			cb_deferred->bindPipeline(mrtAnimPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
@@ -1159,12 +1180,50 @@ namespace tke
 		needUpdateSky = true;
 	}
 
-	void Scene::load(const std::string &_filename)
+	void Scene::save(const std::string &filename)
 	{
-		filename = std::experimental::filesystem::path(_filename).string();
+		tke::AttributeTree at("scene");
+		at.addAttributes(this, b);
+		for (auto &o : objects)
+		{
+			auto n = new AttributeTreeNode("object");
+			o->getCoord();
+			o->getEuler();
+			o->getScale();
+			n->addAttributes(o.get(), o->b);
+			at.add(n);
+		}
+		if (terrain)
+		{
+			auto n = new AttributeTreeNode("terrain");
+			terrain->getCoord();
+			terrain->getEuler();
+			terrain->getScale();
+			n->addAttributes(terrain.get(), terrain->b);
+			at.add(n);
+		}
+		at.saveXML(filename);
+	}
+
+	std::map<unsigned int, std::weak_ptr<Scene>> _scenes;
+	std::shared_ptr<Scene> getScene(const std::string &filename)
+	{
+		auto hash = HASH(filename.c_str());
+		auto it = _scenes.find(hash);
+		if (it != _scenes.end())
+		{
+			auto s = it->second.lock();
+			if (s) return s;
+		}
+
+		std::experimental::filesystem::path path(filename);
+		if (std::experimental::filesystem::exists(filename))
+			return nullptr;
+
+		auto s = std::make_shared<Scene>();
 
 		tke::AttributeTree at("scene", filename);
-		at.obtainFromAttributes(this, b);
+		at.obtainFromAttributes(s.get(), s->b);
 		for (auto &c : at.children)
 		{
 			if (c->name == "object")
@@ -1173,12 +1232,12 @@ namespace tke
 				c->obtainFromAttributes(o, o->b);
 				o->model = getModel(o->model_filename);
 				if (o->model && o->model->animated)
-					o->animationComponent = std::make_unique<AnimationComponent>(o->model);
+					o->animationComponent = std::make_unique<AnimationComponent>(o->model.get());
 				o->needUpdateAxis = true;
 				o->needUpdateQuat = true;
 				o->needUpdateMat = true;
 				o->changed = true;
-				addObject(o);
+				s->addObject(o);
 			}
 			else if (c->name == "light")
 			{
@@ -1203,34 +1262,12 @@ namespace tke
 				t->needUpdateQuat = true;
 				t->needUpdateMat = true;
 				t->changed = true;
-				addTerrain(t);
+				s->addTerrain(t);
 			}
 		}
-	}
 
-	void Scene::save(const std::string &filename)
-	{
-		tke::AttributeTree at("scene");
-		at.addAttributes(this, b);
-		for (auto &o : objects)
-		{
-			auto n = new AttributeTreeNode("object");
-			o->getCoord();
-			o->getEuler();
-			o->getScale();
-			n->addAttributes(o.get(), o->b);
-			at.add(n);
-		}
-		if (terrain)
-		{
-			auto n = new AttributeTreeNode("terrain");
-			terrain->getCoord();
-			terrain->getEuler();
-			terrain->getScale();
-			n->addAttributes(terrain.get(), terrain->b);
-			at.add(n);
-		}
-		at.saveXML(filename);
+		_scenes[hash] = s;
+		return s;
 	}
 
 	void initScene()
@@ -1285,7 +1322,7 @@ namespace tke
 			renderPass_image16, 0, true);
 		mrtPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
-			.vertex_input(&vertexInputState)
+			.vertex_input(&vertexStatInputState)
 			.depth_test(true)
 			.depth_write(true)
 			.addBlendAttachmentState(false)
@@ -1299,7 +1336,7 @@ namespace tke
 			sceneRenderPass, 0);
 		mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(-1).cy(-1)
-			.vertex_input(&vertexAnimatedInputState)
+			.vertex_input(&vertexAnimInputState)
 			.depth_test(true)
 			.depth_write(true)
 			.addBlendAttachmentState(false)
@@ -1345,7 +1382,7 @@ namespace tke
 			sceneRenderPass, 0);
 		esmPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(2048).cy(2048)
-			.vertex_input(&vertexInputState)
+			.vertex_input(&vertexStatInputState)
 			.depth_test(true)
 			.depth_write(true)
 			.addShader(enginePath + "shader/esm/esm.vert", {})
@@ -1357,7 +1394,7 @@ namespace tke
 			renderPass_depthC_image8C, 0);
 		esmAnimPipeline = new Pipeline(PipelineCreateInfo()
 			.cx(2048).cy(2048)
-			.vertex_input(&vertexAnimatedInputState)
+			.vertex_input(&vertexAnimInputState)
 			.depth_test(true)
 			.depth_write(true)
 			.addShader(enginePath + "shader/esm/esm.vert", {"ANIM"})

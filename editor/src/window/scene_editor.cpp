@@ -30,7 +30,7 @@ Window *SceneEditorClass::load(tke::AttributeTreeNode *n)
 
 SceneEditorClass sceneEditorClass;
 
-SceneEditor::SceneEditor(tke::Scene *_scene)
+SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	:Window(&sceneEditorClass), scene(_scene)
 {
 	renderFinished = tke::createEvent();
@@ -84,18 +84,15 @@ SceneEditor::~SceneEditor()
 void draw_pickup_frame(tke::CommandBuffer *cb, void *user_data)
 {
 	auto scene = (tke::Scene*)user_data;
-	std::vector<VkWriteDescriptorSet> writes;
 	for (int i = 0; i < scene->objects.size(); i++)
 	{
 		auto object = scene->objects[i].get();
 		auto model = object->model;
 		auto animated = model->animated;
-		cb->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
-		cb->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
 		cb->bindPipeline(animated ? tke::pipeline_plain_anim : tke::pipeline_plain);
 		if (animated)
 		{
-			writes.push_back(tke::pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, object->animationComponent->boneMatrixBuffer));
+			tke::updateDescriptorSets(1, &tke::pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, object->animationComponent->boneMatrixBuffer));
 			cb->bindDescriptorSet();
 		}
 		struct
@@ -108,9 +105,8 @@ void draw_pickup_frame(tke::CommandBuffer *cb, void *user_data)
 		data.modelview = scene->camera.getMatInv() * object->getMat();
 		data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-		cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+		cb->drawModel(model.get());
 	}
-	tke::updateDescriptorSets(writes.size(), writes.data());
 }
 
 void SceneEditor::show()
@@ -152,81 +148,103 @@ void SceneEditor::show()
 		ImGui::OpenPopup("Create Water");
 	if (ImGui::BeginPopupModal("Create Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		if (ocs.modelIndex >= tke::models.size())
-			ocs.modelIndex = 0;
-		if (ImGui::Combo("Model", &ocs.modelIndex, [](void *data, int idx, const char **out_text) {
-			*out_text = tke::models[idx]->filename.c_str();
-			return true;
-		}, nullptr, tke::models.size()));
-
-		ImGui::Checkbox("Use Camera Position", &ocs.use_camera_position);
-		if (ocs.use_camera_position)
-			ImGui::Checkbox("Use Camera Target Position", &ocs.use_camera_target_position);
-		for (int i = 0; i < 3; i++)
+		static bool basicModel = false;
+		static int model_index = 0;
+		static char model_filename[260];
+		ImGui::Checkbox("Basic Model", &basicModel);
+		if (basicModel)
 		{
-			if (!ocs.use_camera_position)
-			{
-				char *strs[] = {"CoordX", "CoordY", "CoordZ"};
-				ImGui::DragFloat(strs[i], &ocs.coord[i], 0.5f);
-			}
+			if (ImGui::Combo("##Model", &model_index, [](void *data, int idx, const char **out_text) {
+				*out_text = tke::basicModels[idx]->filename.c_str();
+				return true;
+			}, nullptr, tke::basicModels.size()));
+		}
+		else
+			ImGui::InputText("Filename", model_filename, TK_ARRAYSIZE(model_filename));
+
+		static bool use_camera_position = false;
+		static bool use_camera_target_position = false;
+		static glm::vec3 coord;
+		static glm::vec3 euler;
+		static glm::vec3 scale;
+		if (ImGui::TreeNode("Transform"))
+		{
+			ImGui::Checkbox("Use Camera Position", &use_camera_position);
+			if (use_camera_position)
+				ImGui::Checkbox("Use Camera Target Position", &use_camera_target_position);
+			if (!use_camera_position)
+				ImGui::DragFloat3("coord", (float*)&coord[0], 0.5f);
 			else
 			{
 				char *strs[] = {"%f CoordX", "%f CoordY", "%f CoordZ"};
-				if (!ocs.use_camera_target_position)
-					ImGui::Text(strs[i], scene->camera.getCoord()[i]);
+				if (!use_camera_target_position)
+				{
+					auto c = scene->camera.getCoord();
+					ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
+				}
 				else
-					ImGui::Text(strs[i], scene->camera.target[i]);
+				{
+					auto c = scene->camera.target;
+					ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
+				}
 			}
+
+			ImGui::DragFloat3("euler", (float*)&euler[0], 0.5f);
+			ImGui::DragFloat3("scale", (float*)&scale[0], 0.5f);
+
+			ImGui::TreePop();
 		}
 
-		for (int i = 0; i < 3; i++)
+		static bool physx_enable = false;
+		static bool physx_dynamic = false;
+		static bool physx_use_controller = false;
+		if (ImGui::TreeNode("Physx"))
 		{
-			char *strs0[] = {"EulerX", "EulerY", "EulerZ"};
-			ImGui::DragFloat(strs0[i], &ocs.euler[i], 0.5f);
-		}
+			ImGui::Checkbox("enable", &physx_enable);
+			if (physx_enable)
+			{
+				ImGui::Checkbox("dynamic", &physx_dynamic);
+				ImGui::Checkbox("use controller", &physx_use_controller);
+			}
 
-		for (int i = 0; i < 3; i++)
-		{
-			char *strs0[] = {"ScaleX", "ScaleY", "ScaleZ"};
-			ImGui::DragFloat(strs0[i], &ocs.scale[i], 0.5f);
+			ImGui::TreePop();
 		}
-
-		static const char *physxTypeNames[] = {
-			"Null",
-			"Static",
-			"Dynamic"
-		};
-		ImGui::Combo("Physx Type", &ocs.physxType, physxTypeNames, TK_ARRAYSIZE(physxTypeNames));
-		static bool use_controller;
-		if (ocs.physxType != 0)
-			ImGui::Checkbox("Use Controller", &use_controller);
 
 		if (ImGui::Button("Create"))
 		{
-			auto _physxType = tke::ObjectPhysicsType::null;
-			if (ocs.physxType != 0)
-			{
-				_physxType = tke::ObjectPhysicsType(1 << (ocs.physxType - 1));
-				if (use_controller)
-					_physxType = tke::ObjectPhysicsType((int)_physxType | (int)tke::ObjectPhysicsType::controller);
-			}
-			auto o = new tke::Object(tke::models[ocs.modelIndex].get(), _physxType);
+			unsigned int _physxType = 0;
+			if (physx_enable)
+				_physxType |= (int)tke::ObjectPhysicsType::enable;
+			if (physx_dynamic)
+				_physxType |= (int)tke::ObjectPhysicsType::dynamic;
+			if (physx_use_controller)
+				_physxType |= (int)tke::ObjectPhysicsType::controller;
 
-			glm::vec3 _coord;
-			if (ocs.use_camera_position)
-			{
-				if (ocs.use_camera_target_position)
-					_coord = scene->camera.target;
-				else
-					_coord = scene->camera.getCoord();
-			}
+			std::shared_ptr<tke::Model> m;
+			if (basicModel)
+				m = tke::basicModels[model_index];
 			else
-				_coord = ocs.coord;
-			o->setCoord(_coord);
-			o->setEuler(ocs.euler);
-			o->setScale(ocs.scale);
+				m = tke::getModel(model_filename);
+			if (m)
+			{
+				auto o = new tke::Object(m, _physxType);
 
-			scene->addObject(o);
+				glm::vec3 _coord;
+				if (use_camera_position)
+				{
+					if (use_camera_target_position)
+						_coord = scene->camera.target;
+					else
+						_coord = scene->camera.getCoord();
+				}
+				else
+					_coord = coord;
+				o->setCoord(_coord);
+				o->setEuler(euler);
+				o->setScale(scale);
+
+				scene->addObject(o);
+			}
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Close"))
@@ -301,20 +319,20 @@ void SceneEditor::show()
 	}
 	if (ImGui::BeginPopupModal("Create Water", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		for (int i = 0; i < 3; i++)
-		{
-			char *strs[] = {"CoordX", "CoordY", "CoordZ"};
-			ImGui::DragFloat(strs[i], &wcs.coord[i], 0.5f);
-		}
-		ImGui::DragFloat("Height", &wcs.height);
-		if (ImGui::Button("Create"))
-		{
-			auto w = new tke::Water;
-			w->setCoord(wcs.coord);
-			w->height = wcs.height;
-			scene->addWater(w);
-		}
-		ImGui::SameLine();
+		//for (int i = 0; i < 3; i++)
+		//{
+		//	char *strs[] = {"CoordX", "CoordY", "CoordZ"};
+		//	ImGui::DragFloat(strs[i], &wcs.coord[i], 0.5f);
+		//}
+		//ImGui::DragFloat("Height", &wcs.height);
+		//if (ImGui::Button("Create"))
+		//{
+		//	auto w = new tke::Water;
+		//	w->setCoord(wcs.coord);
+		//	w->height = wcs.height;
+		//	scene->addWater(w);
+		//}
+		//ImGui::SameLine();
 		if (ImGui::Button("Close"))
 			ImGui::CloseCurrentPopup();
 
@@ -433,7 +451,7 @@ void SceneEditor::show()
 				auto y = tke::mouseY - image_pos.y;
 				if (!transformerTool->leftDown(x, y))
 				{
-					auto index = tke::pickUp(x, y, draw_pickup_frame, scene);
+					auto index = tke::pickUp(x, y, draw_pickup_frame, scene.get());
 					if (index == 0)
 						selectedItem.reset();
 					else
@@ -696,8 +714,18 @@ void SceneEditor::show()
 
 			if (showSelectedWireframe)
 			{
-				cb_wireframe->bindVertexBuffer(animated ? tke::animatedVertexBuffer : tke::staticVertexBuffer);
-				cb_wireframe->bindIndexBuffer(animated ? tke::animatedIndexBuffer : tke::staticIndexBuffer);
+				{
+					VkBuffer buffers[] = {
+						tke::vertexStatBuffer->v,
+						tke::vertexAnimBuffer->v
+					};
+					VkDeviceSize offsets[] = {
+						0,
+						1
+					};
+					cb_wireframe->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
+				}
+				cb_wireframe->bindIndexBuffer(tke::indexBuffer);
 				cb_wireframe->bindPipeline(animated ? tke::pipeline_wireframe_anim : tke::pipeline_wireframe);
 				if (animated)
 				{
@@ -708,7 +736,7 @@ void SceneEditor::show()
 				pc.modelview = scene->camera.getMatInv() * obj->getMat();
 				pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 				cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-				cb_wireframe->drawModel(model);
+				cb_wireframe->drawModel(model.get());
 			}
 
 			cb_wireframe->endRenderPass();

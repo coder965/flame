@@ -213,9 +213,9 @@ namespace tke
 		std::shared_ptr<Framebuffer> createFramebuffer(Image *dst);
 		void show(Framebuffer *fb, VkEvent signalEvent);
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
-		void load(const std::string &filename);
 		void save(const std::string &filename);
 	};
 
+	std::shared_ptr<Scene> getScene(const std::string &filename);
 	void initScene();
 }

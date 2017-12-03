@@ -44,24 +44,17 @@ namespace tke
 		std::vector<BoneMotion*> motions;
 	};
 
-	struct AnimationBinding;
-	struct Model;
 	struct Animation
 	{
-		std::string name;
-		std::string comment;
 		std::string filename;
-		std::string filepath;
 		std::vector<std::unique_ptr<BoneMotion>> motions;
-		
-		AnimationBinding *bindTo(Model *m);
 	};
 
-	Animation *createAnimation(const std::string &filename);
+	std::shared_ptr<Animation> getAnimation(const std::string &filename);
 
 	struct AnimationBinding
 	{
-		Animation *animation;
+		std::shared_ptr<Animation> animation;
 		int frameTotal;
 		std::vector<std::unique_ptr<BoneMotionTrack>> tracks;
 	};

@@ -64,54 +64,6 @@ namespace tke
 	IMPL() glm::mat4 matPerspectiveInv;
 
 	IMPL(nullptr) StagingBuffer *stagingBuffer;
-	
-	IMPL(true) bool needUpdateVertexBuffer;
-
-	IMPL() std::vector<std::unique_ptr<Animation>> animations;
-	inline Animation *getAnimation(const std::string &_filename)
-	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		for (auto &a : animations)
-		{
-			if (a->filename == filename)
-				return a.get();
-		}
-		return nullptr;
-	}
-
-	IMPL() std::vector<std::unique_ptr<Model>> models;
-	inline Model *getModel(const std::string &_filename)
-	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		for (auto &m : models)
-		{
-			if (m->filename == filename)
-				return m.get();
-		}
-		return nullptr;
-	}
-
-	IMPL() std::vector<std::unique_ptr<Scene>> scenes;
-	inline void addScene(Scene *s)
-	{
-		scenes.push_back(std::move(std::unique_ptr<Scene>(s)));
-	}
-	inline Scene *getScene(const std::string &_filename)
-	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		for (auto &s : scenes)
-		{
-			if (s->filename == filename)
-				return s.get();
-		}
-		return nullptr;
-	}
-
-	IMPL(nullptr) VertexBuffer *staticVertexBuffer;
-	IMPL(nullptr) IndexBuffer *staticIndexBuffer;
-
-	IMPL(nullptr) VertexBuffer *animatedVertexBuffer;
-	IMPL(nullptr) IndexBuffer *animatedIndexBuffer;
 
 	IMPL(nullptr) UniformBuffer *constantBuffer;
 
@@ -150,6 +102,7 @@ namespace tke
 		WindowStyleResize = 1 << 1
 	};
 
+	// must call in main thread
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int window_style, bool only_2d = false);
 
 	IMPL() HWND hWnd;
@@ -189,9 +142,16 @@ namespace tke
 	IMPL(nullptr) PF_EVENT0 onRender;
 	IMPL(nullptr) PF_EVENT0 onDestroy;
 
-	// must call main thread
+	enum EventType
+	{
+		EventTypeEvent,
+		EventTypeOnlyOne
+	};
+	void addBeforeFrameEvent(const std::function<void()>&, int id = -1, EventType event_type = EventTypeEvent);
+
+	// must call in main thread
 	void beginFrame(bool clearBackground);
-	// must call main thread
+	// must call in main thread
 	void endFrame();
 
 	void run();

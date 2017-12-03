@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #define PITCH(x) (x % 4 == 0 ? x : 4 - x % 4 + x)
 
@@ -24,7 +25,7 @@ namespace tke
 		size_t cy = 0;
 		size_t pitch = 0;
 		size_t size = 0;
-		unsigned char *v = nullptr;
+		std::unique_ptr<unsigned char[]> v;
 	};
 
 	struct ImageData
@@ -38,9 +39,8 @@ namespace tke
 		bool sRGB = false;
 
 		ImageData();
-		~ImageData();
 	};
 
-	ImageData *createImageData(const std::string &filename);
+	std::shared_ptr<ImageData> createImageData(const std::string &filename);
 	void saveImageFile(const std::string &filename, unsigned char *data, int cx, int cy, int byte_per_pixel);
 }

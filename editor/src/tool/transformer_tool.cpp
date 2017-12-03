@@ -22,11 +22,11 @@ static void draw(tke::CommandBuffer *cb, void *user_data)
 	dir = glm::normalize(dir);
 	auto coord = currentCamera->getCoord() + dir * 5.f;
 
-	tke::Model *model = currentTransformerTool->mode == TransformerTool::ModeMove ? tke::arrowModel : 
+	auto model = currentTransformerTool->mode == TransformerTool::ModeMove ? tke::arrowModel : 
 		(currentTransformerTool->mode == TransformerTool::ModeRotate ? tke::torusModel : tke::hamerModel);
 
-	cb->bindVertexBuffer(tke::staticVertexBuffer);
-	cb->bindIndexBuffer(tke::staticIndexBuffer);
+	cb->bindVertexBuffer(tke::vertexStatBuffer);
+	cb->bindIndexBuffer(tke::indexBuffer);
 	cb->bindPipeline(currentDrawPolicy == 0 ? tke::pipeline_headlight : tke::pipeline_plain);
 	cb->bindDescriptorSet();
 
@@ -41,17 +41,17 @@ static void draw(tke::CommandBuffer *cb, void *user_data)
 	data.modelview = currentCamera->getMatInv() * glm::translate(coord);
 	data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
 	cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-	cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+	cb->drawModel(model.get());
 
 	data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
 	data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
 	cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-	cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+	cb->drawModel(model.get());
 
 	data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
 	data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
 	cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-	cb->drawIndex(model->indices.size(), model->indiceBase, model->vertexBase);
+	cb->drawModel(model.get());
 }
 
 bool TransformerTool::leftDown(int x, int y)

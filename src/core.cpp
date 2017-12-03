@@ -33,6 +33,18 @@ namespace tke
 
 		auto cb = begineOnceCommandBuffer();
 		cb->beginRenderPass(renderPass_depthC_image8C, pickUpFb.get());
+		{
+			VkBuffer buffers[] = {
+				vertexStatBuffer->v,
+				vertexAnimBuffer->v
+			};
+			VkDeviceSize offsets[] = {
+				0,
+				1
+			};
+			cb->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
+		}
+		cb->bindIndexBuffer(indexBuffer);
 		drawCallback(cb, user_data);
 		cb->endRenderPass();
 		endOnceCommandBuffer(cb);
@@ -316,7 +328,7 @@ namespace tke
 
 			pipeline_plain = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexInputState)
+				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
@@ -324,15 +336,15 @@ namespace tke
 				renderPass_depthC_image8, 0);
 			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimatedInputState)
+				.vertex_input(&vertexAnimInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}), 
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
 				renderPass_depthC_image8, 0, true);
 			pipeline_headlight = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexInputState)
+				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
@@ -340,7 +352,7 @@ namespace tke
 				renderPass_depthC_image8, 0);
 			pipeline_tex = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexInputState)
+				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_TEX"})
@@ -348,7 +360,7 @@ namespace tke
 				renderPass_depthC_image8, 0);
 			pipeline_tex_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimatedInputState)
+				.vertex_input(&vertexAnimInputState)
 				.depth_test(true)
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
@@ -356,7 +368,7 @@ namespace tke
 				renderPass_depthC_image8, 0, true);
 			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexInputState)
+				.vertex_input(&vertexStatInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
 				.cullMode(VK_CULL_MODE_NONE)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
@@ -364,7 +376,7 @@ namespace tke
 				renderPass_image8, 0);
 			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimatedInputState)
+				.vertex_input(&vertexAnimInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
 				.cullMode(VK_CULL_MODE_NONE)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
@@ -380,22 +392,9 @@ namespace tke
 				.addShader(enginePath + "shader/plain3d/plain3d_line.frag", {}), 
 				renderPass_image8, 0);
 
-			staticVertexBuffer = new VertexBuffer();
-			staticIndexBuffer = new IndexBuffer();
-
-			animatedVertexBuffer = new VertexBuffer();
-			animatedIndexBuffer = new IndexBuffer();
-
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 
-			globalResource.setBuffer(staticVertexBuffer, "Static.VertexBuffer");
-			globalResource.setBuffer(staticIndexBuffer, "Static.IndexBuffer");
-
-			globalResource.setBuffer(animatedVertexBuffer, "Animated.VertexBuffer");
-			globalResource.setBuffer(animatedIndexBuffer, "Animated.IndexBuffer");
-
 			globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
-			globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
 
 			{
 				ConstantBufferStruct stru;
@@ -429,12 +428,10 @@ namespace tke
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.hInstance = (HINSTANCE)hInst;
-			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->levels[0].cx, iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v);
+			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->levels[0].cx, iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v.get());
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			RegisterClassExA(&wcex);
-
-			delete iconData;
 		}
 
 		unsigned int win32WindowStyle = WS_VISIBLE;
@@ -481,8 +478,37 @@ namespace tke
 		return NoErr;
 	}
 
+	struct _Event
+	{
+		int id;
+		EventType type;
+		std::function<void()> e;
+	};
+	std::vector<_Event> _beforeFrameEvents;
+	void addBeforeFrameEvent(const std::function<void()> &e, int id, EventType event_type)
+	{
+		bool dontAdd = false;
+		if (id != -1 && event_type == EventTypeOnlyOne)
+		{
+			for (auto &e : _beforeFrameEvents)
+			{
+				if (e.id == id)
+					return;
+			}
+		}
+		_beforeFrameEvents.push_back({
+			id,
+			event_type,
+			e
+		});
+	}
+
 	void beginFrame(bool clearBackground)
 	{
+		for (auto &e : _beforeFrameEvents)
+			e.e();
+		_beforeFrameEvents.clear();
+
 		auto res = vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
 		assert(res == VK_SUCCESS);
 
@@ -542,72 +568,6 @@ namespace tke
 			}
 			else
 			{
-				if (!_only_2d)
-				{
-					if (needUpdateVertexBuffer)
-					{
-						std::vector<Vertex> staticVertexs;
-						std::vector<int> staticIndices;
-
-						std::vector<VertexAnimated> animatedVertexs;
-						std::vector<int> animatedIndices;
-
-						for (auto &m : models)
-						{
-							if (!m->animated)
-							{
-								m->vertexBase = staticVertexs.size();
-								m->indiceBase = staticIndices.size();
-
-								for (int i = 0; i < m->positions.size(); i++)
-								{
-									Vertex vertex;
-									vertex.position = i < m->positions.size() ? m->positions[i] : glm::vec3(0.f);
-									vertex.uv = i < m->uvs.size() ? m->uvs[i] : glm::vec2(0.f);
-									vertex.normal = i < m->normals.size() ? m->normals[i] : glm::vec3(0.f);
-									vertex.tangent = i < m->tangents.size() ? m->tangents[i] : glm::vec3(0.f);
-
-									staticVertexs.push_back(vertex);
-								}
-								for (int i = 0; i < m->indices.size(); i++)
-									staticIndices.push_back(m->indices[i]);
-							}
-							else
-							{
-								m->vertexBase = animatedVertexs.size();
-								m->indiceBase = animatedIndices.size();
-
-								for (int i = 0; i < m->positions.size(); i++)
-								{
-									VertexAnimated vertex;
-									vertex.position = i < m->positions.size() ? m->positions[i] : glm::vec3(0.f);
-									vertex.uv = i < m->uvs.size() ? m->uvs[i] : glm::vec2(0.f);
-									vertex.normal = i < m->normals.size() ? m->normals[i] : glm::vec3(0.f);
-									vertex.tangent = i < m->tangents.size() ? m->tangents[i] : glm::vec3(0.f);
-									vertex.boneWeight = i < m->boneWeights.size() ? m->boneWeights[i] : glm::vec4(0.f);
-									vertex.boneID = i < m->boneIDs.size() ? m->boneIDs[i] : glm::vec4(0.f);
-
-									animatedVertexs.push_back(vertex);
-								}
-								for (int i = 0; i < m->indices.size(); i++)
-									animatedIndices.push_back(m->indices[i]);
-							}
-						}
-
-						if (staticVertexs.size() > 0) 
-							staticVertexBuffer->recreate(sizeof(Vertex) * staticVertexs.size(), staticVertexs.data());
-						if (staticIndices.size() > 0) 
-							staticIndexBuffer->recreate(sizeof(int) * staticIndices.size(), staticIndices.data());
-
-						if (animatedVertexs.size() > 0) 
-							animatedVertexBuffer->recreate(sizeof(VertexAnimated) * animatedVertexs.size(), animatedVertexs.data());
-						if (animatedIndices.size() > 0) 
-							animatedIndexBuffer->recreate(sizeof(int) * animatedIndices.size(), animatedIndices.data());
-
-						needUpdateVertexBuffer = false;
-					}
-				}
-
 				mouseDispX = mouseX - mousePrevX;
 				mouseDispY = mouseY - mousePrevY;
 

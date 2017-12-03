@@ -132,6 +132,11 @@ namespace tke
 		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
 	}
 
+	void CommandBuffer::bindVertexBuffer(VkBuffer *b, int count, VkDeviceSize *offsets)
+	{
+		vkCmdBindVertexBuffers(v, 0, count, b, offsets);
+	}
+
 	void CommandBuffer::bindVertexBuffer(OnceVertexBuffer *b)
 	{
 		VkDeviceSize offsets[] = { 0 };
@@ -187,7 +192,7 @@ namespace tke
 	void CommandBuffer::drawModel(Model *m, int gIndex, int instanceCount, int firstInstance)
 	{
 		if (gIndex == -1)
-			drawIndex(m->indices.size(), m->indiceBase, m->vertexBase, instanceCount, firstInstance);
+			drawIndex(m->indice_count, m->indiceBase, m->vertexBase, instanceCount, firstInstance);
 		else
 			drawIndex(m->geometries[gIndex]->indiceCount, m->indiceBase + m->geometries[gIndex]->indiceBase, m->vertexBase, instanceCount, firstInstance);
 	}

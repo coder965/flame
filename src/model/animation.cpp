@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 
 #include "animation.h"
 #include "model.h"
@@ -6,56 +7,6 @@
 
 namespace tke
 {
-	AnimationBinding *Animation::bindTo(Model *m)
-	{
-		auto b = new AnimationBinding;
-		b->animation = this;
-		for (auto &bm : motions)
-		{
-			b->frameTotal = glm::max(b->frameTotal, bm->frame);
-
-			int boneID = -1;
-			for (int iBone = 0; iBone < m->bones.size(); iBone++)
-			{
-				if (bm->name == m->bones[iBone].name)
-				{
-					boneID = iBone;
-					break;
-				}
-			}
-			if (boneID == -1) continue;
-
-			BoneMotionTrack *t = nullptr;
-			for (auto &_t : b->tracks)
-			{
-				if (_t->boneID == boneID)
-				{
-					t = _t.get();
-					break;
-				}
-			}
-			if (!t)
-			{
-				auto ut = std::make_unique<BoneMotionTrack>();
-				t = ut.get();
-				t->boneID = boneID;
-				t->motions.push_back(bm.get());
-				b->tracks.push_back(std::move(ut));
-			}
-			else
-			{
-				std::vector<BoneMotion*>::iterator it;
-				for (it = t->motions.begin(); it != t->motions.end(); it++)
-				{
-					if ((*it)->frame > bm->frame)
-						break;
-				}
-				t->motions.insert(it, bm.get());
-			}
-		}
-		return b;
-	}
-
 	namespace VMD
 	{
 #pragma pack(1)
@@ -84,8 +35,6 @@ namespace tke
 
 			Header header;
 			file.read((char*)&header, sizeof(Header));
-			a->name = japaneseToChinese(header.modelName);
-			a->comment = japaneseToChinese(header.str);
 
 			int count;
 			file & count;
@@ -143,16 +92,21 @@ namespace tke
 		}
 	}
 
-	Animation *createAnimation(const std::string &_filename)
+	std::map<unsigned int, std::weak_ptr<Animation>> _animations;
+	std::shared_ptr<Animation> getAnimation(const std::string &filename)
 	{
-		auto filename = std::experimental::filesystem::path(_filename).string();
-		if (!std::experimental::filesystem::exists(filename))
+		auto hash = HASH(filename.c_str());
+		auto it = _animations.find(hash);
+		if (it != _animations.end())
 		{
-			std::cout << "Animation File Lost:" << filename;
-			return nullptr;
+			auto s = it->second.lock();
+			if (s) return s;
 		}
 
 		std::experimental::filesystem::path path(filename);
+		if (std::experimental::filesystem::exists(filename))
+			return nullptr;
+
 		auto ext = path.extension().string();
 		void(*load_func)(Animation *, const std::string &) = nullptr;
 		if (ext == ".vmd")
@@ -160,19 +114,13 @@ namespace tke
 		else if (ext == ".t3a")
 			load_func = &TKA::load;
 		else
-		{
-			std::cout << "Animation Format Not Support:%s" << ext;
 			return nullptr;
-		}
-		auto a = new Animation;
-		a->filename = path.filename().string();
-		a->filepath = path.parent_path().string();
-		if (a->filepath == "")
-			a->filepath = ".";
-		load_func(a, filename);
 
-		animations.push_back(std::move(std::unique_ptr<Animation>(a)));
+		auto a = std::make_shared<Animation>();
+		a->filename = filename;
+		load_func(a.get(), filename);
 
+		_animations[hash] = a;
 		return a;
 	}
 
