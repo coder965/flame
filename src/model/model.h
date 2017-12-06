@@ -134,8 +134,6 @@ namespace tke
 	IMPL() std::shared_ptr<Model> torusModel;
 	IMPL() std::shared_ptr<Model> hamerModel;
 
-	IMPL() std::vector<std::shared_ptr<Model>> basicModels;
-
 	std::shared_ptr<Model> getModel(const std::string &filename);
 	void initModel();
 }

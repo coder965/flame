@@ -41,6 +41,7 @@
     <ClCompile Include="..\src\render\buffer.cpp" />
     <ClCompile Include="..\src\render\command_buffer.cpp" />
     <ClCompile Include="..\src\render\descriptor.cpp" />
+    <ClCompile Include="..\src\render\display_layer.cpp" />
     <ClCompile Include="..\src\render\framebuffer.cpp" />
     <ClCompile Include="..\src\render\image.cpp" />
     <ClCompile Include="..\src\render\pipeline.cpp" />
@@ -77,6 +78,7 @@
     <ClInclude Include="..\src\render\buffer.h" />
     <ClInclude Include="..\src\render\command_buffer.h" />
     <ClInclude Include="..\src\render\descriptor.h" />
+    <ClInclude Include="..\src\render\display_layer.h" />
     <ClInclude Include="..\src\render\framebuffer.h" />
     <ClInclude Include="..\src\render\image.h" />
     <ClInclude Include="..\src\render\pipeline.h" />

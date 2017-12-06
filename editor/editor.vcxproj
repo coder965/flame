@@ -185,7 +185,6 @@
     <ClInclude Include="src\select.h" />
     <ClInclude Include="src\tool\tool.h" />
     <ClInclude Include="src\tool\transformer_tool.h" />
-    <ClInclude Include="src\window\attribute.h" />
     <ClInclude Include="src\window\dir_selector.h" />
     <ClInclude Include="src\window\scene_editor.h" />
     <ClInclude Include="src\window\resource_explorer.h" />

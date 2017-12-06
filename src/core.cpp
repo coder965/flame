@@ -40,7 +40,7 @@ namespace tke
 			};
 			VkDeviceSize offsets[] = {
 				0,
-				1
+				0
 			};
 			cb->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
 		}
@@ -326,6 +326,8 @@ namespace tke
 			};
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, ARRAYSIZE(views), views);
 
+			initModel();
+
 			pipeline_plain = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexStatInputState)
@@ -366,22 +368,6 @@ namespace tke
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
 				renderPass_depthC_image8, 0, true);
-			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexStatInputState)
-				.polygonMode(VK_POLYGON_MODE_LINE)
-				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}), 
-				renderPass_image8, 0);
-			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimInputState)
-				.polygonMode(VK_POLYGON_MODE_LINE)
-				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
-				renderPass_image8, 0, true);
 			pipeline_lines = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&lineVertexInputState)
@@ -411,7 +397,6 @@ namespace tke
 			}
 
 			initScene();
-			initModel();
 			initPhysics();
 		}
 
@@ -515,12 +500,32 @@ namespace tke
 		beginUi(clearBackground);
 	}
 
+	void FrameCommandBufferList::add(VkCommandBuffer cb, VkEvent e)
+	{
+		cbs.push_back(cb);
+		last_event = e;
+	}
+
+	FrameCommandBufferList *addFrameCommandBufferList()
+	{
+		auto l = new FrameCommandBufferList;
+		frameCbLists.push_back(std::move(std::unique_ptr<FrameCommandBufferList>(l)));
+		return l;
+	}
+
 	void endFrame()
 	{
 		endUi();
-		cbs.push_back(ui_cb->v);
 
-		tke::graphicsQueue.submit(cbs.size(), cbs.data(), window_imageAvailable, 0, frameDone);
+		{
+			std::vector<VkCommandBuffer> cbs;
+			for (auto &l : frameCbLists)
+			{
+				for (auto c : l->cbs)
+					cbs.push_back(c);
+			}
+			tke::graphicsQueue.submit(cbs.size(), cbs.data(), window_imageAvailable, 0, frameDone);
+		}
 		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
@@ -534,8 +539,7 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		graphicsQueue.mtx.unlock();
 
-		cbs.clear();
-		ui_waitEvents.clear();
+		frameCbLists.clear();
 	}
 
 	static unsigned int _lastTime = 0;

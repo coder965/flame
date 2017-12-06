@@ -7,6 +7,7 @@
 namespace tke
 {
 	static Pipeline *pipeline_ui = nullptr;
+	static CommandBuffer *cb;
 
 	static bool need_clear = false;
 
@@ -49,25 +50,33 @@ namespace tke
 			indexBuffer->unmap();
 		}
 
-		ui_cb->reset();
-		ui_cb->begin();
+		cb->reset();
+		cb->begin();
 
-		if (ui_waitEvents.size() > 0)
-			ui_cb->waitEvents(ui_waitEvents.size(), ui_waitEvents.data());
+		std::vector<VkEvent> evs;
+		{
+			for (auto &l : frameCbLists)
+			{
+				if (l->last_event)
+					evs.push_back(l->last_event);
+			}
+			if (!evs.empty())
+				cb->waitEvents(evs.size(), evs.data());
+		}
 
 		VkClearValue clear_value = { bkColor.r, bkColor.g, bkColor.b };
-		ui_cb->beginRenderPass(need_clear ? renderPass_windowC : renderPass_window, 
+		cb->beginRenderPass(need_clear ? renderPass_windowC : renderPass_window,
 			window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
 
-		ui_cb->setViewportAndScissor(window_cx, window_cy);
+		cb->setViewportAndScissor(window_cx, window_cy);
 
-		ui_cb->bindVertexBuffer(vertexBuffer);
-		ui_cb->bindIndexBuffer(indexBuffer, VK_INDEX_TYPE_UINT16);
+		cb->bindVertexBuffer(vertexBuffer);
+		cb->bindIndexBuffer(indexBuffer, VK_INDEX_TYPE_UINT16);
 
-		ui_cb->bindPipeline(pipeline_ui);
-		ui_cb->bindDescriptorSet();
+		cb->bindPipeline(pipeline_ui);
+		cb->bindDescriptorSet();
 
-		ui_cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 		int vtx_offset = 0;
 		int idx_offset = 0;
@@ -84,26 +93,25 @@ namespace tke
 				}
 				else
 				{
-					ui_cb->setScissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
+					cb->setScissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
 						ImMax((int32_t)(pcmd->ClipRect.y), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 						ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
-					ui_cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					cb->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 				}
 				idx_offset += pcmd->ElemCount;
 			}
 			vtx_offset += cmd_list->VtxBuffer.Size;
 		}
 
-		ui_cb->endRenderPass();
+		cb->endRenderPass();
 
-		if (ui_waitEvents.size())
-		{
-			for (auto &e : ui_waitEvents)
-				ui_cb->resetEvent(e);
-		}
+		for (auto &e : evs)
+			cb->resetEvent(e);
 
-		ui_cb->end();
+		cb->end();
+
+		addFrameCommandBufferList()->add(cb->v, 0);
 	}
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
@@ -127,7 +135,7 @@ namespace tke
 				std::uint32_t   col;
 			};
 
-			VkPipelineVertexInputStateCreateInfo vis;
+			static VkPipelineVertexInputStateCreateInfo vis;
 
 			static VkVertexInputBindingDescription bindings = {0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX};
 
@@ -172,9 +180,9 @@ namespace tke
 			updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, 0, fontImage, colorSampler));
 		}
 
-		ui_cb = new CommandBuffer;
-		ui_cb->begin();
-		ui_cb->end();
+		cb = new CommandBuffer;
+		cb->begin();
+		cb->end();
 		
 		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 		io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;

@@ -127,6 +127,7 @@ namespace tke
 	void Camera::rotateByCursor(float x, float y)
 	{
 		addEuler(glm::vec3(-x * 180.f, 0.f, -y * 180.f));
+		lookAtTarget();
 	}
 
 	void Camera::moveByCursor(float x, float y)

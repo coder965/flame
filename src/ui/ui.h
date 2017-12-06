@@ -44,8 +44,6 @@ namespace tke
 	IMPL() bool uiAcceptedMouse;
 	IMPL() bool uiAcceptedKey;
 
-	IMPL() CommandBuffer *ui_cb;
-	IMPL() std::vector<VkEvent> ui_waitEvents;
 	IMPL(glm::vec3(0.69f,0.76f,0.79f)) glm::vec3 bkColor;
 
 	void initUi();

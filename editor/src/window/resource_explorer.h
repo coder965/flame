@@ -13,8 +13,6 @@ struct ResourceExplorerClass : WindowClass
 
 extern ResourceExplorerClass resourceExplorerClass;
 
-void load_resource();
-
 struct ResourceExplorerDirListItem
 {
 	std::string value;

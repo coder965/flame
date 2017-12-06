@@ -88,8 +88,6 @@ namespace tke
 	IMPL(nullptr) Pipeline *pipeline_headlight;
 	IMPL(nullptr) Pipeline *pipeline_tex;
 	IMPL(nullptr) Pipeline *pipeline_tex_anim;
-	IMPL(nullptr) Pipeline *pipeline_wireframe;
-	IMPL(nullptr) Pipeline *pipeline_wireframe_anim;
 	IMPL(nullptr) Pipeline *pipeline_lines;
 
 	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*, void *), void *user_data);
@@ -125,7 +123,6 @@ namespace tke
 	IMPL() std::shared_ptr<Framebuffer> window_framebuffers[2];
 	IMPL() VkSemaphore window_imageAvailable;
 	IMPL() uint32_t window_imageIndex;
-	IMPL() std::vector<VkCommandBuffer> cbs;
 	IMPL() VkFence frameDone;
 	IMPL() uint32_t FPS;
 	IMPL(nullptr) PF_EVENT1 onKeyDown;
@@ -151,6 +148,18 @@ namespace tke
 
 	// must call in main thread
 	void beginFrame(bool clearBackground);
+
+	struct FrameCommandBufferList
+	{
+		std::vector<VkCommandBuffer> cbs;
+		VkEvent last_event = 0;
+
+		void add(VkCommandBuffer cb, VkEvent e);
+	};
+
+	IMPL() std::vector<std::unique_ptr<FrameCommandBufferList>> frameCbLists;
+	FrameCommandBufferList *addFrameCommandBufferList();
+
 	// must call in main thread
 	void endFrame();
 

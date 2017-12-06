@@ -18,6 +18,7 @@ Window *SceneEditorClass::load(tke::AttributeTreeNode *n)
 		auto s = tke::getScene(a->value);
 		if (s)
 		{
+			s->camera.setMode(tke::CameraMode::targeting);
 			auto w = new SceneEditor(s);
 			a = n->firstAttribute("follow");
 			if (a)
@@ -35,32 +36,20 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 {
 	renderFinished = tke::createEvent();
 
-	image = std::make_shared<tke::Image>(tke::resCx, tke::resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	fb_image = tke::getFramebuffer(image.get(), tke::renderPass_image8);
-	tke::addUiImage(image.get());
-
-	fb_scene = scene->createFramebuffer(image.get());
+	fb_scene = scene->createFramebuffer(layer.image.get());
 	scene_renderFinished = tke::createEvent();
 
 	cb_physx = new tke::CommandBuffer();
 	physx_renderFinished = tke::createEvent();
 
-	cb_wireframe = new tke::CommandBuffer();
-	ds_wireframe_anim = new tke::DescriptorSet(tke::pipeline_wireframe_anim);
-	wireframe_renderFinished = tke::createEvent();
+	wireframe_renderer = std::make_unique<tke::WireframeRenderer>();
 
 	VkImageView views[] = {
-		image->getView(),
+		layer.image->getView(),
 		tke::depthImage->getView()
 	};
-	fb_tool = tke::getFramebuffer(image->levels[0].cx, image->levels[0].cy, tke::renderPass_depthC_image8, ARRAYSIZE(views), views);
+	fb_tool = tke::getFramebuffer(layer.image->levels[0].cx, layer.image->levels[0].cy, tke::renderPass_depthC_image8, ARRAYSIZE(views), views);
 	transformerTool = new TransformerTool(fb_tool.get());
-
-	cbs.push_back(scene->cb_shadow->v);
-	cbs.push_back(scene->cb_deferred->v);
-	cbs.push_back(cb_physx->v);
-	cbs.push_back(cb_wireframe->v);
-	cbs.push_back(transformerTool->cb->v);
 }
 
 SceneEditor::~SceneEditor()
@@ -69,14 +58,8 @@ SceneEditor::~SceneEditor()
 
 	tke::destroyEvent(scene_renderFinished);
 
-	tke::removeUiImage(image.get());
-
 	delete cb_physx;
 	tke::destroyEvent(physx_renderFinished);
-
-	delete cb_wireframe;
-	delete ds_wireframe_anim;
-	tke::destroyEvent(wireframe_renderFinished);
 
 	delete transformerTool;
 }
@@ -111,7 +94,7 @@ void draw_pickup_frame(tke::CommandBuffer *cb, void *user_data)
 
 void SceneEditor::show()
 {
-	ImGui::Begin(("Scene - " + scene->name).c_str(), &opened, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin(("Scene - " + scene->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
 
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
@@ -149,24 +132,35 @@ void SceneEditor::show()
 	if (ImGui::BeginPopupModal("Create Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		static bool basicModel = false;
+		static const char *basic_model_names[] = {
+			"[triangle]",
+			"[cube]",
+			"[sphere]",
+			"[cylinder]",
+			"[cone]",
+			"[arrow]",
+			"[torus]",
+			"[hammer]"
+		};
 		static int model_index = 0;
 		static char model_filename[260];
 		ImGui::Checkbox("Basic Model", &basicModel);
 		if (basicModel)
-		{
-			if (ImGui::Combo("##Model", &model_index, [](void *data, int idx, const char **out_text) {
-				*out_text = tke::basicModels[idx]->filename.c_str();
-				return true;
-			}, nullptr, tke::basicModels.size()));
-		}
+			ImGui::Combo("##Model", &model_index, basic_model_names, TK_ARRAYSIZE(basic_model_names));
 		else
-			ImGui::InputText("Filename", model_filename, TK_ARRAYSIZE(model_filename));
+		{
+			ImGui::InputText("##input_Filename", model_filename, TK_ARRAYSIZE(model_filename));
+			ImGui::SameLine();
+			ImGui::Button(ICON_FA_ELLIPSIS_H);
+			ImGui::SameLine();
+			ImGui::Text("Filename");
+		}
 
 		static bool use_camera_position = false;
 		static bool use_camera_target_position = false;
-		static glm::vec3 coord;
-		static glm::vec3 euler;
-		static glm::vec3 scale;
+		static glm::vec3 coord = glm::vec3(0.f);
+		static glm::vec3 euler = glm::vec3(0.f);
+		static glm::vec3 scale = glm::vec3(1.f);
 		if (ImGui::TreeNode("Transform"))
 		{
 			ImGui::Checkbox("Use Camera Position", &use_camera_position);
@@ -220,11 +214,10 @@ void SceneEditor::show()
 			if (physx_use_controller)
 				_physxType |= (int)tke::ObjectPhysicsType::controller;
 
-			std::shared_ptr<tke::Model> m;
 			if (basicModel)
-				m = tke::basicModels[model_index];
-			else
-				m = tke::getModel(model_filename);
+				strcpy(model_filename, basic_model_names[model_index]);
+
+			auto m = tke::getModel(model_filename);
 			if (m)
 			{
 				auto o = new tke::Object(m, _physxType);
@@ -378,6 +371,21 @@ void SceneEditor::show()
 			target = true;
 		ImGui::MenuItem("Follow", "", &follow);
 
+		if (ImGui::BeginMenu("Mode"))
+		{
+			if (ImGui::MenuItem("Free", "", scene->camera.mode == tke::CameraMode::free))
+				scene->camera.setMode(tke::CameraMode::free);
+			if (ImGui::MenuItem("Targeting", "", scene->camera.mode == tke::CameraMode::targeting))
+				scene->camera.setMode(tke::CameraMode::targeting);
+
+			ImGui::EndMenu();
+		}
+
+		{
+			auto c = scene->camera.getCoord();
+			ImGui::Text("%f, %f, %f coord", c.x, c.y, c.z);
+		}
+
 		ImGui::EndMenu();
 	}
 	if (target || follow)
@@ -421,10 +429,10 @@ void SceneEditor::show()
 	}
 
 	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(image->levels[0].cx, image->levels[0].cy);
+	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImTextureID(image->index), image_pos, image_pos + image_size);
+	draw_list->AddImage(ImTextureID(layer.image->index), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
@@ -443,6 +451,8 @@ void SceneEditor::show()
 					transformerTool->mouseMove(tke::mouseDispX, tke::mouseDispY);
 			}
 		}
+		if (tke::mouseScroll != 0)
+			scene->camera.scroll(tke::mouseScroll);
 		if (tke::mouseLeft.justDown)
 		{
 			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
@@ -588,17 +598,21 @@ void SceneEditor::show()
 
 	ImGui::End();
 
+	auto cb_list = tke::addFrameCommandBufferList();
+
 	scene->show(fb_scene.get(), scene_renderFinished);
+	cb_list->add(scene->cb_shadow->v, 0);
+	cb_list->add(scene->cb_deferred->v, scene_renderFinished);
 
 	{ // view physx
 		cb_physx->reset();
 		cb_physx->begin();
 
-		cb_physx->waitEvents(1, &scene_renderFinished);
+		cb_physx->waitEvents(1, &cb_list->last_event);
 
 		if (viewPhysx)
 		{
-			cb_physx->beginRenderPass(tke::renderPass_image8, fb_image.get());
+			cb_physx->beginRenderPass(tke::renderPass_image8, layer.framebuffer.get());
 
 			auto &rb = scene->pxScene->getRenderBuffer();
 
@@ -684,76 +698,24 @@ void SceneEditor::show()
 			cb_physx->endRenderPass();
 		}
 
-		cb_physx->resetEvent(scene_renderFinished);
+		cb_physx->resetEvent(cb_list->last_event);
 		cb_physx->setEvent(physx_renderFinished);
 
 		cb_physx->end();
+
+		cb_list->add(cb_physx->v, physx_renderFinished);
 	}
 
-	{ // draw wireframe
-		cb_wireframe->reset();
-		cb_wireframe->begin();
-
-		cb_wireframe->waitEvents(1, &physx_renderFinished);
-
+	if (showSelectedWireframe)
+	{
 		auto obj = selectedItem.toObject();
 		if (obj)
-		{
-			auto model = obj->model;
-			auto animated = model->animated;
-
-			cb_wireframe->beginRenderPass(tke::renderPass_image8, fb_image.get());
-
-			struct
-			{
-				glm::mat4 modelview;
-				glm::mat4 proj;
-				glm::vec4 color;
-			}pc;
-			pc.proj = tke::matPerspective;
-
-			if (showSelectedWireframe)
-			{
-				{
-					VkBuffer buffers[] = {
-						tke::vertexStatBuffer->v,
-						tke::vertexAnimBuffer->v
-					};
-					VkDeviceSize offsets[] = {
-						0,
-						1
-					};
-					cb_wireframe->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
-				}
-				cb_wireframe->bindIndexBuffer(tke::indexBuffer);
-				cb_wireframe->bindPipeline(animated ? tke::pipeline_wireframe_anim : tke::pipeline_wireframe);
-				if (animated)
-				{
-					if (last_obj != obj)
-						tke::updateDescriptorSets(1, &ds_wireframe_anim->bufferWrite(0, 0, obj->animationComponent->boneMatrixBuffer));
-					cb_wireframe->bindDescriptorSet(&ds_wireframe_anim->v);
-				}
-				pc.modelview = scene->camera.getMatInv() * obj->getMat();
-				pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-				cb_wireframe->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-				cb_wireframe->drawModel(model.get());
-			}
-
-			cb_wireframe->endRenderPass();
-		}
-		last_obj = obj;
-
-		cb_wireframe->resetEvent(physx_renderFinished);
-		cb_wireframe->setEvent(wireframe_renderFinished);
-
-		cb_wireframe->end();
+			wireframe_renderer->render(layer.framebuffer.get(), &scene->camera, cb_list, obj);
 	}
 
 	transformerTool->transformer = selectedItem.toTransformer();
-	transformerTool->show(&scene->camera, wireframe_renderFinished, renderFinished);
-
-	tke::cbs.insert(tke::cbs.begin(), cbs.begin(), cbs.end());
-	tke::ui_waitEvents.push_back(renderFinished);
+	transformerTool->show(&scene->camera, cb_list->last_event, renderFinished);
+	cb_list->add(transformerTool->cb->v, renderFinished);
 }
 
 void SceneEditor::save(tke::AttributeTreeNode *n)

@@ -103,7 +103,6 @@ namespace tke
 
 		std::mutex mtx;
 
-		REFLv std::string name;
 		std::string filename;
 		std::string filepath;
 

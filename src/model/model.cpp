@@ -187,6 +187,26 @@ namespace tke
 		unsigned int dummy;
 	};
 
+	static void _update_material(Material *m, int index)
+	{
+		auto map = (unsigned char*)stagingBuffer->map(0, sizeof(MaterialShaderStruct));
+		MaterialShaderStruct stru;
+		stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
+		stru.specRoughnessCompress = m->spec + (m->roughness << 8);
+		stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
+			((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
+			((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+		memcpy(map, &stru, sizeof(MaterialShaderStruct));
+		stagingBuffer->unmap();
+
+		VkBufferCopy range = {};
+		range.srcOffset = 0;
+		range.dstOffset = sizeof(MaterialShaderStruct) * index;
+		range.size = sizeof(MaterialShaderStruct);
+
+		copyBuffer(stagingBuffer->v, materialBuffer->v, 1, &range);
+	}
+
 	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
 		unsigned char alpha, unsigned char spec, unsigned char roughness,
 		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap)
@@ -220,22 +240,7 @@ namespace tke
 				m->sceneIndex = i;
 				modelMaterials[i] = m;
 
-				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(MaterialShaderStruct));
-				MaterialShaderStruct stru;
-				stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-				stru.specRoughnessCompress = m->spec + (m->roughness << 8);
-				stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-					((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-					((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
-				memcpy(map, &stru, sizeof(MaterialShaderStruct));
-				stagingBuffer->unmap();
-
-				VkBufferCopy range = {};
-				range.srcOffset = 0;
-				range.dstOffset = sizeof(MaterialShaderStruct) * i;
-				range.size = sizeof(MaterialShaderStruct);
-
-				copyBuffer(stagingBuffer->v, materialBuffer->v, 1, &range);
+				_update_material(m.get(), i);
 
 				return m;
 			}
@@ -285,9 +290,9 @@ namespace tke
 		int baseVertex = positions.size();
 
 		positions.insert(positions.end(), {
-			center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f)
+			center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f)
 		});
-		normals.insert(normals.end(), 3, glm::vec3(0.f, 1.f, 0.f));
+		normals.insert(normals.end(), 3, glm::vec3(0.f, 0.f, 1.f));
 		for (int i = 0; i < 3; i++)
 			indices.push_back(baseVertex + i);
 	}
@@ -1799,11 +1804,17 @@ namespace tke
 		vertexStatBuffer->recreate(vss);
 		vertexAnimBuffer->recreate(vas);
 		indexBuffer->recreate(is);
-		StagingBuffer stagingBuffer(vss + vas + is);
 
-		auto vs_map = stagingBuffer.map(0, vss);
-		auto va_map = stagingBuffer.map(vss, vas);
-		auto i_map = stagingBuffer.map(vss + vas, is);
+		auto total_size = vss + vas + is;
+		StagingBuffer stagingBuffer(total_size);
+
+		auto vso = 0;
+		auto vao = vso + vss;
+		auto io = vao + vas;
+		unsigned char *map = (unsigned char*)stagingBuffer.map(0, total_size);
+		auto vs_map = map + vso;
+		auto va_map = map + vao;
+		auto i_map = map + io;
 		auto vertex_offset = 0;
 		auto indice_offset = 0;
 		for (auto &m : _models)
@@ -1815,9 +1826,9 @@ namespace tke
 				{
 					s->vertexBase = vertex_offset;
 					s->indiceBase = indice_offset;
-					memcpy(vs_map, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
-					memcpy(va_map, s->vertex_anim, sizeof(VertexAnim) * s->vertex_count);
-					memcpy(i_map, s->indices, sizeof(int) * s->indice_count);
+					memcpy(vs_map + vertex_offset, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
+					memcpy(va_map + vertex_offset, s->vertex_anim, sizeof(VertexAnim) * s->vertex_count);
+					memcpy(i_map + indice_offset, s->indices, sizeof(int) * s->indice_count);
 					vertex_offset += s->vertex_count;
 					indice_offset += s->indice_count;
 				}
@@ -1832,12 +1843,38 @@ namespace tke
 				{
 					s->vertexBase = vertex_offset;
 					s->indiceBase = indice_offset;
-					memcpy(vs_map, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
-					memcpy(i_map, s->indices, sizeof(int) * s->indice_count);
+					memcpy(vs_map + vertex_offset, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
+					memcpy(i_map + indice_offset, s->indices, sizeof(int) * s->indice_count);
 					vertex_offset += s->vertex_count;
 					indice_offset += s->indice_count;
 				}
 			}
+		}
+		stagingBuffer.unmap();
+
+		if (vertex_stat_count > 0)
+		{
+			VkBufferCopy range = {};
+			range.srcOffset = vso;
+			range.dstOffset = 0;
+			range.size = sizeof(VertexStat) * vertex_stat_count;
+			copyBuffer(stagingBuffer.v, vertexStatBuffer->v, 1, &range);
+		}
+		if (vertex_anim_count > 0)
+		{
+			VkBufferCopy range = {};
+			range.srcOffset = vao;
+			range.dstOffset = 0;
+			range.size = sizeof(VertexAnim) * vertex_anim_count;
+			copyBuffer(stagingBuffer.v, vertexAnimBuffer->v, 1, &range);
+		}
+		if (indice_count > 0)
+		{
+			VkBufferCopy range = {};
+			range.srcOffset = io;
+			range.dstOffset = 0;
+			range.size = sizeof(int) * indice_count;
+			copyBuffer(stagingBuffer.v, indexBuffer->v, 1, &range);
 		}
 	}
 
@@ -1920,12 +1957,13 @@ namespace tke
 		vertexAnimBuffer = new VertexBuffer();
 		indexBuffer = new IndexBuffer();
 
+		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
+		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
+
 		defaultMaterial = std::make_shared<Material>();
 		defaultMaterial->sceneIndex = 0;
 		modelMaterials[0] = defaultMaterial;
-
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
-		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
+		_update_material(defaultMaterial.get(), 0);
 
 		{
 			VkDescriptorSetLayoutBinding binding;
@@ -1971,12 +2009,12 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			triangleModel = m;
 		}
 
-		{
+		/*{
 			auto m = std::make_shared<Model>();
 			m->filename = "[cube]";
 
@@ -2014,7 +2052,7 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			cubeModel = m;
 		}
@@ -2062,7 +2100,7 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			sphereModel = m;
 		}
@@ -2105,7 +2143,7 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			cylinderModel = m;
 		}
@@ -2142,7 +2180,7 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			coneModel = m;
 		}
@@ -2182,7 +2220,7 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			arrowModel = m;
 		}
@@ -2221,7 +2259,7 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			torusModel = m;
 		}
@@ -2268,10 +2306,10 @@ namespace tke
 
 			_process_model(m.get(), true);
 
-			basicModels.push_back(m);
+			_models[HASH(m->filename.c_str())] = m;
 
 			hamerModel = m;
-		}
+		}*/
 
 		addBeforeFrameEvent(_processVertexAndIndexBuffer, 0, EventTypeOnlyOne);
 	}

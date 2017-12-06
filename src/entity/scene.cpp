@@ -1044,7 +1044,7 @@ namespace tke
 				};
 				VkDeviceSize offsets[] = {
 					0,
-					1
+					0
 				};
 				cb_shadow->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
 			}
@@ -1102,11 +1102,11 @@ namespace tke
 			};
 			VkDeviceSize offsets[] = {
 				0,
-				1
+				0
 			};
-			cb_shadow->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
+			cb_deferred->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
 		}
-		cb_shadow->bindIndexBuffer(indexBuffer);
+		cb_deferred->bindIndexBuffer(indexBuffer);
 
 		// mrt
 		// static
@@ -1217,10 +1217,11 @@ namespace tke
 		}
 
 		std::experimental::filesystem::path path(filename);
-		if (std::experimental::filesystem::exists(filename))
+		if (!std::experimental::filesystem::exists(filename))
 			return nullptr;
 
 		auto s = std::make_shared<Scene>();
+		s->filename = filename;
 
 		tke::AttributeTree at("scene", filename);
 		at.obtainFromAttributes(s.get(), s->b);

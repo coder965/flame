@@ -4,10 +4,9 @@
 #include "editor.h"
 #include "window/dir_selector.h"
 #include "window/scene_editor.h"
-#include "window/attribute.h"
 #include "window/texture_editor.h"
 
-std::experimental::filesystem::path project_path;
+std::experimental::filesystem::path project_path = "d:\\TK_Engine\\editor";
 
 int main(int argc, char** argv)
 {
@@ -16,8 +15,6 @@ int main(int argc, char** argv)
 	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
 
 	initWindow();
-
-	load_resource();
 
 	{
 		tke::AttributeTree at("data", "ui.xml");
@@ -48,8 +45,17 @@ int main(int argc, char** argv)
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("New Project"))
-				;
+			if (ImGui::BeginMenu("New"))
+			{
+				if (ImGui::MenuItem("Project"))
+					;
+				if (ImGui::MenuItem("Image"))
+					;
+				if (ImGui::MenuItem("Terrain"))
+					;
+
+				ImGui::EndMenu();
+			}
 			if (ImGui::MenuItem("Open Project"))
 			{
 				DirSelector::open("c:\\", [](std::string path) {
@@ -62,6 +68,8 @@ int main(int argc, char** argv)
 				});
 			}
 			if (ImGui::MenuItem("Save Project"))
+				;
+			if (ImGui::MenuItem("Close Project"))
 				;
 
 			ImGui::EndMenu();

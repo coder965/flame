@@ -18,6 +18,7 @@
 #include "..\src\render\buffer.h"
 #include "..\src\render\command_buffer.h"
 #include "..\src\render\descriptor.h"
+#include "..\src\render\display_layer.h"
 #include "..\src\render\framebuffer.h"
 #include "..\src\render\image.h"
 #include "..\src\render\pipeline.h"
@@ -66,8 +67,6 @@ Pipeline *pipeline_plain_anim = nullptr;
 Pipeline *pipeline_headlight = nullptr;
 Pipeline *pipeline_tex = nullptr;
 Pipeline *pipeline_tex_anim = nullptr;
-Pipeline *pipeline_wireframe = nullptr;
-Pipeline *pipeline_wireframe_anim = nullptr;
 Pipeline *pipeline_lines = nullptr;
 HWND hWnd;
 int window_cx;
@@ -89,7 +88,6 @@ Image *window_images[2];
 std::shared_ptr<Framebuffer> window_framebuffers[2];
 VkSemaphore window_imageAvailable;
 uint32_t window_imageIndex;
-std::vector<VkCommandBuffer> cbs;
 VkFence frameDone;
 uint32_t FPS;
 PF_EVENT1 onKeyDown = nullptr;
@@ -105,6 +103,7 @@ PF_EVENT2 onMouseMove = nullptr;
 PF_EVENT1 onMouseWheel = nullptr;
 PF_EVENT0 onRender = nullptr;
 PF_EVENT0 onDestroy = nullptr;
+std::vector<std::unique_ptr<FrameCommandBufferList>> frameCbLists;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 Pipeline *scatteringPipeline = nullptr;
@@ -142,15 +141,12 @@ std::shared_ptr<Model> coneModel;
 std::shared_ptr<Model> arrowModel;
 std::shared_ptr<Model> torusModel;
 std::shared_ptr<Model> hamerModel;
-std::vector<std::shared_ptr<Model>> basicModels;
 VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
 VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
 std::vector<std::weak_ptr<Shader>> loaded_shaders;
 bool uiAcceptedMouse;
 bool uiAcceptedKey;
-CommandBuffer *ui_cb;
-std::vector<VkEvent> ui_waitEvents;
 glm::vec3 bkColor = glm::vec3(0.69f,0.76f,0.79f);
 struct ReflectInit{ReflectInit(){
 tke::EnumType *currentEnumType = nullptr;
@@ -177,7 +173,6 @@ currentBank->addV<std::string>("model_filename", offsetof(Object, model_filename
 currentBank->addV<std::string>("name", offsetof(Object, name));
 currentBank->addV<std::uint32_t>("physics_type", offsetof(Object, physics_type));
 currentBank = Scene::b;
-currentBank->addV<std::string>("name", offsetof(Scene, name));
 currentBank = Terrain::b;
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
 currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));

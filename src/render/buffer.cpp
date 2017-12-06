@@ -31,6 +31,9 @@ namespace tke
 
 		res = vkBindBufferMemory(vk_device.v, p->v, p->memory, 0);
 		assert(res == VK_SUCCESS);
+
+		p->info.buffer = p->v;
+		p->info.range = p->size;
 	}
 
 	static void buffer_copy(Buffer *p, void *data)
@@ -58,8 +61,6 @@ namespace tke
 		buffer_create(this);
 
 		info.offset = 0;
-		info.buffer = v;
-		info.range = size;
 	}
 
 	Buffer::~Buffer()

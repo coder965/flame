@@ -1,7 +1,9 @@
 #pragma once
 
-#include "window.h"
 #include "../../../src/core.h"
+#include "../../../src/render/display_layer.h"
+#include "../../../src/render/renderer.h"
+#include "window.h"
 #include "../select.h"
 #include "../tool/transformer_tool.h"
 
@@ -17,10 +19,8 @@ struct SceneEditor : Window
 {
 	std::shared_ptr<tke::Scene> scene;
 
-	std::shared_ptr<tke::Image> image;
-	std::shared_ptr<tke::Framebuffer> fb_image;
+	tke::DisplayLayer layer;
 
-	tke::Object *last_obj = nullptr;
 	std::shared_ptr<tke::Framebuffer> fb_scene;
 	VkEvent scene_renderFinished;
 
@@ -30,14 +30,11 @@ struct SceneEditor : Window
 	VkEvent physx_renderFinished;
 
 	bool showSelectedWireframe = true;
-	tke::CommandBuffer *cb_wireframe;
-	tke::DescriptorSet *ds_wireframe_anim;
-	VkEvent wireframe_renderFinished;
+	std::unique_ptr<tke::WireframeRenderer> wireframe_renderer;
 
 	std::shared_ptr<tke::Framebuffer> fb_tool;
 	TransformerTool *transformerTool;
 
-	std::vector<VkCommandBuffer> cbs;
 	VkEvent renderFinished;
 
 	bool follow = false;

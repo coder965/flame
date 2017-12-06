@@ -20,33 +20,6 @@ ResourceExplorerClass resourceExplorerClass;
 
 ResourceExplorer *resourceExplorer = nullptr;
 
-void load_resource()
-{
-	//tke::AttributeTree at("data", "data.xml");
-	//for (auto &c : at.children)
-	//{
-	//	else if (c->name == "model")
-	//	{
-	//		auto a = c->firstAttribute("filename");
-	//		tke::createModel(a->value);
-	//	}
-	//	else if (c->name == "animation")
-	//	{
-	//		auto a = c->firstAttribute("filename");
-	//		tke::createAnimation(a->value);
-	//	}
-	//	else if (c->name == "scene")
-	//	{
-	//		auto a = c->firstAttribute("filename");
-	//		auto s = new tke::Scene;
-	//		s->load(a->value);
-	//		s->camera.setMode(tke::CameraMode::targeting);
-	//		s->camera.setCoord(0.f, 5.f, 0.f);
-	//		tke::addScene(s);
-	//	}
-	//}
-}
-
 ResourceExplorerFileListItem::~ResourceExplorerFileListItem()
 {
 	if (image && image->index != 0)
@@ -100,6 +73,16 @@ void ResourceExplorer::refresh()
 				{
 					i->file_type = ResourceExplorerFileListItem::FileTypeImage;
 					prefix = ICON_FA_FILE_IMAGE_O" ";
+				}
+				else if (tke::isModelFile(ext))
+				{
+					i->file_type = ResourceExplorerFileListItem::FileTypeModel;
+					prefix = ICON_FA_FILE_O" ";
+				}
+				else if (tke::isSceneFile(ext))
+				{
+					i->file_type = ResourceExplorerFileListItem::FileTypeScene;
+					prefix = ICON_FA_FILE_O" ";
 				}
 				else
 					prefix = ICON_FA_FILE_O" ";
@@ -188,6 +171,7 @@ void ResourceExplorer::show()
 							auto s = tke::getScene((path / i->value).string());
 							if (s)
 							{
+								s->camera.setMode(tke::CameraMode::targeting);
 								auto w = new SceneEditor(s);
 								windows.push_back(std::move(std::unique_ptr<Window>(w)));
 							}
@@ -202,7 +186,7 @@ void ResourceExplorer::show()
 		if (list_index != -1 && list_index >= dir_list.size())
 		{
 			auto i = file_list[list_index - dir_list.size()].get();
-			ImGui::Text("%d", i->file_size);
+			ImGui::Text("size: %d byte", i->file_size);
 		}
 
 		ImGui::EndChild();
@@ -214,54 +198,11 @@ void ResourceExplorer::show()
 			switch (i->file_type)
 			{
 				case ResourceExplorerFileListItem::FileTypeImage:
+					ImGui::Text("%d x %d", i->image->levels[0].cx, i->image->levels[0].cy);
 					ImGui::Image((ImTextureID)i->image->index, ImVec2(i->image->levels[0].cx, i->image->levels[0].cy));
 					break;
 			}
 		}
-
-		//if (ImGui::TreeNode("Animations"))
-		//{
-		//	for (int i = 0; i < tke::animations.size(); i++)
-		//	{
-		//		auto a = tke::animations[i].get();
-		//		if (ImGui::Selectable(a->filename.c_str(), lastItemType == lastItemTypeAnimation && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
-		//		{
-		//			lastItemType = lastItemTypeAnimation;
-		//			itemIndex = i;
-		//			if (ImGui::IsMouseDoubleClicked(0))
-		//				;
-		//		}
-		//	}
-		//	ImGui::TreePop();
-		//}
-		//if (ImGui::TreeNode("Models"))
-		//{
-		//	for (int i = 0; i < tke::models.size(); i++)
-		//	{
-		//		auto m = tke::models[i].get();
-		//		if (ImGui::Selectable(m->filename.c_str(), lastItemType == lastItemTypeModel && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
-		//		{
-		//			lastItemType = lastItemTypeModel;
-		//			itemIndex = i;
-		//		}
-		//	}
-		//	ImGui::TreePop();
-		//}
-		//if (ImGui::TreeNode("Scenes"))
-		//{
-		//	for (int i = 0; i < tke::scenes.size(); i++)
-		//	{
-		//		auto s = tke::scenes[i].get();
-		//		if (ImGui::Selectable(s->name.c_str(), lastItemType == lastItemTypeScene && itemIndex == i, ImGuiSelectableFlags_AllowDoubleClick))
-		//		{
-		//			lastItemType = lastItemTypeScene;
-		//			itemIndex = i;
-		//			if (ImGui::IsMouseDoubleClicked(0))
-		//				windows.push_back(std::move(std::make_unique<SceneEditor>(s)));
-		//		}
-		//	}
-		//	ImGui::TreePop();
-		//}
 	}
 
 	ImGui::End();

@@ -104,7 +104,7 @@ namespace tke
 		}
 
 		std::experimental::filesystem::path path(filename);
-		if (std::experimental::filesystem::exists(filename))
+		if (!std::experimental::filesystem::exists(filename))
 			return nullptr;
 
 		auto ext = path.extension().string();
