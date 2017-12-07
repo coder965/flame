@@ -28,7 +28,7 @@ struct SceneEditor : Window
 	std::unique_ptr<tke::LinesRenderer> lines_renderer;
 
 	bool showSelectedWireframe = true;
-	std::unique_ptr<tke::WireframeRenderer> wireframe_renderer;
+	std::unique_ptr<tke::PlainRenderer> wireframe_renderer;
 
 	std::shared_ptr<tke::Framebuffer> fb_tool;
 	std::unique_ptr<TransformerTool> transformerTool;

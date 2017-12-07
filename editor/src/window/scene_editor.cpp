@@ -39,7 +39,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	physx_vertex_buffer = std::make_unique<tke::OnceVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
 
-	wireframe_renderer = std::make_unique<tke::WireframeRenderer>();
+	wireframe_renderer = std::make_unique<tke::PlainRenderer>();
 
 	VkImageView views[] = {
 		layer.image->getView(),
@@ -654,7 +654,14 @@ void SceneEditor::show()
 	{
 		auto obj = selectedItem.toObject();
 		if (obj)
-			wireframe_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, 0, obj);
+		{
+			tke::PlainRenderer::DrawData data;
+			data.mat = obj->getMat();
+			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+			data.model = obj->model.get();
+			data.bone_buffer = obj->model->animated ? obj->animationComponent->boneMatrixBuffer : nullptr;
+			wireframe_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, TK_MAKEINT(3, 1), &data);
+		}
 	}
 
 	transformerTool->transformer = selectedItem.toTransformer();

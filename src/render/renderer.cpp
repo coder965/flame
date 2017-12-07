@@ -19,16 +19,16 @@ namespace tke
 	{
 		cb->reset();
 		cb->begin();
-		if (cb_list && cb_list->last_event)
-			cb->waitEvents(1, &cb_list->last_event);
+		//if (cb_list && cb_list->last_event)
+		//	cb->waitEvents(1, &cb_list->last_event);
 
 		do_render(framebuffer, clear, camera, count, user_data);
 
-		if (cb_list && cb_list->last_event)
-		{
-			cb->resetEvent(cb_list->last_event);
-			cb->setEvent(renderFinished);
-		}
+		//if (cb_list && cb_list->last_event)
+		//{
+		//	cb->resetEvent(cb_list->last_event);
+		//	cb->setEvent(renderFinished);
+		//}
 		cb->end();
 		if (cb_list)
 			cb_list->add(cb->v, renderFinished);
@@ -39,7 +39,10 @@ namespace tke
 	static Pipeline *pipeline_frontlight;
 	static Pipeline *pipeline_texture;
 	static Pipeline *pipeline_texture_anim;
+	static Pipeline *pipeline_wireframe;
+	static Pipeline *pipeline_wireframe_anim;
 	bool PlainRenderer::first = true;
+	UniformBuffer *PlainRenderer::last_bone_buffer;
 	PlainRenderer::PlainRenderer()
 	{
 		if (first)
@@ -84,6 +87,22 @@ namespace tke
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
 				renderPass_depthC_image8, 0, true);
+			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexStatInputState)
+				.polygonMode(VK_POLYGON_MODE_LINE)
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}),
+				renderPass_image8, 0);
+			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexAnimInputState)
+				.polygonMode(VK_POLYGON_MODE_LINE)
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
+				renderPass_image8, 0, true);
 
 			first = false;
 		}
@@ -94,7 +113,10 @@ namespace tke
 		auto mode = TK_HIGH(_count);
 		auto count = TK_LOW(_count);
 
-		cb->beginRenderPass(clear ? renderPass_depthC_image8C : renderPass_depthC_image8, framebuffer);
+		cb->beginRenderPass(clear ?
+			(mode == 3 ? renderPass_image8C : renderPass_depthC_image8C)
+			: (mode == 3 ? renderPass_image8 : renderPass_depthC_image8)
+			, framebuffer);
 		render_to(cb.get(), mode, camera, count, (DrawData*)user_data);
 		cb->endRenderPass();
 	}
@@ -126,7 +148,11 @@ namespace tke
 					else
 					{
 						cb->bindPipeline(pipeline_plain_anim);
-						updateDescriptorSets(1, &pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+						if (last_bone_buffer != d.bone_buffer)
+						{
+							updateDescriptorSets(1, &pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+							last_bone_buffer = d.bone_buffer;
+						}
 						cb->bindDescriptorSet();
 					}
 					break;
@@ -136,6 +162,9 @@ namespace tke
 				case 2:
 					cb->bindPipeline(!animated ? pipeline_texture : pipeline_texture_anim);
 					break;
+				case 3:
+					cb->bindPipeline(!animated ? pipeline_wireframe : pipeline_wireframe_anim);
+					break;
 			}
 
 			pc.modelview = camera->getMatInv() * d.mat;
@@ -143,80 +172,6 @@ namespace tke
 			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 			cb->drawModel(model);
 		}
-	}
-
-	static Pipeline *pipeline_wireframe;
-	static Pipeline *pipeline_wireframe_anim;
-	bool WireframeRenderer::first = true;
-	WireframeRenderer::WireframeRenderer()
-	{
-		if (first)
-		{
-			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexStatInputState)
-				.polygonMode(VK_POLYGON_MODE_LINE)
-				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}),
-				renderPass_image8, 0);
-			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimInputState)
-				.polygonMode(VK_POLYGON_MODE_LINE)
-				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
-				renderPass_image8, 0, true);
-
-			first = false;
-		}
-
-		ds_anim = std::make_unique<DescriptorSet>(pipeline_wireframe_anim);
-	}
-
-	void WireframeRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
-	{
-		auto obj = (Object*)user_data;
-		auto model = obj->model.get();
-		auto animated = model->animated;
-
-		cb->beginRenderPass(renderPass_image8, framebuffer);
-
-		struct
-		{
-			glm::mat4 modelview;
-			glm::mat4 proj;
-			glm::vec4 color;
-		}pc;
-		pc.proj = matPerspective;
-
-		{
-			VkBuffer buffers[] = {
-				vertexStatBuffer->v,
-				vertexAnimBuffer->v
-			};
-			VkDeviceSize offsets[] = {
-				0,
-				0
-			};
-			cb->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
-		}
-		cb->bindIndexBuffer(indexBuffer);
-		cb->bindPipeline(animated ? pipeline_wireframe_anim : pipeline_wireframe);
-		if (animated)
-		{
-			if (last_obj != obj)
-				updateDescriptorSets(1, &ds_anim->bufferWrite(0, 0, obj->animationComponent->boneMatrixBuffer));
-			cb->bindDescriptorSet(&ds_anim->v);
-		}
-		pc.modelview = camera->getMatInv() * obj->getMat();
-		pc.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		cb->drawModel(model);
-
-		cb->endRenderPass();
-		last_obj = obj;
 	}
 
 	static Pipeline *pipeline_lines;

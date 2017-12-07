@@ -20,7 +20,7 @@ typedef _W64 long TK_LONG_PTR;
 #define TK_DERIVE_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
 #define TK_LOW(I) (I & 0xffff)
 #define TK_HIGH(I) (I >> 16)
-#define TK_MAKEINT(L, H) (L | (H << 16))
+#define TK_MAKEINT(H, L) (L | (H << 16))
 
 // file
 

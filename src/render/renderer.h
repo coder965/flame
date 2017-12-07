@@ -26,6 +26,8 @@ namespace tke
 	{
 		static bool first;
 
+		static UniformBuffer *last_bone_buffer;
+
 		struct DrawData
 		{
 			glm::mat4 mat;
@@ -35,22 +37,10 @@ namespace tke
 		};
 
 		PlainRenderer();
-		// count: H - mode(0: just color, 1: color with a front light, 2: just texture), L - count
+		// count: H - mode(0: just color, 1: color with a front light, 2: just texture, 3: wireframe), L - count
 		// user_data: pointer of DrawData
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
 		static void render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data);
-	};
-
-	struct Object;
-	struct WireframeRenderer : Renderer
-	{
-		static bool first;
-
-		Object *last_obj = nullptr;
-		std::unique_ptr<DescriptorSet> ds_anim;
-
-		WireframeRenderer();
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
 	};
 
 	struct LinesRenderer : Renderer
@@ -80,6 +70,7 @@ namespace tke
 
 	enum { MaxIndirectCount = 1024 };
 
+	struct Object;
 	struct DeferredRenderer : Renderer
 	{
 		static bool defe_inited;
