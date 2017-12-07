@@ -25,17 +25,14 @@ struct SceneEditor : Window
 	VkEvent scene_renderFinished;
 
 	bool viewPhysx = false;
-	tke::OnceVertexBuffer *physxBuffer = nullptr;
-	tke::CommandBuffer *cb_physx;
-	VkEvent physx_renderFinished;
+	std::unique_ptr<tke::OnceVertexBuffer> physx_vertex_buffer;
+	std::unique_ptr<tke::LinesRenderer> lines_renderer;
 
 	bool showSelectedWireframe = true;
 	std::unique_ptr<tke::WireframeRenderer> wireframe_renderer;
 
 	std::shared_ptr<tke::Framebuffer> fb_tool;
 	TransformerTool *transformerTool;
-
-	VkEvent renderFinished;
 
 	bool follow = false;
 

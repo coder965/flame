@@ -14,6 +14,136 @@ namespace tke
 		destroyEvent(renderFinished);
 	}
 
+	void Renderer::render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
+	{
+		cb->reset();
+		cb->begin();
+		if (cb_list)
+			cb->waitEvents(1, &cb_list->last_event);
+
+		do_render(framebuffer, clear, camera, count, user_data);
+
+		if (cb_list) 
+		{
+			cb->resetEvent(cb_list->last_event);
+			cb->setEvent(renderFinished);
+		}
+		cb->end();
+		if (cb_list)
+			cb_list->add(cb->v, renderFinished);
+	}
+
+	static Pipeline *pipeline_plain;
+	static Pipeline *pipeline_plain_anim;
+	static Pipeline *pipeline_frontlight;
+	static Pipeline *pipeline_texture;
+	static Pipeline *pipeline_texture_anim;
+	bool PlainRenderer::first = true;
+	PlainRenderer::PlainRenderer()
+	{
+		if (first)
+		{
+			pipeline_plain = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexStatInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}),
+				renderPass_depthC_image8, 0);
+			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexAnimInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
+				renderPass_depthC_image8, 0, true);
+			pipeline_frontlight = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexStatInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_NORMAL"}),
+				renderPass_depthC_image8, 0);
+			pipeline_texture = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexStatInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_TEX"})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_TEX"}),
+				renderPass_depthC_image8, 0);
+			pipeline_texture_anim = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vertexAnimInputState)
+				.depth_test(true)
+				.depth_write(true)
+				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
+				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
+				renderPass_depthC_image8, 0, true);
+
+			first = false;
+		}
+	}
+
+	void PlainRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int _count, void *user_data)
+	{
+		auto mode = TK_HIGH(_count);
+		auto count = TK_LOW(_count);
+
+		cb->beginRenderPass(clear ? renderPass_depthC_image8C : renderPass_depthC_image8, framebuffer);
+		render_to(cb.get(), mode, camera, count, (DrawData*)user_data);
+		cb->endRenderPass();
+	}
+
+	void PlainRenderer::render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data)
+	{
+		cb->bindVertexBuffer2(vertexStatBuffer, vertexAnimBuffer);
+		cb->bindIndexBuffer(indexBuffer);
+
+		struct
+		{
+			glm::mat4 modelview;
+			glm::mat4 proj;
+			glm::vec4 color;
+		}pc;
+		pc.proj = matPerspective;
+
+		for (int i = 0; i < count; i++)
+		{
+			auto &d = data[i];
+			auto model = d.model;
+			auto animated = model->animated;
+
+			switch (mode)
+			{
+				case 0:
+					if (!animated)
+						cb->bindPipeline(pipeline_plain);
+					else
+					{
+						cb->bindPipeline(pipeline_plain_anim);
+						updateDescriptorSets(1, &pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+						cb->bindDescriptorSet();
+					}
+					break;
+				case 1:
+					cb->bindPipeline(pipeline_frontlight);
+					break;
+				case 2:
+					cb->bindPipeline(!animated ? pipeline_texture : pipeline_texture_anim);
+					break;
+			}
+
+			pc.modelview = camera->getMatInv() * d.mat;
+			pc.color = d.color;
+			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+			cb->drawModel(model);
+		}
+	}
+
 	static Pipeline *pipeline_wireframe;
 	static Pipeline *pipeline_wireframe_anim;
 	bool WireframeRenderer::first = true;
@@ -44,13 +174,8 @@ namespace tke
 		ds_anim = std::make_unique<DescriptorSet>(pipeline_wireframe_anim);
 	}
 
-	void WireframeRenderer::render(Framebuffer *framebuffer, Camera *camera, FrameCommandBufferList *cb_list, void *user_data)
+	void WireframeRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
 	{
-		cb->reset();
-		cb->begin();
-
-		cb->waitEvents(1, &cb_list->last_event);
-
 		auto obj = (Object*)user_data;
 		auto model = obj->model.get();
 		auto animated = model->animated;
@@ -63,12 +188,12 @@ namespace tke
 			glm::mat4 proj;
 			glm::vec4 color;
 		}pc;
-		pc.proj = tke::matPerspective;
+		pc.proj = matPerspective;
 
 		{
 			VkBuffer buffers[] = {
-				tke::vertexStatBuffer->v,
-				tke::vertexAnimBuffer->v
+				vertexStatBuffer->v,
+				vertexAnimBuffer->v
 			};
 			VkDeviceSize offsets[] = {
 				0,
@@ -76,12 +201,12 @@ namespace tke
 			};
 			cb->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
 		}
-		cb->bindIndexBuffer(tke::indexBuffer);
-		cb->bindPipeline(animated ? tke::pipeline_wireframe_anim : tke::pipeline_wireframe);
+		cb->bindIndexBuffer(indexBuffer);
+		cb->bindPipeline(animated ? pipeline_wireframe_anim : pipeline_wireframe);
 		if (animated)
 		{
 			if (last_obj != obj)
-				tke::updateDescriptorSets(1, &ds_anim->bufferWrite(0, 0, obj->animationComponent->boneMatrixBuffer));
+				updateDescriptorSets(1, &ds_anim->bufferWrite(0, 0, obj->animationComponent->boneMatrixBuffer));
 			cb->bindDescriptorSet(&ds_anim->v);
 		}
 		pc.modelview = camera->getMatInv() * obj->getMat();
@@ -91,13 +216,49 @@ namespace tke
 
 		cb->endRenderPass();
 		last_obj = obj;
+	}
 
-		cb->resetEvent(cb_list->last_event);
-		cb->setEvent(renderFinished);
+	static Pipeline *pipeline_lines;
+	bool LinesRenderer::first = true;
+	LinesRenderer::LinesRenderer()
+	{
+		if (first)
+		{
+			static VkVertexInputBindingDescription bindings = {0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
 
-		cb->end();
+			static VkVertexInputAttributeDescription attributes[] = {
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
+			{1, 0, VK_FORMAT_R32G32B32_SFLOAT,	   offsetof(Vertex, color)}
+			};
 
-		cb_list->add(cb->v, renderFinished);
+			auto vis = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
+
+			pipeline_lines = new Pipeline(PipelineCreateInfo()
+				.cx(-1).cy(-1)
+				.vertex_input(&vis)
+				.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+				.polygonMode(VK_POLYGON_MODE_LINE)
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "shader/plain3d/plain3d_line.vert", {})
+				.addShader(enginePath + "shader/plain3d/plain3d_line.frag", {}),
+				renderPass_image8, 0);
+
+			first = false;
+		}
+	}
+
+	void LinesRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
+	{
+		cb->beginRenderPass(renderPass_image8, framebuffer);
+
+		cb->bindVertexBuffer((OnceVertexBuffer*)user_data);
+		cb->bindPipeline(pipeline_lines);
+
+		glm::mat4 mvp = matPerspective * camera->getMatInv();
+		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
+		cb->draw(count);
+
+		cb->endRenderPass();
 	}
 
 	DeferredRenderer::DeferredRenderer()
@@ -105,7 +266,7 @@ namespace tke
 
 	}
 
-	void DeferredRenderer::render(Framebuffer *framebuffer, Camera *camera, FrameCommandBufferList *cb_list, void *user_data)
+	void DeferredRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
 	{
 
 	}

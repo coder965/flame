@@ -137,6 +137,19 @@ namespace tke
 		vkCmdBindVertexBuffers(v, 0, count, b, offsets);
 	}
 
+	void CommandBuffer::bindVertexBuffer2(VertexBuffer *b0, VertexBuffer *b1)
+	{
+		VkBuffer buffers[] = {
+			b0->v,
+			b1->v
+		};
+		VkDeviceSize offsets[] = {
+			0,
+			0
+		};
+		vkCmdBindVertexBuffers(v, 0, 2, buffers, offsets);
+	}
+
 	void CommandBuffer::bindVertexBuffer(OnceVertexBuffer *b)
 	{
 		VkDeviceSize offsets[] = { 0 };
@@ -155,6 +168,8 @@ namespace tke
 
 	void CommandBuffer::bindPipeline(Pipeline *p)
 	{
+		if (currentPipeline == p)
+			return;
 		currentPipeline = p;
 		vkCmdBindPipeline(v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->pipeline);
 	}

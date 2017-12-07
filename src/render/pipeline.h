@@ -8,12 +8,6 @@
 
 namespace tke
 {
-	struct VertexLine
-	{
-		glm::vec3 position;
-		glm::vec3 color;
-	};
-
 	struct LinkResource
 	{
 		int binding = -1;
@@ -35,7 +29,6 @@ namespace tke
 	};
 
 	IMPL() VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-	IMPL() VkPipelineVertexInputStateCreateInfo lineVertexInputState;
 
 	struct PipelineCreateInfo
 	{

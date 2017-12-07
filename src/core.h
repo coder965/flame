@@ -83,14 +83,7 @@ namespace tke
 
 	IMPL() std::shared_ptr<Framebuffer> pickUpFb;
 
-	IMPL(nullptr) Pipeline *pipeline_plain;
-	IMPL(nullptr) Pipeline *pipeline_plain_anim;
-	IMPL(nullptr) Pipeline *pipeline_headlight;
-	IMPL(nullptr) Pipeline *pipeline_tex;
-	IMPL(nullptr) Pipeline *pipeline_tex_anim;
-	IMPL(nullptr) Pipeline *pipeline_lines;
-
-	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*, void *), void *user_data);
+	unsigned int pickUp(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback);
 
 	void processCmdLine(const std::string &str, bool record = true);
 

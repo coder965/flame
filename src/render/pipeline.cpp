@@ -412,16 +412,5 @@ namespace tke
 	void initPipeline()
 	{
 		zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
-
-		{
-			static VkVertexInputBindingDescription bindings = { 0, sizeof(VertexLine), VK_VERTEX_INPUT_RATE_VERTEX };
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexLine, position) },
-				{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexLine, color) }
-			};
-
-			lineVertexInputState = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-		}
 	}
 }

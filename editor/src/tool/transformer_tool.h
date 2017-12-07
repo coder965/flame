@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../src/render/renderer.h"
 #include "tool.h"
 
 struct TransformerTool : Tool
@@ -16,8 +17,11 @@ struct TransformerTool : Tool
 	Mode mode = ModeNull;
 	int selectedAxis = -1;
 
+	std::unique_ptr<tke::PlainRenderer> renderer;
+
 	TransformerTool(tke::Framebuffer *_fb);
 	virtual bool TransformerTool::leftDown(int x, int y) override;
 	virtual void TransformerTool::mouseMove(int xDisp, int yDisp) override;
-	virtual void show(tke::Camera *camera, VkEvent waitEvent, VkEvent signalEvent) override;
+	virtual void show(tke::FrameCommandBufferList *cb_list, tke::Camera *camera) override;
+	std::vector<tke::PlainRenderer::DrawData> getDrawData(int draw_mode);
 };

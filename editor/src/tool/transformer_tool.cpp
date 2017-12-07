@@ -5,67 +5,58 @@
 TransformerTool::TransformerTool(tke::Framebuffer *_fb)
 	:Tool(_fb)
 {
+	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
-static TransformerTool *currentTransformerTool = nullptr;
 static tke::Camera *currentCamera = nullptr;
-static void draw(tke::CommandBuffer *cb, void *user_data)
+std::vector<tke::PlainRenderer::DrawData> TransformerTool::getDrawData(int draw_mode)
 {
-	auto currentDrawPolicy = (int)user_data;
+	std::vector<tke::PlainRenderer::DrawData> draw_data;
 
-	if (!currentTransformerTool->transformer || currentTransformerTool->mode == TransformerTool::ModeNull)
-		return;
+	if (!transformer || mode == TransformerTool::ModeNull)
+		return draw_data;
 
-	auto dir = currentTransformerTool->transformer->getCoord() - currentCamera->getCoord();
+	auto dir = transformer->getCoord() - currentCamera->getCoord();
 	if (glm::length(dir) <= 0.f)
-		return;
+		return draw_data;
+
 	dir = glm::normalize(dir);
 	auto coord = currentCamera->getCoord() + dir * 5.f;
 
-	auto model = currentTransformerTool->mode == TransformerTool::ModeMove ? tke::arrowModel : 
-		(currentTransformerTool->mode == TransformerTool::ModeRotate ? tke::torusModel : tke::hamerModel);
+	auto model = mode == TransformerTool::ModeMove ? tke::arrowModel : 
+		(mode == TransformerTool::ModeRotate ? tke::torusModel : tke::hamerModel);
 
-	cb->bindVertexBuffer(tke::vertexStatBuffer);
-	cb->bindIndexBuffer(tke::indexBuffer);
-	cb->bindPipeline(currentDrawPolicy == 0 ? tke::pipeline_headlight : tke::pipeline_plain);
-	cb->bindDescriptorSet();
+	draw_data.resize(3);
 
-	struct
-	{
-		glm::mat4 modelview;
-		glm::mat4 proj;
-		glm::vec4 color;
-	}data;
-	data.proj = tke::matPerspective;
+	draw_data[0].mat = glm::translate(coord);
+	draw_data[0].color = draw_mode == 0 ? (selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
+	draw_data[0].model = model.get();
 
-	data.modelview = currentCamera->getMatInv() * glm::translate(coord);
-	data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
-	cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-	cb->drawModel(model.get());
+	draw_data[1].mat = glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
+	draw_data[1].color = draw_mode == 0 ? (selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
+	draw_data[1].model = model.get();
 
-	data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
-	data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
-	cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-	cb->drawModel(model.get());
+	draw_data[2].mat = glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
+	draw_data[2].color = draw_mode == 0 ? (selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
+	draw_data[2].model = model.get();
 
-	data.modelview = currentCamera->getMatInv() * glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
-	data.color = currentDrawPolicy == 0 ? (currentTransformerTool->selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
-	cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-	cb->drawModel(model.get());
+	return draw_data;
 }
 
 bool TransformerTool::leftDown(int x, int y)
 {
 	if (!transformer)
 		return false;
-	auto index = tke::pickUp(x, y, draw, (void*)1);
+
+	auto draw_data = getDrawData(1);
+	auto index = tke::pickUp(x, y, std::bind(tke::PlainRenderer::render_to, std::placeholders::_1, 0, currentCamera, draw_data.size(), draw_data.data()));
 	selectedAxis = index - 1;
 	return index != 0;
 }
 
 void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 {
-	if (!currentTransformerTool->transformer || currentTransformerTool->mode == TransformerTool::ModeNull || selectedAxis == -1)
+	if (!transformer || mode == TransformerTool::ModeNull || selectedAxis == -1)
 		return;
 
 	switch (mode)
@@ -100,23 +91,9 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 	}
 }
 
-void TransformerTool::show(tke::Camera *camera, VkEvent waitEvent, VkEvent signalEvent)
+void TransformerTool::show(tke::FrameCommandBufferList *cb_list, tke::Camera *camera)
 {
-	cb->reset();
-	cb->begin();
-
-	cb->waitEvents(1, &waitEvent);
-
-	cb->beginRenderPass(tke::renderPass_depthC_image8, fb);
-
-	currentTransformerTool = this;
 	currentCamera = camera;
-	draw(cb, (void*)0);
-
-	cb->endRenderPass();
-
-	cb->resetEvent(waitEvent);
-	cb->setEvent(signalEvent);
-
-	cb->end();
+	auto draw_data = getDrawData(0);
+	renderer->render(cb_list, fb, false, camera, TK_MAKEINT(0, draw_data.size()), draw_data.data());
 }

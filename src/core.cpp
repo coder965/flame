@@ -26,26 +26,14 @@ namespace tke
 		}
 	}
 
-	unsigned int pickUp(int x, int y, void(*drawCallback)(CommandBuffer*, void*), void *user_data)
+	unsigned int pickUp(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback)
 	{
 		if (x < 0 || y < 0 || x > pickUpImage->levels[0].cx || y > pickUpImage->levels[0].cy)
 			return 0;
 
 		auto cb = begineOnceCommandBuffer();
 		cb->beginRenderPass(renderPass_depthC_image8C, pickUpFb.get());
-		{
-			VkBuffer buffers[] = {
-				vertexStatBuffer->v,
-				vertexAnimBuffer->v
-			};
-			VkDeviceSize offsets[] = {
-				0,
-				0
-			};
-			cb->bindVertexBuffer(buffers, TK_ARRAYSIZE(buffers), offsets);
-		}
-		cb->bindIndexBuffer(indexBuffer);
-		drawCallback(cb, user_data);
+		drawCallback(cb);
 		cb->endRenderPass();
 		endOnceCommandBuffer(cb);
 
@@ -327,56 +315,6 @@ namespace tke
 			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, ARRAYSIZE(views), views);
 
 			initModel();
-
-			pipeline_plain = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexStatInputState)
-				.depth_test(true)
-				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}), 
-				renderPass_depthC_image8, 0);
-			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimInputState)
-				.depth_test(true)
-				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
-				renderPass_depthC_image8, 0, true);
-			pipeline_headlight = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexStatInputState)
-				.depth_test(true)
-				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_NORMAL"}),
-				renderPass_depthC_image8, 0);
-			pipeline_tex = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexStatInputState)
-				.depth_test(true)
-				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_TEX"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_TEX"}), 
-				renderPass_depthC_image8, 0);
-			pipeline_tex_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&vertexAnimInputState)
-				.depth_test(true)
-				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
-				renderPass_depthC_image8, 0, true);
-			pipeline_lines = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
-				.vertex_input(&lineVertexInputState)
-				.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
-				.polygonMode(VK_POLYGON_MODE_LINE)
-				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d_line.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d_line.frag", {}), 
-				renderPass_image8, 0);
 
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 
