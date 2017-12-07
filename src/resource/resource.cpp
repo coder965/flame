@@ -4,7 +4,7 @@ namespace tke
 {
 	Resource::Resource(Resource *_parent)
 	{
-		parents = _parent;
+		parent = _parent;
 	}
 
 	void Resource::setBuffer(Buffer *p, const std::string &str)
@@ -22,8 +22,8 @@ namespace tke
 		auto it = bufferResources.find(str);
 		if (it == bufferResources.end())
 		{
-			if (parents)
-				return parents->getBuffer(str);
+			if (parent)
+				return parent->getBuffer(str);
 			else
 				return nullptr;
 		}
@@ -35,8 +35,8 @@ namespace tke
 		auto it = imageResources.find(str);
 		if (it == imageResources.end())
 		{
-			if (parents)
-				return parents->getImage(str);
+			if (parent)
+				return parent->getImage(str);
 			else
 				return nullptr;
 		}

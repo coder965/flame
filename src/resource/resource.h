@@ -9,7 +9,7 @@ namespace tke
 {
 	struct Resource
 	{
-		Resource *parents;
+		Resource *parent;
 
 		std::map<std::string, Buffer*> bufferResources;
 		std::map<std::string, Image*> imageResources;
