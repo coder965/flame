@@ -67,6 +67,19 @@ namespace tke
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
 	};
 
+	enum { MaxStaticObjectCount = 1024 };
+	enum { MaxAnimatedObjectCount = 8 };
+	enum { MaxLightCount = 256 };
+	enum { MaxWaterCount = 8 };
+	enum { MaxShadowCount = 4 };
+
+	enum { EnvrSizeCx = 128 * 4 };
+	enum { EnvrSizeCy = 128 * 2 };
+	enum { ShadowMapCx = 2048 };
+	enum { ShadowMapCy = 2048 };
+
+	enum { MaxIndirectCount = 1024 };
+
 	struct DeferredRenderer : Renderer
 	{
 		static bool defe_inited;
@@ -106,6 +119,12 @@ namespace tke
 		Resource resource;
 
 		std::shared_ptr<Framebuffer> framebuffer;
+
+		std::vector<Object*> staticObjects;
+		std::vector<Object*> animatedObjects;
+		int staticIndirectCount = 0;
+		int animatedIndirectCount = 0;
+		std::vector<Light*> shadowLights;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;

@@ -34,8 +34,7 @@ SceneEditorClass sceneEditorClass;
 SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	:Window(&sceneEditorClass), scene(_scene)
 {
-	fb_scene = scene->createFramebuffer(layer.image.get());
-	scene_renderFinished = tke::createEvent();
+	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
 
 	physx_vertex_buffer = std::make_unique<tke::OnceVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
@@ -47,14 +46,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 		tke::depthImage->getView()
 	};
 	fb_tool = tke::getFramebuffer(layer.image->levels[0].cx, layer.image->levels[0].cy, tke::renderPass_depthC_image8, ARRAYSIZE(views), views);
-	transformerTool = new TransformerTool(fb_tool.get());
-}
-
-SceneEditor::~SceneEditor()
-{
-	tke::destroyEvent(scene_renderFinished);
-
-	delete transformerTool;
+	transformerTool = std::make_unique<TransformerTool>(fb_tool.get());
 }
 
 void SceneEditor::show()
@@ -359,10 +351,14 @@ void SceneEditor::show()
 	bool openSunDirPopup = false;
 	if (ImGui::BeginMenu("Sky"))
 	{
-		if (ImGui::MenuItem("Sun Dir"))
+		auto sun = scene->sunLight;
+		if (sun)
 		{
-			openSunDirPopup = true;
-			sun_dir = scene->sunDir;
+			if (ImGui::MenuItem("Sun Dir"))
+			{
+				openSunDirPopup = true;
+				sun_dir = glm::vec2(sun->getEuler().x, sun->getEuler().z);
+			}
 		}
 
 		auto ambientColor = scene->ambientColor;
@@ -579,9 +575,10 @@ void SceneEditor::show()
 
 	auto cb_list = tke::addFrameCommandBufferList();
 
-	scene->show(fb_scene.get(), scene_renderFinished);
-	cb_list->add(scene->cb_shadow->v, 0);
-	cb_list->add(scene->cb_deferred->v, scene_renderFinished);
+	scene->update();
+	defe_renderer->update(scene.get());
+	defe_renderer->render(cb_list, nullptr, true, nullptr, 0, scene.get());
+	scene->reset();
 
 	{
 		//for (int i = 0; i < rb.getNbPoints(); i++)

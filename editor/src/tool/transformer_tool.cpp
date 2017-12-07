@@ -49,7 +49,9 @@ bool TransformerTool::leftDown(int x, int y)
 		return false;
 
 	auto draw_data = getDrawData(1);
-	auto index = tke::pickUp(x, y, std::bind(tke::PlainRenderer::render_to, std::placeholders::_1, 0, currentCamera, draw_data.size(), draw_data.data()));
+	auto index = -1;
+	if (!draw_data.empty())
+		index = tke::pickUp(x, y, std::bind(tke::PlainRenderer::render_to, std::placeholders::_1, 0, currentCamera, draw_data.size(), draw_data.data()));
 	selectedAxis = index - 1;
 	return index != 0;
 }
@@ -95,5 +97,6 @@ void TransformerTool::show(tke::FrameCommandBufferList *cb_list, tke::Camera *ca
 {
 	currentCamera = camera;
 	auto draw_data = getDrawData(0);
-	renderer->render(cb_list, fb, false, camera, TK_MAKEINT(0, draw_data.size()), draw_data.data());
+	if (!draw_data.empty())
+		renderer->render(cb_list, fb, false, camera, TK_MAKEINT(0, draw_data.size()), draw_data.data());
 }

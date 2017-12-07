@@ -21,8 +21,7 @@ struct SceneEditor : Window
 
 	tke::DisplayLayer layer;
 
-	std::shared_ptr<tke::Framebuffer> fb_scene;
-	VkEvent scene_renderFinished;
+	std::unique_ptr<tke::DeferredRenderer> defe_renderer;
 
 	bool viewPhysx = false;
 	std::unique_ptr<tke::OnceVertexBuffer> physx_vertex_buffer;
@@ -32,12 +31,11 @@ struct SceneEditor : Window
 	std::unique_ptr<tke::WireframeRenderer> wireframe_renderer;
 
 	std::shared_ptr<tke::Framebuffer> fb_tool;
-	TransformerTool *transformerTool;
+	std::unique_ptr<TransformerTool> transformerTool;
 
 	bool follow = false;
 
 	SceneEditor(std::shared_ptr<tke::Scene> _scene);
-	~SceneEditor();
 	virtual void show() override;
 	virtual void save(tke::AttributeTreeNode *) override;
 };

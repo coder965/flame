@@ -18,75 +18,6 @@
 
 namespace tke
 {
-	enum { MaxStaticObjectCount = 1024 };
-	enum { MaxAnimatedObjectCount = 8 };
-	enum { MaxLightCount = 256 };
-	enum { MaxWaterCount = 8 };
-	enum { MaxShadowCount = 4 };
-
-	enum { EnvrSizeCx = 128 * 4 };
-	enum { EnvrSizeCy = 128 * 2 };
-	enum { ShadowMapCx = 2048 };
-	enum { ShadowMapCy = 2048 };
-
-	enum { MaxIndirectCount = 1024 };
-
-	struct LightShaderStruct
-	{
-		glm::vec4 coord;    // xyz - coord(point/spot)/dir(parallax), w - the light type
-		glm::vec4 color;    // rgb - color, a - shadow index(-1 is no shadow)
-		glm::vec4 spotData; // xyz - spot direction, a - spot range
-	};
-
-	struct LightBufferShaderStruct
-	{
-		unsigned int count;
-		unsigned int dummy0;
-		unsigned int dummy1;
-		unsigned int dummy2;
-
-		LightShaderStruct lights[MaxLightCount];
-	};
-
-	struct TerrainShaderStruct
-	{
-		glm::vec3 coord;
-		int blockCx;
-		float blockSize;
-		float height;
-		float tessellationFactor;
-		float textureUvFactor;
-		float mapDimension;
-		unsigned int dummy0;
-		unsigned int dummy1;
-		unsigned int dummy2;
-	};
-
-	struct WaterShaderStruct
-	{
-		glm::vec3 coord;
-		int blockCx;
-		float blockSize;
-		float height;
-		float tessellationFactor;
-		float textureUvFactor;
-		float mapDimension;
-		unsigned int dummy0;
-		unsigned int dummy1;
-		unsigned int dummy2;
-	};
-
-	struct AmbientBufferShaderStruct
-	{
-		glm::vec3 color;
-		glm::uint envr_max_mipmap;
-		glm::vec4 fogcolor;
-	};
-
-	IMPL(nullptr) Pipeline *scatteringPipeline;
-	IMPL(nullptr) Pipeline *downsamplePipeline;
-	IMPL(nullptr) Pipeline *convolvePipeline;
-
 	REFLECTABLE struct Scene
 	{
 		REFL_BANK;
@@ -97,7 +28,6 @@ namespace tke
 		std::string filepath;
 
 		SkyType skyType = SkyType::atmosphere_scattering;
-		glm::vec2 sunDir = glm::vec2(0.f, 0.f);
 		float atmosphereSunE = 20.f;
 		float atmosphereInnerRadius = 10.f; // The inner (planetary) radius
 		float atmosphereOuterRadius = 10.25f; // The outer (atmosphere) radius
@@ -130,14 +60,11 @@ namespace tke
 		std::vector<std::unique_ptr<Water>> waters;
 
 		bool needUpdateSky = true;
-		bool needUpdateIndirectBuffer = true;
 		bool needUpdateAmbientBuffer = true;
+		bool needUpdateIndirectBuffer = true;
 		bool needUpdateLightCount = true;
 
 		std::vector<CollisionGroup*> pCollisionGroups;
-
-		int staticIndirectCount = 0;
-		int animatedIndirectCount = 0;
 
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
@@ -153,15 +80,15 @@ namespace tke
 		void removeTerrain();
 		void addWater(Water *w);
 		Water *removeWater(Water *w);
+		void reset();
 		void clear();
 		void setSunDir(const glm::vec2 &);
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);
-		void show(Framebuffer *fb, VkEvent signalEvent);
+		void update();
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void save(const std::string &filename);
 	};
 
 	std::shared_ptr<Scene> getScene(const std::string &filename);
-	void initScene();
 }

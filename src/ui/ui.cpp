@@ -60,8 +60,8 @@ namespace tke
 				if (l->last_event)
 					evs.push_back(l->last_event);
 			}
-			if (!evs.empty())
-				cb->waitEvents(evs.size(), evs.data());
+			//if (!evs.empty())
+			//	cb->waitEvents(evs.size(), evs.data());
 		}
 
 		VkClearValue clear_value = { bkColor.r, bkColor.g, bkColor.b };
