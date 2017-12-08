@@ -4,7 +4,7 @@
 #include "editor.h"
 #include "window/dir_selector.h"
 #include "window/scene_editor.h"
-#include "window/texture_editor.h"
+#include "window/image_editor.h"
 
 std::experimental::filesystem::path project_path = "d:\\TK_Engine\\editor";
 
@@ -42,6 +42,8 @@ int main(int argc, char** argv)
 	tke::onRender = []() {
 		tke::beginFrame(true);
 
+		bool openNewImagePopop = false;
+
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("File"))
 		{
@@ -50,7 +52,7 @@ int main(int argc, char** argv)
 				if (ImGui::MenuItem("Project"))
 					;
 				if (ImGui::MenuItem("Image"))
-					;
+					openNewImagePopop = true;
 				if (ImGui::MenuItem("Terrain"))
 					;
 
@@ -89,14 +91,39 @@ int main(int argc, char** argv)
 		}
 		ImGui::EndMainMenuBar();
 
-		if (textureEditor)
+		if (openNewImagePopop)
+			ImGui::OpenPopup("New Image");
+		if (ImGui::BeginPopupModal("New Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			textureEditor->show();
-			if (!textureEditor->opened)
+			static int cx = 512;
+			static int cy = 512;
+			const char *typeNames[] = {
+				"color R8G8B8A8"
+			};
+			static int type = 0;
+			ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
+
+			if (ImGui::Button("Create"))
 			{
-				delete textureEditor;
-				textureEditor = nullptr;
+				//image = new tke::Image(cx, cy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+				//auto cb = tke::begineOnceCommandBuffer();
+				//VkClearColorValue clearValue = {0.f, 0.f, 0.f, 1.f};
+				//VkImageSubresourceRange range;
+				//range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				//range.baseMipLevel = 0;
+				//range.levelCount = 1;
+				//range.baseArrayLayer = 0;
+				//range.layerCount = 1;
+				//vkCmdClearColorImage(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &range);
+				//tke::endOnceCommandBuffer(cb);
+				//tke::addUiImage(image);
+				ImGui::CloseCurrentPopup();
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+				ImGui::CloseCurrentPopup();
+
+			ImGui::EndPopup();
 		}
 
 		for (auto &w : windows)

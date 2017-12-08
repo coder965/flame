@@ -31,7 +31,7 @@ namespace tke
 	struct ImageData
 	{
 		ImageFileType file_type = ImageFileTypeNull;
-		size_t byte_per_pixel = 0;
+		size_t bpp = 0;
 		size_t channel = 0;
 		std::vector<ImageDataLevel> levels;
 		int layer = 1;
@@ -42,5 +42,5 @@ namespace tke
 	};
 
 	std::shared_ptr<ImageData> createImageData(const std::string &filename);
-	void saveImageFile(const std::string &filename, unsigned char *data, int cx, int cy, int byte_per_pixel);
+	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp);
 }

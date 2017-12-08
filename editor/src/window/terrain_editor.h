@@ -15,7 +15,7 @@ extern TerrainEditorClass terrainEditorClass;
 
 struct TerrainEditor : Window
 {
-	std::shared_ptr<tke::Terrain> scene;
+	std::shared_ptr<tke::Terrain> terrain;
 
 	std::shared_ptr<tke::Image> image;
 	std::shared_ptr<tke::Framebuffer> fb_image;

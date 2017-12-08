@@ -111,14 +111,7 @@ namespace tke
 
 		std::shared_ptr<Framebuffer> framebuffer;
 
-		std::vector<Object*> staticObjects;
-		std::vector<Object*> animatedObjects;
-		int staticIndirectCount = 0;
-		int animatedIndirectCount = 0;
-		std::vector<Light*> shadowLights;
-
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
-		void update(Scene *scene);
 	};
 }

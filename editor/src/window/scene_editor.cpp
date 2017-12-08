@@ -389,6 +389,7 @@ void SceneEditor::show()
 		ImGui::EndPopup();
 	}
 
+	ImGui::Checkbox("Render", &enableRender);
 	ImVec2 image_pos = ImGui::GetCursorScreenPos();
 	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
 	ImGui::InvisibleButton("canvas", image_size);
@@ -576,8 +577,8 @@ void SceneEditor::show()
 	auto cb_list = tke::addFrameCommandBufferList();
 
 	scene->update();
-	defe_renderer->update(scene.get());
-	defe_renderer->render(cb_list, nullptr, true, nullptr, 0, scene.get());
+	if (enableRender)
+		defe_renderer->render(cb_list, nullptr, true, nullptr, 0, scene.get());
 	scene->reset();
 
 	{

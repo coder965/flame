@@ -101,37 +101,37 @@ namespace tke
 			switch (Format.Type)
 			{
 				case gli::gl::TYPE_I8:
-					data->byte_per_pixel = 1;
+					data->bpp = 8;
 					break;
 				case gli::gl::TYPE_U8:
-					data->byte_per_pixel = 1;
+					data->bpp = 8;
 					break;
 				case gli::gl::TYPE_I16:
-					data->byte_per_pixel = 2;
+					data->bpp = 16;
 					break;
 				case gli::gl::TYPE_U16:
-					data->byte_per_pixel = 2;
+					data->bpp = 16;
 					break;
 				case gli::gl::TYPE_I32:
-					data->byte_per_pixel = 4;
+					data->bpp = 32;
 					break;
 				case gli::gl::TYPE_U32:
-					data->byte_per_pixel = 4;
+					data->bpp = 32;
 					break;
 				case gli::gl::TYPE_I64:
-					data->byte_per_pixel = 8;
+					data->bpp = 64;
 					break;
 				case gli::gl::TYPE_F16:
-					data->byte_per_pixel = 2;
+					data->bpp = 16;
 					break;
 				case gli::gl::TYPE_F16_OES:
 					// not supported yet
 					return nullptr;
 				case gli::gl::TYPE_F32:
-					data->byte_per_pixel = 4;
+					data->bpp = 32;
 					break;
 				case gli::gl::TYPE_F64:
-					data->byte_per_pixel = 8;
+					data->bpp = 64;
 					break;
 				case gli::gl::TYPE_UINT32_RGB9_E5_REV:
 					// not supported yet
@@ -164,10 +164,10 @@ namespace tke
 					// not supported yet
 					return nullptr;
 				case gli::gl::TYPE_UINT32_RGBA8:
-					data->byte_per_pixel = 1;
+					data->bpp = 8;
 					break;
 				case gli::gl::TYPE_UINT32_RGBA8_REV:
-					data->byte_per_pixel = 1;
+					data->bpp = 8;
 					break;
 				case gli::gl::TYPE_UINT32_RGB10A2:
 					// not supported yet
@@ -184,12 +184,13 @@ namespace tke
 			}
 			data->levels.resize(Texture.levels());
 
+			auto pixel_size = data->bpp / 8;
 			for (int l = 0; l < Texture.levels(); l++)
 			{
 				glm::tvec3<size_t> Extent(Texture.extent(l));
 				data->levels[l].cx = Extent.x;
 				data->levels[l].cy = Extent.y;
-				data->levels[l].pitch = PITCH(data->levels[l].cx * data->byte_per_pixel);
+				data->levels[l].pitch = PITCH(data->levels[l].cx * pixel_size);
 				data->levels[l].size = data->levels[l].pitch * data->levels[l].cy;
 				data->levels[l].v = std::make_unique<unsigned char[]>(data->levels[l].size);
 				memcpy(data->levels[l].v.get(), Texture.data(0, 0, l), data->levels[l].size);
@@ -247,7 +248,7 @@ namespace tke
 				data->channel = 4;
 				break;
 		}
-		data->byte_per_pixel = FreeImage_GetBPP(dib) / 8;
+		data->bpp = FreeImage_GetBPP(dib);
 
 		data->levels[0].cx = FreeImage_GetWidth(dib);
 		data->levels[0].cy = FreeImage_GetHeight(dib);
@@ -260,7 +261,7 @@ namespace tke
 		return data;
 	}
 
-	void saveImageFile(const std::string &filename, unsigned char *data, int cx, int cy, int byte_per_pixel)
+	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp)
 	{
 		{
 			std::experimental::filesystem::path path(filename);
@@ -272,7 +273,7 @@ namespace tke
 		}
 
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		auto dib = FreeImage_ConvertFromRawBits(data, cx, cy, PITCH(cx * byte_per_pixel), byte_per_pixel * 8, 0x0000FF, 0xFF0000, 0x00FF00, true);
+		auto dib = FreeImage_ConvertFromRawBits(data.v.get(), data.cx, data.cy, data.pitch, bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
 		FreeImage_Save(fif, dib, filename.c_str());
 	}
 }

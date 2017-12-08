@@ -1,62 +1,45 @@
 #include "../../../src/ui/ui.h"
 
 #include "../editor.h"
-#include "texture_editor.h"
+#include "image_editor.h"
 
-static void _texture_editor_remove_image(TextureEditor *e)
+std::string ImageEditorClass::getName()
 {
-	if (e->image)
-	{
-		tke::removeUiImage(e->image);
-		delete e->image;
-		e->image = nullptr;
-	}
+	return "image editor";
 }
 
-void TextureEditor::show()
+Window *ImageEditorClass::load(tke::AttributeTreeNode *n)
 {
-	ImGui::Begin("Texture Editor", &opened);
+	auto a = n->firstAttribute("filename");
+	if (a)
+	{
+		auto i = tke::getImage(a->value);
+		if (i)
+		{
+			auto w = new ImageEditor(i);
+			return w;
+		}
+	}
+	return nullptr;
+}
 
-	//if (ImGui::Button("New"))
-	//	ImGui::OpenPopup("Image Attributes");
-	//if (ImGui::BeginPopupModal("Image Attributes", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	//{
-	//	static int cx = 512;
-	//	static int cy = 512;
-	//	const char *typeNames[] = {
-	//		"color R8G8B8A8"
-	//	};
-	//	static int type = 0;
-	//	ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
+ImageEditorClass imageEditorClass;
 
-	//	if (ImGui::Button("Create"))
-	//	{
-	//		_texture_editor_remove_image(this);
-	//		image = new tke::Image(cx, cy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-	//		auto cb = tke::begineOnceCommandBuffer();
-	//		VkClearColorValue clearValue = { 0.f, 0.f, 0.f, 1.f };
-	//		VkImageSubresourceRange range;
-	//		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	//		range.baseMipLevel = 0;
-	//		range.levelCount = 1;
-	//		range.baseArrayLayer = 0;
-	//		range.layerCount = 1;
-	//		vkCmdClearColorImage(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &range);
-	//		tke::endOnceCommandBuffer(cb);
-	//		tke::addUiImage(image);
-	//		ImGui::CloseCurrentPopup();
-	//	}
-	//	ImGui::SameLine();
-	//	if (ImGui::Button("Cancel"))
-	//		ImGui::CloseCurrentPopup();
+ImageEditor::ImageEditor(std::shared_ptr<tke::Image> _image)
+	:Window(&imageEditorClass), image(_image)
+{
+	tke::addUiImage(image.get());
+}
 
-	//	ImGui::EndPopup();
-	//}
-	//ImGui::SameLine();
-	//if (ImGui::Button("Load"))
-	//{
+ImageEditor::~ImageEditor()
+{
+	tke::removeUiImage(image.get());
+}
 
-	//}
+void ImageEditor::show()
+{
+	ImGui::Begin(("Image - " + image->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
+
 	//ImGui::SameLine();
 	//if (ImGui::Button("Save"))
 	//	ImGui::OpenPopup("Save Attribute");
@@ -90,8 +73,6 @@ void TextureEditor::show()
 	//		ImGui::CloseCurrentPopup();
 	//}
 
-	//if (image)
-	//{
 	//	enum Mode
 	//	{
 	//		ModeTerrainBlendMap = 0
@@ -156,15 +137,8 @@ void TextureEditor::show()
 	//			tke::endOnceCommandBuffer(cb);
 	//		}
 	//	}
-	//	if (ImGui::Button("Remove"))
-	//		_texture_editor_remove_image(this);
-	//}
-	//else
-	//{
-	//	ImGui::Text("[No Image]");
-	//}
 
 	ImGui::End();
 }
 
-TextureEditor *textureEditor = nullptr;
+ImageEditor *imageEditor = nullptr;

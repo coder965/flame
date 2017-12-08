@@ -21,6 +21,7 @@ struct SceneEditor : Window
 
 	tke::DisplayLayer layer;
 
+	bool enableRender = true;
 	std::unique_ptr<tke::DeferredRenderer> defe_renderer;
 
 	bool viewPhysx = false;

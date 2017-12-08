@@ -277,16 +277,23 @@ namespace tke
 		uiAcceptedKey = ImGui::IsAnyItemActive();
 	}
 
-	static Image *_images[127];
+	static std::pair<Image*, int> _images[127];
 
 	void addUiImage(Image *image)
 	{
+		if (image->index != -1)
+		{
+			_images[image->index].second++;
+			return;
+		}
+
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
-			if (!_images[i])
+			if (!_images[i].first)
 			{
 				image->index = i + 1;
-				_images[i] = image;
+				_images[i].first = image;
+				_images[i].second = 1;
 				updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, image->index, image, colorSampler));
 				return;
 			}
@@ -297,9 +304,11 @@ namespace tke
 	{
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
-			if (_images[i] == image)
+			if (_images[i].first == image)
 			{
-				_images[i] = nullptr;
+				_images[i].second--;
+				if (_images[i].second == 0)
+					_images[i].first = nullptr;
 				return;
 			}
 		}

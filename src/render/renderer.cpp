@@ -554,8 +554,10 @@ namespace tke
 		}
 	}
 
-	void DeferredRenderer::update(Scene *scene)
+	void DeferredRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
 	{
+		auto scene = (Scene*)user_data;
+
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
 			stru.proj = matPerspective;
@@ -771,8 +773,10 @@ namespace tke
 			if (ranges.size() > 0) copyBuffer(stagingBuffer->v, waterBuffer->v, ranges.size(), ranges.data());
 		}
 
-		staticObjects.clear();
-		animatedObjects.clear();
+		std::vector<Object*> staticObjects;
+		std::vector<Object*> animatedObjects;
+		int staticIndirectCount = 0;
+		int animatedIndirectCount = 0;
 		if (scene->needUpdateIndirectBuffer)
 		{
 			staticObjects.clear();
@@ -842,6 +846,8 @@ namespace tke
 			auto count = scene->lights.size();
 			lightBuffer->update(&count, stagingBuffer, 4);
 		}
+
+		std::vector<Light*> shadowLights;
 		if (enable_shadow)
 		{
 			shadowLights.clear();
@@ -957,12 +963,6 @@ namespace tke
 		}
 
 		updateDescriptorSets(writes.size(), writes.data());
-
-	}
-
-	void DeferredRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
-	{
-		auto scene = (Scene*)user_data;
 
 		if (enable_shadow)
 		{

@@ -227,7 +227,8 @@ namespace tke
 		auto y = glm::fract(_y);
 		int Y = glm::floor(_y);
 
-#define gd(a, b) (float)levels[0].v[(a) * byte_per_pixel + (b) * levels[0].pitch]
+		auto pixel_size = bpp / 8;
+#define gd(a, b) (float)levels[0].v[(a) * pixel_size + (b) * levels[0].pitch]
 		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
 #undef gd
 	}
@@ -252,20 +253,20 @@ namespace tke
 		switch (image_data->channel)
 		{
 		case 1:
-			switch (image_data->byte_per_pixel)
+			switch (image_data->bpp)
 			{
-			case 1:
+			case 8:
 				_format = VK_FORMAT_R8_UNORM;
 				break;
-			case 2:
+			case 16:
 				_format = VK_FORMAT_R16_UNORM;
 				break;
 			}
 			break;
 		case 4:
-			switch (image_data->byte_per_pixel)
+			switch (image_data->bpp)
 			{
-			case 4:
+			case 32:
 				if (sRGB)
 					_format = VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
 				else
@@ -283,7 +284,7 @@ namespace tke
 			i->levels[l].pitch = image_data->levels[l].pitch;
 		}
 		i->filename = filename;
-		i->byte_per_pixel = image_data->byte_per_pixel;
+		i->bpp = image_data->bpp;
 		i->sRGB = sRGB || image_data->sRGB;
 
 		if (saveData)
