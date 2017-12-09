@@ -20,14 +20,14 @@ ResourceExplorerClass resourceExplorerClass;
 
 ResourceExplorer *resourceExplorer = nullptr;
 
-ResourceExplorerFileListItem::~ResourceExplorerFileListItem()
+ResourceExplorerFileItem::~ResourceExplorerFileItem()
 {
 	if (image && image->index != 0)
 		tke::removeUiImage(image.get());
 }
 
 ResourceExplorer::ResourceExplorer()
-	:Window(&resourceExplorerClass)
+	:FileSelector(&resourceExplorerClass, true)
 {
 	path = project_path;
 }
@@ -37,173 +37,89 @@ ResourceExplorer::~ResourceExplorer()
 	resourceExplorer = nullptr;
 }
 
-void ResourceExplorer::refresh()
+int ResourceExplorer::on_left_area_width()
 {
-	dir_list.clear();
-	file_list.clear();
-	list_index = -1;
+	return 300;
+}
 
-	if (project_path != "")
+bool ResourceExplorer::on_refresh()
+{
+	return project_path != "";
+}
+
+FileSelector::FileItem *ResourceExplorer::on_new_file_item()
+{
+	return new ResourceExplorerFileItem;
+}
+
+bool ResourceExplorer::on_window_begin()
+{
+	auto open = ImGui::Begin("Resource Explorer", &opened);
+	if (project_path == "")
 	{
-		std::experimental::filesystem::directory_iterator end_it;
-		for (std::experimental::filesystem::directory_iterator it(path); it != end_it; it++)
-		{
-			auto str = it->path().filename().string();
-			if (std::experimental::filesystem::is_directory(it->status()))
+		ImGui::Text("No project opened.");
+		return false;
+	}
+	return open;
+}
+
+void ResourceExplorer::on_window_end()
+{
+	ImGui::End();
+}
+
+void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
+{
+	auto i = (ResourceExplorerFileItem*)_i;
+
+	switch (i->file_type)
+	{
+		case tke::FileTypeImage:
+			if (!i->image)
 			{
-				auto i = std::make_unique<ResourceExplorerDirListItem>();
-				i->value = str;
-				i->name = ICON_FA_FOLDER_O" " + str;
-				dir_list.push_back(std::move(i));
+				i->image = tke::getImage((path / i->value).string());
+				if (i->image)
+					tke::addUiImage(i->image.get());
 			}
-			else
+			break;
+		case tke::FileTypeScene:
+			if (ImGui::IsMouseDoubleClicked(0))
 			{
-				auto i = std::make_unique<ResourceExplorerFileListItem>();
-
-				i->file_size = std::experimental::filesystem::file_size(it->path());
-
-				auto ext = it->path().extension().string();
-				const char *prefix;
-				if (tke::isTextFile(ext))
+				auto s = tke::getScene((path / i->value).string());
+				if (s)
 				{
-					i->file_type = ResourceExplorerFileListItem::FileTypeText;
-					prefix = ICON_FA_FILE_TEXT_O" ";
+					s->camera.setMode(tke::CameraMode::targeting);
+					auto w = new SceneEditor(s);
+					windows.push_back(std::move(std::unique_ptr<Window>(w)));
 				}
-				else if (tke::isImageFile(ext))
-				{
-					i->file_type = ResourceExplorerFileListItem::FileTypeImage;
-					prefix = ICON_FA_FILE_IMAGE_O" ";
-				}
-				else if (tke::isModelFile(ext))
-				{
-					i->file_type = ResourceExplorerFileListItem::FileTypeModel;
-					prefix = ICON_FA_FILE_O" ";
-				}
-				else if (tke::isSceneFile(ext))
-				{
-					i->file_type = ResourceExplorerFileListItem::FileTypeScene;
-					prefix = ICON_FA_FILE_O" ";
-				}
-				else
-					prefix = ICON_FA_FILE_O" ";
-				i->value = str;
-				i->name = prefix + str;
-
-				file_list.push_back(std::move(i));
 			}
-		}
+			break;
 	}
 }
 
-void ResourceExplorer::show()
+void ResourceExplorer::on_bottom_area_begin()
 {
-	ImGui::Begin("Resource Explorer", &opened);
-
-	if (need_refresh)
+	if (list_index != -1 && list_index >= dir_list.size())
 	{
-		refresh();
-		need_refresh = false;
+		auto i = file_list[list_index - dir_list.size()].get();
+		ImGui::Text("size: %d byte", i->file_size);
 	}
+}
 
-	if (project_path == "")
-		ImGui::Text("No project opened.");
-	else
+void ResourceExplorer::on_right_area_begin()
+{
+	ImGui::SameLine();
+	ImGui::BeginGroup();
+	if (list_index != -1 && list_index >= dir_list.size())
 	{
-		const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
-
-		ImGui::BeginChild("left", ImVec2(300, 0));
-
-		ImGui::Text(path.string().c_str());
-		ImGui::SameLine();
+		auto i = (ResourceExplorerFileItem*)file_list[list_index - dir_list.size()].get();
+		switch (i->file_type)
 		{
-			static float buttonWidth = 100.f;
-			float pos = buttonWidth + itemSpacing;
-			ImGui::SameLine(ImGui::GetWindowWidth() - pos);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			if (ImGui::Button(ICON_FA_CHEVRON_UP))
-			{
-				if (path != project_path)
-				{
-					path = path.parent_path();
-					need_refresh = true;
-				}
-			}
-			buttonWidth = ImGui::GetItemRectSize().x;
-		}
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Parent Path");
-		ImGui::PopStyleColor();
-		ImGui::Separator();
-
-		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing() - 1), true);
-		int index = 0;
-		for (auto &i : dir_list)
-		{
-			if (ImGui::Selectable(i->name.c_str(), index == list_index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
-			{
-				list_index = index;
-				if (ImGui::IsMouseDoubleClicked(0))
-				{
-					path /= i->value;
-					need_refresh = true;
-				}
-			}
-			index++;
-		}
-		for (auto &i : file_list)
-		{
-			if (ImGui::Selectable(i->name.c_str(), index == list_index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
-			{
-				list_index = index;
-				switch (i->file_type)
-				{
-					case ResourceExplorerFileListItem::FileTypeImage:
-						if (!i->image)
-						{
-							i->image = tke::getImage((path / i->value).string());
-							if (i->image)
-								tke::addUiImage(i->image.get());
-						}
-						break;
-					case ResourceExplorerFileListItem::FileTypeScene:
-						if (ImGui::IsMouseDoubleClicked(0))
-						{
-							auto s = tke::getScene((path / i->value).string());
-							if (s)
-							{
-								s->camera.setMode(tke::CameraMode::targeting);
-								auto w = new SceneEditor(s);
-								windows.push_back(std::move(std::unique_ptr<Window>(w)));
-							}
-						}
-						break;
-				}
-			}
-			index++;
-		}
-		ImGui::EndChild();
-
-		if (list_index != -1 && list_index >= dir_list.size())
-		{
-			auto i = file_list[list_index - dir_list.size()].get();
-			ImGui::Text("size: %d byte", i->file_size);
-		}
-
-		ImGui::EndChild();
-
-		ImGui::SameLine();
-		if (list_index != -1 && list_index >= dir_list.size())
-		{
-			auto i = file_list[list_index - dir_list.size()].get();
-			switch (i->file_type)
-			{
-				case ResourceExplorerFileListItem::FileTypeImage:
-					ImGui::Text("%d x %d", i->image->levels[0].cx, i->image->levels[0].cy);
-					ImGui::Image((ImTextureID)i->image->index, ImVec2(i->image->levels[0].cx, i->image->levels[0].cy));
-					break;
-			}
+			case tke::FileTypeImage:
+				ImGui::Text("%d x %d", i->image->levels[0].cx, i->image->levels[0].cy);
+				ImGui::Image((ImTextureID)i->image->index, ImVec2(i->image->levels[0].cx, i->image->levels[0].cy));
+				break;
 		}
 	}
-
-	ImGui::End();
+	ImGui::EndGroup();
 }

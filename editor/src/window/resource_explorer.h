@@ -2,8 +2,9 @@
 
 #include <vector>
 
+#include "../TK_Engine/src/utils.h"
 #include "../TK_Engine/src/render/image.h"
-#include "window.h"
+#include "file_selector.h"
 
 struct ResourceExplorerClass : WindowClass
 {
@@ -13,46 +14,25 @@ struct ResourceExplorerClass : WindowClass
 
 extern ResourceExplorerClass resourceExplorerClass;
 
-struct ResourceExplorerDirListItem
+struct ResourceExplorerFileItem : FileSelector::FileItem
 {
-	std::string value;
-	std::string name;
-};
-
-struct ResourceExplorerFileListItem
-{
-	std::string value;
-	std::string name;
-
-	int file_size;
-
-	enum FileType
-	{
-		FileTypeFile,
-		FileTypeText,
-		FileTypeImage,
-		FileTypeModel,
-		FileTypeScene
-	};
-	FileType file_type = FileTypeFile;
-
 	std::shared_ptr<tke::Image> image;
 
-	~ResourceExplorerFileListItem();
+	~ResourceExplorerFileItem();
 };
 
-struct ResourceExplorer : Window
+struct ResourceExplorer : FileSelector
 {
-	std::experimental::filesystem::path path;
-	std::vector<std::unique_ptr<ResourceExplorerDirListItem>> dir_list;
-	std::vector<std::unique_ptr<ResourceExplorerFileListItem>> file_list;
-	int list_index = -1;
-	bool need_refresh = true;
-
 	ResourceExplorer();
 	virtual ~ResourceExplorer() override;
-	void refresh();
-	virtual void show() override;
+	virtual int on_left_area_width() override;
+	virtual bool on_refresh() override;
+	virtual FileItem *on_new_file_item() override;
+	virtual bool on_window_begin() override;
+	virtual void on_window_end() override;
+	virtual void on_file_item_selected(FileItem *i, bool doubleClicked) override;
+	virtual void on_bottom_area_begin() override;
+	virtual void on_right_area_begin() override;
 };
 
 extern ResourceExplorer *resourceExplorer;

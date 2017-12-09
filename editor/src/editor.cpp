@@ -2,7 +2,7 @@
 #include "../../src/core.h"
 
 #include "editor.h"
-#include "window/dir_selector.h"
+#include "window/file_selector.h"
 #include "window/scene_editor.h"
 #include "window/image_editor.h"
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 			}
 			if (ImGui::MenuItem("Open Project"))
 			{
-				DirSelector::open("c:\\", [](std::string path) {
+				DirSelectorDialog::open("c:\\", [](std::string path) {
 					project_path = path;
 					if (resourceExplorer)
 					{

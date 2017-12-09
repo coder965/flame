@@ -18,8 +18,6 @@ int main(int argc, char** argv)
 		if (first)
 		{
 			ImGui::OpenPopup("p0");
-			ImGui::OpenPopup("p1");
-			first = false;
 		}
 
 		if (ImGui::BeginPopupModal("p0"))
@@ -27,15 +25,20 @@ int main(int argc, char** argv)
 			if (ImGui::Button("ok1"))
 				ImGui::CloseCurrentPopup();
 
-			ImGui::EndPopup();
-		}
-		if (ImGui::BeginPopupModal("p1"))
-		{
-			if (ImGui::Button("ok2"))
-				ImGui::CloseCurrentPopup();
+			if (first)
+			ImGui::OpenPopup("p1");
+
+			if (ImGui::BeginPopupModal("p1"))
+			{
+				if (ImGui::Button("ok2"))
+					ImGui::CloseCurrentPopup();
+
+				ImGui::EndPopup();
+			}
 
 			ImGui::EndPopup();
 		}
+		first = false;
 
 		tke::endFrame();
 	};

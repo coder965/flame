@@ -97,6 +97,11 @@ struct EnsureConst
 
 namespace tke
 {
+	struct vdtor
+	{
+		virtual ~vdtor() {}
+	};
+
 	typedef void(*PF_EVENT0)();
 	typedef void(*PF_EVENT1)(int);
 	typedef void(*PF_EVENT2)(int, int);
@@ -158,6 +163,15 @@ namespace tke
 		char *data = nullptr;
 		OnceFileBuffer(const std::string &filename);
 		~OnceFileBuffer();
+	};
+
+	enum FileType
+	{
+		FileTypeUnknown,
+		FileTypeText,
+		FileTypeImage,
+		FileTypeModel,
+		FileTypeScene
 	};
 
 	bool isTextFile(const std::string &ext);
