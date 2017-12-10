@@ -40,9 +40,6 @@
     <ClCompile Include="src\tool\transformer_tool.cpp">
       <Filter>src\tool</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\attribute.cpp">
-      <Filter>src\window</Filter>
-    </ClCompile>
     <ClCompile Include="src\window\resource_explorer.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
@@ -59,6 +56,9 @@
       <Filter>src\window</Filter>
     </ClCompile>
     <ClCompile Include="src\window\file_selector.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
+    <ClCompile Include="src\window\model_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
   </ItemGroup>
@@ -91,6 +91,9 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="src\window\file_selector.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="src\window\model_editor.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>

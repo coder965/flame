@@ -20,5 +20,3 @@ struct ImageEditor : Window
 	~ImageEditor();
 	virtual void show() override;
 };
-
-extern ImageEditor *imageEditor;

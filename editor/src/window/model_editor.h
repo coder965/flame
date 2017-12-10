@@ -2,26 +2,28 @@
 
 #include "../../../src/render/display_layer.h"
 #include "../../../src/render/framebuffer.h"
+#include "../../../src/render/renderer.h"
 #include "../../../src/entity/terrain.h"
+#include "../../../src/model/model.h"
 
 #include "window.h"
 
-struct TerrainEditorClass : WindowClass
+struct ModelEditorClass : WindowClass
 {
 	virtual std::string getName() override;
 	virtual Window *load(tke::AttributeTreeNode *n) override;
 };
 
-extern TerrainEditorClass terrainEditorClass;
+extern ModelEditorClass modelEditorClass;
 
-struct TerrainEditor : Window
+struct ModelEditor : Window
 {
-	std::shared_ptr<tke::Terrain> terrain;
+	std::shared_ptr<tke::Model> model;
 
 	tke::DisplayLayer layer;
 
-	int tess = 100;
+	std::unique_ptr<tke::PlainRenderer> renderer;
 
-	TerrainEditor();
+	ModelEditor(std::shared_ptr<tke::Model> _model);
 	virtual void show() override;
 };

@@ -213,7 +213,7 @@ namespace tke
 
 	bool isModelFile(const std::string &ext)
 	{
-		if (ext == ".obj" || ext == ".pmd" || ext == ".pmx" || ext == ".tkm")
+		if (ext == ".obj" || ext == ".pmd" || ext == ".pmx" || ext == ".tkm" || ext == ".dae")
 			return true;
 		return false;
 	}

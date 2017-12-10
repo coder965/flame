@@ -27,10 +27,12 @@ struct ResourceExplorer : FileSelector
 	virtual ~ResourceExplorer() override;
 	virtual int on_left_area_width() override;
 	virtual bool on_refresh() override;
+	virtual bool on_parent_path() override;
 	virtual FileItem *on_new_file_item() override;
 	virtual bool on_window_begin() override;
 	virtual void on_window_end() override;
 	virtual void on_file_item_selected(FileItem *i, bool doubleClicked) override;
+	virtual void on_top_area_begin() override;
 	virtual void on_bottom_area_begin() override;
 	virtual void on_right_area_begin() override;
 };

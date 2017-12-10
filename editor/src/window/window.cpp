@@ -6,7 +6,9 @@ std::vector<WindowClass*> windowClasses;
 
 Window::Window(WindowClass *_pClass)
 	:pClass(_pClass)
-{}
+{
+	windows.push_back(std::move(std::unique_ptr<Window>(this)));
+}
 
 std::vector<std::unique_ptr<Window>> windows;
 

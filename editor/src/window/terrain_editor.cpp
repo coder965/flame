@@ -9,13 +9,11 @@ std::string TerrainEditorClass::getName()
 
 Window *TerrainEditorClass::load(tke::AttributeTreeNode *n)
 {
-	terrainEditor = new TerrainEditor;
-	return terrainEditor;
+	auto w = new TerrainEditor;
+	return w;
 }
 
 TerrainEditorClass terrainEditorClass;
-
-TerrainEditor *terrainEditor;
 
 TerrainEditor::TerrainEditor()
 	:Window(&terrainEditorClass)
@@ -24,6 +22,6 @@ TerrainEditor::TerrainEditor()
 
 void TerrainEditor::show()
 {
-	ImGui::Begin("Terrain Editor", &opened);
+	ImGui::Begin("Terrain -", &opened);
 	ImGui::End();
 }

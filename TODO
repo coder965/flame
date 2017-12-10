@@ -1,9 +1,4 @@
-<6>角色控制器有很严重卡顿（查看NV的地形例子）
-<7>editor : 窗口拥有统一的父类
-<10>editor : remove : attribute widget
-<11>editor : 双击texture，在texture editor中打开
-<13>editor : 重做texture editor，不再拥有texture，而只是编辑功能
-<14>editor : 增加新的model editor
+<6>角色控制器有很严重卡顿（查看NV的地形例子），使用分区的地形物理
 <18>remove : 观察者
 <19>scene : 使用shared ptr 管理entity
 <20>editor : 使用weak ptr 实现select

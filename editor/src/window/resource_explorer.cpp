@@ -2,8 +2,12 @@
 
 #include "../../../src/ui/ui.h"
 
-#include "resource_explorer.h"
 #include "../editor.h"
+#include "resource_explorer.h"
+#include "image_editor.h"
+#include "model_editor.h"
+#include "terrain_editor.h"
+#include "scene_editor.h"
 
 std::string ResourceExplorerClass::getName()
 {
@@ -27,9 +31,9 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 }
 
 ResourceExplorer::ResourceExplorer()
-	:FileSelector(&resourceExplorerClass, true)
+	:FileSelector(&resourceExplorerClass, true, 0)
 {
-	path = project_path;
+	current_path = project_path;
 }
 
 ResourceExplorer::~ResourceExplorer()
@@ -47,6 +51,11 @@ bool ResourceExplorer::on_refresh()
 	return project_path != "";
 }
 
+bool ResourceExplorer::on_parent_path()
+{
+	return project_path != current_path;
+}
+
 FileSelector::FileItem *ResourceExplorer::on_new_file_item()
 {
 	return new ResourceExplorerFileItem;
@@ -54,13 +63,16 @@ FileSelector::FileItem *ResourceExplorer::on_new_file_item()
 
 bool ResourceExplorer::on_window_begin()
 {
-	auto open = ImGui::Begin("Resource Explorer", &opened);
-	if (project_path == "")
+	if (ImGui::Begin("Resource Explorer", &opened))
 	{
-		ImGui::Text("No project opened.");
-		return false;
+		if (project_path == "")
+		{
+			ImGui::Text("No project opened.");
+			return false;
+		}
+		return true;
 	}
-	return open;
+	return false;
 }
 
 void ResourceExplorer::on_window_end()
@@ -77,24 +89,41 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 		case tke::FileTypeImage:
 			if (!i->image)
 			{
-				i->image = tke::getImage((path / i->value).string());
+				i->image = tke::getImage((current_path / i->value).string());
 				if (i->image)
 					tke::addUiImage(i->image.get());
 			}
+			if (ImGui::IsMouseDoubleClicked(0))
+				new ImageEditor(i->image);
+			break;
+		case tke::FileTypeModel:
+			if (ImGui::IsMouseDoubleClicked(0))
+			{
+				auto m = tke::getModel((current_path / i->value).string());
+				if (m)
+					new ModelEditor(m);
+			}
+			break;
+		case tke::FileTypeTerrain:
+			if (ImGui::IsMouseDoubleClicked(0))
+				new TerrainEditor;
 			break;
 		case tke::FileTypeScene:
 			if (ImGui::IsMouseDoubleClicked(0))
 			{
-				auto s = tke::getScene((path / i->value).string());
+				auto s = tke::getScene((current_path / i->value).string());
 				if (s)
 				{
 					s->camera.setMode(tke::CameraMode::targeting);
-					auto w = new SceneEditor(s);
-					windows.push_back(std::move(std::unique_ptr<Window>(w)));
+					new SceneEditor(s);
 				}
 			}
 			break;
 	}
+}
+
+void ResourceExplorer::on_top_area_begin()
+{
 }
 
 void ResourceExplorer::on_bottom_area_begin()

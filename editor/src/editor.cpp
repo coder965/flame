@@ -3,10 +3,67 @@
 
 #include "editor.h"
 #include "window/file_selector.h"
+#include "window/resource_explorer.h"
 #include "window/scene_editor.h"
 #include "window/image_editor.h"
 
 std::experimental::filesystem::path project_path = "d:\\TK_Engine\\editor";
+
+struct NewImageDialog : FileSelector
+{
+	bool first = true;
+	int cx = 512;
+	int cy = 512;
+
+	NewImageDialog()
+		:FileSelector(nullptr, true, 1)
+	{
+		callback = [this](std::string s) {
+			if (std::experimental::filesystem::exists(s))
+				return false;
+			tke::newImageFile(s, cx, cy, 32);
+			return true;
+		};
+		set_current_path(project_path.string());
+	}
+
+	virtual bool on_window_begin() override 
+	{
+		if (first)
+		{
+			ImGui::OpenPopup("New Image");
+			ImGui::SetNextWindowSize(ImVec2(800, 600));
+			first = false;
+		}
+		return ImGui::BeginPopupModal("New Image");
+	}
+
+	virtual void on_window_end() override
+	{
+		ImGui::EndPopup();
+	}
+
+	virtual int on_left_area_width() override
+	{
+		return 300;
+	}
+
+	virtual void on_right_area_begin() override
+	{
+		ImGui::SameLine();
+		ImGui::BeginGroup();
+		ImGui::PushItemWidth(200);
+		ImGui::DragInt("cx", &cx);
+		ImGui::DragInt("cy", &cy);
+		const char *typeNames[] = {
+			"color R8G8B8A8"
+		};
+		static int type = 0;
+		ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
+		ImGui::PopItemWidth();
+		ImGui::EndGroup();
+	}
+};
 
 int main(int argc, char** argv)
 {
@@ -24,16 +81,13 @@ int main(int argc, char** argv)
 			{
 				if (n->name == "window")
 				{
-					Window *w = nullptr;
 					for (auto c : windowClasses)
 					{
-						if (w) break;
 						auto a = n->firstAttribute("type");
 						if (a && a->value == c->getName())
-							w = c->load(n.get());
+							if (c->load(n.get()))
+								break;
 					}
-					if (w)
-						windows.push_back(std::move(std::unique_ptr<Window>(w)));
 				}
 			}
 		}
@@ -41,8 +95,6 @@ int main(int argc, char** argv)
 
 	tke::onRender = []() {
 		tke::beginFrame(true);
-
-		bool openNewImagePopop = false;
 
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("File"))
@@ -52,7 +104,7 @@ int main(int argc, char** argv)
 				if (ImGui::MenuItem("Project"))
 					;
 				if (ImGui::MenuItem("Image"))
-					openNewImagePopop = true;
+					new NewImageDialog;
 				if (ImGui::MenuItem("Terrain"))
 					;
 
@@ -64,9 +116,10 @@ int main(int argc, char** argv)
 					project_path = path;
 					if (resourceExplorer)
 					{
-						resourceExplorer->path = project_path;
+						resourceExplorer->current_path = project_path;
 						resourceExplorer->refresh();
 					}
+					return true;
 				});
 			}
 			if (ImGui::MenuItem("Save Project"))
@@ -81,53 +134,20 @@ int main(int argc, char** argv)
 			if (ImGui::MenuItem("Resource Explorer", nullptr, resourceExplorer != nullptr))
 			{
 				if (!resourceExplorer)
-				{
 					resourceExplorer = new ResourceExplorer;
-					windows.push_back(std::move(std::unique_ptr<Window>(resourceExplorer)));
-				}
 			}
 
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 
-		if (openNewImagePopop)
-			ImGui::OpenPopup("New Image");
-		if (ImGui::BeginPopupModal("New Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			static int cx = 512;
-			static int cy = 512;
-			const char *typeNames[] = {
-				"color R8G8B8A8"
-			};
-			static int type = 0;
-			ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
-
-			if (ImGui::Button("Create"))
-			{
-				//image = new tke::Image(cx, cy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-				//auto cb = tke::begineOnceCommandBuffer();
-				//VkClearColorValue clearValue = {0.f, 0.f, 0.f, 1.f};
-				//VkImageSubresourceRange range;
-				//range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				//range.baseMipLevel = 0;
-				//range.levelCount = 1;
-				//range.baseArrayLayer = 0;
-				//range.layerCount = 1;
-				//vkCmdClearColorImage(cb->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &range);
-				//tke::endOnceCommandBuffer(cb);
-				//tke::addUiImage(image);
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
-				ImGui::CloseCurrentPopup();
-
-			ImGui::EndPopup();
+			std::vector<Window*> _w;
+			for (auto &w : windows)
+				_w.push_back(w.get());
+			for (auto &w : _w)
+				w->show();
 		}
-
-		for (auto &w : windows)
-			w->show();
 
 		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetItemsLineHeightWithSpacing()));
 		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);

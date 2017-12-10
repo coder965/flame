@@ -172,8 +172,8 @@
     <ClCompile Include="src\select.cpp" />
     <ClCompile Include="src\tool\tool.cpp" />
     <ClCompile Include="src\tool\transformer_tool.cpp" />
-    <ClCompile Include="src\window\attribute.cpp" />
     <ClCompile Include="src\window\file_selector.cpp" />
+    <ClCompile Include="src\window\model_editor.cpp" />
     <ClCompile Include="src\window\scene_editor.cpp" />
     <ClCompile Include="src\window\resource_explorer.cpp" />
     <ClCompile Include="src\window\terrain_editor.cpp" />
@@ -186,6 +186,7 @@
     <ClInclude Include="src\tool\tool.h" />
     <ClInclude Include="src\tool\transformer_tool.h" />
     <ClInclude Include="src\window\file_selector.h" />
+    <ClInclude Include="src\window\model_editor.h" />
     <ClInclude Include="src\window\scene_editor.h" />
     <ClInclude Include="src\window\resource_explorer.h" />
     <ClInclude Include="src\window\terrain_editor.h" />

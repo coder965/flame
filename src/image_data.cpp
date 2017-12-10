@@ -261,6 +261,14 @@ namespace tke
 		return data;
 	}
 
+	void newImageFile(const std::string &filename, int cx, int cy, int bpp)
+	{
+		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
+		auto dib = FreeImage_Allocate(cx, cy, bpp);
+		FreeImage_Save(fif, dib, filename.c_str());
+		FreeImage_Unload(dib);
+	}
+
 	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp)
 	{
 		{
@@ -275,5 +283,6 @@ namespace tke
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
 		auto dib = FreeImage_ConvertFromRawBits(data.v.get(), data.cx, data.cy, data.pitch, bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
 		FreeImage_Save(fif, dib, filename.c_str());
+		FreeImage_Unload(dib);
 	}
 }

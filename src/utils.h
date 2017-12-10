@@ -171,6 +171,7 @@ namespace tke
 		FileTypeText,
 		FileTypeImage,
 		FileTypeModel,
+		FileTypeTerrain,
 		FileTypeScene
 	};
 
