@@ -9,9 +9,9 @@ TransformerTool::TransformerTool(tke::Framebuffer *_fb)
 }
 
 static tke::Camera *currentCamera = nullptr;
-std::vector<tke::PlainRenderer::DrawData> TransformerTool::getDrawData(int draw_mode)
+tke::PlainRenderer::DrawData TransformerTool::getDrawData(int draw_mode)
 {
-	std::vector<tke::PlainRenderer::DrawData> draw_data;
+	tke::PlainRenderer::DrawData draw_data;
 
 	if (!transformer || mode == TransformerTool::ModeNull)
 		return draw_data;
@@ -26,19 +26,19 @@ std::vector<tke::PlainRenderer::DrawData> TransformerTool::getDrawData(int draw_
 	auto model = mode == TransformerTool::ModeMove ? tke::arrowModel : 
 		(mode == TransformerTool::ModeRotate ? tke::torusModel : tke::hamerModel);
 
-	draw_data.resize(3);
+	draw_data.obj_data.resize(3);
 
-	draw_data[0].mat = glm::translate(coord);
-	draw_data[0].color = draw_mode == 0 ? (selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
-	draw_data[0].fill_with_model(model.get());
+	draw_data.obj_data[0].mat = glm::translate(coord);
+	draw_data.obj_data[0].color = draw_mode == 0 ? (selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
+	draw_data.obj_data[0].fill_with_model(model.get());
 
-	draw_data[1].mat = glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
-	draw_data[1].color = draw_mode == 0 ? (selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
-	draw_data[1].fill_with_model(model.get());
+	draw_data.obj_data[1].mat = glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
+	draw_data.obj_data[1].color = draw_mode == 0 ? (selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
+	draw_data.obj_data[1].fill_with_model(model.get());
 
-	draw_data[2].mat = glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
-	draw_data[2].color = draw_mode == 0 ? (selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
-	draw_data[2].fill_with_model(model.get());
+	draw_data.obj_data[2].mat = glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
+	draw_data.obj_data[2].color = draw_mode == 0 ? (selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
+	draw_data.obj_data[2].fill_with_model(model.get());
 
 	return draw_data;
 }
@@ -49,13 +49,12 @@ bool TransformerTool::leftDown(int x, int y)
 		return false;
 
 	auto draw_data = getDrawData(1);
-	if (!draw_data.empty())
+	if (!draw_data.obj_data.empty())
 	{
+		draw_data.mode = tke::PlainRenderer::mode_just_color;
 		auto index = tke::pickUp(x, y, std::bind(
-			(void(tke::PlainRenderer::*)
-			(tke::CommandBuffer*, int, tke::Camera*, int, tke::PlainRenderer::DrawData*))
 			&tke::PlainRenderer::render_to, 
-			renderer.get(), std::placeholders::_1, 0, currentCamera, draw_data.size(), draw_data.data()));
+			renderer.get(), std::placeholders::_1, currentCamera, &draw_data));
 		selectedAxis = index - 1;
 		return index != 0;
 	}
@@ -103,6 +102,9 @@ void TransformerTool::show(tke::FrameCommandBufferList *cb_list, tke::Camera *ca
 {
 	currentCamera = camera;
 	auto draw_data = getDrawData(0);
-	if (!draw_data.empty())
-		renderer->render(cb_list, fb, false, camera, TK_MAKEINT(0, draw_data.size()), draw_data.data());
+	if (!draw_data.obj_data.empty())
+	{
+		draw_data.mode = tke::PlainRenderer::mode_color_and_front_light;
+		renderer->render(cb_list, fb, false, camera, &draw_data);
+	}
 }

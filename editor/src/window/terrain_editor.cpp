@@ -83,15 +83,18 @@ void TerrainEditor::show()
 	ImGui::End();
 
 	auto cb_list = tke::addFrameCommandBufferList();
-	tke::PlainRenderer::DrawData data;
-	data.mat = glm::mat4(1);
-	data.color = glm::vec4(1.f);
-	data.index_count = indices.size();
-	auto cb = renderer->cb.get();
-	cb->begin();
-	cb->beginRenderPass(tke::renderPass_depthC_image8C, layer.framebuffer.get());
-	renderer->render_to(cb, vertex_buffer.get(), nullptr, index_buffer.get(), 1, &camera, 1, (tke::PlainRenderer::DrawData*)&data);
-	cb->endRenderPass();
-	cb->end();
-	cb_list->add(cb->v, renderer->renderFinished);
+	{
+		tke::PlainRenderer::DrawData data;
+		data.mode = tke::PlainRenderer::mode_color_and_front_light;
+		data.vbuffer0 = vertex_buffer.get();
+		data.ibuffer = index_buffer.get();
+		tke::PlainRenderer::DrawData::ObjData obj_data;
+		obj_data.mat = glm::mat4(1);
+		obj_data.color = glm::vec4(1.f);
+		tke::PlainRenderer::DrawData::ObjData::GeoData geo_data;
+		geo_data.index_count = indices.size();
+		obj_data.geo_data.push_back(geo_data);
+		data.obj_data.push_back(obj_data);
+		renderer->render(cb_list, layer.framebuffer.get(), true, &camera, &data);
+	}
 }

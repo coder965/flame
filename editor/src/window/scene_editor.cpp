@@ -424,24 +424,25 @@ void SceneEditor::show()
 				if (!transformerTool->leftDown(x, y))
 				{
 					auto count = scene->objects.size();
-					std::vector<tke::PlainRenderer::DrawData> draw_data(count);
+					tke::PlainRenderer::DrawData draw_data;
+					draw_data.mode = tke::PlainRenderer::mode_just_color;
 					for (int i = 0; i < count; i++)
 					{
 						auto object = scene->objects[i].get();
 						auto model = object->model;
 						auto animated = model->animated;
 
-						draw_data[i].mat = object->getMat();
-						draw_data[i].color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
-						draw_data[i].fill_with_model(object->model.get());
+						tke::PlainRenderer::DrawData::ObjData obj_data;
+						obj_data.mat = object->getMat();
+						obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
+						obj_data.fill_with_model(object->model.get());
 						if (animated)
-							draw_data[i].bone_buffer = object->animationComponent->boneMatrixBuffer;
+							obj_data.bone_buffer = object->animationComponent->boneMatrixBuffer;
+						draw_data.obj_data.push_back(obj_data);
 					}
 					auto index = tke::pickUp(x, y, std::bind(
-						(void(tke::PlainRenderer::*)
-						(tke::CommandBuffer*, int, tke::Camera*, int, tke::PlainRenderer::DrawData*))
 						&tke::PlainRenderer::render_to, 
-						plain_renderer.get(), std::placeholders::_1, 0, &scene->camera, count, draw_data.data()));
+						plain_renderer.get(), std::placeholders::_1, &scene->camera, &draw_data));
 					if (index == 0)
 						selectedItem.reset();
 					else
@@ -582,7 +583,7 @@ void SceneEditor::show()
 
 	scene->update();
 	if (enableRender)
-		defe_renderer->render(cb_list, nullptr, true, nullptr, 0, scene.get());
+		defe_renderer->render(cb_list, nullptr, true, nullptr, scene.get());
 	scene->reset();
 
 	{
@@ -651,7 +652,10 @@ void SceneEditor::show()
 				vtx_dst += 2;
 			}
 			physx_vertex_buffer->unmap();
-			lines_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, vertex_count, physx_vertex_buffer.get());
+			tke::LinesRenderer::DrawData data;
+			data.vertex_buffer = physx_vertex_buffer.get();
+			data.vertex_count = vertex_count;
+			lines_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, &data);
 		}
 	}
 
@@ -661,12 +665,15 @@ void SceneEditor::show()
 		if (obj)
 		{
 			tke::PlainRenderer::DrawData data;
-			data.mat = obj->getMat();
-			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-			data.fill_with_model(obj->model.get());
+			data.mode = tke::PlainRenderer::mode_wireframe;
+			tke::PlainRenderer::DrawData::ObjData obj_data;
+			obj_data.mat = obj->getMat();
+			obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+			obj_data.fill_with_model(obj->model.get());
 			if (obj->model->animated)
-				data.bone_buffer = obj->animationComponent->boneMatrixBuffer;
-			plain_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, TK_MAKEINT(3, 1), &data);
+				obj_data.bone_buffer = obj->animationComponent->boneMatrixBuffer;
+			data.obj_data.push_back(obj_data);
+			plain_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, &data);
 		}
 	}
 

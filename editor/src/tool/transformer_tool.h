@@ -23,5 +23,5 @@ struct TransformerTool : Tool
 	virtual bool TransformerTool::leftDown(int x, int y) override;
 	virtual void TransformerTool::mouseMove(int xDisp, int yDisp) override;
 	virtual void show(tke::FrameCommandBufferList *cb_list, tke::Camera *camera) override;
-	std::vector<tke::PlainRenderer::DrawData> getDrawData(int draw_mode);
+	tke::PlainRenderer::DrawData getDrawData(int draw_mode);
 };

@@ -17,8 +17,8 @@ namespace tke
 
 		Renderer();
 		virtual ~Renderer();
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) = 0;
-		void render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data);
+		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) = 0;
+		void render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
 
 	};
 
@@ -28,27 +28,46 @@ namespace tke
 
 		static UniformBuffer *last_bone_buffer;
 
+		enum Mode
+		{
+			mode_just_color,
+			mode_color_and_front_light,
+			mode_just_texture,
+			mode_wireframe
+		};
+
 		struct DrawData
 		{
-			glm::mat4 mat;
-			int index_count;
-			int first_index = 0;
-			int vertex_offset = 0;
-			int instance_count = 1;
-			int first_instance = 0;
-			UniformBuffer *bone_buffer = nullptr;
-			glm::vec4 color;
+			Mode mode;
+			VertexBuffer *vbuffer0 = nullptr;
+			VertexBuffer *vbuffer1 = nullptr;
+			IndexBuffer *ibuffer = nullptr;
 
-			void fill_with_model(Model *m);
-			void fill_with_model(Model *m, int geo_index, int _first_instance);
+			struct ObjData
+			{
+				glm::mat4 mat;
+				struct GeoData
+				{
+					int index_count;
+					int first_index = 0;
+					int vertex_offset = 0;
+					int instance_count = 1;
+					int first_instance = 0;
+				};
+				std::vector<GeoData> geo_data;
+				UniformBuffer *bone_buffer = nullptr;
+				glm::vec4 color;
+
+				void fill_with_model(Model *m);
+				void fill_with_model_texture_mode(Model *m);
+			};
+
+			std::vector<ObjData> obj_data;
 		};
 
 		PlainRenderer();
-		// count: H - mode(0: just color, 1: color with a front light, 2: just texture, 3: wireframe), L - count
-		// user_data: pointer of DrawData
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
-		void render_to(CommandBuffer *cb, VertexBuffer *vbuffer0, VertexBuffer *vbuffer1, IndexBuffer *ibuffer, int mode, Camera *camera, int count, DrawData *data);
-		void render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data);
+		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
+		void render_to(CommandBuffer *cb, Camera *camera, DrawData *data);
 	};
 
 	struct LinesRenderer : Renderer
@@ -61,8 +80,14 @@ namespace tke
 			glm::vec3 color;
 		};
 
+		struct DrawData
+		{
+			OnceVertexBuffer *vertex_buffer;
+			int vertex_count;
+		};
+
 		LinesRenderer();
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
+		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
 	};
 
 	enum { MaxStaticObjectCount = 1024 };
@@ -123,6 +148,6 @@ namespace tke
 		int animatedIndirectCount = 0;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
+		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
 	};
 }

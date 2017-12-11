@@ -27,18 +27,11 @@ ModelEditorClass modelEditorClass;
 ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
 	:Window(&modelEditorClass), model(_model), layer(true)
 {
-	for (int i = 0; i < model->geometries.size(); i++)
-	{
-		auto &g = model->geometries[i];
-		if (g->material->albedoAlphaMap)
-		{
-			tke::PlainRenderer::DrawData data;
-			data.mat = glm::mat4(1);
-			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-			data.fill_with_model(model.get(), i, g->material->albedoAlphaMap->index);
-			draw_datas.push_back(data);
-		}
-	}
+	draw_data.mode = tke::PlainRenderer::mode_just_texture;
+	draw_data.obj_data.resize(1);
+	draw_data.obj_data[0].mat = glm::mat4(1);
+	draw_data.obj_data[0].color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+	draw_data.obj_data[0].fill_with_model_texture_mode(model.get());
 
 	camera.setMode(tke::CameraMode::targeting);
 	renderer = std::make_unique<tke::PlainRenderer>();
@@ -133,5 +126,5 @@ void ModelEditor::show()
 	ImGui::End();
 
 	auto cb_list = tke::addFrameCommandBufferList();
-	renderer->render(cb_list, layer.framebuffer.get(), true, &camera, TK_MAKEINT(2, draw_datas.size()), draw_datas.data());
+	renderer->render(cb_list, layer.framebuffer.get(), true, &camera, &draw_data);
 }

@@ -15,14 +15,14 @@ namespace tke
 		destroyEvent(renderFinished);
 	}
 
-	void Renderer::render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
+	void Renderer::render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
 		cb->reset();
 		cb->begin();
 		//if (cb_list && cb_list->last_event)
 		//	cb->waitEvents(1, &cb_list->last_event);
 
-		do_render(framebuffer, clear, camera, count, user_data);
+		do_render(framebuffer, clear, camera, user_data);
 
 		//if (cb_list && cb_list->last_event)
 		//{
@@ -34,23 +34,33 @@ namespace tke
 			cb_list->add(cb->v, renderFinished);
 	}
 
-	void PlainRenderer::DrawData::fill_with_model(Model *m)
+	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)
 	{
-		index_count = m->indice_count;
-		first_index = m->indiceBase;
-		vertex_offset = m->vertexBase;
-		instance_count = 1;
-		first_instance = 0;
+		geo_data.resize(1);
+		geo_data[0].index_count = m->indice_count;
+		geo_data[0].first_index = m->indiceBase;
+		geo_data[0].vertex_offset = m->vertexBase;
+		geo_data[0].instance_count = 1;
+		geo_data[0].first_instance = 0;
 	}
 
-	void PlainRenderer::DrawData::fill_with_model(Model *m, int geo_index, int _first_instance)
+	void PlainRenderer::DrawData::ObjData::fill_with_model_texture_mode(Model *m)
 	{
-		auto &g = m->geometries[geo_index];
-		index_count = g->indiceCount;
-		first_index = m->indiceBase + g->indiceBase;
-		vertex_offset = m->vertexBase;
-		instance_count = 1;
-		first_instance = _first_instance;
+		for (int i = 0; i < m->geometries.size(); i++)
+		{
+			auto &g = m->geometries[i];
+			if (g->material->albedoAlphaMap)
+			{
+				GeoData data;
+				auto &g = m->geometries[i];
+				data.index_count = g->indiceCount;
+				data.first_index = m->indiceBase + g->indiceBase;
+				data.vertex_offset = m->vertexBase;
+				data.instance_count = 1;
+				data.first_instance = g->material->albedoAlphaMap->index;
+				geo_data.push_back(data);
+			}
+		}
 	}
 
 	static Pipeline *pipeline_plain;
@@ -127,26 +137,45 @@ namespace tke
 		}
 	}
 
-	void PlainRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int _count, void *user_data)
+	void PlainRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
-		auto mode = TK_HIGH(_count);
-		auto count = TK_LOW(_count);
+		auto data = (DrawData*)user_data;
 
-		cb->beginRenderPass(clear ?
-			(mode == 3 ? renderPass_image8C : renderPass_depthC_image8C)
-			: (mode == 3 ? renderPass_image8 : renderPass_depthC_image8)
-			, framebuffer);
-		render_to(cb.get(), mode, camera, count, (DrawData*)user_data);
+		RenderPass *rp = nullptr;
+		if (data->mode == mode_wireframe)
+		{
+			if (clear)
+				rp = renderPass_image8C;
+			else
+				rp = renderPass_image8;
+		}
+		else
+		{
+			if (clear)
+				rp = renderPass_depthC_image8C;
+			else
+				rp = renderPass_depthC_image8;
+		}
+		cb->beginRenderPass(rp, framebuffer);
+		render_to(cb.get(), camera, data);
 		cb->endRenderPass();
 	}
 
-	void PlainRenderer::render_to(CommandBuffer *cb, VertexBuffer *vbuffer0, VertexBuffer *vbuffer1, IndexBuffer *ibuffer, int mode, Camera *camera, int count, DrawData *data)
+	void PlainRenderer::render_to(CommandBuffer *cb, Camera *camera, DrawData *data)
 	{
-		if (vbuffer1)
-			cb->bindVertexBuffer2(vbuffer0, vbuffer1);
+		if (data->vbuffer0)
+		{
+			if (data->vbuffer1)
+				cb->bindVertexBuffer2(data->vbuffer0, data->vbuffer1);
+			else
+				cb->bindVertexBuffer(data->vbuffer0);
+			cb->bindIndexBuffer(data->ibuffer);
+		}
 		else
-			cb->bindVertexBuffer(vbuffer0);
-		cb->bindIndexBuffer(ibuffer);
+		{
+			cb->bindVertexBuffer2(vertexStatBuffer, vertexAnimBuffer);
+			cb->bindIndexBuffer(indexBuffer);
+		}
 
 		struct
 		{
@@ -156,11 +185,11 @@ namespace tke
 		}pc;
 		pc.proj = matPerspective;
 
-		for (int i = 0; i < count; i++)
+		for (int i = 0; i < data->obj_data.size(); i++)
 		{
-			auto &d = data[i];
+			auto &d = data->obj_data[i];
 
-			switch (mode)
+			switch (data->mode)
 			{
 				case 0:
 					if (!d.bone_buffer)
@@ -198,14 +227,9 @@ namespace tke
 			pc.modelview = camera->getMatInv() * d.mat;
 			pc.color = d.color;
 			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-			cb->drawIndex(d.index_count, d.first_index, d.vertex_offset, d.instance_count, d.first_instance);
+			for (auto &d : d.geo_data)
+				cb->drawIndex(d.index_count, d.first_index, d.vertex_offset, d.instance_count, d.first_instance);
 		}
-	}
-
-	void PlainRenderer::render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data)
-	{
-		render_to(cb, vertexStatBuffer, vertexAnimBuffer, indexBuffer,
-			mode, camera, count, data);
 	}
 
 	static Pipeline *pipeline_lines;
@@ -237,16 +261,18 @@ namespace tke
 		}
 	}
 
-	void LinesRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
+	void LinesRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
+		auto data = (DrawData*)user_data;
+
 		cb->beginRenderPass(renderPass_image8, framebuffer);
 
-		cb->bindVertexBuffer((OnceVertexBuffer*)user_data);
+		cb->bindVertexBuffer(data->vertex_buffer);
 		cb->bindPipeline(pipeline_lines);
 
 		glm::mat4 mvp = matPerspective * camera->getMatInv();
 		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
-		cb->draw(count);
+		cb->draw(data->vertex_count);
 
 		cb->endRenderPass();
 	}
@@ -588,7 +614,7 @@ namespace tke
 		}
 	}
 
-	void DeferredRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data)
+	void DeferredRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
 		auto scene = (Scene*)user_data;
 
