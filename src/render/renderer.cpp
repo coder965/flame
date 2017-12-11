@@ -146,7 +146,7 @@ namespace tke
 			cb->bindVertexBuffer2(vbuffer0, vbuffer1);
 		else
 			cb->bindVertexBuffer(vbuffer0);
-		cb->bindIndexBuffer(indexBuffer);
+		cb->bindIndexBuffer(ibuffer);
 
 		struct
 		{

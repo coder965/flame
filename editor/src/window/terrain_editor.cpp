@@ -85,12 +85,13 @@ void TerrainEditor::show()
 	auto cb_list = tke::addFrameCommandBufferList();
 	tke::PlainRenderer::DrawData data;
 	data.mat = glm::mat4(1);
-	data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+	data.color = glm::vec4(1.f);
 	data.index_count = indices.size();
-	data.first_index = 0;
-	data.vertex_offset = 0;
-	data.instance_count = 1;
-	data.first_instance = 0;
-	data.bone_buffer = nullptr;
-	renderer->render(cb_list, layer.framebuffer.get(), true, &camera, TK_MAKEINT(2, 1), &data);
+	auto cb = renderer->cb.get();
+	cb->begin();
+	cb->beginRenderPass(tke::renderPass_depthC_image8C, layer.framebuffer.get());
+	renderer->render_to(cb, vertex_buffer.get(), nullptr, index_buffer.get(), 1, &camera, 1, (tke::PlainRenderer::DrawData*)&data);
+	cb->endRenderPass();
+	cb->end();
+	cb_list->add(cb->v, renderer->renderFinished);
 }
