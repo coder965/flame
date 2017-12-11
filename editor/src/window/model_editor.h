@@ -19,6 +19,7 @@ extern ModelEditorClass modelEditorClass;
 struct ModelEditor : Window
 {
 	std::shared_ptr<tke::Model> model;
+	std::vector<tke::PlainRenderer::DrawData> draw_datas;
 
 	tke::DisplayLayer layer;
 

@@ -34,6 +34,25 @@ namespace tke
 			cb_list->add(cb->v, renderFinished);
 	}
 
+	void PlainRenderer::DrawData::fill_with_model(Model *m)
+	{
+		index_count = m->indice_count;
+		first_index = m->indiceBase;
+		vertex_offset = m->vertexBase;
+		instance_count = 1;
+		first_instance = 0;
+	}
+
+	void PlainRenderer::DrawData::fill_with_model(Model *m, int geo_index, int _first_instance)
+	{
+		auto &g = m->geometries[geo_index];
+		index_count = g->indiceCount;
+		first_index = m->indiceBase + g->indiceBase;
+		vertex_offset = m->vertexBase;
+		instance_count = 1;
+		first_instance = _first_instance;
+	}
+
 	static Pipeline *pipeline_plain;
 	static Pipeline *pipeline_plain_anim;
 	static Pipeline *pipeline_frontlight;
@@ -121,9 +140,12 @@ namespace tke
 		cb->endRenderPass();
 	}
 
-	void PlainRenderer::render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data)
+	void PlainRenderer::render_to(CommandBuffer *cb, VertexBuffer *vbuffer0, VertexBuffer *vbuffer1, IndexBuffer *ibuffer, int mode, Camera *camera, int count, DrawData *data)
 	{
-		cb->bindVertexBuffer2(vertexStatBuffer, vertexAnimBuffer);
+		if (vbuffer1)
+			cb->bindVertexBuffer2(vbuffer0, vbuffer1);
+		else
+			cb->bindVertexBuffer(vbuffer0);
 		cb->bindIndexBuffer(indexBuffer);
 
 		struct
@@ -137,13 +159,11 @@ namespace tke
 		for (int i = 0; i < count; i++)
 		{
 			auto &d = data[i];
-			auto model = d.model;
-			auto animated = model->animated;
 
 			switch (mode)
 			{
 				case 0:
-					if (!animated)
+					if (!d.bone_buffer)
 						cb->bindPipeline(pipeline_plain);
 					else
 					{
@@ -171,26 +191,21 @@ namespace tke
 					break;
 				}
 				case 3:
-					cb->bindPipeline(!animated ? pipeline_wireframe : pipeline_wireframe_anim);
+					cb->bindPipeline(!d.bone_buffer ? pipeline_wireframe : pipeline_wireframe_anim);
 					break;
 			}
 
 			pc.modelview = camera->getMatInv() * d.mat;
 			pc.color = d.color;
 			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-			if (mode != 2)
-				cb->drawModel(model);
-			else
-			{
-				int index = 0;
-				for (auto &g : model->geometries)
-				{
-					if (g->material->albedoAlphaMap)
-						cb->drawModel(model, index, 1, g->material->albedoAlphaMap->index);
-					index++;
-				}
-			}
+			cb->drawIndex(d.index_count, d.first_index, d.vertex_offset, d.instance_count, d.first_instance);
 		}
+	}
+
+	void PlainRenderer::render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data)
+	{
+		render_to(cb, vertexStatBuffer, vertexAnimBuffer, indexBuffer,
+			mode, camera, count, data);
 	}
 
 	static Pipeline *pipeline_lines;

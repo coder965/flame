@@ -433,11 +433,15 @@ void SceneEditor::show()
 
 						draw_data[i].mat = object->getMat();
 						draw_data[i].color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
-						draw_data[i].model = object->model.get();
+						draw_data[i].fill_with_model(object->model.get());
 						if (animated)
 							draw_data[i].bone_buffer = object->animationComponent->boneMatrixBuffer;
 					}
-					auto index = tke::pickUp(x, y, std::bind(&tke::PlainRenderer::render_to, plain_renderer.get(), std::placeholders::_1, 0, &scene->camera, count, draw_data.data()));
+					auto index = tke::pickUp(x, y, std::bind(
+						(void(tke::PlainRenderer::*)
+						(tke::CommandBuffer*, int, tke::Camera*, int, tke::PlainRenderer::DrawData*))
+						&tke::PlainRenderer::render_to, 
+						plain_renderer.get(), std::placeholders::_1, 0, &scene->camera, count, draw_data.data()));
 					if (index == 0)
 						selectedItem.reset();
 					else
@@ -659,8 +663,9 @@ void SceneEditor::show()
 			tke::PlainRenderer::DrawData data;
 			data.mat = obj->getMat();
 			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-			data.model = obj->model.get();
-			data.bone_buffer = obj->model->animated ? obj->animationComponent->boneMatrixBuffer : nullptr;
+			data.fill_with_model(obj->model.get());
+			if (obj->model->animated)
+				data.bone_buffer = obj->animationComponent->boneMatrixBuffer;
 			plain_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, TK_MAKEINT(3, 1), &data);
 		}
 	}

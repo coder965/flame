@@ -30,15 +30,15 @@ std::vector<tke::PlainRenderer::DrawData> TransformerTool::getDrawData(int draw_
 
 	draw_data[0].mat = glm::translate(coord);
 	draw_data[0].color = draw_mode == 0 ? (selectedAxis == 0 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(1.f, 0.f, 0.f, 1.f)) : glm::vec4(1.f / 255.f, 0.f, 0.f, 0.f);
-	draw_data[0].model = model.get();
+	draw_data[0].fill_with_model(model.get());
 
 	draw_data[1].mat = glm::translate(coord) * glm::rotate(90.f, glm::vec3(0, 0, 1));
 	draw_data[1].color = draw_mode == 0 ? (selectedAxis == 1 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 1.f, 0.f, 1.f)) : glm::vec4(2.f / 255.f, 0.f, 0.f, 0.f);
-	draw_data[1].model = model.get();
+	draw_data[1].fill_with_model(model.get());
 
 	draw_data[2].mat = glm::translate(coord) * glm::rotate(-90.f, glm::vec3(0, 1, 0));
 	draw_data[2].color = draw_mode == 0 ? (selectedAxis == 2 ? glm::vec4(1.f, 1.f, 0.f, 1.f) : glm::vec4(0.f, 0.f, 1.f, 1.f)) : glm::vec4(3.f / 255.f, 0.f, 0.f, 0.f);
-	draw_data[2].model = model.get();
+	draw_data[2].fill_with_model(model.get());
 
 	return draw_data;
 }
@@ -51,7 +51,11 @@ bool TransformerTool::leftDown(int x, int y)
 	auto draw_data = getDrawData(1);
 	if (!draw_data.empty())
 	{
-		auto index = tke::pickUp(x, y, std::bind(&tke::PlainRenderer::render_to, renderer.get(), std::placeholders::_1, 0, currentCamera, draw_data.size(), draw_data.data()));
+		auto index = tke::pickUp(x, y, std::bind(
+			(void(tke::PlainRenderer::*)
+			(tke::CommandBuffer*, int, tke::Camera*, int, tke::PlainRenderer::DrawData*))
+			&tke::PlainRenderer::render_to, 
+			renderer.get(), std::placeholders::_1, 0, currentCamera, draw_data.size(), draw_data.data()));
 		selectedAxis = index - 1;
 		return index != 0;
 	}

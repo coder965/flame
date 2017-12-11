@@ -31,15 +31,23 @@ namespace tke
 		struct DrawData
 		{
 			glm::mat4 mat;
-			Model *model;
-			UniformBuffer *bone_buffer;
+			int index_count;
+			int first_index = 0;
+			int vertex_offset = 0;
+			int instance_count = 1;
+			int first_instance = 0;
+			UniformBuffer *bone_buffer = nullptr;
 			glm::vec4 color;
+
+			void fill_with_model(Model *m);
+			void fill_with_model(Model *m, int geo_index, int _first_instance);
 		};
 
 		PlainRenderer();
 		// count: H - mode(0: just color, 1: color with a front light, 2: just texture, 3: wireframe), L - count
 		// user_data: pointer of DrawData
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
+		void render_to(CommandBuffer *cb, VertexBuffer *vbuffer0, VertexBuffer *vbuffer1, IndexBuffer *ibuffer, int mode, Camera *camera, int count, DrawData *data);
 		void render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data);
 	};
 
