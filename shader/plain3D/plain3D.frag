@@ -2,14 +2,12 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#if !defined(USE_TEX)
 layout(push_constant) uniform PushConstant
 {
 	mat4 modelview;
 	mat4 proj;
 	vec4 color;
 }pc;
-#endif
 
 #if defined(USE_TEX)
 layout(set = 1, binding = 0) uniform sampler2D maps[256];

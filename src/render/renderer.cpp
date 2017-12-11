@@ -78,7 +78,7 @@ namespace tke
 				.depth_write(true)
 				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_TEX"})
 				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_TEX"}),
-				renderPass_depthC_image8, 0);
+				renderPass_depthC_image8, 0, true);
 			pipeline_texture_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexAnimInputState)
@@ -160,8 +160,16 @@ namespace tke
 					cb->bindPipeline(pipeline_frontlight);
 					break;
 				case 2:
-					cb->bindPipeline(!animated ? pipeline_texture : pipeline_texture_anim);
+				{
+					//cb->bindPipeline(!animated ? pipeline_texture : pipeline_texture_anim);
+					cb->bindPipeline(pipeline_texture);
+					VkDescriptorSet sets[] = {
+						pipeline_texture->descriptorSet->v,
+						ds_textures->v
+					};
+					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 					break;
+				}
 				case 3:
 					cb->bindPipeline(!animated ? pipeline_wireframe : pipeline_wireframe_anim);
 					break;
@@ -170,7 +178,18 @@ namespace tke
 			pc.modelview = camera->getMatInv() * d.mat;
 			pc.color = d.color;
 			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-			cb->drawModel(model);
+			if (mode != 2)
+				cb->drawModel(model);
+			else
+			{
+				int index = 0;
+				for (auto &g : model->geometries)
+				{
+					if (g->material->albedoAlphaMap)
+						cb->drawModel(model, index, 1, g->material->albedoAlphaMap->index);
+					index++;
+				}
+			}
 		}
 	}
 
@@ -775,8 +794,6 @@ namespace tke
 
 		std::vector<Object*> staticObjects;
 		std::vector<Object*> animatedObjects;
-		int staticIndirectCount = 0;
-		int animatedIndirectCount = 0;
 		if (scene->needUpdateIndirectBuffer)
 		{
 			staticObjects.clear();

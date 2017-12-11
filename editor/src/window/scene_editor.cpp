@@ -39,7 +39,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	physx_vertex_buffer = std::make_unique<tke::OnceVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
 
-	wireframe_renderer = std::make_unique<tke::PlainRenderer>();
+	plain_renderer = std::make_unique<tke::PlainRenderer>();
 
 	VkImageView views[] = {
 		layer.image->getView(),
@@ -437,7 +437,7 @@ void SceneEditor::show()
 						if (animated)
 							draw_data[i].bone_buffer = object->animationComponent->boneMatrixBuffer;
 					}
-					auto index = tke::pickUp(x, y, std::bind(tke::PlainRenderer::render_to, std::placeholders::_1, 0, &scene->camera, count, draw_data.data()));
+					auto index = tke::pickUp(x, y, std::bind(&tke::PlainRenderer::render_to, plain_renderer.get(), std::placeholders::_1, 0, &scene->camera, count, draw_data.data()));
 					if (index == 0)
 						selectedItem.reset();
 					else
@@ -661,7 +661,7 @@ void SceneEditor::show()
 			data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 			data.model = obj->model.get();
 			data.bone_buffer = obj->model->animated ? obj->animationComponent->boneMatrixBuffer : nullptr;
-			wireframe_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, TK_MAKEINT(3, 1), &data);
+			plain_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, TK_MAKEINT(3, 1), &data);
 		}
 	}
 

@@ -6,9 +6,7 @@ layout(push_constant) uniform PushConstant
 {
 	mat4 modelview;
 	mat4 proj;
-#if !defined(USE_TEX)
 	vec4 color;
-#endif
 }pc;
 
 #if defined(ANIM)

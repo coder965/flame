@@ -40,7 +40,7 @@ namespace tke
 		// count: H - mode(0: just color, 1: color with a front light, 2: just texture, 3: wireframe), L - count
 		// user_data: pointer of DrawData
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;
-		static void render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data);
+		void render_to(CommandBuffer *cb, int mode, Camera *camera, int count, DrawData *data);
 	};
 
 	struct LinesRenderer : Renderer
@@ -110,6 +110,9 @@ namespace tke
 		Resource resource;
 
 		std::shared_ptr<Framebuffer> framebuffer;
+
+		int staticIndirectCount = 0;
+		int animatedIndirectCount = 0;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, int count, void *user_data) override;

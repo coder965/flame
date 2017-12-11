@@ -25,20 +25,53 @@ Window *ModelEditorClass::load(tke::AttributeTreeNode *n)
 ModelEditorClass modelEditorClass;
 
 ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
-	:Window(&modelEditorClass), model(_model)
+	:Window(&modelEditorClass), model(_model), layer(true)
 {
+	camera.setMode(tke::CameraMode::targeting);
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
 void ModelEditor::show()
 {
-	ImGui::Begin("Model -", &opened);
+	ImGui::Begin(("Model - " + model->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
+
+	ImGui::BeginMenuBar();
+	if (ImGui::BeginMenu("File"))
+	{
+		if (ImGui::MenuItem("Save Data"))
+			model->saveData(false);
+
+		ImGui::EndMenu();
+	}
+	ImGui::EndMenuBar();
+
+	ImVec2 image_pos = ImGui::GetCursorScreenPos();
+	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
+	ImGui::InvisibleButton("canvas", image_size);
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	draw_list->AddImage(ImTextureID(layer.image->index), image_pos, image_pos + image_size);
+	if (ImGui::IsItemHovered())
+	{
+		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
+		{
+			auto distX = (float)tke::mouseDispX / (float)tke::resCx;
+			auto distY = (float)tke::mouseDispY / (float)tke::resCy;
+			if (tke::mouseMiddle.pressing)
+				camera.rotateByCursor(distX, distY);
+		}
+		if (tke::mouseScroll != 0)
+			camera.scroll(tke::mouseScroll);
+	}
+	if (camera.changed)
+		camera.lookAtTarget();
+
+	ImGui::SameLine();
+	ImGui::BeginGroup();
+	ImGui::BeginChild("right", ImVec2(500, 0));
 
 	ImGui::Text("indice count:%d", model->indice_count);
 	ImGui::Text("indice base:%d", model->indiceBase);
 	ImGui::Text("vertex base:%d", model->vertexBase);
-	if (ImGui::Button("Save Data"))
-		model->saveData(false);
 
 	//auto funShowAndSelectAnim = [&](tke::ModelStateAnimationKind kind, const char *name) {
 	//	int index = 0;
@@ -81,11 +114,16 @@ void ModelEditor::show()
 	ImGui::DragFloat3("Controller Position", &model->controller_position[0], 0.1f, 0.f, 10000.f);
 	ImGui::DragFloat3("Eye Position", &model->eye_position[0]);
 
-	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
-	ImGui::InvisibleButton("canvas", image_size);
-	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImTextureID(layer.image->index), image_pos, image_pos + image_size);
+	ImGui::EndChild();
+	ImGui::EndGroup();
 
 	ImGui::End();
+
+	auto cb_list = tke::addFrameCommandBufferList();
+	tke::PlainRenderer::DrawData data;
+	data.mat = glm::mat4(1);
+	data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+	data.model = model.get();
+	data.bone_buffer = nullptr;
+	renderer->render(cb_list, layer.framebuffer.get(), true, &camera, TK_MAKEINT(2, 1), &data);
 }

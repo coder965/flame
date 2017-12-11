@@ -7,10 +7,11 @@ namespace tke
 {
 	struct DisplayLayer
 	{
-		std::shared_ptr<Image> image;
+		std::unique_ptr<Image> image;
+		std::unique_ptr<Image> depth_image;
 		std::shared_ptr<Framebuffer> framebuffer;
 
-		DisplayLayer();
+		DisplayLayer(bool enable_depth = false);
 		~DisplayLayer();
 	};
 }

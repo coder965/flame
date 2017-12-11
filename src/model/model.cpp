@@ -1826,9 +1826,9 @@ namespace tke
 				{
 					s->vertexBase = vertex_offset;
 					s->indiceBase = indice_offset;
-					memcpy(vs_map + vertex_offset, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
-					memcpy(va_map + vertex_offset, s->vertex_anim, sizeof(VertexAnim) * s->vertex_count);
-					memcpy(i_map + indice_offset, s->indices, sizeof(int) * s->indice_count);
+					memcpy(vs_map + vertex_offset * sizeof(VertexStat), s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
+					memcpy(va_map + vertex_offset * sizeof(VertexAnim), s->vertex_anim, sizeof(VertexAnim) * s->vertex_count);
+					memcpy(i_map + indice_offset * sizeof(int), s->indices, sizeof(int) * s->indice_count);
 					vertex_offset += s->vertex_count;
 					indice_offset += s->indice_count;
 				}
@@ -1843,8 +1843,8 @@ namespace tke
 				{
 					s->vertexBase = vertex_offset;
 					s->indiceBase = indice_offset;
-					memcpy(vs_map + vertex_offset, s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
-					memcpy(i_map + indice_offset, s->indices, sizeof(int) * s->indice_count);
+					memcpy(vs_map + vertex_offset * sizeof(VertexStat), s->vertex_stat, sizeof(VertexStat) * s->vertex_count);
+					memcpy(i_map + indice_offset * sizeof(int), s->indices, sizeof(int) * s->indice_count);
 					vertex_offset += s->vertex_count;
 					indice_offset += s->indice_count;
 				}
@@ -2014,7 +2014,7 @@ namespace tke
 			triangleModel = m;
 		}
 
-		/*{
+		{
 			auto m = std::make_shared<Model>();
 			m->filename = "[cube]";
 
@@ -2309,7 +2309,7 @@ namespace tke
 			_models[HASH(m->filename.c_str())] = m;
 
 			hamerModel = m;
-		}*/
+		}
 
 		addBeforeFrameEvent(_processVertexAndIndexBuffer, 0, EventTypeOnlyOne);
 	}

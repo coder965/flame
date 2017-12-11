@@ -22,6 +22,7 @@ struct ModelEditor : Window
 
 	tke::DisplayLayer layer;
 
+	tke::Camera camera;
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
 	ModelEditor(std::shared_ptr<tke::Model> _model);
