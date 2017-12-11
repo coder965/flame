@@ -429,14 +429,12 @@ void SceneEditor::show()
 					for (int i = 0; i < count; i++)
 					{
 						auto object = scene->objects[i].get();
-						auto model = object->model;
-						auto animated = model->animated;
 
 						tke::PlainRenderer::DrawData::ObjData obj_data;
 						obj_data.mat = object->getMat();
 						obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 						obj_data.fill_with_model(object->model.get());
-						if (animated)
+						if (object->model->animated)
 							obj_data.bone_buffer = object->animationComponent->boneMatrixBuffer;
 						draw_data.obj_data.push_back(obj_data);
 					}

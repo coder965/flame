@@ -9,6 +9,7 @@
 
 int main(int argc, char** argv)
 {
+
 	tke::init(false, "../", 800, 600, 1280, 720, "test", tke::WindowStyleFrame | tke::WindowStyleResize, true);
 
 	tke::onRender = []() {
