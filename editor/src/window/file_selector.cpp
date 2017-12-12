@@ -2,8 +2,8 @@
 #include "../../../src/utils.h"
 #include "../../../src/ui/ui.h"
 
-FileSelector::FileSelector(WindowClass*_pclass, bool _enable_file, int _mode)
-	:Window(_pclass), enable_file(_enable_file), mode(_mode)
+FileSelector::FileSelector(WindowClass*_pclass, const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
+	:Window(_pclass), title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
 {
 	filename[0] = 0;
 }
@@ -97,7 +97,7 @@ void FileSelector::refresh()
 	}
 }
 
-void FileSelector::show()
+void FileSelector::do_show()
 {
 	if (need_refresh)
 	{
@@ -105,8 +105,21 @@ void FileSelector::show()
 		need_refresh = false;
 	}
 
-	auto open = on_window_begin();
-	if (open)
+	bool _open;
+	if (modal)
+	{
+		if (first)
+		{
+			ImGui::OpenPopup(title.c_str());
+			ImGui::SetNextWindowSize(ImVec2(cx, cy));
+			first = false;
+		}
+		_open = ImGui::BeginPopupModal(title.c_str());
+	}
+	else
+		_open = ImGui::Begin(title.c_str());
+
+	if (_open)
 	{
 		const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
 
@@ -114,6 +127,14 @@ void FileSelector::show()
 
 		on_top_area_begin();
 
+		ImGui::PushItemWidth(100);
+		if (ImGui::Combo("##driver", &driver_index, drivers, TK_ARRAYSIZE(drivers)))
+		{
+			current_path = std::string(drivers[driver_index]) + "\\";
+			need_refresh = true;
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
 		ImGui::Text(current_path.string().c_str());
 		ImGui::SameLine();
 		{
@@ -135,7 +156,7 @@ void FileSelector::show()
 		ImGui::PopStyleColor();
 		ImGui::Separator();
 
-		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing() - 1), true);
+		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
 		auto index = 0;
 		for (auto &i : dir_list)
 		{
@@ -172,9 +193,12 @@ void FileSelector::show()
 		ImGui::EndChild();
 
 		on_right_area_begin();
-
-		on_window_end();
 	}
+
+	if (modal)
+		ImGui::EndPopup();
+	else
+		ImGui::End();
 }
 
 int FileSelector::on_left_area_width() 
@@ -211,14 +235,6 @@ void FileSelector::on_file_item_selected(FileItem *i, bool doubleClicked)
 
 void FileSelector::on_top_area_begin() 
 {
-	ImGui::PushItemWidth(100);
-	if (ImGui::Combo("##driver", &driver_index, drivers, TK_ARRAYSIZE(drivers)))
-	{
-		current_path = std::string(drivers[driver_index]) + "\\";
-		need_refresh = true;
-	}
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
 }
 
 void FileSelector::on_bottom_area_begin() 
@@ -262,24 +278,8 @@ void FileSelector::on_right_area_begin()
 }
 
 DirSelectorDialog::DirSelectorDialog()
-	:FileSelector(nullptr, false, 0)
+	:FileSelector(nullptr, "Dir Selector", true, false, 0, 800, 600)
 {
-}
-
-bool DirSelectorDialog::on_window_begin()
-{
-	if (first)
-	{
-		ImGui::OpenPopup("Dir Selector");
-		ImGui::SetNextWindowSize(ImVec2(800, 600));
-		first = false;
-	}
-	return ImGui::BeginPopupModal("Dir Selector");
-}
-
-void DirSelectorDialog::on_window_end()
-{
-	ImGui::EndPopup();
 }
 
 void DirSelectorDialog::open(const std::string &default_dir, const std::function<bool(std::string)> &_callback)

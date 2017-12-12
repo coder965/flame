@@ -37,7 +37,7 @@ ImageEditor::~ImageEditor()
 	tke::removeUiImage(image.get());
 }
 
-void ImageEditor::show()
+void ImageEditor::do_show()
 {
 	ImGui::Begin(("Image - " + image->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
 

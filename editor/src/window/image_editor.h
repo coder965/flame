@@ -18,5 +18,5 @@ struct ImageEditor : Window
 
 	ImageEditor(std::shared_ptr<tke::Image> _image);
 	~ImageEditor();
-	virtual void show() override;
+	virtual void do_show() override;
 };

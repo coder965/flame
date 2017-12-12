@@ -27,5 +27,5 @@ struct ModelEditor : Window
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
 	ModelEditor(std::shared_ptr<tke::Model> _model);
-	virtual void show() override;
+	virtual void do_show() override;
 };

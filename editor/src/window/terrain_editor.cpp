@@ -30,29 +30,13 @@ struct SaveModelDialog : FileSelector
 	bool first = true;
 
 	SaveModelDialog()
-		:FileSelector(nullptr, true, 1)
+		:FileSelector(nullptr, "Save Model", true, true, 1, 800, 600)
 	{
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}
-
-	virtual bool on_window_begin() override
-	{
-		if (first)
-		{
-			ImGui::OpenPopup("Save Model");
-			ImGui::SetNextWindowSize(ImVec2(800, 600));
-			first = false;
-		}
-		return ImGui::BeginPopupModal("Save Model");
-	}
-
-	virtual void on_window_end() override
-	{
-		ImGui::EndPopup();
-	}
 };
 
-void TerrainEditor::show()
+void TerrainEditor::do_show()
 {
 	ImGui::Begin("Terrain -", &opened, ImGuiWindowFlags_MenuBar);
 

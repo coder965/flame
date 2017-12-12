@@ -33,6 +33,6 @@ struct TerrainEditor : Window
 	int block_count = 64;
 
 	TerrainEditor();
-	virtual void show() override;
+	virtual void do_show() override;
 	void create_vertex(bool first);
 };

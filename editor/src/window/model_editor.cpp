@@ -37,7 +37,7 @@ ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
-void ModelEditor::show()
+void ModelEditor::do_show()
 {
 	ImGui::Begin(("Model - " + model->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
 

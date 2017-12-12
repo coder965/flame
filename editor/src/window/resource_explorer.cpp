@@ -31,7 +31,7 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 }
 
 ResourceExplorer::ResourceExplorer()
-	:FileSelector(&resourceExplorerClass, true, 0)
+	:FileSelector(&resourceExplorerClass, "Resource Explorer", false, true, 0)
 {
 	current_path = project_path;
 }
@@ -46,42 +46,18 @@ int ResourceExplorer::on_left_area_width()
 	return 300;
 }
 
-bool ResourceExplorer::on_refresh()
-{
-	return project_path != "";
-}
-
-bool ResourceExplorer::on_parent_path()
-{
-	return project_path != current_path;
-}
-
 FileSelector::FileItem *ResourceExplorer::on_new_file_item()
 {
 	return new ResourceExplorerFileItem;
 }
 
-bool ResourceExplorer::on_window_begin()
-{
-	if (ImGui::Begin("Resource Explorer", &opened))
-	{
-		if (project_path == "")
-		{
-			ImGui::Text("No project opened.");
-			return false;
-		}
-		return true;
-	}
-	return false;
-}
-
-void ResourceExplorer::on_window_end()
-{
-	ImGui::End();
-}
-
 void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 {
+	if (ImGui::IsMouseClicked(1))
+	{
+
+	}
+
 	auto i = (ResourceExplorerFileItem*)_i;
 
 	switch (i->file_type)
@@ -93,11 +69,11 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 				if (i->image)
 					tke::addUiImage(i->image.get());
 			}
-			if (ImGui::IsMouseDoubleClicked(0))
+			if (doubleClicked)
 				new ImageEditor(i->image);
 			break;
 		case tke::FileTypeModel:
-			if (ImGui::IsMouseDoubleClicked(0))
+			if (doubleClicked)
 			{
 				auto m = tke::getModel((current_path / i->value).string());
 				if (m)
@@ -105,11 +81,11 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 			}
 			break;
 		case tke::FileTypeTerrain:
-			if (ImGui::IsMouseDoubleClicked(0))
+			if (doubleClicked)
 				new TerrainEditor;
 			break;
 		case tke::FileTypeScene:
-			if (ImGui::IsMouseDoubleClicked(0))
+			if (doubleClicked)
 			{
 				auto s = tke::getScene((current_path / i->value).string());
 				if (s)

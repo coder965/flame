@@ -19,9 +19,11 @@ struct Window
 {
 	WindowClass *pClass;
 	bool opened = true;
+	bool _need_focus = false;
 
 	Window(WindowClass *);
-	virtual void show() = 0;
+	void show();
+	virtual void do_show() = 0;
 	virtual void save(tke::AttributeTreeNode *) {}
 	virtual ~Window() {}
 };

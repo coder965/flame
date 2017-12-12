@@ -38,6 +38,6 @@ struct SceneEditor : Window
 	bool follow = false;
 
 	SceneEditor(std::shared_ptr<tke::Scene> _scene);
-	virtual void show() override;
+	virtual void do_show() override;
 	virtual void save(tke::AttributeTreeNode *) override;
 };

@@ -16,7 +16,7 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog()
-		:FileSelector(nullptr, true, 1)
+		:FileSelector(nullptr, "New Image", true, true, 1, 800, 600)
 	{
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
@@ -25,22 +25,6 @@ struct NewImageDialog : FileSelector
 			return true;
 		};
 		set_current_path(project_path.string());
-	}
-
-	virtual bool on_window_begin() override 
-	{
-		if (first)
-		{
-			ImGui::OpenPopup("New Image");
-			ImGui::SetNextWindowSize(ImVec2(800, 600));
-			first = false;
-		}
-		return ImGui::BeginPopupModal("New Image");
-	}
-
-	virtual void on_window_end() override
-	{
-		ImGui::EndPopup();
 	}
 
 	virtual int on_left_area_width() override
@@ -131,10 +115,11 @@ int main(int argc, char** argv)
 		}
 		if (ImGui::BeginMenu("View"))
 		{
-			if (ImGui::MenuItem("Resource Explorer", nullptr, resourceExplorer != nullptr))
+			if (ImGui::MenuItem("Resource Explorer"))
 			{
 				if (!resourceExplorer)
 					resourceExplorer = new ResourceExplorer;
+				resourceExplorer->_need_focus = true;
 			}
 
 			ImGui::EndMenu();
@@ -149,7 +134,7 @@ int main(int argc, char** argv)
 				w->show();
 		}
 
-		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetItemsLineHeightWithSpacing()));
+		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetFrameHeightWithSpacing()));
 		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Text("FPS:%d", tke::FPS);
 		ImGui::End();
