@@ -102,6 +102,7 @@ void TerrainEditor::show()
 							auto dis = glm::distance(glm::vec2(x, y), glm::vec2(px, py));
 							vertexs[y * vxcount + x].position.y += dis * 
 								(tke::mouseLeft.justDown ? 1.f : -1.f);
+							//vertexs[y * vxcount + x].normal = glm::vec3(0.f);
 						};
 
 						fChangeHeight(fl_x, fl_y, lx, lz);
@@ -119,19 +120,19 @@ void TerrainEditor::show()
 							if (x < 0 || x > block_count || y < 0 || y > block_count)
 								return;
 
+							float hC = fGetHeight(x, y);
 							float hL = fGetHeight(x - 1, y);
 							float hR = fGetHeight(x + 1, y);
 							float hU = fGetHeight(x, y - 1);
 							float hD = fGetHeight(x, y + 1);
 
-							glm::vec3 normal;
-							normal.x = hL - hR;
-							normal.z = hD - hU;
-							normal.y = 2.0;
-							vertexs[y * vxcount + x].normal = glm::normalize(normal);
+							auto v0 = glm::vec3(0.5f, (hC + hR) * 0.5f, 0.f) - glm::vec3(-0.5, (hC + hL) * 0.5, 0.f);
+							auto v1 = glm::vec3(0.f, (hC + hD) * 0.5f, 0.5f) - glm::vec3(0.f, (hC + hU) * 0.5, -0.5f);
+
+							vertexs[y * vxcount + x].normal = glm::normalize(-glm::cross(v0, v1));
 						};
 
-						for (auto y = fl_x - 1; y <= fl_x + 2; y++)
+						for (auto y = fl_y - 1; y <= fl_y + 2; y++)
 						{
 							for (auto x = fl_x - 1; x <= fl_x + 2; x++)
 								fCalcNormal(x, y);

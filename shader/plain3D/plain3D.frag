@@ -40,6 +40,5 @@ void main()
 #else
 		pc.color.a
 #endif
-
 	);
 }
