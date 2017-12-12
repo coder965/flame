@@ -7,7 +7,7 @@
 #include "window/scene_editor.h"
 #include "window/image_editor.h"
 
-std::experimental::filesystem::path project_path = "d:\\";
+std::experimental::filesystem::path project_path = "d:\\TK_Engine\\editor\\";
 
 struct NewImageDialog : FileSelector
 {

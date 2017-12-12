@@ -35,6 +35,7 @@ struct FileSelector : Window
 
 	std::function<bool(std::string)> callback;
 
+	// mode: 0 - open, 1 - save
 	FileSelector(WindowClass*_pclass, bool _enable_file, int _mode);
 	void set_current_path(const std::string &s);
 	void refresh();

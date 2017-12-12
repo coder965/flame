@@ -434,7 +434,7 @@ void SceneEditor::show()
 						obj_data.mat = object->getMat();
 						obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 						obj_data.fill_with_model(object->model.get());
-						if (object->model->animated)
+						if (object->model->vertex_anim)
 							obj_data.bone_buffer = object->animationComponent->boneMatrixBuffer;
 						draw_data.obj_data.push_back(obj_data);
 					}
@@ -549,7 +549,7 @@ void SceneEditor::show()
 			ImGui::DragFloat("speed", &o->speed);
 			ImGui::DragFloat("turn speed", &o->turn_speed);
 
-			if (o->model->animated)
+			if (o->model->vertex_anim)
 			{
 				static int boneID = -1;
 				if (boneID >= o->model->bones.size()) boneID = -1;
@@ -668,7 +668,7 @@ void SceneEditor::show()
 			obj_data.mat = obj->getMat();
 			obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 			obj_data.fill_with_model(obj->model.get());
-			if (obj->model->animated)
+			if (obj->model->vertex_anim)
 				obj_data.bone_buffer = obj->animationComponent->boneMatrixBuffer;
 			data.obj_data.push_back(obj_data);
 			plain_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, &data);

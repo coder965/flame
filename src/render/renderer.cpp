@@ -722,7 +722,7 @@ namespace tke
 
 			for (auto &o : scene->objects)
 			{
-				if (!o->model->animated)
+				if (!o->model->vertex_anim)
 				{
 					if (o->changed)
 					{
@@ -852,7 +852,7 @@ namespace tke
 				{
 					auto m = o->model;
 
-					if (!m->animated)
+					if (!m->vertex_anim)
 					{
 						for (auto &g : m->geometries)
 						{

@@ -45,16 +45,15 @@ namespace tke
 
 		std::string filename;
 		std::string filepath;
-		bool animated = false;
 
 		int vertexBase = 0;
 		int indiceBase = 0;
 
 		int vertex_count = 0;
-		VertexStat *vertex_stat = nullptr;
-		VertexAnim *vertex_anim = nullptr;
+		std::unique_ptr<VertexStat[]> vertex_stat;
+		std::unique_ptr<VertexAnim[]> vertex_anim;
 		int indice_count = 0;
-		int *indices = nullptr;
+		std::unique_ptr<int[]> indices;
 
 		std::vector<std::unique_ptr<Geometry>> geometries;
 
@@ -135,5 +134,6 @@ namespace tke
 	IMPL() std::shared_ptr<Model> hamerModel;
 
 	std::shared_ptr<Model> getModel(const std::string &filename);
+	void saveModel(Model *m, const std::string &filename);
 	void initModel();
 }

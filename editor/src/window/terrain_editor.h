@@ -34,4 +34,5 @@ struct TerrainEditor : Window
 
 	TerrainEditor();
 	virtual void show() override;
+	void create_vertex(bool first);
 };
