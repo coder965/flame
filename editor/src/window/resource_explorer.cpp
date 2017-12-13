@@ -33,7 +33,7 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 ResourceExplorer::ResourceExplorer()
 	:FileSelector(&resourceExplorerClass, "Resource Explorer", false, true, 0)
 {
-	current_path = project_path;
+	set_current_path(project_path.string());
 }
 
 ResourceExplorer::~ResourceExplorer()
@@ -53,11 +53,6 @@ FileSelector::FileItem *ResourceExplorer::on_new_file_item()
 
 void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 {
-	if (ImGui::IsMouseClicked(1))
-	{
-
-	}
-
 	auto i = (ResourceExplorerFileItem*)_i;
 
 	switch (i->file_type)
@@ -65,7 +60,7 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 		case tke::FileTypeImage:
 			if (!i->image)
 			{
-				i->image = tke::getImage((current_path / i->value).string());
+				i->image = tke::getImage(i->filename);
 				if (i->image)
 					tke::addUiImage(i->image.get());
 			}
@@ -75,7 +70,7 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 		case tke::FileTypeModel:
 			if (doubleClicked)
 			{
-				auto m = tke::getModel((current_path / i->value).string());
+				auto m = tke::getModel(i->filename);
 				if (m)
 					new ModelEditor(m);
 			}
@@ -87,7 +82,7 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 		case tke::FileTypeScene:
 			if (doubleClicked)
 			{
-				auto s = tke::getScene((current_path / i->value).string());
+				auto s = tke::getScene(i->filename);
 				if (s)
 				{
 					s->camera.setMode(tke::CameraMode::targeting);

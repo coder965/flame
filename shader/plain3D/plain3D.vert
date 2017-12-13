@@ -10,7 +10,7 @@ layout(push_constant) uniform PushConstant
 }pc;
 
 #if defined(ANIM)
-layout(set = 2, binding = 0) uniform BONE
+layout(binding = 0) uniform BONE
 {
 	mat4 matrix[256];
 }u_bone;

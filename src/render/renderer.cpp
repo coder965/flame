@@ -71,7 +71,8 @@ namespace tke
 	static Pipeline *pipeline_wireframe;
 	static Pipeline *pipeline_wireframe_anim;
 	bool PlainRenderer::first = true;
-	UniformBuffer *PlainRenderer::last_bone_buffer;
+	UniformBuffer *PlainRenderer::last_bone_buffer_mode0;
+	UniformBuffer *PlainRenderer::last_bone_buffer_mode3;
 	PlainRenderer::PlainRenderer()
 	{
 		if (first)
@@ -197,10 +198,10 @@ namespace tke
 					else
 					{
 						cb->bindPipeline(pipeline_plain_anim);
-						if (last_bone_buffer != d.bone_buffer)
+						if (last_bone_buffer_mode0 != d.bone_buffer)
 						{
 							updateDescriptorSets(1, &pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
-							last_bone_buffer = d.bone_buffer;
+							last_bone_buffer_mode0 = d.bone_buffer;
 						}
 						cb->bindDescriptorSet();
 					}
@@ -220,7 +221,18 @@ namespace tke
 					break;
 				}
 				case 3:
-					cb->bindPipeline(!d.bone_buffer ? pipeline_wireframe : pipeline_wireframe_anim);
+					if (!d.bone_buffer)
+						cb->bindPipeline(pipeline_wireframe);
+					else
+					{
+						cb->bindPipeline(pipeline_wireframe_anim);
+						if (last_bone_buffer_mode3 != d.bone_buffer)
+						{
+							updateDescriptorSets(1, &pipeline_wireframe_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+							last_bone_buffer_mode3 = d.bone_buffer;
+						}
+						cb->bindDescriptorSet();
+					}
 					break;
 			}
 

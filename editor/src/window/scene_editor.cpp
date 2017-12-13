@@ -389,6 +389,26 @@ void SceneEditor::do_show()
 		ImGui::InvisibleButton("canvas", image_size);
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 		draw_list->AddImage(ImTextureID(layer.image->index), image_pos, image_pos + image_size);
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
+			{
+				static char filename[260];
+				memcpy(filename, payload->Data, payload->DataSize);
+				std::experimental::filesystem::path path(filename);
+				auto ext = path.extension();
+				if (tke::isModelFile(ext.string()))
+				{
+					auto m = tke::getModel(filename);
+					if (m)
+					{
+						auto o = new tke::Object(m, 0);
+						scene->addObject(o);
+					}
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
 		if (ImGui::IsItemHovered())
 		{
 			if (tke::mouseDispX != 0 || tke::mouseDispY != 0)

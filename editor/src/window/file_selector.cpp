@@ -114,10 +114,10 @@ void FileSelector::do_show()
 			ImGui::SetNextWindowSize(ImVec2(cx, cy));
 			first = false;
 		}
-		_open = ImGui::BeginPopupModal(title.c_str());
+		_open = ImGui::BeginPopupModal(title.c_str(), &opened);
 	}
 	else
-		_open = ImGui::Begin(title.c_str());
+		_open = ImGui::Begin(title.c_str(), &opened);
 
 	if (_open)
 	{
@@ -163,6 +163,7 @@ void FileSelector::do_show()
 			if (ImGui::Selectable(i->name.c_str(), list_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				strcpy(filename, i->value.c_str());
+				i->filename = (current_path / i->value).string();
 				on_dir_item_selected(i.get());
 				list_index = index;
 				if (ImGui::IsMouseDoubleClicked(0))
@@ -181,7 +182,15 @@ void FileSelector::do_show()
 				{
 					list_index = index;
 					strcpy(filename, i->value.c_str());
+					i->filename = (current_path / i->value).string();
 					on_file_item_selected(i.get(), ImGui::IsMouseDoubleClicked(0));
+				}
+				if (ImGui::BeginDragDropSource())
+				{
+					i->filename = (current_path / i->value).string();
+					ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size());
+					ImGui::Text(i->filename.c_str());
+					ImGui::EndDragDropSource();
 				}
 				index++;
 			}

@@ -21,12 +21,14 @@ struct FileSelector : Window
 	{
 		std::string value;
 		std::string name;
+		std::string filename;
 	};
 
 	struct FileItem : tke::vdtor
 	{
 		std::string value;
 		std::string name;
+		std::string filename;
 
 		int file_size;
 		tke::FileType file_type = tke::FileTypeUnknown;
