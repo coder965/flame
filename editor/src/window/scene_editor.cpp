@@ -4,34 +4,8 @@
 #include "../select.h"
 #include "scene_editor.h"
 
-std::string SceneEditorClass::getName()
-{
-	return "scene editor";
-}
-
-Window *SceneEditorClass::load(tke::AttributeTreeNode *n)
-{
-	auto a = n->firstAttribute("filename");
-	if (a)
-	{
-		auto s = tke::getScene(a->value);
-		if (s)
-		{
-			s->camera.setMode(tke::CameraMode::targeting);
-			auto w = new SceneEditor(s);
-			a = n->firstAttribute("follow");
-			if (a)
-				a->get(&w->follow);
-			return w;
-		}
-	}
-	return nullptr;
-}
-
-SceneEditorClass sceneEditorClass;
-
 SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
-	:Window(&sceneEditorClass), scene(_scene)
+	:scene(_scene)
 {
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
 

@@ -7,15 +7,7 @@
 #include "../select.h"
 #include "../tool/transformer_tool.h"
 
-struct SceneEditorClass : WindowClass
-{
-	virtual std::string getName() override;
-	virtual Window *load(tke::AttributeTreeNode *n) override;
-};
-
-extern SceneEditorClass sceneEditorClass;
-
-struct SceneEditor : Window
+struct SceneEditor
 {
 	std::shared_ptr<tke::Scene> scene;
 
@@ -38,6 +30,6 @@ struct SceneEditor : Window
 	bool follow = false;
 
 	SceneEditor(std::shared_ptr<tke::Scene> _scene);
-	virtual void do_show() override;
-	virtual void save(tke::AttributeTreeNode *) override;
+	void do_show();
+	void save(tke::AttributeTreeNode *);
 };
