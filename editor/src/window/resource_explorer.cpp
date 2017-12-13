@@ -2,7 +2,6 @@
 
 #include "../../../src/ui/ui.h"
 
-#include "../editor.h"
 #include "resource_explorer.h"
 #include "image_editor.h"
 #include "model_editor.h"
@@ -33,7 +32,7 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 ResourceExplorer::ResourceExplorer()
 	:FileSelector(&resourceExplorerClass, "Resource Explorer", false, true, 0)
 {
-	set_current_path(project_path.string());
+	set_current_path("d:\\TK_Engine\\editor");
 }
 
 ResourceExplorer::~ResourceExplorer()

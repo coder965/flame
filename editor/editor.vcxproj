@@ -181,7 +181,6 @@
     <ClCompile Include="src\window\window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\editor.h" />
     <ClInclude Include="src\select.h" />
     <ClInclude Include="src\tool\tool.h" />
     <ClInclude Include="src\tool\transformer_tool.h" />

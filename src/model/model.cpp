@@ -1971,7 +1971,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[triangle]";
+			m->filename = "[triangle].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2008,7 +2008,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[cube]";
+			m->filename = "[cube].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2051,7 +2051,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[sphere]";
+			m->filename = "[sphere].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2099,7 +2099,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[cylinder]";
+			m->filename = "[cylinder].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2142,7 +2142,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[cone]";
+			m->filename = "[cone].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2179,7 +2179,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[arrow]";
+			m->filename = "[arrow].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2219,7 +2219,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[torus]";
+			m->filename = "[torus].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2258,7 +2258,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "[hammer]";
+			m->filename = "[hammer].tkm";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;

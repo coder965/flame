@@ -1,13 +1,10 @@
 #include "../../src/ui/ui.h"
 #include "../../src/core.h"
 
-#include "editor.h"
 #include "window/file_selector.h"
 #include "window/resource_explorer.h"
 #include "window/scene_editor.h"
 #include "window/image_editor.h"
-
-std::experimental::filesystem::path project_path = "d:\\TK_Engine\\editor";
 
 struct NewImageDialog : FileSelector
 {
@@ -24,7 +21,7 @@ struct NewImageDialog : FileSelector
 			tke::newImageFile(s, cx, cy, 32);
 			return true;
 		};
-		set_current_path(project_path.string());
+		set_current_path("d:\\TK_Engine\\editor");
 	}
 
 	virtual int on_left_area_width() override
@@ -85,7 +82,7 @@ int main(int argc, char** argv)
 		{
 			if (ImGui::BeginMenu("New"))
 			{
-				if (ImGui::MenuItem("Project"))
+				if (ImGui::MenuItem("Scene"))
 					;
 				if (ImGui::MenuItem("Image"))
 					new NewImageDialog;
@@ -94,22 +91,6 @@ int main(int argc, char** argv)
 
 				ImGui::EndMenu();
 			}
-			if (ImGui::MenuItem("Open Project"))
-			{
-				DirSelectorDialog::open("c:\\", [](std::string path) {
-					project_path = path;
-					if (resourceExplorer)
-					{
-						resourceExplorer->current_path = project_path;
-						resourceExplorer->refresh();
-					}
-					return true;
-				});
-			}
-			if (ImGui::MenuItem("Save Project"))
-				;
-			if (ImGui::MenuItem("Close Project"))
-				;
 
 			ImGui::EndMenu();
 		}
@@ -125,6 +106,15 @@ int main(int argc, char** argv)
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
+
+		//ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
+		//ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy - ImGui::GetFrameHeight()));
+		//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		//ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
+		//ImGui::Image((ImTextureID)0, ImVec2(tke::window_cx, tke::window_cy - ImGui::GetFrameHeight()));
+		//ImGui::End();
+		//ImGui::PopStyleVar(2);
 
 		{
 			std::vector<Window*> _w;

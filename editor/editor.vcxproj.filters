@@ -63,9 +63,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\editor.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\select.h">
       <Filter>src</Filter>
     </ClInclude>

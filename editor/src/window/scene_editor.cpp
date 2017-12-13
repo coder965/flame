@@ -2,7 +2,6 @@
 #include "../../../src/render/synchronization.h"
 
 #include "../select.h"
-#include "../editor.h"
 #include "scene_editor.h"
 
 std::string SceneEditorClass::getName()
@@ -90,14 +89,14 @@ void SceneEditor::do_show()
 		{
 			static bool basicModel = false;
 			static const char *basic_model_names[] = {
-				"[triangle]",
-				"[cube]",
-				"[sphere]",
-				"[cylinder]",
-				"[cone]",
-				"[arrow]",
-				"[torus]",
-				"[hammer]"
+				"[triangle].tkm",
+				"[cube].tkm",
+				"[sphere].tkm",
+				"[cylinder].tkm",
+				"[cone].tkm",
+				"[arrow].tkm",
+				"[torus].tkm",
+				"[hammer].tkm"
 			};
 			static int model_index = 0;
 			static char model_filename[260];

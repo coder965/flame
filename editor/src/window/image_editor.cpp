@@ -1,7 +1,6 @@
 #include "../../../src/ui/ui.h"
 #include "../../../src/core.h"
 
-#include "../editor.h"
 #include "image_editor.h"
 
 std::string ImageEditorClass::getName()
