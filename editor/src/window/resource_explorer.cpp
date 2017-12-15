@@ -8,6 +8,17 @@
 #include "terrain_editor.h"
 #include "scene_editor.h"
 
+const char *basic_model_names[] = {
+	"[triangle].tkm",
+	"[cube].tkm",
+	"[sphere].tkm",
+	"[cylinder].tkm",
+	"[cone].tkm",
+	"[arrow].tkm",
+	"[torus].tkm",
+	"[hammer].tkm"
+};
+
 std::string ResourceExplorerClass::getName()
 {
 	return "resource explorer";
@@ -33,6 +44,7 @@ ResourceExplorer::ResourceExplorer()
 	:FileSelector(&resourceExplorerClass, "Resource Explorer", false, true, 0)
 {
 	set_current_path("d:\\TK_Engine\\editor");
+	user_define_extra_path = "[basic models]";
 }
 
 ResourceExplorer::~ResourceExplorer()
@@ -48,6 +60,21 @@ int ResourceExplorer::on_left_area_width()
 FileSelector::FileItem *ResourceExplorer::on_new_file_item()
 {
 	return new ResourceExplorerFileItem;
+}
+
+void ResourceExplorer::on_refresh_user_define_dir()
+{
+	auto fAddBasicModel = [&](const char *name) {
+		{
+			auto i = on_new_file_item();
+			i->file_type = tke::FileTypeModel;
+			i->value = name;
+			i->name = ICON_FA_FILE_O" " + i->value;
+			file_list.push_back(std::move(std::unique_ptr<FileItem>(i)));
+		}
+	};
+	for (int i = 0; i < TK_ARRAYSIZE(basic_model_names); i++)
+		fAddBasicModel(basic_model_names[i]);
 }
 
 void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
@@ -95,11 +122,11 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 	}
 }
 
-void ResourceExplorer::on_top_area_begin()
+void ResourceExplorer::on_top_area_show()
 {
 }
 
-void ResourceExplorer::on_bottom_area_begin()
+void ResourceExplorer::on_bottom_area_show()
 {
 	if (list_index != -1 && list_index >= dir_list.size())
 	{
@@ -108,7 +135,7 @@ void ResourceExplorer::on_bottom_area_begin()
 	}
 }
 
-void ResourceExplorer::on_right_area_begin()
+void ResourceExplorer::on_right_area_show()
 {
 	ImGui::SameLine();
 	ImGui::BeginGroup();

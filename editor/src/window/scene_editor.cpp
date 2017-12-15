@@ -3,6 +3,7 @@
 
 #include "../select.h"
 #include "scene_editor.h"
+#include "resource_explorer.h"
 
 std::unique_ptr<SceneEditor> scene_editor = nullptr;
 
@@ -62,16 +63,6 @@ void SceneEditor::on_menu_bar()
 	if (ImGui::BeginPopupModal("Create Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		static bool basicModel = false;
-		static const char *basic_model_names[] = {
-			"[triangle].tkm",
-			"[cube].tkm",
-			"[sphere].tkm",
-			"[cylinder].tkm",
-			"[cone].tkm",
-			"[arrow].tkm",
-			"[torus].tkm",
-			"[hammer].tkm"
-		};
 		static int model_index = 0;
 		static char model_filename[260];
 		ImGui::Checkbox("Basic Model", &basicModel);

@@ -8,7 +8,7 @@ FileSelector::FileSelector(WindowClass*_pclass, const std::string &_title, bool 
 	filename[0] = 0;
 }
 
-const char *drivers[] = {
+const char *drivers[5] = {
 	"c:",
 	"d:",
 	"e:",
@@ -37,6 +37,12 @@ void FileSelector::refresh()
 
 	if (!on_refresh())
 		return;
+
+	if (current_path == user_define_extra_path)
+	{
+		on_refresh_user_define_dir();
+		return;
+	}
 
 	std::experimental::filesystem::directory_iterator end_it;
 	for (std::experimental::filesystem::directory_iterator it(current_path); it != end_it; it++)
@@ -125,12 +131,21 @@ void FileSelector::do_show()
 
 		ImGui::BeginChild("left", ImVec2(on_left_area_width(), 0));
 
-		on_top_area_begin();
+		on_top_area_show();
 
 		ImGui::PushItemWidth(100);
-		if (ImGui::Combo("##driver", &driver_index, drivers, TK_ARRAYSIZE(drivers)))
+		auto driver_count = TK_ARRAYSIZE(drivers) - 1;
+		if (user_define_extra_path.size() != 0)
 		{
-			current_path = std::string(drivers[driver_index]) + "\\";
+			drivers[TK_ARRAYSIZE(drivers) - 1] = user_define_extra_path.c_str();
+			driver_count++;
+		}
+		if (ImGui::Combo("##driver", &driver_index, drivers, driver_count))
+		{
+			auto d = std::string(drivers[driver_index]);
+			if (d != user_define_extra_path)
+				d += "\\";
+			current_path = d;
 			need_refresh = true;
 		}
 		ImGui::PopItemWidth();
@@ -143,7 +158,7 @@ void FileSelector::do_show()
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			if (ImGui::Button(ICON_FA_CHEVRON_UP))
 			{
-				if (on_parent_path() && current_path.root_path() != current_path)
+				if (current_path != user_define_extra_path && on_parent_path() && current_path.root_path() != current_path)
 				{
 					current_path = current_path.parent_path();
 					need_refresh = true;
@@ -182,12 +197,18 @@ void FileSelector::do_show()
 				{
 					list_index = index;
 					strcpy(filename, i->value.c_str());
-					i->filename = (current_path / i->value).string();
+					if (current_path != user_define_extra_path)
+						i->filename = (current_path / i->value).string();
+					else
+						i->filename = i->value;
 					on_file_item_selected(i.get(), ImGui::IsMouseDoubleClicked(0));
 				}
 				if (ImGui::BeginDragDropSource())
 				{
-					i->filename = (current_path / i->value).string();
+					if (current_path != user_define_extra_path)
+						i->filename = (current_path / i->value).string();
+					else
+						i->filename = i->value;
 					ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size() + 1);
 					ImGui::Text(i->filename.c_str());
 					ImGui::EndDragDropSource();
@@ -197,11 +218,11 @@ void FileSelector::do_show()
 		}
 		ImGui::EndChild();
 
-		on_bottom_area_begin();
+		on_bottom_area_show();
 
 		ImGui::EndChild();
 
-		on_right_area_begin();
+		on_right_area_show();
 	}
 
 	if (modal)
@@ -234,6 +255,10 @@ void FileSelector::on_add_file_item(FileItem *i)
 {
 }
 
+void FileSelector::on_refresh_user_define_dir()
+{
+}
+
 void FileSelector::on_dir_item_selected(DirItem *i) 
 {
 }
@@ -242,11 +267,11 @@ void FileSelector::on_file_item_selected(FileItem *i, bool doubleClicked)
 {
 }
 
-void FileSelector::on_top_area_begin() 
+void FileSelector::on_top_area_show() 
 {
 }
 
-void FileSelector::on_bottom_area_begin() 
+void FileSelector::on_bottom_area_show() 
 {
 	static float okButtonWidth = 100;
 	static float cancelButtonWidth = 100;
@@ -282,7 +307,7 @@ void FileSelector::on_bottom_area_begin()
 	cancelButtonWidth = ImGui::GetItemRectSize().x;
 }
 
-void FileSelector::on_right_area_begin() 
+void FileSelector::on_right_area_show() 
 {
 }
 

@@ -6,6 +6,8 @@
 #include "../TK_Engine/src/render/image.h"
 #include "file_selector.h"
 
+extern const char *basic_model_names[8];
+
 struct ResourceExplorerClass : WindowClass
 {
 	virtual std::string getName() override;
@@ -27,10 +29,11 @@ struct ResourceExplorer : FileSelector
 	virtual ~ResourceExplorer() override;
 	virtual int on_left_area_width() override;
 	virtual FileItem *on_new_file_item() override;
+	virtual void on_refresh_user_define_dir() override;
 	virtual void on_file_item_selected(FileItem *i, bool doubleClicked) override;
-	virtual void on_top_area_begin() override;
-	virtual void on_bottom_area_begin() override;
-	virtual void on_right_area_begin() override;
+	virtual void on_top_area_show() override;
+	virtual void on_bottom_area_show() override;
+	virtual void on_right_area_show() override;
 };
 
 extern ResourceExplorer *resourceExplorer;

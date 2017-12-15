@@ -29,7 +29,7 @@ struct NewImageDialog : FileSelector
 		return 300;
 	}
 
-	virtual void on_right_area_begin() override
+	virtual void on_right_area_show() override
 	{
 		ImGui::SameLine();
 		ImGui::BeginGroup();

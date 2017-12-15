@@ -30,7 +30,7 @@ struct FileSelector : Window
 		std::string name;
 		std::string filename;
 
-		int file_size;
+		int file_size = 0;
 		tke::FileType file_type = tke::FileTypeUnknown;
 	};
 
@@ -43,6 +43,7 @@ struct FileSelector : Window
 	bool need_refresh = true;
 
 	std::function<bool(std::string)> callback;
+	std::string user_define_extra_path;
 
 	// mode: 0 - open, 1 - save
 	FileSelector(WindowClass*_pclass, const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx = 0, int _cy = 0);
@@ -54,11 +55,12 @@ struct FileSelector : Window
 	virtual bool on_parent_path();
 	virtual FileItem *on_new_file_item();
 	virtual void on_add_file_item(FileItem *i);
+	virtual void on_refresh_user_define_dir();
 	virtual void on_dir_item_selected(DirItem *i);
 	virtual void on_file_item_selected(FileItem *i, bool doubleClicked);
-	virtual void on_top_area_begin();
-	virtual void on_bottom_area_begin();
-	virtual void on_right_area_begin();
+	virtual void on_top_area_show();
+	virtual void on_bottom_area_show();
+	virtual void on_right_area_show();
 };
 
 struct DirSelectorDialog : FileSelector
