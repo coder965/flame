@@ -239,7 +239,7 @@ namespace tke
 		enginePath = path;
 		resCx = rcx;
 		resCy = rcy;
-		screenAspect = (float)resCx / resCy;
+		resAspect = (float)resCx / resCy;
 
 		if (!only_2d)
 		{
@@ -247,7 +247,7 @@ namespace tke
 				glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f));
 			matOrtho = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
 			matOrthoInv = glm::inverse(matOrtho);
-			matPerspective = vkTrans * glm::perspective(glm::radians(fovy), screenAspect, near_plane, far_plane);
+			matPerspective = vkTrans * glm::perspective(glm::radians(fovy), resAspect, near_plane, far_plane);
 			matPerspectiveInv = glm::inverse(matPerspective);
 		}
 
@@ -327,7 +327,7 @@ namespace tke
 				stru.depth_far = far_plane;
 				stru.cx = resCx;
 				stru.cy = resCy;
-				stru.aspect = screenAspect;
+				stru.aspect = resAspect;
 				stru.fovy = fovy;
 				stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
 				stru.envrCx = EnvrSizeCx;

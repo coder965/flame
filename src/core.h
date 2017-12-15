@@ -56,7 +56,7 @@ namespace tke
 	IMPL() std::string enginePath;
 	IMPL() int resCx;
 	IMPL() int resCy;
-	IMPL() float screenAspect;
+	IMPL() float resAspect;
 
 	IMPL() glm::mat4 matOrtho;
 	IMPL() glm::mat4 matOrthoInv;

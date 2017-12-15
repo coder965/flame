@@ -42,7 +42,7 @@ int nowTime;
 std::string enginePath;
 int resCx;
 int resCy;
-float screenAspect;
+float resAspect;
 glm::mat4 matOrtho;
 glm::mat4 matOrthoInv;
 glm::mat4 matPerspective;

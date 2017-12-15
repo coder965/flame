@@ -48,7 +48,7 @@ struct NewImageDialog : FileSelector
 
 int main(int argc, char** argv)
 {
-	tke::init(true, "../", 800, 600, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
+	tke::init(true, "../", 1280, 720, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
 
 	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
 

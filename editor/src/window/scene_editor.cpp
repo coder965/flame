@@ -365,17 +365,17 @@ void SceneEditor::do_show()
 	auto displayCx = tke::window_cx;
 	auto displayCy = tke::window_cy - frameHeight;
 	ImVec2 image_size;
-	if ((float)displayCx / (float)displayCy > tke::screenAspect)
+	if ((float)displayCx / (float)displayCy > tke::resAspect)
 	{
 		image_size.y = displayCy;
-		image_size.x = tke::screenAspect * image_size.y;
+		image_size.x = tke::resAspect * image_size.y;
 		image_pos.x = (displayCx - image_size.x) * 0.5f;
 		image_pos.y = frameHeight;
 	}
 	else
 	{
 		image_size.x = displayCx;
-		image_size.y = image_size.x / tke::screenAspect;
+		image_size.y = image_size.x / tke::resAspect;
 		image_pos.y = frameHeight + (displayCy - image_size.y) * 0.5f;
 		image_pos.x = 0;
 	}
