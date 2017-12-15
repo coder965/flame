@@ -7,8 +7,8 @@ namespace tke
 {
 	REFLECTABLE enum class ObjectPhysicsType
 	{
-		REFLe enable,
-		REFLe dynamic = 1 << 0,
+		REFLe enable = 1 << 0,
+		REFLe dynamic = 1 << 1,
 		REFLe controller = 1 << 2
 	};
 
@@ -34,7 +34,7 @@ namespace tke
 		REFLv std::uint32_t physics_type = 0; // cannot change
 
 		std::unique_ptr<AnimationComponent> animationComponent;
-		std::vector<ObjectRigidBodyData> rigidbodyDatas;
+		std::vector<std::unique_ptr<ObjectRigidBodyData>> rigidbodyDatas;
 		physx::PxController *pxController = nullptr;
 		float floatingTime = 0.f;
 

@@ -4,7 +4,8 @@ namespace tke
 {
 	ObjectRigidBodyData::~ObjectRigidBodyData()
 	{
-		actor->release();
+		if (actor)
+			actor->release();
 	}
 
 	Object::Object() {}

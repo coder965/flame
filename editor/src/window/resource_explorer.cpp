@@ -85,7 +85,10 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 				if (s)
 				{
 					s->camera.setMode(tke::CameraMode::targeting);
-					new SceneEditor(s);
+					if (!scene_editor)
+						scene_editor = std::make_unique<SceneEditor>(s);
+					else
+						scene_editor->scene = s;
 				}
 			}
 			break;

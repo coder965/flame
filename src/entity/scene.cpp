@@ -64,8 +64,8 @@ namespace tke
 
 	static int _objectMagicIndex = 0;
 
-	void Scene::addObject(Object *o) // when a object is added to scene, the owner is the scene, object cannot be deleted elsewhere
-									 // and, if object has physics componet, it can be only moved by physics
+	void Scene::addObject(Object *o) // when an object add to scene, the owner is scene, object cannot be deleted elsewhere
+									 // and, if object has dynamic physics, it can be only moved by physics
 	{
 		auto m = o->model;
 		if (!m)
@@ -97,16 +97,16 @@ namespace tke
 
 				for (auto r : m->rigidbodies)
 				{
-					ObjectRigidBodyData rigidbodyData;
-					rigidbodyData.rigidbody = r;
+					auto rigidbodyData = new ObjectRigidBodyData;
+					rigidbodyData->rigidbody = r;
 
 					auto rigidCoord = r->getCoord();
 					if (r->boneID != -1) rigidCoord += m->bones[r->boneID].rootCoord;
 					rigidCoord *= objScale;
 					auto rigidAxis = r->getAxis();
 
-					rigidbodyData.rotation = objAxis * rigidAxis;
-					rigidbodyData.coord = objCoord + objAxis * rigidCoord;
+					rigidbodyData->rotation = objAxis * rigidAxis;
+					rigidbodyData->coord = objCoord + objAxis * rigidCoord;
 					physx::PxTransform rigTrans(rigidCoord.x, rigidCoord.y, rigidCoord.z, physx::PxQuat(physx::PxMat33(
 						physx::PxVec3(rigidAxis[0][0], rigidAxis[0][1], rigidAxis[0][2]),
 						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
@@ -138,9 +138,9 @@ namespace tke
 						}
 					}
 
-					rigidbodyData.actor = actor;
+					rigidbodyData->actor = actor;
 
-					o->rigidbodyDatas.push_back(rigidbodyData);
+					o->rigidbodyDatas.push_back(std::move(std::unique_ptr<ObjectRigidBodyData>(rigidbodyData)));
 
 					pxScene->addActor(*actor);
 				}
@@ -202,22 +202,22 @@ namespace tke
 			//			//p->setConstraintFlag(PxConstraintFlag::eVISUALIZATION, true);
 			//			jID++;
 			//		}
-		}
 
-		if (o->physics_type & (int)ObjectPhysicsType::controller)
-		{
-			auto c = m->controller_position * o->getScale() + o->getCoord();
-			physx::PxCapsuleControllerDesc capsuleDesc;
-			capsuleDesc.radius = (m->controller_radius * o->getScale().x) / 0.8f;
-			capsuleDesc.height = (m->controller_height * o->getScale().y) / 0.8f;
-			capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
-			capsuleDesc.material = pxDefaultMaterial;
-			capsuleDesc.position.x = c.x;
-			capsuleDesc.position.y = c.y;
-			capsuleDesc.position.z = c.z;
-			capsuleDesc.stepOffset = capsuleDesc.radius;
+			if (o->physics_type & (int)ObjectPhysicsType::controller)
+			{
+				auto c = m->controller_position * o->getScale() + o->getCoord();
+				physx::PxCapsuleControllerDesc capsuleDesc;
+				capsuleDesc.radius = (m->controller_radius * o->getScale().x) / 0.8f;
+				capsuleDesc.height = (m->controller_height * o->getScale().y) / 0.8f;
+				capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
+				capsuleDesc.material = pxDefaultMaterial;
+				capsuleDesc.position.x = c.x;
+				capsuleDesc.position.y = c.y;
+				capsuleDesc.position.z = c.z;
+				capsuleDesc.stepOffset = capsuleDesc.radius;
 
-			o->pxController = pxControllerManager->createController(capsuleDesc);
+				o->pxController = pxControllerManager->createController(capsuleDesc);
+			}
 		}
 
 		objects.push_back(std::move(std::unique_ptr<Object>(o)));
@@ -237,11 +237,6 @@ namespace tke
 				{
 					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
-				}
-				for (auto &r : o->rigidbodyDatas)
-				{
-					if (r.actor)
-						r.actor->release();
 				}
 				if (o->pxController)
 					o->pxController->release();
@@ -453,17 +448,17 @@ namespace tke
 
 					for (auto &data : o->rigidbodyDatas)
 					{
-						if (data.rigidbody->boneID == -1)
+						if (data->rigidbody->boneID == -1)
 						{
-							auto trans = data.actor->getGlobalPose();
+							auto trans = data->actor->getGlobalPose();
 							auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
 							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
 							o->setCoord(coord);
 							o->setQuat(quat);
 							glm::mat3 axis;
 							quaternionToMatrix(quat, axis);
-							data.coord = coord;
-							data.rotation = axis;
+							data->coord = coord;
+							data->rotation = axis;
 						}
 						//else
 						//{

@@ -92,8 +92,13 @@ int main(int argc, char** argv)
 				ImGui::EndMenu();
 			}
 
+			if (scene_editor)
+				scene_editor->on_file_menu();
+
 			ImGui::EndMenu();
 		}
+		if (scene_editor)
+			scene_editor->on_menu_bar();
 		if (ImGui::BeginMenu("View"))
 		{
 			if (ImGui::MenuItem("Resource Explorer"))
@@ -107,14 +112,17 @@ int main(int argc, char** argv)
 		}
 		ImGui::EndMainMenuBar();
 
-		//ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
-		//ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy - ImGui::GetFrameHeight()));
-		//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-		//ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
-		//ImGui::Image((ImTextureID)0, ImVec2(tke::window_cx, tke::window_cy - ImGui::GetFrameHeight()));
-		//ImGui::End();
-		//ImGui::PopStyleVar(2);
+		if (scene_editor)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
+			ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy - ImGui::GetFrameHeight()));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus))
+				scene_editor->do_show();
+			ImGui::End();
+			ImGui::PopStyleVar(2);
+		}
 
 		{
 			std::vector<Window*> _w;

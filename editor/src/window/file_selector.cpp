@@ -188,7 +188,7 @@ void FileSelector::do_show()
 				if (ImGui::BeginDragDropSource())
 				{
 					i->filename = (current_path / i->value).string();
-					ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size());
+					ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size() + 1);
 					ImGui::Text(i->filename.c_str());
 					ImGui::EndDragDropSource();
 				}

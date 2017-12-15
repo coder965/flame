@@ -26,5 +26,4 @@ std::vector<std::unique_ptr<Window>> windows;
 void initWindow()
 {
 	windowClasses.push_back(&resourceExplorerClass);
-	windowClasses.push_back(&sceneEditorClass);
 }
