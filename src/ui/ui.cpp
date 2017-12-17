@@ -4,6 +4,20 @@
 #include "../core.h"
 #include "../render/image.h"
 
+namespace ImGui
+{
+	bool main_menu_alive = false;
+	bool last_frame_main_menu_alive = false;
+
+	bool BeginMenu_keepalive(const char* label, bool enabled)
+	{
+		auto open = BeginMenu(label, enabled);
+		if (!main_menu_alive && open)
+			main_menu_alive = true;
+		return open;
+	}
+}
+
 namespace tke
 {
 	static Pipeline *pipeline_ui;
@@ -166,10 +180,14 @@ namespace tke
 		io.MouseWheel = mouseScroll / 120;
 
 		ImGui::NewFrame();
+
+		ImGui::main_menu_alive = false;
 	}
 
 	void endUi()
 	{
+		ImGui::last_frame_main_menu_alive = ImGui::main_menu_alive;
+
 		ImGui::Render();
 
 		ImGuiIO& io = ImGui::GetIO();

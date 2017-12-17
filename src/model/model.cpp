@@ -84,7 +84,7 @@ namespace tke
 					break;
 				}
 			}
-			if (boneID == -1) 
+			if (boneID == -1)
 				continue;
 
 			BoneMotionTrack *t = nullptr;
@@ -294,7 +294,7 @@ namespace tke
 
 		positions.insert(positions.end(), {
 			center + rotation * glm::vec3(0.f, 0.f, 0.f), center + rotation * glm::vec3(1.f, 0.f, 0.f), center + rotation * glm::vec3(0.f, 1.f, 0.f)
-		});
+			});
 		normals.insert(normals.end(), 3, glm::vec3(0.f, 0.f, 1.f));
 		for (int i = 0; i < 3; i++)
 			indices.push_back(baseVertex + i);
@@ -320,7 +320,7 @@ namespace tke
 			a, b, e, f,
 			a, d, e, h,
 			b, c, f, g
-		});
+			});
 
 		normals.insert(normals.end(), 4, rotation * glm::vec3(1.f, 0.f, 0.f));
 		normals.insert(normals.end(), 4, rotation * glm::vec3(-1.f, 0.f, 0.f));
@@ -748,7 +748,7 @@ namespace tke
 								ids[1] != -1 ? rawTexcoords[ids[1]] : glm::vec2(0.f),
 								ids[2] != -1 ? rawNormals[ids[2]] : glm::vec3(0.f),
 								glm::vec3(0.f)
-							});
+								});
 							rawIndexs.push_back(ids);
 
 						}
@@ -1348,7 +1348,7 @@ namespace tke
 											glm::vec2(0.f),
 											glm::vec3(0.f),
 											glm::vec3(0.f)
-										});
+											});
 										indices.push_back(index);
 										indice_count--;
 										str = match.suffix();
@@ -1382,7 +1382,7 @@ namespace tke
 												uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]),
 												normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]),
 												glm::vec3(0.f)
-											});
+												});
 											ids.push_back(id);
 
 										}
@@ -1420,7 +1420,7 @@ namespace tke
 												uv_source_index == -1 ? glm::vec2(0.f) : sources[uv_source_index]->v2(id[uv_offset]),
 												normal_source_index == -1 ? glm::vec3(0.f) : sources[normal_source_index]->v3(id[normal_offset]),
 												glm::vec3(0.f)
-											});
+												});
 											ids.push_back(id);
 
 										}

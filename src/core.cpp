@@ -230,7 +230,7 @@ namespace tke
 
 	static bool _only_2d;
 
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int window_style, bool only_2d)
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool only_2d)
 	{
 		auto init_start_time = GetTickCount();
 
@@ -357,24 +357,12 @@ namespace tke
 			RegisterClassExA(&wcex);
 		}
 
-		unsigned int win32WindowStyle = WS_VISIBLE;
-
-		if (window_style & WindowStyleFrame)
+		window_style = _window_style;
 		{
-			RECT rect = {0, 0, _window_cx, _window_cy};
-			AdjustWindowRect(&rect, WS_CAPTION, false);
-			_window_cx = rect.right - rect.left;
-			_window_cy = rect.bottom - rect.top;
-
-			win32WindowStyle |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-
-			if (window_style & WindowStyleResize)
-				win32WindowStyle |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+			auto wndProp = getWin32WndProp();
+			hWnd = CreateWindowA("tke_wnd", title.c_str(), wndProp.second,
+				(screenCx - wndProp.first.x) / 2, (screenCy - wndProp.first.y) / 2, wndProp.first.x, wndProp.first.y, NULL, NULL, (HINSTANCE)hInst, NULL);
 		}
-		else
-			win32WindowStyle |= WS_POPUP;
-
-		hWnd = CreateWindowA("tke_wnd", title.c_str(), win32WindowStyle, (screenCx - _window_cx) / 2, (screenCy - _window_cy) / 2, _window_cx, _window_cy, NULL, NULL, (HINSTANCE)hInst, NULL);
 
 		{
 			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
@@ -399,6 +387,39 @@ namespace tke
 		printf("engine init finished - %d ms\n", GetTickCount() - init_start_time);
 
 		return NoErr;
+	}
+
+	std::pair<glm::ivec2, unsigned int> getWin32WndProp()
+	{
+		std::pair<glm::ivec2, unsigned int> result;
+
+		result.second = WS_VISIBLE;
+
+		if (window_style & WindowStyleFrame)
+		{
+			RECT rect = {0, 0, window_cx, window_cy};
+			AdjustWindowRect(&rect, WS_CAPTION, false);
+			result.first.x = rect.right - rect.left;
+			result.first.y = rect.bottom - rect.top;
+
+			result.second |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+
+			if (window_style & WindowStyleResize)
+				result.second |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+		}
+		else
+		{
+			result.second |= WS_BORDER;
+			if (window_style & WindowStyleFullscreen)
+			{
+				result.first.x = screenCx;
+				result.first.y = screenCy;
+				window_cx = screenCx;
+				window_cy = screenCy;
+			}
+		}
+
+		return result;
 	}
 
 	struct _Event

@@ -39,7 +39,7 @@ void SceneEditor::on_menu_bar()
 	bool openCreateObjectPopup = false;
 	bool openCreateTerrainPopup = false;
 	bool openCreateWaterPopup = false;
-	if (ImGui::BeginMenu("Create"))
+	if (ImGui::BeginMenu_keepalive("Create"))
 	{
 		if (ImGui::MenuItem("Light"))
 			openCreateLightPopup = true;
@@ -246,7 +246,7 @@ void SceneEditor::on_menu_bar()
 
 		ImGui::EndPopup();
 	}
-	if (ImGui::BeginMenu("Edit"))
+	if (ImGui::BeginMenu_keepalive("Edit"))
 	{
 		if (ImGui::MenuItem("Cut", "Ctrl+X"))
 			;
@@ -259,7 +259,7 @@ void SceneEditor::on_menu_bar()
 
 		ImGui::EndMenu();
 	}
-	if (ImGui::BeginMenu("Show"))
+	if (ImGui::BeginMenu_keepalive("Show"))
 	{
 		ImGui::MenuItem("Show Selected Wire Frame", "", &showSelectedWireframe);
 		if (ImGui::MenuItem("View Physx", "", &viewPhysx))
@@ -280,7 +280,7 @@ void SceneEditor::on_menu_bar()
 		ImGui::EndMenu();
 	}
 	bool target = false;
-	if (ImGui::BeginMenu("Camera"))
+	if (ImGui::BeginMenu_keepalive("Camera"))
 	{
 		if (ImGui::MenuItem("Target To Selected"))
 			target = true;
@@ -307,7 +307,7 @@ void SceneEditor::on_menu_bar()
 		scene->camera.object = selectedItem.toObject();
 	static glm::vec2 sun_dir;
 	bool openSunDirPopup = false;
-	if (ImGui::BeginMenu("Sky"))
+	if (ImGui::BeginMenu_keepalive("Sky"))
 	{
 		auto sun = scene->sunLight;
 		if (sun)
@@ -352,22 +352,21 @@ void SceneEditor::do_show()
 {
 	ImGui::Checkbox("Render", &enableRender);
 	ImVec2 image_pos;
-	auto frameHeight = ImGui::GetFrameHeight();
 	auto displayCx = tke::window_cx;
-	auto displayCy = tke::window_cy - frameHeight;
+	auto displayCy = tke::window_cy;
 	ImVec2 image_size;
 	if ((float)displayCx / (float)displayCy > tke::resAspect)
 	{
 		image_size.y = displayCy;
 		image_size.x = tke::resAspect * image_size.y;
 		image_pos.x = (displayCx - image_size.x) * 0.5f;
-		image_pos.y = frameHeight;
+		image_pos.y = 0;
 	}
 	else
 	{
 		image_size.x = displayCx;
 		image_size.y = image_size.x / tke::resAspect;
-		image_pos.y = frameHeight + (displayCy - image_size.y) * 0.5f;
+		image_pos.y = (displayCy - image_size.y) * 0.5f;
 		image_pos.x = 0;
 	}
 	ImGui::SetCursorScreenPos(image_pos);

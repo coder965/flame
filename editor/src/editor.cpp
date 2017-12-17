@@ -48,7 +48,7 @@ struct NewImageDialog : FileSelector
 
 int main(int argc, char** argv)
 {
-	tke::init(true, "../", 1280, 720, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
+	tke::init(true, "../", 1920, 1080, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
 
 	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
 
@@ -77,45 +77,66 @@ int main(int argc, char** argv)
 	tke::onRender = []() {
 		tke::beginFrame(true);
 
-		ImGui::BeginMainMenuBar();
-		if (ImGui::BeginMenu("File"))
+		if (ImGui::last_frame_main_menu_alive || tke::mouseY <= ImGui::GetFrameHeight())
 		{
-			if (ImGui::BeginMenu("New"))
+			ImGui::BeginMainMenuBar();
+			if (ImGui::BeginMenu_keepalive("File"))
 			{
-				if (ImGui::MenuItem("Scene"))
-					;
-				if (ImGui::MenuItem("Image"))
-					new NewImageDialog;
-				if (ImGui::MenuItem("Terrain"))
-					;
+				if (ImGui::BeginMenu("New"))
+				{
+					if (ImGui::MenuItem("Scene"))
+						;
+					if (ImGui::MenuItem("Image"))
+						new NewImageDialog;
+					if (ImGui::MenuItem("Terrain"))
+						;
+
+					ImGui::EndMenu();
+				}
+
+				if (scene_editor)
+					scene_editor->on_file_menu();
 
 				ImGui::EndMenu();
 			}
-
 			if (scene_editor)
-				scene_editor->on_file_menu();
-
-			ImGui::EndMenu();
-		}
-		if (scene_editor)
-			scene_editor->on_menu_bar();
-		if (ImGui::BeginMenu("View"))
-		{
-			if (ImGui::MenuItem("Resource Explorer"))
+				scene_editor->on_menu_bar();
+			if (ImGui::BeginMenu_keepalive("View"))
 			{
-				if (!resourceExplorer)
-					resourceExplorer = new ResourceExplorer;
-				resourceExplorer->_need_focus = true;
-			}
+				static bool fullscreen = false;
+				if (ImGui::MenuItem("Fullscreen", "", &fullscreen))
+				{
+					if (fullscreen)
+					{
+						tke::window_style |= tke::WindowStyleFullscreen;
+						tke::window_style &= (~tke::WindowStyleFrame);
+					}
+					else
+					{
+						tke::window_style |= tke::WindowStyleFrame;
+						tke::window_style &= (~tke::WindowStyleFullscreen);
+					}
+					auto wndProp = tke::getWin32WndProp();
+					SetWindowLong(tke::hWnd, GWL_STYLE, wndProp.second);
+					SetWindowPos(tke::hWnd, HWND_TOP, 0, 0, wndProp.first.x, wndProp.first.y, SWP_NOZORDER);
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Resource Explorer"))
+				{
+					if (!resourceExplorer)
+						resourceExplorer = new ResourceExplorer;
+					resourceExplorer->_need_focus = true;
+				}
 
-			ImGui::EndMenu();
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
 		}
-		ImGui::EndMainMenuBar();
 
 		if (scene_editor)
 		{
-			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
-			ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy - ImGui::GetFrameHeight()));
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus))

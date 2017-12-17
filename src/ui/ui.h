@@ -36,6 +36,14 @@ static inline ImVec4& operator-=(ImVec4& lhs, const ImVec4& rhs) { lhs.x -= rhs.
 static inline ImVec4& operator*=(ImVec4& lhs, const ImVec4& rhs) { lhs.x *= rhs.x; lhs.y *= rhs.y; lhs.z *= rhs.z; lhs.w *= rhs.w; return lhs; }
 static inline ImVec4& operator/=(ImVec4& lhs, const ImVec4& rhs) { lhs.x /= rhs.x; lhs.y /= rhs.y; lhs.z /= rhs.z; lhs.w /= rhs.w; return lhs; }
 
+namespace ImGui
+{
+	extern bool main_menu_alive;
+	extern bool last_frame_main_menu_alive;
+
+	bool BeginMenu_keepalive(const char* label, bool enabled = true);
+}
+
 namespace tke
 {
 	struct CommandBuffer;

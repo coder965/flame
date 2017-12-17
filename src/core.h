@@ -90,11 +90,12 @@ namespace tke
 	enum WindowStyle
 	{
 		WindowStyleFrame = 1 << 0,
-		WindowStyleResize = 1 << 1
+		WindowStyleResize = 1 << 1,
+		WindowStyleFullscreen = 1 << 2
 	};
 
 	// must call in main thread
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int window_style, bool only_2d = false);
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool only_2d = false);
 
 	IMPL() HWND hWnd;
 	IMPL() int window_cx;
@@ -131,6 +132,9 @@ namespace tke
 	IMPL(nullptr) PF_EVENT1 onMouseWheel;
 	IMPL(nullptr) PF_EVENT0 onRender;
 	IMPL(nullptr) PF_EVENT0 onDestroy;
+	IMPL() std::uint32_t window_style;
+
+	std::pair<glm::ivec2, unsigned int> getWin32WndProp();
 
 	enum EventType
 	{
