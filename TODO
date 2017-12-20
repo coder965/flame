@@ -2,6 +2,7 @@
 <2>地形显示不再支持model模式，法线使用法线贴图
 <3>rename: 所有的animated->skeleton
 <4>统一object的matrix buffer，matrix buffer容量增大（使用instance渲染草层）
+<5>cb_list是具有明显先后关系的，所以不需要event
 <6>地形的物理使用triangle mesh
 <18>remove: 观察者
 <19>scene: 使用shared ptr 管理entity
