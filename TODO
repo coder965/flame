@@ -1,12 +1,16 @@
-<6>角色控制器有很严重卡顿（查看NV的地形例子），使用分区的地形物理
-<18>remove : 观察者
-<19>scene : 使用shared ptr 管理entity
-<20>editor : 使用weak ptr 实现select
+<1>大气散射加入sun的属性（方向固定，强度自定义，是否产生阴影）在render时插入到UBO中
+<2>地形显示不再支持model模式，法线使用法线贴图
+<3>rename: 所有的animated->skeleton
+<4>统一object的matrix buffer，matrix buffer容量增大（使用instance渲染草层）
+<6>地形的物理使用triangle mesh
+<18>remove: 观察者
+<19>scene: 使用shared ptr 管理entity
+<20>editor: 使用weak ptr 实现select
 <21>实现以节点为基础的动画系统
 <26>ik的限制（转化为任意欧拉角，然后限定角度）
 <27>角色穿戴系统：武器，衣服
 <28>粒子系统（face to camera，animation，fire）
-<29>水面：摄像机y反转渲染reflect image，摄像机偏移渲染refraction image
+<29>水面：摄像机y反转渲染reflect image，摄像机偏移渲染refraction image，FFT、perlin noise + normal mapping
 <30>模型lod：顶点坍缩，（one vertex buffer，multiple index buffer）
 <31>包围球：用于lod
 <32>physx：处理动画
@@ -20,3 +24,4 @@
 <41>bloom
 <42>颜色纠正
 <43>god ray
+<44>屏幕空间出发射线与水平面求交的方法，得出视锥体在水平面的投影，利用这个来做无限水面、地形
