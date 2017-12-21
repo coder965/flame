@@ -3,9 +3,15 @@ A light weight and powerful 3D Game Engine.
 
 Platform:Windows
 
-# Features
-Model Loading:obj, pmd, dae, tkm
+# Used Third-party Libraries
+Freeimage http://freeimage.sourceforge.net/
 
-Image Loading:powered by freeimage and gli
+gli https://github.com/g-truc/gli
 
-Physics:powered by PhysX
+PhysX https://github.com/NVIDIAGameWorks/PhysX-3.3
+
+imgui https://github.com/ocornut/imgui
+
+glm https://github.com/g-truc/glm
+
+rapidxml http://rapidxml.sourceforge.net/
