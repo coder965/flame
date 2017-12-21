@@ -7,6 +7,10 @@
 
 struct IWindow
 {
+	bool first = true;
+	int first_cx = 0;
+	int first_cy = 0;
+
 	bool opened = true;
 	bool _need_focus = false;
 

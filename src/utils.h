@@ -273,18 +273,6 @@ namespace tke
 		std::string name;
 		std::string value;
 
-		Attribute();
-		Attribute(const std::string &, const std::string &);
-		Attribute(const std::string &, const char *);
-		Attribute(const std::string &, char *);
-
-		template<class T>
-		Attribute(const std::string &n, T *v)
-			:name(n)
-		{
-			set(v);
-		}
-
 		void set(const std::type_index &t, void *v);
 
 		template<class T>
@@ -298,7 +286,7 @@ namespace tke
 		{
 			name = n;
 
-			set(t);
+			set(v);
 		}
 
 		void get(const std::type_index &t, void *v);
@@ -319,16 +307,27 @@ namespace tke
 		std::vector<std::unique_ptr<AttributeTreeNode>> children;
 
 		AttributeTreeNode(const std::string &_name);
-		void add(Attribute *);
-		void add(AttributeTreeNode *);
+		Attribute *newAttribute();
+		Attribute *newAttribute(const std::string &, const std::string &);
+		Attribute *newAttribute(const std::string &, const char *);
+		Attribute *newAttribute(const std::string &, char *);
+
+		template<class T>
+		Attribute *newAttribute(const std::string &n, T *v)
+		{
+			auto a = newAttribute();
+			a->set(v);
+			return a;
+		}
+
+		AttributeTreeNode *newNode(const std::string &_name);
 		Attribute *firstAttribute(const std::string &_name);
 		AttributeTreeNode *firstNode(const std::string &_name);
 
 		template <class... _Valty>
 		inline void addAttribute(_Valty&&... _Val)
 		{
-			auto a = new Attribute(_Val...);
-			add(a);
+			newAttribute(_Val...);
 		}
 
 		void addAttributes(void *src, ReflectionBank *b);

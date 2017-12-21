@@ -5,6 +5,9 @@
 ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
 	:model(_model), layer(true)
 {
+	first_cx = 800;
+	first_cy = 600;
+
 	draw_data.mode = tke::PlainRenderer::mode_just_texture;
 	draw_data.obj_data.resize(1);
 	draw_data.obj_data[0].mat = glm::mat4(1);
@@ -17,7 +20,7 @@ ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
 
 void ModelEditor::do_show()
 {
-	ImGui::Begin(("Model - " + model->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin(("Model - " + model->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))

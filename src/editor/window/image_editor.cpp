@@ -6,6 +6,9 @@
 ImageEditor::ImageEditor(std::shared_ptr<tke::Image> _image)
 	:image(_image)
 {
+	first_cx = 800;
+	first_cy = 600;
+
 	tke::addUiImage(image.get());
 }
 
@@ -16,7 +19,7 @@ ImageEditor::~ImageEditor()
 
 void ImageEditor::do_show()
 {
-	ImGui::Begin(("Image - " + image->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin(("Image - " + image->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))

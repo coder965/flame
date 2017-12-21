@@ -130,7 +130,9 @@ int main(int argc, char** argv)
 			ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus))
+			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | 
+				ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings))
 				scene_editor->do_show();
 			ImGui::End();
 			ImGui::PopStyleVar(2);
@@ -145,7 +147,8 @@ int main(int argc, char** argv)
 		}
 
 		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetFrameHeightWithSpacing()));
-		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | 
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Text("FPS:%d", tke::FPS);
 		ImGui::End();
 
@@ -163,15 +166,9 @@ int main(int argc, char** argv)
 	tke::onDestroy = []() {
 		tke::AttributeTree at("data");
 		if (resourceExplorer)
-		{
-			auto n = new tke::AttributeTreeNode("resource_explorer");
-			at.add(n);
-		}
+			at.newNode("resource_explorer");
 		if (SelectObject)
-		{
-			auto n = new tke::AttributeTreeNode("select");
-			at.add(n);
-		}
+			at.newNode("select");
 		at.saveXML("ui.xml");
 	};
 

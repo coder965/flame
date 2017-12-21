@@ -534,21 +534,19 @@ namespace tke
 		at.addAttributes(this, b);
 		for (auto &o : objects)
 		{
-			auto n = new AttributeTreeNode("object");
+			auto n = at.newNode("object");
 			o->getCoord();
 			o->getEuler();
 			o->getScale();
 			n->addAttributes(o.get(), o->b);
-			at.add(n);
 		}
 		if (terrain)
 		{
-			auto n = new AttributeTreeNode("terrain");
+			auto n = at.newNode("terrain");
 			terrain->getCoord();
 			terrain->getEuler();
 			terrain->getScale();
 			n->addAttributes(terrain.get(), terrain->b);
-			at.add(n);
 		}
 		at.saveXML(filename);
 	}

@@ -344,20 +344,6 @@ namespace tke
 		return _enum;
 	}
 
-	Attribute::Attribute() {}
-
-	Attribute::Attribute(const std::string &n, const std::string &v)
-		:name(n), value(v)
-	{}
-
-	Attribute::Attribute(const std::string &n, const char *v) 
-		:name(n), value(v)
-	{}
-
-	Attribute::Attribute(const std::string &n, char *v) 
-		:name(n), value(v)
-	{}
-
 	void Attribute::set(const std::type_index &t, void *_v)
 	{
 		if (t == typeid(std::string))
@@ -415,14 +401,42 @@ namespace tke
 		: name(_name)
 	{}
 
-	void AttributeTreeNode::add(Attribute *a)
+	Attribute *AttributeTreeNode::newAttribute()
 	{
+		auto a = new Attribute;
 		attributes.push_back(std::move(std::unique_ptr<Attribute>(a)));
+		return a;
 	}
 
-	void AttributeTreeNode::add(AttributeTreeNode *n)
+	Attribute *AttributeTreeNode::newAttribute(const std::string &n, const std::string &v)
 	{
+		auto a = newAttribute();
+		a->name = n;
+		a->value = v;
+		return a;
+	}
+
+	Attribute *AttributeTreeNode::newAttribute(const std::string &n, const char *v)
+	{
+		auto a = newAttribute();
+		a->name = n;
+		a->value = v;
+		return a;
+	}
+
+	Attribute *AttributeTreeNode::newAttribute(const std::string &n, char *v)
+	{
+		auto a = newAttribute();
+		a->name = n;
+		a->value = v;
+		return a;
+	}
+
+	AttributeTreeNode *AttributeTreeNode::newNode(const std::string &_name)
+	{
+		auto n = new AttributeTreeNode(_name);
 		children.push_back(std::move(std::unique_ptr<AttributeTreeNode>(n)));
+		return n;
 	}
 
 	Attribute *AttributeTreeNode::firstAttribute(const std::string &_name)
@@ -451,7 +465,7 @@ namespace tke
 		b->enumertateReflections([](Reflection *r, int offset, void *_data) {
 			auto n = (AttributeTreeNode*)_data;
 
-			auto a = new Attribute;
+			auto a = n->newAttribute();
 			a->name = r->name;
 
 			if (r->what == Reflection::eVariable)
@@ -476,8 +490,6 @@ namespace tke
 					}
 				}
 			}
-
-			n->add(a);
 		}, this, 0);
 	}
 
@@ -522,18 +534,13 @@ namespace tke
 		p->value = n->value();
 		for (auto a = n->first_attribute(); a; a = a->next_attribute())
 		{
-			auto _a = new Attribute;
+			auto _a = p->newAttribute();
 			_a->name = a->name();
 			_a->value = a->value();
-			p->add(_a);
 		}
 
 		for (auto nn = n->first_node(); nn; nn = nn->next_sibling())
-		{
-			auto c = new AttributeTreeNode(nn->name());
-			_loadXML(nn, c);
-			p->add(c);
-		}
+			_loadXML(nn, p->newNode(nn->name()));
 	}
 
 	void AttributeTree::loadXML(const std::string &filename)

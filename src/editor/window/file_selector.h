@@ -7,12 +7,8 @@
 
 struct FileSelector : IWindow
 {
-	bool first = true;
-
 	std::string title;
 	bool modal;
-	int cx;
-	int cy;
 
 	bool enable_file;
 	int mode; // 0 - open, 1 - save

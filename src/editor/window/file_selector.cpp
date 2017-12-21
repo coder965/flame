@@ -3,8 +3,10 @@
 #include "../../ui/ui.h"
 
 FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
-	:title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
+	:title(_title), modal(_modal), enable_file(_enable_file), mode(_mode)
 {
+	first_cx = _cx;
+	first_cy = _cy;
 	filename[0] = 0;
 	set_current_path(tke::exePath);
 }
@@ -119,11 +121,7 @@ void FileSelector::do_show()
 	if (modal)
 	{
 		if (first)
-		{
 			ImGui::OpenPopup(title.c_str());
-			ImGui::SetNextWindowSize(ImVec2(cx, cy));
-			first = false;
-		}
 		_open = ImGui::BeginPopupModal(title.c_str(), &opened);
 	}
 	else

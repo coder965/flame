@@ -6,6 +6,9 @@
 TerrainEditor::TerrainEditor()
 	:layer(true)
 {
+	first_cx = 800;
+	first_cy = 600;
+
 	create_vertex(true);
 
 	camera.setMode(tke::CameraMode::targeting);
@@ -25,7 +28,7 @@ struct SaveModelDialog : FileSelector
 
 void TerrainEditor::do_show()
 {
-	ImGui::Begin("Terrain -", &opened, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin("Terrain -", &opened, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 
 	bool openBlockCountPopup = false;
 	static int sBlock_count;

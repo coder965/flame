@@ -44,8 +44,8 @@ namespace tke
 		{
 			for (auto r : rigidbodies)
 			{
-				auto n = new AttributeTreeNode("rigid_body");
-				at.add(n);
+				auto n = at.newNode("rigid_body");
+
 			}
 		}
 
