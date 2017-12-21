@@ -7,31 +7,16 @@ namespace tke
 	Renderer::Renderer()
 	{
 		cb = std::make_unique<CommandBuffer>();
-		renderFinished = createEvent();
-	}
-
-	Renderer::~Renderer()
-	{
-		destroyEvent(renderFinished);
 	}
 
 	void Renderer::render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
 		cb->reset();
 		cb->begin();
-		//if (cb_list && cb_list->last_event)
-		//	cb->waitEvents(1, &cb_list->last_event);
 
 		do_render(framebuffer, clear, camera, user_data);
 
-		//if (cb_list && cb_list->last_event)
-		//{
-		//	cb->resetEvent(cb_list->last_event);
-		//	cb->setEvent(renderFinished);
-		//}
 		cb->end();
-		if (cb_list)
-			cb_list->add(cb->v, renderFinished);
 	}
 
 	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)
@@ -747,7 +732,7 @@ namespace tke
 
 			for (auto &o : scene->objects)
 			{
-				if (!o->model->vertex_anim)
+				if (!o->model->vertex_skeleton)
 				{
 					if (o->changed)
 					{
@@ -875,7 +860,7 @@ namespace tke
 				{
 					auto m = o->model;
 
-					if (!m->vertex_anim)
+					if (!m->vertex_skeleton)
 					{
 						for (auto &g : m->geometries)
 						{

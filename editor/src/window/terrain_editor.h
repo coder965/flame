@@ -7,21 +7,21 @@
 
 #include "window.h"
 
-struct TerrainEditorClass : WindowClass
+struct TerrainEditorClass : IWindowClass
 {
 	virtual std::string getName() override;
-	virtual Window *load(tke::AttributeTreeNode *n) override;
+	virtual IWindow *load(tke::AttributeTreeNode *n) override;
 };
 
 extern TerrainEditorClass terrainEditorClass;
 
-struct TerrainEditor : Window
+struct TerrainEditor : IWindow
 {
 	std::shared_ptr<tke::Terrain> terrain;
 
 	tke::DisplayLayer layer;
 
-	std::vector<tke::VertexStat> vertexs;
+	std::vector<tke::Vertex> vertexs;
 	std::vector<int> indices;
 
 	std::unique_ptr<tke::VertexBuffer> vertex_buffer;

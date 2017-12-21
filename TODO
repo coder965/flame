@@ -1,12 +1,5 @@
 // structure
-·OnceVertex|IndexBuffer中的Once更名为Immediate
-·纯虚基类，即是接口类，名字要以大写的I开头
-·#end后面要加上注释，内容为#ifdef的内容
 ·rename: 所有的animated->skeleton
-·cb_list是具有明显先后关系的，所以不需要event
-·大气散射加入sun的属性（方向固定，强度自定义，是否产生阴影）在render时插入到UBO中
-·reflect放到program文件夹中
-·old_shader放到trash中
 ·创建bin文件夹，misc内容、editor数据及exe移动到该目录
 ·实现以节点为基础的动画系统
 ·ik的限制（转化为任意欧拉角，然后限定角度）

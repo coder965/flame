@@ -52,16 +52,16 @@ namespace tke
 		IndexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
-	struct OnceVertexBuffer : Buffer // data use once per frame
+	struct ImmediateVertexBuffer : Buffer // data use once per frame
 	{
 		// must call in main thread
-		OnceVertexBuffer(size_t _size = 16, void *data = nullptr);
+		ImmediateVertexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
-	struct OnceIndexBuffer : Buffer // data use once per frame
+	struct ImmediateIndexBuffer : Buffer // data use once per frame
 	{
 		// must call in main thread
-		OnceIndexBuffer(size_t _size = 16, void *data = nullptr);
+		ImmediateIndexBuffer(size_t _size = 16, void *data = nullptr);
 	};
 
 	struct IndirectVertexBuffer : Buffer

@@ -3,15 +3,15 @@
 #include "resource_explorer.h"
 #include "scene_editor.h"
 
-std::vector<WindowClass*> windowClasses;
+std::vector<IWindowClass*> windowClasses;
 
-Window::Window(WindowClass *_pClass)
+IWindow::IWindow(IWindowClass *_pClass)
 	:pClass(_pClass)
 {
-	windows.push_back(std::move(std::unique_ptr<Window>(this)));
+	windows.push_back(std::move(std::unique_ptr<IWindow>(this)));
 }
 
-void Window::show()
+void IWindow::show()
 {
 	if (_need_focus)
 	{
@@ -21,7 +21,7 @@ void Window::show()
 	do_show();
 }
 
-std::vector<std::unique_ptr<Window>> windows;
+std::vector<std::unique_ptr<IWindow>> windows;
 
 void initWindow()
 {

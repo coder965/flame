@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 		}
 
 		{
-			std::vector<Window*> _w;
+			std::vector<IWindow*> _w;
 			for (auto &w : windows)
 				_w.push_back(w.get());
 			for (auto &w : _w)

@@ -580,7 +580,7 @@ namespace tke
 				auto o = new Object;
 				c->obtainFromAttributes(o, o->b);
 				o->model = getModel(o->model_filename);
-				if (o->model && o->model->vertex_anim)
+				if (o->model && o->model->vertex_skeleton)
 					o->animationComponent = std::make_unique<AnimationComponent>(o->model.get());
 				o->needUpdateAxis = true;
 				o->needUpdateQuat = true;

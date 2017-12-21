@@ -7,7 +7,7 @@ std::string ModelEditorClass::getName()
 	return "model editor";
 }
 
-Window *ModelEditorClass::load(tke::AttributeTreeNode *n)
+IWindow *ModelEditorClass::load(tke::AttributeTreeNode *n)
 {
 	auto a = n->firstAttribute("filename");
 	if (a)
@@ -25,7 +25,7 @@ Window *ModelEditorClass::load(tke::AttributeTreeNode *n)
 ModelEditorClass modelEditorClass;
 
 ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
-	:Window(&modelEditorClass), model(_model), layer(true)
+	:IWindow(&modelEditorClass), model(_model), layer(true)
 {
 	draw_data.mode = tke::PlainRenderer::mode_just_texture;
 	draw_data.obj_data.resize(1);

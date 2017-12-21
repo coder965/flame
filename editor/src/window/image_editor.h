@@ -4,15 +4,15 @@
 
 #include "window.h"
 
-struct ImageEditorClass : WindowClass
+struct ImageEditorClass : IWindowClass
 {
 	virtual std::string getName() override;
-	virtual Window *load(tke::AttributeTreeNode *n) override;
+	virtual IWindow *load(tke::AttributeTreeNode *n) override;
 };
 
 extern ImageEditorClass imageEditorClass;
 
-struct ImageEditor : Window
+struct ImageEditor : IWindow
 {
 	std::shared_ptr<tke::Image> image;
 

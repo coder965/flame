@@ -459,10 +459,9 @@ namespace tke
 		beginUi(clearBackground);
 	}
 
-	void FrameCommandBufferList::add(VkCommandBuffer cb, VkEvent e)
+	void FrameCommandBufferList::add(VkCommandBuffer cb)
 	{
 		cbs.push_back(cb);
-		last_event = e;
 	}
 
 	FrameCommandBufferList *addFrameCommandBufferList()

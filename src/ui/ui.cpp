@@ -22,8 +22,8 @@ namespace tke
 {
 	static Pipeline *pipeline_ui;
 	static CommandBuffer *cb_ui;
-	static OnceVertexBuffer	*vertexBuffer_ui;
-	static OnceIndexBuffer *indexBuffer_ui;
+	static ImmediateVertexBuffer	*vertexBuffer_ui;
+	static ImmediateIndexBuffer *indexBuffer_ui;
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
 	{
@@ -67,8 +67,8 @@ namespace tke
 				renderPass_window, 0, true);
 		}
 
-		vertexBuffer_ui = new OnceVertexBuffer();
-		indexBuffer_ui = new OnceIndexBuffer();
+		vertexBuffer_ui = new ImmediateVertexBuffer();
+		indexBuffer_ui = new ImmediateIndexBuffer();
 
 		ImGuiIO& io = ImGui::GetIO();
 		{

@@ -144,14 +144,14 @@ namespace tke
 			buffer_copy(this, data);
 	}
 
-	OnceVertexBuffer::OnceVertexBuffer(size_t _size, void *data)
+	ImmediateVertexBuffer::ImmediateVertexBuffer(size_t _size, void *data)
 		: Buffer(_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 	{
 		if (data)
 			buffer_copy(this, data);
 	}
 
-	OnceIndexBuffer::OnceIndexBuffer(size_t _size, void *data)
+	ImmediateIndexBuffer::ImmediateIndexBuffer(size_t _size, void *data)
 		: Buffer(_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 	{
 		if (data)

@@ -14,7 +14,7 @@ namespace tke
 		:model(_model), physics_type(_physicsType)
 	{
 		model_filename = model->filename;
-		if (model->vertex_anim)
+		if (model->vertex_skeleton)
 			animationComponent = std::make_unique<AnimationComponent>(model.get());
 	}
 

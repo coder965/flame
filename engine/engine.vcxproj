@@ -204,7 +204,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>..\reflect\Debug\Reflect.exe</Command>
+      <Command>..\program\reflect\Debug\Reflect.exe</Command>
     </PreBuildEvent>
     <BuildLog>
       <Path>$(MSBuildProjectName).log</Path>

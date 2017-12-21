@@ -149,9 +149,8 @@ namespace tke
 	struct FrameCommandBufferList
 	{
 		std::vector<VkCommandBuffer> cbs;
-		VkEvent last_event = 0;
 
-		void add(VkCommandBuffer cb, VkEvent e);
+		void add(VkCommandBuffer cb);
 	};
 
 	IMPL() std::vector<std::unique_ptr<FrameCommandBufferList>> frameCbLists;

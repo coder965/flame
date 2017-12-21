@@ -4,9 +4,9 @@
 #include <regex>
 #include <sstream>
 
-#include "../src/utils.h"
+#include "../../src/utils.h"
 
-#include "windows.h"
+#include <windows.h>
 
 int main(int argc, char **argv)
 {

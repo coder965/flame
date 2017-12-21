@@ -150,7 +150,7 @@ namespace tke
 		vkCmdBindVertexBuffers(v, 0, 2, buffers, offsets);
 	}
 
-	void CommandBuffer::bindVertexBuffer(OnceVertexBuffer *b)
+	void CommandBuffer::bindVertexBuffer(ImmediateVertexBuffer *b)
 	{
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
@@ -161,7 +161,7 @@ namespace tke
 		vkCmdBindIndexBuffer(v, b->v, 0, type);
 	}
 
-	void CommandBuffer::bindIndexBuffer(OnceIndexBuffer *b, VkIndexType type)
+	void CommandBuffer::bindIndexBuffer(ImmediateIndexBuffer *b, VkIndexType type)
 	{
 		vkCmdBindIndexBuffer(v, b->v, 0, type);
 	}

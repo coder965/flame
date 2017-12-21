@@ -10,9 +10,9 @@ namespace tke
 	struct Framebuffer;
 	struct Buffer;
 	struct VertexBuffer;
-	struct OnceVertexBuffer;
+	struct ImmediateVertexBuffer;
 	struct IndexBuffer;
-	struct OnceIndexBuffer;
+	struct ImmediateIndexBuffer;
 	struct Image;
 	struct Model;
 	struct IndirectVertexBuffer;
@@ -38,9 +38,9 @@ namespace tke
 		void bindVertexBuffer(VertexBuffer *b);
 		void bindVertexBuffer(VkBuffer *b, int count, VkDeviceSize *offsets);
 		void bindVertexBuffer2(VertexBuffer *b0, VertexBuffer *b1);
-		void bindVertexBuffer(OnceVertexBuffer *b);
+		void bindVertexBuffer(ImmediateVertexBuffer *b);
 		void bindIndexBuffer(IndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);
-		void bindIndexBuffer(OnceIndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);
+		void bindIndexBuffer(ImmediateIndexBuffer *b, VkIndexType type = VK_INDEX_TYPE_UINT32);
 		void bindPipeline(Pipeline *p);
 		void bindDescriptorSet();
 		void bindDescriptorSet(VkDescriptorSet *sets, int index = 0, int count = 1);

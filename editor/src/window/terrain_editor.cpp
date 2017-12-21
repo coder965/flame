@@ -8,7 +8,7 @@ std::string TerrainEditorClass::getName()
 	return "terrain editor";
 }
 
-Window *TerrainEditorClass::load(tke::AttributeTreeNode *n)
+IWindow *TerrainEditorClass::load(tke::AttributeTreeNode *n)
 {
 	auto w = new TerrainEditor;
 	return w;
@@ -17,7 +17,7 @@ Window *TerrainEditorClass::load(tke::AttributeTreeNode *n)
 TerrainEditorClass terrainEditorClass;
 
 TerrainEditor::TerrainEditor()
-	:Window(&terrainEditorClass), layer(true)
+	:IWindow(&terrainEditorClass), layer(true)
 {
 	create_vertex(true);
 
@@ -57,8 +57,8 @@ void TerrainEditor::do_show()
 
 					tke::Model m;
 					m.vertex_count = vertexs.size();
-					m.vertex_stat = std::make_unique<tke::VertexStat[]>(m.vertex_count);
-					memcpy(m.vertex_stat.get(), vertexs.data(), m.vertex_count * sizeof(tke::VertexStat));
+					m.vertex = std::make_unique<tke::Vertex[]>(m.vertex_count);
+					memcpy(m.vertex.get(), vertexs.data(), m.vertex_count * sizeof(tke::Vertex));
 					m.indice_count = indices.size();
 					m.indices = std::make_unique<int[]>(m.indice_count);
 					memcpy(m.indices.get(), indices.data(), m.indice_count * sizeof(int));
@@ -193,15 +193,15 @@ void TerrainEditor::do_show()
 						auto bottom = glm::min((float)block_count, fl_y + 2);
 						auto xlength = (int)(right - left);
 						auto ylength = (int)(bottom - top);
-						tke::StagingBuffer stagingBuffer(xlength * ylength * sizeof(tke::VertexStat));
-						auto map = (tke::VertexStat*)stagingBuffer.map(0, stagingBuffer.size);
+						tke::StagingBuffer stagingBuffer(xlength * ylength * sizeof(tke::Vertex));
+						auto map = (tke::Vertex*)stagingBuffer.map(0, stagingBuffer.size);
 						std::vector<VkBufferCopy> ranges(ylength);
 						for (int i = 0; i < ranges.size(); i++)
 						{
-							memcpy(map + i * xlength, &vertexs[(top + i) * vxcount + left], xlength * sizeof(tke::VertexStat));
-							ranges[i].size = xlength * sizeof(tke::VertexStat);
-							ranges[i].dstOffset = ((top + i) * vxcount + left) * sizeof(tke::VertexStat);
-							ranges[i].srcOffset = (i * xlength) * sizeof(tke::VertexStat);
+							memcpy(map + i * xlength, &vertexs[(top + i) * vxcount + left], xlength * sizeof(tke::Vertex));
+							ranges[i].size = xlength * sizeof(tke::Vertex);
+							ranges[i].dstOffset = ((top + i) * vxcount + left) * sizeof(tke::Vertex);
+							ranges[i].srcOffset = (i * xlength) * sizeof(tke::Vertex);
 						}
 						stagingBuffer.unmap();
 						stagingBuffer.copyTo(vertex_buffer.get(), ranges.size(), ranges.data());
@@ -267,12 +267,12 @@ void TerrainEditor::create_vertex(bool first)
 
 	if (first)
 	{
-		vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::VertexStat) * vertexs.size(), vertexs.data());
+		vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::Vertex) * vertexs.size(), vertexs.data());
 		index_buffer = std::make_unique<tke::IndexBuffer>(sizeof(int) * indices.size(), indices.data());
 	}
 	else
 	{
-		vertex_buffer->recreate(sizeof(tke::VertexStat) * vertexs.size(), vertexs.data());
+		vertex_buffer->recreate(sizeof(tke::Vertex) * vertexs.size(), vertexs.data());
 		index_buffer->recreate(sizeof(int) * indices.size(), indices.data());
 	}
 }

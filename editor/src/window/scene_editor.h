@@ -19,7 +19,7 @@ struct SceneEditor
 	std::unique_ptr<tke::DeferredRenderer> defe_renderer;
 
 	bool viewPhysx = false;
-	std::unique_ptr<tke::OnceVertexBuffer> physx_vertex_buffer;
+	std::unique_ptr<tke::ImmediateVertexBuffer> physx_vertex_buffer;
 	std::unique_ptr<tke::LinesRenderer> lines_renderer;
 
 	bool showSelectedWireframe = true;

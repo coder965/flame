@@ -2,8 +2,8 @@
 #include "../../../src/utils.h"
 #include "../../../src/ui/ui.h"
 
-FileSelector::FileSelector(WindowClass*_pclass, const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
-	:Window(_pclass), title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
+FileSelector::FileSelector(IWindowClass*_pclass, const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
+	:IWindow(_pclass), title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
 {
 	filename[0] = 0;
 }

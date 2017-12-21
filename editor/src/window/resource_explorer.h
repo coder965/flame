@@ -8,10 +8,10 @@
 
 extern const char *basic_model_names[8];
 
-struct ResourceExplorerClass : WindowClass
+struct ResourceExplorerClass : IWindowClass
 {
 	virtual std::string getName() override;
-	virtual Window *load(tke::AttributeTreeNode *n) override;
+	virtual IWindow *load(tke::AttributeTreeNode *n) override;
 };
 
 extern ResourceExplorerClass resourceExplorerClass;

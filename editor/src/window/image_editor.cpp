@@ -8,7 +8,7 @@ std::string ImageEditorClass::getName()
 	return "image editor";
 }
 
-Window *ImageEditorClass::load(tke::AttributeTreeNode *n)
+IWindow *ImageEditorClass::load(tke::AttributeTreeNode *n)
 {
 	auto a = n->firstAttribute("filename");
 	if (a)
@@ -26,7 +26,7 @@ Window *ImageEditorClass::load(tke::AttributeTreeNode *n)
 ImageEditorClass imageEditorClass;
 
 ImageEditor::ImageEditor(std::shared_ptr<tke::Image> _image)
-	:Window(&imageEditorClass), image(_image)
+	:IWindow(&imageEditorClass), image(_image)
 {
 	tke::addUiImage(image.get());
 }

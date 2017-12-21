@@ -24,7 +24,7 @@ std::string ResourceExplorerClass::getName()
 	return "resource explorer";
 }
 
-Window *ResourceExplorerClass::load(tke::AttributeTreeNode *n)
+IWindow *ResourceExplorerClass::load(tke::AttributeTreeNode *n)
 {
 	resourceExplorer = new ResourceExplorer;
 	return resourceExplorer;

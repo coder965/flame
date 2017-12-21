@@ -384,7 +384,7 @@ namespace tke
 			strZ.erase(strZ.find_last_not_of('0') + 1, std::string::npos);
 			value = strX + "/" + strY + "/" + strZ;
 		}
-#endif
+#endif // TKE_UTILS_NO_MATH
 	}
 
 	void Attribute::get(const std::type_index &t, void *_v)
@@ -408,7 +408,7 @@ namespace tke
 			v.y = std::stof(match[2].str());
 			v.z = std::stof(match[3].str());
 		}
-#endif
+#endif // TKE_UTILS_NO_MATH
 	}
 
 	AttributeTreeNode::AttributeTreeNode(const std::string &_name)

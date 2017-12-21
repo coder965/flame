@@ -25,7 +25,7 @@ namespace tke
 	enum { MaxTextureCount = 256 };
 	enum { MaxBoneCount = 256 };
 
-	struct VertexStat
+	struct Vertex
 	{
 		glm::vec3 position;
 		glm::vec2 uv;
@@ -33,7 +33,7 @@ namespace tke
 		glm::vec3 tangent;
 	};
 
-	struct VertexAnim
+	struct VertexSkeleton
 	{
 		glm::vec4 bone_weight;
 		glm::vec4 bone_ID;
@@ -50,8 +50,8 @@ namespace tke
 		int indiceBase = 0;
 
 		int vertex_count = 0;
-		std::unique_ptr<VertexStat[]> vertex_stat;
-		std::unique_ptr<VertexAnim[]> vertex_anim;
+		std::unique_ptr<Vertex[]> vertex;
+		std::unique_ptr<VertexSkeleton[]> vertex_skeleton;
 		int indice_count = 0;
 		std::unique_ptr<int[]> indices;
 

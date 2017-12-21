@@ -13,10 +13,8 @@ namespace tke
 	struct Renderer
 	{
 		std::unique_ptr<CommandBuffer> cb;
-		VkEvent renderFinished;
 
 		Renderer();
-		virtual ~Renderer();
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) = 0;
 		void render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
 
@@ -83,7 +81,7 @@ namespace tke
 
 		struct DrawData
 		{
-			OnceVertexBuffer *vertex_buffer;
+			ImmediateVertexBuffer *vertex_buffer;
 			int vertex_count;
 		};
 
