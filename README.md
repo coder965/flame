@@ -1,5 +1,5 @@
 # TK_Engine
-A light weight and powerful 3D Game Engine.
+A lightweight and powerful 3D Game Engine.
 
 C++:C++17 and STL
 
@@ -21,3 +21,5 @@ gli https://github.com/g-truc/gli
 imgui https://github.com/ocornut/imgui
 
 PhysX https://github.com/NVIDIAGameWorks/PhysX-3.3
+
+# Features
