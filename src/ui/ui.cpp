@@ -82,7 +82,7 @@ namespace tke
 			ImFontConfig icons_config; 
 			icons_config.MergeMode = true; 
 			icons_config.PixelSnapH = true;
-			io.Fonts->AddFontFromFileTTF((enginePath + "misc/icon.ttf").c_str(), 16.0f, &icons_config, icons_ranges);
+			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 			auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, 

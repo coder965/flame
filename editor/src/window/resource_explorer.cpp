@@ -30,7 +30,6 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 ResourceExplorer::ResourceExplorer()
 	:FileSelector("Resource Explorer", false, true, 0)
 {
-	set_current_path("d:\\TK_Engine\\editor");
 	user_define_extra_path = "[basic models]";
 }
 

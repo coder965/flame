@@ -21,7 +21,6 @@ struct NewImageDialog : FileSelector
 			tke::newImageFile(s, cx, cy, 32);
 			return true;
 		};
-		set_current_path("d:\\TK_Engine\\editor");
 	}
 
 	virtual int on_left_area_width() override

@@ -344,7 +344,7 @@ namespace tke
 		window_cy = _window_cy;
 
 		{
-			auto iconData = createImageData(enginePath + "misc/ico.ico");
+			auto iconData = createImageData("ico.ico");
 
 			WNDCLASSEXA wcex = {};
 			wcex.cbSize = sizeof(WNDCLASSEXA);

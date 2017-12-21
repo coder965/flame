@@ -6,22 +6,26 @@ FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_
 	:title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
 {
 	filename[0] = 0;
+	set_current_path(tke::exePath);
 }
 
-const char *drivers[5] = {
+const char *drivers[] = {
 	"c:",
 	"d:",
 	"e:",
-	"f:"
+	"f:",
+	""
 };
 
 void FileSelector::set_current_path(const std::string &s)
 {
 	current_path = s;
 	driver_index = 0;
+	auto root_name = current_path.root_name().string();
+	std::transform(root_name.begin(), root_name.end(), root_name.begin(), tolower);
 	for (int i = 0; i < TK_ARRAYSIZE(drivers); i++)
 	{
-		if (current_path.root_name() == drivers[i])
+		if (root_name == drivers[i])
 		{
 			driver_index = i;
 			break;
