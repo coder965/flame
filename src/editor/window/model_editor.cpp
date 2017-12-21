@@ -1,4 +1,4 @@
-#include "../../../src/ui/ui.h"
+#include "../../ui/ui.h"
 
 #include "model_editor.h"
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../src/utils.h"
-#include "../../src/entity/object.h"
+#include "../utils.h"
+#include "../entity/object.h"
 
 enum ItemType
 {

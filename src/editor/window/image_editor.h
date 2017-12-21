@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../src/render/image.h"
+#include "../../render/image.h"
 
 #include "window.h"
 

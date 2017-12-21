@@ -1,6 +1,6 @@
 #include "file_selector.h"
-#include "../../../src/utils.h"
-#include "../../../src/ui/ui.h"
+#include "../../utils.h"
+#include "../../ui/ui.h"
 
 FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
 	:title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)

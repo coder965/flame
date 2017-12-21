@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../../src/core.h"
-#include "../../../src/render/display_layer.h"
-#include "../../../src/render/renderer.h"
+#include "../../core.h"
+#include "../../render/display_layer.h"
+#include "../../render/renderer.h"
 #include "window.h"
 #include "../select.h"
 #include "../tool/transformer_tool.h"

@@ -28,70 +28,70 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\editor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\select.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\tool\tool.cpp">
+    <ClCompile Include="..\src\editor\tool\tool.cpp">
       <Filter>src\tool</Filter>
     </ClCompile>
-    <ClCompile Include="src\tool\transformer_tool.cpp">
+    <ClCompile Include="..\src\editor\tool\transformer_tool.cpp">
       <Filter>src\tool</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\resource_explorer.cpp">
+    <ClCompile Include="..\src\editor\window\file_selector.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\terrain_editor.cpp">
+    <ClCompile Include="..\src\editor\window\image_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\window.cpp">
+    <ClCompile Include="..\src\editor\window\model_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\scene_editor.cpp">
+    <ClCompile Include="..\src\editor\window\resource_explorer.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\image_editor.cpp">
+    <ClCompile Include="..\src\editor\window\scene_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\file_selector.cpp">
+    <ClCompile Include="..\src\editor\window\terrain_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="src\window\model_editor.cpp">
+    <ClCompile Include="..\src\editor\window\window.cpp">
       <Filter>src\window</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\editor\editor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\editor\select.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\select.h">
+    <ClInclude Include="..\src\editor\tool\tool.h">
+      <Filter>src\tool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\tool\transformer_tool.h">
+      <Filter>src\tool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\file_selector.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\image_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\model_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\resource_explorer.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\scene_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\terrain_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\window.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\select.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tool\tool.h">
-      <Filter>src\tool</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tool\transformer_tool.h">
-      <Filter>src\tool</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\resource_explorer.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\terrain_editor.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\window.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\scene_editor.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\image_editor.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\file_selector.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="src\window\model_editor.h">
-      <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

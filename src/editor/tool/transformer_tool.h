@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../src/render/renderer.h"
+#include "../../render/renderer.h"
 #include "tool.h"
 
 struct TransformerTool : Tool

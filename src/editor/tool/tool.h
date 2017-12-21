@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../../src/math/math.h"
-#include "../../../src/core.h"
-#include "../../../src/entity/camera.h"
-#include "../../../src/render/command_buffer.h"
-#include "../../../src/render/framebuffer.h"
+#include "../../math/math.h"
+#include "../../core.h"
+#include "../../entity/camera.h"
+#include "../../render/command_buffer.h"
+#include "../../render/framebuffer.h"
 
 struct Tool
 {

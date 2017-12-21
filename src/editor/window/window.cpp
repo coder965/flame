@@ -1,4 +1,4 @@
-#include "../../../src/ui/ui.h"
+#include "../../ui/ui.h"
 #include "window.h"
 #include "resource_explorer.h"
 #include "scene_editor.h"

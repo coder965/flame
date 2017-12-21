@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../TK_Engine/src/utils.h"
-#include "../TK_Engine/src/render/image.h"
+#include "../../utils.h"
+#include "../../render/image.h"
 #include "file_selector.h"
 
 extern const char *basic_model_names[8];

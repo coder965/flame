@@ -1,5 +1,5 @@
-#include "../../../src/ui/ui.h"
-#include "../../../src/core.h"
+#include "../../ui/ui.h"
+#include "../../core.h"
 
 #include "image_editor.h"
 

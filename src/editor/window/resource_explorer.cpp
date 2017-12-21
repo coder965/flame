@@ -1,6 +1,6 @@
 #include <filesystem>
 
-#include "../../../src/ui/ui.h"
+#include "../../ui/ui.h"
 
 #include "resource_explorer.h"
 #include "image_editor.h"
