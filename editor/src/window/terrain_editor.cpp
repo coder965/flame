@@ -204,7 +204,7 @@ void TerrainEditor::do_show()
 							ranges[i].srcOffset = (i * xlength) * sizeof(tke::VertexStat);
 						}
 						stagingBuffer.unmap();
-						tke::copyBuffer(stagingBuffer.v, vertex_buffer->v, ranges.size(), ranges.data());
+						stagingBuffer.copyTo(vertex_buffer.get(), ranges.size(), ranges.data());
 					}
 				}
 			}

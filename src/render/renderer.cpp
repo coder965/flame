@@ -646,6 +646,19 @@ namespace tke
 		{
 			switch (scene->skyType)
 			{
+				case SkyType::null:
+				{
+					auto cb = begineOnceCommandBuffer();
+					VkClearColorValue clear_value = {0.f, 0.f, 0.f, 0.f};
+					VkImageSubresourceRange range = {
+						VK_IMAGE_ASPECT_COLOR_BIT,
+						0, envrImage->levels.size(),
+						0, 1
+					};
+					vkCmdClearColorImage(cb->v, envrImage->v, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &range);
+					endOnceCommandBuffer(cb);
+					break;
+				}
 				case SkyType::atmosphere_scattering:
 				{
 					{
@@ -654,7 +667,7 @@ namespace tke
 
 						cb->beginRenderPass(renderPass_image16, fb.get());
 						cb->bindPipeline(scatteringPipeline);
-						auto dir = scene->sunLight->getAxis()[2];
+						auto dir = scene->sun_light_axis[2];
 						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
 						cb->draw(3);
 						cb->endRenderPass();
@@ -771,10 +784,8 @@ namespace tke
 
 			}
 			stagingBuffer->unmap();
-			if (staticUpdateRanges.size() > 0)
-				copyBuffer(stagingBuffer->v, staticObjectMatrixBuffer->v, staticUpdateRanges.size(), staticUpdateRanges.data());
-			if (animatedUpdateRanges.size() > 0)
-				copyBuffer(stagingBuffer->v, animatedObjectMatrixBuffer->v, animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			stagingBuffer->copyTo(staticObjectMatrixBuffer.get(), staticUpdateRanges.size(), staticUpdateRanges.data());
+			stagingBuffer->copyTo(animatedObjectMatrixBuffer.get(), animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 
 		std::vector<VkWriteDescriptorSet> writes;
@@ -842,7 +853,7 @@ namespace tke
 				}
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0) copyBuffer(stagingBuffer->v, waterBuffer->v, ranges.size(), ranges.data());
+			stagingBuffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		std::vector<Object*> staticObjects;
@@ -911,21 +922,61 @@ namespace tke
 					animatedObjectIndirectBuffer->update(animatedCommands.data(), stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 			}
 		}
-		if (scene->needUpdateLightCount)
-		{ // light count in light attribute
-			auto count = scene->lights.size();
-			lightBuffer->update(&count, stagingBuffer, 4);
-		}
 
 		std::vector<Light*> shadowLights;
 		if (enable_shadow)
 		{
-			shadowLights.clear();
-			if (scene->lights.size() > 0)
+			int lightCount = scene->lights.size();
+			if (scene->enable_sun_light && scene->enable_sun_light_shadow)
+				lightCount++;
+			if (lightCount > 0)
 			{
-				auto shadowIndex = 0;
 				std::vector<VkBufferCopy> ranges;
-				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * scene->lights.size());
+				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * lightCount);
+				auto index = 0;
+
+				auto funProcessParallaxLight = [&](const glm::mat3 &lightAxis) {
+					glm::vec3 p[8];
+					auto cameraCoord = scene->camera.coord;
+					for (int i = 0; i < 8; i++) p[i] = scene->camera.frustumPoints[i] - cameraCoord;
+					auto axisT = glm::transpose(lightAxis);
+					auto vMax = axisT * p[0], vMin = vMax;
+					for (int i = 1; i < 8; i++)
+					{
+						auto tp = axisT * p[i];
+						vMax = glm::max(tp, vMax);
+						vMin = glm::min(tp, vMin);
+					}
+					auto halfWidth = (vMax.z - vMin.z) * 0.5f;
+					auto halfHeight = (vMax.y - vMin.y) * 0.5f;
+					auto halfDepth = glm::max(vMax.x - vMin.x, near_plane) * 0.5f;
+					auto center = lightAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
+					//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * 
+					glm::lookAt(center + halfDepth * lightAxis[2], center, lightAxis[1]);
+					auto shadowMatrix = glm::mat4(1.f, 0.f, 0.f, 0.f,
+						0.f, 1.f, 0.f, 0.f,
+						0.f, 0.f, 0.5f, 0.f,
+						0.f, 0.f, 0.5f, 1.f) *
+						glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) *
+						glm::lookAt(scene->camera.target + glm::vec3(0, 0, 100), scene->camera.target, glm::vec3(0, 1, 0));
+
+					auto srcOffset = sizeof(glm::mat4) * ranges.size();
+					memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));
+					VkBufferCopy range = {};
+					range.srcOffset = srcOffset;
+					range.dstOffset = sizeof(glm::mat4) * index;
+					range.size = sizeof(glm::mat4);
+					ranges.push_back(range);
+
+					writes.push_back(ds_defe->imageWrite(ShadowImageBinding, index, esmImage.get(), colorSampler, 0, 1, index, 1));
+				};
+
+				if (scene->enable_sun_light && scene->enable_sun_light_shadow)
+				{
+					if (scene->needUpdateSunLight || scene->camera.changed)
+						funProcessParallaxLight(scene->sun_light_axis);
+					index += 6;
+				}
 
 				for (auto &l : scene->lights)
 				{
@@ -935,49 +986,14 @@ namespace tke
 						continue;
 					}
 
-					l->sceneShadowIndex = shadowIndex;
+					l->sceneShadowIndex = index;
 					shadowLights.push_back(l.get());
 
 					if (l->type == LightType::parallax)
 					{
 						if (l->changed || scene->camera.changed)
-						{
-							glm::vec3 p[8];
-							auto cameraCoord = scene->camera.coord;
-							for (int i = 0; i < 8; i++) p[i] = scene->camera.frustumPoints[i] - cameraCoord;
-							auto lighAxis = l->getAxis();
-							auto axisT = glm::transpose(lighAxis);
-							auto vMax = axisT * p[0], vMin = vMax;
-							for (int i = 1; i < 8; i++)
-							{
-								auto tp = axisT * p[i];
-								vMax = glm::max(tp, vMax);
-								vMin = glm::min(tp, vMin);
-							}
-							auto halfWidth = (vMax.z - vMin.z) * 0.5f;
-							auto halfHeight = (vMax.y - vMin.y) * 0.5f;
-							auto halfDepth = glm::max(vMax.x - vMin.x, near_plane) * 0.5f;
-							auto center = lighAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
-							//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * 
-							glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
-							auto shadowMatrix = glm::mat4(1.f, 0.f, 0.f, 0.f,
-								0.f, 1.f, 0.f, 0.f,
-								0.f, 0.f, 0.5f, 0.f,
-								0.f, 0.f, 0.5f, 1.f) *
-								glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) *
-								glm::lookAt(scene->camera.target + glm::vec3(0, 0, 100), scene->camera.target, glm::vec3(0, 1, 0));
-
-							auto srcOffset = sizeof(glm::mat4) * ranges.size();
-							memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));
-							VkBufferCopy range = {};
-							range.srcOffset = srcOffset;
-							range.dstOffset = sizeof(glm::mat4) * shadowIndex;
-							range.size = sizeof(glm::mat4);
-							ranges.push_back(range);
-
-							writes.push_back(ds_defe->imageWrite(ShadowImageBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1));
-						}
-						shadowIndex += 6;
+							funProcessParallaxLight(l->getAxis());
+						index += 6;
 					}
 					else if (l->type == LightType::point)
 					{
@@ -994,42 +1010,75 @@ namespace tke
 							shadowMatrix[4] = proj * glm::lookAt(coord, coord + glm::vec3(0, 0, 1), glm::vec3(0, -1, 0));
 							shadowMatrix[5] = proj * glm::lookAt(coord, coord + glm::vec3(0, 0, -1), glm::vec3(0, -1, 0));
 						}
-						shadowIndex += 6;
+						index += 6;
 					}
 				}
 				stagingBuffer->unmap();
-				if (ranges.size() > 0) copyBuffer(stagingBuffer->v, shadowBuffer->v, ranges.size(), ranges.data());
+				stagingBuffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
 			}
 		}
-		if (scene->lights.size() > 0)
+
+		int lightCount = scene->lights.size();
+		if (scene->enable_sun_light)
+			lightCount++;
+		if (lightCount > 0)
 		{ // light attribute
-			int lightIndex = 0;
+			int index = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
+			auto map = (unsigned char*)stagingBuffer->map(0, 16 + sizeof(LightShaderStruct) * lightCount);
+			if (scene->needUpdateLightCount)
+			{
+				memcpy(map, &lightCount, sizeof(int));
+				ranges.push_back({
+					0,
+					0,
+					sizeof(int)
+				});
+				lightBuffer->update(&lightCount, stagingBuffer, sizeof(int));
+			}
+			auto funProcessLight = [&](const glm::vec4 &coord, const glm::vec4 &color, const glm::vec4 &spotData) {
+				LightShaderStruct stru;
+				stru.coord = coord;
+				stru.color = color;
+				stru.spotData = spotData;
+				auto srcOffset = 16 + sizeof(LightShaderStruct) * ranges.size();
+				memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
+				ranges.push_back({
+					srcOffset,
+					16 + sizeof(LightShaderStruct) * index,
+					sizeof(LightShaderStruct)
+				});
+			};
+			if (scene->enable_sun_light)
+			{
+				if (scene->needUpdateSunLight)
+					funProcessLight(
+						glm::vec4(scene->sun_light_axis[2], LightType::parallax),
+						glm::vec4(glm::vec3(scene->sun_light_power), scene->enable_sun_light_shadow ? 0 : -1),
+						glm::vec4(0.f)
+					);
+				index++;
+			}
 			for (auto &l : scene->lights)
 			{
 				if (l->changed)
 				{
 					LightShaderStruct stru;
+					glm::vec4 coord;
 					if (l->type == LightType::parallax)
-						stru.coord = glm::vec4(l->getAxis()[2], 0.f);
+						coord = glm::vec4(l->getAxis()[2], 0.f);
 					else
-						stru.coord = glm::vec4(l->getCoord(), l->type);
-					stru.color = glm::vec4(l->color, l->sceneShadowIndex);
-					stru.spotData = glm::vec4(-l->getAxis()[2], l->range);
-					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
-					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = 16 + sizeof(LightShaderStruct) * lightIndex;
-					range.size = sizeof(LightShaderStruct);
-					ranges.push_back(range);
+						coord = glm::vec4(l->getCoord(), l->type);
+					funProcessLight(
+						coord, 
+						glm::vec4(l->color, l->sceneShadowIndex), 
+						glm::vec4(-l->getAxis()[2], l->range)
+					);
 				}
-				lightIndex++;
+				index++;
 			}
 			stagingBuffer->unmap();
-			if (ranges.size() > 0)
-				copyBuffer(stagingBuffer->v, lightBuffer->v, ranges.size(), ranges.data());
+			stagingBuffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		updateDescriptorSets(writes.size(), writes.data());

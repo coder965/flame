@@ -18,17 +18,21 @@ namespace tke
 		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 		pxScene = pxPhysics->createScene(pxSceneDesc);
 		pxControllerManager = PxCreateControllerManager(*pxScene);
-
-		sunLight = new Light(LightType::parallax);
-		//sunLight->shadow = true;
-		//_setSunLight_attribute(this);
-		//addLight(sunLight);
 	}
 
 	Scene::~Scene()
 	{
 		pxControllerManager->release();
 		pxScene->release();
+	}
+
+	void Scene::setSkyType(SkyType _skyType)
+	{
+		skyType = _skyType;
+		needUpdateSky = true;
+		if (skyType == SkyType::atmosphere_scattering)
+			needUpdateSunLight = true;
+		needUpdateAmbientBuffer = true;
 	}
 
 	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
@@ -356,6 +360,7 @@ namespace tke
 	void Scene::reset()
 	{
 		needUpdateSky = false;
+		needUpdateSunLight = false;
 		needUpdateAmbientBuffer = false;
 		needUpdateIndirectBuffer = false;
 		needUpdateLightCount = false;
@@ -374,7 +379,6 @@ namespace tke
 	{
 		mtx.lock();
 
-		sunLight = nullptr;
 		lights.clear();
 		objects.clear();
 		terrain.reset();
@@ -384,8 +388,10 @@ namespace tke
 
 	void Scene::setSunDir(const glm::vec2 &v)
 	{
-		sunLight->setEuler(glm::vec3(v.x, 0.f, v.y));
+		sun_light_dir = v;
+		eulerYzxToMatrix(glm::vec3(v.x, 0.f, v.y), sun_light_axis);
 		needUpdateSky = true;
+		needUpdateSunLight = true;
 		needUpdateAmbientBuffer = true;
 	}
 

@@ -261,6 +261,7 @@ void SceneEditor::on_menu_bar()
 	}
 	if (ImGui::BeginMenu_keepalive("Show"))
 	{
+		ImGui::MenuItem("Enable Render", "", &enableRender);
 		ImGui::MenuItem("Show Selected Wire Frame", "", &showSelectedWireframe);
 		if (ImGui::MenuItem("View Physx", "", &viewPhysx))
 		{
@@ -309,14 +310,40 @@ void SceneEditor::on_menu_bar()
 	bool openSunDirPopup = false;
 	if (ImGui::BeginMenu_keepalive("Sky"))
 	{
-		auto sun = scene->sunLight;
-		if (sun)
+		if (ImGui::BeginMenu("Type"))
 		{
+			if (ImGui::MenuItem("Null", "", scene->skyType == tke::SkyType::null))
+			{
+				if (scene->skyType != tke::SkyType::null)
+					scene->setSkyType(tke::SkyType::null);
+			}
+			if (ImGui::MenuItem("Atmosphere Scattering", "", scene->skyType == tke::SkyType::atmosphere_scattering))
+			{
+				if (scene->skyType != tke::SkyType::atmosphere_scattering)
+					scene->setSkyType(tke::SkyType::atmosphere_scattering);
+			}
+			if (ImGui::MenuItem("Panorama", "", scene->skyType == tke::SkyType::panorama))
+			{
+				if (scene->skyType != tke::SkyType::panorama)
+					scene->setSkyType(tke::SkyType::panorama);
+			}
+
+			ImGui::EndMenu();
+		}
+
+		switch (scene->skyType)
+		{
+		case tke::SkyType::null:
+			break;
+		case tke::SkyType::atmosphere_scattering:
 			if (ImGui::MenuItem("Sun Dir"))
 			{
 				openSunDirPopup = true;
-				sun_dir = glm::vec2(sun->getEuler().x, sun->getEuler().z);
+				sun_dir = scene->sun_light_dir;
 			}
+			break;
+		case tke::SkyType::panorama:
+			break;
 		}
 
 		auto ambientColor = scene->ambientColor;
@@ -350,7 +377,6 @@ void SceneEditor::on_menu_bar()
 
 void SceneEditor::do_show()
 {
-	ImGui::Checkbox("Render", &enableRender);
 	ImVec2 image_pos;
 	auto displayCx = tke::window_cx;
 	auto displayCy = tke::window_cy;
@@ -453,16 +479,16 @@ void SceneEditor::do_show()
 		//};
 		for (int i = 0; i < 4; i++)
 		{
-			auto needPopup = false;
+			auto needPop = false;
 			if (transformerTool->mode == TransformerTool::Mode(i))
 			{
 				ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(0.f, 0.6f, 0.6f).Value);
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(0.f, 0.7f, 0.7f).Value);
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(0.f, 0.8f, 0.8f).Value);
-				needPopup = true;
+				needPop = true;
 			}
 			//if (ImGui::Button(names[i])) transformerTool->mode = TransformerTool::Mode(i);
-			if (needPopup) ImGui::PopStyleColor(3);
+			if (needPop) ImGui::PopStyleColor(3);
 			if (i < 3) ImGui::SameLine();
 		}
 	}

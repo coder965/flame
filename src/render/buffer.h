@@ -21,9 +21,11 @@ namespace tke
 		// must call in main thread
 		~Buffer();
 		void recreate(size_t _size, void *data = nullptr);
-		void update(void *data, StagingBuffer *stagingBuffer, size_t size = 0);
 		void *map(size_t offset, size_t _size);
 		void unmap();
+		void copyTo(Buffer *dst, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
+		void copyTo(Buffer *dst, size_t count, VkBufferCopy *ranges);
+		void update(void *data, StagingBuffer *stagingBuffer, size_t size = 0);
 	};
 
 	struct StagingBuffer : Buffer

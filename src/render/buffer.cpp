@@ -43,7 +43,7 @@ namespace tke
 		void* map = stagingBuffer.map(0, p->size);
 		memcpy(map, data, p->size);
 		stagingBuffer.unmap();
-		copyBuffer(stagingBuffer.v, p->v, p->size);
+		stagingBuffer.copyTo(p, p->size);
 	}
 
 	static void buffer_destroy(Buffer *p)
@@ -77,12 +77,6 @@ namespace tke
 			buffer_copy(this, data);
 	}
 
-	void Buffer::update(void *data, StagingBuffer *stagingBuffer, size_t _size)
-	{
-		if (_size == 0) _size = size;
-		updateBuffer(data, _size, stagingBuffer, v);
-	}
-
 	void *Buffer::map(size_t offset, size_t _size)
 	{
 		void *map;
@@ -98,6 +92,32 @@ namespace tke
 		vk_device.mtx.lock();
 		vkUnmapMemory(vk_device.v, memory);
 		vk_device.mtx.unlock();
+	}
+
+	void Buffer::copyTo(Buffer *dst, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
+	{
+		auto cb = begineOnceCommandBuffer();
+		VkBufferCopy region = {srcOffset, dstOffset, size};
+		vkCmdCopyBuffer(cb->v, v, dst->v, 1, &region);
+		endOnceCommandBuffer(cb);
+	}
+
+	void Buffer::copyTo(Buffer *dst, size_t count, VkBufferCopy *ranges)
+	{
+		if (count <= 0)
+			return;
+		auto cb = begineOnceCommandBuffer();
+		vkCmdCopyBuffer(cb->v, v, dst->v, count, ranges);
+		endOnceCommandBuffer(cb);
+	}
+
+	void Buffer::update(void *data, StagingBuffer *stagingBuffer, size_t _size)
+	{
+		if (_size == 0) _size = size;
+		void* map = stagingBuffer->map(0, size);
+		memcpy(map, data, size);
+		stagingBuffer->unmap();
+		stagingBuffer->copyTo(this, size);
 	}
 
 	StagingBuffer::StagingBuffer(size_t _size)

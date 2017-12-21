@@ -269,30 +269,6 @@ namespace tke
 		delete cb;
 	}
 
-	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
-	{
-		auto cb = begineOnceCommandBuffer();
-		VkBufferCopy region = { srcOffset, dstOffset, size };
-		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, 1, &region);
-		endOnceCommandBuffer(cb);
-	}
-
-	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges)
-	{
-		auto cb = begineOnceCommandBuffer();
-		vkCmdCopyBuffer(cb->v, srcBuffer, dstBuffer, count, ranges);
-		endOnceCommandBuffer(cb);
-	}
-
-	void updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &Buffer)
-	{
-		void* map = stagingBuffer->map(0, size);
-		memcpy(map, data, size);
-		stagingBuffer->unmap();
-
-		copyBuffer(stagingBuffer->v, Buffer, size);
-	}
-
 	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
 	{
 		auto cb = begineOnceCommandBuffer();

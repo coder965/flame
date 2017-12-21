@@ -204,7 +204,7 @@ namespace tke
 		range.dstOffset = sizeof(MaterialShaderStruct) * index;
 		range.size = sizeof(MaterialShaderStruct);
 
-		copyBuffer(stagingBuffer->v, materialBuffer->v, 1, &range);
+		stagingBuffer->copyTo(materialBuffer, 1, &range);
 	}
 
 	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
@@ -1837,7 +1837,7 @@ namespace tke
 			range.srcOffset = vso;
 			range.dstOffset = 0;
 			range.size = sizeof(VertexStat) * vertex_stat_count;
-			copyBuffer(stagingBuffer.v, vertexStatBuffer->v, 1, &range);
+			stagingBuffer.copyTo(vertexStatBuffer, 1, &range);
 		}
 		if (vertex_anim_count > 0)
 		{
@@ -1845,7 +1845,7 @@ namespace tke
 			range.srcOffset = vao;
 			range.dstOffset = 0;
 			range.size = sizeof(VertexAnim) * vertex_anim_count;
-			copyBuffer(stagingBuffer.v, vertexAnimBuffer->v, 1, &range);
+			stagingBuffer.copyTo(vertexAnimBuffer, 1, &range);
 		}
 		if (indice_count > 0)
 		{
@@ -1853,7 +1853,7 @@ namespace tke
 			range.srcOffset = io;
 			range.dstOffset = 0;
 			range.size = sizeof(int) * indice_count;
-			copyBuffer(stagingBuffer.v, indexBuffer->v, 1, &range);
+			stagingBuffer.copyTo(indexBuffer, 1, &range);
 		}
 	}
 

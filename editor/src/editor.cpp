@@ -115,6 +115,8 @@ int main(int argc, char** argv)
 					{
 						tke::window_style |= tke::WindowStyleFrame;
 						tke::window_style &= (~tke::WindowStyleFullscreen);
+						tke::window_cx = tke::resCx;
+						tke::window_cy = tke::resCy;
 					}
 					auto wndProp = tke::getWin32WndProp();
 					SetWindowLong(tke::hWnd, GWL_STYLE, wndProp.second);
@@ -170,24 +172,22 @@ int main(int argc, char** argv)
 	};
 
 	tke::onDestroy = []() {
+		tke::AttributeTree at("data");
+		for (auto &w : windows)
 		{
-			tke::AttributeTree at("data");
-			for (auto &w : windows)
-			{
-				if (!w->pClass)
-					continue;
-				auto n = new tke::AttributeTreeNode("window");
-				n->addAttribute("type", w->pClass->getName());
-				w->save(n);
-				at.add(n);
-			}
-			if (SelectObject)
-			{
-				auto n = new tke::AttributeTreeNode("select");
-				at.add(n);
-			}
-			at.saveXML("ui.xml");
+			if (!w->pClass)
+				continue;
+			auto n = new tke::AttributeTreeNode("window");
+			n->addAttribute("type", w->pClass->getName());
+			w->save(n);
+			at.add(n);
 		}
+		if (SelectObject)
+		{
+			auto n = new tke::AttributeTreeNode("select");
+			at.add(n);
+		}
+		at.saveXML("ui.xml");
 	};
 
 	tke::run();

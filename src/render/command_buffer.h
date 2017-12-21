@@ -67,15 +67,7 @@ namespace tke
 	};
 
 	CommandBuffer *begineOnceCommandBuffer();
-
 	void endOnceCommandBuffer(CommandBuffer *cb);
-
-	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);
-
-	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, size_t count, VkBufferCopy *ranges);
-
-	void updateBuffer(void *data, size_t size, Buffer *stagingBuffer, VkBuffer &uniformBuffer);
-
 	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 
 	extern CommandPool *commandPool;
