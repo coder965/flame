@@ -2,30 +2,8 @@
 
 #include "model_editor.h"
 
-std::string ModelEditorClass::getName()
-{
-	return "model editor";
-}
-
-IWindow *ModelEditorClass::load(tke::AttributeTreeNode *n)
-{
-	auto a = n->firstAttribute("filename");
-	if (a)
-	{
-		auto i = tke::getModel(a->value);
-		if (i)
-		{
-			auto w = new ModelEditor(i);
-			return w;
-		}
-	}
-	return nullptr;
-}
-
-ModelEditorClass modelEditorClass;
-
 ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
-	:IWindow(&modelEditorClass), model(_model), layer(true)
+	:model(_model), layer(true)
 {
 	draw_data.mode = tke::PlainRenderer::mode_just_texture;
 	draw_data.obj_data.resize(1);

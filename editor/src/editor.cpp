@@ -13,7 +13,7 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog()
-		:FileSelector(nullptr, "New Image", true, true, 1, 800, 600)
+		:FileSelector("New Image", true, true, 1, 800, 600)
 	{
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
@@ -52,24 +52,14 @@ int main(int argc, char** argv)
 
 	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
 
-	initWindow();
-
 	{
 		tke::AttributeTree at("data", "ui.xml");
 		if (at.good)
 		{
 			for (auto &n : at.children)
 			{
-				if (n->name == "window")
-				{
-					for (auto c : windowClasses)
-					{
-						auto a = n->firstAttribute("type");
-						if (a && a->value == c->getName())
-							if (c->load(n.get()))
-								break;
-					}
-				}
+				if (n->name == "resource_explorer")
+					resourceExplorer = new ResourceExplorer;
 			}
 		}
 	}
@@ -173,13 +163,9 @@ int main(int argc, char** argv)
 
 	tke::onDestroy = []() {
 		tke::AttributeTree at("data");
-		for (auto &w : windows)
+		if (resourceExplorer)
 		{
-			if (!w->pClass)
-				continue;
-			auto n = new tke::AttributeTreeNode("window");
-			n->addAttribute("type", w->pClass->getName());
-			w->save(n);
+			auto n = new tke::AttributeTreeNode("resource_explorer");
 			at.add(n);
 		}
 		if (SelectObject)

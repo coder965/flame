@@ -7,14 +7,6 @@
 
 #include "window.h"
 
-struct TerrainEditorClass : IWindowClass
-{
-	virtual std::string getName() override;
-	virtual IWindow *load(tke::AttributeTreeNode *n) override;
-};
-
-extern TerrainEditorClass terrainEditorClass;
-
 struct TerrainEditor : IWindow
 {
 	std::shared_ptr<tke::Terrain> terrain;

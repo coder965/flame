@@ -8,14 +8,6 @@
 
 #include "window.h"
 
-struct ModelEditorClass : IWindowClass
-{
-	virtual std::string getName() override;
-	virtual IWindow *load(tke::AttributeTreeNode *n) override;
-};
-
-extern ModelEditorClass modelEditorClass;
-
 struct ModelEditor : IWindow
 {
 	std::shared_ptr<tke::Model> model;

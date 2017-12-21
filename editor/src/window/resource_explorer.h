@@ -8,14 +8,6 @@
 
 extern const char *basic_model_names[8];
 
-struct ResourceExplorerClass : IWindowClass
-{
-	virtual std::string getName() override;
-	virtual IWindow *load(tke::AttributeTreeNode *n) override;
-};
-
-extern ResourceExplorerClass resourceExplorerClass;
-
 struct ResourceExplorerFileItem : FileSelector::FileItem
 {
 	std::shared_ptr<tke::Image> image;

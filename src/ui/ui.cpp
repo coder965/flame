@@ -224,17 +224,6 @@ namespace tke
 			cb_ui->reset();
 			cb_ui->begin();
 
-			std::vector<VkEvent> evs;
-			{
-				for (auto &l : frameCbLists)
-				{
-					if (l->last_event)
-						evs.push_back(l->last_event);
-				}
-				//if (!evs.empty())
-				//	cb->waitEvents(evs.size(), evs.data());
-			}
-
 			VkClearValue clear_value = {bkColor.r, bkColor.g, bkColor.b};
 			cb_ui->beginRenderPass(need_clear ? renderPass_windowC : renderPass_window,
 				window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
@@ -281,12 +270,9 @@ namespace tke
 
 			cb_ui->endRenderPass();
 
-			for (auto &e : evs)
-				cb_ui->resetEvent(e);
-
 			cb_ui->end();
 
-			addFrameCommandBufferList()->add(cb_ui->v, 0);
+			addFrameCommandBufferList()->add(cb_ui->v);
 		}
 
 		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();

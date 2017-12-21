@@ -2,8 +2,8 @@
 #include "../../../src/utils.h"
 #include "../../../src/ui/ui.h"
 
-FileSelector::FileSelector(IWindowClass*_pclass, const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
-	:IWindow(_pclass), title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
+FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
+	:title(_title), modal(_modal), cx(_cx), cy(_cy), enable_file(_enable_file), mode(_mode)
 {
 	filename[0] = 0;
 }
@@ -312,7 +312,7 @@ void FileSelector::on_right_area_show()
 }
 
 DirSelectorDialog::DirSelectorDialog()
-	:FileSelector(nullptr, "Dir Selector", true, false, 0, 800, 600)
+	:FileSelector("Dir Selector", true, false, 0, 800, 600)
 {
 }
 

@@ -3,21 +3,8 @@
 #include "terrain_editor.h"
 #include "file_selector.h"
 
-std::string TerrainEditorClass::getName()
-{
-	return "terrain editor";
-}
-
-IWindow *TerrainEditorClass::load(tke::AttributeTreeNode *n)
-{
-	auto w = new TerrainEditor;
-	return w;
-}
-
-TerrainEditorClass terrainEditorClass;
-
 TerrainEditor::TerrainEditor()
-	:IWindow(&terrainEditorClass), layer(true)
+	:layer(true)
 {
 	create_vertex(true);
 
@@ -30,7 +17,7 @@ struct SaveModelDialog : FileSelector
 	bool first = true;
 
 	SaveModelDialog()
-		:FileSelector(nullptr, "Save Model", true, true, 1, 800, 600)
+		:FileSelector("Save Model", true, true, 1, 800, 600)
 	{
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}

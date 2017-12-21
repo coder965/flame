@@ -46,7 +46,7 @@ struct FileSelector : IWindow
 	std::string user_define_extra_path;
 
 	// mode: 0 - open, 1 - save
-	FileSelector(IWindowClass*_pclass, const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx = 0, int _cy = 0);
+	FileSelector(const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx = 0, int _cy = 0);
 	void set_current_path(const std::string &s);
 	void refresh();
 	virtual void do_show() override;

@@ -1,6 +1,5 @@
 // structure
-·rename: 所有的animated->skeleton
-·创建bin文件夹，misc内容、editor数据及exe移动到该目录
+·misc内容、editor数据及exe移动到bin文件夹
 ·实现以节点为基础的动画系统
 ·ik的限制（转化为任意欧拉角，然后限定角度）
 ·模型lod：顶点坍缩，（one vertex buffer，multiple index buffer）

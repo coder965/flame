@@ -3,10 +3,7 @@
 #include "resource_explorer.h"
 #include "scene_editor.h"
 
-std::vector<IWindowClass*> windowClasses;
-
-IWindow::IWindow(IWindowClass *_pClass)
-	:pClass(_pClass)
+IWindow::IWindow()
 {
 	windows.push_back(std::move(std::unique_ptr<IWindow>(this)));
 }
@@ -22,8 +19,3 @@ void IWindow::show()
 }
 
 std::vector<std::unique_ptr<IWindow>> windows;
-
-void initWindow()
-{
-	windowClasses.push_back(&resourceExplorerClass);
-}

@@ -3,30 +3,8 @@
 
 #include "image_editor.h"
 
-std::string ImageEditorClass::getName()
-{
-	return "image editor";
-}
-
-IWindow *ImageEditorClass::load(tke::AttributeTreeNode *n)
-{
-	auto a = n->firstAttribute("filename");
-	if (a)
-	{
-		auto i = tke::getImage(a->value);
-		if (i)
-		{
-			auto w = new ImageEditor(i);
-			return w;
-		}
-	}
-	return nullptr;
-}
-
-ImageEditorClass imageEditorClass;
-
 ImageEditor::ImageEditor(std::shared_ptr<tke::Image> _image)
-	:IWindow(&imageEditorClass), image(_image)
+	:image(_image)
 {
 	tke::addUiImage(image.get());
 }

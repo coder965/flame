@@ -19,19 +19,6 @@ const char *basic_model_names[] = {
 	"[hammer].tkm"
 };
 
-std::string ResourceExplorerClass::getName()
-{
-	return "resource explorer";
-}
-
-IWindow *ResourceExplorerClass::load(tke::AttributeTreeNode *n)
-{
-	resourceExplorer = new ResourceExplorer;
-	return resourceExplorer;
-}
-
-ResourceExplorerClass resourceExplorerClass;
-
 ResourceExplorer *resourceExplorer = nullptr;
 
 ResourceExplorerFileItem::~ResourceExplorerFileItem()
@@ -41,7 +28,7 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 }
 
 ResourceExplorer::ResourceExplorer()
-	:FileSelector(&resourceExplorerClass, "Resource Explorer", false, true, 0)
+	:FileSelector("Resource Explorer", false, true, 0)
 {
 	set_current_path("d:\\TK_Engine\\editor");
 	user_define_extra_path = "[basic models]";
