@@ -1,34 +1,35 @@
-<1>大气散射加入sun的属性（方向固定，强度自定义，是否产生阴影）在render时插入到UBO中
-<2>地形显示不再支持model模式，法线使用法线贴图
-<3>rename: 所有的animated->skeleton
-<4>统一object的matrix buffer，matrix buffer容量增大（使用instance渲染草层）
-<5>cb_list是具有明显先后关系的，所以不需要event
-<6>地形的物理使用triangle mesh
-<7>OnceVertex|IndexBuffer中的Once更名为Immediate
-<8>纯虚基类，即是接口类，名字要以大写的I开头
-<9>#end后面要加上注释，内容为#ifdef的内容
-<10>reflect放到program文件夹中
-<11>old_shader放到trash中
-<12>创建bin文件夹，misc内容、editor数据及exe移动到该目录
-<18>remove: 观察者
-<19>scene: 使用shared ptr 管理entity
-<20>editor: 使用weak ptr 实现select
-<21>实现以节点为基础的动画系统
-<26>ik的限制（转化为任意欧拉角，然后限定角度）
-<27>角色穿戴系统：武器，衣服
-<28>粒子系统（face to camera，animation，fire）
-<29>水面：摄像机y反转渲染reflect image，摄像机偏移渲染refraction image，FFT、perlin noise + normal mapping
-<30>模型lod：顶点坍缩，（one vertex buffer，multiple index buffer）
-<31>包围球：用于lod
-<32>physx：处理动画
-<33>alpha test、溶解：植被
-<34>fxaa：边缘检测blur
-<36>ray marching：云
-<37>esm csm
-<38>ssr
-<39>ssao
-<40>hdr
-<41>bloom
-<42>颜色纠正
-<43>god ray
-<44>屏幕空间出发射线与水平面求交的方法，得出视锥体在水平面的投影，利用这个来做无限水面、地形
+// structure
+·OnceVertex|IndexBuffer中的Once更名为Immediate
+·纯虚基类，即是接口类，名字要以大写的I开头
+·#end后面要加上注释，内容为#ifdef的内容
+·rename: 所有的animated->skeleton
+·cb_list是具有明显先后关系的，所以不需要event
+·大气散射加入sun的属性（方向固定，强度自定义，是否产生阴影）在render时插入到UBO中
+·reflect放到program文件夹中
+·old_shader放到trash中
+·创建bin文件夹，misc内容、editor数据及exe移动到该目录
+·实现以节点为基础的动画系统
+·ik的限制（转化为任意欧拉角，然后限定角度）
+·模型lod：顶点坍缩，（one vertex buffer，multiple index buffer）
+·屏幕空间出发射线与水平面求交的方法，得出视锥体在水平面的投影，利用这个来做无限水面、地形
+·包围球：用于lod
+// physics
+·地形的物理使用triangle mesh
+·physx：处理动画
+// render
+·地形显示不再支持model模式，法线使用法线贴图
+·统一object的matrix buffer，matrix buffer容量增大（使用instance渲染草层）
+*明确指出image的layout，不再使用general（不必要的转换会严重影响性能）
+·水面：摄像机y反转渲染reflect image，摄像机偏移渲染refraction image，FFT、perlin noise + normal mapping
+·alpha test、溶解：植被
+·fxaa：边缘检测blur
+·ray marching：云
+·esm csm
+·ssr
+·ssao
+·hdr
+·bloom
+·color correction
+·god ray
+·粒子系统（face to camera，animation，fire）
+·角色穿戴系统：武器，衣服
