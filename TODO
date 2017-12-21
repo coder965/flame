@@ -7,6 +7,9 @@
 <7>OnceVertex|IndexBuffer中的Once更名为Immediate
 <8>纯虚基类，即是接口类，名字要以大写的I开头
 <9>#end后面要加上注释，内容为#ifdef的内容
+<10>reflect放到program文件夹中
+<11>old_shader放到trash中
+<12>创建bin文件夹，misc内容、editor数据及exe移动到该目录
 <18>remove: 观察者
 <19>scene: 使用shared ptr 管理entity
 <20>editor: 使用weak ptr 实现select
