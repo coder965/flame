@@ -7,7 +7,7 @@ Platform:PC
 
 OS:Windows 10
 
-# Used Third-party Libraries
+# Used Third-Party Libraries
 rapidxml http://rapidxml.sourceforge.net/
 
 glm https://github.com/g-truc/glm
