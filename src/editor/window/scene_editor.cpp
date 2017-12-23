@@ -1,9 +1,7 @@
 #include "../../ui/ui.h"
-#include "../../render/synchronization.h"
-
 #include "../select.h"
-#include "scene_editor.h"
 #include "resource_explorer.h"
+#include "scene_editor.h"
 
 std::unique_ptr<SceneEditor> scene_editor = nullptr;
 
@@ -407,7 +405,7 @@ void SceneEditor::do_show()
 			strcpy(filename, (char*)payload->Data);
 			std::experimental::filesystem::path path(filename);
 			auto ext = path.extension();
-			if (tke::isModelFile(ext.string()))
+			if (tke::is_model_file(ext.string()))
 			{
 				auto m = tke::getModel(filename);
 				if (m)

@@ -1,13 +1,10 @@
 #pragma once
 
-#include <fstream>
 #include <vector>
 #include <list>
 #include <string>
 #include <typeindex>
 #include <memory>
-#include <filesystem>
-#include <functional>
 #include <chrono>
 
 #if defined(_WIN64)
@@ -22,86 +19,10 @@ typedef _W64 long TK_LONG_PTR;
 #define TK_HIGH(I) ((I) >> 16)
 #define TK_MAKEINT(H, L) ((L) | ((H) << 16))
 
-// file
-
-template<class T>
-inline std::ifstream& operator&(std::ifstream &file, T &v)
-{
-	file.read((char*)&v, sizeof(T));
-	return file;
-}
-
-template<class T>
-inline std::ofstream& operator&(std::ofstream &file, T &v)
-{
-	file.write((char*)&v, sizeof(T));
-	return file;
-}
-
-inline std::ifstream& operator>(std::ifstream &file, std::string &str)
-{
-	int size = 0;
-	int q = 1;
-	for (int i = 0; i < 4; i++)
-	{
-		unsigned char byte;
-		file.read((char*)&byte, 1);
-		if (byte >= 128)
-			byte -= 128;
-		else
-			i = 4;
-		size += q * byte;
-		q *= 128;
-	}
-	str.resize(size);
-	file.read((char*)str.data(), size);
-	return file;
-}
-
-inline std::ofstream& operator<(std::ofstream &file, std::string &str)
-{
-	int size = str.size();
-	for (int i = 0; i < 4; i++)
-	{
-		unsigned char byte = size % 128;
-		size /= 128;
-		if (size > 0)
-			byte += 128;
-		else
-			i = 4;
-		file.write((char*)&byte, 1);
-
-	}
-	file.write((char*)str.data(), str.size());
-	return file;
-}
-
 template<size_t s> struct Sizer {};
-
-// hash
-
-inline constexpr unsigned int _HASH(char const * str, unsigned int seed)
-{
-	return 0 == *str ? seed : _HASH(str + 1, seed ^ (*str + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
-}
-
-#define HASH(x) (_HASH(x, 0))
-
-template <unsigned int N>
-struct EnsureConst
-{
-	static const unsigned int value = N;
-};
-
-#define CHASH(x) (EnsureConst<_HASH(x, 0)>::value)
 
 namespace tke
 {
-	struct vdtor
-	{
-		virtual ~vdtor() {}
-	};
-
 	typedef void(*PF_EVENT0)();
 	typedef void(*PF_EVENT1)(int);
 	typedef void(*PF_EVENT2)(int, int);
@@ -109,14 +30,6 @@ namespace tke
 	inline long long now_time_ms()
 	{
 		return std::chrono::system_clock::now().time_since_epoch().count() / 10000;
-	}
-
-	inline size_t file_length(std::ifstream &f)
-	{
-		f.seekg(0, std::ios::end);
-		auto s = f.tellg();
-		f.seekg(0, std::ios::beg);
-		return s;
 	}
 
 	int lineNumber(const char *str);
@@ -156,30 +69,6 @@ namespace tke
 	void saveBitmap32(const std::string &filename, int width, int height, void *data);
 
 	void exec(const std::string &filename, const std::string &parameters);
-
-	struct OnceFileBuffer
-	{
-		int length = 0;
-		char *data = nullptr;
-		OnceFileBuffer(const std::string &filename);
-		~OnceFileBuffer();
-	};
-
-	enum FileType
-	{
-		FileTypeUnknown,
-		FileTypeText,
-		FileTypeImage,
-		FileTypeModel,
-		FileTypeTerrain,
-		FileTypeScene
-	};
-
-	bool isTextFile(const std::string &ext);
-	bool isImageFile(const std::string &ext);
-	bool isModelFile(const std::string &ext);
-	bool isTerrainFile(const std::string &ext);
-	bool isSceneFile(const std::string &ext);
 
 	struct Variable;
 	struct Enum;

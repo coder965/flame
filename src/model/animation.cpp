@@ -1,9 +1,11 @@
 #include <iostream>
 #include <map>
 
+#include "../core.h"
+#include "../file_utils.h"
+#include "../hash.h"
 #include "animation.h"
 #include "model.h"
-#include "../core.h"
 
 namespace tke
 {

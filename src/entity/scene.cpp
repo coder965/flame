@@ -1,10 +1,12 @@
 #include <map>
 
-#include "scene.h"
 #include "../math/math.h"
 #include "../core.h"
+#include "../hash.h"
+#include "../file_utils.h"
 #include "../render/renderpass.h"
 #include "../render/synchronization.h"
+#include "scene.h"
 
 namespace tke
 {
@@ -562,8 +564,8 @@ namespace tke
 			if (s) return s;
 		}
 
-		std::experimental::filesystem::path path(filename);
-		if (!std::experimental::filesystem::exists(filename))
+		std::fs::path path(filename);
+		if (!std::fs::exists(filename))
 			return nullptr;
 
 		auto s = std::make_shared<Scene>();

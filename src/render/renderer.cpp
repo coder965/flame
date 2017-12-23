@@ -1,6 +1,8 @@
 #include "renderer.h"
 #include "synchronization.h"
 #include "renderpass.h"
+#include "../model/model.h"
+#include "../entity/scene.h"
 
 namespace tke
 {
@@ -500,7 +502,7 @@ namespace tke
 		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxIndirectCount);
 		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxIndirectCount);
 
-		envrImage = std::make_unique<Image>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 4);
+		envrImage = std::make_unique<Image>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
 		for (int i = 0; i < 3; i++)
 			envrImageDownsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
 				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1019,7 +1021,6 @@ namespace tke
 					0,
 					sizeof(int)
 				});
-				lightBuffer->update(&lightCount, stagingBuffer, sizeof(int));
 			}
 			auto funProcessLight = [&](const glm::vec4 &coord, const glm::vec4 &color, const glm::vec4 &spotData) {
 				LightShaderStruct stru;

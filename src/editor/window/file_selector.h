@@ -3,6 +3,7 @@
 #include <vector>
 #include <functional>
 
+#include "../../file_utils.h"
 #include "window.h"
 
 struct FileSelector : IWindow
@@ -20,7 +21,7 @@ struct FileSelector : IWindow
 		std::string filename;
 	};
 
-	struct FileItem : tke::vdtor
+	struct FileItem
 	{
 		std::string value;
 		std::string name;
@@ -28,6 +29,8 @@ struct FileSelector : IWindow
 
 		int file_size = 0;
 		tke::FileType file_type = tke::FileTypeUnknown;
+
+		virtual ~FileItem() {}
 	};
 
 	int driver_index = 0;

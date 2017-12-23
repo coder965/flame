@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../utils.h"
 #include "../math/math.h"
 #include "camera.h"
 #include "sky.h"

@@ -8,6 +8,7 @@
 #include "render/renderpass.h"
 #include "render/synchronization.h"
 #include "render/renderer.h"
+#include "model/model.h"
 
 namespace tke
 {
@@ -228,13 +229,9 @@ namespace tke
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	static bool _only_2d;
-
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool only_2d)
 	{
 		auto init_start_time = GetTickCount();
-
-		_only_2d = only_2d;
 
 		enginePath = path;
 		resCx = rcx;

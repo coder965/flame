@@ -17,6 +17,7 @@ namespace tke
 	struct Model;
 	struct IndirectVertexBuffer;
 	struct IndirectIndexBuffer;
+
 	struct CommandBuffer
 	{
 		VkCommandBuffer v;

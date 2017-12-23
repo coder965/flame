@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../../core.h"
+#include "../../entity/scene.h"
 #include "../../render/display_layer.h"
 #include "../../render/renderer.h"
-#include "window.h"
 #include "../select.h"
 #include "../tool/transformer_tool.h"
+#include "window.h"
 
 struct SceneEditor
 {

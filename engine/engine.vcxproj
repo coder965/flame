@@ -31,6 +31,7 @@
     <ClCompile Include="..\src\entity\terrain.cpp" />
     <ClCompile Include="..\src\entity\transformer.cpp" />
     <ClCompile Include="..\src\entity\water.cpp" />
+    <ClCompile Include="..\src\file_utils.cpp" />
     <ClCompile Include="..\src\image_data.cpp" />
     <ClCompile Include="..\src\math\math.cpp" />
     <ClCompile Include="..\src\model\animation.cpp" />
@@ -45,7 +46,6 @@
     <ClCompile Include="..\src\render\framebuffer.cpp" />
     <ClCompile Include="..\src\render\image.cpp" />
     <ClCompile Include="..\src\render\pipeline.cpp" />
-    <ClCompile Include="..\src\render\push_constant.cpp" />
     <ClCompile Include="..\src\render\renderer.cpp" />
     <ClCompile Include="..\src\render\renderpass.cpp" />
     <ClCompile Include="..\src\render\sampler.cpp" />
@@ -69,6 +69,8 @@
     <ClInclude Include="..\src\entity\terrain.h" />
     <ClInclude Include="..\src\entity\transformer.h" />
     <ClInclude Include="..\src\entity\water.h" />
+    <ClInclude Include="..\src\file_utils.h" />
+    <ClInclude Include="..\src\hash.h" />
     <ClInclude Include="..\src\image_data.h" />
     <ClInclude Include="..\src\math\math.h" />
     <ClInclude Include="..\src\model\animation.h" />
@@ -82,7 +84,6 @@
     <ClInclude Include="..\src\render\framebuffer.h" />
     <ClInclude Include="..\src\render\image.h" />
     <ClInclude Include="..\src\render\pipeline.h" />
-    <ClInclude Include="..\src\render\push_constant.h" />
     <ClInclude Include="..\src\render\renderer.h" />
     <ClInclude Include="..\src\render\renderpass.h" />
     <ClInclude Include="..\src\render\sampler.h" />
@@ -204,7 +205,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>..\bin\Reflect.exe</Command>
+      <Command>"./../bin/Reflect.exe"</Command>
     </PreBuildEvent>
     <BuildLog>
       <Path>$(MSBuildProjectName).log</Path>

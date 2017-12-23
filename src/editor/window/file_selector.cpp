@@ -72,27 +72,27 @@ void FileSelector::refresh()
 
 			auto ext = it->path().extension().string();
 			const char *prefix;
-			if (tke::isTextFile(ext))
+			if (tke::is_text_file(ext))
 			{
 				i->file_type = tke::FileTypeText;
 				prefix = ICON_FA_FILE_TEXT_O" ";
 			}
-			else if (tke::isImageFile(ext))
+			else if (tke::is_image_file(ext))
 			{
 				i->file_type = tke::FileTypeImage;
 				prefix = ICON_FA_FILE_IMAGE_O" ";
 			}
-			else if (tke::isModelFile(ext))
+			else if (tke::is_model_file(ext))
 			{
 				i->file_type = tke::FileTypeModel;
 				prefix = ICON_FA_FILE_O" ";
 			}
-			else if (tke::isTerrainFile(ext))
+			else if (tke::is_terrain_file(ext))
 			{
 				i->file_type = tke::FileTypeTerrain;
 				prefix = ICON_FA_FILE_O" ";
 			}
-			else if (tke::isSceneFile(ext))
+			else if (tke::is_scene_file(ext))
 			{
 				i->file_type = tke::FileTypeScene;
 				prefix = ICON_FA_FILE_O" ";

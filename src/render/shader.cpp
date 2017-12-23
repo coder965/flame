@@ -2,16 +2,16 @@
 #include <stack>
 #include <regex>
 
-#include "shader.h"
-#include "../core.h"
 #include "../../SPIRV-Cross/spirv_glsl.hpp"
+#include "../file_utils.h"
+#include "../core.h"
+#include "shader.h"
 
 namespace tke
 {
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines)
 	{
 		std::experimental::filesystem::path path(_filename);
-		// format the shader path, so that they can reuse if they refer the same one
 		filename = std::experimental::filesystem::canonical(path).string();
 		defines = _defines;
 
@@ -29,7 +29,7 @@ namespace tke
 				stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		}
 
-		auto shaderFileLastModificationTime = std::experimental::filesystem::last_write_time(path);
+		auto shaderFileLastWriteTime = std::experimental::filesystem::last_write_time(path);
 
 		auto spvFilename = filename;
 		for (auto &d : defines)
@@ -39,7 +39,7 @@ namespace tke
 		bool spvUpToDate = false;
 		if (std::experimental::filesystem::exists(spvFilename))
 		{
-			if (std::experimental::filesystem::last_write_time(spvFilename) > shaderFileLastModificationTime)
+			if (std::experimental::filesystem::last_write_time(spvFilename) > shaderFileLastWriteTime)
 				spvUpToDate = true;
 			else
 				std::experimental::filesystem::remove(spvFilename);
@@ -62,13 +62,13 @@ namespace tke
 			}
 		}
 
-		OnceFileBuffer spvFile(spvFilename);
+		auto spvFile = get_file_content(spvFilename);
 
 		{
 			VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
 			shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			shaderModuleCreateInfo.codeSize = spvFile.length;
-			shaderModuleCreateInfo.pCode = (uint32_t*)spvFile.data;
+			shaderModuleCreateInfo.codeSize = spvFile.second;
+			shaderModuleCreateInfo.pCode = (uint32_t*)spvFile.first.get();
 
 			auto res = vkCreateShaderModule(vk_device.v, &shaderModuleCreateInfo, nullptr, &vkModule);
 			assert(res == VK_SUCCESS);
@@ -125,8 +125,8 @@ namespace tke
 		else
 		{
 			// do reflection
-			std::vector<unsigned int> spv_vec(spvFile.length / sizeof(unsigned int));
-			memcpy(spv_vec.data(), spvFile.data, spvFile.length);
+			std::vector<unsigned int> spv_vec(spvFile.second / sizeof(unsigned int));
+			memcpy(spv_vec.data(), spvFile.first.get(), spvFile.second);
 
 			spirv_cross::CompilerGLSL glsl(std::move(spv_vec));
 

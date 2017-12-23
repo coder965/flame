@@ -13,7 +13,9 @@
 #if !defined(TKE_UTILS_NO_MATH)
 #include "math/math.h"
 #endif
+
 #include "utils.h"
+#include "file_utils.h"
 #include "image_data.h"
 
 namespace tke
@@ -168,69 +170,6 @@ namespace tke
 		}
 	};
 	static UtilsInit init;
-
-	OnceFileBuffer::OnceFileBuffer(const std::string &filename)
-	{
-		auto file = fopen(filename.c_str(), "rb");
-		if (!file)
-		{
-			length = -1;
-			return;
-		}
-		fseek(file, 0, SEEK_END);
-		length = ftell(file);
-		fseek(file, 0, SEEK_SET);
-		data = new char[length + 1];
-		fread(data, length, 1, file);
-		data[length] = 0;
-		fclose(file);
-	}
-
-	OnceFileBuffer::~OnceFileBuffer()
-	{
-		delete data;
-	}
-
-	bool isTextFile(const std::string &ext)
-	{
-		if (ext == ".txt" || 
-			ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp" || ext == ".cxx"|| ext == ".inl" ||
-			ext == ".glsl" || ext == ".vert" || ext == ".tesc" || ext == ".tese" || ext == ".geom" || ext == ".frag" || ext == ".hlsl" ||
-			ext == ".xml" || ext == ".json" || ext == ".ini" || ext == ".log" ||
-			ext == ".htm" || ext == ".html" || ext == ".css" ||
-			ext == ".sln" || ext == ".vcxproj")
-			return true;
-		return false;
-	}
-
-	bool isImageFile(const std::string &ext)
-	{
-		if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" ||
-			ext == ".tga" || ext == ".dds" || ext == ".ktx")
-			return true;
-		return false;
-	}
-
-	bool isModelFile(const std::string &ext)
-	{
-		if (ext == ".obj" || ext == ".pmd" || ext == ".pmx" || ext == ".tkm" || ext == ".dae")
-			return true;
-		return false;
-	}
-
-	bool isTerrainFile(const std::string &ext)
-	{
-		if (ext == ".tkt")
-			return true;
-		return false;
-	}
-
-	bool isSceneFile(const std::string &ext)
-	{
-		if (ext == ".tks")
-			return true;
-		return false;
-	}
 
 	Reflection::Reflection(What _what, const std::string &_name)
 		: what(_what), name(_name)
@@ -545,15 +484,15 @@ namespace tke
 
 	void AttributeTree::loadXML(const std::string &filename)
 	{
-		OnceFileBuffer file(filename);
-		if (file.length == -1)
+		auto content = get_file_content(filename);
+		if (!content.first)
 		{
 			good = false;
 			return;
 		}
 
 		rapidxml::xml_document<> xmlDoc;
-		xmlDoc.parse<0>(file.data);
+		xmlDoc.parse<0>(content.first.get());
 
 		auto rootNode = xmlDoc.first_node(name.c_str());
 		if (rootNode)

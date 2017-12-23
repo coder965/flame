@@ -2,12 +2,9 @@
 
 #include <functional>
 
-#include "entity/scene.h"
 #include "render/buffer.h"
 #include "render/image.h"
 #include "render/command_buffer.h"
-#include "render/descriptor.h"
-#include "render/pipeline.h"
 
 enum
 {

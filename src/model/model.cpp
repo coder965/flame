@@ -4,8 +4,11 @@
 #include <algorithm>
 #include <map>
 
-#include "model.h"
+#include "../file_utils.h"
+#include "../hash.h"
 #include "../core.h"
+#include "../resource/resource.h"
+#include "model.h"
 
 namespace tke
 {

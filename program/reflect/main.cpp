@@ -4,7 +4,7 @@
 #include <regex>
 #include <sstream>
 
-#include "../../src/utils.h"
+#include "../../src/file_utils.h"
 
 #include <windows.h>
 
@@ -65,9 +65,9 @@ int main(int argc, char **argv)
 
 	for (int i = 0; i < inputFilenames.size(); i++)
 	{
-		tke::OnceFileBuffer file(inputFilenames[i]);
+		auto file_content = tke::get_file_content(inputFilenames[i]);
 
-		std::stringstream ss(file.data);
+		std::stringstream ss(file_content.first.get());
 		std::string line;
 		while (!ss.eof())
 		{

@@ -93,9 +93,6 @@
     <ClCompile Include="..\src\render\pipeline.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\render\push_constant.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\render\renderpass.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
@@ -140,6 +137,9 @@
     </ClCompile>
     <ClCompile Include="..\src\render\display_layer.cpp">
       <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file_utils.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -206,9 +206,6 @@
     <ClInclude Include="..\src\render\pipeline.h">
       <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\render\push_constant.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\render\renderpass.h">
       <Filter>src\render</Filter>
     </ClInclude>
@@ -247,6 +244,12 @@
     </ClInclude>
     <ClInclude Include="..\src\render\display_layer.h">
       <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file_utils.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\hash.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

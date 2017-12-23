@@ -3,10 +3,17 @@
 #include "../utils.h"
 #include "vulkan.h"
 #include "descriptor.h"
-#include "push_constant.h"
 
 namespace tke
 {
+	REFLECTABLE struct PushConstantRange
+	{
+		REFL_BANK;
+
+		REFLv int offset = 0;
+		REFLv int size = 0;
+	};
+
 	struct Shader
 	{
 		VkShaderStageFlagBits stage;
