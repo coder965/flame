@@ -26,18 +26,8 @@ namespace tke
 		std::string filename;
 		std::string filepath;
 
-		SkyType skyType = SkyType::null;
-		float atmosphereSunE = 20.f;
-		float atmosphereInnerRadius = 10.f; // The inner (planetary) radius
-		float atmosphereOuterRadius = 10.25f; // The outer (atmosphere) radius
-		float atmosphereCameraHeight = 10.0002f;
-		float atmosphereKm = 0.0025f;
-		float atmosphereKr = 0.001f;
+		std::unique_ptr<Sky> sky;
 		bool enable_sun_light = true;
-		glm::vec2 sun_light_dir = glm::vec2(0.f);
-		glm::mat3 sun_light_axis = glm::mat3(1.f);
-		float sun_light_power = 1.f;
-		bool enable_sun_light_shadow = true;
 
 		float hdrExposure = 0.01f;
 		float hdrWhite = 1.f;
@@ -62,7 +52,6 @@ namespace tke
 		std::vector<std::unique_ptr<Water>> waters;
 
 		bool needUpdateSky = true;
-		bool needUpdateSunLight = true;
 		bool needUpdateAmbientBuffer = true;
 		bool needUpdateIndirectBuffer = true;
 		bool needUpdateLightCount = true;
@@ -74,7 +63,7 @@ namespace tke
 
 		Scene();
 		~Scene();
-		void setSkyType(SkyType _skyType);
+		void setSkyType(SkyType skyType);
 		void addLight(Light *l);
 		Light *removeLight(Light *l);
 		void addObject(Object *o);

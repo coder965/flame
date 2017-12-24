@@ -28,12 +28,27 @@ namespace tke
 		pxScene->release();
 	}
 
-	void Scene::setSkyType(SkyType _skyType)
+	void Scene::setSkyType(SkyType skyType)
 	{
-		skyType = _skyType;
+		switch (skyType)
+		{
+		case SkyType::null:
+			if (!sky)
+				return;
+			sky = nullptr;
+			break;
+		case SkyType::atmosphere_scattering:
+			if (sky && sky->type == SkyType::atmosphere_scattering)
+				return;
+			sky = std::move(std::make_unique<SkyAtmosphereScattering>(this));
+			break;
+		case SkyType::panorama:
+			if (sky && sky->type == SkyType::panorama)
+				return;
+			sky = std::move(std::make_unique<SkyPanorama>());
+			break;
+		}
 		needUpdateSky = true;
-		if (skyType == SkyType::atmosphere_scattering)
-			needUpdateSunLight = true;
 		needUpdateAmbientBuffer = true;
 	}
 
@@ -362,7 +377,6 @@ namespace tke
 	void Scene::reset()
 	{
 		needUpdateSky = false;
-		needUpdateSunLight = false;
 		needUpdateAmbientBuffer = false;
 		needUpdateIndirectBuffer = false;
 		needUpdateLightCount = false;
@@ -390,10 +404,11 @@ namespace tke
 
 	void Scene::setSunDir(const glm::vec2 &v)
 	{
-		sun_light_dir = v;
-		eulerYzxToMatrix(glm::vec3(v.x, 0.f, v.y), sun_light_axis);
+		if (!sky || sky->type != SkyType::atmosphere_scattering)
+			return;
+		auto as = (SkyAtmosphereScattering*)sky.get();
+		as->sun_light->setEuler(glm::vec3(v.x, 0.f, v.y));
 		needUpdateSky = true;
-		needUpdateSunLight = true;
 		needUpdateAmbientBuffer = true;
 	}
 

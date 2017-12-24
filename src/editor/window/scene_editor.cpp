@@ -310,38 +310,41 @@ void SceneEditor::on_menu_bar()
 	{
 		if (ImGui::BeginMenu("Type"))
 		{
-			if (ImGui::MenuItem("Null", "", scene->skyType == tke::SkyType::null))
+			if (ImGui::MenuItem("Null", "", !scene->sky))
 			{
-				if (scene->skyType != tke::SkyType::null)
+				if (scene->sky)
 					scene->setSkyType(tke::SkyType::null);
 			}
-			if (ImGui::MenuItem("Atmosphere Scattering", "", scene->skyType == tke::SkyType::atmosphere_scattering))
+			if (ImGui::MenuItem("Atmosphere Scattering", "", scene->sky && scene->sky->type == tke::SkyType::atmosphere_scattering))
 			{
-				if (scene->skyType != tke::SkyType::atmosphere_scattering)
+				if (!scene->sky || scene->sky->type != tke::SkyType::atmosphere_scattering)
 					scene->setSkyType(tke::SkyType::atmosphere_scattering);
 			}
-			if (ImGui::MenuItem("Panorama", "", scene->skyType == tke::SkyType::panorama))
+			if (ImGui::MenuItem("Panorama", "", scene->sky && scene->sky->type == tke::SkyType::panorama))
 			{
-				if (scene->skyType != tke::SkyType::panorama)
+				if (!scene->sky || scene->sky->type != tke::SkyType::panorama)
 					scene->setSkyType(tke::SkyType::panorama);
 			}
 
 			ImGui::EndMenu();
 		}
 
-		switch (scene->skyType)
+		if (scene->sky)
 		{
-		case tke::SkyType::null:
-			break;
-		case tke::SkyType::atmosphere_scattering:
-			if (ImGui::MenuItem("Sun Dir"))
+			switch (scene->sky->type)
 			{
-				openSunDirPopup = true;
-				sun_dir = scene->sun_light_dir;
+			case tke::SkyType::atmosphere_scattering:
+				if (ImGui::MenuItem("Sun Dir"))
+				{
+					openSunDirPopup = true;
+					auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
+					auto euler = as->sun_light->getEuler();
+					sun_dir = glm::vec2(euler.x, euler.z);
+				}
+				break;
+			case tke::SkyType::panorama:
+				break;
 			}
-			break;
-		case tke::SkyType::panorama:
-			break;
 		}
 
 		auto ambientColor = scene->ambientColor;
