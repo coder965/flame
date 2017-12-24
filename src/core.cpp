@@ -456,31 +456,19 @@ namespace tke
 		beginUi(clearBackground);
 	}
 
-	void FrameCommandBufferList::add(VkCommandBuffer cb)
-	{
-		cbs.push_back(cb);
-	}
+	static std::vector<VkCommandBuffer> _cbs;
 
-	FrameCommandBufferList *addFrameCommandBufferList()
+	void addCb(VkCommandBuffer cb)
 	{
-		auto l = new FrameCommandBufferList;
-		frameCbLists.push_back(std::move(std::unique_ptr<FrameCommandBufferList>(l)));
-		return l;
+		_cbs.push_back(cb);
 	}
 
 	void endFrame()
 	{
 		endUi();
 
-		{
-			std::vector<VkCommandBuffer> cbs;
-			for (auto &l : frameCbLists)
-			{
-				for (auto c : l->cbs)
-					cbs.push_back(c);
-			}
-			tke::graphicsQueue.submit(cbs.size(), cbs.data(), window_imageAvailable, 0, frameDone);
-		}
+		if (_cbs.size())
+			tke::graphicsQueue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frameDone);
 		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
@@ -494,7 +482,7 @@ namespace tke
 		assert(res == VK_SUCCESS);
 		graphicsQueue.mtx.unlock();
 
-		frameCbLists.clear();
+		_cbs.clear();
 	}
 
 	static unsigned int _lastTime = 0;

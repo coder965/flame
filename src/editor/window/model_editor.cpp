@@ -106,6 +106,5 @@ void ModelEditor::do_show()
 
 	ImGui::End();
 
-	auto cb_list = tke::addFrameCommandBufferList();
-	renderer->render(cb_list, layer.framebuffer.get(), true, &camera, &draw_data);
+	renderer->render(layer.framebuffer.get(), true, &camera, &draw_data);
 }

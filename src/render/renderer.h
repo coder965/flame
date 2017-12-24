@@ -18,7 +18,7 @@ namespace tke
 
 		Renderer();
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) = 0;
-		void render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
+		void render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
 
 	};
 

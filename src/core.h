@@ -143,15 +143,7 @@ namespace tke
 	// must call in main thread
 	void beginFrame(bool clearBackground);
 
-	struct FrameCommandBufferList
-	{
-		std::vector<VkCommandBuffer> cbs;
-
-		void add(VkCommandBuffer cb);
-	};
-
-	IMPL() std::vector<std::unique_ptr<FrameCommandBufferList>> frameCbLists;
-	FrameCommandBufferList *addFrameCommandBufferList();
+	void addCb(VkCommandBuffer cb);
 
 	// must call in main thread
 	void endFrame();

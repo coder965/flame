@@ -205,7 +205,6 @@ void TerrainEditor::do_show()
 
 	ImGui::End();
 
-	auto cb_list = tke::addFrameCommandBufferList();
 	{
 		tke::PlainRenderer::DrawData data;
 		data.mode = tke::PlainRenderer::mode_color_and_front_light;
@@ -218,7 +217,7 @@ void TerrainEditor::do_show()
 		geo_data.index_count = indices.size();
 		obj_data.geo_data.push_back(geo_data);
 		data.obj_data.push_back(obj_data);
-		renderer->render(cb_list, layer.framebuffer.get(), true, &camera, &data);
+		renderer->render(layer.framebuffer.get(), true, &camera, &data);
 	}
 }
 

@@ -596,11 +596,9 @@ void SceneEditor::do_show()
 		ImGui::TextUnformatted("Select:Null");
 	ImGui::End();
 
-	auto cb_list = tke::addFrameCommandBufferList();
-
 	scene->update();
 	if (enableRender)
-		defe_renderer->render(cb_list, nullptr, true, nullptr, scene.get());
+		defe_renderer->render(nullptr, true, nullptr, scene.get());
 	scene->reset();
 
 	{
@@ -672,7 +670,7 @@ void SceneEditor::do_show()
 			tke::LinesRenderer::DrawData data;
 			data.vertex_buffer = physx_vertex_buffer.get();
 			data.vertex_count = vertex_count;
-			lines_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, &data);
+			lines_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
 		}
 	}
 
@@ -690,12 +688,12 @@ void SceneEditor::do_show()
 			if (obj->model->vertex_skeleton)
 				obj_data.bone_buffer = obj->animationComponent->boneMatrixBuffer;
 			data.obj_data.push_back(obj_data);
-			plain_renderer->render(cb_list, layer.framebuffer.get(), false, &scene->camera, &data);
+			plain_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
 		}
 	}
 
 	transformerTool->transformer = selectedItem.toTransformer();
-	transformerTool->show(cb_list, &scene->camera);
+	transformerTool->show(&scene->camera);
 }
 
 void SceneEditor::save(tke::AttributeTreeNode *n)

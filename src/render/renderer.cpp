@@ -11,7 +11,7 @@ namespace tke
 		cb = std::make_unique<CommandBuffer>();
 	}
 
-	void Renderer::render(FrameCommandBufferList *cb_list, Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
+	void Renderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
 		cb->reset();
 		cb->begin();
@@ -20,8 +20,7 @@ namespace tke
 
 		cb->end(); 
 
-		if (cb_list)
-			cb_list->add(cb->v);
+		addCb(cb->v);
 	}
 
 	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)

@@ -13,7 +13,7 @@ struct Tool
 	Tool(tke::Framebuffer *_fb);
 	virtual bool leftDown(int x, int y);
 	virtual void mouseMove(int xDisp, int yDisp);
-	virtual void show(tke::FrameCommandBufferList *cb_list, tke::Camera *camera) = 0;
+	virtual void show(tke::Camera *camera) = 0;
 	virtual ~Tool();
 };
 

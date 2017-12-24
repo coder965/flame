@@ -52,8 +52,7 @@ bool TransformerTool::leftDown(int x, int y)
 	if (!draw_data.obj_data.empty())
 	{
 		draw_data.mode = tke::PlainRenderer::mode_just_color;
-		auto index = tke::pickUp(x, y, std::bind(
-			&tke::PlainRenderer::render_to, 
+		auto index = tke::pickUp(x, y, std::bind( &tke::PlainRenderer::render_to, 
 			renderer.get(), std::placeholders::_1, currentCamera, &draw_data));
 		selectedAxis = index - 1;
 		return index != 0;
@@ -98,13 +97,13 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 	}
 }
 
-void TransformerTool::show(tke::FrameCommandBufferList *cb_list, tke::Camera *camera)
+void TransformerTool::show(tke::Camera *camera)
 {
 	currentCamera = camera;
 	auto draw_data = getDrawData(0);
 	if (!draw_data.obj_data.empty())
 	{
 		draw_data.mode = tke::PlainRenderer::mode_color_and_front_light;
-		renderer->render(cb_list, fb, false, camera, &draw_data);
+		renderer->render(fb, false, camera, &draw_data);
 	}
 }

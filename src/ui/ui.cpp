@@ -272,7 +272,7 @@ namespace tke
 
 			cb_ui->end();
 
-			addFrameCommandBufferList()->add(cb_ui->v);
+			addCb(cb_ui->v);
 		}
 
 		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
