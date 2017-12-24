@@ -118,6 +118,8 @@ int main(int argc, char** argv)
 						resourceExplorer = new ResourceExplorer;
 					resourceExplorer->_need_focus = true;
 				}
+				if (scene_editor)
+					scene_editor->on_view_menu();
 
 				ImGui::EndMenu();
 			}

@@ -23,6 +23,12 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	transformerTool = std::make_unique<TransformerTool>(fb_tool.get());
 }
 
+SceneEditor::~SceneEditor()
+{
+	if (entity_window)
+		entity_window->opened = false;
+}
+
 void SceneEditor::on_file_menu()
 {
 	if (ImGui::MenuItem("Save", "Ctrl+S"))
@@ -83,7 +89,7 @@ void SceneEditor::on_menu_bar()
 				ImGui::DragFloat3("coord", (float*)&coord[0], 0.5f);
 			else
 			{
-				char *strs[] = {"%f CoordX", "%f CoordY", "%f CoordZ"};
+				char *strs[] = { "%f CoordX", "%f CoordY", "%f CoordZ" };
 				if (!use_camera_target_position)
 				{
 					auto c = scene->camera.getCoord();
@@ -334,6 +340,8 @@ void SceneEditor::on_menu_bar()
 			switch (scene->sky->type)
 			{
 			case tke::SkyType::atmosphere_scattering:
+			{
+				auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
 				if (ImGui::MenuItem("Sun Dir"))
 				{
 					openSunDirPopup = true;
@@ -341,7 +349,12 @@ void SceneEditor::on_menu_bar()
 					auto euler = as->sun_light->getEuler();
 					sun_dir = glm::vec2(euler.x, euler.z);
 				}
+				if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
+					as->sun_light->setColor(as->sun_color * as->sun_power);
+				ImGui::Checkbox("sun shadow", &as->sun_light->shadow);
+				ImGui::Separator();
 				break;
+			}
 			case tke::SkyType::panorama:
 				break;
 			}
@@ -373,6 +386,16 @@ void SceneEditor::on_menu_bar()
 			ImGui::CloseCurrentPopup();
 
 		ImGui::EndPopup();
+	}
+}
+
+void SceneEditor::on_view_menu()
+{
+	if (ImGui::MenuItem("Entity Window"))
+	{
+		if (!entity_window)
+			entity_window = new EntityWindow(scene.get());
+		entity_window->_need_focus = true;
 	}
 }
 
@@ -493,108 +516,6 @@ void SceneEditor::do_show()
 			if (i < 3) ImGui::SameLine();
 		}
 	}
-
-	ImGui::Begin("Entity");
-	if (ImGui::TreeNode(("Lights - " + std::to_string(scene->lights.size())).c_str()))
-	{
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode(("Objects - " + std::to_string(scene->objects.size())).c_str()))
-	{
-		for (int i = 0; i < scene->objects.size(); i++)
-		{
-			auto o = scene->objects[i].get();
-			if (ImGui::Selectable(std::to_string(i).c_str(), selectedItem.toObject() == o))
-				selectedItem.select(o);
-		}
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode(("Terrain - " + std::to_string(scene->terrain ? 1 : 0)).c_str()))
-	{
-		auto terrain = scene->terrain.get();
-
-		if (terrain)
-		{
-			ImGui::Text("Height Map:%s", terrain->heightMap->filename.c_str());
-			ImGui::Text("Color Map 0:%s", terrain->colorMaps[0]->filename.c_str());
-			ImGui::Text("Color Map 1:%s", terrain->colorMaps[1]->filename.c_str());
-			ImGui::Text("Color Map 2:%s", terrain->colorMaps[2]->filename.c_str());
-			ImGui::Text("Color Map 3:%s", terrain->colorMaps[3]->filename.c_str());
-			ImGui::Text("Height:%f", terrain->height);
-			ImGui::Text("Use Physx:%s", terrain->use_physx ? "Yse" : "No");
-			if (ImGui::Button("Remove Terrain"))
-				scene->removeTerrain();
-		}
-
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode(("Waters - " + std::to_string(scene->waters.size())).c_str()))
-	{
-
-		ImGui::TreePop();
-	}
-
-	auto obj = selectedItem.toObject();
-	if (obj)
-	{
-		obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
-		obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
-		obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
-		obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
-	}
-
-	ImGui::Separator();
-	if (selectedItem)
-	{
-		switch (selectedItem.type)
-		{
-			case ItemTypeObject:
-			{
-				ImGui::TextUnformatted("Selected:Object");
-
-				auto o = selectedItem.toObject();
-
-				auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
-				ImGui::Text("model:%s", modelName.c_str());
-
-				auto coord = o->getCoord();
-				if (ImGui::DragFloat3("coord", &coord[0]))
-					o->setCoord(coord);
-				auto euler = o->getEuler();
-				if (ImGui::DragFloat3("euler", &euler[0]))
-					o->setEuler(euler);
-				auto scale = o->getScale();
-				if (ImGui::DragFloat3("scale", &scale[0]))
-					o->setScale(scale);
-
-				ImGui::DragFloat("ang offset", &o->ang_offset);
-				ImGui::DragFloat("speed", &o->speed);
-				ImGui::DragFloat("turn speed", &o->turn_speed);
-
-				if (o->model->vertex_skeleton)
-				{
-					static int boneID = -1;
-					if (boneID >= o->model->bones.size()) boneID = -1;
-
-					if (ImGui::TreeNode("Bones Motion"))
-					{
-						for (int i = 0; i < o->model->bones.size(); i++)
-						{
-							auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
-							if (ImGui::Selectable(str.c_str(), i == boneID))
-								boneID = i;
-						}
-
-						ImGui::TreePop();
-					}
-				}
-			}
-			break;
-		}
-	}
-	else
-		ImGui::TextUnformatted("Select:Null");
-	ImGui::End();
 
 	scene->update();
 	if (enableRender)

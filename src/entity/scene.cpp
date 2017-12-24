@@ -72,7 +72,6 @@ namespace tke
 					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
 				}
-				delete l;
 				it = lights.erase(it);
 				l = it == lights.end() ? nullptr : it->get();
 				break;
@@ -261,7 +260,6 @@ namespace tke
 				}
 				if (o->pxController)
 					o->pxController->release();
-				delete o;
 				it = objects.erase(it);
 				o = it == objects.end() ? nullptr : it->get();
 				break;

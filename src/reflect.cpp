@@ -3,6 +3,7 @@
 #include "..\src\editor\select.h"
 #include "..\src\editor\tool\tool.h"
 #include "..\src\editor\tool\transformer_tool.h"
+#include "..\src\editor\window\entity_window.h"
 #include "..\src\editor\window\file_selector.h"
 #include "..\src\editor\window\image_editor.h"
 #include "..\src\editor\window\model_editor.h"

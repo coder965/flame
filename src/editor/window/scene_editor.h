@@ -5,7 +5,7 @@
 #include "../../render/renderer.h"
 #include "../select.h"
 #include "../tool/transformer_tool.h"
-#include "window.h"
+#include "entity_window.h"
 
 struct SceneEditor
 {
@@ -30,8 +30,10 @@ struct SceneEditor
 	bool follow = false;
 
 	SceneEditor(std::shared_ptr<tke::Scene> _scene);
+	~SceneEditor();
 	void on_file_menu();
 	void on_menu_bar();
+	void on_view_menu();
 	void do_show();
 	void save(tke::AttributeTreeNode *);
 };

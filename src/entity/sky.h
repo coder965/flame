@@ -28,8 +28,10 @@ namespace tke
 		float atmosphereCameraHeight = 10.0002f;
 		float atmosphereKm = 0.0025f;
 		float atmosphereKr = 0.001f;
+		glm::vec3 sun_color = glm::vec3(1.f);
 		Scene *scene;
 		Light *sun_light;
+		float sun_power = 1.f;
 
 		SkyAtmosphereScattering(Scene *_scene);
 		virtual ~SkyAtmosphereScattering();
