@@ -14,27 +14,16 @@ namespace tke
 
 		REFLv bool use_physx = false;
 
-		REFLv std::string normal_height_map_filename;
-		REFLv std::string blend_map_filename;
-		REFLv std::string color_map0_filename;
-		REFLv std::string color_map1_filename;
-		REFLv std::string color_map2_filename;
-		REFLv std::string color_map3_filename;
-		REFLv std::string normal_map0_filename;
-		REFLv std::string normal_map1_filename;
-		REFLv std::string normal_map2_filename;
-		REFLv std::string normal_map3_filename;
-
 		REFLv int block_cx = 64;
 		REFLv float block_size = 16.f;
 		REFLv float height = 100.f;
 		REFLv float tessellation_factor = 0.75f;
 		REFLv float texture_uv_factor = 8.f;
 
-		Image *normalHeightMap = nullptr;
-		Image *blendMap = nullptr;
-		Image *colorMaps[4] = {};
-		Image *normalMaps[4] = {};
+		std::shared_ptr<Image> normalHeightMap;
+		std::shared_ptr<Image> blendMap;
+		std::shared_ptr<Image> colorMaps[4];
+		std::shared_ptr<Image> normalMaps[4];
 		float spec = 0.04f;
 		float roughness = 1.f;
 
@@ -42,9 +31,12 @@ namespace tke
 
 		int sceneIndex = -1;
 
-		Terrain(bool _use_physx = false, Image *_normalHeightMap = nullptr, Image *_blendMap = nullptr,
-			Image *_colorMap0 = nullptr, Image *_colorMap1 = nullptr, Image *_colorMap2 = nullptr, Image *_colorMap3 = nullptr,
-			Image *_normalMap0 = nullptr, Image *_normalMap1 = nullptr, Image *_normalMap2 = nullptr, Image *_normalMap3 = nullptr);
+		Terrain(bool _use_physx = false, std::shared_ptr<Image> _normalHeightMap = nullptr, 
+			std::shared_ptr<Image> _blendMap = nullptr, std::shared_ptr<Image> _colorMap0 = nullptr, 
+			std::shared_ptr<Image> _colorMap1 = nullptr, std::shared_ptr<Image> _colorMap2 = nullptr, 
+			std::shared_ptr<Image> _colorMap3 = nullptr, std::shared_ptr<Image> _normalMap0 = nullptr, 
+			std::shared_ptr<Image> _normalMap1 = nullptr, std::shared_ptr<Image> _normalMap2 = nullptr, 
+			std::shared_ptr<Image> _normalMap3 = nullptr);
 	};
 
 }

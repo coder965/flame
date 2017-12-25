@@ -184,11 +184,16 @@ void EntityWindow::do_show()
 
 			auto t = (tke::Terrain*)s.get();
 
-			ImGui::Text("Height Map:%s", t->normalHeightMap->filename.c_str());
-			ImGui::Text("Color Map 0:%s", t->colorMaps[0]->filename.c_str());
-			ImGui::Text("Color Map 1:%s", t->colorMaps[1]->filename.c_str());
-			ImGui::Text("Color Map 2:%s", t->colorMaps[2]->filename.c_str());
-			ImGui::Text("Color Map 3:%s", t->colorMaps[3]->filename.c_str());
+			ImGui::Text("Normal Height Map:%s", t->normalHeightMap ? t->normalHeightMap->filename.c_str() : "Null");
+			ImGui::Text("Blend Map:%s", t->blendMap ? t->blendMap->filename.c_str() : "Null");
+			ImGui::Text("Color Map 0:%s", t->colorMaps[0] ? t->colorMaps[0]->filename.c_str() : "Null");
+			ImGui::Text("Color Map 1:%s", t->colorMaps[1] ? t->colorMaps[1]->filename.c_str() : "Null");
+			ImGui::Text("Color Map 2:%s", t->colorMaps[2] ? t->colorMaps[2]->filename.c_str() : "Null");
+			ImGui::Text("Color Map 3:%s", t->colorMaps[3] ? t->colorMaps[3]->filename.c_str() : "Null");
+			ImGui::Text("Normal Map 0:%s", t->normalMaps[0] ? t->normalMaps[0]->filename.c_str() : "Null");
+			ImGui::Text("Normal Map 1:%s", t->normalMaps[0] ? t->normalMaps[1]->filename.c_str() : "Null");
+			ImGui::Text("Normal Map 2:%s", t->normalMaps[0] ? t->normalMaps[2]->filename.c_str() : "Null");
+			ImGui::Text("Normal Map 3:%s", t->normalMaps[0] ? t->normalMaps[3]->filename.c_str() : "Null");
 			ImGui::Text("Height:%f", t->height);
 			ImGui::Text("Use Physx:%s", t->use_physx ? "Yse" : "No");
 

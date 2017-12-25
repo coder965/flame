@@ -823,19 +823,20 @@ namespace tke
 					range.size = sizeof(TerrainShaderStruct);
 					ranges.push_back(range);
 
-					if (t->normalHeightMap)
-						writes.push_back(ds_terrain->imageWrite(TerrainNormalHeightMapBinding, index, t->normalHeightMap, colorBorderSampler));
-					if (t->blendMap)
-						writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, index, t->blendMap, colorBorderSampler));
+					writes.push_back(ds_terrain->imageWrite(TerrainNormalHeightMapBinding, 
+						index, t->normalHeightMap ? t->normalHeightMap.get() : 
+						default_normal_image, colorBorderSampler));
+					writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, 
+						index, t->blendMap ? t->blendMap.get() : default_color_image, 
+						colorBorderSampler));
 					for (int i = 0; i < 4; i++)
 					{
-						if (t->colorMaps[i])
-							writes.push_back(ds_terrain->imageWrite(TerrainColorMapsBinding, index * MaxTerrainCount + i, t->colorMaps[i], colorWrapSampler));
-					}
-					for (int i = 0; i < 4; i++)
-					{
-						if (t->normalMaps[i])
-							writes.push_back(ds_terrain->imageWrite(TerrainNormalMapsBinding, index * MaxTerrainCount + i, t->normalMaps[i], colorWrapSampler));
+						writes.push_back(ds_terrain->imageWrite(TerrainColorMapsBinding, 
+							index * MaxTerrainCount + i, t->colorMaps[i] ? 
+							t->colorMaps[i].get() : default_color_image, colorWrapSampler));
+						writes.push_back(ds_terrain->imageWrite(TerrainNormalMapsBinding, 
+							index * MaxTerrainCount + i, t->normalMaps[i] ? 
+							t->normalMaps[i].get() : default_normal_image, colorWrapSampler));
 					}
 				}
 				index++;

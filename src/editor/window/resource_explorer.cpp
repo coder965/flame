@@ -87,10 +87,6 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 					new ModelEditor(m);
 			}
 			break;
-		case tke::FileTypeTerrain:
-			if (doubleClicked)
-				new TerrainEditor;
-			break;
 		case tke::FileTypeScene:
 			if (doubleClicked)
 			{

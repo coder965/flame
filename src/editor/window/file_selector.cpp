@@ -87,11 +87,6 @@ void FileSelector::refresh()
 				i->file_type = tke::FileTypeModel;
 				prefix = ICON_FA_FILE_O" ";
 			}
-			else if (tke::is_terrain_file(ext))
-			{
-				i->file_type = tke::FileTypeTerrain;
-				prefix = ICON_FA_FILE_O" ";
-			}
 			else if (tke::is_scene_file(ext))
 			{
 				i->file_type = tke::FileTypeScene;

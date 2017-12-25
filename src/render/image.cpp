@@ -338,4 +338,12 @@ namespace tke
 		_images[hash] = i;
 		return i;
 	}
+
+	void init_image()
+	{
+		default_color_image = new Image(1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_color_image->clear(glm::vec4(0.f));
+		default_normal_image = new Image(1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_normal_image->clear(glm::vec4(0.f, 0.f, 1.f, 0.f));
+	}
 }

@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "../refl.h"
 #include "../math/math.h"
 #include "graphics.h"
 #include "../image_data.h"
@@ -68,4 +69,9 @@ namespace tke
 
 	Image *load_image(const std::string &filename, int min_level = 0, bool sRGB = false, bool saveData = false);
 	std::shared_ptr<Image> getImage(const std::string &filename, int min_level = 0, bool sRGB = false, bool saveData = false);
+
+	IMPL(nullptr) Image* default_color_image;
+	IMPL(nullptr) Image* default_normal_image;
+
+	void init_image();
 }

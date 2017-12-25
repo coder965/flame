@@ -18,7 +18,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 		layer.image->getView(),
 		tke::depthImage->getView()
 	};
-	fb_tool = tke::getFramebuffer(layer.image->levels[0].cx, layer.image->levels[0].cy, tke::renderPass_depthC_image8, ARRAYSIZE(views), views);
+	fb_tool = tke::getFramebuffer(layer.image->levels[0].cx, layer.image->levels[0].cy, tke::renderPass_depthC_image8, TK_ARRAYSIZE(views), views);
 	transformerTool = std::make_unique<TransformerTool>(fb_tool.get());
 }
 
@@ -36,12 +36,18 @@ void SceneEditor::on_file_menu()
 		scene_editor.reset();
 }
 
+bool openCreateLightPopup = false;
+bool openCreateObjectPopup = false;
+bool openCreateTerrainPopup = false;
+bool openCreateWaterPopup = false;
+
 void SceneEditor::on_menu_bar()
 {
-	bool openCreateLightPopup = false;
-	bool openCreateObjectPopup = false;
-	bool openCreateTerrainPopup = false;
-	bool openCreateWaterPopup = false;
+	openCreateLightPopup = false;
+	openCreateObjectPopup = false;
+	openCreateTerrainPopup = false;
+	openCreateWaterPopup = false;
+
 	if (ImGui::BeginMenu_keepalive("Create"))
 	{
 		if (ImGui::MenuItem("Light"))
@@ -54,200 +60,6 @@ void SceneEditor::on_menu_bar()
 			openCreateWaterPopup = true;
 
 		ImGui::EndMenu();
-	}
-	if (openCreateLightPopup)
-		ImGui::OpenPopup("Create Light");
-	if (openCreateObjectPopup)
-		ImGui::OpenPopup("Create Object");
-	if (openCreateTerrainPopup)
-		ImGui::OpenPopup("Create Terrain");
-	if (openCreateWaterPopup)
-		ImGui::OpenPopup("Create Water");
-	if (ImGui::BeginPopupModal("Create Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		static bool basicModel = false;
-		static int model_index = 0;
-		static char model_filename[260];
-		ImGui::Checkbox("Basic Model", &basicModel);
-		if (basicModel)
-			ImGui::Combo("##Model", &model_index, basic_model_names, TK_ARRAYSIZE(basic_model_names));
-		else
-			ImGui::InputText("Filename", model_filename, TK_ARRAYSIZE(model_filename));
-
-		static bool use_camera_position = false;
-		static bool use_camera_target_position = false;
-		static glm::vec3 coord = glm::vec3(0.f);
-		static glm::vec3 euler = glm::vec3(0.f);
-		static glm::vec3 scale = glm::vec3(1.f);
-		if (ImGui::TreeNode("Transform"))
-		{
-			ImGui::Checkbox("Use Camera Position", &use_camera_position);
-			if (use_camera_position)
-				ImGui::Checkbox("Use Camera Target Position", &use_camera_target_position);
-			if (!use_camera_position)
-				ImGui::DragFloat3("coord", (float*)&coord[0], 0.5f);
-			else
-			{
-				char *strs[] = { "%f CoordX", "%f CoordY", "%f CoordZ" };
-				if (!use_camera_target_position)
-				{
-					auto c = scene->camera.getCoord();
-					ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
-				}
-				else
-				{
-					auto c = scene->camera.target;
-					ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
-				}
-			}
-
-			ImGui::DragFloat3("euler", (float*)&euler[0], 0.5f);
-			ImGui::DragFloat3("scale", (float*)&scale[0], 0.5f);
-
-			ImGui::TreePop();
-		}
-
-		static bool physx_enable = false;
-		static bool physx_dynamic = false;
-		static bool physx_use_controller = false;
-		if (ImGui::TreeNode("Physx"))
-		{
-			ImGui::Checkbox("enable", &physx_enable);
-			if (physx_enable)
-			{
-				ImGui::Checkbox("dynamic", &physx_dynamic);
-				ImGui::Checkbox("use controller", &physx_use_controller);
-			}
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::Button("Create"))
-		{
-			unsigned int _physxType = 0;
-			if (physx_enable)
-				_physxType |= (int)tke::ObjectPhysicsType::enable;
-			if (physx_dynamic)
-				_physxType |= (int)tke::ObjectPhysicsType::dynamic;
-			if (physx_use_controller)
-				_physxType |= (int)tke::ObjectPhysicsType::controller;
-
-			if (basicModel)
-				strcpy(model_filename, basic_model_names[model_index]);
-
-			auto m = tke::getModel(model_filename);
-			if (m)
-			{
-				auto o = new tke::Object(m, _physxType);
-
-				glm::vec3 _coord;
-				if (use_camera_position)
-				{
-					if (use_camera_target_position)
-						_coord = scene->camera.target;
-					else
-						_coord = scene->camera.getCoord();
-				}
-				else
-					_coord = coord;
-				o->setCoord(_coord);
-				o->setEuler(euler);
-				o->setScale(scale);
-
-				scene->addObject(o);
-			}
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
-	}
-	if (ImGui::BeginPopupModal("Create Terrain", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		//if (tcs.heightMapIndex >= tke::textures.size())
-		//	tcs.heightMapIndex = 0;
-		//if (tcs.blendMapIndex >= tke::textures.size())
-		//	tcs.blendMapIndex = 0;
-		//if (tcs.colorMap0Index >= tke::textures.size())
-		//	tcs.colorMap0Index = 0;
-		//if (tcs.colorMap1Index >= tke::textures.size())
-		//	tcs.colorMap1Index = 0;
-		//if (tcs.colorMap2Index >= tke::textures.size())
-		//	tcs.colorMap2Index = 0;
-		//if (tcs.colorMap3Index >= tke::textures.size())
-		//	tcs.colorMap3Index = 0;
-		//for (int i = 0; i < 3; i++)
-		//{
-		//	char *strs[] = {"CoordX", "CoordY", "CoordZ"};
-		//	ImGui::DragFloat(strs[i], &tcs.coord[i], 0.5f);
-		//}
-		//if (tke::textures.size() > 0)
-		//{
-		//	if (ImGui::Combo("Height Map", &tcs.heightMapIndex, [](void *data, int idx, const char **out_text) {
-		//		*out_text = tke::textures[idx]->filename.c_str();
-		//		return true;
-		//	}, nullptr, tke::textures.size()));
-		//	if (ImGui::Combo("Blend Map", &tcs.blendMapIndex, [](void *data, int idx, const char **out_text) {
-		//		*out_text = tke::textures[idx]->filename.c_str();
-		//		return true;
-		//	}, nullptr, tke::textures.size()));
-		//	if (ImGui::Combo("Color Map 0", &tcs.colorMap0Index, [](void *data, int idx, const char **out_text) {
-		//		*out_text = tke::textures[idx]->filename.c_str();
-		//		return true;
-		//	}, nullptr, tke::textures.size()));
-		//	if (ImGui::Combo("Color Map 1", &tcs.colorMap1Index, [](void *data, int idx, const char **out_text) {
-		//		*out_text = tke::textures[idx]->filename.c_str();
-		//		return true;
-		//	}, nullptr, tke::textures.size()));
-		//	if (ImGui::Combo("Color Map 2", &tcs.colorMap2Index, [](void *data, int idx, const char **out_text) {
-		//		*out_text = tke::textures[idx]->filename.c_str();
-		//		return true;
-		//	}, nullptr, tke::textures.size()));
-		//	if (ImGui::Combo("Color Map 3", &tcs.colorMap3Index, [](void *data, int idx, const char **out_text) {
-		//		*out_text = tke::textures[idx]->filename.c_str();
-		//		return true;
-		//	}, nullptr, tke::textures.size()));
-		//}
-		//ImGui::DragFloat("Height", &tcs.height);
-		//ImGui::Checkbox("Use Physx", &tcs.usePhysx);
-		//if (tke::textures.size() > 0)
-		//{
-		//	if (ImGui::Button("Create"))
-		//	{
-		//		auto t = new tke::Terrain(tcs.usePhysx, tke::textures[tcs.heightMapIndex].get(), nullptr, tke::textures[tcs.blendMapIndex].get(), tke::textures[tcs.colorMap0Index].get(), tke::textures[tcs.colorMap1Index].get(), tke::textures[tcs.colorMap2Index].get(), tke::textures[tcs.colorMap3Index].get());
-		//		t->setCoord(tcs.coord);
-		//		t->height = tcs.height;
-		//		scene->addTerrain(t);
-		//		ImGui::CloseCurrentPopup();
-		//	}
-		//	ImGui::SameLine();
-		//}
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
-	}
-	if (ImGui::BeginPopupModal("Create Water", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		//for (int i = 0; i < 3; i++)
-		//{
-		//	char *strs[] = {"CoordX", "CoordY", "CoordZ"};
-		//	ImGui::DragFloat(strs[i], &wcs.coord[i], 0.5f);
-		//}
-		//ImGui::DragFloat("Height", &wcs.height);
-		//if (ImGui::Button("Create"))
-		//{
-		//	auto w = new tke::Water;
-		//	w->setCoord(wcs.coord);
-		//	w->height = wcs.height;
-		//	scene->addWater(w);
-		//}
-		//ImGui::SameLine();
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
 	}
 	if (ImGui::BeginMenu_keepalive("Edit"))
 	{
@@ -363,6 +175,188 @@ void SceneEditor::on_view_menu()
 
 void SceneEditor::do_show()
 {
+	static bool use_camera_position = false;
+	static bool use_camera_target_position = false;
+	static glm::vec3 coord = glm::vec3(0.f);
+	static glm::vec3 euler = glm::vec3(0.f);
+	static glm::vec3 scale = glm::vec3(1.f);
+	auto funShowCoordUi = [&]() {
+		ImGui::Checkbox("Use Camera Position", &use_camera_position);
+		if (use_camera_position)
+			ImGui::Checkbox("Use Camera Target Position", &use_camera_target_position);
+		if (!use_camera_position)
+			ImGui::DragFloat3("coord", (float*)&coord[0], 0.5f);
+		else
+		{
+			glm::vec3 c;
+			if (!use_camera_target_position)
+				c = scene->camera.getCoord();
+			else
+				c = scene->camera.target;
+			ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
+		}
+	};
+
+	if (openCreateLightPopup)
+		ImGui::OpenPopup("Create Light");
+	if (openCreateObjectPopup)
+		ImGui::OpenPopup("Create Object");
+	if (openCreateTerrainPopup)
+		ImGui::OpenPopup("Create Terrain");
+	if (openCreateWaterPopup)
+		ImGui::OpenPopup("Create Water");
+	if (ImGui::BeginPopupModal("Create Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static bool basicModel = false;
+		static int model_index = 0;
+		static char model_filename[260];
+		ImGui::Checkbox("Basic Model", &basicModel);
+		if (basicModel)
+			ImGui::Combo("##Model", &model_index, basic_model_names, TK_ARRAYSIZE(basic_model_names));
+		else
+			ImGui::InputText("Filename", model_filename, TK_ARRAYSIZE(model_filename));
+
+		if (ImGui::TreeNode("Transform"))
+		{
+			funShowCoordUi();
+			ImGui::DragFloat3("euler", (float*)&euler[0], 0.5f);
+			ImGui::DragFloat3("scale", (float*)&scale[0], 0.5f);
+
+			ImGui::TreePop();
+		}
+
+		static bool physx_enable = false;
+		static bool physx_dynamic = false;
+		static bool physx_use_controller = false;
+		if (ImGui::TreeNode("Physx"))
+		{
+			ImGui::Checkbox("enable", &physx_enable);
+			if (physx_enable)
+			{
+				ImGui::Checkbox("dynamic", &physx_dynamic);
+				ImGui::Checkbox("use controller", &physx_use_controller);
+			}
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::Button("Create"))
+		{
+			unsigned int _physxType = 0;
+			if (physx_enable)
+				_physxType |= (int)tke::ObjectPhysicsType::enable;
+			if (physx_dynamic)
+				_physxType |= (int)tke::ObjectPhysicsType::dynamic;
+			if (physx_use_controller)
+				_physxType |= (int)tke::ObjectPhysicsType::controller;
+
+			if (basicModel)
+				strcpy(model_filename, basic_model_names[model_index]);
+
+			auto m = tke::getModel(model_filename);
+			if (m)
+			{
+				auto o = new tke::Object(m, _physxType);
+
+				glm::vec3 _coord;
+				if (use_camera_position)
+				{
+					if (use_camera_target_position)
+						_coord = scene->camera.target;
+					else
+						_coord = scene->camera.getCoord();
+				}
+				else
+					_coord = coord;
+				o->setCoord(_coord);
+				o->setEuler(euler);
+				o->setScale(scale);
+
+				scene->addObject(o);
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Close"))
+			ImGui::CloseCurrentPopup();
+
+		ImGui::EndPopup();
+	}
+	if (ImGui::BeginPopupModal("Create Terrain", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		if (ImGui::TreeNode("Transform"))
+		{
+			funShowCoordUi();
+			ImGui::TreePop();
+		}
+		static char normal_height_image_name[260];
+		static char blend_image_name[260];
+		static char color_image0_name[260];
+		static char color_image1_name[260];
+		static char color_image2_name[260];
+		static char color_image3_name[260];
+		static char normal_image0_name[260];
+		static char normal_image1_name[260];
+		static char normal_image2_name[260];
+		static char normal_image3_name[260];
+		if (ImGui::TreeNode("Maps"))
+		{
+			ImGui::InputText("Normal Height Map", normal_height_image_name, TK_ARRAYSIZE(normal_height_image_name));
+			ImGui::InputText("Blend Map", blend_image_name, TK_ARRAYSIZE(blend_image_name));
+			ImGui::InputText("Color Map 0", color_image0_name, TK_ARRAYSIZE(color_image0_name));
+			ImGui::InputText("Color Map 1", color_image1_name, TK_ARRAYSIZE(color_image1_name));
+			ImGui::InputText("Color Map 2", color_image2_name, TK_ARRAYSIZE(color_image2_name));
+			ImGui::InputText("Color Map 3", color_image3_name, TK_ARRAYSIZE(color_image3_name));
+			ImGui::InputText("Normal Map 0", normal_image0_name, TK_ARRAYSIZE(normal_image0_name));
+			ImGui::InputText("Normal Map 1", normal_image1_name, TK_ARRAYSIZE(normal_image1_name));
+			ImGui::InputText("Normal Map 2", normal_image2_name, TK_ARRAYSIZE(normal_image2_name));
+			ImGui::InputText("Normal Map 3", normal_image3_name, TK_ARRAYSIZE(normal_image3_name));
+			ImGui::TreePop();
+		}
+		static float height = 10.f;
+		ImGui::DragFloat("Height", &height);
+		static bool use_physx = false;
+		ImGui::Checkbox("Use Physx", &use_physx);
+		if (ImGui::Button("Create"))
+		{
+			auto t = new tke::Terrain(use_physx, tke::getImage(normal_height_image_name),
+				tke::getImage(blend_image_name), tke::getImage(color_image0_name),
+				tke::getImage(color_image1_name), tke::getImage(color_image2_name),
+				tke::getImage(color_image3_name), tke::getImage(normal_image0_name),
+				tke::getImage(normal_image1_name), tke::getImage(normal_image2_name),
+				tke::getImage(normal_image3_name));
+			t->setCoord(coord);
+			t->height = height;
+			scene->addTerrain(t);
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Close"))
+			ImGui::CloseCurrentPopup();
+
+		ImGui::EndPopup();
+	}
+	if (ImGui::BeginPopupModal("Create Water", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		//for (int i = 0; i < 3; i++)
+		//{
+		//	char *strs[] = {"CoordX", "CoordY", "CoordZ"};
+		//	ImGui::DragFloat(strs[i], &wcs.coord[i], 0.5f);
+		//}
+		//ImGui::DragFloat("Height", &wcs.height);
+		//if (ImGui::Button("Create"))
+		//{
+		//	auto w = new tke::Water;
+		//	w->setCoord(wcs.coord);
+		//	w->height = wcs.height;
+		//	scene->addWater(w);
+		//}
+		//ImGui::SameLine();
+		if (ImGui::Button("Close"))
+			ImGui::CloseCurrentPopup();
+
+		ImGui::EndPopup();
+	}
+
 	ImVec2 image_pos;
 	auto displayCx = tke::window_cx;
 	auto displayCy = tke::window_cy;
