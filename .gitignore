@@ -3,6 +3,7 @@
 
 # User-specific files
 imgui.ini
+*.res
 *.suo
 *.user
 *.userosscache
