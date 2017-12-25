@@ -75,8 +75,9 @@ namespace tke
 		if (path == "")
 		{
 			char buf[MAX_PATH];
-			GetCurrentDirectoryA(MAX_PATH, buf);
-			path = buf;
+			GetModuleFileName(nullptr, buf, MAX_PATH);
+			std::fs::path _p(buf);
+			path = _p.parent_path().string();
 		}
 		return path;
 	}

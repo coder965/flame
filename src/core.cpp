@@ -233,6 +233,8 @@ namespace tke
 	{
 		auto init_start_time = GetTickCount();
 
+		SetCurrentDirectory(get_exe_path().c_str());
+
 #ifdef _MSVC_LANG
 		SetProcessDPIAware();
 #endif

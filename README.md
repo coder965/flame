@@ -18,7 +18,11 @@ Freeimage http://freeimage.sourceforge.net/
 
 gli https://github.com/g-truc/gli
 
+spirv-cross https://github.com/KhronosGroup/SPIRV-Cross
+
 imgui https://github.com/ocornut/imgui
+
+FontAwesome https://github.com/juliettef/IconFontCppHeaders
 
 PhysX https://github.com/NVIDIAGameWorks/PhysX-3.3
 
