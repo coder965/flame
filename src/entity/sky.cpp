@@ -4,7 +4,7 @@
 namespace tke
 {
 	Sky::Sky(SkyType _type)
-		:type(_type)
+		:Node(NodeTypeSky), type(_type)
 	{
 	}
 

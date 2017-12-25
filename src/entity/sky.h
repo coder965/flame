@@ -1,5 +1,7 @@
 #pragma once
 
+#include "node.h"
+
 namespace tke
 {
 	enum class SkyType
@@ -9,7 +11,7 @@ namespace tke
 		panorama = 1 << 1
 	};
 
-	struct Sky
+	struct Sky : Node
 	{
 		SkyType type;
 

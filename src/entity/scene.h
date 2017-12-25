@@ -26,7 +26,7 @@ namespace tke
 		std::string filename;
 		std::string filepath;
 
-		std::unique_ptr<Sky> sky;
+		std::shared_ptr<Sky> sky;
 		bool enable_sun_light = true;
 
 		float hdrExposure = 0.01f;

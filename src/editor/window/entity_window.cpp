@@ -16,43 +16,46 @@ void EntityWindow::do_show()
 
 	auto scene = scene_editor->scene.get();
 	auto s = scene_editor->selected.lock();
-	if (ImGui::TreeNode(("Lights - " + std::to_string(scene->lights.size())).c_str()))
+	auto entity_count = 0;
+	if (scene->sky)
 	{
-		ImGui::TreePop();
+		entity_count++;
+		if (ImGui::Selectable("Sky", s && (tke::Sky*)s.get() == scene->sky.get()))
+			scene_editor->selected = scene->sky;
 	}
-	if (ImGui::TreeNode(("Objects - " + std::to_string(scene->objects.size())).c_str()))
+	for (int i = 0; i < scene->lights.size(); i++)
 	{
-		for (int i = 0; i < scene->objects.size(); i++)
-		{
-			auto &o = scene->objects[i];
-			if (ImGui::Selectable(std::to_string(i).c_str(), s && (tke::Object*)s.get() == o.get()))
-				scene_editor->selected = o;
-		}
-		ImGui::TreePop();
+		entity_count++;
+		auto &l = scene->lights[i];
+		if (ImGui::Selectable(("Light - " + std::to_string(i)).c_str(), s && (tke::Light*)s.get() == l.get()))
+			scene_editor->selected = l;
 	}
-	if (ImGui::TreeNode(("Terrain - " + std::to_string(scene->terrain ? 1 : 0)).c_str()))
+	for (int i = 0; i < scene->objects.size(); i++)
 	{
-		auto terrain = scene->terrain.get();
-
-		if (terrain)
-		{
-			ImGui::Text("Height Map:%s", terrain->heightMap->filename.c_str());
-			ImGui::Text("Color Map 0:%s", terrain->colorMaps[0]->filename.c_str());
-			ImGui::Text("Color Map 1:%s", terrain->colorMaps[1]->filename.c_str());
-			ImGui::Text("Color Map 2:%s", terrain->colorMaps[2]->filename.c_str());
-			ImGui::Text("Color Map 3:%s", terrain->colorMaps[3]->filename.c_str());
-			ImGui::Text("Height:%f", terrain->height);
-			ImGui::Text("Use Physx:%s", terrain->use_physx ? "Yse" : "No");
-			if (ImGui::Button("Remove Terrain"))
-				scene->removeTerrain();
-		}
-
-		ImGui::TreePop();
+		entity_count++;
+		auto &o = scene->objects[i];
+		if (ImGui::Selectable(("Object - " + std::to_string(i)).c_str(), s && (tke::Object*)s.get() == o.get()))
+			scene_editor->selected = o;
 	}
-	if (ImGui::TreeNode(("Waters - " + std::to_string(scene->waters.size())).c_str()))
+	if (scene->terrain)
 	{
-
-		ImGui::TreePop();
+		entity_count++;
+		if (ImGui::Selectable("Terrain", s && (tke::Terrain*)s.get() == scene->terrain.get()))
+			scene_editor->selected = scene->terrain;
+	}
+	for (int i = 0; i < scene->waters.size(); i++)
+	{
+		entity_count++;
+		auto &w = scene->waters[i];
+		if (ImGui::Selectable(("Water - " + std::to_string(i)).c_str(), s && (tke::Water*)s.get() == w.get()))
+			scene_editor->selected = w;
+	}
+	if (entity_count == 0)
+		ImGui::TextUnformatted("Empty Scene");
+	else
+	{
+		ImGui::Separator();
+		ImGui::Text("Entities:%d", entity_count);
 	}
 
 	if (s && s->type == tke::NodeTypeObject)
@@ -64,11 +67,48 @@ void EntityWindow::do_show()
 		obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
 	}
 
+	static glm::vec2 sun_dir;
+	bool openSunDirPopup = false;
+
 	ImGui::Separator();
 	if (s)
 	{
 		switch (s->type)
 		{
+		case tke::NodeTypeSky:
+		{
+			ImGui::TextUnformatted("Selected:Sky");
+
+			auto sky = (tke::Sky*)s.get();
+
+			switch (sky->type)
+			{
+			case tke::SkyType::atmosphere_scattering:
+			{
+				auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
+				if (ImGui::Button("change sun dir"))
+				{
+					openSunDirPopup = true;
+					auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
+					auto euler = as->sun_light->getEuler();
+					sun_dir = glm::vec2(euler.x, euler.z);
+				}
+				if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
+					as->sun_light->setColor(as->sun_color * as->sun_power);
+				ImGui::Checkbox("sun shadow", &as->sun_light->shadow);
+				break;
+			}
+			case tke::SkyType::panorama:
+				break;
+			}
+
+			break;
+		}
+		case tke::NodeTypeLight:
+		{
+			ImGui::TextUnformatted("Selected:Light");
+			break;
+		}
 		case tke::NodeTypeObject:
 		{
 			ImGui::TextUnformatted("Selected:Object");
@@ -109,12 +149,54 @@ void EntityWindow::do_show()
 					ImGui::TreePop();
 				}
 			}
+
+			break;
 		}
-		break;
+		case tke::NodeTypeTerrain:
+		{
+			ImGui::TextUnformatted("Selected:Terrain");
+
+			auto t = (tke::Terrain*)s.get();
+
+			ImGui::Text("Height Map:%s", t->heightMap->filename.c_str());
+			ImGui::Text("Color Map 0:%s", t->colorMaps[0]->filename.c_str());
+			ImGui::Text("Color Map 1:%s", t->colorMaps[1]->filename.c_str());
+			ImGui::Text("Color Map 2:%s", t->colorMaps[2]->filename.c_str());
+			ImGui::Text("Color Map 3:%s", t->colorMaps[3]->filename.c_str());
+			ImGui::Text("Height:%f", t->height);
+			ImGui::Text("Use Physx:%s", t->use_physx ? "Yse" : "No");
+			if (ImGui::Button("Remove Terrain"))
+				scene->removeTerrain();
+
+			break;
+		}
+		case tke::NodeTypeWater:
+		{
+			ImGui::TextUnformatted("Selected:Water");
+			break;
+		}
 		}
 	}
 	else
 		ImGui::TextUnformatted("Select:Null");
+
+	if (openSunDirPopup)
+		ImGui::OpenPopup("Sun Dir");
+	if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::DragFloat("x", &sun_dir[0]);
+		ImGui::DragFloat("y", &sun_dir[1]);
+		if (ImGui::Button("Ok"))
+		{
+			scene->setSunDir(sun_dir);
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+			ImGui::CloseCurrentPopup();
+
+		ImGui::EndPopup();
+	}
 
 	ImGui::End();
 }

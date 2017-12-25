@@ -1,10 +1,11 @@
 #pragma once
 
 #include "transformer.h"
+#include "node.h"
 
 namespace tke
 {
-	REFLECTABLE struct Water : Transformer
+	REFLECTABLE struct Water : Transformer, Node
 	{
 		REFL_BANK;
 

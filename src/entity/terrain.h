@@ -1,13 +1,14 @@
 #pragma once
 
 #include "transformer.h"
+#include "node.h"
 
 namespace physx { struct PxRigidActor; }
 
 namespace tke
 {
 	struct Image;
-	REFLECTABLE struct Terrain : Transformer
+	REFLECTABLE struct Terrain : Transformer, Node
 	{
 		REFL_BANK;
 

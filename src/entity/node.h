@@ -7,6 +7,7 @@ namespace tke
 {
 	enum NodeType
 	{
+		NodeTypeSky,
 		NodeTypeLight,
 		NodeTypeObject,
 		NodeTypeTerrain,

@@ -317,8 +317,6 @@ void SceneEditor::on_menu_bar()
 			scene->camera.object = nullptr;
 	}
 
-	static glm::vec2 sun_dir;
-	bool openSunDirPopup = false;
 	if (ImGui::BeginMenu_keepalive("Sky"))
 	{
 		if (ImGui::BeginMenu("Type"))
@@ -342,31 +340,6 @@ void SceneEditor::on_menu_bar()
 			ImGui::EndMenu();
 		}
 
-		if (scene->sky)
-		{
-			switch (scene->sky->type)
-			{
-			case tke::SkyType::atmosphere_scattering:
-			{
-				auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
-				if (ImGui::MenuItem("Sun Dir"))
-				{
-					openSunDirPopup = true;
-					auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
-					auto euler = as->sun_light->getEuler();
-					sun_dir = glm::vec2(euler.x, euler.z);
-				}
-				if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
-					as->sun_light->setColor(as->sun_color * as->sun_power);
-				ImGui::Checkbox("sun shadow", &as->sun_light->shadow);
-				ImGui::Separator();
-				break;
-			}
-			case tke::SkyType::panorama:
-				break;
-			}
-		}
-
 		auto ambientColor = scene->ambientColor;
 		if (ImGui::DragFloat3("Ambient Color", &ambientColor[0], 0.1f, 0.f, 100.f))
 			scene->setAmbientColor(ambientColor);
@@ -375,24 +348,6 @@ void SceneEditor::on_menu_bar()
 			scene->setFogColor(fogColor);
 
 		ImGui::EndMenu();
-	}
-
-	if (openSunDirPopup)
-		ImGui::OpenPopup("Sun Dir");
-	if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::DragFloat("x", &sun_dir[0]);
-		ImGui::DragFloat("y", &sun_dir[1]);
-		if (ImGui::Button("Ok"))
-		{
-			scene->setSunDir(sun_dir);
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
 	}
 }
 
