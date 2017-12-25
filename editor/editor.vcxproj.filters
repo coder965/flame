@@ -4,28 +4,12 @@
     <Filter Include="src">
       <UniqueIdentifier>{53328497-2b0c-4e1a-af91-379a4e1cf4ec}</UniqueIdentifier>
     </Filter>
-    <Filter Include="res">
-      <UniqueIdentifier>{9794f7b4-4266-4995-a535-1f6bd413c99f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\tool">
       <UniqueIdentifier>{e5ff0cc1-bb12-46bc-aa51-c54cf38b2211}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\window">
       <UniqueIdentifier>{99f33b0a-7ac9-4096-9f8b-0fae8a5d1b91}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="data.xml">
-      <Filter>res</Filter>
-    </Xml>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="scene_1.scene">
-      <Filter>res</Filter>
-    </None>
-    <None Include="scene_2.scene">
-      <Filter>res</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\editor\tool\tool.cpp">

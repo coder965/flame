@@ -94,6 +94,7 @@ namespace tke
 	enum { MaxStaticObjectCount = 1024 };
 	enum { MaxAnimatedObjectCount = 8 };
 	enum { MaxLightCount = 256 };
+	enum { MaxTerrainCount = 8 };
 	enum { MaxWaterCount = 8 };
 	enum { MaxShadowCount = 4 };
 

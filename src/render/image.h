@@ -56,6 +56,7 @@ namespace tke
 		// must call in main thread
 		~Image();
 		unsigned char getR(float x, float y);
+		unsigned char getA(float x, float y);
 		void transitionLayout(int _level, VkImageLayout _layout);
 		void fillData(int _level, unsigned char *src, size_t _size);
 		VkImageView getView(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);

@@ -29,8 +29,7 @@ enum
 	ShadowImageBinding,
 	AoImageBinding,
 	// terrain special
-	TerrainHeightMapBinding,
-	TerrainNormalMapBinding,
+	TerrainNormalHeightMapBinding,
 	TerrainBlendMapBinding,
 	TerrainColorMapsBinding,
 	TerrainNormalMapsBinding

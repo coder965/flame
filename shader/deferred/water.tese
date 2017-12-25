@@ -40,6 +40,7 @@ layout (location = 1) out vec2 outUV;
 
 void main()
 {
+	outWaterId = inWaterId[0];
 	vec2 uv0 = mix(inUV[0], inUV[1], gl_TessCoord.x);
 	vec2 uv1 = mix(inUV[3], inUV[2], gl_TessCoord.x);
 	outUV = mix(uv0, uv1, gl_TessCoord.y);
@@ -47,7 +48,7 @@ void main()
 	vec4 pos0 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
-	//pos.y += texture(heightMap, outUV).r * u_water.d[inWaterId[0]].height;
-	pos.xyz += u_water.d[inWaterId[0]].coord;
+	//pos.y += texture(heightMap, outUV).r * u_water.d[outWaterId].height;
+	pos.xyz += u_water.d[outWaterId].coord;
 	gl_Position = u_matrix.projView * pos;
 }

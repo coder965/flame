@@ -55,7 +55,7 @@ namespace tke
 	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
 		mtx.lock();
-		lights.push_back(std::move(std::unique_ptr<Light>(l)));
+		lights.push_back(std::shared_ptr<Light>(l));
 		needUpdateLightCount = true;
 		mtx.unlock();
 	}
@@ -239,7 +239,7 @@ namespace tke
 			}
 		}
 
-		objects.push_back(std::move(std::unique_ptr<Object>(o)));
+		objects.push_back(std::shared_ptr<Object>(o));
 
 		needUpdateIndirectBuffer = true;
 		mtx.unlock();
@@ -294,9 +294,9 @@ namespace tke
 	{
 		mtx.lock();
 
-		if (t->use_physx && t->heightMap)
+		if (t->use_physx && t->normalHeightMap)
 		{
-			auto m = t->heightMap;
+			auto m = t->normalHeightMap;
 
 			auto numVerts = m->levels[0].cx * m->levels[0].cy;
 
@@ -306,7 +306,7 @@ namespace tke
 			for (int y = 0; y < m->levels[0].cy; y++)
 			{
 				for (int x = 0; x < m->levels[0].cy; x++)
-					samples[y + x * m->levels[0].cx].height = m->getR(x - 0.5, y - 0.5);
+					samples[y + x * m->levels[0].cx].height = m->getA(x - 0.5, y - 0.5);
 			}
 
 			physx::PxHeightFieldDesc hfDesc;
@@ -325,21 +325,33 @@ namespace tke
 			delete[]samples;
 		}
 
-		terrain = std::unique_ptr<Terrain>(t);
+		terrains.push_back(std::shared_ptr<Terrain>(t));
 
 		mtx.unlock();
 	}
 
-	void Scene::removeTerrain()
+	Terrain *Scene::removeTerrain(Terrain *t)
 	{
 		mtx.lock();
 
-		if (terrain->actor)
-			terrain->actor->release();
-
-		terrain.reset();
+		for (auto it = terrains.begin(); it != terrains.end(); it++)
+		{
+			if (it->get() == t)
+			{
+				for (auto itt = it + 1; itt != terrains.end(); itt++)
+				{
+					(*itt)->sceneIndex--;
+					(*itt)->changed = true;
+				}
+				it = terrains.erase(it);
+				t = it == terrains.end() ? nullptr : it->get();
+				break;
+			}
+		}
 
 		mtx.unlock();
+
+		return t;
 	}
 
 	void Scene::addWater(Water *w)
@@ -358,10 +370,9 @@ namespace tke
 			{
 				for (auto itt = it + 1; itt != waters.end(); itt++)
 				{
-					//(*itt)->sceneIndex--;
+					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
 				}
-				delete w;
 				it = waters.erase(it);
 				w = it == waters.end() ? nullptr : it->get();
 				break;
@@ -382,8 +393,8 @@ namespace tke
 			l->changed = false;
 		for (auto &o : objects)
 			o->changed = false;
-		if (terrain)
-			terrain->changed = false;
+		for (auto &t : terrains)
+			t->changed = false;
 		for (auto &w : waters)
 			w->changed = false;
 	}
@@ -394,7 +405,7 @@ namespace tke
 
 		lights.clear();
 		objects.clear();
-		terrain.reset();
+		terrains.clear();
 
 		mtx.unlock();
 	}
@@ -554,13 +565,13 @@ namespace tke
 			o->getScale();
 			n->addAttributes(o.get(), o->b);
 		}
-		if (terrain)
+		for (auto &t : terrains)
 		{
 			auto n = at.newNode("terrain");
-			terrain->getCoord();
-			terrain->getEuler();
-			terrain->getScale();
-			n->addAttributes(terrain.get(), terrain->b);
+			t->getCoord();
+			t->getEuler();
+			t->getScale();
+			n->addAttributes(t.get(), t->b);
 		}
 		at.save(filename);
 	}

@@ -4,7 +4,7 @@
 
 #include "..\debug.h"
 
-layout(binding = 4) uniform TERRAIN
+struct Terrain
 {
 	vec3 coord;
 	int blockCx;
@@ -13,6 +13,11 @@ layout(binding = 4) uniform TERRAIN
 	float tessellationFactor;
 	float textureUvFactor;
 	float mapDimension;
+};
+
+layout(binding = 4) uniform TERRAIN
+{
+	Terrain d[8];
 }u_terrain;
 
 layout(binding = 2) uniform MATRIX
@@ -27,13 +32,13 @@ layout(binding = 2) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 17) uniform sampler2D heightMap;
-layout(binding = 18) uniform sampler2D normalMap;
-layout(binding = 19) uniform sampler2D blendMap;
-layout(binding = 20) uniform sampler2D colorMaps[4];
-layout(binding = 21) uniform sampler2D normalMaps[4];
+layout(binding = 17) uniform sampler2D normalHeightMap[8];
+layout(binding = 18) uniform sampler2D blendMap[8];
+layout(binding = 19) uniform sampler2D colorMaps[8 * 4];
+layout(binding = 20) uniform sampler2D normalMaps[8 * 4];
 
-layout (location = 0) in vec2 inUV;
+layout (location = 0) in flat uint inTerrainId;
+layout (location = 1) in vec2 inUV;
 
 layout(location = 0) out vec4 outAlbedoAlpha;
 layout(location = 1) out vec4 outNormalHeight;
@@ -41,7 +46,7 @@ layout(location = 2) out vec4 outSpecRoughness;
 
 float getHeight(vec2 UV)
 {
-	return texture(heightMap, UV).r * u_terrain.height;
+	return texture(normalHeightMap[inTerrainId], UV).r * u_terrain.d[inTerrainId].height;
 }
 
 /*
@@ -73,36 +78,17 @@ void main()
 	mat3 normalMatrix = mat3(u_matrix.view);
 
 	vec4 blend;
-	blend.rgb = texture(blendMap, inUV).rgb;
+	blend.rgb = texture(blendMap[inTerrainId], inUV).rgb;
 	blend.a = 1.0 - blend.x - blend.y - blend.z;
 	vec2 tilledUV = inUV * u_terrain.blockCx * u_terrain.textureUvFactor;
 
 	vec3 color = vec3(0);
-	color += texture(colorMaps[0], tilledUV).rgb * blend.r;
-	color += texture(colorMaps[1], tilledUV).rgb * blend.g;
-	color += texture(colorMaps[2], tilledUV).rgb * blend.b;
-	color += texture(colorMaps[3], tilledUV).rgb * blend.a;
+	color += texture(colorMaps[inTerrainId * 8 + 0], tilledUV).rgb * blend.r;
+	color += texture(colorMaps[inTerrainId * 8 + 1], tilledUV).rgb * blend.g;
+	color += texture(colorMaps[inTerrainId * 8 + 2], tilledUV).rgb * blend.b;
+	color += texture(colorMaps[inTerrainId * 8 + 3], tilledUV).rgb * blend.a;
 	
-	/*
-	vec3 normal = vec3(0);
-	normal += (texture(normalMaps[0], tilledUV).xyz * 2.0 - 1.0) * blend.r;
-	normal += (texture(normalMaps[1], tilledUV).xyz * 2.0 - 1.0) * blend.g;
-	normal += (texture(normalMaps[2], tilledUV).xyz * 2.0 - 1.0) * blend.b;
-	normal += (texture(normalMaps[3], tilledUV).xyz * 2.0 - 1.0) * blend.a;
-	
-	float h = texture(heightMap, inUV).r;
-	vec2 step = vec2(1.0 / u_terrain.mapDimension, 0);
-	float eps = (u_terrain.blockCx * u_terrain.blockSize) * step.x * 2.0;
-	float LR  = getHeight(inUV - step.xy) - getHeight(inUV + step.xy);
-	float TB  = getHeight(inUV - step.yx) - getHeight(inUV + step.yx);
-	
-	normal = normalMatrix * mat3(normalize(vec3(eps, LR, 0.0)),
- 								normalize(vec3(0.0, TB, eps)),
- 								normalize(vec3(LR, eps, TB))) * normal;
-*/
-	
-	
-	vec3 samNormal = texture(normalMap, inUV).xyz * 2.0 - 1.0;
+	vec3 samNormal = texture(normalHeightMap[inTerrainId], inUV).xyz * 2.0 - 1.0;
 	vec3 normal = normalMatrix * vec3(-samNormal.x, samNormal.z, -samNormal.y);
 
 	outAlbedoAlpha = vec4(color, 1.0);

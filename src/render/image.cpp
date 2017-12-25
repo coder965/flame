@@ -232,6 +232,22 @@ namespace tke
 #undef gd
 	}
 
+	unsigned char Image::getA(float _x, float _y)
+	{
+		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
+			return 0;
+
+		auto x = glm::fract(_x);
+		int X = glm::floor(_x);
+		auto y = glm::fract(_y);
+		int Y = glm::floor(_y);
+
+		auto pixel_size = bpp / 8;
+#define gd(a, b) (float)levels[0].v[(a) * pixel_size + 3 + (b) * levels[0].pitch]
+		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
+#undef gd
+	}
+
 	Image *load_image(const std::string &filename, int min_level, bool sRGB, bool saveData)
 	{
 		auto image_data = createImageData(filename);

@@ -503,7 +503,7 @@ namespace tke
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
 		staticObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticObjectCount);
 		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedObjectCount);
-		terrainBuffer = std::make_unique<UniformBuffer>(sizeof TerrainShaderStruct);
+		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
 		ambientBuffer = std::make_unique<UniformBuffer>(sizeof AmbientBufferShaderStruct);
@@ -807,50 +807,66 @@ namespace tke
 
 		std::vector<VkWriteDescriptorSet> writes;
 
-		if (scene->terrain)
+		if (scene->waters.size() > 0)
 		{
-			if (scene->terrain->changed)
+			std::vector<VkBufferCopy> ranges;
+			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(TerrainShaderStruct) * scene->terrains.size());
+
+			auto index = 0;
+			for (auto &t : scene->terrains)
 			{
-				TerrainShaderStruct stru;
-				stru.coord = scene->terrain->getCoord();
-				stru.blockCx = scene->terrain->block_cx;
-				stru.blockSize = scene->terrain->block_size;
-				stru.height = scene->terrain->height;
-				stru.tessellationFactor = scene->terrain->tessellation_factor;
-				stru.textureUvFactor = scene->terrain->texture_uv_factor;
-				stru.mapDimension = scene->terrain->heightMap->levels[0].cx;
-
-				terrainBuffer->update(&stru, stagingBuffer);
-
-				if (scene->terrain->heightMap)
-					writes.push_back(ds_terrain->imageWrite(TerrainHeightMapBinding, 0, scene->terrain->heightMap, colorBorderSampler));
-				if (scene->terrain->normalMap)
-					writes.push_back(ds_terrain->imageWrite(TerrainNormalMapBinding, 0, scene->terrain->normalMap, colorBorderSampler));
-				if (scene->terrain->blendMap)
-					writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, 0, scene->terrain->blendMap, colorBorderSampler));
-				for (int i = 0; i < 4; i++)
+				t->sceneIndex = index;
+				if (t->changed)
 				{
-					if (scene->terrain->colorMaps[i])
-						writes.push_back(ds_terrain->imageWrite(TerrainColorMapsBinding, i, scene->terrain->colorMaps[i], colorWrapSampler));
+					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
+					TerrainShaderStruct stru;
+					stru.coord = t->getCoord();
+					stru.blockCx = t->block_cx;
+					stru.blockSize = t->block_size;
+					stru.height = t->height;
+					stru.tessellationFactor = t->tessellation_factor;
+					stru.textureUvFactor = t->texture_uv_factor;
+					stru.mapDimension = t->normalHeightMap ? t->normalHeightMap->levels[0].cx : 1;
+					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
+					VkBufferCopy range = {};
+					range.srcOffset = srcOffset;
+					range.dstOffset = sizeof(TerrainShaderStruct) * index;
+					range.size = sizeof(TerrainShaderStruct);
+					ranges.push_back(range);
+
+					if (t->normalHeightMap)
+						writes.push_back(ds_terrain->imageWrite(TerrainNormalHeightMapBinding, index, t->normalHeightMap, colorBorderSampler));
+					if (t->blendMap)
+						writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, index, t->blendMap, colorBorderSampler));
+					for (int i = 0; i < 4; i++)
+					{
+						if (t->colorMaps[i])
+							writes.push_back(ds_terrain->imageWrite(TerrainColorMapsBinding, index * MaxTerrainCount + i, t->colorMaps[i], colorWrapSampler));
+					}
+					for (int i = 0; i < 4; i++)
+					{
+						if (t->normalMaps[i])
+							writes.push_back(ds_terrain->imageWrite(TerrainNormalMapsBinding, index * MaxTerrainCount + i, t->normalMaps[i], colorWrapSampler));
+					}
 				}
-				for (int i = 0; i < 4; i++)
-				{
-					if (scene->terrain->normalMaps[i])
-						writes.push_back(ds_terrain->imageWrite(TerrainNormalMapsBinding, i, scene->terrain->normalMaps[i], colorWrapSampler));
-				}
+				index++;
 			}
+
+			stagingBuffer->unmap();
+			stagingBuffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 		if (scene->waters.size() > 0)
 		{
-			int updateCount = 0;
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(WaterShaderStruct) * scene->waters.size());
 
+			auto index = 0;
 			for (auto &w : scene->waters)
 			{
+				w->sceneIndex = index;
 				if (w->changed)
 				{
-					auto offset = sizeof(WaterShaderStruct) * updateCount;
+					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
 					WaterShaderStruct stru;
 					stru.coord = w->getCoord();
 					stru.blockCx = w->blockCx;
@@ -859,15 +875,14 @@ namespace tke
 					stru.tessellationFactor = w->tessellationFactor;
 					stru.textureUvFactor = w->textureUvFactor;
 					stru.mapDimension = 1024;
-					memcpy(map + offset, &stru, sizeof(WaterShaderStruct));
+					memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
 					VkBufferCopy range = {};
-					range.srcOffset = offset;
-					range.dstOffset = offset;
+					range.srcOffset = srcOffset;
+					range.dstOffset = sizeof(WaterShaderStruct) * index;
 					range.size = sizeof(WaterShaderStruct);
 					ranges.push_back(range);
-
-					updateCount++;
 				}
+				index++;
 			}
 			stagingBuffer->unmap();
 			stagingBuffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
@@ -1031,6 +1046,7 @@ namespace tke
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
 			for (auto &l : scene->lights)
 			{
+				l->sceneIndex = lightIndex;
 				if (l->changed)
 				{
 					LightShaderStruct stru;
@@ -1140,11 +1156,15 @@ namespace tke
 			cb->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animatedIndirectCount);
 		}
 		// terrain
-		if (scene->terrain)
+		if (scene->terrains.size() > 0)
 		{
-			cb->bindPipeline(terrainPipeline);
-			cb->bindDescriptorSet(&ds_terrain->v);
-			cb->draw(4, 0, scene->terrain->block_cx * scene->terrain->block_cx);
+			int index = 0;
+			for (auto &t : scene->terrains)
+			{
+				cb->bindPipeline(terrainPipeline);
+				cb->bindDescriptorSet(&ds_terrain->v);
+				cb->draw(4, 0, (index << 16) + t->block_cx * t->block_cx);
+			}
 		}
 		// water
 		if (scene->waters.size() > 0)
@@ -1154,7 +1174,7 @@ namespace tke
 			{
 				cb->bindPipeline(waterPipeline);
 				cb->bindDescriptorSet(&ds_water->v);
-				cb->draw(4, 0, w->blockCx * w->blockCx);
+				cb->draw(4, 0, (index << 16) + w->blockCx * w->blockCx);
 			}
 		}
 

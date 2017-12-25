@@ -78,6 +78,9 @@ bool frustumCheck()
 
 void main()
 {
+	outWaterId[gl_InvocationID] = inWaterId[0];
+	outUV[gl_InvocationID] = inUV[gl_InvocationID];
+
 	if (gl_InvocationID == 0)
 	{
 		if (!frustumCheck())
@@ -114,6 +117,4 @@ void main()
 	}
 
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-	outWaterId[gl_InvocationID] = inWaterId[gl_InvocationID];
-	outUV[gl_InvocationID] = inUV[gl_InvocationID];
 } 

@@ -161,13 +161,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Xml Include="data.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="scene_1.scene" />
-    <None Include="scene_2.scene" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\src\editor\editor.cpp" />
     <ClCompile Include="..\src\editor\tool\tool.cpp" />
     <ClCompile Include="..\src\editor\tool\transformer_tool.cpp" />
