@@ -101,9 +101,9 @@ namespace tke
 	IMPL() VkPipelineVertexInputStateCreateInfo vertexStatInputState;
 	IMPL() VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
 
-	IMPL(nullptr) VertexBuffer *vertexStatBuffer;
-	IMPL(nullptr) VertexBuffer *vertexAnimBuffer;
-	IMPL(nullptr) IndexBuffer *indexBuffer;
+	IMPL() std::unique_ptr<VertexBuffer> vertexStatBuffer;
+	IMPL() std::unique_ptr<VertexBuffer> vertexAnimBuffer;
+	IMPL() std::unique_ptr<IndexBuffer> indexBuffer;
 
 	IMPL() std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
 	IMPL(nullptr) std::shared_ptr<Material> defaultMaterial;

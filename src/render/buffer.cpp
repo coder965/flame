@@ -7,33 +7,6 @@ namespace tke
 {
 	static void buffer_create(Buffer *p)
 	{
-		VkBufferCreateInfo bufferInfo = {};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = p->size;
-		bufferInfo.usage = p->usage;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		auto res = vkCreateBuffer(vk_device.v, &bufferInfo, nullptr, &p->v);
-		assert(res == VK_SUCCESS);
-
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(vk_device.v, p->v, &memRequirements);
-
-		assert(p->size <= memRequirements.size);
-
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findVkMemoryType(memRequirements.memoryTypeBits, p->memoryProperty);
-
-		res = vkAllocateMemory(vk_device.v, &allocInfo, nullptr, &p->memory);
-		assert(res == VK_SUCCESS);
-
-		res = vkBindBufferMemory(vk_device.v, p->v, p->memory, 0);
-		assert(res == VK_SUCCESS);
-
-		p->info.buffer = p->v;
-		p->info.range = p->size;
 	}
 
 	static void buffer_copy(Buffer *p, void *data)
@@ -46,35 +19,47 @@ namespace tke
 		stagingBuffer.copyTo(p, p->size);
 	}
 
-	static void buffer_destroy(Buffer *p)
-	{
-		vkFreeMemory(vk_device.v, p->memory, nullptr);
-		vkDestroyBuffer(vk_device.v, p->v, nullptr);
-	}
-
 	Buffer::Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty)
 	{
 		size = _size;
 		usage = _usage;
 		memoryProperty = _memoryProperty;
 
-		buffer_create(this);
+		VkBufferCreateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = size;
+		bufferInfo.usage = usage;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		auto res = vkCreateBuffer(vk_device.v, &bufferInfo, nullptr, &v);
+		assert(res == VK_SUCCESS);
+
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(vk_device.v, v, &memRequirements);
+
+		assert(size <= memRequirements.size);
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = findVkMemoryType(memRequirements.memoryTypeBits, memoryProperty);
+
+		res = vkAllocateMemory(vk_device.v, &allocInfo, nullptr, &memory);
+		assert(res == VK_SUCCESS);
+
+		res = vkBindBufferMemory(vk_device.v, v, memory, 0);
+		assert(res == VK_SUCCESS);
+
+		info.buffer = v;
+		info.range = size;
 
 		info.offset = 0;
 	}
 
 	Buffer::~Buffer()
 	{
-		buffer_destroy(this);
-	}
-
-	void Buffer::recreate(size_t _size, void *data)
-	{
-		buffer_destroy(this);
-		size = _size;
-		buffer_create(this);
-		if (data)
-			buffer_copy(this, data);
+		vkFreeMemory(vk_device.v, memory, nullptr);
+		vkDestroyBuffer(vk_device.v, v, nullptr);
 	}
 
 	void *Buffer::map(size_t offset, size_t _size)

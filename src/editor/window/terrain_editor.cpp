@@ -9,7 +9,7 @@ TerrainEditor::TerrainEditor()
 	first_cx = 800;
 	first_cy = 600;
 
-	create_vertex(true);
+	create_vertex();
 
 	camera.setMode(tke::CameraMode::targeting);
 	renderer = std::make_unique<tke::PlainRenderer>();
@@ -25,6 +25,8 @@ struct SaveModelDialog : FileSelector
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}
 };
+
+static tke::Pipeline *update_normal_pipeline;
 
 void TerrainEditor::do_show()
 {
@@ -89,7 +91,7 @@ void TerrainEditor::do_show()
 			if (sBlock_count != block_count)
 			{
 				block_count= sBlock_count;
-				create_vertex(false);
+				create_vertex();
 			}
 			ImGui::CloseCurrentPopup();
 		}
@@ -221,9 +223,16 @@ void TerrainEditor::do_show()
 	}
 }
 
-void TerrainEditor::create_vertex(bool first)
+void TerrainEditor::create_vertex()
 {
 	auto vxcount = block_count + 1;
+	auto vxcount2 = vxcount * vxcount;
+
+	height_array = std::make_unique<float[]>(vxcount2);
+	for (int i = 0; i < vxcount2; i++)
+		height_array[i] = 0.f;
+	
+
 	vertexs.resize(vxcount * vxcount);
 	glm::vec3 center = glm::vec3(block_count * -0.5f, 0.f, block_count * -0.5f);
 	for (int y = 0; y < vxcount; y++)
@@ -254,14 +263,6 @@ void TerrainEditor::create_vertex(bool first)
 		}
 	}
 
-	if (first)
-	{
-		vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::Vertex) * vertexs.size(), vertexs.data());
-		index_buffer = std::make_unique<tke::IndexBuffer>(sizeof(int) * indices.size(), indices.data());
-	}
-	else
-	{
-		vertex_buffer->recreate(sizeof(tke::Vertex) * vertexs.size(), vertexs.data());
-		index_buffer->recreate(sizeof(int) * indices.size(), indices.data());
-	}
+	vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::Vertex) * vertexs.size(), vertexs.data());
+	index_buffer = std::make_unique<tke::IndexBuffer>(sizeof(int) * indices.size(), indices.data());
 }

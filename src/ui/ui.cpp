@@ -23,8 +23,8 @@ namespace tke
 {
 	static Pipeline *pipeline_ui;
 	static CommandBuffer *cb_ui;
-	static ImmediateVertexBuffer	*vertexBuffer_ui;
-	static ImmediateIndexBuffer *indexBuffer_ui;
+	static std::unique_ptr<ImmediateVertexBuffer> vertexBuffer_ui;
+	static std::unique_ptr<ImmediateIndexBuffer> indexBuffer_ui;
 
 	static void _SetClipboardCallback(void *user_data, const char *s)
 	{
@@ -67,9 +67,6 @@ namespace tke
 				.addShader(enginePath + "shader/ui.frag", {}),
 				renderPass_window, 0, true);
 		}
-
-		vertexBuffer_ui = new ImmediateVertexBuffer();
-		indexBuffer_ui = new ImmediateIndexBuffer();
 
 		ImGuiIO& io = ImGui::GetIO();
 		{
@@ -201,11 +198,11 @@ namespace tke
 
 				size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 				if (!vertexBuffer_ui || vertexBuffer_ui->size < vertex_size)
-					vertexBuffer_ui->recreate(vertex_size);
+					vertexBuffer_ui = std::make_unique<ImmediateVertexBuffer>(vertex_size);
 
 				size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 				if (!indexBuffer_ui || indexBuffer_ui->size < index_size)
-					indexBuffer_ui->recreate(index_size);
+					indexBuffer_ui = std::make_unique<ImmediateIndexBuffer>(index_size);
 
 				auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->map(0, vertex_size);
 				auto idx_dst = (ImDrawIdx*)indexBuffer_ui->map(0, index_size);
@@ -234,8 +231,8 @@ namespace tke
 			{
 				cb_ui->setViewportAndScissor(window_cx, window_cy);
 
-				cb_ui->bindVertexBuffer(vertexBuffer_ui);
-				cb_ui->bindIndexBuffer(indexBuffer_ui, VK_INDEX_TYPE_UINT16);
+				cb_ui->bindVertexBuffer(vertexBuffer_ui.get());
+				cb_ui->bindIndexBuffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
 
 				cb_ui->bindPipeline(pipeline_ui);
 				cb_ui->bindDescriptorSet();

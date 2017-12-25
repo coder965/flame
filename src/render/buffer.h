@@ -20,7 +20,6 @@ namespace tke
 		Buffer(size_t _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		// must call in main thread
 		~Buffer();
-		void recreate(size_t _size, void *data = nullptr);
 		void *map(size_t offset, size_t _size);
 		void unmap();
 		void copyTo(Buffer *dst, VkDeviceSize size, size_t srcOffset = 0, size_t dstOffset = 0);

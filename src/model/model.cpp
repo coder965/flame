@@ -1783,9 +1783,10 @@ namespace tke
 		auto vss = vertex_stat_count > 0 ? sizeof(Vertex) * vertex_stat_count : 1;
 		auto vas = vertex_anim_count > 0 ? sizeof(VertexSkeleton) * vertex_anim_count : 1;
 		auto is = indice_count > 0 ? sizeof(int) * indice_count : 1;
-		vertexStatBuffer->recreate(vss);
-		vertexAnimBuffer->recreate(vas);
-		indexBuffer->recreate(is);
+
+		vertexStatBuffer = std::make_unique<VertexBuffer>(vss);
+		vertexAnimBuffer = std::make_unique<VertexBuffer>(vas);
+		indexBuffer = std::make_unique<IndexBuffer>(is);
 
 		auto total_size = vss + vas + is;
 		StagingBuffer stagingBuffer(total_size);
@@ -1840,7 +1841,7 @@ namespace tke
 			range.srcOffset = vso;
 			range.dstOffset = 0;
 			range.size = sizeof(Vertex) * vertex_stat_count;
-			stagingBuffer.copyTo(vertexStatBuffer, 1, &range);
+			stagingBuffer.copyTo(vertexStatBuffer.get(), 1, &range);
 		}
 		if (vertex_anim_count > 0)
 		{
@@ -1848,7 +1849,7 @@ namespace tke
 			range.srcOffset = vao;
 			range.dstOffset = 0;
 			range.size = sizeof(VertexSkeleton) * vertex_anim_count;
-			stagingBuffer.copyTo(vertexAnimBuffer, 1, &range);
+			stagingBuffer.copyTo(vertexAnimBuffer.get(), 1, &range);
 		}
 		if (indice_count > 0)
 		{
@@ -1856,7 +1857,7 @@ namespace tke
 			range.srcOffset = io;
 			range.dstOffset = 0;
 			range.size = sizeof(int) * indice_count;
-			stagingBuffer.copyTo(indexBuffer, 1, &range);
+			stagingBuffer.copyTo(indexBuffer.get(), 1, &range);
 		}
 	}
 
@@ -1947,10 +1948,6 @@ namespace tke
 
 			vertexAnimInputState = vertexStateInfo(TK_ARRAYSIZE(bindings), bindings, TK_ARRAYSIZE(attributes), attributes);
 		}
-
-		vertexStatBuffer = new VertexBuffer();
-		vertexAnimBuffer = new VertexBuffer();
-		indexBuffer = new IndexBuffer();
 
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
 		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");

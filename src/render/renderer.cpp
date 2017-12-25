@@ -163,8 +163,8 @@ namespace tke
 		}
 		else
 		{
-			cb->bindVertexBuffer2(vertexStatBuffer, vertexAnimBuffer);
-			cb->bindIndexBuffer(indexBuffer);
+			cb->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
+			cb->bindIndexBuffer(indexBuffer.get());
 		}
 
 		struct
@@ -1068,8 +1068,8 @@ namespace tke
 				};
 				cb->beginRenderPass(renderPass_depthC_image32fC, fb_esm[i].get(), clearValues);
 
-				cb->bindVertexBuffer2(vertexStatBuffer, vertexAnimBuffer);
-				cb->bindIndexBuffer(indexBuffer);
+				cb->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
+				cb->bindIndexBuffer(indexBuffer.get());
 
 				// static
 				if (staticObjects.size() > 0)
@@ -1112,8 +1112,8 @@ namespace tke
 
 		cb->beginRenderPass(defeRenderPass, this->framebuffer.get());
 
-		cb->bindVertexBuffer2(vertexStatBuffer, vertexAnimBuffer);
-		cb->bindIndexBuffer(indexBuffer);
+		cb->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
+		cb->bindIndexBuffer(indexBuffer.get());
 
 		// mrt
 		// static
