@@ -345,6 +345,7 @@ namespace tke
 	static Pipeline *scatteringPipeline;
 	static Pipeline *downsamplePipeline;
 	static Pipeline *convolvePipeline;
+	static Pipeline *copyPipeline;
 	static Pipeline *mrtPipeline;
 	static Pipeline *mrtAnimPipeline;
 	static Pipeline *terrainPipeline;
@@ -406,6 +407,11 @@ namespace tke
 				.cullMode(VK_CULL_MODE_NONE)
 				.addShader(enginePath + "shader/fullscreenUv.vert", {})
 				.addShader(enginePath + "shader/sky/convolve.frag", {}),
+				renderPass_image16, 0, true);
+			copyPipeline = new Pipeline(PipelineCreateInfo()
+				.cullMode(VK_CULL_MODE_NONE)
+				.addShader(enginePath + "shader/fullscreenUv.vert", {})
+				.addShader(enginePath + "shader/copy.frag", {}),
 				renderPass_image16, 0, true);
 			mrtPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -634,8 +640,7 @@ namespace tke
 		}
 		if (scene->needUpdateSky)
 		{
-			if (!scene->sky)
-			{
+			auto funClearEnvrImage = [&]() {
 				auto cb = begineOnceCommandBuffer();
 				VkClearColorValue clear_value = { 0.f, 0.f, 0.f, 0.f };
 				VkImageSubresourceRange range = {
@@ -645,7 +650,48 @@ namespace tke
 				};
 				vkCmdClearColorImage(cb->v, envrImage->v, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &range);
 				endOnceCommandBuffer(cb);
-			}
+			};
+
+			auto funUpdateIBL = [&]() {
+				for (int i = 0; i < envrImage->levels.size() - 1; i++)
+				{
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
+
+					cb->beginRenderPass(renderPass_image16, fb.get());
+					cb->bindPipeline(downsamplePipeline);
+					cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
+					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
+					updateDescriptorSets(1, &downsamplePipeline->descriptorSet->imageWrite(0, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler));
+					cb->bindDescriptorSet();
+					cb->draw(3);
+					cb->endRenderPass();
+
+					endOnceCommandBuffer(cb);
+				}
+
+				for (int i = 1; i < envrImage->levels.size(); i++)
+				{
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
+
+					cb->beginRenderPass(renderPass_image16, fb.get());
+					cb->bindPipeline(convolvePipeline);
+					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
+					cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
+					updateDescriptorSets(1, &convolvePipeline->descriptorSet->imageWrite(0, 0, envrImageDownsample[i - 1], plainSampler));
+					cb->bindDescriptorSet();
+					cb->draw(3);
+					cb->endRenderPass();
+
+					endOnceCommandBuffer(cb);
+				}
+			};
+
+			if (!scene->sky)
+				funClearEnvrImage();
 			else
 			{
 				switch (scene->sky->type)
@@ -653,72 +699,49 @@ namespace tke
 				case SkyType::atmosphere_scattering:
 				{
 					auto as = (SkyAtmosphereScattering*)scene->sky.get();
+
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
+
+					cb->beginRenderPass(renderPass_image16, fb.get());
+					cb->bindPipeline(scatteringPipeline);
+					auto euler = as->sun_light->getEuler();
+					auto dir = glm::vec2(euler.x, euler.z);
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
+					cb->draw(3);
+					cb->endRenderPass();
+
+					endOnceCommandBuffer(cb);
+
+					funUpdateIBL();
+
+					break;
+				}
+				case SkyType::panorama:
+				{
+					auto pa = (SkyPanorama*)scene->sky.get();
+
+					if (pa->panoImage)
 					{
 						auto cb = begineOnceCommandBuffer();
 						auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 						cb->beginRenderPass(renderPass_image16, fb.get());
-						cb->bindPipeline(scatteringPipeline);
-						auto euler = as->sun_light->getEuler();
-						auto dir = glm::vec2(euler.x, euler.z);
-						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
-						cb->draw(3);
-						cb->endRenderPass();
-
-						endOnceCommandBuffer(cb);
-					}
-
-					// update IBL
-					for (int i = 0; i < 3; i++)
-					{
-						auto cb = begineOnceCommandBuffer();
-						auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
-
-						cb->beginRenderPass(renderPass_image16, fb.get());
-						cb->bindPipeline(downsamplePipeline);
-						cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
-						auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
-						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-						updateDescriptorSets(1, &downsamplePipeline->descriptorSet->imageWrite(0, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler));
+						cb->bindPipeline(copyPipeline);
+						cb->setViewportAndScissor(EnvrSizeCx, EnvrSizeCy);
+						updateDescriptorSets(1, &copyPipeline->descriptorSet->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
 						cb->bindDescriptorSet();
 						cb->draw(3);
 						cb->endRenderPass();
 
 						endOnceCommandBuffer(cb);
+
+						funUpdateIBL();
 					}
-
-					for (int i = 1; i < envrImage->levels.size(); i++)
-					{
-						auto cb = begineOnceCommandBuffer();
-						auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
-
-						cb->beginRenderPass(renderPass_image16, fb.get());
-						cb->bindPipeline(convolvePipeline);
-						auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
-						cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
-						updateDescriptorSets(1, &convolvePipeline->descriptorSet->imageWrite(0, 0, envrImageDownsample[i - 1], plainSampler));
-						cb->bindDescriptorSet();
-						cb->draw(3);
-						cb->endRenderPass();
-
-						endOnceCommandBuffer(cb);
-					}
+					else
+						funClearEnvrImage();
 					break;
 				}
-				case SkyType::panorama:
-					// TODO : FIX SKY FROM FILE
-					//if (skyImage)
-					//{
-					//	//writes.push_back(vk->writeDescriptorSet(panoramaPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, skyImage->getInfo(colorSampler), 0));
-					//	//writes.push_back(vk->writeDescriptorSet(deferredPipeline.m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, radianceImage->getInfo(colorSampler), 0));
-
-					//	AmbientBufferShaderStruct stru;
-					//	stru.v = glm::vec4(1.f, 1.f, 1.f, skyImage->level - 1);
-					//	stru.fogcolor = glm::vec4(0.f, 0.f, 1.f, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-					//	ambientBuffer->update(&stru, *stagingBuffer);
-					//}
-					break;
 				}
 			}
 		}

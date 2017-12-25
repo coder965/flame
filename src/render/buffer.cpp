@@ -113,11 +113,12 @@ namespace tke
 
 	void Buffer::update(void *data, StagingBuffer *stagingBuffer, size_t _size)
 	{
-		if (_size == 0) _size = size;
-		void* map = stagingBuffer->map(0, size);
-		memcpy(map, data, size);
+		if (_size == 0) 
+			_size = size;
+		void* map = stagingBuffer->map(0, _size);
+		memcpy(map, data, _size);
 		stagingBuffer->unmap();
-		stagingBuffer->copyTo(this, size);
+		stagingBuffer->copyTo(this, _size);
 	}
 
 	StagingBuffer::StagingBuffer(size_t _size)

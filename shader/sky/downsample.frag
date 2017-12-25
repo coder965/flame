@@ -17,10 +17,10 @@ void main()
 {
 	vec2 offset = 1.0 / pc.size;
 	
-   outColor = (
-        texture(source, inTexcoord) +
+	outColor = (
+		texture(source, inTexcoord) +
 		texture(source, inTexcoord + vec2(0.0, offset.y)) +
 		texture(source, inTexcoord + vec2(offset.x, 0.0)) +
 		texture(source, inTexcoord + vec2(offset.x, offset.y))
-    ) * 0.25;
+	) * 0.25;
 }

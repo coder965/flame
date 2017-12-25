@@ -277,7 +277,7 @@ namespace tke
 		{
 			if (!modelTextures[i].lock())
 			{
-				auto t = getImage(_filename, sRGB);
+				auto t = getImage(_filename, 0, sRGB);
 				if (!t)
 					return nullptr;
 

@@ -232,21 +232,13 @@ namespace tke
 #undef gd
 	}
 
-	static std::map<unsigned int, std::weak_ptr<Image>> _images;
-
-	std::shared_ptr<Image> getImage(const std::string &filename, bool sRGB, bool saveData)
+	Image *load_image(const std::string &filename, int min_level, bool sRGB, bool saveData)
 	{
-		auto hash = HASH(filename.c_str());
-		auto it = _images.find(hash);
-		if (it != _images.end())
-		{
-			auto s = it->second.lock();
-			if (s) return s;
-		}
-
 		auto image_data = createImageData(filename);
 		if (!image_data)
 			return nullptr;
+
+		auto level_count = std::max((int)image_data->levels.size(), min_level);
 
 		VkFormat _format = VK_FORMAT_UNDEFINED;
 		switch (image_data->channel)
@@ -275,8 +267,8 @@ namespace tke
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
-		auto i = std::make_shared<Image>(image_data->levels[0].cx, image_data->levels[0].cy, 
-			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_data->levels.size(), 1, false);
+		auto i = new Image(image_data->levels[0].cx, image_data->levels[0].cy,
+			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, level_count, 1, false);
 		for (int l = 0; l < image_data->levels.size(); l++)
 		{
 			i->fillData(l, image_data->levels[l].v.get(), image_data->levels[l].size);
@@ -294,6 +286,25 @@ namespace tke
 				image_data->levels[l].v = nullptr;
 			}
 		}
+
+		return i;
+	}
+
+	static std::map<unsigned int, std::weak_ptr<Image>> _images;
+
+	std::shared_ptr<Image> getImage(const std::string &filename, int min_level, bool sRGB, bool saveData)
+	{
+		auto hash = HASH(filename.c_str());
+		auto it = _images.find(hash);
+		if (it != _images.end())
+		{
+			auto s = it->second.lock();
+			if (s) return s;
+		}
+
+		auto i = std::shared_ptr<Image>(load_image(filename, min_level, sRGB, saveData));
+		if (!i)
+			return nullptr;
 
 		_images[hash] = i;
 		return i;

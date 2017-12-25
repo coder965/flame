@@ -4,6 +4,10 @@
 
 namespace tke
 {
+	struct Scene;
+	struct Light;
+	struct Image;
+
 	enum class SkyType
 	{
 		null,
@@ -18,9 +22,6 @@ namespace tke
 		Sky(SkyType _type);
 		virtual ~Sky() {}
 	};
-
-	struct Scene;
-	struct Light;
 
 	struct SkyAtmosphereScattering : Sky
 	{
@@ -41,6 +42,8 @@ namespace tke
 
 	struct SkyPanorama : Sky
 	{
+		std::shared_ptr<Image> panoImage;
+
 		SkyPanorama();
 	};
 }

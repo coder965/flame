@@ -62,5 +62,6 @@ namespace tke
 		VkDescriptorImageInfo *getInfo(VkImageView view, VkSampler sampler);
 	};
 
-	std::shared_ptr<Image> getImage(const std::string &filename, bool sRGB = false, bool saveData = false);
+	Image *load_image(const std::string &filename, int min_level = 0, bool sRGB = false, bool saveData = false);
+	std::shared_ptr<Image> getImage(const std::string &filename, int min_level = 0, bool sRGB = false, bool saveData = false);
 }

@@ -99,7 +99,31 @@ void EntityWindow::do_show()
 				break;
 			}
 			case tke::SkyType::panorama:
+			{
+				auto pa = (tke::SkyPanorama*)scene->sky.get();
+				ImGui::Text("Image:%s", pa->panoImage ? pa->panoImage->filename.c_str() : "Null");
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
+					{
+						static char filename[260];
+						strcpy(filename, (char*)payload->Data);
+						if (!pa->panoImage || pa->panoImage->filename != filename)
+						{
+							std::experimental::filesystem::path path(filename);
+							auto ext = path.extension();
+							if (tke::is_image_file(ext.string()))
+							{
+								pa->panoImage = tke::getImage(filename);
+								scene->needUpdateSky = true;
+							}
+						}
+
+					}
+					ImGui::EndDragDropTarget();
+				}
 				break;
+			}
 			}
 
 			break;
