@@ -5,9 +5,6 @@
 
 struct EntityWindow : IWindow
 {
-	tke::Scene *scene;
-
-	EntityWindow(tke::Scene *_scene);
 	~EntityWindow();
 	virtual void do_show() override;
 };

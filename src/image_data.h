@@ -44,4 +44,6 @@ namespace tke
 	std::shared_ptr<ImageData> createImageData(const std::string &filename);
 	void newImageFile(const std::string &filename, int cx, int cy, int bpp);
 	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp);
+	void saveBitmap24(const std::string &filename, int cx, int cy, void *data);
+	void saveBitmap32(const std::string &filename, int cx, int cy, void *data);
 }

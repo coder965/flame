@@ -3,13 +3,13 @@
 #include "../../entity/scene.h"
 #include "../../render/display_layer.h"
 #include "../../render/renderer.h"
-#include "../select.h"
 #include "../tool/transformer_tool.h"
 #include "entity_window.h"
 
 struct SceneEditor
 {
 	std::shared_ptr<tke::Scene> scene;
+	std::weak_ptr<tke::Node> selected;
 
 	tke::DisplayLayer layer;
 
@@ -35,7 +35,7 @@ struct SceneEditor
 	void on_menu_bar();
 	void on_view_menu();
 	void do_show();
-	void save(tke::AttributeTreeNode *);
+	void save(tke::XMLNode *);
 };
 
 extern std::unique_ptr<SceneEditor> scene_editor;

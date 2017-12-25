@@ -1,12 +1,6 @@
 #pragma once
 
 #include "../math/math.h"
-#include "camera.h"
-#include "sky.h"
-#include "light.h"
-#include "object.h"
-#include "terrain.h"
-#include "water.h"
 #include "../physics/physics.h"
 #include "../render/buffer.h"
 #include "../render/image.h"
@@ -14,6 +8,12 @@
 #include "../render/pipeline.h"
 #include "../render/command_buffer.h"
 #include "../resource/resource.h"
+#include "camera.h"
+#include "sky.h"
+#include "light.h"
+#include "object.h"
+#include "terrain.h"
+#include "water.h"
 
 namespace tke
 {
@@ -43,13 +43,10 @@ namespace tke
 
 		Camera camera;
 
-		std::vector<std::unique_ptr<Light>> lights;
-
-		std::vector<std::unique_ptr<Object>> objects;
-
-		std::unique_ptr<Terrain> terrain;
-
-		std::vector<std::unique_ptr<Water>> waters;
+		std::vector<std::shared_ptr<Light>> lights;
+		std::vector<std::shared_ptr<Object>> objects;
+		std::shared_ptr<Terrain> terrain;
+		std::vector<std::shared_ptr<Water>> waters;
 
 		bool needUpdateSky = true;
 		bool needUpdateAmbientBuffer = true;

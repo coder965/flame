@@ -1,14 +1,9 @@
 #include "../../ui/ui.h"
 #include "../../core.h"
-#include "../select.h"
+#include "scene_editor.h"
 #include "entity_window.h"
 
 EntityWindow *entity_window = nullptr;
-
-EntityWindow::EntityWindow(tke::Scene *_scene)
-	:scene(_scene)
-{
-}
 
 EntityWindow::~EntityWindow()
 {
@@ -19,6 +14,8 @@ void EntityWindow::do_show()
 {
 	ImGui::Begin("Entity", &opened);
 
+	auto scene = scene_editor->scene.get();
+	auto s = scene_editor->selected.lock();
 	if (ImGui::TreeNode(("Lights - " + std::to_string(scene->lights.size())).c_str()))
 	{
 		ImGui::TreePop();
@@ -27,9 +24,9 @@ void EntityWindow::do_show()
 	{
 		for (int i = 0; i < scene->objects.size(); i++)
 		{
-			auto o = scene->objects[i].get();
-			if (ImGui::Selectable(std::to_string(i).c_str(), selectedItem.toObject() == o))
-				selectedItem.select(o);
+			auto &o = scene->objects[i];
+			if (ImGui::Selectable(std::to_string(i).c_str(), s && (tke::Object*)s.get() == o.get()))
+				scene_editor->selected = o;
 		}
 		ImGui::TreePop();
 	}
@@ -58,9 +55,9 @@ void EntityWindow::do_show()
 		ImGui::TreePop();
 	}
 
-	auto obj = selectedItem.toObject();
-	if (obj)
+	if (s && s->type == tke::NodeTypeObject)
 	{
+		auto obj = (tke::Object*)s.get();
 		obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
 		obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
 		obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
@@ -68,15 +65,15 @@ void EntityWindow::do_show()
 	}
 
 	ImGui::Separator();
-	if (selectedItem)
+	if (s)
 	{
-		switch (selectedItem.type)
+		switch (s->type)
 		{
-		case ItemTypeObject:
+		case tke::NodeTypeObject:
 		{
 			ImGui::TextUnformatted("Selected:Object");
 
-			auto o = selectedItem.toObject();
+			auto o = (tke::Object*)s.get();
 
 			auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
 			ImGui::Text("model:%s", modelName.c_str());

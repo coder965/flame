@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "../../PhysX-3.3/PhysXSDK/Include/PxPhysicsAPI.h"
 
 #include "../entity/transformer.h"
@@ -81,7 +83,6 @@ namespace tke
 		glm::vec3 springConstant = glm::vec3(0.f);
 		glm::vec3 sprintRotationConstant = glm::vec3(0.f);
 	};
-
 
 	extern physx::PxFoundation *pxFoundation;
 	extern physx::PxPhysics *pxPhysics;

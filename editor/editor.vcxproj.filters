@@ -58,9 +58,6 @@
     <ClCompile Include="..\src\editor\editor.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\editor\select.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\editor\window\entity_window.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
@@ -92,9 +89,6 @@
     </ClInclude>
     <ClInclude Include="..\src\editor\window\window.h">
       <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\editor\select.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\editor\window\entity_window.h">
       <Filter>src\window</Filter>

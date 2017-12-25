@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
 
 	{
-		tke::AttributeTree at("data", "ui.xml");
+		tke::XMLDoc at("data", "ui.xml");
 		if (at.good)
 		{
 			for (auto &n : at.children)
@@ -166,12 +166,12 @@ int main(int argc, char** argv)
 	};
 
 	tke::onDestroy = []() {
-		tke::AttributeTree at("data");
+		tke::XMLDoc at("data");
 		if (resourceExplorer)
 			at.newNode("resource_explorer");
 		if (SelectObject)
 			at.newNode("select");
-		at.saveXML("ui.xml");
+		at.save("ui.xml");
 	};
 
 	tke::run();

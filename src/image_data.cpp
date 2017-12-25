@@ -271,18 +271,30 @@ namespace tke
 
 	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp)
 	{
+		std::experimental::filesystem::path path(filename);
+		auto ext = path.extension().string();
+		if (ext == ".ktx")
 		{
-			std::experimental::filesystem::path path(filename);
-			auto ext = path.extension().string();
-			if (ext == ".ktx")
-			{
 
-			}
 		}
 
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
 		auto dib = FreeImage_ConvertFromRawBits(data.v.get(), data.cx, data.cy, data.pitch, bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
 		FreeImage_Save(fif, dib, filename.c_str());
+		FreeImage_Unload(dib);
+	}
+
+	void saveBitmap24(const std::string &filename, int width, int height, void *data)
+	{
+		auto dib = FreeImage_Allocate(width, height, 24);
+		FreeImage_Save(FIF_BMP, dib, filename.c_str());
+		FreeImage_Unload(dib);
+	}
+
+	void saveBitmap32(const std::string &filename, int width, int height, void *data)
+	{
+		auto dib = FreeImage_Allocate(width, height, 32);
+		FreeImage_Save(FIF_BMP, dib, filename.c_str());
 		FreeImage_Unload(dib);
 	}
 }

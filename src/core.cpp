@@ -233,6 +233,10 @@ namespace tke
 	{
 		auto init_start_time = GetTickCount();
 
+#ifdef _MSVC_LANG
+		SetProcessDPIAware();
+#endif
+
 		enginePath = path;
 		resCx = rcx;
 		resCy = rcy;
@@ -347,8 +351,9 @@ namespace tke
 			wcex.cbSize = sizeof(WNDCLASSEXA);
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
-			wcex.hInstance = (HINSTANCE)hInst;
-			wcex.hIcon = CreateIcon((HINSTANCE)hInst, iconData->levels[0].cx, iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v.get());
+			wcex.hInstance = (HINSTANCE)get_hinst();
+			wcex.hIcon = CreateIcon(wcex.hInstance, iconData->levels[0].cx, 
+				iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v.get());
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			RegisterClassExA(&wcex);
@@ -358,22 +363,27 @@ namespace tke
 		{
 			auto wndProp = getWin32WndProp();
 			hWnd = CreateWindowA("tke_wnd", title.c_str(), wndProp.second,
-				(screenCx - wndProp.first.x) / 2, (screenCy - wndProp.first.y) / 2, wndProp.first.x, wndProp.first.y, NULL, NULL, (HINSTANCE)hInst, NULL);
+				(get_screen_cx() - wndProp.first.x) / 2,  
+				(get_screen_cy() - wndProp.first.y) / 2, wndProp.first.x, 
+				wndProp.first.y, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
 		}
 
 		{
 			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
 			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			surfaceInfo.hinstance = (HINSTANCE)hInst;
+			surfaceInfo.hinstance = (HINSTANCE)get_hinst();
 			surfaceInfo.hwnd = (HWND)hWnd;
-			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surfaceInfo, nullptr, &window_surface);
+			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surfaceInfo, nullptr, 
+				&window_surface);
 			assert(res == VK_SUCCESS);
 
 			VkBool32 supported;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, window_surface, &supported);
+			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, window_surface, 
+				&supported);
 
 			VkSurfaceCapabilitiesKHR surfaceCapabilities;
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, window_surface, &surfaceCapabilities);
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, window_surface, 
+				&surfaceCapabilities);
 		}
 
 		_create_swapchain();
@@ -409,10 +419,10 @@ namespace tke
 			result.second |= WS_BORDER;
 			if (window_style & WindowStyleFullscreen)
 			{
-				result.first.x = screenCx;
-				result.first.y = screenCy;
-				window_cx = screenCx;
-				window_cy = screenCy;
+				result.first.x = get_screen_cx();
+				result.first.y = get_screen_cy();
+				window_cx = get_screen_cx();
+				window_cy = get_screen_cy();
 			}
 		}
 

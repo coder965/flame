@@ -1,5 +1,4 @@
 #include "../../ui/ui.h"
-#include "../select.h"
 #include "resource_explorer.h"
 #include "scene_editor.h"
 
@@ -284,6 +283,7 @@ void SceneEditor::on_menu_bar()
 
 		ImGui::EndMenu();
 	}
+
 	bool target = false;
 	if (ImGui::BeginMenu_keepalive("Camera"))
 	{
@@ -309,7 +309,14 @@ void SceneEditor::on_menu_bar()
 		ImGui::EndMenu();
 	}
 	if (target || follow)
-		scene->camera.object = selectedItem.toObject();
+	{
+		auto s = selected.lock();
+		if (s && s->type == tke::NodeTypeObject)
+			scene->camera.object = (tke::Object*)s.get();
+		else
+			scene->camera.object = nullptr;
+	}
+
 	static glm::vec2 sun_dir;
 	bool openSunDirPopup = false;
 	if (ImGui::BeginMenu_keepalive("Sky"))
@@ -394,7 +401,7 @@ void SceneEditor::on_view_menu()
 	if (ImGui::MenuItem("Entity Window"))
 	{
 		if (!entity_window)
-			entity_window = new EntityWindow(scene.get());
+			entity_window = new EntityWindow;
 		entity_window->_need_focus = true;
 	}
 }
@@ -489,9 +496,9 @@ void SceneEditor::do_show()
 						&tke::PlainRenderer::render_to,
 						plain_renderer.get(), std::placeholders::_1, &scene->camera, &draw_data));
 					if (index == 0)
-						selectedItem.reset();
+						selected.reset();
 					else
-						selectedItem.select(scene->objects[index - 1].get());
+						selected = scene->objects[index - 1];
 				}
 			}
 		}
@@ -597,9 +604,10 @@ void SceneEditor::do_show()
 
 	if (showSelectedWireframe)
 	{
-		auto obj = selectedItem.toObject();
-		if (obj)
+		auto s = selected.lock();
+		if (s && s->type == tke::NodeTypeObject)
 		{
+			auto obj = (tke::Object*)s.get();
 			tke::PlainRenderer::DrawData data;
 			data.mode = tke::PlainRenderer::mode_wireframe;
 			tke::PlainRenderer::DrawData::ObjData obj_data;
@@ -613,11 +621,27 @@ void SceneEditor::do_show()
 		}
 	}
 
-	transformerTool->transformer = selectedItem.toTransformer();
-	transformerTool->show(&scene->camera);
+	{
+		auto s = selected.lock();
+		if (s)
+		{
+			switch (s->type)
+			{
+			case tke::NodeTypeLight:
+				transformerTool->transformer = (tke::Light*)s.get();
+				break;
+			case tke::NodeTypeObject:
+				transformerTool->transformer = (tke::Object*)s.get();
+				break;
+			default:
+				transformerTool->transformer = nullptr;
+			}
+		}
+		transformerTool->show(&scene->camera);
+	}
 }
 
-void SceneEditor::save(tke::AttributeTreeNode *n)
+void SceneEditor::save(tke::XMLNode *n)
 {
 	n->addAttribute("filename", scene->filename);
 	n->addAttribute("follow", &follow);

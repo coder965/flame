@@ -8,7 +8,7 @@ FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_
 	first_cx = _cx;
 	first_cy = _cy;
 	filename[0] = 0;
-	set_current_path(tke::exePath);
+	set_current_path(tke::get_exe_path());
 }
 
 const char *drivers[] = {

@@ -84,8 +84,7 @@ namespace tke
 
 	static int _objectMagicIndex = 0;
 
-	void Scene::addObject(Object *o) // when an object add to scene, the owner is scene, object cannot be deleted elsewhere
-									 // and, if object has dynamic physics, it can be only moved by physics
+	void Scene::addObject(Object *o) // if object has dynamic physics, it can be only moved by physics
 	{
 		auto m = o->model;
 		if (!m)
@@ -545,7 +544,7 @@ namespace tke
 
 	void Scene::save(const std::string &filename)
 	{
-		tke::AttributeTree at("scene");
+		tke::XMLDoc at("scene");
 		at.addAttributes(this, b);
 		for (auto &o : objects)
 		{
@@ -563,7 +562,7 @@ namespace tke
 			terrain->getScale();
 			n->addAttributes(terrain.get(), terrain->b);
 		}
-		at.saveXML(filename);
+		at.save(filename);
 	}
 
 	std::map<unsigned int, std::weak_ptr<Scene>> _scenes;
@@ -584,7 +583,7 @@ namespace tke
 		auto s = std::make_shared<Scene>();
 		s->filename = filename;
 
-		tke::AttributeTree at("scene", filename);
+		tke::XMLDoc at("scene", filename);
 		at.obtainFromAttributes(s.get(), s->b);
 		for (auto &c : at.children)
 		{

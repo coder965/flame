@@ -141,6 +141,12 @@
     <ClCompile Include="..\src\file_utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\entity\node.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\refl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -249,6 +255,15 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\hash.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\entity\node.h">
+      <Filter>src\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\refl.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\define.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

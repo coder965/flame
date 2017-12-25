@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "../../utils.h"
+#include "../../file_utils.h"
 
 struct IWindow
 {
@@ -18,7 +18,7 @@ struct IWindow
 	IWindow();
 	void show();
 	virtual void do_show() = 0;
-	virtual void save(tke::AttributeTreeNode *) {}
+	virtual void save(tke::XMLNode *) {}
 	virtual ~IWindow() {}
 };
 

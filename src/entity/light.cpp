@@ -3,7 +3,7 @@
 namespace tke
 {
 	Light::Light(LightType _type, bool _shadow)
-		:type(_type), shadow(_shadow)
+		:Node(NodeTypeLight), type(_type), shadow(_shadow)
 	{
 	}
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
-#include "../utils.h"
 #include "vulkan.h"
 
 namespace tke

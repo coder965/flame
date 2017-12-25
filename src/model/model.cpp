@@ -14,7 +14,7 @@ namespace tke
 {
 	void Model::loadData(bool needRigidbody)
 	{
-		AttributeTree at("data", filename + ".xml");
+		XMLDoc at("data", filename + ".xml");
 		if (!at.good)
 			return;
 
@@ -39,7 +39,7 @@ namespace tke
 
 	void Model::saveData(bool needRigidbody)
 	{
-		AttributeTree at("data");
+		XMLDoc at("data");
 
 		at.addAttributes(this, b);
 
@@ -52,7 +52,7 @@ namespace tke
 			}
 		}
 
-		at.saveXML(filename + ".xml");
+		at.save(filename + ".xml");
 	}
 
 	std::shared_ptr<AnimationBinding> Model::bindAnimation(std::shared_ptr<Animation> a)
@@ -1220,8 +1220,8 @@ namespace tke
 
 		void load(Model *m, const std::string &filename)
 		{
-			AttributeTree at("COLLADA", filename);
-			AttributeTreeNode *n;
+			XMLDoc at("COLLADA", filename);
+			XMLNode *n;
 			n = at.firstNode("library_geometries"); assert(n);
 			n = n->firstNode("geometry"); assert(n);
 			n = n->firstNode("mesh"); assert(n);
@@ -1234,8 +1234,8 @@ namespace tke
 			{
 				if (c->name == "source")
 				{
-					AttributeTreeNode *n;
-					Attribute *a;
+					XMLNode *n;
+					XMLAttribute *a;
 					auto s = std::make_unique<Source>();
 					a = c->firstAttribute("id"); assert(a);
 					s->id = a->value;
@@ -1292,7 +1292,7 @@ namespace tke
 					{
 						if (cc->name == "input")
 						{
-							Attribute *a;
+							XMLAttribute *a;
 							a = cc->firstAttribute("source"); assert(a);
 							auto id = getId(a->value);
 							int source_index = -1;

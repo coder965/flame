@@ -8,10 +8,13 @@ namespace tke
 			actor->release();
 	}
 
-	Object::Object() {}
+	Object::Object()
+		:Node(NodeTypeObject)
+	{
+	}
 
 	Object::Object(std::shared_ptr<Model> _model, unsigned int _physicsType)
-		:model(_model), physics_type(_physicsType)
+		: Node(NodeTypeObject), model(_model), physics_type(_physicsType)
 	{
 		model_filename = model->filename;
 		if (model->vertex_skeleton)

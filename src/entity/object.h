@@ -1,7 +1,9 @@
 #pragma once
 
 #include "../model/model.h"
+#include "transformer.h"
 #include "controller.h"
+#include "node.h"
 
 namespace tke
 {
@@ -22,7 +24,7 @@ namespace tke
 		~ObjectRigidBodyData();
 	};
 
-	REFLECTABLE struct Object : Transformer, Controller, Observed
+	REFLECTABLE struct Object : Transformer, Controller, Node
 	{
 		REFL_BANK;
 

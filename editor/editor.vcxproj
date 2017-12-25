@@ -169,7 +169,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\editor\editor.cpp" />
-    <ClCompile Include="..\src\editor\select.cpp" />
     <ClCompile Include="..\src\editor\tool\tool.cpp" />
     <ClCompile Include="..\src\editor\tool\transformer_tool.cpp" />
     <ClCompile Include="..\src\editor\window\entity_window.cpp" />
@@ -182,7 +181,6 @@
     <ClCompile Include="..\src\editor\window\window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\editor\select.h" />
     <ClInclude Include="..\src\editor\tool\tool.h" />
     <ClInclude Include="..\src\editor\tool\transformer_tool.h" />
     <ClInclude Include="..\src\editor\window\entity_window.h" />

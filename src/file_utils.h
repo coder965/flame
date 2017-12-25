@@ -3,6 +3,9 @@
 #include <fstream>
 #include <filesystem>
 #include <memory>
+#include <typeindex>
+
+#include "refl.h"
 
 template<class T>
 inline std::ifstream& operator&(std::ifstream &file, T &v)
@@ -82,4 +85,80 @@ namespace tke
 	size_t get_file_length(std::ifstream &f);
 
 	std::pair<std::unique_ptr<char[]>, size_t> get_file_content(const std::string &filename);
+
+	struct XMLAttribute
+	{
+		std::string name;
+		std::string value;
+
+		void set(const std::type_index &t, void *v);
+
+		template<class T>
+		inline void set(T *v)
+		{
+			set(typeid(T), v);
+		}
+
+		template<class T>
+		inline void set(const std::string &n, T *v)
+		{
+			name = n;
+
+			set(v);
+		}
+
+		void get(const std::type_index &t, void *v);
+
+		template<class T>
+		inline void get(T *v)
+		{
+			get(typeid(T), v);
+		}
+	};
+
+	struct XMLNode
+	{
+		void *ptr = nullptr;
+		std::string name;
+		std::string value;
+		std::vector<std::unique_ptr<XMLAttribute>> attributes;
+		std::vector<std::unique_ptr<XMLNode>> children;
+
+		XMLNode(const std::string &_name);
+		XMLAttribute *newAttribute();
+		XMLAttribute *newAttribute(const std::string &, const std::string &);
+		XMLAttribute *newAttribute(const std::string &, const char *);
+		XMLAttribute *newAttribute(const std::string &, char *);
+
+		template<class T>
+		XMLAttribute *newAttribute(const std::string &n, T *v)
+		{
+			auto a = newAttribute();
+			a->set(v);
+			return a;
+		}
+
+		XMLNode *newNode(const std::string &_name);
+		XMLAttribute *firstAttribute(const std::string &_name);
+		XMLNode *firstNode(const std::string &_name);
+
+		template <class... _Valty>
+		inline void addAttribute(_Valty&&... _Val)
+		{
+			newAttribute(_Val...);
+		}
+
+		void addAttributes(void *src, ReflectionBank *b);
+		void obtainFromAttributes(void *dst, ReflectionBank *b);
+	};
+
+	struct XMLDoc : XMLNode
+	{
+		bool good = true;
+
+		XMLDoc(const std::string &_name);
+		XMLDoc(const std::string &_name, const std::string &_filename);
+		void load(const std::string &filename);
+		void save(const std::string &filename);
+	};
 }
