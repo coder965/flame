@@ -80,7 +80,7 @@ void main()
 	vec4 blend;
 	blend.rgb = texture(blendMap[inTerrainId], inUV).rgb;
 	blend.a = 1.0 - blend.x - blend.y - blend.z;
-	vec2 tilledUV = inUV * u_terrain.blockCx * u_terrain.textureUvFactor;
+	vec2 tilledUV = inUV * u_terrain.d[inTerrainId].blockCx * u_terrain.d[inTerrainId].textureUvFactor;
 
 	vec3 color = vec3(0);
 	color += texture(colorMaps[inTerrainId * 8 + 0], tilledUV).rgb * blend.r;

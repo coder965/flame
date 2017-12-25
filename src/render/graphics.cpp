@@ -2,9 +2,10 @@
 #include <set>
 
 #include "../utils.h"
-#include "vulkan.h"
+#include "graphics.h"
 #include "command_buffer.h"
 #include "descriptor.h"
+#include "pipeline.h"
 #include "sampler.h"
 
 namespace tke

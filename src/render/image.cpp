@@ -216,6 +216,19 @@ namespace tke
 		return i;
 	}
 
+	void Image::clear(const glm::vec4 &color)
+	{
+		auto cb = begineOnceCommandBuffer();
+		VkClearColorValue clear_value = { color.x, color.y, color.z, color.a };
+		VkImageSubresourceRange range = {
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			0, levels.size(),
+			0, 1
+		};
+		vkCmdClearColorImage(cb->v, v, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &range);
+		endOnceCommandBuffer(cb);
+	}
+
 	unsigned char Image::getR(float _x, float _y)
 	{
 		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)

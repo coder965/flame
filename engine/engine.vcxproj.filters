@@ -105,9 +105,6 @@
     <ClCompile Include="..\src\render\synchronization.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\render\vulkan.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\physics\physics.cpp">
       <Filter>src\physics</Filter>
     </ClCompile>
@@ -146,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="..\src\refl.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\render\graphics.cpp">
+      <Filter>src\render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -224,9 +224,6 @@
     <ClInclude Include="..\src\render\synchronization.h">
       <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\render\vulkan.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\physics\physics.h">
       <Filter>src\physics</Filter>
     </ClInclude>
@@ -265,6 +262,9 @@
     </ClInclude>
     <ClInclude Include="..\src\define.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\render\graphics.h">
+      <Filter>src\render</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

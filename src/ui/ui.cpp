@@ -2,6 +2,8 @@
 
 #include "../core.h"
 #include "../render/image.h"
+#include "../render/pipeline.h"
+#include "../render/sampler.h"
 
 #include "ui.h"
 

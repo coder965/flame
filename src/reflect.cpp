@@ -35,6 +35,7 @@
 #include "..\src\render\descriptor.h"
 #include "..\src\render\display_layer.h"
 #include "..\src\render\framebuffer.h"
+#include "..\src\render\graphics.h"
 #include "..\src\render\image.h"
 #include "..\src\render\pipeline.h"
 #include "..\src\render\renderer.h"
@@ -42,7 +43,6 @@
 #include "..\src\render\sampler.h"
 #include "..\src\render\shader.h"
 #include "..\src\render\synchronization.h"
-#include "..\src\render\vulkan.h"
 #include "..\src\resource\resource.h"
 #include "..\src\sound\sound.h"
 #include "..\src\ui\ui.h"
@@ -112,6 +112,7 @@ PF_EVENT1 onMouseWheel = nullptr;
 PF_EVENT0 onRender = nullptr;
 PF_EVENT0 onDestroy = nullptr;
 std::uint32_t window_style;
+bool only_2d = false;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
@@ -170,8 +171,7 @@ currentBank->addV<std::uint32_t>("physics_type", offsetof(Object, physics_type))
 currentBank = Scene::b;
 currentBank = Terrain::b;
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
-currentBank->addV<std::string>("height_map_filename", offsetof(Terrain, height_map_filename));
-currentBank->addV<std::string>("normal_map_filename", offsetof(Terrain, normal_map_filename));
+currentBank->addV<std::string>("normal_height_map_filename", offsetof(Terrain, normal_height_map_filename));
 currentBank->addV<std::string>("blend_map_filename", offsetof(Terrain, blend_map_filename));
 currentBank->addV<std::string>("color_map0_filename", offsetof(Terrain, color_map0_filename));
 currentBank->addV<std::string>("color_map1_filename", offsetof(Terrain, color_map1_filename));

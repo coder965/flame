@@ -16,7 +16,15 @@ void EntityWindow::do_show()
 
 	auto scene = scene_editor->scene.get();
 	auto s = scene_editor->selected.lock();
-	auto entity_count = 0;
+	static auto entity_count = 0;
+	if (entity_count == 0)
+		ImGui::TextUnformatted("Empty Scene");
+	else
+	{
+		ImGui::Separator();
+		ImGui::Text("Entities:%d", entity_count);
+	}
+	entity_count = 0;
 	if (scene->sky)
 	{
 		entity_count++;
@@ -37,11 +45,12 @@ void EntityWindow::do_show()
 		if (ImGui::Selectable(("Object - " + std::to_string(i)).c_str(), s && (tke::Object*)s.get() == o.get()))
 			scene_editor->selected = o;
 	}
-	if (scene->terrain)
+	for (int i = 0; i < scene->terrains.size(); i++)
 	{
 		entity_count++;
-		if (ImGui::Selectable("Terrain", s && (tke::Terrain*)s.get() == scene->terrain.get()))
-			scene_editor->selected = scene->terrain;
+		auto &t = scene->terrains[i];
+		if (ImGui::Selectable(("Terrain - " + std::to_string(i)).c_str(), s && (tke::Terrain*)s.get() == t.get()))
+			scene_editor->selected = t;
 	}
 	for (int i = 0; i < scene->waters.size(); i++)
 	{
@@ -49,13 +58,6 @@ void EntityWindow::do_show()
 		auto &w = scene->waters[i];
 		if (ImGui::Selectable(("Water - " + std::to_string(i)).c_str(), s && (tke::Water*)s.get() == w.get()))
 			scene_editor->selected = w;
-	}
-	if (entity_count == 0)
-		ImGui::TextUnformatted("Empty Scene");
-	else
-	{
-		ImGui::Separator();
-		ImGui::Text("Entities:%d", entity_count);
 	}
 
 	if (s && s->type == tke::NodeTypeObject)
@@ -182,15 +184,13 @@ void EntityWindow::do_show()
 
 			auto t = (tke::Terrain*)s.get();
 
-			ImGui::Text("Height Map:%s", t->heightMap->filename.c_str());
+			ImGui::Text("Height Map:%s", t->normalHeightMap->filename.c_str());
 			ImGui::Text("Color Map 0:%s", t->colorMaps[0]->filename.c_str());
 			ImGui::Text("Color Map 1:%s", t->colorMaps[1]->filename.c_str());
 			ImGui::Text("Color Map 2:%s", t->colorMaps[2]->filename.c_str());
 			ImGui::Text("Color Map 3:%s", t->colorMaps[3]->filename.c_str());
 			ImGui::Text("Height:%f", t->height);
 			ImGui::Text("Use Physx:%s", t->use_physx ? "Yse" : "No");
-			if (ImGui::Button("Remove Terrain"))
-				scene->removeTerrain();
 
 			break;
 		}

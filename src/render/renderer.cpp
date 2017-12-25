@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "synchronization.h"
 #include "renderpass.h"
+#include "sampler.h"
 #include "../model/model.h"
 #include "../entity/scene.h"
 
@@ -640,18 +641,6 @@ namespace tke
 		}
 		if (scene->needUpdateSky)
 		{
-			auto funClearEnvrImage = [&]() {
-				auto cb = begineOnceCommandBuffer();
-				VkClearColorValue clear_value = { 0.f, 0.f, 0.f, 0.f };
-				VkImageSubresourceRange range = {
-					VK_IMAGE_ASPECT_COLOR_BIT,
-					0, envrImage->levels.size(),
-					0, 1
-				};
-				vkCmdClearColorImage(cb->v, envrImage->v, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &range);
-				endOnceCommandBuffer(cb);
-			};
-
 			auto funUpdateIBL = [&]() {
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
 				{
@@ -691,7 +680,7 @@ namespace tke
 			};
 
 			if (!scene->sky)
-				funClearEnvrImage();
+				envrImage->clear(glm::vec4(0.f));
 			else
 			{
 				switch (scene->sky->type)
@@ -739,7 +728,7 @@ namespace tke
 						funUpdateIBL();
 					}
 					else
-						funClearEnvrImage();
+						envrImage->clear(glm::vec4(0.f));
 					break;
 				}
 				}

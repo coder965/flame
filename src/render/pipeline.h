@@ -2,9 +2,8 @@
 
 #include "../refl.h"
 #include "../math/math.h"
-#include "vulkan.h"
-#include "shader.h"
-#include "sampler.h"
+#include "graphics.h"
+#include "descriptor.h"
 
 namespace tke
 {
@@ -93,6 +92,8 @@ namespace tke
 
 	struct Resource;
 	struct RenderPass;
+	struct Shader;
+
 	struct Pipeline
 	{
 		std::vector<LinkResource> links;

@@ -5,6 +5,8 @@
 #include "image.h"
 #include "renderpass.h"
 #include "framebuffer.h"
+#include "descriptor.h"
+#include "pipeline.h"
 #include "../model/model.h"
 
 namespace tke

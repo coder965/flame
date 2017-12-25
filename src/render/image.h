@@ -2,7 +2,8 @@
 
 #include <memory>
 
-#include "vulkan.h"
+#include "../math/math.h"
+#include "graphics.h"
 #include "../image_data.h"
 
 namespace tke
@@ -52,9 +53,11 @@ namespace tke
 
 		// must call in main thread
 		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);
+		// must call in main thread
 		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
 		// must call in main thread
 		~Image();
+		void clear(const glm::vec4 &color);
 		unsigned char getR(float x, float y);
 		unsigned char getA(float x, float y);
 		void transitionLayout(int _level, VkImageLayout _layout);

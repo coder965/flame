@@ -48,7 +48,7 @@ void SceneEditor::on_menu_bar()
 			openCreateLightPopup = true;
 		if (ImGui::MenuItem("Object"))
 			openCreateObjectPopup = true;
-		if (ImGui::MenuItem("Terrain", "", nullptr, !scene->terrain))
+		if (ImGui::MenuItem("Terrain"))
 			openCreateTerrainPopup = true;
 		if (ImGui::MenuItem("Water"))
 			openCreateWaterPopup = true;

@@ -6,7 +6,7 @@
 #include "../entity/camera.h"
 #include "../resource/resource.h"
 #include "../model/model.h"
-#include "vulkan.h"
+#include "graphics.h"
 #include "command_buffer.h"
 #include "framebuffer.h"
 

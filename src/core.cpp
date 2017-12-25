@@ -229,9 +229,11 @@ namespace tke
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool only_2d)
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool _only_2d)
 	{
 		auto init_start_time = GetTickCount();
+
+		only_2d = _only_2d;
 
 		SetCurrentDirectory(get_exe_path().c_str());
 

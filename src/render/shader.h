@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../utils.h"
-#include "vulkan.h"
+#include "graphics.h"
 #include "descriptor.h"
 
 namespace tke

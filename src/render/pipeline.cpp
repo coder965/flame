@@ -1,6 +1,7 @@
 #include "pipeline.h"
 #include "descriptor.h"
 #include "renderpass.h"
+#include "shader.h"
 #include "sampler.h"
 #include "../core.h"
 #include "../resource/resource.h"

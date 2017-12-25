@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "vulkan.h"
+#include "graphics.h"
 
 namespace tke
 {

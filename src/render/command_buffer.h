@@ -1,7 +1,6 @@
 #pragma once
 
-#include "vulkan.h"
-#include "pipeline.h"
+#include "graphics.h"
 
 namespace tke
 {

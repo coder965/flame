@@ -8,7 +8,6 @@
 
 #include "../refl.h"
 #include "../math/math.h"
-#include "../render/vulkan.h"
 
 static inline ImVec2 operator+(const ImVec2& lhs, const float& rhs) { return ImVec2(lhs.x + rhs, lhs.y + rhs); }
 static inline ImVec2 operator-(const ImVec2& lhs, const float& rhs) { return ImVec2(lhs.x - rhs, lhs.y - rhs); }
@@ -45,7 +44,6 @@ namespace ImGui
 
 namespace tke
 {
-	struct CommandBuffer;
 	struct Image;
 
 	IMPL() bool uiAcceptedMouse;

@@ -2,6 +2,8 @@
 
 #include <functional>
 
+#include "refl.h"
+#include "utils.h"
 #include "render/buffer.h"
 #include "render/image.h"
 #include "render/command_buffer.h"
@@ -91,7 +93,7 @@ namespace tke
 	};
 
 	// must call in main thread
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool only_2d = false);
+	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool _only_2d = false);
 
 	IMPL() HWND hWnd;
 	IMPL() int window_cx;
@@ -129,6 +131,7 @@ namespace tke
 	IMPL(nullptr) PF_EVENT0 onRender;
 	IMPL(nullptr) PF_EVENT0 onDestroy;
 	IMPL() std::uint32_t window_style;
+	IMPL(false) bool only_2d;
 
 	std::pair<glm::ivec2, unsigned int> getWin32WndProp();
 

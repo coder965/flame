@@ -8,6 +8,8 @@
 #include "../hash.h"
 #include "../core.h"
 #include "../resource/resource.h"
+#include "../render/sampler.h"
+#include "../render/pipeline.h"
 #include "model.h"
 
 namespace tke
