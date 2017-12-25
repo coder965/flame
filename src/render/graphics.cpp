@@ -4,6 +4,7 @@
 #include "../utils.h"
 #include "graphics.h"
 #include "command_buffer.h"
+#include "image.h"
 #include "descriptor.h"
 #include "pipeline.h"
 #include "sampler.h"
@@ -210,6 +211,7 @@ namespace tke
 		commandPool = new CommandPool;
 		descriptorPool = new DescriptorPool;
 
+		init_image();
 		initPipeline();
 		initSampler();
 

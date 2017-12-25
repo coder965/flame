@@ -796,7 +796,7 @@ namespace tke
 
 		std::vector<VkWriteDescriptorSet> writes;
 
-		if (scene->waters.size() > 0)
+		if (scene->terrains.size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(TerrainShaderStruct) * scene->terrains.size());
@@ -843,7 +843,7 @@ namespace tke
 			}
 
 			stagingBuffer->unmap();
-			stagingBuffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
+			stagingBuffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
 		}
 		if (scene->waters.size() > 0)
 		{
@@ -1148,23 +1148,25 @@ namespace tke
 		// terrain
 		if (scene->terrains.size() > 0)
 		{
+			cb->bindPipeline(terrainPipeline);
+			cb->bindDescriptorSet(&ds_terrain->v);
 			int index = 0;
 			for (auto &t : scene->terrains)
 			{
-				cb->bindPipeline(terrainPipeline);
-				cb->bindDescriptorSet(&ds_terrain->v);
 				cb->draw(4, 0, (index << 16) + t->block_cx * t->block_cx);
+				index++;
 			}
 		}
 		// water
 		if (scene->waters.size() > 0)
 		{
+			cb->bindPipeline(waterPipeline);
+			cb->bindDescriptorSet(&ds_water->v);
 			int index = 0;
 			for (auto &w : scene->waters)
 			{
-				cb->bindPipeline(waterPipeline);
-				cb->bindDescriptorSet(&ds_water->v);
 				cb->draw(4, 0, (index << 16) + w->blockCx * w->blockCx);
+				index++;
 			}
 		}
 
