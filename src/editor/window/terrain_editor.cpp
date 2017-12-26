@@ -49,8 +49,8 @@ void TerrainEditor::do_show()
 
 					tke::Model m;
 					m.vertex_count = vertexs.size();
-					m.vertex = std::make_unique<tke::Vertex[]>(m.vertex_count);
-					memcpy(m.vertex.get(), vertexs.data(), m.vertex_count * sizeof(tke::Vertex));
+					m.vertex = std::make_unique<tke::ModelVertex[]>(m.vertex_count);
+					memcpy(m.vertex.get(), vertexs.data(), m.vertex_count * sizeof(tke::ModelVertex));
 					m.indice_count = indices.size();
 					m.indices = std::make_unique<int[]>(m.indice_count);
 					memcpy(m.indices.get(), indices.data(), m.indice_count * sizeof(int));
@@ -185,15 +185,15 @@ void TerrainEditor::do_show()
 						auto bottom = glm::min((float)block_count, fl_y + 2);
 						auto xlength = (int)(right - left);
 						auto ylength = (int)(bottom - top);
-						tke::StagingBuffer stagingBuffer(xlength * ylength * sizeof(tke::Vertex));
-						auto map = (tke::Vertex*)stagingBuffer.map(0, stagingBuffer.size);
+						tke::StagingBuffer stagingBuffer(xlength * ylength * sizeof(tke::ModelVertex));
+						auto map = (tke::ModelVertex*)stagingBuffer.map(0, stagingBuffer.size);
 						std::vector<VkBufferCopy> ranges(ylength);
 						for (int i = 0; i < ranges.size(); i++)
 						{
-							memcpy(map + i * xlength, &vertexs[(top + i) * vxcount + left], xlength * sizeof(tke::Vertex));
-							ranges[i].size = xlength * sizeof(tke::Vertex);
-							ranges[i].dstOffset = ((top + i) * vxcount + left) * sizeof(tke::Vertex);
-							ranges[i].srcOffset = (i * xlength) * sizeof(tke::Vertex);
+							memcpy(map + i * xlength, &vertexs[(top + i) * vxcount + left], xlength * sizeof(tke::ModelVertex));
+							ranges[i].size = xlength * sizeof(tke::ModelVertex);
+							ranges[i].dstOffset = ((top + i) * vxcount + left) * sizeof(tke::ModelVertex);
+							ranges[i].srcOffset = (i * xlength) * sizeof(tke::ModelVertex);
 						}
 						stagingBuffer.unmap();
 						stagingBuffer.copyTo(vertex_buffer.get(), ranges.size(), ranges.data());
@@ -263,6 +263,6 @@ void TerrainEditor::create_vertex()
 		}
 	}
 
-	vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::Vertex) * vertexs.size(), vertexs.data());
+	vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::ModelVertex) * vertexs.size(), vertexs.data());
 	index_buffer = std::make_unique<tke::IndexBuffer>(sizeof(int) * indices.size(), indices.data());
 }

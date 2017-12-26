@@ -17,7 +17,7 @@ struct TerrainEditor : IWindow
 	std::unique_ptr<float[]> height_array;
 	std::unique_ptr<tke::UniformBuffer> height_array_buffer;
 
-	std::vector<tke::Vertex> vertexs;
+	std::vector<tke::ModelVertex> vertexs;
 	std::vector<int> indices;
 
 	std::unique_ptr<tke::VertexBuffer> vertex_buffer;

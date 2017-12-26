@@ -72,12 +72,14 @@ namespace tke
 		FileTypeText,
 		FileTypeImage,
 		FileTypeModel,
+		FileTypeTerrain,
 		FileTypeScene
 	};
 
 	bool is_text_file(const std::string &ext);
 	bool is_image_file(const std::string &ext);
 	bool is_model_file(const std::string &ext);
+	bool is_terrain_file(const std::string &ext);
 	bool is_scene_file(const std::string &ext);
 
 	size_t get_file_length(std::ifstream &f);

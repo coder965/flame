@@ -687,7 +687,7 @@ namespace tke
 			std::vector<glm::vec3> rawNormals;
 			std::vector<glm::ivec3> rawIndexs;
 
-			std::vector<Vertex> vertexs;
+			std::vector<ModelVertex> vertexs;
 			std::vector<int> indices;
 
 			while (!file.eof())
@@ -822,8 +822,8 @@ namespace tke
 			}
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
-			memcpy(m->vertex.get(), vertexs.data(), sizeof(Vertex) * m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
+			memcpy(m->vertex.get(), vertexs.data(), sizeof(ModelVertex) * m->vertex_count);
 			m->indice_count = indices.size();
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
@@ -951,8 +951,8 @@ namespace tke
 			file.read((char*)&header, sizeof(Header));
 
 			file & m->vertex_count;
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
-			m->vertex_skeleton = std::make_unique<VertexSkeleton[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
+			m->vertex_skeleton = std::make_unique<ModelVertexSkeleton[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				VertexData data;
@@ -1230,7 +1230,7 @@ namespace tke
 			std::vector<std::unique_ptr<Source>> sources;
 			VertexInfo vertex_info;
 
-			std::vector<Vertex> vertexs;
+			std::vector<ModelVertex> vertexs;
 			std::vector<int> indices;
 			for (auto &c : n->children)
 			{
@@ -1442,8 +1442,8 @@ namespace tke
 			}
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
-			memcpy(m->vertex.get(), vertexs.data(), sizeof(Vertex) * m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
+			memcpy(m->vertex.get(), vertexs.data(), sizeof(ModelVertex) * m->vertex_count);
 			m->indice_count = indices.size();
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
@@ -1470,12 +1470,12 @@ namespace tke
 			file & m->indice_count;
 			if (m->vertex_count > 0)
 			{
-				m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
-				file.read((char*)m->vertex.get(), sizeof(Vertex) * m->vertex_count);
+				m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
+				file.read((char*)m->vertex.get(), sizeof(ModelVertex) * m->vertex_count);
 				if (animated)
 				{
-					m->vertex_skeleton = std::make_unique<VertexSkeleton[]>(m->vertex_count);
-					file.read((char*)m->vertex_skeleton.get(), sizeof(VertexSkeleton) * m->vertex_count);
+					m->vertex_skeleton = std::make_unique<ModelVertexSkeleton[]>(m->vertex_count);
+					file.read((char*)m->vertex_skeleton.get(), sizeof(ModelVertexSkeleton) * m->vertex_count);
 				}
 			}
 			if (m->indice_count > 0)
@@ -1647,9 +1647,9 @@ namespace tke
 			file & m->indice_count;
 			if (m->vertex_count > 0)
 			{
-				file.write((char*)m->vertex.get(), sizeof(Vertex) * m->vertex_count);
+				file.write((char*)m->vertex.get(), sizeof(ModelVertex) * m->vertex_count);
 				if (animated)
-					file.write((char*)m->vertex_skeleton.get(), sizeof(VertexSkeleton) * m->vertex_count);
+					file.write((char*)m->vertex_skeleton.get(), sizeof(ModelVertexSkeleton) * m->vertex_count);
 			}
 			if (m->indice_count > 0)
 				file.write((char*)m->indices.get(), sizeof(int) * m->indice_count);
@@ -1782,8 +1782,8 @@ namespace tke
 			}
 		}
 
-		auto vss = vertex_stat_count > 0 ? sizeof(Vertex) * vertex_stat_count : 1;
-		auto vas = vertex_anim_count > 0 ? sizeof(VertexSkeleton) * vertex_anim_count : 1;
+		auto vss = vertex_stat_count > 0 ? sizeof(ModelVertex) * vertex_stat_count : 1;
+		auto vas = vertex_anim_count > 0 ? sizeof(ModelVertexSkeleton) * vertex_anim_count : 1;
 		auto is = indice_count > 0 ? sizeof(int) * indice_count : 1;
 
 		vertexStatBuffer = std::make_unique<VertexBuffer>(vss);
@@ -1811,8 +1811,8 @@ namespace tke
 				{
 					s->vertexBase = vertex_offset;
 					s->indiceBase = indice_offset;
-					memcpy(vs_map + vertex_offset * sizeof(Vertex), s->vertex.get(), sizeof(Vertex) * s->vertex_count);
-					memcpy(va_map + vertex_offset * sizeof(VertexSkeleton), s->vertex_skeleton.get(), sizeof(VertexSkeleton) * s->vertex_count);
+					memcpy(vs_map + vertex_offset * sizeof(ModelVertex), s->vertex.get(), sizeof(ModelVertex) * s->vertex_count);
+					memcpy(va_map + vertex_offset * sizeof(ModelVertexSkeleton), s->vertex_skeleton.get(), sizeof(ModelVertexSkeleton) * s->vertex_count);
 					memcpy(i_map + indice_offset * sizeof(int), s->indices.get(), sizeof(int) * s->indice_count);
 					vertex_offset += s->vertex_count;
 					indice_offset += s->indice_count;
@@ -1828,7 +1828,7 @@ namespace tke
 				{
 					s->vertexBase = vertex_offset;
 					s->indiceBase = indice_offset;
-					memcpy(vs_map + vertex_offset * sizeof(Vertex), s->vertex.get(), sizeof(Vertex) * s->vertex_count);
+					memcpy(vs_map + vertex_offset * sizeof(ModelVertex), s->vertex.get(), sizeof(ModelVertex) * s->vertex_count);
 					memcpy(i_map + indice_offset * sizeof(int), s->indices.get(), sizeof(int) * s->indice_count);
 					vertex_offset += s->vertex_count;
 					indice_offset += s->indice_count;
@@ -1842,7 +1842,7 @@ namespace tke
 			VkBufferCopy range = {};
 			range.srcOffset = vso;
 			range.dstOffset = 0;
-			range.size = sizeof(Vertex) * vertex_stat_count;
+			range.size = sizeof(ModelVertex) * vertex_stat_count;
 			stagingBuffer.copyTo(vertexStatBuffer.get(), 1, &range);
 		}
 		if (vertex_anim_count > 0)
@@ -1850,7 +1850,7 @@ namespace tke
 			VkBufferCopy range = {};
 			range.srcOffset = vao;
 			range.dstOffset = 0;
-			range.size = sizeof(VertexSkeleton) * vertex_anim_count;
+			range.size = sizeof(ModelVertexSkeleton) * vertex_anim_count;
 			stagingBuffer.copyTo(vertexAnimBuffer.get(), 1, &range);
 		}
 		if (indice_count > 0)
@@ -1921,13 +1921,13 @@ namespace tke
 	void initModel()
 	{
 		{
-			static VkVertexInputBindingDescription bindings = {0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX};
+			static VkVertexInputBindingDescription bindings = {0, sizeof(ModelVertex), VK_VERTEX_INPUT_RATE_VERTEX};
 
 			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT,	   offsetof(Vertex, uv)},
-				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)},
-				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)}
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ModelVertex, position)},
+				{1, 0, VK_FORMAT_R32G32_SFLOAT,	   offsetof(ModelVertex, uv)},
+				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ModelVertex, normal)},
+				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ModelVertex, tangent)}
 			};
 
 			vertexStatInputState = vertexStateInfo(1, &bindings, TK_ARRAYSIZE(attributes), attributes);
@@ -1935,17 +1935,17 @@ namespace tke
 
 		{
 			static VkVertexInputBindingDescription bindings[] = {
-				{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX},
-				{1, sizeof(VertexSkeleton), VK_VERTEX_INPUT_RATE_VERTEX}
+				{0, sizeof(ModelVertex), VK_VERTEX_INPUT_RATE_VERTEX},
+				{1, sizeof(ModelVertexSkeleton), VK_VERTEX_INPUT_RATE_VERTEX}
 			};
 
 			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(Vertex, position)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT,       offsetof(Vertex, uv)},
-				{2, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(Vertex, normal)},
-				{3, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(Vertex, tangent)},
-				{4, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexSkeleton, bone_weight)},
-				{5, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexSkeleton, bone_ID)}
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(ModelVertex, position)},
+				{1, 0, VK_FORMAT_R32G32_SFLOAT,       offsetof(ModelVertex, uv)},
+				{2, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(ModelVertex, normal)},
+				{3, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(ModelVertex, tangent)},
+				{4, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(ModelVertexSkeleton, bone_weight)},
+				{5, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(ModelVertexSkeleton, bone_ID)}
 			};
 
 			vertexAnimInputState = vertexStateInfo(TK_ARRAYSIZE(bindings), bindings, TK_ARRAYSIZE(attributes), attributes);
@@ -1982,7 +1982,7 @@ namespace tke
 			addTriangleVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f));
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2019,7 +2019,7 @@ namespace tke
 			addCubeVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 1.f);
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2062,7 +2062,7 @@ namespace tke
 			addSphereVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 32, 32);
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2110,7 +2110,7 @@ namespace tke
 			addCylinderVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2153,7 +2153,7 @@ namespace tke
 			addConeVertex(vertexs, normals, indices, glm::mat3(1.f), glm::vec3(0.f), 0.5f, 0.5f, 32);
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2193,7 +2193,7 @@ namespace tke
 			addConeVertex(vertexs, normals, indices, matR, glm::vec3(0.8f, 0.f, 0.f), 0.2f, 0.05f, 32);
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2232,7 +2232,7 @@ namespace tke
 			addTorusVertex(vertexs, normals, indices, matR, glm::vec3(), 1.f, 0.01f, 32, 32);
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {
@@ -2274,7 +2274,7 @@ namespace tke
 			int ic1 = indices.size();
 
 			m->vertex_count = vertexs.size();
-			m->vertex = std::make_unique<Vertex[]>(m->vertex_count);
+			m->vertex = std::make_unique<ModelVertex[]>(m->vertex_count);
 			for (int i = 0; i < m->vertex_count; i++)
 			{
 				m->vertex[i] = {

@@ -1,6 +1,7 @@
 #include "../../ui/ui.h"
 #include "resource_explorer.h"
 #include "scene_editor.h"
+#include "../../file_utils.h"
 
 std::unique_ptr<SceneEditor> scene_editor = nullptr;
 
@@ -312,7 +313,7 @@ void SceneEditor::do_show()
 			ImGui::InputText("Normal Map 3", normal_image3_name, TK_ARRAYSIZE(normal_image3_name));
 			ImGui::TreePop();
 		}
-		static float height = 10.f;
+		static float height = 100.f;
 		ImGui::DragFloat("Height", &height);
 		static bool use_physx = false;
 		ImGui::Checkbox("Use Physx", &use_physx);

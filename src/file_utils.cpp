@@ -40,6 +40,13 @@ namespace tke
 		return false;
 	}
 
+	bool is_terrain_file(const std::string &ext)
+	{
+		if (ext == ".tkt")
+			return true;
+		return false;
+	}
+
 	bool is_scene_file(const std::string &ext)
 	{
 		if (ext == ".tks")

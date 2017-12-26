@@ -21,14 +21,4 @@ namespace tke
 
 		int sceneIndex = -1;
 	};
-
-	struct Geometry
-	{
-		std::shared_ptr<Material> material;
-
-		int indiceBase = 0; // offset of model base
-		int indiceCount = 0;
-
-		bool visible = true;
-	};
 }

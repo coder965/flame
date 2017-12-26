@@ -25,7 +25,7 @@ namespace tke
 	enum { MaxTextureCount = 256 };
 	enum { MaxBoneCount = 256 };
 
-	struct Vertex
+	struct ModelVertex
 	{
 		glm::vec3 position;
 		glm::vec2 uv;
@@ -33,10 +33,20 @@ namespace tke
 		glm::vec3 tangent;
 	};
 
-	struct VertexSkeleton
+	struct ModelVertexSkeleton
 	{
 		glm::vec4 bone_weight;
 		glm::vec4 bone_ID;
+	};
+
+	struct Geometry
+	{
+		std::shared_ptr<Material> material;
+
+		int indiceBase = 0; // offset of model base
+		int indiceCount = 0;
+
+		bool visible = true;
 	};
 
 	REFLECTABLE struct Model
@@ -50,8 +60,8 @@ namespace tke
 		int indiceBase = 0;
 
 		int vertex_count = 0;
-		std::unique_ptr<Vertex[]> vertex;
-		std::unique_ptr<VertexSkeleton[]> vertex_skeleton;
+		std::unique_ptr<ModelVertex[]> vertex;
+		std::unique_ptr<ModelVertexSkeleton[]> vertex_skeleton;
 		int indice_count = 0;
 		std::unique_ptr<int[]> indices;
 
@@ -135,5 +145,6 @@ namespace tke
 
 	std::shared_ptr<Model> getModel(const std::string &filename);
 	void saveModel(Model *m, const std::string &filename);
+
 	void initModel();
 }

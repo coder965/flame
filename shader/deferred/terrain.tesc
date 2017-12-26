@@ -5,12 +5,12 @@
 struct Terrain
 {
 	vec3 coord;
-	int blockCx;
-	float blockSize;
-	float height;
-	float tessellationFactor;
-	float textureUvFactor;
-	float mapDimension;
+	int block_count;
+	float block_size;
+	float terrain_height;
+	float displacement_height;
+	float tessellation_factor;
+	float tiling_scale;
 };
 
 layout(binding = 4) uniform TERRAIN
@@ -30,15 +30,21 @@ layout(binding = 2) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 17) uniform sampler2D normalHeightMap[8];
-
 layout (vertices = 4) out;
  
 layout (location = 0) in flat uint inTerrainId[];
 layout (location = 1) in vec2 inUV[];
+layout (location = 2) in vec3 inNormal[];
+layout (location = 3) in vec3 inTangent[];
  
 layout (location = 0) out flat uint outTerrainId[4];
 layout (location = 1) out vec2 outUV[4];
+layout (location = 2) out vec3 outNormal[4];
+layout (location = 3) out vec3 outTangent[4];
+
+float terrain_block_size;
+float terrain_block_height;
+float tess_factor;
  
 float screenSpaceTessFactor(vec4 p0, vec4 p1)
 {
@@ -56,17 +62,15 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 	clip0.xy *= u_matrix.viewportDim;
 	clip1.xy *= u_matrix.viewportDim;
 	
-	return clamp(distance(clip0, clip1) / u_terrain.d[inTerrainId[0]].blockSize * u_terrain.d[inTerrainId[0]].tessellationFactor, 1.0, 64.0);
+	return clamp(distance(clip0, clip1) / terrain_block_size * tess_factor, 1.0, 64.0);
 }
 
 bool frustumCheck()
 {
 	vec2 uv = (inUV[0] + inUV[1] + inUV[2] + inUV[3]) * 0.25;
 	
-	const float radius = max(u_terrain.d[inTerrainId[0]].blockSize, u_terrain.d[inTerrainId[0]].height);
+	const float radius = max(terrain_block_size, terrain_block_height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
-	pos.y += texture(normalHeightMap[inTerrainId[0]], uv).a * u_terrain.d[inTerrainId[0]].height;
-	pos.xyz += u_terrain.d[inTerrainId[0]].coord;
 	pos = u_matrix.projView * pos;
 	pos /= pos.w;
 
@@ -82,6 +86,8 @@ void main()
 {
 	outTerrainId[gl_InvocationID] = inTerrainId[0];
 	outUV[gl_InvocationID] = inUV[gl_InvocationID];
+	outNormal[gl_InvocationID] = inNormal[gl_InvocationID0];
+	outTangent[gl_InvocationID] = inTangent[gl_InvocationID];
 
 	if (gl_InvocationID == 0)
 	{
@@ -96,8 +102,11 @@ void main()
 		}
 		else
 		{
-			
-			if (u_terrain.d[inTerrainId[0]].tessellationFactor > 0.0)
+			terrain_block_size = u_terrain.d[inTerrainId[0]].block_size;
+			terrain_block_height = u_terrain.d[inTerrainId[0]].terrain_height;
+			tess_factor = u_terrain.d[inTerrainId[0]].tessellation_factor;
+
+			if (tess_factor > 0.0)
 			{
 				gl_TessLevelOuter[0] = screenSpaceTessFactor(gl_in[3].gl_Position, gl_in[0].gl_Position);
 				gl_TessLevelOuter[1] = screenSpaceTessFactor(gl_in[0].gl_Position, gl_in[1].gl_Position);
@@ -118,5 +127,5 @@ void main()
 		}
 	}
 
-	gl_out[gl_InvocationID].gl_Position =  gl_in[gl_InvocationID].gl_Position;
+	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 } 

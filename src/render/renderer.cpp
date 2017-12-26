@@ -318,12 +318,12 @@ namespace tke
 	struct TerrainShaderStruct
 	{
 		glm::vec3 coord;
-		int blockCx;
-		float blockSize;
-		float height;
-		float tessellationFactor;
-		float textureUvFactor;
-		float mapDimension;
+		int block_count;
+		float block_size;
+		float terrain_height;
+		float displacement_height;
+		float tessellation_factor;
+		float tiling_scale;
 		unsigned int dummy0;
 		unsigned int dummy1;
 		unsigned int dummy2;
@@ -810,12 +810,11 @@ namespace tke
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
 					stru.coord = t->getCoord();
-					stru.blockCx = t->block_cx;
-					stru.blockSize = t->block_size;
-					stru.height = t->height;
-					stru.tessellationFactor = t->tessellation_factor;
-					stru.textureUvFactor = t->texture_uv_factor;
-					stru.mapDimension = t->normalHeightMap ? t->normalHeightMap->levels[0].cx : 1;
+					stru.block_count = t->block_cx;
+					stru.block_size = t->block_size;
+					stru.terrain_height = t->height;
+					stru.tessellation_factor = t->tessellation_factor;
+					stru.tiling_scale = t->tiling_scale;
 					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;

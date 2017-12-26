@@ -2,22 +2,6 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-struct Terrain
-{
-	vec3 coord;
-	int blockCx;
-	float blockSize;
-	float height;
-	float tessellationFactor;
-	float textureUvFactor;
-	float mapDimension;
-};
-
-layout(binding = 4) uniform TERRAIN
-{
-	Terrain d[8];
-}u_terrain;
-
 layout(binding = 2) uniform MATRIX
 {
 	mat4 proj;
@@ -30,27 +14,48 @@ layout(binding = 2) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout (binding = 17) uniform sampler2D normalHeightMap[8];
-
 layout(quads, equal_spacing, ccw) in;
 
 layout (location = 0) in flat uint inTerrainId[];
 layout (location = 1) in vec2 inUV[];
+layout (location = 2) in vec3 inNormal[];
+layout (location = 3) in vec3 inTangent[];
  
 layout (location = 0) out flat uint outTerrainId;
 layout (location = 1) out vec2 outUV;
+layout (location = 2) out vec3 outNormal;
+layout (location = 3) out vec3 outTangent;
 
 void main()
 {
 	outTerrainId = inTerrainId[0];
-	vec2 uv0 = mix(inUV[0], inUV[1], gl_TessCoord.x);
-	vec2 uv1 = mix(inUV[3], inUV[2], gl_TessCoord.x);
-	outUV = mix(uv0, uv1, gl_TessCoord.y);
 
-	vec4 pos0 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
-	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
-	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
-	pos.y += texture(normalHeightMap[outTerrainId], outUV).a * u_terrain.d[outTerrainId].height;
-	pos.xyz += u_terrain.d[outTerrainId].coord;
+	outUV = 
+		mix(
+			mix(inUV[0], inUV[1], gl_TessCoord.x), 
+			mix(inUV[3], inUV[2], gl_TessCoord.x), 
+			gl_TessCoord.y
+		);
+
+	outNormal = 
+		mix(
+			mix(inNormal[0], inNormal[1], gl_TessCoord.x), 
+			mix(inNormal[3], inNormal[2], gl_TessCoord.x), 
+			gl_TessCoord.y
+		);
+
+	outTangent = 
+		mix(
+			mix(inTangent[0], inTangent[1], gl_TessCoord.x), 
+			mix(inTangent[3], inTangent[2], gl_TessCoord.x), 
+			gl_TessCoord.y
+		);
+
+	vec4 pos = 
+		mix(
+			mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x), 
+			mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x), 
+			gl_TessCoord.y
+		);
 	gl_Position = u_matrix.projView * pos;
 }
