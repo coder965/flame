@@ -61,8 +61,6 @@ namespace tke
 	IMPL() glm::mat4 matPerspective;
 	IMPL() glm::mat4 matPerspectiveInv;
 
-	IMPL(nullptr) StagingBuffer *stagingBuffer;
-
 	IMPL(nullptr) UniformBuffer *constantBuffer;
 
 	IMPL(nullptr) Image *depthImage;

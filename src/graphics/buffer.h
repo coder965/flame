@@ -74,4 +74,8 @@ namespace tke
 		// must call in main thread
 		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
+
+	IMPL(nullptr) StagingBuffer *defalut_staging_buffer;
+
+	void init_buffer();
 }

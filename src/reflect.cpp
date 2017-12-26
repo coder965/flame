@@ -22,27 +22,27 @@
 #include "..\src\entity\transformer.h"
 #include "..\src\entity\water.h"
 #include "..\src\file_utils.h"
+#include "..\src\graphics\buffer.h"
+#include "..\src\graphics\command_buffer.h"
+#include "..\src\graphics\descriptor.h"
+#include "..\src\graphics\display_layer.h"
+#include "..\src\graphics\framebuffer.h"
+#include "..\src\graphics\graphics.h"
+#include "..\src\graphics\image.h"
+#include "..\src\graphics\material.h"
+#include "..\src\graphics\pipeline.h"
+#include "..\src\graphics\renderer.h"
+#include "..\src\graphics\renderpass.h"
+#include "..\src\graphics\sampler.h"
+#include "..\src\graphics\shader.h"
+#include "..\src\graphics\synchronization.h"
 #include "..\src\hash.h"
 #include "..\src\image_data.h"
 #include "..\src\math\math.h"
 #include "..\src\model\animation.h"
-#include "..\src\model\material.h"
 #include "..\src\model\model.h"
 #include "..\src\physics\physics.h"
 #include "..\src\refl.h"
-#include "..\src\render\buffer.h"
-#include "..\src\render\command_buffer.h"
-#include "..\src\render\descriptor.h"
-#include "..\src\render\display_layer.h"
-#include "..\src\render\framebuffer.h"
-#include "..\src\render\graphics.h"
-#include "..\src\render\image.h"
-#include "..\src\render\pipeline.h"
-#include "..\src\render\renderer.h"
-#include "..\src\render\renderpass.h"
-#include "..\src\render\sampler.h"
-#include "..\src\render\shader.h"
-#include "..\src\render\synchronization.h"
 #include "..\src\resource\resource.h"
 #include "..\src\sound\sound.h"
 #include "..\src\ui\ui.h"
@@ -61,7 +61,6 @@ glm::mat4 matOrtho;
 glm::mat4 matOrthoInv;
 glm::mat4 matPerspective;
 glm::mat4 matPerspectiveInv;
-StagingBuffer *stagingBuffer = nullptr;
 UniformBuffer *constantBuffer = nullptr;
 Image *depthImage = nullptr;
 Image *pickUpImage = nullptr;
@@ -119,17 +118,23 @@ tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
 tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
 tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
+StagingBuffer *defalut_staging_buffer = nullptr;
+Image* default_color_image = nullptr;
+Image* default_normal_image = nullptr;
+std::weak_ptr<Material> materials[MaxMaterialCount];
+std::shared_ptr<Material> defaultMaterial = nullptr;
+UniformBuffer *materialBuffer = nullptr;
+std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
+DescriptorSet *ds_textures = nullptr;
+VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
+std::vector<std::weak_ptr<Shader>> loaded_shaders;
 tke::ReflectionBank *Model::b = tke::addReflectionBank("Model");
 VkPipelineVertexInputStateCreateInfo vertexStatInputState;
 VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
 std::unique_ptr<VertexBuffer> vertexStatBuffer;
 std::unique_ptr<VertexBuffer> vertexAnimBuffer;
 std::unique_ptr<IndexBuffer> indexBuffer;
-std::weak_ptr<Material> modelMaterials[MaxMaterialCount];
-std::shared_ptr<Material> defaultMaterial = nullptr;
-UniformBuffer *materialBuffer = nullptr;
-std::weak_ptr<Image> modelTextures[MaxTextureCount];
-DescriptorSet *ds_textures = nullptr;
 std::shared_ptr<Model> triangleModel;
 std::shared_ptr<Model> cubeModel;
 std::shared_ptr<Model> sphereModel;
@@ -138,11 +143,6 @@ std::shared_ptr<Model> coneModel;
 std::shared_ptr<Model> arrowModel;
 std::shared_ptr<Model> torusModel;
 std::shared_ptr<Model> hamerModel;
-Image* default_color_image = nullptr;
-Image* default_normal_image = nullptr;
-VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
-tke::ReflectionBank *PushConstantRange::b = tke::addReflectionBank("PushConstantRange");
-std::vector<std::weak_ptr<Shader>> loaded_shaders;
 bool uiAcceptedMouse;
 bool uiAcceptedKey;
 glm::vec3 bkColor = glm::vec3(0.69f,0.76f,0.79f);
@@ -177,13 +177,16 @@ currentBank->addV<int>("block_cx", offsetof(Terrain, block_cx));
 currentBank->addV<float>("block_size", offsetof(Terrain, block_size));
 currentBank->addV<float>("height", offsetof(Terrain, height));
 currentBank->addV<float>("tessellation_factor", offsetof(Terrain, tessellation_factor));
-currentBank->addV<float>("texture_uv_factor", offsetof(Terrain, texture_uv_factor));
+currentBank->addV<float>("tiling_scale", offsetof(Terrain, tiling_scale));
 currentBank = Transformer::b;
 currentBank->addV<glm::vec3>("coord", offsetof(Transformer, coord));
 currentBank->addV<glm::vec3>("euler", offsetof(Transformer, euler));
 currentBank->addV<glm::vec3>("scale", offsetof(Transformer, scale));
 currentBank = Water::b;
 currentBank->parents.emplace_back(Transformer::b, TK_DERIVE_OFFSET(Water, Transformer));
+currentBank = PushConstantRange::b;
+currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
+currentBank->addV<int>("size", offsetof(PushConstantRange, size));
 currentBank = Model::b;
 currentBank->addV<std::string>("stand_animation_filename", offsetof(Model, stand_animation_filename));
 currentBank->addV<std::string>("forward_animation_filename", offsetof(Model, forward_animation_filename));
@@ -195,8 +198,5 @@ currentBank->addV<glm::vec3>("controller_position", offsetof(Model, controller_p
 currentBank->addV<float>("controller_height", offsetof(Model, controller_height));
 currentBank->addV<float>("controller_radius", offsetof(Model, controller_radius));
 currentBank->addV<glm::vec3>("eye_position", offsetof(Model, eye_position));
-currentBank = PushConstantRange::b;
-currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
-currentBank->addV<int>("size", offsetof(PushConstantRange, size));
 }};static ReflectInit _init;
 }

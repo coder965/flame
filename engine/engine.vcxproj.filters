@@ -16,9 +16,6 @@
     <Filter Include="src\physics">
       <UniqueIdentifier>{85f55c03-5b9c-4a84-a9dd-17045b54e544}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\render">
-      <UniqueIdentifier>{c69047f9-820a-408f-835c-efdde6815fab}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\resource">
       <UniqueIdentifier>{c81aafc0-625e-42cc-ba36-8ed5b1463af9}</UniqueIdentifier>
     </Filter>
@@ -27,6 +24,9 @@
     </Filter>
     <Filter Include="src\ui">
       <UniqueIdentifier>{236f145f-b98d-4654-a9d7-048f873b9e40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\graphics">
+      <UniqueIdentifier>{c69047f9-820a-408f-835c-efdde6815fab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -60,9 +60,6 @@
     <ClCompile Include="..\src\model\animation.cpp">
       <Filter>src\model</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\model\material.cpp">
-      <Filter>src\model</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\model\model.cpp">
       <Filter>src\model</Filter>
     </ClCompile>
@@ -74,36 +71,6 @@
     </ClCompile>
     <ClCompile Include="..\src\resource\resource.cpp">
       <Filter>src\resource</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\buffer.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\command_buffer.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\descriptor.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\framebuffer.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\image.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\pipeline.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\renderpass.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\sampler.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\shader.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\synchronization.cpp">
-      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="..\src\physics\physics.cpp">
       <Filter>src\physics</Filter>
@@ -126,14 +93,8 @@
     <ClCompile Include="..\..\imgui\imgui_draw.cpp">
       <Filter>src\ui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\render\renderer.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\entity\sky.cpp">
       <Filter>src\entity</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\render\display_layer.cpp">
-      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="..\src\file_utils.cpp">
       <Filter>src</Filter>
@@ -144,8 +105,47 @@
     <ClCompile Include="..\src\refl.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\render\graphics.cpp">
-      <Filter>src\render</Filter>
+    <ClCompile Include="..\src\graphics\buffer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\command_buffer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\descriptor.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\display_layer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\framebuffer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\graphics.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\image.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\material.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\pipeline.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\renderer.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\renderpass.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\sampler.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\shader.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics\synchronization.cpp">
+      <Filter>src\graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -179,9 +179,6 @@
     <ClInclude Include="..\src\model\animation.h">
       <Filter>src\model</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\model\material.h">
-      <Filter>src\model</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\model\model.h">
       <Filter>src\model</Filter>
     </ClInclude>
@@ -193,36 +190,6 @@
     </ClInclude>
     <ClInclude Include="..\src\resource\resource.h">
       <Filter>src\resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\buffer.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\command_buffer.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\descriptor.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\framebuffer.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\image.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\pipeline.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\renderpass.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\sampler.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\shader.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\synchronization.h">
-      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="..\src\physics\physics.h">
       <Filter>src\physics</Filter>
@@ -239,14 +206,8 @@
     <ClInclude Include="..\..\imgui\imgui.h">
       <Filter>src\ui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\render\renderer.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\entity\sky.h">
       <Filter>src\entity</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\render\display_layer.h">
-      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="..\src\file_utils.h">
       <Filter>src</Filter>
@@ -263,8 +224,47 @@
     <ClInclude Include="..\src\define.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\render\graphics.h">
-      <Filter>src\render</Filter>
+    <ClInclude Include="..\src\graphics\buffer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\command_buffer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\descriptor.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\display_layer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\framebuffer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\graphics.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\image.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\material.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\pipeline.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\renderer.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\renderpass.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\sampler.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\shader.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphics\synchronization.h">
+      <Filter>src\graphics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
