@@ -11,52 +11,12 @@
 #include "../render/sampler.h"
 #include "../render/pipeline.h"
 #include "model.h"
+#include "material.h"
+#include "animation.h"
+#include "../physics/physics.h"
 
 namespace tke
 {
-	void Model::loadData(bool needRigidbody)
-	{
-		XMLDoc at("data", filename + ".xml");
-		if (!at.good)
-			return;
-
-		if (needRigidbody)
-		{
-			for (auto r : rigidbodies)
-				delete r;
-			rigidbodies.clear();
-		}
-
-		at.obtainFromAttributes(this, b);
-
-		for (auto &c : at.children)
-		{
-			if (c->name == "rigid_body")
-			{
-				auto r = new Rigidbody;
-				rigidbodies.push_back(r);
-			}
-		}
-	}
-
-	void Model::saveData(bool needRigidbody)
-	{
-		XMLDoc at("data");
-
-		at.addAttributes(this, b);
-
-		if (needRigidbody)
-		{
-			for (auto r : rigidbodies)
-			{
-				auto n = at.newNode("rigid_body");
-
-			}
-		}
-
-		at.save(filename + ".xml");
-	}
-
 	std::shared_ptr<AnimationBinding> Model::bindAnimation(std::shared_ptr<Animation> a)
 	{
 		for (auto it = animation_bindings.begin(); it != animation_bindings.end(); )
@@ -180,117 +140,6 @@ namespace tke
 		static auto magicNumber = 0;
 		pJoint->id = magicNumber++;
 		joints.push_back(pJoint);
-	}
-
-	struct MaterialShaderStruct
-	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
-
-		unsigned int mapIndex;
-
-		unsigned int dummy;
-	};
-
-	static void _update_material(Material *m, int index)
-	{
-		auto map = (unsigned char*)stagingBuffer->map(0, sizeof(MaterialShaderStruct));
-		MaterialShaderStruct stru;
-		stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-		stru.specRoughnessCompress = m->spec + (m->roughness << 8);
-		stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-			((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-			((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
-		memcpy(map, &stru, sizeof(MaterialShaderStruct));
-		stagingBuffer->unmap();
-
-		VkBufferCopy range = {};
-		range.srcOffset = 0;
-		range.dstOffset = sizeof(MaterialShaderStruct) * index;
-		range.size = sizeof(MaterialShaderStruct);
-
-		stagingBuffer->copyTo(materialBuffer, 1, &range);
-	}
-
-	std::shared_ptr<Material> getModelMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
-		unsigned char alpha, unsigned char spec, unsigned char roughness,
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap)
-	{
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			auto m = modelMaterials[i].lock();
-			if (m)
-			{
-				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
-					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
-					&& m->normalHeightMap == normalHeightMap)
-					return m;
-			}
-		}
-
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			if (!modelMaterials[i].lock())
-			{
-				auto m = std::make_shared<Material>();
-				m->albedoR = albedoR;
-				m->albedoG = albedoG;
-				m->albedoB = albedoB;
-				m->alpha = alpha;
-				m->spec = spec;
-				m->roughness = roughness;
-				m->albedoAlphaMap = albedoAlphaMap;
-				m->normalHeightMap = normalHeightMap;
-				m->specRoughnessMap = specRoughnessMap;
-				m->sceneIndex = i;
-				modelMaterials[i] = m;
-
-				_update_material(m.get(), i);
-
-				return m;
-			}
-		}
-	}
-
-	std::shared_ptr<Material> getModelMaterial(const std::string name)
-	{
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			auto m = modelMaterials[i].lock();
-			if (m && m->name == name)
-				return m;
-		}
-		return std::shared_ptr<Material>();
-	}
-
-	std::shared_ptr<Image> getModelTexture(const std::string &_filename, bool sRGB)
-	{
-		for (int i = 0; i < MaxTextureCount; i++)
-		{
-			auto t = modelTextures[i].lock();
-			if (t)
-			{
-				if (t->filename == _filename)
-					return t;
-			}
-		}
-
-		for (int i = 0; i < MaxTextureCount; i++)
-		{
-			if (!modelTextures[i].lock())
-			{
-				auto t = getImage(_filename, 0, sRGB);
-				if (!t)
-					return nullptr;
-
-				t->index = i;
-				modelTextures[i] = t;
-
-				updateDescriptorSets(1, &ds_textures->imageWrite(0, i, t.get(), colorSampler));
-
-				return t;
-			}
-		}
 	}
 
 	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center)

@@ -7,7 +7,7 @@ namespace tke
 		:Node(NodeTypeTerrain), use_physx(_use_physx), blendMap(_blendMap)
 	{
 		for (int i = 0; i < 4; i++)
-			materials[i] = default_material;
+			materials[i] = defaultMaterial;
 	}
 
 }
