@@ -2,12 +2,14 @@
 #include <regex>
 
 #include "core.h"
+#include "graphics/buffer.h"
+#include "graphics/image.h"
+#include "graphics/renderpass.h"
+#include "graphics/synchronization.h"
+#include "graphics/renderer.h"
 #include "ui/ui.h"
 #include "physics/physics.h"
 #include "sound/sound.h"
-#include "render/renderpass.h"
-#include "render/synchronization.h"
-#include "render/renderer.h"
 #include "model/model.h"
 
 namespace tke
@@ -48,12 +50,12 @@ namespace tke
 		range.imageExtent.width = 1;
 		range.imageExtent.height = 1;
 		range.imageExtent.depth = 1;
-		vkCmdCopyImageToBuffer(cb->v, pickUpImage->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer->v, 1, &range);
+		vkCmdCopyImageToBuffer(cb->v, pickUpImage->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, defalut_staging_buffer->v, 1, &range);
 		endOnceCommandBuffer(cb);
 
-		auto pixel = (unsigned char*)stagingBuffer->map(0, 4);
+		auto pixel = (unsigned char*)defalut_staging_buffer->map(0, 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
-		stagingBuffer->unmap();
+		defalut_staging_buffer->unmap();
 
 		return index;
 	}
@@ -258,8 +260,6 @@ namespace tke
 
 		initVulkan(vulkan_debug);
 
-		stagingBuffer = new StagingBuffer(67108864);
-
 		{
 			auto att0 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
 			auto att1 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -318,7 +318,7 @@ namespace tke
 				pickUpImage->getView(),
 				depthImage->getView()
 			};
-			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, ARRAYSIZE(views), views);
+			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, TK_ARRAYSIZE(views), views);
 
 			initModel();
 
@@ -337,7 +337,7 @@ namespace tke
 				stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
 				stru.envrCx = EnvrSizeCx;
 				stru.envrCy = EnvrSizeCy;
-				constantBuffer->update(&stru, stagingBuffer);
+				constantBuffer->update(&stru, defalut_staging_buffer);
 			}
 
 			initPhysics();

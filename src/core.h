@@ -3,48 +3,15 @@
 #include <functional>
 
 #include "refl.h"
+#include "math/math.h"
 #include "utils.h"
-#include "render/buffer.h"
-#include "render/image.h"
-#include "render/command_buffer.h"
-
-enum
-{
-	// buffer
-	ConstantBufferBinding,
-	MaterialBufferBinding,
-	MatrixBufferBinding,
-	StaticObjectMatrixBufferBinding,
-	AnimatedObjectMatrixBufferBinding = 3,
-	TerrainBufferBinding,
-	WaterBufferBinding,
-	LightBufferBinding,
-	AmbientBufferBinding,
-	ShadowBufferBinding,
-	// image
-	EnvrImageBinding,
-	MainImageBinding,
-	DepthImageBinding,
-	AlbedoAlphaImageBinding,
-	NormalHeightImageBinding,
-	SpecRoughnessImageBinding,
-	ShadowImageBinding,
-	AoImageBinding,
-	// terrain special
-	TerrainNormalHeightMapBinding,
-	TerrainBlendMapBinding,
-	TerrainColorMapsBinding,
-	TerrainNormalMapsBinding
-};
-
-enum
-{
-	TexturesBindingSet = 1,
-	BoneBindingSet
-};
 
 namespace tke
 {
+	struct Buffer;
+	struct Image;
+	struct CommandBuffer;
+
 	IMPL(0.1f) float near_plane;
 	IMPL(1000.f) float far_plane;
 	IMPL(60.f) float fovy;
