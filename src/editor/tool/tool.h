@@ -1,16 +1,20 @@
 #pragma once
 
+#include <memory>
+
 #include "../../math/math.h"
-#include "../../core.h"
 #include "../../entity/camera.h"
-#include "../../render/command_buffer.h"
-#include "../../render/framebuffer.h"
+#include "../../graphics/image.h"
+#include "../../graphics/framebuffer.h"
+#include "../../graphics/command_buffer.h"
 
 struct Tool
 {
-	tke::Framebuffer *fb;
+	static bool inited;
+	static std::shared_ptr<tke::Framebuffer> fb;
+	static std::unique_ptr<tke::Image> depthImage;
 
-	Tool(tke::Framebuffer *_fb);
+	Tool(tke::Image *dst);
 	virtual bool leftDown(int x, int y);
 	virtual void mouseMove(int xDisp, int yDisp);
 	virtual void show(tke::Camera *camera) = 0;

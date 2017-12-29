@@ -1,12 +1,14 @@
 #include <assert.h>
 #include <set>
 
-#include "../utils.h"
+#include "../error.h"
 #include "graphics.h"
 #include "command_buffer.h"
 #include "buffer.h"
 #include "image.h"
+#include "material.h"
 #include "descriptor.h"
+#include "renderpass.h"
 #include "pipeline.h"
 #include "sampler.h"
 
@@ -214,6 +216,8 @@ namespace tke
 
 		init_buffer();
 		init_image();
+		init_material();
+		init_renderpass();
 		initPipeline();
 		initSampler();
 

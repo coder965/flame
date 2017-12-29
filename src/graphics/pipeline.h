@@ -3,10 +3,12 @@
 #include "../refl.h"
 #include "../math/math.h"
 #include "graphics.h"
-#include "descriptor.h"
 
 namespace tke
 {
+	struct DescriptorSetLayout;
+	struct DescriptorSet;
+
 	struct LinkResource
 	{
 		int binding = -1;

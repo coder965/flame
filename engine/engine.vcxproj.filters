@@ -28,6 +28,9 @@
     <Filter Include="src\graphics">
       <UniqueIdentifier>{c69047f9-820a-408f-835c-efdde6815fab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\pick_up">
+      <UniqueIdentifier>{33da02c2-b2d3-4d63-9a52-83d129965aba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\entity\camera.cpp">
@@ -76,12 +79,6 @@
       <Filter>src\physics</Filter>
     </ClCompile>
     <ClCompile Include="..\src\image_data.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\core.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\REFLECT.cpp">
@@ -147,6 +144,33 @@
     <ClCompile Include="..\src\graphics\synchronization.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\event.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\inpit.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\error.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\time.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\string_utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\language.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pick_up\pick_up.cpp">
+      <Filter>src\pick_up</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\application.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -197,12 +221,6 @@
     <ClInclude Include="..\src\image_data.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\core.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\utils.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\imgui\imgui.h">
       <Filter>src\ui</Filter>
     </ClInclude>
@@ -219,9 +237,6 @@
       <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\refl.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\define.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphics\buffer.h">
@@ -265,6 +280,39 @@
     </ClInclude>
     <ClInclude Include="..\src\graphics\synchronization.h">
       <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\event.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\error.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\time.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\string_utils.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\language.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pick_up\pick_up.h">
+      <Filter>src\pick_up</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\global.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\type.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\application.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

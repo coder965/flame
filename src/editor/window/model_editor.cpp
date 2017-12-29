@@ -1,3 +1,6 @@
+#include "../../input.h"
+#include "../../global.h"
+#include "../../graphics/image.h"
 #include "../../ui/ui.h"
 
 #include "model_editor.h"
@@ -25,8 +28,8 @@ void ModelEditor::do_show()
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
-		if (ImGui::MenuItem("Save Data"))
-			model->saveData(false);
+		if (ImGui::MenuItem("Save"))
+			;
 
 		ImGui::EndMenu();
 	}
@@ -41,8 +44,8 @@ void ModelEditor::do_show()
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::resCx;
-			auto distY = (float)tke::mouseDispY / (float)tke::resCy;
+			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
+			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
 			if (tke::mouseMiddle.pressing)
 				camera.rotateByCursor(distX, distY);
 		}

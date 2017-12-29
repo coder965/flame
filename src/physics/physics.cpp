@@ -49,28 +49,25 @@ namespace tke
 	{
 	}
 
-	void Rigidbody::addShape(Shape *s)
+	Shape *Rigidbody::new_shape()
 	{
 		static auto magicNumber = 0;
+		auto s = std::make_unique<Shape>();
 		s->id = magicNumber++;
-		shapes.push_back(std::move(std::unique_ptr<Shape>(s)));
+		shapes.push_back(std::move(s));
+		return s.get();
 	}
 
-	Shape *Rigidbody::removeShape(Shape *s)
+	void Rigidbody::remove_shape(Shape *s)
 	{
 		for (auto it = shapes.begin(); it != shapes.end(); it++)
 		{
-			if ((*it).get() == s)
+			if (it->get() == s)
 			{
-				if (it > shapes.begin())
-					s = (*(it - 1)).get();
-				else
-					s = nullptr;
 				shapes.erase(it);
-				break;
+				return;
 			}
 		}
-		return s;
 	}
 
 	physx::PxFoundation *pxFoundation = nullptr;

@@ -1,9 +1,15 @@
 #include <process.h>
 
-#include "../core.h"
-#include "../render/image.h"
-#include "../render/pipeline.h"
-#include "../render/sampler.h"
+#include "../global.h"
+#include "../input.h"
+#include "../graphics/buffer.h"
+#include "../graphics/image.h"
+#include "../graphics/renderpass.h"
+#include "../graphics/descriptor.h"
+#include "../graphics/pipeline.h"
+#include "../graphics/sampler.h"
+#include "../graphics/command_buffer.h"
+#include "../application.h"
 
 #include "ui.h"
 
@@ -27,16 +33,6 @@ namespace tke
 	static CommandBuffer *cb_ui;
 	static std::unique_ptr<ImmediateVertexBuffer> vertexBuffer_ui;
 	static std::unique_ptr<ImmediateIndexBuffer> indexBuffer_ui;
-
-	static void _SetClipboardCallback(void *user_data, const char *s)
-	{
-		setClipBoard(s);
-	}
-
-	static const char *_GetClipboardCallback(void *user_data)
-	{
-		return getClipBoard();
-	}
 
 	void initUi()
 	{
@@ -65,8 +61,8 @@ namespace tke
 				.cullMode(VK_CULL_MODE_NONE)
 				.addBlendAttachmentState(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
 				.addDynamicState(VK_DYNAMIC_STATE_SCISSOR)
-				.addShader(enginePath + "shader/ui.vert", {})
-				.addShader(enginePath + "shader/ui.frag", {}),
+				.addShader(engine_path + "shader/ui.vert", {})
+				.addShader(engine_path + "shader/ui.frag", {}),
 				renderPass_window, 0, true);
 		}
 
@@ -116,8 +112,14 @@ namespace tke
 		io.KeyMap[ImGuiKey_X] = 'X';
 		io.KeyMap[ImGuiKey_Y] = 'Y';
 		io.KeyMap[ImGuiKey_Z] = 'Z';
-		io.SetClipboardTextFn = _SetClipboardCallback;
-		io.GetClipboardTextFn = _GetClipboardCallback;
+		io.SetClipboardTextFn = [](void *user_data, const char *s) {
+			set_clipBoard(s);
+		};
+		io.GetClipboardTextFn = [](void *user_data) {
+			static std::string s;
+			s = get_clipBoard();
+			return s.c_str();
+		};
 	}
 
 	void ui_onKeyDown(int k)
@@ -227,7 +229,6 @@ namespace tke
 			VkClearValue clear_value = {bkColor.r, bkColor.g, bkColor.b};
 			cb_ui->beginRenderPass(need_clear ? renderPass_windowC : renderPass_window,
 				window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
-
 
 			if (draw_data->CmdListsCount > 0)
 			{

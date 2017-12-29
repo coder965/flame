@@ -1,5 +1,5 @@
+#include "../global.h"
 #include "controller.h"
-#include "../core.h"
 
 namespace tke
 {

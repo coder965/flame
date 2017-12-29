@@ -3,6 +3,8 @@
 #include <memory>
 
 #include "../refl.h"
+#include "../math/math.h"
+#include "../graphics/graphics.h"
 
 namespace tke
 {
@@ -103,10 +105,17 @@ namespace tke
 		std::shared_ptr<AnimationBinding> bindAnimation(std::shared_ptr<Animation> a);
 		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 
-		void addRigidbody(Rigidbody *pRigidbody);
-		Rigidbody *deleteRigidbody(Rigidbody *pRigidbody);
+		Bone *new_bone();
+		void remove_bone(Bone *b);
 
-		void addJoint(Joint *pJoint);
+		BoneIK *new_bone_ik();
+		void remove_bone_ik(BoneIK *b);
+
+		Rigidbody *new_rigidbody();
+		void remove_rigidbody(Rigidbody *r);
+
+		Joint *new_joint();
+		void remove_joint(Joint *j);
 	};
 
 	IMPL() VkPipelineVertexInputStateCreateInfo vertexStatInputState;

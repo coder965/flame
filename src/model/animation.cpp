@@ -1,9 +1,11 @@
 #include <iostream>
 #include <map>
 
-#include "../core.h"
-#include "../file_utils.h"
 #include "../hash.h"
+#include "../file_utils.h"
+#include "../language.h"
+#include "../global.h"
+#include "../graphics/buffer.h"
 #include "animation.h"
 #include "model.h"
 
@@ -45,7 +47,7 @@ namespace tke
 				BoneMotionData data;
 				file.read((char*)&data, sizeof(BoneMotionData));
 				auto m = std::make_unique<BoneMotion>();
-				m->name = japaneseToChinese(data.name);
+				m->name = japanese_to_chinese(data.name);
 				m->frame = data.frame;
 				m->coord = glm::vec3(data.coord);
 				m->quaternion = glm::vec4(data.quaternion);
@@ -134,7 +136,7 @@ namespace tke
 		for (int i = 0; i < model->bones.size(); i++)
 			boneMatrix[i] = glm::mat4(1.f);
 		boneMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * model->bones.size());
-		boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
+		boneMatrixBuffer->update(boneMatrix, defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
 	}
 
 	AnimationComponent::~AnimationComponent()
@@ -150,8 +152,9 @@ namespace tke
 
 		for (int i = 0; i < model->bones.size(); i++)
 		{
-			boneMatrix[i] = glm::translate(model->bones[i].relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
-			if (model->bones[i].parents != -1) boneMatrix[i] = boneMatrix[model->bones[i].parents] * boneMatrix[i];
+			boneMatrix[i] = glm::translate(model->bones[i]->relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
+			if (model->bones[i]->parent != -1) 
+				boneMatrix[i] = boneMatrix[model->bones[i]->parent] * boneMatrix[i];
 		}
 	}
 
@@ -159,10 +162,11 @@ namespace tke
 	{
 		assert(model && i < model->bones.size());
 
-		boneMatrix[i] = glm::translate(model->bones[i].relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
-		if (model->bones[i].parents != -1) boneMatrix[i] = boneMatrix[model->bones[i].parents] * boneMatrix[i];
+		boneMatrix[i] = glm::translate(model->bones[i]->relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
+		if (model->bones[i]->parent != -1)
+			boneMatrix[i] = boneMatrix[model->bones[i]->parent] * boneMatrix[i];
 
-		for (auto child : model->bones[i].children)
+		for (auto child : model->bones[i]->children)
 			refreshBone(child);
 	}
 
@@ -176,7 +180,7 @@ namespace tke
 				boneData[i].rotation = glm::mat3();
 				boneMatrix[i] = glm::mat4();
 			}
-			boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
+			boneMatrixBuffer->update(boneMatrix, defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
 		}
 		currentAnimation = animation;
 		currentFrame = 0;
@@ -281,8 +285,8 @@ namespace tke
 		}
 
 		for (int i = 0; i < model->bones.size(); i++)
-			boneMatrix[i] *= glm::translate(-model->bones[i].rootCoord);
+			boneMatrix[i] *= glm::translate(-model->bones[i]->rootCoord);
 
-		boneMatrixBuffer->update(boneMatrix, stagingBuffer, sizeof(glm::mat4) * model->bones.size());
+		boneMatrixBuffer->update(boneMatrix, defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
 	}
 }

@@ -1,6 +1,7 @@
+#include "../global.h"
+#include "../model/model.h"
 #include "camera.h"
 #include "object.h"
-#include "../core.h"
 
 namespace tke
 {
@@ -53,9 +54,9 @@ namespace tke
 		auto tanHfFovy = glm::tan(glm::radians(fovy * 0.5f));
 
 		auto _y1 = near_plane * tanHfFovy;
-		auto _z1 = _y1 * resAspect;
+		auto _z1 = _y1 * res_aspect;
 		auto _y2 = far_plane * tanHfFovy;
-		auto _z2 = _y2 * resAspect;
+		auto _z2 = _y2 * res_aspect;
 		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
 		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
 		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
@@ -134,7 +135,7 @@ namespace tke
 	{
 		auto l = length / near_plane;
 		auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
-		target += (-x * cy * resAspect * l) * axis[0] + (y * cy * l) * axis[1];
+		target += (-x * cy * res_aspect * l) * axis[0] + (y * cy * l) * axis[1];
 		lookAtTarget();
 	}
 

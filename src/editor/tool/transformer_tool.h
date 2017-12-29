@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../render/renderer.h"
+#include "../../graphics/renderer.h"
 #include "tool.h"
 
 struct TransformerTool : Tool
@@ -19,7 +19,7 @@ struct TransformerTool : Tool
 
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
-	TransformerTool(tke::Framebuffer *_fb);
+	TransformerTool(tke::Image *dst);
 	virtual bool TransformerTool::leftDown(int x, int y) override;
 	virtual void TransformerTool::mouseMove(int xDisp, int yDisp) override;
 	virtual void show(tke::Camera *camera) override;

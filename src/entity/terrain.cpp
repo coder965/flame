@@ -1,5 +1,5 @@
 #include "terrain.h"
-#include "../render/image.h"
+#include "../graphics/material.h"
 
 namespace tke
 {

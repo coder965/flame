@@ -1,11 +1,18 @@
 #include <map>
 
 #include "../math/math.h"
-#include "../core.h"
 #include "../hash.h"
 #include "../file_utils.h"
-#include "../render/renderpass.h"
-#include "../render/synchronization.h"
+#include "../graphics/renderpass.h"
+#include "../graphics/synchronization.h"
+#include "../physics/physics.h"
+#include "../model/model.h"
+#include "../model/animation.h"
+#include "sky.h"
+#include "light.h"
+#include "object.h"
+#include "terrain.h"
+#include "water.h"
 #include "scene.h"
 
 namespace tke
@@ -114,13 +121,14 @@ namespace tke
 					physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
 					physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
 
-				for (auto r : m->rigidbodies)
+				for (auto &r : m->rigidbodies)
 				{
-					auto rigidbodyData = new ObjectRigidBodyData;
-					rigidbodyData->rigidbody = r;
+					auto rigidbodyData = std::make_unique<ObjectRigidBodyData>();
+					rigidbodyData->rigidbody = r.get();
 
 					auto rigidCoord = r->getCoord();
-					if (r->boneID != -1) rigidCoord += m->bones[r->boneID].rootCoord;
+					if (r->boneID != -1) 
+						rigidCoord += m->bones[r->boneID]->rootCoord;
 					rigidCoord *= objScale;
 					auto rigidAxis = r->getAxis();
 
@@ -159,7 +167,7 @@ namespace tke
 
 					rigidbodyData->actor = actor;
 
-					o->rigidbodyDatas.push_back(std::move(std::unique_ptr<ObjectRigidBodyData>(rigidbodyData)));
+					o->rigidbodyDatas.push_back(std::move(rigidbodyData));
 
 					pxScene->addActor(*actor);
 				}

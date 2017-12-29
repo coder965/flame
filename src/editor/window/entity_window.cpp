@@ -1,5 +1,9 @@
+#include "../../input.h"
+#include "../../language.h"
 #include "../../ui/ui.h"
-#include "../../core.h"
+#include "../../model/model.h"
+#include "../../entity/object.h"
+#include "../../entity/terrain.h"
 #include "scene_editor.h"
 #include "entity_window.h"
 
@@ -167,7 +171,7 @@ void EntityWindow::do_show()
 				{
 					for (int i = 0; i < o->model->bones.size(); i++)
 					{
-						auto str = tke::translate(936, CP_UTF8, o->model->bones[i].name);
+						auto str = tke::translate(936, CP_UTF8, o->model->bones[i]->name);
 						if (ImGui::Selectable(str.c_str(), i == boneID))
 							boneID = i;
 					}

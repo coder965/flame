@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../../render/display_layer.h"
-#include "../../render/framebuffer.h"
-#include "../../render/renderer.h"
-#include "../../entity/terrain.h"
+#include "../../graphics/display_layer.h"
+#include "../../graphics/framebuffer.h"
+#include "../../graphics/renderer.h"
 #include "../../model/model.h"
+#include "../../entity/terrain.h"
+#include "../../entity/camera.h"
 
 #include "window.h"
 

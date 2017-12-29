@@ -2,11 +2,11 @@
 
 #include <map>
 
-#include "../render/buffer.h"
-#include "../render/image.h"
-
 namespace tke
 {
+	struct Buffer;
+	struct Image;
+
 	struct Resource
 	{
 		Resource *parent;

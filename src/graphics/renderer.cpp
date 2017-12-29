@@ -1,9 +1,23 @@
-#include "renderer.h"
-#include "synchronization.h"
-#include "renderpass.h"
-#include "sampler.h"
+#include "../global.h"
 #include "../model/model.h"
 #include "../entity/scene.h"
+#include "synchronization.h"
+#include "buffer.h"
+#include "image.h"
+#include "material.h"
+#include "renderpass.h"
+#include "framebuffer.h"
+#include "descriptor.h"
+#include "pipeline.h"
+#include "sampler.h"
+#include "command_buffer.h"
+#include "renderer.h"
+#include "../model/animation.h"
+#include "../entity/light.h"
+#include "../entity/object.h"
+#include "../entity/terrain.h"
+#include "../entity/water.h"
+#include "../application.h"
 
 namespace tke
 {
@@ -72,56 +86,56 @@ namespace tke
 				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {}),
 				renderPass_depthC_image8, 0);
 			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexAnimInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"ANIM"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"ANIM"}),
 				renderPass_depthC_image8, 0, true);
 			pipeline_frontlight = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_NORMAL"}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"USE_NORMAL"}),
 				renderPass_depthC_image8, 0);
 			pipeline_texture = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"USE_TEX"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"USE_TEX"}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"USE_TEX"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"USE_TEX"}),
 				renderPass_depthC_image8, 0, true);
 			pipeline_texture_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexAnimInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
 				renderPass_depthC_image8, 0, true);
 			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexStatInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {}),
 				renderPass_image8, 0);
 			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexAnimInputState)
 				.polygonMode(VK_POLYGON_MODE_LINE)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d.vert", {"ANIM"})
-				.addShader(enginePath + "shader/plain3d/plain3d.frag", {"ANIM"}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"ANIM"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"ANIM"}),
 				renderPass_image8, 0, true);
 
 			first = false;
@@ -205,7 +219,7 @@ namespace tke
 					cb->bindPipeline(pipeline_texture);
 					VkDescriptorSet sets[] = {
 						pipeline_texture->descriptorSet->v,
-						ds_textures->v
+						ds_material_images->v
 					};
 					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 					break;
@@ -255,8 +269,8 @@ namespace tke
 				.primitiveTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
 				.polygonMode(VK_POLYGON_MODE_LINE)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/plain3d/plain3d_line.vert", {})
-				.addShader(enginePath + "shader/plain3d/plain3d_line.frag", {}),
+				.addShader(engine_path + "shader/plain3d/plain3d_line.vert", {})
+				.addShader(engine_path + "shader/plain3d/plain3d_line.frag", {}),
 				renderPass_image8, 0);
 
 			first = false;
@@ -396,23 +410,23 @@ namespace tke
 			scatteringPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(512).cy(256)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/fullscreenUv.vert", {})
-				.addShader(enginePath + "shader/sky/scattering.frag", {}),
+				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/sky/scattering.frag", {}),
 				renderPass_image16, 0);
 			downsamplePipeline = new Pipeline(PipelineCreateInfo()
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/fullscreenUv.vert", {})
-				.addShader(enginePath + "shader/sky/downsample.frag", {})
+				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/sky/downsample.frag", {})
 				, renderPass_image16, 0, true);
 			convolvePipeline = new Pipeline(PipelineCreateInfo()
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/fullscreenUv.vert", {})
-				.addShader(enginePath + "shader/sky/convolve.frag", {}),
+				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/sky/convolve.frag", {}),
 				renderPass_image16, 0, true);
 			copyPipeline = new Pipeline(PipelineCreateInfo()
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/fullscreenUv.vert", {})
-				.addShader(enginePath + "shader/copy.frag", {}),
+				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/copy.frag", {}),
 				renderPass_image16, 0, true);
 			mrtPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -422,8 +436,8 @@ namespace tke
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
-				.addShader(enginePath + "shader/deferred/mrt.vert", {})
-				.addShader(enginePath + "shader/deferred/mrt.frag", {})
+				.addShader(engine_path + "shader/deferred/mrt.vert", {})
+				.addShader(engine_path + "shader/deferred/mrt.frag", {})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
 				.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
 				.addLink("MATERIAL", "Material.UniformBuffer"),
@@ -436,8 +450,8 @@ namespace tke
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
-				.addShader(enginePath + "shader/deferred/mrt.vert", {"ANIM"})
-				.addShader(enginePath + "shader/deferred/mrt.frag", {"ANIM"})
+				.addShader(engine_path + "shader/deferred/mrt.vert", {"ANIM"})
+				.addShader(engine_path + "shader/deferred/mrt.frag", {"ANIM"})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
 				.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
 				.addLink("MATERIAL", "Material.UniformBuffer"),
@@ -451,10 +465,10 @@ namespace tke
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
-				.addShader(enginePath + "shader/deferred/terrain.vert", {})
-				.addShader(enginePath + "shader/deferred/terrain.tesc", {})
-				.addShader(enginePath + "shader/deferred/terrain.tese", {})
-				.addShader(enginePath + "shader/deferred/terrain.frag", {})
+				.addShader(engine_path + "shader/deferred/terrain.vert", {})
+				.addShader(engine_path + "shader/deferred/terrain.tesc", {})
+				.addShader(engine_path + "shader/deferred/terrain.tese", {})
+				.addShader(engine_path + "shader/deferred/terrain.frag", {})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
 				.addLink("TERRAIN", "Terrain.UniformBuffer"),
 				defeRenderPass, 0);
@@ -467,18 +481,18 @@ namespace tke
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
 				.addBlendAttachmentState(false)
-				.addShader(enginePath + "shader/deferred/water.vert", {})
-				.addShader(enginePath + "shader/deferred/water.tesc", {})
-				.addShader(enginePath + "shader/deferred/water.tese", {})
-				.addShader(enginePath + "shader/deferred/water.frag", {})
+				.addShader(engine_path + "shader/deferred/water.vert", {})
+				.addShader(engine_path + "shader/deferred/water.tesc", {})
+				.addShader(engine_path + "shader/deferred/water.tese", {})
+				.addShader(engine_path + "shader/deferred/water.frag", {})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
 				.addLink("WATER", "Water.UniformBuffer"),
 				defeRenderPass, 0);
 			deferredPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/fullscreenView.vert", {})
-				.addShader(enginePath + "shader/deferred/deferred.frag", {"USE_PBR", "USE_IBL"})
+				.addShader(engine_path + "shader/fullscreenView.vert", {})
+				.addShader(engine_path + "shader/deferred/deferred.frag", {"USE_PBR", "USE_IBL"})
 				.addLink("CONSTANT", "Constant.UniformBuffer")
 				.addLink("MATRIX", "Matrix.UniformBuffer")
 				.addLink("AMBIENT", "Ambient.UniformBuffer")
@@ -493,8 +507,8 @@ namespace tke
 			composePipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(enginePath + "shader/fullscreen.vert", {})
-				.addShader(enginePath + "shader/compose/compose.frag", {})
+				.addShader(engine_path + "shader/fullscreen.vert", {})
+				.addShader(engine_path + "shader/compose/compose.frag", {})
 				.addLink("source", "Main.Image", 0, plainUnnormalizedSampler),
 				defeRenderPass, 2);
 
@@ -516,11 +530,11 @@ namespace tke
 		for (int i = 0; i < 3; i++)
 			envrImageDownsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
 				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		mainImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		depthImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = std::make_unique<Image>(resCx, resCy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		mainImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		depthImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		ds_mrt = std::make_unique<DescriptorSet>(mrtPipeline);
 		ds_mrtAnim = std::make_unique<DescriptorSet>(mrtAnimPipeline);
@@ -563,8 +577,8 @@ namespace tke
 					.vertex_input(&vertexStatInputState)
 					.depth_test(true)
 					.depth_write(true)
-					.addShader(enginePath + "shader/esm/esm.vert", {})
-					.addShader(enginePath + "shader/esm/esm.frag", {})
+					.addShader(engine_path + "shader/esm/esm.vert", {})
+					.addShader(engine_path + "shader/esm/esm.frag", {})
 					.addLink("CONSTANT", "Constant.UniformBuffer")
 					.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
 					.addLink("SHADOW", "Shadow.UniformBuffer")
@@ -575,8 +589,8 @@ namespace tke
 					.vertex_input(&vertexAnimInputState)
 					.depth_test(true)
 					.depth_write(true)
-					.addShader(enginePath + "shader/esm/esm.vert", {"ANIM"})
-					.addShader(enginePath + "shader/esm/esm.frag", {"ANIM"})
+					.addShader(engine_path + "shader/esm/esm.vert", {"ANIM"})
+					.addShader(engine_path + "shader/esm/esm.frag", {"ANIM"})
 					.addLink("CONSTANT", "Constant.UniformBuffer")
 					.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
 					.addLink("SHADOW", "Shadow.UniformBuffer")
@@ -619,7 +633,7 @@ namespace tke
 				specRoughnessImage->getView(),
 				dst->getView(),
 			};
-			framebuffer = getFramebuffer(resCx, resCy, defeRenderPass, ARRAYSIZE(views), views);
+			framebuffer = getFramebuffer(res_cx, res_cy, defeRenderPass, ARRAYSIZE(views), views);
 		}
 	}
 
@@ -636,8 +650,8 @@ namespace tke
 			stru.projView = stru.proj * stru.view;
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, scene->camera.frustumPlanes, sizeof(MatrixBufferShaderStruct::frustumPlanes));
-			stru.viewportDim = glm::vec2(resCx, resCy);
-			matrixBuffer->update(&stru, stagingBuffer);
+			stru.viewportDim = glm::vec2(res_cx, res_cy);
+			matrixBuffer->update(&stru, defalut_staging_buffer);
 		}
 		if (scene->needUpdateSky)
 		{
@@ -740,14 +754,14 @@ namespace tke
 			stru.color = scene->ambientColor;
 			stru.envr_max_mipmap = envrImage->levels.size() - 1;
 			stru.fogcolor = glm::vec4(scene->fogColor, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-			ambientBuffer->update(&stru, stagingBuffer);
+			ambientBuffer->update(&stru, defalut_staging_buffer);
 		}
 		if (scene->objects.size() > 0)
 		{
 			int updateCount = 0;
 			std::vector<VkBufferCopy> staticUpdateRanges;
 			std::vector<VkBufferCopy> animatedUpdateRanges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * scene->objects.size());
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * scene->objects.size());
 			int staticObjectIndex = 0;
 			int animatedObjectIndex = 0;
 
@@ -789,9 +803,9 @@ namespace tke
 				}
 
 			}
-			stagingBuffer->unmap();
-			stagingBuffer->copyTo(staticObjectMatrixBuffer.get(), staticUpdateRanges.size(), staticUpdateRanges.data());
-			stagingBuffer->copyTo(animatedObjectMatrixBuffer.get(), animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			defalut_staging_buffer->unmap();
+			defalut_staging_buffer->copyTo(staticObjectMatrixBuffer.get(), staticUpdateRanges.size(), staticUpdateRanges.data());
+			defalut_staging_buffer->copyTo(animatedObjectMatrixBuffer.get(), animatedUpdateRanges.size(), animatedUpdateRanges.data());
 		}
 
 		std::vector<VkWriteDescriptorSet> writes;
@@ -799,7 +813,7 @@ namespace tke
 		if (scene->terrains.size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(TerrainShaderStruct) * scene->terrains.size());
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(TerrainShaderStruct) * scene->terrains.size());
 
 			auto index = 0;
 			for (auto &t : scene->terrains)
@@ -841,13 +855,13 @@ namespace tke
 				index++;
 			}
 
-			stagingBuffer->unmap();
-			stagingBuffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
+			defalut_staging_buffer->unmap();
+			defalut_staging_buffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
 		}
 		if (scene->waters.size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(WaterShaderStruct) * scene->waters.size());
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * scene->waters.size());
 
 			auto index = 0;
 			for (auto &w : scene->waters)
@@ -873,8 +887,8 @@ namespace tke
 				}
 				index++;
 			}
-			stagingBuffer->unmap();
-			stagingBuffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
+			defalut_staging_buffer->unmap();
+			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		std::vector<Object*> staticObjects;
@@ -938,9 +952,9 @@ namespace tke
 				animatedIndirectCount = animatedCommands.size();
 
 				if (staticCommands.size() > 0)
-					staticObjectIndirectBuffer->update(staticCommands.data(), stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
+					staticObjectIndirectBuffer->update(staticCommands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
 				if (animatedCommands.size() > 0)
-					animatedObjectIndirectBuffer->update(animatedCommands.data(), stagingBuffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
+					animatedObjectIndirectBuffer->update(animatedCommands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 			}
 		}
 
@@ -951,7 +965,7 @@ namespace tke
 			{
 				auto shadowIndex = 0;
 				std::vector<VkBufferCopy> ranges;
-				auto map = (unsigned char*)stagingBuffer->map(0, sizeof(glm::mat4) * scene->lights.size());
+				auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * scene->lights.size());
 
 				for (auto &l : scene->lights)
 				{
@@ -1023,8 +1037,8 @@ namespace tke
 						shadowIndex += 6;
 					}
 				}
-				stagingBuffer->unmap();
-				stagingBuffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
+				defalut_staging_buffer->unmap();
+				defalut_staging_buffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
 			}
 		}
 
@@ -1032,7 +1046,7 @@ namespace tke
 		{ // light attribute
 			int lightIndex = 0;
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)stagingBuffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
 			for (auto &l : scene->lights)
 			{
 				l->sceneIndex = lightIndex;
@@ -1055,8 +1069,8 @@ namespace tke
 				}
 				lightIndex++;
 			}
-			stagingBuffer->unmap();
-			stagingBuffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
+			defalut_staging_buffer->unmap();
+			defalut_staging_buffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		updateDescriptorSets(writes.size(), writes.data());
@@ -1082,7 +1096,7 @@ namespace tke
 					cb->bindPipeline(esmPipeline);
 					VkDescriptorSet sets[] = {
 						ds_esm->v,
-						ds_textures->v
+						ds_material_images->v
 					};
 					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 					for (int oId = 0; oId < staticObjects.size(); oId++)
@@ -1099,7 +1113,7 @@ namespace tke
 					cb->bindPipeline(esmAnimPipeline);
 					VkDescriptorSet sets[] = {
 						ds_esmAnim->v,
-						ds_textures->v,
+						ds_material_images->v,
 						ds_mrtAnim_bone->v
 					};
 					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
@@ -1127,7 +1141,7 @@ namespace tke
 			cb->bindPipeline(mrtPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
-				ds_textures->v
+				ds_material_images->v
 			};
 			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 			cb->drawIndirectIndex(staticObjectIndirectBuffer.get(), staticIndirectCount);
@@ -1138,7 +1152,7 @@ namespace tke
 			cb->bindPipeline(mrtAnimPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
-				ds_textures->v,
+				ds_material_images->v,
 				ds_mrtAnim_bone->v
 			};
 			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));

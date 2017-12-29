@@ -1,16 +1,23 @@
 #include <map>
 #include <regex>
 
-#include "core.h"
+#include "error.h"
+#include "global.h"
+#include "system.h"
+#include "input.h"
+#include "global.h"
+#include "application.h"
 #include "graphics/buffer.h"
 #include "graphics/image.h"
 #include "graphics/renderpass.h"
+#include "graphics/framebuffer.h"
 #include "graphics/synchronization.h"
 #include "graphics/renderer.h"
 #include "ui/ui.h"
 #include "physics/physics.h"
 #include "sound/sound.h"
 #include "model/model.h"
+#include "pick_up/pick_up.h"
 
 namespace tke
 {
@@ -28,36 +35,6 @@ namespace tke
 			if (sm[0].str() == "r")
 				processCmdLine(last_cmd.c_str(), false);
 		}
-	}
-
-	unsigned int pickUp(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback)
-	{
-		if (x < 0 || y < 0 || x > pickUpImage->levels[0].cx || y > pickUpImage->levels[0].cy)
-			return 0;
-
-		auto cb = begineOnceCommandBuffer();
-		cb->beginRenderPass(renderPass_depthC_image8C, pickUpFb.get());
-		drawCallback(cb);
-		cb->endRenderPass();
-		endOnceCommandBuffer(cb);
-
-		cb = begineOnceCommandBuffer();
-		VkBufferImageCopy range = {};
-		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.imageSubresource.layerCount = 1;
-		range.imageOffset.x = x;
-		range.imageOffset.y = y;
-		range.imageExtent.width = 1;
-		range.imageExtent.height = 1;
-		range.imageExtent.depth = 1;
-		vkCmdCopyImageToBuffer(cb->v, pickUpImage->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, defalut_staging_buffer->v, 1, &range);
-		endOnceCommandBuffer(cb);
-
-		auto pixel = (unsigned char*)defalut_staging_buffer->map(0, 4);
-		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
-		defalut_staging_buffer->unmap();
-
-		return index;
 	}
 
 	struct ConstantBufferStruct
@@ -243,10 +220,10 @@ namespace tke
 		SetProcessDPIAware();
 #endif
 
-		enginePath = path;
-		resCx = rcx;
-		resCy = rcy;
-		resAspect = (float)resCx / resCy;
+		engine_path = path;
+		res_cx = rcx;
+		res_cy = rcy;
+		res_aspect = (float)res_cx / res_cy;
 
 		if (!only_2d)
 		{
@@ -254,85 +231,29 @@ namespace tke
 				glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f));
 			matOrtho = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
 			matOrthoInv = glm::inverse(matOrtho);
-			matPerspective = vkTrans * glm::perspective(glm::radians(fovy), resAspect, near_plane, far_plane);
+			matPerspective = vkTrans * glm::perspective(glm::radians(fovy), res_aspect, near_plane, far_plane);
 			matPerspectiveInv = glm::inverse(matPerspective);
 		}
 
 		initVulkan(vulkan_debug);
 
-		{
-			auto att0 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att1 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-			VkAttachmentReference col_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-			renderPass_window = new RenderPass(1, &att0, 1, &subpass0);
-			renderPass_windowC = new RenderPass(1, &att1, 1, &subpass0);
-
-			if (!only_2d)
-			{
-				auto att2 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-				auto att3 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				auto att4 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-				auto att5 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-				VkAttachmentReference col_ref = {0, VK_IMAGE_LAYOUT_GENERAL};
-				VkAttachmentReference dep_ref0 = {0, VK_IMAGE_LAYOUT_GENERAL};
-				VkAttachmentReference dep_ref1 = {1, VK_IMAGE_LAYOUT_GENERAL};
-				VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-				VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
-				VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
-				VkAttachmentDescription atts0[] = {
-					att2,
-					att6
-				};
-				VkAttachmentDescription atts1[] = {
-					att3,
-					att6
-				};
-				VkAttachmentDescription atts2[] = {
-					att7,
-					att6
-				};
-				renderPass_image8 = new RenderPass(1, &att2, 1, &subpass0);
-				renderPass_image8C = new RenderPass(1, &att3, 1, &subpass0);
-				renderPass_image16 = new RenderPass(1, &att4, 1, &subpass0);
-				renderPass_image16C = new RenderPass(1, &att5, 1, &subpass0);
-				renderPass_depthC = new RenderPass(1, &att6, 1, &subpass1);
-				renderPass_depthC_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
-				renderPass_depthC_image8C = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
-				renderPass_depthC_image32fC = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
-			}
-		}
-
 		initUi();
 
 		if (!only_2d)
 		{
-			depthImage = new Image(resCx, resCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			globalResource.setImage(depthImage, "Depth.Image");
-
-			pickUpImage = new Image(resCx, resCy, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-
-			VkImageView views[] = {
-				pickUpImage->getView(),
-				depthImage->getView()
-			};
-			pickUpFb = getFramebuffer(resCx, resCy, renderPass_depthC_image8C, TK_ARRAYSIZE(views), views);
-
 			initModel();
+			init_pick_up();
 
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-
 			globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
 
 			{
 				ConstantBufferStruct stru;
 				stru.depth_near = near_plane;
 				stru.depth_far = far_plane;
-				stru.cx = resCx;
-				stru.cy = resCy;
-				stru.aspect = resAspect;
+				stru.cx = res_cx;
+				stru.cy = res_cy;
+				stru.aspect = res_aspect;
 				stru.fovy = fovy;
 				stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
 				stru.envrCx = EnvrSizeCx;

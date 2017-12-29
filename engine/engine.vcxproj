@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\imgui\imgui.cpp" />
     <ClCompile Include="..\..\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\src\core.cpp" />
+    <ClCompile Include="..\src\application.cpp" />
     <ClCompile Include="..\src\entity\camera.cpp" />
     <ClCompile Include="..\src\entity\controller.cpp" />
     <ClCompile Include="..\src\entity\light.cpp" />
@@ -32,6 +32,8 @@
     <ClCompile Include="..\src\entity\terrain.cpp" />
     <ClCompile Include="..\src\entity\transformer.cpp" />
     <ClCompile Include="..\src\entity\water.cpp" />
+    <ClCompile Include="..\src\error.cpp" />
+    <ClCompile Include="..\src\event.cpp" />
     <ClCompile Include="..\src\file_utils.cpp" />
     <ClCompile Include="..\src\graphics\buffer.cpp" />
     <ClCompile Include="..\src\graphics\command_buffer.cpp" />
@@ -48,21 +50,25 @@
     <ClCompile Include="..\src\graphics\shader.cpp" />
     <ClCompile Include="..\src\graphics\synchronization.cpp" />
     <ClCompile Include="..\src\image_data.cpp" />
+    <ClCompile Include="..\src\inpit.cpp" />
+    <ClCompile Include="..\src\language.cpp" />
     <ClCompile Include="..\src\math\math.cpp" />
     <ClCompile Include="..\src\model\animation.cpp" />
     <ClCompile Include="..\src\model\model.cpp" />
     <ClCompile Include="..\src\physics\physics.cpp" />
+    <ClCompile Include="..\src\pick_up\pick_up.cpp" />
     <ClCompile Include="..\src\refl.cpp" />
     <ClCompile Include="..\src\REFLECT.cpp" />
     <ClCompile Include="..\src\resource\resource.cpp" />
     <ClCompile Include="..\src\sound\sound.cpp" />
+    <ClCompile Include="..\src\string_utils.cpp" />
+    <ClCompile Include="..\src\system.cpp" />
+    <ClCompile Include="..\src\time.cpp" />
     <ClCompile Include="..\src\ui\ui.cpp" />
-    <ClCompile Include="..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\imgui\imgui.h" />
-    <ClInclude Include="..\src\core.h" />
-    <ClInclude Include="..\src\define.h" />
+    <ClInclude Include="..\src\application.h" />
     <ClInclude Include="..\src\entity\camera.h" />
     <ClInclude Include="..\src\entity\controller.h" />
     <ClInclude Include="..\src\entity\light.h" />
@@ -73,7 +79,10 @@
     <ClInclude Include="..\src\entity\terrain.h" />
     <ClInclude Include="..\src\entity\transformer.h" />
     <ClInclude Include="..\src\entity\water.h" />
+    <ClInclude Include="..\src\error.h" />
+    <ClInclude Include="..\src\event.h" />
     <ClInclude Include="..\src\file_utils.h" />
+    <ClInclude Include="..\src\global.h" />
     <ClInclude Include="..\src\graphics\buffer.h" />
     <ClInclude Include="..\src\graphics\command_buffer.h" />
     <ClInclude Include="..\src\graphics\descriptor.h" />
@@ -90,15 +99,21 @@
     <ClInclude Include="..\src\graphics\synchronization.h" />
     <ClInclude Include="..\src\hash.h" />
     <ClInclude Include="..\src\image_data.h" />
+    <ClInclude Include="..\src\input.h" />
+    <ClInclude Include="..\src\language.h" />
     <ClInclude Include="..\src\math\math.h" />
     <ClInclude Include="..\src\model\animation.h" />
     <ClInclude Include="..\src\model\model.h" />
     <ClInclude Include="..\src\physics\physics.h" />
+    <ClInclude Include="..\src\pick_up\pick_up.h" />
     <ClInclude Include="..\src\refl.h" />
     <ClInclude Include="..\src\resource\resource.h" />
     <ClInclude Include="..\src\sound\sound.h" />
+    <ClInclude Include="..\src\string_utils.h" />
+    <ClInclude Include="..\src\system.h" />
+    <ClInclude Include="..\src\time.h" />
+    <ClInclude Include="..\src\type.h" />
     <ClInclude Include="..\src\ui\ui.h" />
-    <ClInclude Include="..\src\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6F5FD7B3-5E83-4A48-B23D-497D31A48266}</ProjectGuid>

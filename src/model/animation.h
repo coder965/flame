@@ -12,7 +12,7 @@ namespace tke
 		std::string name;
 		char type = -1;
 
-		int parents = -1;
+		int parent = -1;
 
 		glm::vec3 rootCoord = glm::vec3(0.f);
 		glm::vec3 relateCoord = glm::vec3(0.f);
@@ -61,6 +61,7 @@ namespace tke
 
 	struct Model;
 	struct UniformBuffer;
+
 	struct AnimationComponent
 	{
 		struct BoneData

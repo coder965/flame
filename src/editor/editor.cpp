@@ -1,5 +1,7 @@
-#include "../../src/ui/ui.h"
-#include "../../src/core.h"
+#include "../ui/ui.h"
+#include "../input.h"
+#include "../global.h"
+#include "../application.h"
 
 #include "window/file_selector.h"
 #include "window/resource_explorer.h"
@@ -49,7 +51,7 @@ int main(int argc, char** argv)
 {
 	tke::init(true, "../", 1920, 1080, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
 
-	ShowWindow(tke::hWnd, SW_SHOWMAXIMIZED);
+	ShowWindow((HWND)tke::hWnd, SW_SHOWMAXIMIZED);
 
 	{
 		tke::XMLDoc at("data", "ui.xml");
@@ -104,12 +106,12 @@ int main(int argc, char** argv)
 					{
 						tke::window_style |= tke::WindowStyleFrame;
 						tke::window_style &= (~tke::WindowStyleFullscreen);
-						tke::window_cx = tke::resCx;
-						tke::window_cy = tke::resCy;
+						tke::window_cx = tke::res_cx;
+						tke::window_cy = tke::res_cy;
 					}
 					auto wndProp = tke::getWin32WndProp();
-					SetWindowLong(tke::hWnd, GWL_STYLE, wndProp.second);
-					SetWindowPos(tke::hWnd, HWND_TOP, 0, 0, wndProp.first.x, wndProp.first.y, SWP_NOZORDER);
+					SetWindowLong((HWND)tke::hWnd, GWL_STYLE, wndProp.second);
+					SetWindowPos((HWND)tke::hWnd, HWND_TOP, 0, 0, wndProp.first.x, wndProp.first.y, SWP_NOZORDER);
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Resource Explorer"))

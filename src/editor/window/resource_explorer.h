@@ -1,9 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
-#include "../../utils.h"
-#include "../../render/image.h"
+#include "../../graphics/image.h"
+
 #include "file_selector.h"
 
 extern const char *basic_model_names[8];

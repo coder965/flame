@@ -12,6 +12,7 @@ namespace tke
 
 	struct UniformBuffer;
 	struct Image;
+	struct DescriptorSet;
 
 	struct Material
 	{
@@ -39,7 +40,7 @@ namespace tke
 
 	IMPL() std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
 	std::shared_ptr<Image> getMaterialImage(const std::string &filename, bool sRGB = false);
-	IMPL(nullptr) DescriptorSet *ds_textures;
+	IMPL(nullptr) DescriptorSet *ds_material_images;
 
 	void init_material();
 }

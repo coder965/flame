@@ -1,4 +1,7 @@
+#include "../model/model.h"
+#include "../model/animation.h"
 #include "object.h"
+#include "../physics/physics.h"
 
 namespace tke
 {

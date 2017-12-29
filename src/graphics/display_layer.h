@@ -1,10 +1,12 @@
 #pragma once
 
-#include "image.h"
-#include "framebuffer.h"
+#include <memory>
 
 namespace tke
 {
+	struct Image;
+	struct Framebuffer;
+
 	struct DisplayLayer
 	{
 		std::unique_ptr<Image> image;

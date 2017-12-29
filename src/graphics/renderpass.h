@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "../refl.h"
 #include "graphics.h"
 
 namespace tke
@@ -22,4 +23,17 @@ namespace tke
 		// must call in main thread
 		~RenderPass();
 	};
+
+	IMPL(nullptr) RenderPass *renderPass_image8;
+	IMPL(nullptr) RenderPass *renderPass_image8C;
+	IMPL(nullptr) RenderPass *renderPass_image16;
+	IMPL(nullptr) RenderPass *renderPass_image16C;
+	IMPL(nullptr) RenderPass *renderPass_depthC;
+	IMPL(nullptr) RenderPass *renderPass_depthC_image8;
+	IMPL(nullptr) RenderPass *renderPass_depthC_image8C;
+	IMPL(nullptr) RenderPass *renderPass_depthC_image32fC;
+	IMPL(nullptr) RenderPass *renderPass_window;
+	IMPL(nullptr) RenderPass *renderPass_windowC;
+
+	void init_renderpass();
 }

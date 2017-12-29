@@ -1,7 +1,18 @@
 #include "../../ui/ui.h"
+#include "../../file_utils.h"
+#include "../../graphics/buffer.h"
+#include "../../model/model.h"
+#include "../../model/animation.h"
+#include "../../entity/light.h"
+#include "../../entity/object.h"
+#include "../../entity/terrain.h"
+#include "../../physics/physics.h"
+#include "../../pick_up/pick_up.h"
+#include "../../input.h"
+#include "../../global.h"
+#include "../../application.h"
 #include "resource_explorer.h"
 #include "scene_editor.h"
-#include "../../file_utils.h"
 
 std::unique_ptr<SceneEditor> scene_editor = nullptr;
 
@@ -15,12 +26,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 
-	VkImageView views[] = {
-		layer.image->getView(),
-		tke::depthImage->getView()
-	};
-	fb_tool = tke::getFramebuffer(layer.image->levels[0].cx, layer.image->levels[0].cy, tke::renderPass_depthC_image8, TK_ARRAYSIZE(views), views);
-	transformerTool = std::make_unique<TransformerTool>(fb_tool.get());
+	transformerTool = std::make_unique<TransformerTool>(layer.image.get());
 }
 
 SceneEditor::~SceneEditor()
@@ -362,17 +368,17 @@ void SceneEditor::do_show()
 	auto displayCx = tke::window_cx;
 	auto displayCy = tke::window_cy;
 	ImVec2 image_size;
-	if ((float)displayCx / (float)displayCy > tke::resAspect)
+	if ((float)displayCx / (float)displayCy > tke::res_aspect)
 	{
 		image_size.y = displayCy;
-		image_size.x = tke::resAspect * image_size.y;
+		image_size.x = tke::res_aspect * image_size.y;
 		image_pos.x = (displayCx - image_size.x) * 0.5f;
 		image_pos.y = 0;
 	}
 	else
 	{
 		image_size.x = displayCx;
-		image_size.y = image_size.x / tke::resAspect;
+		image_size.y = image_size.x / tke::res_aspect;
 		image_pos.y = (displayCy - image_size.y) * 0.5f;
 		image_pos.x = 0;
 	}
@@ -404,8 +410,8 @@ void SceneEditor::do_show()
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::resCx;
-			auto distY = (float)tke::mouseDispY / (float)tke::resCy;
+			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
+			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
 			if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
 				scene->camera.moveByCursor(distX, distY);
 			else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
@@ -424,8 +430,8 @@ void SceneEditor::do_show()
 		{
 			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
 			{
-				auto x = (tke::mouseX - image_pos.x) / image_size.x * tke::resCx;
-				auto y = (tke::mouseY - image_pos.y) / image_size.y * tke::resCy;
+				auto x = (tke::mouseX - image_pos.x) / image_size.x * tke::res_cx;
+				auto y = (tke::mouseY - image_pos.y) / image_size.y * tke::res_cy;
 				if (!transformerTool->leftDown(x, y))
 				{
 					tke::PlainRenderer::DrawData draw_data;
@@ -442,7 +448,7 @@ void SceneEditor::do_show()
 							obj_data.bone_buffer = object->animationComponent->boneMatrixBuffer;
 						draw_data.obj_data.push_back(obj_data);
 					}
-					auto index = tke::pickUp(x, y, std::bind(
+					auto index = tke::pick_up(x, y, std::bind(
 						&tke::PlainRenderer::render_to,
 						plain_renderer.get(), std::placeholders::_1, &scene->camera, &draw_data));
 					if (index == 0)

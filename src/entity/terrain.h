@@ -2,7 +2,6 @@
 
 #include "transformer.h"
 #include "node.h"
-#include "../model/material.h"
 
 namespace physx { struct PxRigidActor; }
 
@@ -15,6 +14,8 @@ namespace tke
 	};
 
 	struct Image;
+	struct Material;
+
 	REFLECTABLE struct Terrain : Transformer, Node
 	{
 		REFL_BANK;

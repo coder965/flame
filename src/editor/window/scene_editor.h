@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../entity/scene.h"
-#include "../../render/display_layer.h"
-#include "../../render/renderer.h"
+#include "../../graphics/display_layer.h"
+#include "../../graphics/renderer.h"
 #include "../tool/transformer_tool.h"
 #include "entity_window.h"
 
@@ -24,7 +24,6 @@ struct SceneEditor
 
 	bool showSelectedWireframe = true;
 
-	std::shared_ptr<tke::Framebuffer> fb_tool;
 	std::unique_ptr<TransformerTool> transformerTool;
 
 	bool follow = false;

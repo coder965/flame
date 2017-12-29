@@ -65,8 +65,8 @@ namespace tke
 
 		Rigidbody();
 		Rigidbody(RigidbodyType _type);
-		void addShape(Shape *s);
-		Shape *removeShape(Shape *s);
+		Shape *new_shape();
+		void remove_shape(Shape *s);
 	};
 
 	struct Joint : Transformer

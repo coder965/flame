@@ -6,12 +6,14 @@
 
 #include "../file_utils.h"
 #include "../hash.h"
-#include "../core.h"
+#include "../language.h"
 #include "../resource/resource.h"
-#include "../render/sampler.h"
-#include "../render/pipeline.h"
+#include "../graphics/buffer.h"
+#include "../graphics/image.h"
+#include "../graphics/sampler.h"
+#include "../graphics/pipeline.h"
+#include "../graphics/material.h"
 #include "model.h"
-#include "material.h"
 #include "animation.h"
 #include "../physics/physics.h"
 
@@ -43,7 +45,7 @@ namespace tke
 			int boneID = -1;
 			for (int iBone = 0; iBone < bones.size(); iBone++)
 			{
-				if (bm->name == bones[iBone].name)
+				if (bm->name == bones[iBone]->name)
 				{
 					boneID = iBone;
 					break;
@@ -111,35 +113,84 @@ namespace tke
 		}
 	}
 
-	void Model::addRigidbody(Rigidbody *pRigidbody)
+	Bone *Model::new_bone()
 	{
-		static auto magicNumber = 0;
-		pRigidbody->id = magicNumber++;
-		rigidbodies.push_back(pRigidbody);
+		auto b = std::make_unique<Bone>();
+		bones.push_back(std::move(b));
+		return b.get();
 	}
 
-	Rigidbody *Model::deleteRigidbody(Rigidbody *pRigidBody)
+	void Model::remove_bone(Bone *b)
+	{
+		for (auto it = bones.begin(); it != bones.end(); it++)
+		{
+			if (it->get() == b)
+			{
+				bones.erase(it);
+				return;
+			}
+		}
+	}
+
+	BoneIK *Model::new_bone_ik()
+	{
+		auto b = std::make_unique<BoneIK>();
+		iks.push_back(std::move(b));
+		return b.get();
+	}
+
+	void Model::remove_bone_ik(BoneIK *b)
+	{
+		for (auto it = iks.begin(); it != iks.end(); it++)
+		{
+			if (it->get() == b)
+			{
+				iks.erase(it);
+				return;
+			}
+		}
+	}
+
+	Rigidbody *Model::new_rigidbody()
+	{
+		static auto magicNumber = 0;
+		auto r = std::make_unique<Rigidbody>();
+		r->id = magicNumber++;
+		rigidbodies.push_back(std::move(r));
+		return r.get();
+	}
+
+	void Model::remove_rigidbody(Rigidbody *r)
 	{
 		for (auto it = rigidbodies.begin(); it != rigidbodies.end(); it++)
 		{
-			if (*it == pRigidBody)
+			if (it->get() == r)
 			{
-				if (it > rigidbodies.begin())
-					pRigidBody = *(it - 1);
-				else
-					pRigidBody = nullptr;
 				rigidbodies.erase(it);
-				break;
+				return;
 			}
 		}
-		return pRigidBody;
 	}
 
-	void Model::addJoint(Joint *pJoint)
+	Joint *Model::new_joint()
 	{
 		static auto magicNumber = 0;
-		pJoint->id = magicNumber++;
-		joints.push_back(pJoint);
+		auto j = std::make_unique<Joint>();
+		j->id = magicNumber++;
+		joints.push_back(std::move(j));
+		return j.get();
+	}
+
+	void Model::remove_joint(Joint *j)
+	{
+		for (auto it = joints.begin(); it != joints.end(); it++)
+		{
+			if (it->get() == j)
+			{
+				joints.erase(it);
+				return;
+			}
+		}
 	}
 
 	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center)
@@ -495,12 +546,12 @@ namespace tke
 
 		for (int i = 0; i < m->bones.size(); i++)
 		{
-			m->bones[i].relateCoord = m->bones[i].rootCoord;
-			int parentID = m->bones[i].parents;
+			m->bones[i]->relateCoord = m->bones[i]->rootCoord;
+			int parentID = m->bones[i]->parent;
 			if (parentID != -1)
 			{
-				m->bones[i].relateCoord -= m->bones[parentID].rootCoord;
-				m->bones[parentID].children.push_back(i);
+				m->bones[i]->relateCoord -= m->bones[parentID]->rootCoord;
+				m->bones[parentID]->children.push_back(i);
 			}
 		}
 
@@ -617,7 +668,7 @@ namespace tke
 					ss >> name;
 					auto g = std::make_unique<Geometry>();
 					currentGeometry = g.get();
-					currentGeometry->material = getModelMaterial(name);
+					currentGeometry->material = getMaterial(name);
 					currentGeometry->indiceBase = currentIndex;
 					m->geometries.push_back(std::move(g));
 				}
@@ -654,17 +705,17 @@ namespace tke
 							{
 								std::string filename;
 								ss >> filename;
-								albedoAlphaMap = getModelTexture(m->filepath + "/" + filename, true);
+								albedoAlphaMap = getMaterialImage(m->filepath + "/" + filename, true);
 							}
 							else if (token == "map_bump")
 							{
 								std::string filename;
 								ss >> filename;
-								normalHeightMap = getModelTexture(m->filepath + "/" + filename);
+								normalHeightMap = getMaterialImage(m->filepath + "/" + filename);
 							}
 						}
 
-						auto m = getModelMaterial(255, 255, 255, 255, spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
+						auto m = getMaterial(255, 255, 255, 255, spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
 						m->name = mtlName;
 					}
 				}
@@ -676,8 +727,6 @@ namespace tke
 			m->indice_count = indices.size();
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
-
-			m->loadData(true);
 
 			_process_model(m, true);
 		}
@@ -841,8 +890,8 @@ namespace tke
 				file.read((char*)&data, sizeof(MaterialData));
 
 				auto g = std::make_unique<Geometry>();
-				g->material = getModelMaterial(data.diffuse.r * 255, data.diffuse.g * 255, data.diffuse.b * 255, data.diffuse.a * 255,
-					0, 255, getModelTexture(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
+				g->material = getMaterial(data.diffuse.r * 255, data.diffuse.g * 255, data.diffuse.b * 255, data.diffuse.a * 255,
+					0, 255, getMaterialImage(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
 				g->indiceBase = currentIndiceVertex;
 				g->indiceCount = data.indiceCount;
 
@@ -853,37 +902,39 @@ namespace tke
 
 			unsigned short boneCount;
 			file & boneCount;
-			m->bones.resize(boneCount);
 			for (int i = 0; i < boneCount; i++)
 			{
 				BoneData data;
 				file.read((char*)&data, sizeof(BoneData));
 
-				m->bones[i].name = japaneseToChinese(data.name);
-				m->bones[i].parents = data.parents;
-				m->bones[i].type = data.type;
-				m->bones[i].rootCoord = data.coord;
-				m->bones[i].rootCoord.z *= -1.f;
+				auto b = m->new_bone();
+
+				b->name = japanese_to_chinese(data.name);
+				b->parent = data.parents;
+				b->type = data.type;
+				b->rootCoord = data.coord;
+				b->rootCoord.z *= -1.f;
 			}
 
 			unsigned short ikCount;
 			file & ikCount;
-			m->iks.resize(ikCount);
 			for (int i = 0; i < ikCount; i++)
 			{
 				IkData data;
 				file.read((char*)&data, sizeof(IkData));
 
-				m->iks[i].targetID = data.target;
-				m->iks[i].effectorID = data.effector;
-				m->iks[i].iterations = data.iterations;
-				m->iks[i].weight = data.weight;
-				m->iks[i].chain.resize(data.chainLength);
+				auto b = m->new_bone_ik();
+
+				b->targetID = data.target;
+				b->effectorID = data.effector;
+				b->iterations = data.iterations;
+				b->weight = data.weight;
+				b->chain.resize(data.chainLength);
 				for (int j = 0; j < data.chainLength; j++)
 				{
 					short boneID;
 					file & boneID;
-					m->iks[i].chain[j] = boneID;
+					b->chain[j] = boneID;
 				}
 			}
 
@@ -964,29 +1015,34 @@ namespace tke
 				RigidData data;
 				file.read((char*)&data, sizeof(RigidData));
 
-				auto p = new Rigidbody;
-				p->name = japaneseToChinese(data.name);
-				p->boneID = data.bone;
-				p->originCollisionGroupID = data.collisionGroupNumber;
-				p->originCollisionFreeFlag = data.collisionGroupMask;
+				auto r = m->new_rigidbody();
+				r->name = japanese_to_chinese(data.name);
+				r->boneID = data.bone;
+				r->originCollisionGroupID = data.collisionGroupNumber;
+				r->originCollisionFreeFlag = data.collisionGroupMask;
 				data.location.z *= -1.f;
-				p->setCoord(data.location);
+				r->setCoord(data.location);
 				data.rotation = glm::degrees(data.rotation);
 				glm::mat3 rotationMat;
 				eulerYxzToMatrix(glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z), rotationMat);
 				glm::vec4 rotationQuat;
 				matrixToQuaternion(rotationMat, rotationQuat);
-				p->setQuat(rotationQuat);
-				p->type = (RigidbodyType)data.mode;
-				//m->addRigidbody(p); // TODO : FIX
-				auto q = new Shape;
+				r->setQuat(rotationQuat);
+				r->type = (RigidbodyType)data.mode;
+				auto s = r->new_shape();
 				switch (data.type)
 				{
-					case 0: q->type = ShapeType::sphere; break;
-					case 1: q->type = ShapeType::box; break;
-					case 2: q->type = ShapeType::capsule; break;
+					case 0: 
+						s->type = ShapeType::sphere; 
+						break;
+					case 1: 
+						s->type = ShapeType::box; 
+						break;
+					case 2:
+						s->type = ShapeType::capsule; 
+						break;
 				}
-				switch (q->type)
+				switch (s->type)
 				{
 					case ShapeType::sphere:
 						data.size.y = data.size.z = data.size.x;
@@ -996,10 +1052,10 @@ namespace tke
 						data.size.z = data.size.x;
 						break;
 				}
-				q->setScale(data.size);
-				auto v = q->getVolume();
-				if (v != 0.f) p->density = data.mass / v;
-				p->addShape(q);
+				s->setScale(data.size);
+				auto v = s->getVolume();
+				if (v != 0.f) 
+					r->density = data.mass / v;
 			}
 
 			unsigned int jointCount;
@@ -1009,28 +1065,25 @@ namespace tke
 				JointData data;
 				file.read((char*)&data, sizeof(JointData));
 
-				auto p = new Joint;
-				p->name = japaneseToChinese(data.name);
-				p->rigid0ID = data.rigid0;
-				p->rigid1ID = data.rigid1;
-				p->maxCoord = data.maxCoord;
-				p->minCoord = data.minCoord;
-				p->maxRotation = data.maxRotation;
-				p->minRotation = data.minRotation;
-				p->springConstant = data.springConstant;
-				p->sprintRotationConstant = data.springRotationConstant;
+				auto j = m->new_joint();
+				j->name = japanese_to_chinese(data.name);
+				j->rigid0ID = data.rigid0;
+				j->rigid1ID = data.rigid1;
+				j->maxCoord = data.maxCoord;
+				j->minCoord = data.minCoord;
+				j->maxRotation = data.maxRotation;
+				j->minRotation = data.minRotation;
+				j->springConstant = data.springConstant;
+				j->sprintRotationConstant = data.springRotationConstant;
 
 				data.coord.z *= -1.f;
-				p->setCoord(data.coord);
+				j->setCoord(data.coord);
 				glm::mat3 rotationMat;
 				eulerYxzToMatrix(glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z), rotationMat);
 				glm::vec4 rotationQuat;
 				matrixToQuaternion(rotationMat, rotationQuat);
-				p->setQuat(rotationQuat);
-				m->addJoint(p);
+				j->setQuat(rotationQuat);
 			}
-
-			m->loadData(false);
 
 			_process_model(m, true);
 		}
@@ -1352,10 +1405,10 @@ namespace tke
 				file > specRoughnessMapName;
 
 				auto g = std::make_unique<Geometry>();
-				g->material = getModelMaterial(albedoR, albedoG, albedoB, alpha, spec, roughness,
-					getModelTexture(m->filepath + "/" + albedoAlphaMapName, true),
-					getModelTexture(m->filepath + "/" + normalHeightMapName, true),
-					getModelTexture(m->filepath + "/" + specRoughnessMapName, true));
+				g->material = getMaterial(albedoR, albedoG, albedoB, alpha, spec, roughness,
+					getMaterialImage(m->filepath + "/" + albedoAlphaMapName, true),
+					getMaterialImage(m->filepath + "/" + normalHeightMapName, true),
+					getMaterialImage(m->filepath + "/" + specRoughnessMapName, true));
 				file & g->indiceBase;
 				file & g->indiceCount;
 				file & g->visible;
@@ -1367,17 +1420,15 @@ namespace tke
 			file & boneCount;
 			for (int i = 0; i < boneCount; i++)
 			{
-				Bone bone;
+				auto b = m->new_bone();
 
 				char name[20];
 				file.read(name, 20);
-				bone.name = name;
+				b->name = name;
 
-				file & bone.type;
-				file & bone.parents;
-				file & bone.rootCoord;
-
-				m->bones.push_back(bone);
+				file & b->type;
+				file & b->parent;
+				file & b->rootCoord;
 			}
 
 			int ikCount;
@@ -1385,15 +1436,17 @@ namespace tke
 			m->iks.resize(boneCount);
 			for (int i = 0; i < ikCount; i++)
 			{
-				file & m->iks[i].targetID;
-				file & m->iks[i].effectorID;
-				file & m->iks[i].iterations;
-				file & m->iks[i].weight;
+				auto b = m->new_bone_ik();
+
+				file & b->targetID;
+				file & b->effectorID;
+				file & b->iterations;
+				file & b->weight;
 
 				int chainLength;
 				file & chainLength;
-				m->iks[i].chain.resize(chainLength);
-				file.read((char*)m->iks[i].chain.data(), sizeof(int) * chainLength);
+				b->chain.resize(chainLength);
+				file.read((char*)b->chain.data(), sizeof(int) * chainLength);
 			}
 
 			if (animated)
@@ -1410,45 +1463,43 @@ namespace tke
 			file & rigidbodyCount;
 			for (int i = 0; i < rigidbodyCount; i++)
 			{
-				auto p = new Rigidbody;
+				auto r = m->new_rigidbody();
 				int type;
 				file & type;
-				p->type = (RigidbodyType)type;
-				file > p->name;
-				file & p->originCollisionGroupID;
-				file & p->originCollisionFreeFlag;
-				file & p->boneID;
+				r->type = (RigidbodyType)type;
+				file > r->name;
+				file & r->originCollisionGroupID;
+				file & r->originCollisionFreeFlag;
+				file & r->boneID;
 				glm::vec3 coord;
 				file & coord;
-				p->setCoord(coord);
+				r->setCoord(coord);
 				glm::vec3 euler;
 				file & euler;
-				p->setEuler(euler);
-				file & p->density;
-				file & p->velocityAttenuation;
-				file & p->rotationAttenuation;
-				file & p->bounce;
-				file & p->friction;
-				m->addRigidbody(p);
+				r->setEuler(euler);
+				file & r->density;
+				file & r->velocityAttenuation;
+				file & r->rotationAttenuation;
+				file & r->bounce;
+				file & r->friction;
 
 				int shapeCount;
 				file & shapeCount;
 				for (int j = 0; j < shapeCount; j++)
 				{
-					auto q = new Shape;
-					p->addShape(q);
+					auto s = r->new_shape();
 					glm::vec3 coord;
 					file & coord;
-					q->setCoord(coord);
+					s->setCoord(coord);
 					glm::vec3 euler;
 					file & euler;
-					q->setEuler(euler);
+					s->setEuler(euler);
 					glm::vec3 scale;
 					file & scale;
-					q->setScale(scale);
+					s->setScale(scale);
 					int type;
 					file & type;
-					q->type = (ShapeType)type;
+					s->type = (ShapeType)type;
 				}
 			}
 
@@ -1456,7 +1507,7 @@ namespace tke
 			file & jointCount;
 			for (int i = 0; i < jointCount; i++)
 			{
-				auto j = new Joint;
+				auto j = m->new_joint();
 				glm::vec3 coord;
 				file & coord;
 				j->setCoord(coord);
@@ -1471,7 +1522,6 @@ namespace tke
 				file & j->minRotation;
 				file & j->springConstant;
 				file & j->sprintRotationConstant;
-				m->addJoint(j);
 			}
 
 			file & m->bounding_position;
@@ -1524,26 +1574,26 @@ namespace tke
 
 			int boneCount = m->bones.size();
 			file & boneCount;
-			for (auto &bone : m->bones)
+			for (auto &b : m->bones)
 			{
-				file & bone.name;
-				file & bone.type;
-				file & bone.parents;
-				file & bone.rootCoord;
+				file & b->name;
+				file & b->type;
+				file & b->parent;
+				file & b->rootCoord;
 			}
 
 			int ikCount = m->iks.size();
 			file & ikCount;
-			for (auto &ik : m->iks)
+			for (auto &b : m->iks)
 			{
-				file & ik.targetID;
-				file & ik.effectorID;
-				file & ik.iterations;
-				file & ik.weight;
+				file & b->targetID;
+				file & b->effectorID;
+				file & b->iterations;
+				file & b->weight;
 
-				int chainSize = ik.chain.size();
+				int chainSize = b->chain.size();
 				file & chainSize;
-				file.write((char*)ik.chain.data(), sizeof(int) * ik.chain.size());
+				file.write((char*)b->chain.data(), sizeof(int) * b->chain.size());
 			}
 
 			if (animated)
@@ -1558,25 +1608,25 @@ namespace tke
 
 			int rigidbodyCount = m->rigidbodies.size();
 			file & rigidbodyCount;
-			for (auto rb : m->rigidbodies)
+			for (auto &r : m->rigidbodies)
 			{
-				int mode = (int)rb->type;
+				int mode = (int)r->type;
 				file & mode;
-				file < rb->name;
-				file & rb->originCollisionGroupID;
-				file & rb->originCollisionFreeFlag;
-				file & rb->boneID;
-				file & rb->getCoord();
-				file & rb->getEuler();
-				file & rb->density;
-				file & rb->velocityAttenuation;
-				file & rb->rotationAttenuation;
-				file & rb->bounce;
-				file & rb->friction;
+				file < r->name;
+				file & r->originCollisionGroupID;
+				file & r->originCollisionFreeFlag;
+				file & r->boneID;
+				file & r->getCoord();
+				file & r->getEuler();
+				file & r->density;
+				file & r->velocityAttenuation;
+				file & r->rotationAttenuation;
+				file & r->bounce;
+				file & r->friction;
 
-				int shapeCount = rb->shapes.size();
+				int shapeCount = r->shapes.size();
 				file & shapeCount;
-				for (auto &s : rb->shapes)
+				for (auto &s : r->shapes)
 				{
 					file & s->getCoord();
 					file & s->getEuler();
@@ -1588,7 +1638,7 @@ namespace tke
 
 			int jointCount = m->joints.size();
 			file & jointCount;
-			for (auto j : m->joints)
+			for (auto &j : m->joints)
 			{
 				file & j->getCoord();
 				file & j->getEuler();
@@ -1765,8 +1815,6 @@ namespace tke
 		save_func(m, filename);
 	}
 
-	static std::shared_ptr<DescriptorSetLayout> _textures_layout;
-
 	void initModel()
 	{
 		{
@@ -1799,26 +1847,6 @@ namespace tke
 
 			vertexAnimInputState = vertexStateInfo(TK_ARRAYSIZE(bindings), bindings, TK_ARRAYSIZE(attributes), attributes);
 		}
-
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
-		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
-
-		defaultMaterial = std::make_shared<Material>();
-		defaultMaterial->sceneIndex = 0;
-		modelMaterials[0] = defaultMaterial;
-		_update_material(defaultMaterial.get(), 0);
-
-		{
-			VkDescriptorSetLayoutBinding binding;
-			binding.binding = 0;
-			binding.descriptorCount = MaxTextureCount;
-			binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			binding.pImmutableSamplers = nullptr;
-			_textures_layout = getDescriptorSetLayout(1, &binding);
-		}
-
-		ds_textures = new DescriptorSet(_textures_layout.get());
 
 		{
 			auto m = std::make_shared<Model>();
@@ -1887,11 +1915,11 @@ namespace tke
 			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			m->addRigidbody(pRigidbody);
-			auto s = new Shape(ShapeType::box);
+			auto r = m->new_rigidbody();
+			r->type = RigidbodyType::dynamic;
+			auto s = r->new_shape();
+			s->type = ShapeType::box;
 			s->setScale(glm::vec3(0.5f));
-			pRigidbody->addShape(s);
 
 			_process_model(m.get(), true);
 
@@ -1935,11 +1963,11 @@ namespace tke
 			m->geometries.push_back(std::move(g0));
 			m->geometries.push_back(std::move(g1));
 
-			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			m->addRigidbody(pRigidbody);
-			auto s = new Shape(ShapeType::sphere);
+			auto r = m->new_rigidbody();
+			r->type = RigidbodyType::dynamic;
+			auto s = r->new_shape();
+			s->type = ShapeType::sphere;
 			s->setScale(glm::vec3(0.5f));
-			pRigidbody->addShape(s);
 
 			_process_model(m.get(), true);
 
@@ -1978,11 +2006,11 @@ namespace tke
 			g->indiceCount = m->indice_count;
 			m->geometries.push_back(std::move(g));
 
-			auto pRigidbody = new Rigidbody(RigidbodyType::dynamic);
-			m->addRigidbody(pRigidbody);
-			auto s = new Shape(ShapeType::capsule);
+			auto r = m->new_rigidbody();
+			r->type = RigidbodyType::dynamic;
+			auto s = r->new_shape();
+			s->type = ShapeType::capsule;
 			s->setScale(glm::vec3(0.5f));
-			pRigidbody->addShape(s);
 
 			_process_model(m.get(), true);
 

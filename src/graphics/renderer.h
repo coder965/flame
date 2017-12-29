@@ -2,16 +2,25 @@
 
 #include <memory>
 
-#include "../core.h"
-#include "../entity/camera.h"
+#include "../math/math.h"
 #include "../resource/resource.h"
-#include "../model/model.h"
 #include "graphics.h"
-#include "command_buffer.h"
-#include "framebuffer.h"
+#include "renderer.h"
 
 namespace tke
 {
+	struct Camera;
+	struct Model;
+	struct UniformBuffer;
+	struct ImmediateVertexBuffer;
+	struct IndirectIndexBuffer;
+	struct VertexBuffer;
+	struct IndexBuffer;
+	struct DescriptorSet;
+	struct Framebuffer;
+	struct CommandBuffer;
+	struct Object;
+
 	struct Renderer
 	{
 		std::unique_ptr<CommandBuffer> cb;
@@ -105,7 +114,6 @@ namespace tke
 
 	enum { MaxIndirectCount = 1024 };
 
-	struct Object;
 	struct DeferredRenderer : Renderer
 	{
 		static bool defe_inited;

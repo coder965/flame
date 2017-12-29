@@ -4,7 +4,6 @@
 #include "../../../rapidxml-1.13\rapidxml_utils.hpp"
 #include "../../../rapidxml-1.13\rapidxml_print.hpp"
 
-#include "define.h"
 #include "refl.h"
 #if !defined(TKE_UTILS_NO_MATH)
 #include "math/math.h"

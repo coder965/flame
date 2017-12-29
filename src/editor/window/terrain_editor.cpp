@@ -1,3 +1,8 @@
+#include "../../input.h"
+#include "../../global.h"
+#include "../../graphics/pipeline.h"
+#include "../../graphics/material.h"
+#include "../../graphics/command_buffer.h"
 #include "../../ui/ui.h"
 
 #include "terrain_editor.h"
@@ -111,8 +116,8 @@ void TerrainEditor::do_show()
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::resCx;
-			auto distY = (float)tke::mouseDispY / (float)tke::resCy;
+			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
+			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
 			if (tke::mouseMiddle.pressing)
 				camera.rotateByCursor(distX, distY);
 		}
@@ -126,8 +131,8 @@ void TerrainEditor::do_show()
 				auto winx = tke::mouseX - image_pos.x;
 				auto winy = tke::mouseY - image_pos.y;
 
-				auto p0 = glm::unProject(glm::vec3(winx, winy, -1.f), camera.getMatInv(), tke::matPerspective, glm::vec4(0, 0, tke::resCx, tke::resCy));
-				auto p1 = glm::unProject(glm::vec3(winx, winy, 1.f), camera.getMatInv(), tke::matPerspective, glm::vec4(0, 0, tke::resCx, tke::resCy));
+				auto p0 = glm::unProject(glm::vec3(winx, winy, -1.f), camera.getMatInv(), tke::matPerspective, glm::vec4(0, 0, tke::res_cx, tke::res_cy));
+				auto p1 = glm::unProject(glm::vec3(winx, winy, 1.f), camera.getMatInv(), tke::matPerspective, glm::vec4(0, 0, tke::res_cx, tke::res_cy));
 				auto t = p0.y / (p0.y - p1.y);
 				if (t > 0 && t < 1)
 				{

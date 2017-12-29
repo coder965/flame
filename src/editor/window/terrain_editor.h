@@ -1,9 +1,12 @@
 #pragma once
 
-#include "../../render/display_layer.h"
-#include "../../render/buffer.h"
-#include "../../render/framebuffer.h"
-#include "../../render/renderer.h"
+#include "../../graphics/display_layer.h"
+#include "../../graphics/buffer.h"
+#include "../../graphics/image.h"
+#include "../../graphics/framebuffer.h"
+#include "../../graphics/renderer.h"
+#include "../../model/model.h"
+#include "../../entity/camera.h"
 #include "../../entity/terrain.h"
 
 #include "window.h"

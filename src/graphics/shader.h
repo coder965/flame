@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../utils.h"
 #include "graphics.h"
-#include "descriptor.h"
 
 namespace tke
 {
@@ -14,6 +12,8 @@ namespace tke
 		REFLv int size = 0;
 	};
 
+	struct Descriptor;
+
 	struct Shader
 	{
 		VkShaderStageFlagBits stage;
@@ -21,7 +21,7 @@ namespace tke
 		std::vector<std::string> defines;
 		VkShaderModule vkModule;
 
-		std::vector<std::vector<Descriptor>> descriptors;
+		std::vector<std::vector<std::unique_ptr<Descriptor>>> descriptors;
 		std::vector<PushConstantRange> pushConstantRanges;
 
 		// must call in main thread

@@ -1,22 +1,26 @@
 #pragma once
 
+#include <mutex>
+
 #include "../math/math.h"
-#include "../physics/physics.h"
-#include "../render/buffer.h"
-#include "../render/image.h"
-#include "../render/framebuffer.h"
-#include "../render/pipeline.h"
-#include "../render/command_buffer.h"
-#include "../resource/resource.h"
 #include "camera.h"
-#include "sky.h"
 #include "light.h"
-#include "object.h"
-#include "terrain.h"
-#include "water.h"
+#include "sky.h"
+
+namespace physx
+{
+	struct PxScene;
+	struct PxControllerManager;
+}
 
 namespace tke
 {
+	struct Light;
+	struct Object;
+	struct Terrain;
+	struct Water;
+	struct CollisionGroup;
+
 	REFLECTABLE struct Scene
 	{
 		REFL_BANK;

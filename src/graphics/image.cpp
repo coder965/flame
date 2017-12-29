@@ -3,7 +3,6 @@
 #include <map>
 
 #include "../hash.h"
-#include "../core.h"
 #include "buffer.h"
 #include "image.h"
 #include "command_buffer.h"

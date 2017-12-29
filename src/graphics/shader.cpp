@@ -4,7 +4,8 @@
 
 #include "../../SPIRV-Cross/spirv_glsl.hpp"
 #include "../file_utils.h"
-#include "../core.h"
+#include "../global.h"
+#include "../graphics/descriptor.h"
 #include "shader.h"
 
 namespace tke
@@ -52,7 +53,7 @@ namespace tke
 			for (auto &d : defines)
 				cmd_str += "-D" + d + " ";
 			cmd_str += " -flimit-file ";
-			cmd_str += enginePath + "shader/my_config.conf";
+			cmd_str += engine_path + "shader/my_config.conf";
 			cmd_str += " -o " + spvFilename;
 			system(cmd_str.c_str());
 			if (!std::experimental::filesystem::exists(spvFilename))
@@ -89,12 +90,12 @@ namespace tke
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
 
-				Descriptor d;
-				d.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				resFile > d.name;
-				resFile & d.binding;
-				resFile & d.count;
-				descriptors[set].push_back(d);
+				auto d = std::make_unique<Descriptor>();
+				d->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				resFile > d->name;
+				resFile & d->binding;
+				resFile & d->count;
+				descriptors[set].push_back(std::move(d));
 			}
 			int imageCount;
 			resFile & imageCount;
@@ -105,12 +106,12 @@ namespace tke
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
 
-				Descriptor d;
-				d.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				resFile > d.name;
-				resFile & d.binding;
-				resFile & d.count;
-				descriptors[set].push_back(d);
+				auto d = std::make_unique<Descriptor>();
+				d->type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				resFile > d->name;
+				resFile & d->binding;
+				resFile & d->count;
+				descriptors[set].push_back(std::move(d));
 			}
 			int pcSize;
 			resFile & pcSize;
@@ -140,17 +141,17 @@ namespace tke
 					descriptors.resize(set + 1);
 				resFile & set;
 
-				Descriptor d;
-				d.type = desc_type;
-				d.name = r.name;
-				d.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
+				auto d = std::make_unique<Descriptor>();
+				d->type = desc_type;
+				d->name = r.name;
+				d->binding = glsl.get_decoration(r.id, spv::DecorationBinding);
 				auto type = glsl.get_type(r.type_id);
-				d.count = type.array.size() > 0 ? type.array[0] : 1;
-				descriptors[set].push_back(d);
+				d->count = type.array.size() > 0 ? type.array[0] : 1;
+				descriptors[set].push_back(std::move(d));
 
-				resFile < d.name;
-				resFile & d.binding;
-				resFile & d.count;
+				resFile < d->name;
+				resFile & d->binding;
+				resFile & d->count;
 			};
 
 			int uboCount = resources.uniform_buffers.size();

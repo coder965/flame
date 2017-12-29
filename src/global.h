@@ -1,18 +1,28 @@
 #pragma once
 
-#if defined(_WIN64)
-typedef __int64 TK_LONG_PTR;
-#else
-typedef _W64 long TK_LONG_PTR;
-#endif
-#define TK_ARRAYSIZE(_ARR) ((int)(sizeof(_ARR)/sizeof(*_ARR)))
-#define TK_DERIVE_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
-#define TK_LOW(I) ((I) & 0xffff)
-#define TK_HIGH(I) ((I) >> 16)
-#define TK_MAKEINT(H, L) ((L) | ((H) << 16))
+#include "refl.h"
+#include "math/math.h"
 
 namespace tke
 {
+	IMPL(false) bool only_2d;
+
+	IMPL(0.1f) float near_plane;
+	IMPL(1000.f) float far_plane;
+	IMPL(60.f) float fovy;
+
+	IMPL() int nowTime;
+
+	IMPL() std::string engine_path;
+	IMPL() int res_cx;
+	IMPL() int res_cy;
+	IMPL() float res_aspect;
+
+	IMPL() glm::mat4 matOrtho;
+	IMPL() glm::mat4 matOrthoInv;
+	IMPL() glm::mat4 matPerspective;
+	IMPL() glm::mat4 matPerspectiveInv;
+
 	enum
 	{
 		// buffer
@@ -36,10 +46,7 @@ namespace tke
 		ShadowImageBinding,
 		AoImageBinding,
 		// terrain special
-		TerrainNormalHeightMapBinding,
-		TerrainBlendMapBinding,
-		TerrainColorMapsBinding,
-		TerrainNormalMapsBinding
+		TerrainBlendMapBinding
 	};
 
 	enum

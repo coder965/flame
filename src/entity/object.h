@@ -1,12 +1,21 @@
 #pragma once
 
-#include "../model/model.h"
 #include "transformer.h"
 #include "controller.h"
 #include "node.h"
 
+namespace physx
+{
+	struct PxRigidActor;
+	struct PxController;
+}
+
 namespace tke
 {
+	struct Model;
+	struct AnimationComponent;
+	struct Rigidbody;
+
 	REFLECTABLE enum class ObjectPhysicsType
 	{
 		REFLe enable = 1 << 0,

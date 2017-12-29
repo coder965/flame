@@ -1,5 +1,7 @@
+#include "../../input.h"
+#include "../../graphics/buffer.h"
+#include "../../graphics/command_buffer.h"
 #include "../../ui/ui.h"
-#include "../../core.h"
 
 #include "image_editor.h"
 
@@ -70,7 +72,7 @@ void ImageEditor::do_show()
 			auto x = tke::mouseX - image_pos.x;
 			auto y = tke::mouseY - image_pos.y;
 
-			auto pixel = (unsigned char*)tke::stagingBuffer->map(0, 4);
+			auto pixel = (unsigned char*)tke::defalut_staging_buffer->map(0, 4);
 			memset(pixel, 0, 4);
 			if (penId < 3)
 			{
@@ -78,7 +80,7 @@ void ImageEditor::do_show()
 				pixel[3] = 255;
 			}
 			pixel[3] = 255;
-			tke::stagingBuffer->unmap();
+			tke::defalut_staging_buffer->unmap();
 
 			auto cb = tke::begineOnceCommandBuffer();
 			VkBufferImageCopy range = {};
@@ -89,7 +91,7 @@ void ImageEditor::do_show()
 			range.imageExtent.width = 1;
 			range.imageExtent.height = 1;
 			range.imageExtent.depth = 1;
-			vkCmdCopyBufferToImage(cb->v, tke::stagingBuffer->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &range);
+			vkCmdCopyBufferToImage(cb->v, tke::defalut_staging_buffer->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &range);
 			tke::endOnceCommandBuffer(cb);
 		}
 	}

@@ -1,10 +1,11 @@
-#include "pipeline.h"
+#include "../global.h"
+#include "image.h"
 #include "descriptor.h"
 #include "renderpass.h"
 #include "shader.h"
 #include "sampler.h"
-#include "../core.h"
 #include "../resource/resource.h"
+#include "pipeline.h"
 
 namespace tke
 {
@@ -78,19 +79,20 @@ namespace tke
 						auto found = false;
 						for (auto &b : vkDescriptors[set])
 						{
-							if (b.binding == d.binding)
+							if (b.binding == d->binding)
 							{
 								b.stageFlags |= s->stage;
 								found = true;
 								break;
 							}
 						}
-						if (found) continue;
+						if (found) 
+							continue;
 
 						VkDescriptorSetLayoutBinding b = {};
-						b.descriptorType = d.type;
-						b.binding = d.binding;
-						b.descriptorCount = d.count;
+						b.descriptorType = d->type;
+						b.binding = d->binding;
+						b.descriptorCount = d->count;
 						b.stageFlags = s->stage;
 						vkDescriptors[set].push_back(b);
 					}
@@ -121,9 +123,9 @@ namespace tke
 		}
 
 		if (info._cx == -1)
-			info._cx = resCx;
+			info._cx = res_cx;
 		if (info._cy == -1)
-			info._cy = resCy;
+			info._cy = res_cy;
 
 		if (info._cx == 0 && info._cy == 0)
 		{
@@ -318,10 +320,10 @@ namespace tke
 					{
 						for (auto &d : s->descriptors[set])
 						{
-							if (d.name == link.descriptor_name)
+							if (d->name == link.descriptor_name)
 							{
-								link.binding = d.binding;
-								link.type = d.type;
+								link.binding = d->binding;
+								link.type = d->type;
 								found = true;
 								break;
 							}
@@ -343,9 +345,9 @@ namespace tke
 					{
 						for (auto &d : s->descriptors[set])
 						{
-							if (d.binding == link.binding)
+							if (d->binding == link.binding)
 							{
-								link.type = d.type;
+								link.type = d->type;
 								found = true;
 								break;
 							}
@@ -390,8 +392,8 @@ namespace tke
 			{
 				for (auto &d : s->descriptors[set])
 				{
-					if (d.name == name)
-						return d.binding;
+					if (d->name == name)
+						return d->binding;
 				}
 			}
 		}
