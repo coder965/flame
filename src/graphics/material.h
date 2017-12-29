@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "../refl.h"
+#include "../math/math.h"
 
 namespace tke
 {
@@ -18,23 +19,22 @@ namespace tke
 	{
 		std::string name;
 
-		unsigned char albedoR = 255, albedoG = 255, albedoB = 255;
-		unsigned char alpha = 255;
-		unsigned char spec = 0;
-		unsigned char roughness = 255;
+		glm::vec4 albedo_alpha = glm::vec4(1.f);
+		float spec = 0.f;
+		float roughness = 1.f;
 
 		std::shared_ptr<Image> albedoAlphaMap;
 		std::shared_ptr<Image> normalHeightMap;
 		std::shared_ptr<Image> specRoughnessMap;
 
-		int sceneIndex = -1;
+		int index = -1;
 	};
 
 	IMPL() std::weak_ptr<Material> materials[MaxMaterialCount];
-	IMPL(nullptr) std::shared_ptr<Material> defaultMaterial;
-	std::shared_ptr<Material> getMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
-		unsigned char alpha, unsigned char spec, unsigned char roughness,
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap);
+	IMPL() std::shared_ptr<Material> defaultMaterial;
+	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
+		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, 
+		std::shared_ptr<Image> specRoughnessMap);
 	std::shared_ptr<Material> getMaterial(const std::string name);
 	IMPL(nullptr) UniformBuffer *materialBuffer;
 

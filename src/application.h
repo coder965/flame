@@ -39,7 +39,6 @@ namespace tke
 	IMPL() VkSemaphore window_imageAvailable;
 	IMPL() uint32_t window_imageIndex;
 	IMPL() VkFence frameDone;
-	IMPL() uint32_t FPS;
 	IMPL(nullptr) PF_EVENT1 onKeyDown;
 	IMPL(nullptr) PF_EVENT1 onKeyUp;
 	IMPL(nullptr) PF_EVENT1 onChar;

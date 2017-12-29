@@ -60,8 +60,39 @@ bool inline operator >= (glm::vec3 a, float b)
 	return a.x >= b && a.y >= b && a.z >= b;
 }
 
+#define TK_EPS (0.001f)
+
 namespace tke
 {
+	inline bool fEqual(const float a, const float b)
+	{
+		return std::abs(a - b) <= TK_EPS;
+	}
+
+	inline bool fEqual(const glm::vec2 &a, const glm::vec2 &b)
+	{
+		return 
+			std::abs(a.x - b.x) <= TK_EPS &&
+			std::abs(a.y - b.y) <= TK_EPS;
+	}
+
+	inline bool fEqual(const glm::vec3 &a, const glm::vec3 &b)
+	{
+		return
+			std::abs(a.x - b.x) <= TK_EPS &&
+			std::abs(a.y - b.y) <= TK_EPS &&
+			std::abs(a.z - b.z) <= TK_EPS;
+	}
+
+	inline bool fEqual(const glm::vec4 &a, const glm::vec4 &b)
+	{
+		return
+			std::abs(a.x - b.x) <= TK_EPS &&
+			std::abs(a.y - b.y) <= TK_EPS &&
+			std::abs(a.z - b.z) <= TK_EPS &&
+			std::abs(a.w - b.w) <= TK_EPS;
+	}
+
 	void quaternionToMatrix(glm::vec4 &q, glm::mat3 &mat);
 	void matrixToQuaternion(glm::mat3 &mat, glm::vec4 &q);
 	void quaternionRotate(glm::vec4 &q, glm::vec3 v);

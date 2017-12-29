@@ -3,6 +3,7 @@
 #include "../math/math.h"
 #include "../hash.h"
 #include "../file_utils.h"
+#include "../global.h"
 #include "../graphics/renderpass.h"
 #include "../graphics/synchronization.h"
 #include "../physics/physics.h"
@@ -302,36 +303,36 @@ namespace tke
 	{
 		mtx.lock();
 
-		if (t->use_physx && t->normalHeightMap)
-		{
-			auto m = t->normalHeightMap;
+		//if (t->use_physx && t->normalHeightMap)
+		//{
+		//	auto m = t->normalHeightMap;
 
-			auto numVerts = m->levels[0].cx * m->levels[0].cy;
+		//	auto numVerts = m->levels[0].cx * m->levels[0].cy;
 
-			auto samples = new physx::PxHeightFieldSample[numVerts];
-			memset(samples, 0, numVerts * sizeof(physx::PxHeightFieldSample));
+		//	auto samples = new physx::PxHeightFieldSample[numVerts];
+		//	memset(samples, 0, numVerts * sizeof(physx::PxHeightFieldSample));
 
-			for (int y = 0; y < m->levels[0].cy; y++)
-			{
-				for (int x = 0; x < m->levels[0].cy; x++)
-					samples[y + x * m->levels[0].cx].height = m->getA(x - 0.5, y - 0.5);
-			}
+		//	for (int y = 0; y < m->levels[0].cy; y++)
+		//	{
+		//		for (int x = 0; x < m->levels[0].cy; x++)
+		//			samples[y + x * m->levels[0].cx].height = m->getA(x - 0.5, y - 0.5);
+		//	}
 
-			physx::PxHeightFieldDesc hfDesc;
-			hfDesc.format = physx::PxHeightFieldFormat::eS16_TM;
-			hfDesc.nbRows = m->levels[0].cx;
-			hfDesc.nbColumns = m->levels[0].cy;
-			hfDesc.samples.data = samples;
-			hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
+		//	physx::PxHeightFieldDesc hfDesc;
+		//	hfDesc.format = physx::PxHeightFieldFormat::eS16_TM;
+		//	hfDesc.nbRows = m->levels[0].cx;
+		//	hfDesc.nbColumns = m->levels[0].cy;
+		//	hfDesc.samples.data = samples;
+		//	hfDesc.samples.stride = sizeof(physx::PxHeightFieldSample);
 
-			physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->block_size * t->block_cx / m->levels[0].cx, t->block_size * t->block_cx / m->levels[0].cy);
-			t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
-			t->actor->createShape(hfGeom, *pxDefaultMaterial);
+		//	physx::PxHeightFieldGeometry hfGeom(pxPhysics->createHeightField(hfDesc), physx::PxMeshGeometryFlags(), t->height / 255.f, t->block_size * t->block_cx / m->levels[0].cx, t->block_size * t->block_cx / m->levels[0].cy);
+		//	t->actor = pxPhysics->createRigidStatic(physx::PxTransform(physx::PxIdentity));
+		//	t->actor->createShape(hfGeom, *pxDefaultMaterial);
 
-			pxScene->addActor(*t->actor);
+		//	pxScene->addActor(*t->actor);
 
-			delete[]samples;
-		}
+		//	delete[]samples;
+		//}
 
 		terrains.push_back(std::shared_ptr<Terrain>(t));
 

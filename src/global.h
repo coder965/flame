@@ -23,6 +23,8 @@ namespace tke
 	IMPL() glm::mat4 matPerspective;
 	IMPL() glm::mat4 matPerspectiveInv;
 
+	IMPL() uint32_t FPS;
+
 	enum
 	{
 		// buffer

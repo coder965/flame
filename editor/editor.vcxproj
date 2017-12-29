@@ -170,6 +170,7 @@
     <ClCompile Include="..\src\editor\window\model_editor.cpp" />
     <ClCompile Include="..\src\editor\window\resource_explorer.cpp" />
     <ClCompile Include="..\src\editor\window\scene_editor.cpp" />
+    <ClCompile Include="..\src\editor\window\show_material.cpp" />
     <ClCompile Include="..\src\editor\window\terrain_editor.cpp" />
     <ClCompile Include="..\src\editor\window\window.cpp" />
   </ItemGroup>
@@ -182,6 +183,7 @@
     <ClInclude Include="..\src\editor\window\model_editor.h" />
     <ClInclude Include="..\src\editor\window\resource_explorer.h" />
     <ClInclude Include="..\src\editor\window\scene_editor.h" />
+    <ClInclude Include="..\src\editor\window\show_material.h" />
     <ClInclude Include="..\src\editor\window\terrain_editor.h" />
     <ClInclude Include="..\src\editor\window\window.h" />
   </ItemGroup>

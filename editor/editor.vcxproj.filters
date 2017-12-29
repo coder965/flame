@@ -45,6 +45,9 @@
     <ClCompile Include="..\src\editor\window\entity_window.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\editor\window\show_material.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\editor\tool\tool.h">
@@ -75,6 +78,9 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="..\src\editor\window\entity_window.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\show_material.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>

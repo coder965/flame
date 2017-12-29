@@ -2,10 +2,12 @@
 #include "../../language.h"
 #include "../../ui/ui.h"
 #include "../../model/model.h"
+#include "../../model/animation.h"
 #include "../../entity/object.h"
 #include "../../entity/terrain.h"
 #include "scene_editor.h"
 #include "entity_window.h"
+#include "show_material.h"
 
 EntityWindow *entity_window = nullptr;
 
@@ -188,16 +190,11 @@ void EntityWindow::do_show()
 
 			auto t = (tke::Terrain*)s.get();
 
-			ImGui::Text("Normal Height Map:%s", t->normalHeightMap ? t->normalHeightMap->filename.c_str() : "Null");
 			ImGui::Text("Blend Map:%s", t->blendMap ? t->blendMap->filename.c_str() : "Null");
-			ImGui::Text("Color Map 0:%s", t->colorMaps[0] ? t->colorMaps[0]->filename.c_str() : "Null");
-			ImGui::Text("Color Map 1:%s", t->colorMaps[1] ? t->colorMaps[1]->filename.c_str() : "Null");
-			ImGui::Text("Color Map 2:%s", t->colorMaps[2] ? t->colorMaps[2]->filename.c_str() : "Null");
-			ImGui::Text("Color Map 3:%s", t->colorMaps[3] ? t->colorMaps[3]->filename.c_str() : "Null");
-			ImGui::Text("Normal Map 0:%s", t->normalMaps[0] ? t->normalMaps[0]->filename.c_str() : "Null");
-			ImGui::Text("Normal Map 1:%s", t->normalMaps[0] ? t->normalMaps[1]->filename.c_str() : "Null");
-			ImGui::Text("Normal Map 2:%s", t->normalMaps[0] ? t->normalMaps[2]->filename.c_str() : "Null");
-			ImGui::Text("Normal Map 3:%s", t->normalMaps[0] ? t->normalMaps[3]->filename.c_str() : "Null");
+			show_material(t->materials[0].get());
+			//show_material(t->materials[1].get());
+			//show_material(t->materials[2].get());
+			//show_material(t->materials[3].get());
 			ImGui::Text("Height:%f", t->height);
 			ImGui::Text("Use Physx:%s", t->use_physx ? "Yse" : "No");
 

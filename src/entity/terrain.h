@@ -25,6 +25,7 @@ namespace tke
 		REFLv int block_cx = 64;
 		REFLv float block_size = 16.f;
 		REFLv float height = 100.f;
+		REFLv float displacement_height = 1.f;
 		REFLv float tessellation_factor = 0.75f;
 		REFLv float tiling_scale = 8.f;
 

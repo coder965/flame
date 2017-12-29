@@ -338,9 +338,19 @@ namespace tke
 		float displacement_height;
 		float tessellation_factor;
 		float tiling_scale;
+		union
+		{
+			struct
+			{
+				unsigned char x;
+				unsigned char y;
+				unsigned char z;
+				unsigned char w;
+			};
+			unsigned int packed;
+		}material_index;
 		unsigned int dummy0;
 		unsigned int dummy1;
-		unsigned int dummy2;
 	};
 
 	struct WaterShaderStruct
@@ -827,8 +837,13 @@ namespace tke
 					stru.block_count = t->block_cx;
 					stru.block_size = t->block_size;
 					stru.terrain_height = t->height;
+					stru.displacement_height = t->displacement_height;
 					stru.tessellation_factor = t->tessellation_factor;
 					stru.tiling_scale = t->tiling_scale;
+					stru.material_index.x = t->materials[0]->index;
+					stru.material_index.y = t->materials[1]->index;
+					stru.material_index.z = t->materials[2]->index;
+					stru.material_index.w = t->materials[3]->index;
 					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
@@ -836,21 +851,9 @@ namespace tke
 					range.size = sizeof(TerrainShaderStruct);
 					ranges.push_back(range);
 
-					writes.push_back(ds_terrain->imageWrite(TerrainNormalHeightMapBinding, 
-						index, t->normalHeightMap ? t->normalHeightMap.get() : 
-						default_normal_image, colorBorderSampler));
 					writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, 
 						index, t->blendMap ? t->blendMap.get() : default_color_image, 
 						colorBorderSampler));
-					for (int i = 0; i < 4; i++)
-					{
-						writes.push_back(ds_terrain->imageWrite(TerrainColorMapsBinding, 
-							index * MaxTerrainCount + i, t->colorMaps[i] ? 
-							t->colorMaps[i].get() : default_color_image, colorWrapSampler));
-						writes.push_back(ds_terrain->imageWrite(TerrainNormalMapsBinding, 
-							index * MaxTerrainCount + i, t->normalMaps[i] ? 
-							t->normalMaps[i].get() : default_normal_image, colorWrapSampler));
-					}
 				}
 				index++;
 			}
@@ -919,7 +922,7 @@ namespace tke
 							command.indexCount = g->indiceCount;
 							command.vertexOffset = m->vertexBase;
 							command.firstIndex = m->indiceBase + g->indiceBase;
-							command.firstInstance = (staticIndex << 8) + g->material->sceneIndex;
+							command.firstInstance = (staticIndex << 8) + g->material->index;
 
 							staticCommands.push_back(command);
 						}
@@ -936,7 +939,7 @@ namespace tke
 							command.indexCount = g->indiceCount;
 							command.vertexOffset = m->vertexBase;
 							command.firstIndex = m->indiceBase + g->indiceBase;
-							command.firstInstance = (animatedIndex << 8) + g->material->sceneIndex;
+							command.firstInstance = (animatedIndex << 8) + g->material->index;
 
 							animatedCommands.push_back(command);
 						}

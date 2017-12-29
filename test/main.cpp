@@ -7,14 +7,23 @@
 
 int main(int argc, char** argv)
 {
-	auto proj = glm::perspective(60.f, 1.3f, 0.1f, 1000.f);
+	union map_index
+	{
+		struct
+		{
+			unsigned char x;
+			unsigned char y;
+			unsigned char z;
+			unsigned char w;
+		};
+		unsigned int packed;
+	};
 
-	auto p0 = proj * glm::vec4(1, 2, 3, 1);
-	auto p1 = proj * glm::vec4(3, 4, 5, 1);
-	auto pa = (p0 + p1) * 0.5f;
-	auto p2 = glm::vec4(1, 2, 3, 1);
-	auto p3 = glm::vec4(3, 4, 5, 1);
-	auto pb = proj * ((p0 + p1) * 0.5f);
+	map_index i;
+	i.x = 1;
+	i.y = 0;
+	i.z = 0;
+	i.w = 0;
 
 	return 0;
 }

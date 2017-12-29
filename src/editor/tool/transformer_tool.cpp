@@ -1,9 +1,10 @@
-
-
+#include "../../global.h"
+#include "../../model/model.h"
+#include "../../pick_up/pick_up.h"
 #include "transformer_tool.h"
 
-TransformerTool::TransformerTool(tke::Framebuffer *_fb)
-	:Tool(_fb)
+TransformerTool::TransformerTool(tke::Image *dst)
+	:Tool(dst)
 {
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
@@ -52,7 +53,7 @@ bool TransformerTool::leftDown(int x, int y)
 	if (!draw_data.obj_data.empty())
 	{
 		draw_data.mode = tke::PlainRenderer::mode_just_color;
-		auto index = tke::pickUp(x, y, std::bind( &tke::PlainRenderer::render_to, 
+		auto index = tke::pick_up(x, y, std::bind( &tke::PlainRenderer::render_to, 
 			renderer.get(), std::placeholders::_1, currentCamera, &draw_data));
 		selectedAxis = index - 1;
 		return index != 0;
@@ -69,8 +70,8 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 	{
 	case ModeMove:
 	{
-		auto xDisp = (float)_xDisp / (float)tke::resCx;
-		auto yDisp = (float)_yDisp / (float)tke::resCy;
+		auto xDisp = (float)_xDisp / (float)tke::res_cx;
+		auto yDisp = (float)_yDisp / (float)tke::res_cy;
 
 		auto p = tke::matPerspective * currentCamera->getMatInv() * glm::vec4(transformer->getCoord(), 1.f);
 		p = p / p.w;
@@ -104,6 +105,6 @@ void TransformerTool::show(tke::Camera *camera)
 	if (!draw_data.obj_data.empty())
 	{
 		draw_data.mode = tke::PlainRenderer::mode_color_and_front_light;
-		renderer->render(fb, false, camera, &draw_data);
+		renderer->render(fb.get(), false, camera, &draw_data);
 	}
 }

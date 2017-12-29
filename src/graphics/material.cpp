@@ -9,10 +9,41 @@ namespace tke
 {
 	struct MaterialShaderStruct
 	{
-		unsigned int albedoAlphaCompress;
-		unsigned int specRoughnessCompress;
+		union
+		{
+			struct
+			{
+				unsigned char albedo_r;
+				unsigned char albedo_g;
+				unsigned char albedo_b;
+				unsigned char alpha;
+			};
+			unsigned int packed;
+		}albedo_alpha;
 
-		unsigned int mapIndex;
+		union
+		{
+			struct
+			{
+				unsigned char spec;
+				unsigned char roughness;
+				unsigned char dummy0;
+				unsigned char dummy1;
+			};
+			unsigned int packed;
+		}spec_roughness;
+
+		union
+		{
+			struct
+			{
+				unsigned char albedo_alpha;
+				unsigned char normal_height;
+				unsigned char spec_roughness;
+				unsigned char dummy;
+			};
+			unsigned int packed;
+		}map_index;
 
 		unsigned int dummy;
 	};
@@ -21,11 +52,16 @@ namespace tke
 	{
 		auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(MaterialShaderStruct));
 		MaterialShaderStruct stru;
-		stru.albedoAlphaCompress = m->albedoR + (m->albedoG << 8) + (m->albedoB << 16) + (m->alpha << 24);
-		stru.specRoughnessCompress = m->spec + (m->roughness << 8);
-		stru.mapIndex = (m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0) +
-			((m->normalHeightMap ? m->normalHeightMap->index + 1 : 0) << 8) +
-			((m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0) << 16);
+		auto albedo_alpha = glm::clamp(m->albedo_alpha, 0.f, 1.f);
+		stru.albedo_alpha.albedo_r = albedo_alpha.r * 255.f;
+		stru.albedo_alpha.albedo_g = albedo_alpha.g * 255.f;
+		stru.albedo_alpha.albedo_b = albedo_alpha.b * 255.f;
+		stru.albedo_alpha.alpha = albedo_alpha.a * 255.f;
+		stru.spec_roughness.spec = glm::clamp(m->spec, 0.f, 1.f) * 255.f;
+		stru.spec_roughness.roughness = glm::clamp(m->roughness, 0.f, 1.f) * 255.f;
+		stru.map_index.albedo_alpha = m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0;
+		stru.map_index.normal_height = m->normalHeightMap ? m->normalHeightMap->index + 1 : 0;
+		stru.map_index.spec_roughness = m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0;
 		memcpy(map, &stru, sizeof(MaterialShaderStruct));
 		defalut_staging_buffer->unmap();
 
@@ -37,17 +73,17 @@ namespace tke
 		defalut_staging_buffer->copyTo(materialBuffer, 1, &range);
 	}
 
-	std::shared_ptr<Material> getMaterial(unsigned char albedoR, unsigned char albedoG, unsigned char albedoB,
-		unsigned char alpha, unsigned char spec, unsigned char roughness,
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, std::shared_ptr<Image> specRoughnessMap)
+	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
+		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap,
+		std::shared_ptr<Image> specRoughnessMap)
 	{
 		for (int i = 0; i < MaxMaterialCount; i++)
 		{
 			auto m = materials[i].lock();
 			if (m)
 			{
-				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && m->albedoR == albedoR && m->albedoG == albedoG && m->albedoB == albedoB && m->alpha == alpha)
-					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && m->spec == spec && m->roughness == roughness)
+				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && fEqual(m->albedo_alpha, albedo_alpha))
+					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && fEqual(m->spec, spec) && fEqual(m->roughness, roughness))
 					&& m->normalHeightMap == normalHeightMap)
 					return m;
 			}
@@ -58,16 +94,13 @@ namespace tke
 			if (!materials[i].lock())
 			{
 				auto m = std::make_shared<Material>();
-				m->albedoR = albedoR;
-				m->albedoG = albedoG;
-				m->albedoB = albedoB;
-				m->alpha = alpha;
+				m->albedo_alpha = albedo_alpha;
 				m->spec = spec;
 				m->roughness = roughness;
 				m->albedoAlphaMap = albedoAlphaMap;
 				m->normalHeightMap = normalHeightMap;
 				m->specRoughnessMap = specRoughnessMap;
-				m->sceneIndex = i;
+				m->index = i;
 				materials[i] = m;
 
 				_update_material(m.get(), i);
@@ -126,7 +159,8 @@ namespace tke
 		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
 
 		defaultMaterial = std::make_shared<Material>();
-		defaultMaterial->sceneIndex = 0;
+		defaultMaterial->name = "[default_material]";
+		defaultMaterial->index = 0;
 		materials[0] = defaultMaterial;
 		_update_material(defaultMaterial.get(), 0);
 

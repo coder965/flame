@@ -70,8 +70,9 @@ namespace tke
 	Image *load_image(const std::string &filename, int min_level = 0, bool sRGB = false, bool saveData = false);
 	std::shared_ptr<Image> getImage(const std::string &filename, int min_level = 0, bool sRGB = false, bool saveData = false);
 
-	IMPL(nullptr) Image* default_color_image;
-	IMPL(nullptr) Image* default_normal_image;
+	IMPL() std::shared_ptr<Image> default_color_image; // R:0 G:0 B:0 A:0
+	IMPL() std::shared_ptr<Image> default_normal_image; // X:0 Y:0 Z:1
+	IMPL() std::shared_ptr<Image> default_blend_image; // R:1 G:0 B:0 A:0
 
 	void init_image();
 }
