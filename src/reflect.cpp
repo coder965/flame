@@ -8,6 +8,7 @@
 #include "..\src\editor\window\model_editor.h"
 #include "..\src\editor\window\resource_explorer.h"
 #include "..\src\editor\window\scene_editor.h"
+#include "..\src\editor\window\show_material.h"
 #include "..\src\editor\window\terrain_editor.h"
 #include "..\src\editor\window\window.h"
 #include "..\src\entity\camera.h"
@@ -103,10 +104,11 @@ glm::mat4 matPerspective;
 glm::mat4 matPerspectiveInv;
 uint32_t FPS;
 StagingBuffer *defalut_staging_buffer = nullptr;
-Image* default_color_image = nullptr;
-Image* default_normal_image = nullptr;
+std::shared_ptr<Image> default_color_image;
+std::shared_ptr<Image> default_normal_image;
+std::shared_ptr<Image> default_blend_image;
 std::weak_ptr<Material> materials[MaxMaterialCount];
-std::shared_ptr<Material> defaultMaterial = nullptr;
+std::shared_ptr<Material> defaultMaterial;
 UniformBuffer *materialBuffer = nullptr;
 std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
 DescriptorSet *ds_material_images = nullptr;

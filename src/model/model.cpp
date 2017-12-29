@@ -682,7 +682,7 @@ namespace tke
 						std::ifstream file(m->filepath + "/" + libName);
 
 						std::string mtlName;
-						unsigned char spec, roughness;
+						float spec, roughness;
 						std::shared_ptr<Image> albedoAlphaMap;
 						std::shared_ptr<Image> normalHeightMap;
 
@@ -715,7 +715,7 @@ namespace tke
 							}
 						}
 
-						auto m = getMaterial(255, 255, 255, 255, spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
+						auto m = getMaterial(glm::vec4(1.f), spec, roughness, albedoAlphaMap, normalHeightMap, nullptr);
 						m->name = mtlName;
 					}
 				}
@@ -890,8 +890,8 @@ namespace tke
 				file.read((char*)&data, sizeof(MaterialData));
 
 				auto g = std::make_unique<Geometry>();
-				g->material = getMaterial(data.diffuse.r * 255, data.diffuse.g * 255, data.diffuse.b * 255, data.diffuse.a * 255,
-					0, 255, getMaterialImage(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
+				g->material = getMaterial(data.diffuse, 0.f, 1.f, 
+					getMaterialImage(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
 				g->indiceBase = currentIndiceVertex;
 				g->indiceCount = data.indiceCount;
 
@@ -1390,11 +1390,9 @@ namespace tke
 			file & geometryCount;
 			for (int i = 0; i < geometryCount; i++)
 			{
-				unsigned char albedoR, albedoG, albedoB, alpha, spec, roughness;
-				file & albedoR;
-				file & albedoG;
-				file & albedoB;
-				file & alpha;
+				glm::vec4 albedo_alpha;
+				float spec, roughness;
+				file & albedo_alpha;
 				file & spec;
 				file & roughness;
 				std::string albedoAlphaMapName;
@@ -1405,7 +1403,7 @@ namespace tke
 				file > specRoughnessMapName;
 
 				auto g = std::make_unique<Geometry>();
-				g->material = getMaterial(albedoR, albedoG, albedoB, alpha, spec, roughness,
+				g->material = getMaterial(albedo_alpha, spec, roughness,
 					getMaterialImage(m->filepath + "/" + albedoAlphaMapName, true),
 					getMaterialImage(m->filepath + "/" + normalHeightMapName, true),
 					getMaterialImage(m->filepath + "/" + specRoughnessMapName, true));
@@ -1557,10 +1555,7 @@ namespace tke
 			file & geometryCount;
 			for (auto &g : m->geometries)
 			{
-				file & g->material->albedoR;
-				file & g->material->albedoG;
-				file & g->material->albedoB;
-				file & g->material->alpha;
+				file & g->material->albedo_alpha;
 				file & g->material->spec;
 				file & g->material->roughness;
 				file < (g->material->albedoAlphaMap ? g->material->albedoAlphaMap->filename : "");

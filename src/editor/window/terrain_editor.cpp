@@ -4,6 +4,8 @@
 #include "../../graphics/material.h"
 #include "../../graphics/command_buffer.h"
 #include "../../ui/ui.h"
+#include "../../model/animation.h"
+#include "../../physics/physics.h"
 
 #include "terrain_editor.h"
 #include "file_selector.h"

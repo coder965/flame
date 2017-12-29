@@ -852,8 +852,7 @@ namespace tke
 					ranges.push_back(range);
 
 					writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, 
-						index, t->blendMap ? t->blendMap.get() : default_color_image, 
-						colorBorderSampler));
+						index, t->blendMap.get(),  colorBorderSampler));
 				}
 				index++;
 			}

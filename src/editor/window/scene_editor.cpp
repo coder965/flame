@@ -295,42 +295,15 @@ void SceneEditor::do_show()
 			funShowCoordUi();
 			ImGui::TreePop();
 		}
-		static char normal_height_image_name[260];
 		static char blend_image_name[260];
-		static char color_image0_name[260];
-		static char color_image1_name[260];
-		static char color_image2_name[260];
-		static char color_image3_name[260];
-		static char normal_image0_name[260];
-		static char normal_image1_name[260];
-		static char normal_image2_name[260];
-		static char normal_image3_name[260];
-		if (ImGui::TreeNode("Maps"))
-		{
-			ImGui::InputText("Normal Height Map", normal_height_image_name, TK_ARRAYSIZE(normal_height_image_name));
-			ImGui::InputText("Blend Map", blend_image_name, TK_ARRAYSIZE(blend_image_name));
-			ImGui::InputText("Color Map 0", color_image0_name, TK_ARRAYSIZE(color_image0_name));
-			ImGui::InputText("Color Map 1", color_image1_name, TK_ARRAYSIZE(color_image1_name));
-			ImGui::InputText("Color Map 2", color_image2_name, TK_ARRAYSIZE(color_image2_name));
-			ImGui::InputText("Color Map 3", color_image3_name, TK_ARRAYSIZE(color_image3_name));
-			ImGui::InputText("Normal Map 0", normal_image0_name, TK_ARRAYSIZE(normal_image0_name));
-			ImGui::InputText("Normal Map 1", normal_image1_name, TK_ARRAYSIZE(normal_image1_name));
-			ImGui::InputText("Normal Map 2", normal_image2_name, TK_ARRAYSIZE(normal_image2_name));
-			ImGui::InputText("Normal Map 3", normal_image3_name, TK_ARRAYSIZE(normal_image3_name));
-			ImGui::TreePop();
-		}
+		ImGui::InputText("Blend Map", blend_image_name, TK_ARRAYSIZE(blend_image_name));
 		static float height = 100.f;
 		ImGui::DragFloat("Height", &height);
 		static bool use_physx = false;
 		ImGui::Checkbox("Use Physx", &use_physx);
 		if (ImGui::Button("Create"))
 		{
-			auto t = new tke::Terrain(use_physx, tke::getImage(normal_height_image_name),
-				tke::getImage(blend_image_name), tke::getImage(color_image0_name),
-				tke::getImage(color_image1_name), tke::getImage(color_image2_name),
-				tke::getImage(color_image3_name), tke::getImage(normal_image0_name),
-				tke::getImage(normal_image1_name), tke::getImage(normal_image2_name),
-				tke::getImage(normal_image3_name));
+			auto t = new tke::Terrain(use_physx, tke::getImage(blend_image_name));
 			t->setCoord(coord);
 			t->height = height;
 			scene->addTerrain(t);
