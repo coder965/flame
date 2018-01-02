@@ -1,3 +1,4 @@
+#include "../graphics/buffer.h"
 #include "../model/model.h"
 #include "../model/animation.h"
 #include "object.h"
@@ -21,7 +22,7 @@ namespace tke
 	{
 		model_filename = model->filename;
 		if (model->vertex_skeleton)
-			animationComponent = std::make_unique<AnimationComponent>(model.get());
+			animationComponent = std::make_unique<AnimationRunner>(model.get());
 	}
 
 	Object::~Object()
@@ -37,9 +38,9 @@ namespace tke
 			if (animationComponent)
 			{
 				if (state == Controller::State::stand)
-					animationComponent->setAnimation(model->stateAnimations[ModelStateAnimationStand].get());
+					animationComponent->set_animation(model->stateAnimations[ModelStateAnimationStand].get());
 				else if (state == Controller::State::forward)
-					animationComponent->setAnimation(model->stateAnimations[ModelStateAnimationForward].get());
+					animationComponent->set_animation(model->stateAnimations[ModelStateAnimationForward].get());
 			}
 		}
 	}

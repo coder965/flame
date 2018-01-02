@@ -1,6 +1,7 @@
 #include "../../ui/ui.h"
 #include "../../file_utils.h"
 #include "../../graphics/buffer.h"
+#include "../../graphics/descriptor.h"
 #include "../../model/model.h"
 #include "../../model/animation.h"
 #include "../../entity/light.h"
@@ -418,7 +419,7 @@ void SceneEditor::do_show()
 						obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 						obj_data.fill_with_model(object->model.get());
 						if (object->model->vertex_skeleton)
-							obj_data.bone_buffer = object->animationComponent->boneMatrixBuffer;
+							obj_data.bone_buffer = object->animationComponent->bone_buffer.get();
 						draw_data.obj_data.push_back(obj_data);
 					}
 					auto index = tke::pick_up(x, y, std::bind(
@@ -544,7 +545,7 @@ void SceneEditor::do_show()
 			obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 			obj_data.fill_with_model(obj->model.get());
 			if (obj->model->vertex_skeleton)
-				obj_data.bone_buffer = obj->animationComponent->boneMatrixBuffer;
+				obj_data.bone_buffer = obj->animationComponent->bone_buffer.get();
 			data.obj_data.push_back(obj_data);
 			plain_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
 		}

@@ -19,74 +19,6 @@
 
 namespace tke
 {
-	std::shared_ptr<AnimationBinding> Model::bindAnimation(std::shared_ptr<Animation> a)
-	{
-		for (auto it = animation_bindings.begin(); it != animation_bindings.end(); )
-		{
-			if (!it->lock())
-				it = animation_bindings.erase(it);
-			else
-				it++;
-		}
-
-		for (auto &b : animation_bindings)
-		{
-			auto s = b.lock();
-			if (s->animation == a)
-				return s;
-		}
-
-		auto b = std::make_shared<AnimationBinding>();
-		b->animation = a;
-		for (auto &bm : a->motions)
-		{
-			b->frameTotal = glm::max(b->frameTotal, bm->frame);
-
-			int boneID = -1;
-			for (int iBone = 0; iBone < bones.size(); iBone++)
-			{
-				if (bm->name == bones[iBone]->name)
-				{
-					boneID = iBone;
-					break;
-				}
-			}
-			if (boneID == -1)
-				continue;
-
-			BoneMotionTrack *t = nullptr;
-			for (auto &_t : b->tracks)
-			{
-				if (_t->boneID == boneID)
-				{
-					t = _t.get();
-					break;
-				}
-			}
-			if (!t)
-			{
-				auto ut = std::make_unique<BoneMotionTrack>();
-				t = ut.get();
-				t->boneID = boneID;
-				t->motions.push_back(bm.get());
-				b->tracks.push_back(std::move(ut));
-			}
-			else
-			{
-				std::vector<BoneMotion*>::iterator it;
-				for (it = t->motions.begin(); it != t->motions.end(); it++)
-				{
-					if ((*it)->frame > bm->frame)
-						break;
-				}
-				t->motions.insert(it, bm.get());
-			}
-		}
-
-		animation_bindings.push_back(b);
-		return b;
-	}
-
 	void Model::setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b)
 	{
 		stateAnimations[kind] = b;
@@ -115,9 +47,9 @@ namespace tke
 
 	Bone *Model::new_bone()
 	{
-		auto b = std::make_unique<Bone>();
-		bones.push_back(std::move(b));
-		return b.get();
+		auto b = new Bone;
+		bones.emplace_back(b);
+		return b;
 	}
 
 	void Model::remove_bone(Bone *b)
@@ -134,9 +66,9 @@ namespace tke
 
 	BoneIK *Model::new_bone_ik()
 	{
-		auto b = std::make_unique<BoneIK>();
-		iks.push_back(std::move(b));
-		return b.get();
+		auto b = new BoneIK;
+		iks.emplace_back(b);
+		return b;
 	}
 
 	void Model::remove_bone_ik(BoneIK *b)
@@ -154,10 +86,10 @@ namespace tke
 	Rigidbody *Model::new_rigidbody()
 	{
 		static auto magicNumber = 0;
-		auto r = std::make_unique<Rigidbody>();
+		auto r = new Rigidbody;
 		r->id = magicNumber++;
-		rigidbodies.push_back(std::move(r));
-		return r.get();
+		rigidbodies.emplace_back(r);
+		return r;
 	}
 
 	void Model::remove_rigidbody(Rigidbody *r)
@@ -175,10 +107,10 @@ namespace tke
 	Joint *Model::new_joint()
 	{
 		static auto magicNumber = 0;
-		auto j = std::make_unique<Joint>();
+		auto j = new Joint;
 		j->id = magicNumber++;
-		joints.push_back(std::move(j));
-		return j.get();
+		joints.emplace_back(j);
+		return j;
 	}
 
 	void Model::remove_joint(Joint *j)
@@ -558,17 +490,17 @@ namespace tke
 		if (m->vertex_skeleton)
 		{
 			auto a = getAnimation(m->stand_animation_filename);
-			if (a) m->stateAnimations[ModelStateAnimationStand] = m->bindAnimation(a);
+			if (a) m->stateAnimations[ModelStateAnimationStand] = get_animation_binding(m, a);
 			a = getAnimation(m->forward_animation_filename);
-			if (a) m->stateAnimations[ModelStateAnimationForward] = m->bindAnimation(a);
+			if (a) m->stateAnimations[ModelStateAnimationForward] = get_animation_binding(m, a);
 			a = getAnimation(m->backward_animation_filename);
-			if (a) m->stateAnimations[ModelStateAnimationBackward] = m->bindAnimation(a);
+			if (a) m->stateAnimations[ModelStateAnimationBackward] = get_animation_binding(m, a);
 			a = getAnimation(m->leftward_animation_filename);
-			if (a) m->stateAnimations[ModelStateAnimationLeftward] = m->bindAnimation(a);
+			if (a) m->stateAnimations[ModelStateAnimationLeftward] = get_animation_binding(m, a);
 			a = getAnimation(m->rightward_animation_filename);
-			if (a) m->stateAnimations[ModelStateAnimationRightward] = m->bindAnimation(a);
+			if (a) m->stateAnimations[ModelStateAnimationRightward] = get_animation_binding(m, a);
 			a = getAnimation(m->jump_animation_filename);
-			if (a) m->stateAnimations[ModelStateAnimationJump] = m->bindAnimation(a);
+			if (a) m->stateAnimations[ModelStateAnimationJump] = get_animation_binding(m, a);
 		}
 	}
 
@@ -666,11 +598,11 @@ namespace tke
 				{
 					std::string name;
 					ss >> name;
-					auto g = std::make_unique<Geometry>();
-					currentGeometry = g.get();
+					auto g = new Geometry;
+					currentGeometry = g;
 					currentGeometry->material = getMaterial(name);
 					currentGeometry->indiceBase = currentIndex;
-					m->geometries.push_back(std::move(g));
+					m->geometries.emplace_back(g);
 				}
 				else if (token == "mtllib")
 				{
@@ -889,7 +821,7 @@ namespace tke
 				MaterialData data;
 				file.read((char*)&data, sizeof(MaterialData));
 
-				auto g = std::make_unique<Geometry>();
+				auto g = new Geometry;
 				g->material = getMaterial(data.diffuse, 0.f, 1.f, 
 					getMaterialImage(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
 				g->indiceBase = currentIndiceVertex;
@@ -897,7 +829,7 @@ namespace tke
 
 				currentIndiceVertex += data.indiceCount;
 
-				m->geometries.push_back(std::move(g));
+				m->geometries.emplace_back(g);
 			}
 
 			unsigned short boneCount;
@@ -1023,11 +955,8 @@ namespace tke
 				data.location.z *= -1.f;
 				r->setCoord(data.location);
 				data.rotation = glm::degrees(data.rotation);
-				glm::mat3 rotationMat;
-				eulerYxzToMatrix(glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z), rotationMat);
-				glm::vec4 rotationQuat;
-				matrixToQuaternion(rotationMat, rotationQuat);
-				r->setQuat(rotationQuat);
+				r->setQuat(mat3_to_quaternion(euler_yxz_to_mat3(
+					glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z))));
 				r->type = (RigidbodyType)data.mode;
 				auto s = r->new_shape();
 				switch (data.type)
@@ -1078,11 +1007,8 @@ namespace tke
 
 				data.coord.z *= -1.f;
 				j->setCoord(data.coord);
-				glm::mat3 rotationMat;
-				eulerYxzToMatrix(glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z), rotationMat);
-				glm::vec4 rotationQuat;
-				matrixToQuaternion(rotationMat, rotationQuat);
-				j->setQuat(rotationQuat);
+				j->setQuat(mat3_to_quaternion(euler_yxz_to_mat3(
+					glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z))));
 			}
 
 			_process_model(m, true);
@@ -1140,7 +1066,7 @@ namespace tke
 				{
 					XMLNode *n;
 					XMLAttribute *a;
-					auto s = std::make_unique<Source>();
+					auto s = new Source;
 					a = c->firstAttribute("id"); assert(a);
 					s->id = a->value;
 					n = c->firstNode("float_array"); assert(n);
@@ -1157,7 +1083,7 @@ namespace tke
 						id++;
 						str = match.suffix();
 					}
-					sources.push_back(std::move(s));
+					sources.emplace_back(s);
 				}
 				else if (c->name == "vertices")
 				{
@@ -1350,10 +1276,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			_process_model(m, true);
 		}
@@ -1402,7 +1328,7 @@ namespace tke
 				file > normalHeightMapName;
 				file > specRoughnessMapName;
 
-				auto g = std::make_unique<Geometry>();
+				auto g = new Geometry;
 				g->material = getMaterial(albedo_alpha, spec, roughness,
 					getMaterialImage(m->filepath + "/" + albedoAlphaMapName, true),
 					getMaterialImage(m->filepath + "/" + normalHeightMapName, true),
@@ -1411,7 +1337,7 @@ namespace tke
 				file & g->indiceCount;
 				file & g->visible;
 
-				m->geometries.push_back(std::move(g));
+				m->geometries.emplace_back(g);
 			}
 
 			int boneCount;
@@ -1868,10 +1794,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			_process_model(m.get(), true);
 
@@ -1905,10 +1831,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			auto r = m->new_rigidbody();
 			r->type = RigidbodyType::dynamic;
@@ -1948,15 +1874,15 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g0 = std::make_unique<Geometry>();
+			auto g0 = new Geometry;
 			g0->material = defaultMaterial;
 			g0->indiceCount = m->indice_count / 2;
-			auto g1 = std::make_unique<Geometry>();
+			auto g1 = new Geometry;
 			g1->material = defaultMaterial;
 			g1->indiceBase = g0->indiceCount;
 			g1->indiceCount = g0->indiceCount;
-			m->geometries.push_back(std::move(g0));
-			m->geometries.push_back(std::move(g1));
+			m->geometries.emplace_back(g0);
+			m->geometries.emplace_back(g1);
 
 			auto r = m->new_rigidbody();
 			r->type = RigidbodyType::dynamic;
@@ -1996,10 +1922,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			auto r = m->new_rigidbody();
 			r->type = RigidbodyType::dynamic;
@@ -2039,10 +1965,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			_process_model(m.get(), true);
 
@@ -2079,10 +2005,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			_process_model(m.get(), true);
 
@@ -2118,10 +2044,10 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g = std::make_unique<Geometry>();
+			auto g = new Geometry;
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
-			m->geometries.push_back(std::move(g));
+			m->geometries.emplace_back(g);
 
 			_process_model(m.get(), true);
 
@@ -2160,15 +2086,15 @@ namespace tke
 			m->indices = std::make_unique<int[]>(m->indice_count);
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
-			auto g0 = std::make_unique<Geometry>();
+			auto g0 = new Geometry;
 			g0->material = defaultMaterial;
 			g0->indiceCount = ic0;
-			auto g1 = std::make_unique<Geometry>();
+			auto g1 = new Geometry;
 			g1->material = defaultMaterial;
 			g1->indiceBase = ic0;
 			g1->indiceCount = ic1 - ic0;
-			m->geometries.push_back(std::move(g0));
-			m->geometries.push_back(std::move(g1));
+			m->geometries.emplace_back(g0);
+			m->geometries.emplace_back(g1);
 
 			_process_model(m.get(), true);
 

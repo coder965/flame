@@ -52,10 +52,10 @@ namespace tke
 	Shape *Rigidbody::new_shape()
 	{
 		static auto magicNumber = 0;
-		auto s = std::make_unique<Shape>();
+		auto s = new Shape;
 		s->id = magicNumber++;
-		shapes.push_back(std::move(s));
-		return s.get();
+		shapes.emplace_back(s);
+		return s;
 	}
 
 	void Rigidbody::remove_shape(Shape *s)

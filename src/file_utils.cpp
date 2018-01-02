@@ -133,7 +133,7 @@ namespace tke
 	XMLAttribute *XMLNode::newAttribute()
 	{
 		auto a = new XMLAttribute;
-		attributes.push_back(std::move(std::unique_ptr<XMLAttribute>(a)));
+		attributes.emplace_back(a);
 		return a;
 	}
 
@@ -164,7 +164,7 @@ namespace tke
 	XMLNode *XMLNode::newNode(const std::string &_name)
 	{
 		auto n = new XMLNode(_name);
-		children.push_back(std::move(std::unique_ptr<XMLNode>(n)));
+		children.emplace_back(n);
 		return n;
 	}
 

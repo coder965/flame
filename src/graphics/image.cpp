@@ -196,7 +196,7 @@ namespace tke
 		auto res = vkCreateImageView(vk_device.v, &info, nullptr, &view->v);
 		assert(res == VK_SUCCESS);
 
-		views.push_back(std::move(std::unique_ptr<ImageView>(view)));
+		views.emplace_back(view);
 		return view->v;
 	}
 
@@ -211,7 +211,7 @@ namespace tke
 		i->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		i->imageView = view;
 		i->sampler = sampler;
-		infos.push_back(std::move(std::unique_ptr<VkDescriptorImageInfo>(i)));
+		infos.emplace_back(i);
 		return i;
 	}
 

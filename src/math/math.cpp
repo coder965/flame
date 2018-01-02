@@ -15,7 +15,7 @@ namespace tke
 		return 1.0 / (a * z + b);
 	}
 
-	void quaternionToMatrix(glm::vec4 &q, glm::mat3 &mat)
+	glm::mat3 quaternion_to_mat3(glm::vec4 &q)
 	{
 		float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
 
@@ -35,6 +35,7 @@ namespace tke
 		wy = q.w * y2;
 		wz = q.w * z2;
 
+		glm::mat3 mat;
 		mat[0][0] = 1.f - (yy + zz);
 		mat[1][0] = xy - wz;
 		mat[2][0] = xz + wy;
@@ -46,9 +47,10 @@ namespace tke
 		mat[0][2] = xz - wy;
 		mat[1][2] = yz + wx;
 		mat[2][2] = 1.f - (xx + yy);
+		return mat;
 	}
 
-	void matrixToQuaternion(glm::mat3 &mat, glm::vec4 &q)
+	glm::vec4 mat3_to_quaternion(glm::mat3 &mat)
 	{
 		float s;
 		float tq[4];
@@ -64,6 +66,7 @@ namespace tke
 		{
 			j = (tq[i] > tq[j]) ? i : j;
 		}
+		glm::vec4 q;
 		// check the diagonal
 		if (j == 0)
 		{
@@ -100,9 +103,10 @@ namespace tke
 		q.y *= s;
 		q.z *= s;
 		q = glm::normalize(q);
+		return q;
 	}
 
-	void quaternionRotate(glm::vec4 &q, glm::vec3 v)
+	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v)
 	{
 		auto s = -q.x * v.x - q.y * v.y - q.z * v.z;
 		auto i = q.w * v.x + q.y * v.z - q.z * v.y;
@@ -119,7 +123,7 @@ namespace tke
 		v.z = s * z + i * y - j * x;
 	}
 
-	void eulerYzxToMatrix(glm::vec3 &e, glm::mat3 &mat)
+	glm::mat3 euler_yzx_to_mat3(glm::vec3 &e)
 	{
 		using namespace glm;
 		auto x = vec3(1.f, 0.f, 0.f), y = vec3(0.f, 1.f, 0.f), z = vec3(0.f, 0.f, 1.f);
@@ -132,12 +136,14 @@ namespace tke
 		auto matRoll = mat3(glm::rotate(glm::radians(e.z), x));
 		y = matRoll * y;
 		z = matRoll * z;
+		glm::mat3 mat;
 		mat[0] = x;
 		mat[1] = y;
 		mat[2] = z;
+		return mat;
 	}
 
-	void eulerYxzToMatrix(glm::vec3 &e, glm::mat3 &mat)
+	glm::mat3 euler_yxz_to_mat3(glm::vec3 &e)
 	{
 		using namespace glm;
 		auto x = vec3(1.f, 0.f, 0.f), y = vec3(0.f, 1.f, 0.f), z = vec3(0.f, 0.f, 1.f);
@@ -150,9 +156,11 @@ namespace tke
 		auto matRoll = mat3(glm::rotate(glm::radians(e.z), z));
 		y = matRoll * y;
 		x = matRoll * x;
+		glm::mat3 mat;
 		mat[0] = x;
 		mat[1] = y;
 		mat[2] = z;
+		return mat;
 	}
 
 	glm::mat4 makeMatrix(glm::mat3 &rotation, glm::vec3 coord)

@@ -11,6 +11,65 @@
 
 namespace tke
 {
+	KeyFrame *AnimationTrack::new_keyframe()
+	{
+		auto k = new KeyFrame;
+		keyframes.emplace_back(k);
+		return k;
+	}
+
+	KeyFrame *AnimationTrack::new_keyframe(int frame)
+	{
+		auto it = keyframes.begin();
+		for (; it != keyframes.end(); it++)
+		{
+			if ((*it)->frame > frame)
+			{
+				if (it != keyframes.begin())
+				{
+					if ((*(it - 1))->frame == frame)
+						return nullptr;
+				}
+				break;
+			}
+		}
+		auto k = std::make_unique<KeyFrame>();
+		k->frame = frame;
+		keyframes.insert(it, std::move(k));
+		return k.get();
+	}
+
+	void AnimationTrack::remove_keyframe(KeyFrame *k)
+	{
+		for (auto it = keyframes.begin(); it != keyframes.end(); it++)
+		{
+			if (it->get() == k)
+			{
+				keyframes.erase(it);
+				return;
+			}
+		}
+	}
+
+	AnimationTrack *Animation::new_track()
+	{
+		auto t = new AnimationTrack;
+		tracks.emplace_back(t);
+		return t;
+	}
+
+	void Animation::remove_track(AnimationTrack *t)
+	{
+		for (auto it = tracks.begin(); it != tracks.end(); it++)
+		{
+			if (it->get() == t)
+			{
+				tracks.erase(it);
+				return;
+			}
+		}
+	}
+
 	namespace VMD
 	{
 #pragma pack(1)
@@ -20,7 +79,7 @@ namespace tke
 			char modelName[20];
 		};
 
-		struct BoneMotionData
+		struct KeyFrameData
 		{
 			char name[15];
 			int frame;
@@ -35,27 +94,39 @@ namespace tke
 			std::ifstream file(filename, std::ios::binary);
 
 			static_assert(sizeof(Header) == 50, "");
-			static_assert(sizeof(BoneMotionData) == 111, "");
+			static_assert(sizeof(KeyFrameData) == 111, "");
 
 			Header header;
 			file.read((char*)&header, sizeof(Header));
 
 			int count;
 			file & count;
-			for (int i = 0; i < count; i++)
+			for (auto i = 0; i < count; i++)
 			{
-				BoneMotionData data;
-				file.read((char*)&data, sizeof(BoneMotionData));
-				auto m = std::make_unique<BoneMotion>();
-				m->name = japanese_to_chinese(data.name);
-				m->frame = data.frame;
-				m->coord = glm::vec3(data.coord);
-				m->quaternion = glm::vec4(data.quaternion);
-				memcpy(m->bezier, data.bezier, 64);
-				m->coord.z *= -1.f;
-				m->quaternion.z *= -1.f;
-				m->quaternion.w *= -1.f;
-				a->motions.push_back(std::move(m));
+				KeyFrameData data;
+				file.read((char*)&data, sizeof(KeyFrameData));
+				auto name = japanese_to_chinese(data.name);
+				AnimationTrack *t = nullptr;
+				for (auto &_t : a->tracks)
+				{
+					if (_t->bone_name == name)
+					{
+						t = _t.get();
+						break;
+					}
+				}
+				if (!t)
+				{
+					t = a->new_track();
+					t->bone_name = name;
+				}
+				auto k = t->new_keyframe(data.frame);
+				k->frame = data.frame;
+				k->coord = glm::vec3(data.coord);
+				k->quaternion = glm::vec4(data.quaternion);
+				k->coord.z *= -1.f;
+				k->quaternion.z *= -1.f;
+				k->quaternion.w *= -1.f;
 			}
 		}
 	}
@@ -66,16 +137,21 @@ namespace tke
 		{
 			std::ifstream file(filename, std::ios::binary);
 
-			int count;
-			file >> count;
-			for (int i = 0; i < count; i++)
+			int track_count;
+			file >> track_count;
+			for (auto i = 0; i < track_count; i++)
 			{
-				auto m = std::make_unique<BoneMotion>();
-				file > m->name;
-				file >> m->frame;
-				file & m->coord;
-				file & m->quaternion;
-				file.read(m->bezier, 64);
+				auto t = a->new_track();
+				file > t->bone_name;
+				int keyframe_count;
+				file >> keyframe_count;
+				for (auto j = 0; j < keyframe_count; j++)
+				{
+					auto k = t->new_keyframe();
+					file >> k->frame;
+					file & k->coord;
+					file & k->quaternion;
+				}
 			}
 		}
 
@@ -83,15 +159,18 @@ namespace tke
 		{
 			std::ofstream file(filename, std::ios::binary);
 
-			int motionCount = a->motions.size();
-			file & motionCount;
-			for (auto &m : a->motions)
+			int track_count = a->tracks.size();
+			file & track_count;
+			for (auto &t : a->tracks)
 			{
-				file < m->name;
-				file & m->frame;
-				file & m->coord;
-				file & m->quaternion;
-				file.write(m->bezier, 64);
+				file < t->bone_name;
+				int keyframe_count = t->keyframes.size();
+				for (auto &k : t->keyframes)
+				{
+					file << k->frame;
+					file & k->coord;
+					file & k->quaternion;
+				}
 			}
 		}
 	}
@@ -128,106 +207,177 @@ namespace tke
 		return a;
 	}
 
-	AnimationComponent::AnimationComponent(Model *_model)
+	std::vector<std::pair<Model *, std::weak_ptr<AnimationBinding>>> _animation_bindings;
+	std::shared_ptr<AnimationBinding> get_animation_binding(Model *m, std::shared_ptr<Animation> anim)
 	{
-		model = _model;
-		boneData = new BoneData[model->bones.size()];
-		boneMatrix = new glm::mat4[model->bones.size()];
+		for (auto &b : _animation_bindings)
+		{
+			if (b.first == m)
+			{
+				auto s = b.second.lock();
+				if (s && s->animation == anim) 
+					return s;
+			}
+		}
+
+		auto b = std::make_shared<AnimationBinding>();
+		b->animation = anim;
+		for (auto &t : anim->tracks)
+		{
+			auto bone_index = -1;
+			for (int i = 0; i < m->bones.size(); i++)
+			{
+				if (m->bones[i]->name == t->bone_name)
+				{
+					bone_index = i;
+					break;
+				}
+			}
+			if (bone_index == -1)
+				continue;
+
+			for (auto &k : t->keyframes)
+				b->total_frame = glm::max(b->total_frame, k->frame);
+
+			b->tracks.emplace_back(bone_index, t.get());
+		}
+
+		_animation_bindings.emplace_back(m, b);
+	}
+
+	AnimationRunner::AnimationRunner(Model *_model)
+		:model(_model)
+	{
+		bone_data = std::make_unique<BoneData[]>(model->bones.size());
+		bone_matrix = std::make_unique<glm::mat4[]>(model->bones.size());
 		for (int i = 0; i < model->bones.size(); i++)
-			boneMatrix[i] = glm::mat4(1.f);
-		boneMatrixBuffer = new UniformBuffer(sizeof(glm::mat4) * model->bones.size());
-		boneMatrixBuffer->update(boneMatrix, defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
+			bone_matrix[i] = glm::mat4(1.f);
+		bone_buffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * model->bones.size());
+		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
 	}
 
-	AnimationComponent::~AnimationComponent()
+	void AnimationRunner::reset_bones()
 	{
-		delete[]boneData;
-		delete[]boneMatrix;
-		delete boneMatrixBuffer;
+		for (int i = 0; i < model->bones.size(); i++)
+		{
+			bone_data[i].coord = glm::vec3();
+			bone_data[i].rotation = glm::mat3();
+			bone_matrix[i] = glm::mat4();
+		}
 	}
 
-	void AnimationComponent::refreshBone()
+	void AnimationRunner::refresh_bone()
 	{
 		assert(model);
 
 		for (int i = 0; i < model->bones.size(); i++)
 		{
-			boneMatrix[i] = glm::translate(model->bones[i]->relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
+			bone_matrix[i] = glm::translate(model->bones[i]->relateCoord + bone_data[i].coord) * glm::mat4(bone_data[i].rotation);
 			if (model->bones[i]->parent != -1) 
-				boneMatrix[i] = boneMatrix[model->bones[i]->parent] * boneMatrix[i];
+				bone_matrix[i] = bone_matrix[model->bones[i]->parent] * bone_matrix[i];
 		}
 	}
 
-	void AnimationComponent::refreshBone(int i)
+	void AnimationRunner::refresh_bone(int i)
 	{
 		assert(model && i < model->bones.size());
 
-		boneMatrix[i] = glm::translate(model->bones[i]->relateCoord + boneData[i].coord) * glm::mat4(boneData[i].rotation);
+		bone_matrix[i] = glm::translate(model->bones[i]->relateCoord + bone_data[i].coord) * glm::mat4(bone_data[i].rotation);
 		if (model->bones[i]->parent != -1)
-			boneMatrix[i] = boneMatrix[model->bones[i]->parent] * boneMatrix[i];
+			bone_matrix[i] = bone_matrix[model->bones[i]->parent] * bone_matrix[i];
 
 		for (auto child : model->bones[i]->children)
-			refreshBone(child);
+			refresh_bone(child);
 	}
 
-	void AnimationComponent::setAnimation(AnimationBinding *animation)
+	void AnimationRunner::set_animation(AnimationBinding *animation)
 	{
-		if (!animation && currentAnimation)
-		{
-			for (int i = 0; i < model->bones.size(); i++)
-			{
-				boneData[i].coord = glm::vec3();
-				boneData[i].rotation = glm::mat3();
-				boneMatrix[i] = glm::mat4();
-			}
-			boneMatrixBuffer->update(boneMatrix, defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
-		}
-		currentAnimation = animation;
-		currentFrame = 0;
-		currentTime = nowTime;
+		if (curr_anim == animation)
+			return;
+
+		reset_bones();
+		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
+		curr_anim = animation;
+		curr_frame = 0;
+		last_time = nowTime;
+		curr_frame_index.resize(animation->tracks.size());
+		for (auto &i : curr_frame_index)
+			i = 0;
 	}
 
-	void AnimationComponent::update()
+	void AnimationRunner::update()
 	{
 		const float dist = 1000.f / 60.f;
 
-		if (currentAnimation)
+		if (curr_anim)
 		{
-			for (int i = 0; i < model->bones.size(); i++)
+			reset_bones();
+
+			for (int i = 0; i < curr_frame_index.size(); i++)
 			{
-				boneMatrix[i] = glm::mat4();
-				boneData[i].rotation = glm::mat3();
-				boneData[i].coord = glm::vec3();
-			}
-
-			for (auto &t : currentAnimation->tracks)
-			{
-				auto pBoneData = &boneData[t->boneID];
-				auto it = std::upper_bound(t->motions.rbegin(), t->motions.rend(), currentFrame, [](int frame, BoneMotion *bm) {
-					return frame > bm->frame;
-				});
-
-				if (it == t->motions.rend()) continue;
-
-				auto pLeftMotion = *it;
-				auto pRightMotion = (it == t->motions.rbegin() ? t->motions[0] : *(it - 1));
+				auto &t = curr_anim->tracks[i];
+				auto index = curr_frame_index[i];
+				auto left_keyframe = t.second->keyframes[index].get();
+				index++;
+				if (index == t.second->keyframes.size())
+					index = 0;
+				auto right_keyframe = t.second->keyframes[index].get();
 
 				auto beta = 0.f;
-				if (pLeftMotion != pRightMotion) beta = (currentFrame - pLeftMotion->frame) / (pRightMotion->frame - pLeftMotion->frame);
+				if (left_keyframe != right_keyframe)
+				{
+					beta = (curr_frame - left_keyframe->frame) /
+						(right_keyframe->frame - left_keyframe->frame);
+				}
 
-				tke::quaternionToMatrix(glm::normalize((1.f - beta) * pLeftMotion->quaternion + beta * pRightMotion->quaternion), pBoneData->rotation);
-				pBoneData->coord = pLeftMotion->coord + (pRightMotion->coord - pLeftMotion->coord) * beta;
+				auto data = &bone_data[t.first];
+				data->rotation = tke::quaternion_to_mat3(glm::normalize((1.f - beta) *
+					left_keyframe->quaternion + beta * right_keyframe->quaternion));
+				data->coord = left_keyframe->coord + (right_keyframe->coord - 
+					right_keyframe->coord) * beta;
 			}
 
-			currentFrame += (nowTime - currentTime) / dist;
-			if (currentFrame >= currentAnimation->frameTotal)
-				currentFrame = currentAnimation->frameTotal - 1.f;
-			currentTime = nowTime;
+			bool wrap = false;
+			curr_frame += (nowTime - last_time) / dist;
+			if (curr_anim->total_frame > 0)
+			{
+				if (curr_frame >= curr_anim->total_frame)
+				{
+					curr_frame = glm::mod(curr_frame, (float)curr_anim->total_frame);
+					wrap = true;
+				}
+			}
+			last_time = nowTime;
+
+			auto dst = curr_frame;
+			if (wrap)
+				dst += curr_anim->total_frame;
+			for (int i = 0; i < curr_frame_index.size(); i++)
+			{
+				auto &t = curr_anim->tracks[i];
+				if (t.second->keyframes.size() == 0)
+					continue;
+				auto index = curr_frame_index[i];
+				while (t.second->keyframes[index]->frame <= dst)
+				{
+					index++;
+					if (index == t.second->keyframes.size())
+					{
+						index = 0;
+						dst -= curr_anim->total_frame;
+					}
+				}
+				if (index == 0)
+					index = t.second->keyframes.size() - 1;
+				else
+					index -= 1;
+				curr_frame_index[i] = index;
+			}
 		}
 
-		refreshBone();
+		refresh_bone();
 
-		if (processIK)
+		if (enable_IK)
 		{
 			//	for (int i = 0; i < pModel->iks.size(); i++)
 			//	{
@@ -285,8 +435,8 @@ namespace tke
 		}
 
 		for (int i = 0; i < model->bones.size(); i++)
-			boneMatrix[i] *= glm::translate(-model->bones[i]->rootCoord);
+			bone_matrix[i] *= glm::translate(-model->bones[i]->rootCoord);
 
-		boneMatrixBuffer->update(boneMatrix, defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
+		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
 	}
 }

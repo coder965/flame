@@ -5,6 +5,7 @@
 #include "../../model/animation.h"
 #include "../../entity/object.h"
 #include "../../entity/terrain.h"
+#include "../../entity/water.h"
 #include "scene_editor.h"
 #include "entity_window.h"
 #include "show_material.h"

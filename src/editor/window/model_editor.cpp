@@ -1,6 +1,7 @@
 #include "../../input.h"
 #include "../../global.h"
 #include "../../graphics/image.h"
+#include "../../graphics/command_buffer.h"
 #include "../../ui/ui.h"
 
 #include "model_editor.h"

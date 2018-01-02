@@ -13,7 +13,7 @@ namespace physx
 namespace tke
 {
 	struct Model;
-	struct AnimationComponent;
+	struct AnimationRunner;
 	struct Rigidbody;
 
 	REFLECTABLE enum class ObjectPhysicsType
@@ -44,7 +44,7 @@ namespace tke
 
 		REFLv std::uint32_t physics_type = 0; // cannot change
 
-		std::unique_ptr<AnimationComponent> animationComponent;
+		std::unique_ptr<AnimationRunner> animationComponent;
 		std::vector<std::unique_ptr<ObjectRigidBodyData>> rigidbodyDatas;
 		physx::PxController *pxController = nullptr;
 		float floatingTime = 0.f;

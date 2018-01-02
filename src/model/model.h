@@ -39,8 +39,6 @@ namespace tke
 	struct Material;
 	struct VertexBuffer;
 	struct IndexBuffer;
-	struct Bone;
-	struct BoneIK;
 	struct Animation;
 	struct AnimationBinding;
 	struct Rigidbody;
@@ -54,6 +52,28 @@ namespace tke
 		int indiceCount = 0;
 
 		bool visible = true;
+	};
+
+	struct Bone
+	{
+		std::string name;
+		char type = -1;
+
+		int parent = -1;
+
+		glm::vec3 rootCoord = glm::vec3(0.f);
+		glm::vec3 relateCoord = glm::vec3(0.f);
+
+		std::vector<int> children;
+	};
+
+	struct BoneIK
+	{
+		int targetID = -1;
+		int effectorID = -1;
+		unsigned short iterations = 0;
+		float weight = 0.f;
+		std::vector<int> chain;
 	};
 
 	REFLECTABLE struct Model
@@ -77,7 +97,6 @@ namespace tke
 		std::vector<std::unique_ptr<Bone>> bones;
 		std::vector<std::unique_ptr<BoneIK>> iks;
 
-		std::vector<std::weak_ptr<AnimationBinding>> animation_bindings;
 		std::shared_ptr<AnimationBinding> stateAnimations[ModelStateAnimationCount];
 
 		REFLv std::string stand_animation_filename;
@@ -102,7 +121,6 @@ namespace tke
 
 		REFLv glm::vec3 eye_position = glm::vec3(0.f);
 
-		std::shared_ptr<AnimationBinding> bindAnimation(std::shared_ptr<Animation> a);
 		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 
 		Bone *new_bone();

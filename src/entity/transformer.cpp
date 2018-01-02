@@ -17,9 +17,9 @@ namespace tke
 	void Transformer::updateAxis()
 	{
 		if (!needUpdateQuat)
-			quaternionToMatrix(quat, axis);// update by quat
+			axis = quaternion_to_mat3(quat);// update by quat
 		else
-			eulerYzxToMatrix(euler, axis);// update by euler
+			axis = euler_yzx_to_mat3(euler);// update by euler
 		needUpdateAxis = false;
 	}
 
@@ -65,7 +65,7 @@ namespace tke
 	{
 		if (needUpdateAxis) updateAxis();
 		// update by axis
-		matrixToQuaternion(axis, quat);
+		quat = mat3_to_quaternion(axis);
 		needUpdateQuat = false;
 	}
 

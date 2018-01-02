@@ -17,7 +17,7 @@ namespace tke
 		return str;
 	}
 
-	std::string japanese_to_Chinese(const std::string &src)
+	std::string japanese_to_chinese(const std::string &src)
 	{
 		return translate(932, 936, src);
 	}

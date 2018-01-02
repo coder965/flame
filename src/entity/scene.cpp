@@ -4,6 +4,7 @@
 #include "../hash.h"
 #include "../file_utils.h"
 #include "../global.h"
+#include "../graphics/buffer.h"
 #include "../graphics/renderpass.h"
 #include "../graphics/synchronization.h"
 #include "../physics/physics.h"
@@ -124,7 +125,7 @@ namespace tke
 
 				for (auto &r : m->rigidbodies)
 				{
-					auto rigidbodyData = std::make_unique<ObjectRigidBodyData>();
+					auto rigidbodyData = new ObjectRigidBodyData;
 					rigidbodyData->rigidbody = r.get();
 
 					auto rigidCoord = r->getCoord();
@@ -168,7 +169,7 @@ namespace tke
 
 					rigidbodyData->actor = actor;
 
-					o->rigidbodyDatas.push_back(std::move(rigidbodyData));
+					o->rigidbodyDatas.emplace_back(rigidbodyData);
 
 					pxScene->addActor(*actor);
 				}
@@ -288,9 +289,7 @@ namespace tke
 		for (int i = 0; i < count; i++)
 		{
 			if (pCollisionGroups[i]->originalID == ID && pCollisionGroups[i]->originalmask == mask)
-			{
 				return i;
-			}
 		}
 		auto c = new CollisionGroup;
 		c->originalID = ID;
@@ -366,7 +365,7 @@ namespace tke
 	void Scene::addWater(Water *w)
 	{
 		mtx.lock();
-		waters.push_back(std::move(std::unique_ptr<Water>(w)));
+		waters.emplace_back(w);
 		mtx.unlock();
 	}
 
@@ -495,10 +494,8 @@ namespace tke
 							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
 							o->setCoord(coord);
 							o->setQuat(quat);
-							glm::mat3 axis;
-							quaternionToMatrix(quat, axis);
 							data->coord = coord;
-							data->rotation = axis;
+							data->rotation = quaternion_to_mat3(quat);
 						}
 						//else
 						//{
@@ -613,7 +610,7 @@ namespace tke
 				c->obtainFromAttributes(o, o->b);
 				o->model = getModel(o->model_filename);
 				if (o->model && o->model->vertex_skeleton)
-					o->animationComponent = std::make_unique<AnimationComponent>(o->model.get());
+					o->animationComponent = std::make_unique<AnimationRunner>(o->model.get());
 				o->needUpdateAxis = true;
 				o->needUpdateQuat = true;
 				o->needUpdateMat = true;

@@ -93,11 +93,11 @@ namespace tke
 			std::abs(a.w - b.w) <= TK_EPS;
 	}
 
-	void quaternionToMatrix(glm::vec4 &q, glm::mat3 &mat);
-	void matrixToQuaternion(glm::mat3 &mat, glm::vec4 &q);
-	void quaternionRotate(glm::vec4 &q, glm::vec3 v);
-	void eulerYzxToMatrix(glm::vec3 &e, glm::mat3 &mat);
-	void eulerYxzToMatrix(glm::vec3 &e, glm::mat3 &mat);
+	glm::mat3 quaternion_to_mat3(glm::vec4 &q);
+	glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
+	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
+	glm::mat3 euler_yzx_to_mat3(glm::vec3 &e);
+	glm::mat3 euler_yxz_to_mat3(glm::vec3 &e);
 	glm::mat4 makeMatrix(glm::mat3 &rotation, glm::vec3 coord);
 
 	float linearDepthOrtho(float z, float depth_near, float depth_far);

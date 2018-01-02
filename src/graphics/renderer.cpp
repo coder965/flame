@@ -943,7 +943,7 @@ namespace tke
 							animatedCommands.push_back(command);
 						}
 
-						writes.push_back(ds_mrtAnim_bone->bufferWrite(0, animatedIndex, o->animationComponent->boneMatrixBuffer));
+						writes.push_back(ds_mrtAnim_bone->bufferWrite(0, animatedIndex, o->animationComponent->bone_buffer.get()));
 
 						animatedObjects.push_back(o.get());
 						animatedIndex++;

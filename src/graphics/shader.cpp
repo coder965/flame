@@ -90,12 +90,12 @@ namespace tke
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
 
-				auto d = std::make_unique<Descriptor>();
+				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				resFile > d->name;
 				resFile & d->binding;
 				resFile & d->count;
-				descriptors[set].push_back(std::move(d));
+				descriptors[set].emplace_back(d);
 			}
 			int imageCount;
 			resFile & imageCount;
@@ -106,12 +106,12 @@ namespace tke
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
 
-				auto d = std::make_unique<Descriptor>();
+				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				resFile > d->name;
 				resFile & d->binding;
 				resFile & d->count;
-				descriptors[set].push_back(std::move(d));
+				descriptors[set].emplace_back(d);
 			}
 			int pcSize;
 			resFile & pcSize;
@@ -141,13 +141,13 @@ namespace tke
 					descriptors.resize(set + 1);
 				resFile & set;
 
-				auto d = std::make_unique<Descriptor>();
+				auto d = new Descriptor;
 				d->type = desc_type;
 				d->name = r.name;
 				d->binding = glsl.get_decoration(r.id, spv::DecorationBinding);
 				auto type = glsl.get_type(r.type_id);
 				d->count = type.array.size() > 0 ? type.array[0] : 1;
-				descriptors[set].push_back(std::move(d));
+				descriptors[set].emplace_back(d);
 
 				resFile < d->name;
 				resFile & d->binding;
