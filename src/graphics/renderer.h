@@ -100,8 +100,7 @@ namespace tke
 		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
 	};
 
-	enum { MaxStaticObjectCount = 1024 };
-	enum { MaxAnimatedObjectCount = 8 };
+	enum { MaxObjectCount = 1024 };
 	enum { MaxLightCount = 256 };
 	enum { MaxTerrainCount = 8 };
 	enum { MaxWaterCount = 8 };
@@ -120,8 +119,7 @@ namespace tke
 		static bool shad_inited;
 
 		std::unique_ptr<UniformBuffer> matrixBuffer;
-		std::unique_ptr<UniformBuffer> staticObjectMatrixBuffer;
-		std::unique_ptr<UniformBuffer> animatedObjectMatrixBuffer;
+		std::unique_ptr<UniformBuffer> objectMatrixBuffer;
 		std::unique_ptr<UniformBuffer> terrainBuffer;
 		std::unique_ptr<UniformBuffer> waterBuffer;
 		std::unique_ptr<UniformBuffer> lightBuffer;

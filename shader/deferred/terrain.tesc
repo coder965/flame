@@ -11,6 +11,7 @@ struct Terrain
 	float displacement_height;
 	float tessellation_factor;
 	float tiling_scale;
+	uint material_index;
 };
 
 layout(binding = 4) uniform TERRAIN
@@ -86,7 +87,7 @@ void main()
 {
 	outTerrainId[gl_InvocationID] = inTerrainId[0];
 	outUV[gl_InvocationID] = inUV[gl_InvocationID];
-	outNormal[gl_InvocationID] = inNormal[gl_InvocationID0];
+	outNormal[gl_InvocationID] = inNormal[gl_InvocationID];
 	outTangent[gl_InvocationID] = inTangent[gl_InvocationID];
 
 	if (gl_InvocationID == 0)

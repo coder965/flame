@@ -1,3 +1,4 @@
+#include "../global.h"
 #include "../resource/resource.h"
 #include "../graphics/buffer.h"
 #include "../graphics/image.h"
@@ -144,19 +145,38 @@ namespace tke
 				t->index = i;
 				materialImages[i] = t;
 
-				updateDescriptorSets(1, &ds_material_images->imageWrite(0, i, t.get(), colorSampler));
+				updateDescriptorSets(1, &ds_material->imageWrite(MaterialImagesDescriptorBinding, i, t.get(), colorSampler));
 
 				return t;
 			}
 		}
 	}
 
-	static std::shared_ptr<DescriptorSetLayout> _images_layout;
+	static std::shared_ptr<DescriptorSetLayout> _material_layout;
 
 	void init_material()
 	{
+		VkDescriptorSetLayoutBinding bindings[] = {
+			{
+				MaterialBufferDescriptorBinding,
+				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				1,
+				VK_SHADER_STAGE_FRAGMENT_BIT,
+				nullptr
+			},
+				{
+					MaterialImagesDescriptorBinding,
+					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					MaxMaterialCount,
+					VK_SHADER_STAGE_FRAGMENT_BIT,
+					nullptr
+				}
+		};
+		_material_layout = getDescriptorSetLayout(TK_ARRAYSIZE(bindings), bindings);
+
+		ds_material = new DescriptorSet(_material_layout.get());
+
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
-		globalResource.setBuffer(materialBuffer, "Material.UniformBuffer");
 
 		defaultMaterial = std::make_shared<Material>();
 		defaultMaterial->name = "[default_material]";
@@ -164,16 +184,6 @@ namespace tke
 		materials[0] = defaultMaterial;
 		_update_material(defaultMaterial.get(), 0);
 
-		{
-			VkDescriptorSetLayoutBinding binding;
-			binding.binding = 0;
-			binding.descriptorCount = MaxMaterialCount;
-			binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			binding.pImmutableSamplers = nullptr;
-			_images_layout = getDescriptorSetLayout(1, &binding);
-
-			ds_material_images = new DescriptorSet(_images_layout.get());
-		}
+		updateDescriptorSets(1, &ds_material->bufferWrite(MaterialBufferDescriptorBinding, 0, materialBuffer));
 	}
 }

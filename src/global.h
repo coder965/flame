@@ -25,35 +25,40 @@ namespace tke
 
 	IMPL() uint32_t FPS;
 
-	enum
+	enum DescriptorSetBindings
 	{
-		// buffer
-		ConstantBufferBinding,
-		MaterialBufferBinding,
-		MatrixBufferBinding,
-		StaticObjectMatrixBufferBinding,
-		AnimatedObjectMatrixBufferBinding = 3,
-		TerrainBufferBinding,
-		WaterBufferBinding,
-		LightBufferBinding,
-		AmbientBufferBinding,
-		ShadowBufferBinding,
-		// image
-		EnvrImageBinding,
-		MainImageBinding,
-		DepthImageBinding,
-		AlbedoAlphaImageBinding,
-		NormalHeightImageBinding,
-		SpecRoughnessImageBinding,
-		ShadowImageBinding,
-		AoImageBinding,
-		// terrain special
-		TerrainBlendMapBinding
+		MainDescriptorSetBinding,
+		MaterialDescriptorSetBinding,
+		BoneSetDescriptorBinding
 	};
 
-	enum
+	enum MainDescriptorSetBindings
 	{
-		TexturesBindingSet = 1,
-		BoneBindingSet
+		// buffer
+		ConstantBufferDescriptorBinding,
+		MatrixBufferDescriptorBinding,
+		ObjectMatrixBufferDescriptorBinding,
+		TerrainBufferDescriptorBinding,
+		WaterBufferDescriptorBinding,
+		LightBufferDescriptorBinding,
+		AmbientBufferDescriptorBinding,
+		ShadowBufferDescriptorBinding,
+		// image
+		EnvrImageDescriptorBinding,
+		MainImageDescriptorBinding,
+		DepthImageDescriptorBinding,
+		AlbedoAlphaImageDescriptorBinding,
+		NormalHeightImageDescriptorBinding,
+		SpecRoughnessDescriptorImageBinding,
+		ShadowImageDescriptorBinding,
+		AoImageDescriptorBinding,
+		// terrain special
+		TerrainBlendImageDescriptorBinding
+	};
+
+	enum MaterialDescriptorSetBindings
+	{
+		MaterialBufferDescriptorBinding,
+		MaterialImagesDescriptorBinding
 	};
 }

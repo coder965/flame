@@ -219,7 +219,7 @@ namespace tke
 					cb->bindPipeline(pipeline_texture);
 					VkDescriptorSet sets[] = {
 						pipeline_texture->descriptorSet->v,
-						ds_material_images->v
+						ds_material->v
 					};
 					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 					break;
@@ -449,8 +449,7 @@ namespace tke
 				.addShader(engine_path + "shader/deferred/mrt.vert", {})
 				.addShader(engine_path + "shader/deferred/mrt.frag", {})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
-				.addLink("MATERIAL", "Material.UniformBuffer"),
+				.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -463,8 +462,7 @@ namespace tke
 				.addShader(engine_path + "shader/deferred/mrt.vert", {"ANIM"})
 				.addShader(engine_path + "shader/deferred/mrt.frag", {"ANIM"})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
-				.addLink("MATERIAL", "Material.UniformBuffer"),
+				.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			terrainPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -526,8 +524,7 @@ namespace tke
 		}
 
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
-		staticObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticObjectCount);
-		animatedObjectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedObjectCount);
+		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxObjectCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
@@ -562,8 +559,7 @@ namespace tke
 		resource.setImage(specRoughnessImage.get(), "SpecRoughness.Image");
 
 		resource.setBuffer(matrixBuffer.get(), "Matrix.UniformBuffer");
-		resource.setBuffer(staticObjectMatrixBuffer.get(), "StaticObjectMatrix.UniformBuffer");
-		resource.setBuffer(animatedObjectMatrixBuffer.get(), "AnimatedObjectMatrix.UniformBuffer");
+		resource.setBuffer(objectMatrixBuffer.get(), "ObjectMatrix.UniformBuffer");
 		resource.setBuffer(terrainBuffer.get(), "Terrain.UniformBuffer");
 		resource.setBuffer(waterBuffer.get(), "Water.UniformBuffer");
 		resource.setBuffer(lightBuffer.get(), "Light.UniformBuffer");
@@ -768,54 +764,27 @@ namespace tke
 		}
 		if (scene->objects.size() > 0)
 		{
-			int updateCount = 0;
-			std::vector<VkBufferCopy> staticUpdateRanges;
-			std::vector<VkBufferCopy> animatedUpdateRanges;
+			std::vector<VkBufferCopy> ranges;
 			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * scene->objects.size());
-			int staticObjectIndex = 0;
-			int animatedObjectIndex = 0;
+			int index = 0;
 
 			for (auto &o : scene->objects)
 			{
-				if (!o->model->vertex_skeleton)
+				if (o->changed)
 				{
-					if (o->changed)
-					{
-						auto srcOffset = sizeof(glm::mat4) * updateCount;
-						memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
-						VkBufferCopy range = {};
-						range.srcOffset = srcOffset;
-						range.dstOffset = sizeof(glm::mat4) * staticObjectIndex;
-						range.size = sizeof(glm::mat4);
-						staticUpdateRanges.push_back(range);
-
-						updateCount++;
-					}
-					o->sceneIndex = staticObjectIndex;
-					staticObjectIndex++;
+					auto srcOffset = sizeof(glm::mat4) * ranges.size();
+					memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
+					VkBufferCopy range = {};
+					range.srcOffset = srcOffset;
+					range.dstOffset = sizeof(glm::mat4) * index;
+					range.size = sizeof(glm::mat4);
+					ranges.push_back(range);
 				}
-				else
-				{
-					if (o->changed)
-					{
-						auto srcOffset = sizeof(glm::mat4) * updateCount;
-						memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
-						VkBufferCopy range = {};
-						range.srcOffset = srcOffset;
-						range.dstOffset = sizeof(glm::mat4) * animatedObjectIndex;
-						range.size = sizeof(glm::mat4);
-						animatedUpdateRanges.push_back(range);
-
-						updateCount++;
-					}
-					o->sceneIndex = animatedObjectIndex;
-					animatedObjectIndex++;
-				}
-
+				o->sceneIndex = index;
+				index++;
 			}
 			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(staticObjectMatrixBuffer.get(), staticUpdateRanges.size(), staticUpdateRanges.data());
-			defalut_staging_buffer->copyTo(animatedObjectMatrixBuffer.get(), animatedUpdateRanges.size(), animatedUpdateRanges.data());
+			defalut_staging_buffer->copyTo(objectMatrixBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		std::vector<VkWriteDescriptorSet> writes;
@@ -851,7 +820,7 @@ namespace tke
 					range.size = sizeof(TerrainShaderStruct);
 					ranges.push_back(range);
 
-					writes.push_back(ds_terrain->imageWrite(TerrainBlendMapBinding, 
+					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding, 
 						index, t->blendMap.get(),  colorBorderSampler));
 				}
 				index++;
@@ -1017,7 +986,7 @@ namespace tke
 							range.size = sizeof(glm::mat4);
 							ranges.push_back(range);
 
-							writes.push_back(ds_defe->imageWrite(ShadowImageBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1));
+							writes.push_back(ds_defe->imageWrite(ShadowImageDescriptorBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1));
 						}
 						shadowIndex += 6;
 					}
@@ -1098,7 +1067,7 @@ namespace tke
 					cb->bindPipeline(esmPipeline);
 					VkDescriptorSet sets[] = {
 						ds_esm->v,
-						ds_material_images->v
+						ds_material->v
 					};
 					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 					for (int oId = 0; oId < staticObjects.size(); oId++)
@@ -1115,7 +1084,7 @@ namespace tke
 					cb->bindPipeline(esmAnimPipeline);
 					VkDescriptorSet sets[] = {
 						ds_esmAnim->v,
-						ds_material_images->v,
+						ds_material->v,
 						ds_mrtAnim_bone->v
 					};
 					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
@@ -1143,7 +1112,7 @@ namespace tke
 			cb->bindPipeline(mrtPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
-				ds_material_images->v
+				ds_material->v
 			};
 			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 			cb->drawIndirectIndex(staticObjectIndirectBuffer.get(), staticIndirectCount);
@@ -1154,7 +1123,7 @@ namespace tke
 			cb->bindPipeline(mrtAnimPipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
-				ds_material_images->v,
+				ds_material->v,
 				ds_mrtAnim_bone->v
 			};
 			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));

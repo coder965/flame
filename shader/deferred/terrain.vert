@@ -11,6 +11,7 @@ struct Terrain
 	float displacement_height;
 	float tessellation_factor;
 	float tiling_scale;
+	uint material_index;
 };
 
 layout(binding = 4) uniform TERRAIN

@@ -27,12 +27,12 @@ struct Material
 	uint dummy;
 };
 
-layout(binding = 1) uniform MATERIAL
+layout(set = 1, binding = 0) uniform MATERIAL
 {
 	Material material[256];
 }u_material;
 
-layout(set = 1, binding = 0) uniform sampler2D maps[256];
+layout(set = 1, binding = 1) uniform sampler2D maps[256];
 
 layout(location = 0) in vec2 inTexcoord;
 layout(location = 1) in flat uint inMaterialID;

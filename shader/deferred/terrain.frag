@@ -13,6 +13,7 @@ struct Terrain
 	float displacement_height;
 	float tessellation_factor;
 	float tiling_scale;
+	uint material_index;
 };
 
 layout(binding = 4) uniform TERRAIN
@@ -33,13 +34,11 @@ layout(binding = 2) uniform MATRIX
 }u_matrix;
 
 layout(binding = 18) uniform sampler2D blendMap[8];
-layout(binding = 19) uniform sampler2D colorMaps[8 * 4];
-layout(binding = 20) uniform sampler2D normalMaps[8 * 4];
 
 layout (location = 0) in flat uint inTerrainId;
 layout (location = 1) in vec2 inUV;
-layout (location = 2) out vec3 inNormal;
-layout (location = 3) out vec3 inTangent;
+layout (location = 2) in vec3 inNormal;
+layout (location = 3) in vec3 inTangent;
 
 layout(location = 0) out vec4 outAlbedoAlpha;
 layout(location = 1) out vec4 outNormalHeight;
@@ -47,10 +46,10 @@ layout(location = 2) out vec4 outSpecRoughness;
 
 void main()
 {
-	mat3 normalMatrix = mat3(u_matrix.view);
+	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view));
 
-	vec4 blend = texture(blendMap[inTerrainId], inUV).rgb;
-	vec2 tilledUV = inUV * u_terrain.d[inTerrainId].block_count * u_terrain.d[inTerrainId].tessellation_factor;
+	vec4 blend = texture(blendMap[inTerrainId], inUV);
+	vec2 tilledUV = inUV * u_terrain.d[inTerrainId].block_count * u_terrain.d[inTerrainId].tiling_scale;
 
 	vec3 color = vec3(0);
 	color += texture(colorMaps[inTerrainId * 8 + 0], tilledUV).rgb * blend.r;

@@ -40,7 +40,7 @@ namespace tke
 
 	IMPL() std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
 	std::shared_ptr<Image> getMaterialImage(const std::string &filename, bool sRGB = false);
-	IMPL(nullptr) DescriptorSet *ds_material_images;
+	IMPL(nullptr) DescriptorSet *ds_material;
 
 	void init_material();
 }
