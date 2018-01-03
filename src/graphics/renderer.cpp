@@ -449,7 +449,7 @@ namespace tke
 				.addShader(engine_path + "shader/deferred/mrt.vert", {})
 				.addShader(engine_path + "shader/deferred/mrt.frag", {})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer"),
+				.addLink("OBJECT", "ObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -462,7 +462,7 @@ namespace tke
 				.addShader(engine_path + "shader/deferred/mrt.vert", {"ANIM"})
 				.addShader(engine_path + "shader/deferred/mrt.frag", {"ANIM"})
 				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer"),
+				.addLink("OBJECT", "ObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			terrainPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -586,9 +586,8 @@ namespace tke
 					.addShader(engine_path + "shader/esm/esm.vert", {})
 					.addShader(engine_path + "shader/esm/esm.frag", {})
 					.addLink("CONSTANT", "Constant.UniformBuffer")
-					.addLink("OBJECT", "StaticObjectMatrix.UniformBuffer")
-					.addLink("SHADOW", "Shadow.UniformBuffer")
-					.addLink("MATERIAL", "Material.UniformBuffer"),
+					.addLink("OBJECT", "ObjectMatrix.UniformBuffer")
+					.addLink("SHADOW", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
 				esmAnimPipeline = new Pipeline(PipelineCreateInfo()
 					.cx(2048).cy(2048)
@@ -598,9 +597,8 @@ namespace tke
 					.addShader(engine_path + "shader/esm/esm.vert", {"ANIM"})
 					.addShader(engine_path + "shader/esm/esm.frag", {"ANIM"})
 					.addLink("CONSTANT", "Constant.UniformBuffer")
-					.addLink("OBJECT", "AnimatedObjectMatrix.UniformBuffer")
-					.addLink("SHADOW", "Shadow.UniformBuffer")
-					.addLink("MATERIAL", "Material.UniformBuffer"),
+					.addLink("OBJECT", "ObjectMatrix.UniformBuffer")
+					.addLink("SHADOW", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
 
 				shad_inited = true;
