@@ -102,7 +102,10 @@ namespace tke
 
 	float linearDepthOrtho(float z, float depth_near, float depth_far);
 	float linearDepthPerspective(float z, float depth_near, float depth_far);
-	float rand2d(glm::vec2 v);
+	float rand2d(const glm::vec2 &v);
 	float noise2d(glm::vec2 v);
 	float fbm2d(glm::vec2 v);
+
+	glm::vec4 fit_rect(const glm::vec2 &desired_size, float xy_aspect);
+	glm::vec4 fit_rect_no_zoom_in(const glm::vec2 &desired_size, const glm::vec2 &size);
 }

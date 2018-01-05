@@ -1,6 +1,7 @@
 #include <filesystem>
 
 #include "../../ui/ui.h"
+#include "../../graphics/descriptor.h"
 
 #include "resource_explorer.h"
 #include "image_editor.h"
@@ -131,9 +132,16 @@ void ResourceExplorer::on_right_area_show()
 		switch (i->file_type)
 		{
 			case tke::FileTypeImage:
+			{
+				auto w = ImGui::GetWindowWidth() - 300;
+				auto h = ImGui::GetWindowHeight() - ImGui::GetFrameHeightWithSpacing() * 3;
 				ImGui::Text("%d x %d", i->image->levels[0].cx, i->image->levels[0].cy);
-				ImGui::Image((ImTextureID)i->image->index, ImVec2(i->image->levels[0].cx, i->image->levels[0].cy));
+				auto image_rect = tke::fit_rect_no_zoom_in(glm::vec2(w, h), glm::vec2(i->image->levels[0].cx, i->image->levels[0].cy));
+				auto pos = ImGui::GetCursorPos();
+				ImGui::SetCursorPos(pos + ImVec2(image_rect.x, image_rect.y));
+				ImGui::Image((ImTextureID)i->image->index, ImVec2(image_rect.z, image_rect.w));
 				break;
+			}
 		}
 	}
 	ImGui::EndGroup();

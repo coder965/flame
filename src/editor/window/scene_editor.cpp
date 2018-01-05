@@ -29,12 +29,6 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	transformerTool = std::make_unique<TransformerTool>(layer.image.get());
 }
 
-SceneEditor::~SceneEditor()
-{
-	if (entity_window)
-		entity_window->opened = false;
-}
-
 void SceneEditor::on_file_menu()
 {
 	if (ImGui::MenuItem("Save", "Ctrl+S"))
@@ -167,16 +161,6 @@ void SceneEditor::on_menu_bar()
 			scene->setFogColor(fogColor);
 
 		ImGui::EndMenu();
-	}
-}
-
-void SceneEditor::on_view_menu()
-{
-	if (ImGui::MenuItem("Entity Window"))
-	{
-		if (!entity_window)
-			entity_window = new EntityWindow;
-		entity_window->_need_focus = true;
 	}
 }
 
@@ -337,28 +321,12 @@ void SceneEditor::do_show()
 		ImGui::EndPopup();
 	}
 
-	ImVec2 image_pos;
-	auto displayCx = tke::window_cx;
-	auto displayCy = tke::window_cy;
-	ImVec2 image_size;
-	if ((float)displayCx / (float)displayCy > tke::res_aspect)
-	{
-		image_size.y = displayCy;
-		image_size.x = tke::res_aspect * image_size.y;
-		image_pos.x = (displayCx - image_size.x) * 0.5f;
-		image_pos.y = 0;
-	}
-	else
-	{
-		image_size.x = displayCx;
-		image_size.y = image_size.x / tke::res_aspect;
-		image_pos.y = (displayCy - image_size.y) * 0.5f;
-		image_pos.x = 0;
-	}
-	ImGui::SetCursorScreenPos(image_pos);
-	ImGui::InvisibleButton("canvas", image_size);
+	glm::vec4 image_rect = tke::fit_rect(glm::vec2(tke::window_cx, tke::window_cy), tke::res_aspect);
+	ImGui::SetCursorScreenPos(ImVec2(image_rect.x, image_rect.y));
+	ImGui::InvisibleButton("canvas", ImVec2(image_rect.z, image_rect.w));
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImTextureID(layer.image->index), image_pos, image_pos + image_size);
+	draw_list->AddImage(ImTextureID(layer.image->index), ImVec2(image_rect.x, image_rect.y), ImVec2(image_rect.x + 
+		image_rect.z, image_rect.y + image_rect.w));
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
@@ -403,8 +371,8 @@ void SceneEditor::do_show()
 		{
 			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
 			{
-				auto x = (tke::mouseX - image_pos.x) / image_size.x * tke::res_cx;
-				auto y = (tke::mouseY - image_pos.y) / image_size.y * tke::res_cy;
+				auto x = (tke::mouseX - image_rect.x) / image_rect.z * tke::res_cx;
+				auto y = (tke::mouseY - image_rect.y) / image_rect.w * tke::res_cy;
 				if (!transformerTool->leftDown(x, y))
 				{
 					tke::PlainRenderer::DrawData draw_data;

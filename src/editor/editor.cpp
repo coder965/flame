@@ -5,6 +5,7 @@
 
 #include "window/file_selector.h"
 #include "window/resource_explorer.h"
+#include "window/hierarchy.h"
 #include "window/scene_editor.h"
 #include "window/image_editor.h"
 
@@ -61,6 +62,8 @@ int main(int argc, char** argv)
 			{
 				if (n->name == "resource_explorer")
 					resourceExplorer = new ResourceExplorer;
+				else if (n->name == "hierarchy_window")
+					hierarchy_window = new HierarchyWindow;
 			}
 		}
 	}
@@ -120,8 +123,12 @@ int main(int argc, char** argv)
 						resourceExplorer = new ResourceExplorer;
 					resourceExplorer->_need_focus = true;
 				}
-				if (scene_editor)
-					scene_editor->on_view_menu();
+				if (ImGui::MenuItem("Hierarchy"))
+				{
+					if (!hierarchy_window)
+						hierarchy_window = new HierarchyWindow;
+					hierarchy_window->_need_focus = true;
+				}
 
 				ImGui::EndMenu();
 			}
@@ -171,6 +178,8 @@ int main(int argc, char** argv)
 		tke::XMLDoc at("data");
 		if (resourceExplorer)
 			at.newNode("resource_explorer");
+		if (hierarchy_window)
+			at.newNode("hierarchy_window");
 		if (SelectObject)
 			at.newNode("select");
 		at.save("ui.xml");

@@ -168,7 +168,7 @@ namespace tke
 		return glm::mat4(glm::vec4(rotation[0], 0.f), glm::vec4(rotation[1], 0.f), glm::vec4(rotation[2], 0.f), glm::vec4(coord, 1.f));
 	}
 
-	float rand2d(glm::vec2 v)
+	float rand2d(const glm::vec2 &v)
 	{
 		return glm::fract(cos(v.x * (12.9898) + v.y * (4.1414)) * 43758.5453);
 	}
@@ -206,5 +206,44 @@ namespace tke
 		}
 
 		return r;
+	}
+
+	glm::vec4 fit_rect(const glm::vec2 &desired_size, float xy_aspect)
+	{
+		if (desired_size.x <= 0.f || desired_size.y <= 0.f)
+			return glm::vec4(0.f, 0.f, 1.f, 1.f);
+		glm::vec4 ret;
+		if (desired_size.x / desired_size.y > xy_aspect)
+		{
+			ret.z = xy_aspect * desired_size.y;
+			ret.w = desired_size.y;
+			ret.x = (desired_size.x - ret.z) * 0.5f;
+			ret.y = 0;
+		}
+		else
+		{
+			ret.z = desired_size.x;
+			ret.w = ret.z / xy_aspect;
+			ret.x = 0;
+			ret.y = (desired_size.y - ret.w) * 0.5f;
+		}
+		return ret;
+	}
+
+	glm::vec4 fit_rect_no_zoom_in(const glm::vec2 &desired_size, const glm::vec2 &size)
+	{
+		if (desired_size.x <= 0.f || desired_size.y <= 0.f)
+			return glm::vec4(0.f, 0.f, 1.f, 1.f);
+		if (size.x <= desired_size.x && size.y <= desired_size.y)
+		{
+			glm::vec4 ret;
+			ret.z = size.x;
+			ret.w = size.y;
+			ret.x = (desired_size.x - ret.z) * 0.5f;
+			ret.y = (desired_size.y - ret.w) * 0.5f;
+			return ret;
+		}
+		else
+			return fit_rect(desired_size, size.x / size.y);
 	}
 }

@@ -42,10 +42,10 @@
     <ClCompile Include="..\src\editor\editor.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\editor\window\entity_window.cpp">
+    <ClCompile Include="..\src\editor\window\show_material.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\editor\window\show_material.cpp">
+    <ClCompile Include="..\src\editor\window\hierarchy.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,10 +77,10 @@
     <ClInclude Include="..\src\editor\window\window.h">
       <Filter>src\window</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\editor\window\entity_window.h">
+    <ClInclude Include="..\src\editor\window\show_material.h">
       <Filter>src\window</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\editor\window\show_material.h">
+    <ClInclude Include="..\src\editor\window\hierarchy.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>
