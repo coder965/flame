@@ -316,7 +316,7 @@ namespace tke
 		window_imageAvailable = createSemaphore();
 		frameDone = createFence();
 
-		printf("engine init finished - %d ms\n", GetTickCount() - init_start_time);
+		printf("\n=====INFO=====\nengine init finished - %d ms\n==============\n", GetTickCount() - init_start_time);
 
 		return NoErr;
 	}

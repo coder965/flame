@@ -11,7 +11,7 @@ Tool::Tool(tke::Image *dst)
 	if (!inited)
 	{
 		depthImage = std::make_unique<tke::Image>(tke::res_cx, tke::res_cy,
-			VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+			VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		VkImageView views[] = {
 			dst->getView(),

@@ -530,7 +530,7 @@ namespace tke
 				.cullMode(VK_CULL_MODE_NONE)
 				.addShader(engine_path + "shader/fullscreen.vert", {})
 				.addShader(engine_path + "shader/compose/compose.frag", {})
-				.addLink("source", "Main.Image", 0, plainUnnormalizedSampler),
+				.addLink("img_source", "Main.Image", 0, plainUnnormalizedSampler),
 				defeRenderPass, 2);
 
 			defe_inited = true;

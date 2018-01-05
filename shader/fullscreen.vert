@@ -20,11 +20,13 @@ layout(binding = 0) uniform ubo_constant_
 	float envrCy;
 }ubo_constant;
 
+layout(location = 
 #if defined(USE_UV)
-layout(location = 1) out vec3 outViewDir;
+	1
 #else
-layout(location = 0) out vec3 outViewDir;
+	0
 #endif
+) out vec3 outViewDir;
 #endif
 
 void main()

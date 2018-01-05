@@ -88,7 +88,7 @@ namespace tke
 	{
 		auto pr = _vulkan_errors.insert({objectType, object, location, messageCode});
 		if (pr.second)
-			printf("\n%s\n", pMessage);
+			printf("\n=====VK ERROR=====\nERROR NUM:%d\n%s\n==================\n", messageCode, pMessage);
 
 		if (messageCode == 8) return VK_FALSE; // Your fucking computer is not support anisotropy, never mind
 		if (messageCode == 10) return VK_FALSE; // Dest AccessMask 0 [None] must have required access bit 4096 [VK_ACCESS_TRANSFER_WRITE_BIT]  when layout is VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, unless the app has previously added a barrier for this transition.
