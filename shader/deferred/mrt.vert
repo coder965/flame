@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(binding = 1) uniform MATRIX
+layout(binding = 1) uniform ubo_matrix_
 {
 	mat4 proj;
 	mat4 projInv;
@@ -12,7 +12,7 @@ layout(binding = 1) uniform MATRIX
 	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
-}u_matrix;
+}ubo_matrix;
 
 layout(binding = 2) uniform ubo_object_
 {
@@ -53,8 +53,8 @@ void main()
 	skinMatrix += inBoneWeight[3] * ubo_bone[objID].matrix[int(inBoneID[3])];
 	modelMatrix = modelMatrix * skinMatrix;
 #endif
-	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view * modelMatrix)));
+	mat3 normalMatrix = transpose(inverse(mat3(ubo_matrix.view * modelMatrix)));
 	outNormal = normalize(normalMatrix * inNormal);
 	outTangent = normalize(normalMatrix * inTangent);
-	gl_Position = u_matrix.projView * modelMatrix * vec4(inVertex, 1);
+	gl_Position = ubo_matrix.projView * modelMatrix * vec4(inVertex, 1);
 }

@@ -479,6 +479,7 @@ namespace tke
 				defeRenderPass, 0);
 			terrainPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
+				.vertex_input(&terrianVertexInputState)
 				.patch_control_points(4)
 				.depth_test(true)
 				.depth_write(true)
@@ -520,10 +521,10 @@ namespace tke
 				.addLink("img_albedo_alpha", "AlbedoAlpha.Image", 0, plainUnnormalizedSampler)
 				.addLink("img_normal_height", "NormalHeight.Image", 0, plainUnnormalizedSampler)
 				.addLink("img_spec_roughness", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
-				.addLink("u_light_", "Light.UniformBuffer")
+				.addLink("ubo_light_", "Light.UniformBuffer")
 				.addLink("img_envr", "Envr.Image", 0, colorSampler)
-				.addLink("u_ambient_", "Ambient.UniformBuffer")
-				.addLink("u_shadow_", "Shadow.UniformBuffer"),
+				.addLink("ubo_ambient_", "Ambient.UniformBuffer")
+				.addLink("ubo_shadow_", "Shadow.UniformBuffer"),
 				defeRenderPass, 1);
 			composePipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -1145,7 +1146,11 @@ namespace tke
 		if (scene->terrains.size() > 0)
 		{
 			cb->bindPipeline(terrainPipeline);
-			cb->bindDescriptorSet(&ds_terrain->v);
+			VkDescriptorSet sets[] = {
+				ds_terrain->v,
+				ds_material->v
+			};
+			cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
 			int index = 0;
 			for (auto &t : scene->terrains)
 			{

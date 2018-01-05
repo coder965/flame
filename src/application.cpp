@@ -17,6 +17,7 @@
 #include "physics/physics.h"
 #include "sound/sound.h"
 #include "model/model.h"
+#include "entity/terrain.h"
 #include "pick_up/pick_up.h"
 
 namespace tke
@@ -242,6 +243,7 @@ namespace tke
 		if (!only_2d)
 		{
 			initModel();
+			init_terrain();
 			init_pick_up();
 
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);

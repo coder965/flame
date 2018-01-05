@@ -13,6 +13,8 @@ namespace tke
 		glm::vec3 tangent;
 	};
 
+	IMPL() VkPipelineVertexInputStateCreateInfo terrianVertexInputState;
+
 	struct Image;
 	struct Material;
 
@@ -44,4 +46,5 @@ namespace tke
 		void remove_material(int index);
 	};
 
+	void init_terrain();
 }

@@ -86,6 +86,7 @@ std::uint32_t window_style;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
+VkPipelineVertexInputStateCreateInfo terrianVertexInputState;
 tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
 tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
 tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
