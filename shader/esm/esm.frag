@@ -4,19 +4,6 @@
 
 #include "..\esm.h"
 
-layout(binding = 0) uniform CONSTANT
-{
-	float near;
-	float far;
-	float cx;
-	float cy;
-	float aspect;
-	float fovy;
-	float tanHfFovy;
-	float envrCx;
-	float envrCy;
-}u_constant;
-
 struct Material
 {
 	uint albedoAlphaCompress;
@@ -27,12 +14,12 @@ struct Material
 	uint dummy;
 };
 
-layout(set = 1, binding = 0) uniform MATERIAL
+layout(set = 1, binding = 0) uniform ubo_material_
 {
 	Material material[256];
-}u_material;
+}ubo_material;
 
-layout(set = 1, binding = 1) uniform sampler2D maps[256];
+layout(set = 1, binding = 1) uniform sampler2D imgs_material[256];
 
 layout(location = 0) in vec2 inTexcoord;
 layout(location = 1) in flat uint inMaterialID;
@@ -47,22 +34,13 @@ highp float map_01(float x, float v0, float v1)
 void main()
 {
 	/*
-	uint mapIndex;
-
-	float alpha;
-	mapIndex = u_material.material[inMaterialID].mapIndex & 0xff;
-	if (mapIndex == 0)
+	uint mapIndex = ubo_material.material[inMaterialID].mapIndex & 0xff;
+	if (mapIndex != 0)
 	{
-		uint v = u_material.material[inMaterialID].albedoAlphaCompress;
-		alpha = ((v >> 24) & 0xff) / 255.0;
+		vec4 v = texture(imgs_material[mapIndex - 1], inTexcoord);
+		if (v.a < 0.5)
+			discard;
 	}
-	else
-	{
-		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
-		alpha = v.a;
-	}
-	if (alpha < 0.5)
-		discard;
 	*/
 
 	// Exponential is a configurable constant for approximation.

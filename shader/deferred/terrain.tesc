@@ -2,6 +2,18 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+layout(binding = 1) uniform ubo_matrix_
+{
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
+	vec4 frustumPlanes[6];
+	vec2 viewportDim;
+}ubo_matrix;
+
 struct Terrain
 {
 	vec3 coord;
@@ -14,22 +26,10 @@ struct Terrain
 	uint material_index;
 };
 
-layout(binding = 4) uniform TERRAIN
+layout(binding = 3) uniform ubo_terrain_
 {
 	Terrain d[8];
-}u_terrain;
-
-layout(binding = 2) uniform MATRIX
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}u_matrix;
+}ubo_terrain;
 
 layout (vertices = 4) out;
  
@@ -52,16 +52,16 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 	vec4 midPoint = 0.5 * (p0 + p1);
 	float radius = distance(p0, p1) / 2.0;
 
-	vec4 v0 = u_matrix.view * midPoint;
+	vec4 v0 = ubo_matrix.view * midPoint;
 
-	vec4 clip0 = (u_matrix.proj * (v0 - vec4(radius, vec3(0.0))));
-	vec4 clip1 = (u_matrix.proj * (v0 + vec4(radius, vec3(0.0))));
+	vec4 clip0 = (ubo_matrix.proj * (v0 - vec4(radius, vec3(0.0))));
+	vec4 clip1 = (ubo_matrix.proj * (v0 + vec4(radius, vec3(0.0))));
 
 	clip0 /= clip0.w;
 	clip1 /= clip1.w;
 
-	clip0.xy *= u_matrix.viewportDim;
-	clip1.xy *= u_matrix.viewportDim;
+	clip0.xy *= ubo_matrix.viewportDim;
+	clip1.xy *= ubo_matrix.viewportDim;
 	
 	return clamp(distance(clip0, clip1) / terrain_block_size * tess_factor, 1.0, 64.0);
 }
@@ -72,12 +72,12 @@ bool frustumCheck()
 	
 	const float radius = max(terrain_block_size, terrain_block_height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
-	pos = u_matrix.projView * pos;
+	pos = ubo_matrix.projView * pos;
 	pos /= pos.w;
 
 	for (int i = 0; i < 6; i++) 
 	{
-		if (dot(pos, u_matrix.frustumPlanes[i]) + radius < 0.0)
+		if (dot(pos, ubo_matrix.frustumPlanes[i]) + radius < 0.0)
 			return false;
 	}
 	return true;
@@ -103,9 +103,9 @@ void main()
 		}
 		else
 		{
-			terrain_block_size = u_terrain.d[inTerrainId[0]].block_size;
-			terrain_block_height = u_terrain.d[inTerrainId[0]].terrain_height;
-			tess_factor = u_terrain.d[inTerrainId[0]].tessellation_factor;
+			terrain_block_size = ubo_terrain.d[inTerrainId[0]].block_size;
+			terrain_block_height = ubo_terrain.d[inTerrainId[0]].terrain_height;
+			tess_factor = ubo_terrain.d[inTerrainId[0]].tessellation_factor;
 
 			if (tess_factor > 0.0)
 			{

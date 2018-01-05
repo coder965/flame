@@ -70,12 +70,13 @@ namespace tke
 	static Pipeline *pipeline_plain;
 	static Pipeline *pipeline_plain_anim;
 	static Pipeline *pipeline_frontlight;
-	static Pipeline *pipeline_texture;
-	static Pipeline *pipeline_texture_anim;
+	static Pipeline *pipeline_material;
+	static Pipeline *pipeline_material_anim;
 	static Pipeline *pipeline_wireframe;
 	static Pipeline *pipeline_wireframe_anim;
 	bool PlainRenderer::first = true;
 	UniformBuffer *PlainRenderer::last_bone_buffer_mode0;
+	UniformBuffer *PlainRenderer::last_bone_buffer_mode2;
 	UniformBuffer *PlainRenderer::last_bone_buffer_mode3;
 	PlainRenderer::PlainRenderer()
 	{
@@ -105,21 +106,21 @@ namespace tke
 				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"USE_NORMAL"})
 				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"USE_NORMAL"}),
 				renderPass_depthC_image8, 0);
-			pipeline_texture = new Pipeline(PipelineCreateInfo()
+			pipeline_material = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexStatInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"USE_TEX"})
-				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"USE_TEX"}),
-				renderPass_depthC_image8, 0, true);
-			pipeline_texture_anim = new Pipeline(PipelineCreateInfo()
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"USE_MATERIAL"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"USE_MATERIAL"}),
+				renderPass_depthC_image8, 0);
+			pipeline_material_anim = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input(&vertexAnimInputState)
 				.depth_test(true)
 				.depth_write(true)
-				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"ANIM", "USE_TEX"})
-				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"ANIM", "USE_TEX"}),
+				.addShader(engine_path + "shader/plain3d/plain3d.vert", {"ANIM", "USE_MATERIAL"})
+				.addShader(engine_path + "shader/plain3d/plain3d.frag", {"ANIM", "USE_MATERIAL"}),
 				renderPass_depthC_image8, 0, true);
 			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -215,13 +216,25 @@ namespace tke
 					break;
 				case 2:
 				{
-					//cb->bindPipeline(!animated ? pipeline_texture : pipeline_texture_anim);
-					cb->bindPipeline(pipeline_texture);
-					VkDescriptorSet sets[] = {
-						pipeline_texture->descriptorSet->v,
-						ds_material->v
-					};
-					cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+					if (!d.bone_buffer)
+					{
+						cb->bindPipeline(pipeline_material);
+						cb->bindDescriptorSet(&ds_material->v, 1, 1);
+					}
+					else
+					{
+						cb->bindPipeline(pipeline_material_anim);
+						if (last_bone_buffer_mode2 != d.bone_buffer)
+						{
+							updateDescriptorSets(1, &pipeline_material_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+							last_bone_buffer_mode2 = d.bone_buffer;
+						}
+						VkDescriptorSet sets[] = {
+							pipeline_material->descriptorSet->v,
+							ds_material->v
+						};
+						cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+					}
 					break;
 				}
 				case 3:
@@ -349,8 +362,8 @@ namespace tke
 			};
 			unsigned int packed;
 		}material_index;
+		unsigned int material_count;
 		unsigned int dummy0;
-		unsigned int dummy1;
 	};
 
 	struct WaterShaderStruct
@@ -420,22 +433,22 @@ namespace tke
 			scatteringPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(512).cy(256)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/fullscreen.vert", {"USE_UV"})
 				.addShader(engine_path + "shader/sky/scattering.frag", {}),
 				renderPass_image16, 0);
 			downsamplePipeline = new Pipeline(PipelineCreateInfo()
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/fullscreen.vert", {"USE_UV"})
 				.addShader(engine_path + "shader/sky/downsample.frag", {})
 				, renderPass_image16, 0, true);
 			convolvePipeline = new Pipeline(PipelineCreateInfo()
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/fullscreen.vert", {"USE_UV"})
 				.addShader(engine_path + "shader/sky/convolve.frag", {}),
 				renderPass_image16, 0, true);
 			copyPipeline = new Pipeline(PipelineCreateInfo()
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(engine_path + "shader/fullscreenUv.vert", {})
+				.addShader(engine_path + "shader/fullscreen.vert", {"USE_UV"})
 				.addShader(engine_path + "shader/copy.frag", {}),
 				renderPass_image16, 0, true);
 			mrtPipeline = new Pipeline(PipelineCreateInfo()
@@ -448,8 +461,8 @@ namespace tke
 				.addBlendAttachmentState(false)
 				.addShader(engine_path + "shader/deferred/mrt.vert", {})
 				.addShader(engine_path + "shader/deferred/mrt.frag", {})
-				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("OBJECT", "ObjectMatrix.UniformBuffer"),
+				.addLink("ubo_matrix_", "Matrix.UniformBuffer")
+				.addLink("ubo_object_", "ObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -461,8 +474,8 @@ namespace tke
 				.addBlendAttachmentState(false)
 				.addShader(engine_path + "shader/deferred/mrt.vert", {"ANIM"})
 				.addShader(engine_path + "shader/deferred/mrt.frag", {"ANIM"})
-				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("OBJECT", "ObjectMatrix.UniformBuffer"),
+				.addLink("ubo_matrix_", "Matrix.UniformBuffer")
+				.addLink("ubo_object_", "ObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			terrainPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -477,8 +490,8 @@ namespace tke
 				.addShader(engine_path + "shader/deferred/terrain.tesc", {})
 				.addShader(engine_path + "shader/deferred/terrain.tese", {})
 				.addShader(engine_path + "shader/deferred/terrain.frag", {})
-				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("TERRAIN", "Terrain.UniformBuffer"),
+				.addLink("ubo_matrix_", "Matrix.UniformBuffer")
+				.addLink("ubo_terrain_", "Terrain.UniformBuffer"),
 				defeRenderPass, 0);
 			waterPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -493,24 +506,24 @@ namespace tke
 				.addShader(engine_path + "shader/deferred/water.tesc", {})
 				.addShader(engine_path + "shader/deferred/water.tese", {})
 				.addShader(engine_path + "shader/deferred/water.frag", {})
-				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("WATER", "Water.UniformBuffer"),
+				.addLink("ubo_matrix_", "Matrix.UniformBuffer")
+				.addLink("ubo_water_", "Water.UniformBuffer"),
 				defeRenderPass, 0);
 			deferredPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.cullMode(VK_CULL_MODE_NONE)
-				.addShader(engine_path + "shader/fullscreenView.vert", {})
+				.addShader(engine_path + "shader/fullscreen.vert", {"USE_VIEW"})
 				.addShader(engine_path + "shader/deferred/deferred.frag", {"USE_PBR", "USE_IBL"})
-				.addLink("CONSTANT", "Constant.UniformBuffer")
-				.addLink("MATRIX", "Matrix.UniformBuffer")
-				.addLink("AMBIENT", "Ambient.UniformBuffer")
-				.addLink("LIGHT", "Light.UniformBuffer")
-				.addLink("envrSampler", "Envr.Image", 0, colorSampler)
-				.addLink("depthSampler", "Depth.Image", 0, plainUnnormalizedSampler)
-				.addLink("albedoAlphaSampler", "AlbedoAlpha.Image", 0, plainUnnormalizedSampler)
-				.addLink("normalHeightSampler", "NormalHeight.Image", 0, plainUnnormalizedSampler)
-				.addLink("specRoughnessSampler", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
-				.addLink("SHADOW", "Shadow.UniformBuffer"),
+				.addLink("ubo_constant_", "Constant.UniformBuffer")
+				.addLink("ubo_matrix_", "Matrix.UniformBuffer")
+				.addLink("img_depth", "Depth.Image", 0, plainUnnormalizedSampler)
+				.addLink("img_albedo_alpha", "AlbedoAlpha.Image", 0, plainUnnormalizedSampler)
+				.addLink("img_normal_height", "NormalHeight.Image", 0, plainUnnormalizedSampler)
+				.addLink("img_spec_roughness", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
+				.addLink("u_light_", "Light.UniformBuffer")
+				.addLink("img_envr", "Envr.Image", 0, colorSampler)
+				.addLink("u_ambient_", "Ambient.UniformBuffer")
+				.addLink("u_shadow_", "Shadow.UniformBuffer"),
 				defeRenderPass, 1);
 			composePipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -585,9 +598,9 @@ namespace tke
 					.depth_write(true)
 					.addShader(engine_path + "shader/esm/esm.vert", {})
 					.addShader(engine_path + "shader/esm/esm.frag", {})
-					.addLink("CONSTANT", "Constant.UniformBuffer")
-					.addLink("OBJECT", "ObjectMatrix.UniformBuffer")
-					.addLink("SHADOW", "Shadow.UniformBuffer"),
+					.addLink("ubo_constant_", "Constant.UniformBuffer")
+					.addLink("ubo_object_", "ObjectMatrix.UniformBuffer")
+					.addLink("u_shadow_", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
 				esmAnimPipeline = new Pipeline(PipelineCreateInfo()
 					.cx(2048).cy(2048)
@@ -596,9 +609,9 @@ namespace tke
 					.depth_write(true)
 					.addShader(engine_path + "shader/esm/esm.vert", {"ANIM"})
 					.addShader(engine_path + "shader/esm/esm.frag", {"ANIM"})
-					.addLink("CONSTANT", "Constant.UniformBuffer")
-					.addLink("OBJECT", "ObjectMatrix.UniformBuffer")
-					.addLink("SHADOW", "Shadow.UniformBuffer"),
+					.addLink("ubo_constant_", "Constant.UniformBuffer")
+					.addLink("ubo_object_", "ObjectMatrix.UniformBuffer")
+					.addLink("u_shadow_", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
 
 				shad_inited = true;
@@ -811,6 +824,7 @@ namespace tke
 					stru.material_index.y = t->materials[1]->index;
 					stru.material_index.z = t->materials[2]->index;
 					stru.material_index.w = t->materials[3]->index;
+					stru.material_count = t->material_count;
 					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;

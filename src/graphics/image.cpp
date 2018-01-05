@@ -340,13 +340,13 @@ namespace tke
 
 	void init_image()
 	{
-		default_color_image = std::make_shared<Image>(1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_color_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		default_color_image->filename = "[default_color_image]";
 		default_color_image->clear(glm::vec4(0.f));
-		default_normal_image = std::make_shared<Image>(1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_normal_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		default_normal_image->filename = "[default_normal_image]";
 		default_normal_image->clear(glm::vec4(0.f, 0.f, 1.f, 0.f));
-		default_blend_image = std::make_shared<Image>(1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_blend_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		default_blend_image->filename = "[default_blend_image]";
 		default_blend_image->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
 	}

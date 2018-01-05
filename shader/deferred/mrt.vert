@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(binding = 2) uniform MATRIX
+layout(binding = 1) uniform MATRIX
 {
 	mat4 proj;
 	mat4 projInv;
@@ -14,16 +14,16 @@ layout(binding = 2) uniform MATRIX
 	vec2 viewportDim;
 }u_matrix;
 
-layout(binding = 3) uniform OBJECT
+layout(binding = 2) uniform ubo_object_
 {
-	mat4 matrix[8];
-}u_object;
+	mat4 matrix[1024];
+}ubo_object;
 
 #if defined(ANIM)
-layout(set = 2, binding = 0) uniform BONE
+layout(set = 2, binding = 0) uniform ubo_bone_
 {
 	mat4 matrix[256];
-}u_bone[8];
+}ubo_bone[8];
 #endif
 
 layout(location = 0) in vec3 inVertex;
@@ -45,12 +45,12 @@ void main()
 	uint objID = gl_InstanceIndex >> 8;
 	outMaterialID = gl_InstanceIndex & 0xff;
 	outTexcoord = inTexcoord;
-	mat4 modelMatrix = u_object.matrix[objID];
+	mat4 modelMatrix = ubo_object.matrix[objID];
 #if defined(ANIM)
-	mat4 skinMatrix = inBoneWeight[0] * u_bone[objID].matrix[int(inBoneID[0])];
-	skinMatrix += inBoneWeight[1] * u_bone[objID].matrix[int(inBoneID[1])];
-	skinMatrix += inBoneWeight[2] * u_bone[objID].matrix[int(inBoneID[2])];
-	skinMatrix += inBoneWeight[3] * u_bone[objID].matrix[int(inBoneID[3])];
+	mat4 skinMatrix = inBoneWeight[0] * ubo_bone[objID].matrix[int(inBoneID[0])];
+	skinMatrix += inBoneWeight[1] * ubo_bone[objID].matrix[int(inBoneID[1])];
+	skinMatrix += inBoneWeight[2] * ubo_bone[objID].matrix[int(inBoneID[2])];
+	skinMatrix += inBoneWeight[3] * ubo_bone[objID].matrix[int(inBoneID[3])];
 	modelMatrix = modelMatrix * skinMatrix;
 #endif
 	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view * modelMatrix)));

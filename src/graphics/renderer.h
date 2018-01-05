@@ -36,6 +36,7 @@ namespace tke
 		static bool first;
 
 		static UniformBuffer *last_bone_buffer_mode0;
+		static UniformBuffer *last_bone_buffer_mode2;
 		static UniformBuffer *last_bone_buffer_mode3;
 
 		enum Mode

@@ -2,6 +2,18 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+layout(binding = 1) uniform ubo_matrix_
+{
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
+	vec4 frustumPlanes[6];
+	vec2 viewportDim;
+}ubo_matrix;
+
 struct Water
 {
 	vec3 coord;
@@ -13,22 +25,10 @@ struct Water
 	float mapDimension;
 };
 
-layout(binding = 5) uniform WATER
+layout(binding = 5) uniform ubo_water_
 {
 	Water d[8];
-}u_water;
-
-layout(binding = 2) uniform MATRIX
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}u_matrix;
+}ubo_water;
 
 layout(quads, equal_spacing, ccw) in;
 
@@ -48,7 +48,7 @@ void main()
 	vec4 pos0 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
 	vec4 pos1 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 pos = mix(pos0, pos1, gl_TessCoord.y);
-	//pos.y += texture(heightMap, outUV).r * u_water.d[outWaterId].height;
-	pos.xyz += u_water.d[outWaterId].coord;
-	gl_Position = u_matrix.projView * pos;
+	//pos.y += texture(heightMap, outUV).r * ubo_water.d[outWaterId].height;
+	pos.xyz += ubo_water.d[outWaterId].coord;
+	gl_Position = ubo_matrix.projView * pos;
 }

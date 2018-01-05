@@ -12,7 +12,7 @@
 #define USE_PHONG
 #endif
 
-layout(binding = 0) uniform CONSTANT
+layout(binding = 0) uniform ubo_constant_
 {
 	float near;
 	float far;
@@ -23,9 +23,9 @@ layout(binding = 0) uniform CONSTANT
 	float tanHfFovy;
 	float envrCx;
 	float envrCy;
-}u_constant;
+}ubo_constant;
 
-layout(binding = 2) uniform MATRIX
+layout(binding = 1) uniform ubo_matrix_
 {
 	mat4 proj;
 	mat4 projInv;
@@ -35,7 +35,12 @@ layout(binding = 2) uniform MATRIX
 	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
-}u_matrix;
+}ubo_matrix;
+
+layout(binding = 6) uniform sampler2D img_depth;
+layout(binding = 7) uniform sampler2D img_albedo_alpha;
+layout(binding = 8) uniform sampler2D img_normal_height;
+layout(binding = 9) uniform sampler2D img_spec_roughness;
 
 struct Light
 {
@@ -44,31 +49,29 @@ struct Light
 	vec4 spotData;
 };
 
-layout(binding = 6) uniform LIGHT
+layout(binding = 10) uniform ubo_light_
 {
 	uint count;
 	Light lights[256];
-}u_light;
+}ubo_light;
 
-layout(binding = 7) uniform AMBIENT
+layout(binding = 11) uniform sampler2D img_envr;
+
+layout(binding = 12) uniform ubo_ambient_
 {
 	vec3 color;
 	uint envr_max_mipmap;
 	vec4 fogColor;
-}u_ambient;
+}ubo_ambient;
 
-layout(binding = 8) uniform SHADOW
+layout(binding = 13) uniform sampler2D img_ao;
+
+layout(binding = 14) uniform ubo_shadow_
 {
 	mat4 matrix[8];
-}u_shadow;
+}ubo_shadow;
 
-layout(binding = 9) uniform sampler2D envrSampler;
-layout(binding = 11) uniform sampler2D depthSampler;
-layout(binding = 12) uniform sampler2D albedoAlphaSampler;
-layout(binding = 13) uniform sampler2D normalHeightSampler;
-layout(binding = 14) uniform sampler2D specRoughnessSampler;
-layout(binding = 15) uniform sampler2D shadowSampler[48];
-layout(binding = 16) uniform sampler2D aoSampler;
+layout(binding = 15) uniform sampler2D imgs_shadow[48];
 
 layout(location = 0) in vec3 inViewDir;
 
@@ -120,25 +123,25 @@ void main()
 {
 	vec3 viewDir = normalize(inViewDir);
 
-	float inDepth = texture(depthSampler, gl_FragCoord.xy).r;
+	float inDepth = texture(img_depth, gl_FragCoord.xy).r;
 	if (inDepth == 1.0)
 	{
-		outColor = vec4(textureLod(envrSampler, panorama(mat3(u_matrix.viewInv) * viewDir), 0).rgb, 1.0);
+		outColor = vec4(textureLod(img_envr, panorama(mat3(ubo_matrix.viewInv) * viewDir), 0).rgb, 1.0);
 		return;
 	}
 		
-	float linerDepth = LinearDepthPerspective(inDepth, u_constant.near, u_constant.far);
+	float linerDepth = LinearDepthPerspective(inDepth, ubo_constant.near, ubo_constant.far);
 		
 	vec3 coordView = inViewDir * (-linerDepth / inViewDir.z);
-	vec4 coordWorld = u_matrix.viewInv * vec4(coordView, 1.0);
+	vec4 coordWorld = ubo_matrix.viewInv * vec4(coordView, 1.0);
 #if defined(DEBUG_WORLD_COORD)
 	outColor = vec4(coordWorld.xyz, 1.0);
 	return;
 #endif
 	
-	vec4 inAlbedoAlpha = texture(albedoAlphaSampler, gl_FragCoord.xy);
-	vec4 inNormalHeight = texture(normalHeightSampler, gl_FragCoord.xy);
-	vec4 inSpecRoughness = texture(specRoughnessSampler, gl_FragCoord.xy);
+	vec4 inAlbedoAlpha = texture(img_albedo_alpha, gl_FragCoord.xy);
+	vec4 inNormalHeight = texture(img_normal_height, gl_FragCoord.xy);
+	vec4 inSpecRoughness = texture(img_spec_roughness, gl_FragCoord.xy);
 	
 	vec3 albedo = inAlbedoAlpha.rgb;
 	float spec = inSpecRoughness.r;
@@ -153,20 +156,20 @@ void main()
 #endif
 	
 	vec3 lightSumColor = vec3(0.0);
-	for (int i = 0; i < u_light.count; i++)
+	for (int i = 0; i < ubo_light.count; i++)
 	{
-		Light light = u_light.lights[i];
+		Light light = ubo_light.lights[i];
 
 		float visibility = 1.0;
 		{
 			int shadowId = int(light.color.a);
 			if (shadowId != -1)
 			{
-				vec4 shadowCoord = u_shadow.matrix[shadowId] * coordWorld; 
+				vec4 shadowCoord = ubo_shadow.matrix[shadowId] * coordWorld; 
 				shadowCoord /= shadowCoord.w;
 				if (shadowCoord.z >= 0.0 && shadowCoord.z <= 1.0)
 				{
-					float occluder = texture(shadowSampler[shadowId * 6], (shadowCoord.xy * 0.5 + 0.5)).r;
+					float occluder = texture(imgs_shadow[shadowId * 6], (shadowCoord.xy * 0.5 + 0.5)).r;
 					float reciever = shadowCoord.z;
 					//visibility = clamp(occluder * exp(-esm_factor * reciever), 0.0, 1.0);
 					visibility = occluder < exp(esm_factor * reciever) ? 0.0 : 1.0;
@@ -184,11 +187,11 @@ void main()
 		vec3 lightDir = light.coord.xyz;
 		if (light.coord.w == 0.0)
 		{
-			lightDir = (u_matrix.view * vec4(lightDir, 0.0)).xyz;
+			lightDir = (ubo_matrix.view * vec4(lightDir, 0.0)).xyz;
 		}
 		else
 		{
-			lightDir = (u_matrix.view * vec4(lightDir, 1.0)).xyz - coordView;
+			lightDir = (ubo_matrix.view * vec4(lightDir, 1.0)).xyz - coordView;
 			lightColor /= lightDir.x * lightDir.x + lightDir.y * lightDir.y + lightDir.z * lightDir.z;
 		}
 		lightDir = normalize(lightDir);
@@ -197,7 +200,7 @@ void main()
 
 		if (light.coord.w == 2.0)
 		{
-			float spotVal = dot(-lightDir, vec3(u_matrix.view * vec4(light.spotData.xyz, 0.0)));
+			float spotVal = dot(-lightDir, vec3(ubo_matrix.view * vec4(light.spotData.xyz, 0.0)));
 			spotVal -= light.spotData.w;
 			if (spotVal < 0.0) continue;
 			float k = spotVal / (1.0 - light.spotData.w);
@@ -216,15 +219,14 @@ void main()
 	
 	vec3 color = lightSumColor;
 #if defined(USE_IBL)
-	mat3 matrixViewInv3 = mat3(u_matrix.viewInv);
-	vec3 irradiance = albedo * textureLod(envrSampler, panorama(matrixViewInv3 * normal), u_ambient.envr_max_mipmap).rgb;
-	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * textureLod(envrSampler, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * u_ambient.envr_max_mipmap).rgb;
-	color += u_ambient.color * (irradiance + radiance);
+	mat3 matrixViewInv3 = mat3(ubo_matrix.viewInv);
+	vec3 irradiance = albedo * textureLod(img_envr, panorama(matrixViewInv3 * normal), ubo_ambient.envr_max_mipmap).rgb;
+	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * textureLod(img_envr, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * ubo_ambient.envr_max_mipmap).rgb;
+	color += ubo_ambient.color * (irradiance + radiance);
 #else
-	color += u_ambient.color * albedo;
+	color += ubo_ambient.color * albedo;
 #endif
 	
 	float fog = clamp(exp2(-0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
-	//outColor = vec4(mix(u_ambient.fogColor.rgb, color, fog), 1.0);
-	outColor = vec4(mix(u_ambient.fogColor.rgb, color, 1), 1.0);
+	outColor = vec4(mix(ubo_ambient.fogColor.rgb, color, fog), 1.0);
 }

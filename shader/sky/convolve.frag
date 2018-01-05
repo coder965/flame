@@ -10,7 +10,7 @@ layout(push_constant) uniform PushConstant
 	float spec;
 }pc;
 
-layout(binding = 0) uniform sampler2D source;
+layout(binding = 0) uniform sampler2D img_source;
 
 layout(location = 0) in vec2 inTexcoord;
 
@@ -27,7 +27,7 @@ void main()
 		{
 			vec3 l = vec3(cos(x) * cos(y), sin(y), sin(x) * cos(y));
 			float term = pow(max(0.0, dot(n, l)), pc.spec) * cos(y);
-			result += vec4(texture(source, panorama(l)).rgb * term, term);
+			result += vec4(texture(img_source, panorama(l)).rgb * term, term);
 		}
 		
     outColor = vec4(result.rgb / result.w, 1.0);

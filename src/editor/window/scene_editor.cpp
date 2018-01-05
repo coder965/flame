@@ -20,12 +20,11 @@ std::unique_ptr<SceneEditor> scene_editor = nullptr;
 SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	:scene(_scene)
 {
+	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
 
 	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
-
-	plain_renderer = std::make_unique<tke::PlainRenderer>();
 
 	transformerTool = std::make_unique<TransformerTool>(layer.image.get());
 }

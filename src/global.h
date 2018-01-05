@@ -34,26 +34,22 @@ namespace tke
 
 	enum MainDescriptorSetBindings
 	{
-		// buffer
 		ConstantBufferDescriptorBinding,
 		MatrixBufferDescriptorBinding,
 		ObjectMatrixBufferDescriptorBinding,
 		TerrainBufferDescriptorBinding,
+		TerrainBlendImageDescriptorBinding,
 		WaterBufferDescriptorBinding,
-		LightBufferDescriptorBinding,
-		AmbientBufferDescriptorBinding,
-		ShadowBufferDescriptorBinding,
-		// image
-		EnvrImageDescriptorBinding,
-		MainImageDescriptorBinding,
 		DepthImageDescriptorBinding,
 		AlbedoAlphaImageDescriptorBinding,
 		NormalHeightImageDescriptorBinding,
 		SpecRoughnessDescriptorImageBinding,
-		ShadowImageDescriptorBinding,
+		LightBufferDescriptorBinding,
+		EnvrImageDescriptorBinding,
+		AmbientBufferDescriptorBinding,
 		AoImageDescriptorBinding,
-		// terrain special
-		TerrainBlendImageDescriptorBinding
+		ShadowBufferDescriptorBinding,
+		ShadowImageDescriptorBinding
 	};
 
 	enum MaterialDescriptorSetBindings

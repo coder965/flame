@@ -2,6 +2,18 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+layout(binding = 1) uniform ubo_matrix_
+{
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
+	vec4 frustumPlanes[6];
+	vec2 viewportDim;
+}ubo_matrix;
+
 struct Water
 {
 	vec3 coord;
@@ -13,22 +25,10 @@ struct Water
 	float mapDimension;
 };
 
-layout(binding = 5) uniform WATER
+layout(binding = 5) uniform ubo_water_
 {
 	Water d[8];
-}u_water;
-
-layout(binding = 2) uniform MATRIX
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}u_matrix;
+}ubo_water;
 
 layout (location = 0) in flat uint inWaterId;
 layout (location = 1) in vec2 inUV;
@@ -39,7 +39,7 @@ layout(location = 2) out vec4 outSpecRoughness;
 
 void main()
 {
-	mat3 normalMatrix = mat3(u_matrix.view);
+	mat3 normalMatrix = transpose(inverse(mat3(ubo_matrix.view)));
 	
 	//vec3 normal = normalMatrix * normalize(vec3(L - R, 2.0 * eps, T - B));
 	vec3 normal = normalMatrix * vec3(0, 1, 0);

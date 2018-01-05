@@ -4,12 +4,6 @@
 
 namespace tke
 {
-	VkSampler plainSampler;
-	VkSampler plainUnnormalizedSampler;
-	VkSampler colorSampler;
-	VkSampler colorBorderSampler;
-	VkSampler colorWrapSampler;
-
 	void initSampler()
 	{
 		// sampler must be created correctly

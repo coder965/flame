@@ -12,12 +12,12 @@ struct Material
 	uint dummy;
 };
 
-layout(set = 1, binding = 0) uniform MATERIAL
+layout(set = 1, binding = 0) uniform ubo_material_
 {
 	Material material[256];
-}u_material;
+}ubo_material;
 
-layout(set = 1, binding = 1) uniform sampler2D maps[256];
+layout(set = 1, binding = 1) uniform sampler2D imgs_material[256];
 
 layout(location = 0) in flat uint inMaterialID;
 layout(location = 1) in vec2 inTexcoord;
@@ -34,40 +34,40 @@ void main()
 
 	vec3 albedo;
 	float alpha;
-	mapIndex = u_material.material[inMaterialID].mapIndex & 0xff;
+	mapIndex = ubo_material.material[inMaterialID].mapIndex & 0xff;
 	if (mapIndex == 0)
 	{
-		uint v = u_material.material[inMaterialID].albedoAlphaCompress;
+		uint v = ubo_material.material[inMaterialID].albedoAlphaCompress;
 		albedo = vec3((v & 0xff) / 255.0, ((v >> 8) & 0xff) / 255.0, ((v >> 16) & 0xff) / 255.0);
 		alpha = ((v >> 24) & 0xff) / 255.0;
 	}
 	else
 	{
-		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
+		vec4 v = texture(imgs_material[mapIndex - 1], inTexcoord);
 		albedo = v.rgb;
 		alpha = v.a;
 	}
 	
 	vec3 normal = inNormal;
-	mapIndex = (u_material.material[inMaterialID].mapIndex >> 8) & 0xff;
+	mapIndex = (ubo_material.material[inMaterialID].mapIndex >> 8) & 0xff;
 	if (mapIndex > 0)
 	{
-		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
+		vec4 v = texture(imgs_material[mapIndex - 1], inTexcoord);
 		vec3 tn = normalize(v.xyz * 2.0 - 1.0);
 		normal = normalize(mat3(-inTangent, cross(normal, -inTangent), normal) * tn);
 	}
 
 	float spec, roughness;
-	mapIndex = (u_material.material[inMaterialID].mapIndex >> 16) & 0xff;
+	mapIndex = (ubo_material.material[inMaterialID].mapIndex >> 16) & 0xff;
 	if (mapIndex == 0)
 	{
-		uint v = u_material.material[inMaterialID].specRoughnessCompress;
+		uint v = ubo_material.material[inMaterialID].specRoughnessCompress;
 		spec = (v & 0xff) / 255.0;
 		roughness = ((v >> 8) & 0xff) / 255.0;
 	}
 	else
 	{
-		vec4 v = texture(maps[mapIndex - 1], inTexcoord);
+		vec4 v = texture(imgs_material[mapIndex - 1], inTexcoord);
 		spec = v.r;
 		roughness = v.g;
 	}

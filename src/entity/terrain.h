@@ -32,6 +32,7 @@ namespace tke
 		std::unique_ptr<TerrainVertex[]> vertex;
 
 		std::shared_ptr<Image> blendMap;
+		int material_count = 0;
 		std::shared_ptr<Material> materials[4];
 
 		physx::PxRigidActor *actor = nullptr;
@@ -39,6 +40,8 @@ namespace tke
 		int sceneIndex = -1;
 
 		Terrain(bool _use_physx = false, std::shared_ptr<Image> _blendMap = nullptr);
+		void add_material(std::shared_ptr<Material> m);
+		void remove_material(int index);
 	};
 
 }

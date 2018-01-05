@@ -15,11 +15,11 @@ namespace tke
 		REFLe color_border = 1 << 4
 	};
 
-	extern VkSampler plainSampler;
-	extern VkSampler plainUnnormalizedSampler;
-	extern VkSampler colorSampler;
-	extern VkSampler colorBorderSampler;
-	extern VkSampler colorWrapSampler;
+	IMPL() VkSampler plainSampler;
+	IMPL() VkSampler plainUnnormalizedSampler;
+	IMPL() VkSampler colorSampler;
+	IMPL() VkSampler colorBorderSampler;
+	IMPL() VkSampler colorWrapSampler;
 
 	void initSampler();
 }

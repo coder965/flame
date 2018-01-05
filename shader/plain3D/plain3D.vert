@@ -10,17 +10,17 @@ layout(push_constant) uniform PushConstant
 }pc;
 
 #if defined(ANIM)
-layout(binding = 0) uniform BONE
+layout(binding = 0) uniform ubo_bone_
 {
 	mat4 matrix[256];
-}u_bone;
+}ubo_bone;
 #endif
 
 layout(location = 0) in vec3 inVertex;
-#if defined(USE_TEX)
+#if defined(USE_MATERIAL)
 layout(location = 1) in vec2 inTexcoord;
 layout(location = 0) out vec2 outTexcoord;
-layout(location = 3) out flat uint outTexId;
+layout(location = 3) out flat uint outMaterialID;
 #endif
 #if defined(USE_NORMAL)
 layout(location = 2) in vec3 inNormal;
@@ -35,15 +35,15 @@ void main()
 {
 	mat4 modelview = pc.modelview;
 #if defined(ANIM)
-	mat4 skinMatrix = inBoneWeight[0] * u_bone.matrix[int(inBoneID[0])];
-	skinMatrix += inBoneWeight[1] * u_bone.matrix[int(inBoneID[1])];
-	skinMatrix += inBoneWeight[2] * u_bone.matrix[int(inBoneID[2])];
-	skinMatrix += inBoneWeight[3] * u_bone.matrix[int(inBoneID[3])];
+	mat4 skinMatrix = inBoneWeight[0] * ubo_bone.matrix[int(inBoneID[0])];
+	skinMatrix += inBoneWeight[1] * ubo_bone.matrix[int(inBoneID[1])];
+	skinMatrix += inBoneWeight[2] * ubo_bone.matrix[int(inBoneID[2])];
+	skinMatrix += inBoneWeight[3] * ubo_bone.matrix[int(inBoneID[3])];
 	modelview = modelview * skinMatrix;
 #endif
-#if defined(USE_TEX)
+#if defined(USE_MATERIAL)
 	outTexcoord = inTexcoord;
-	outTexId = gl_InstanceIndex;
+	outMaterialID = gl_InstanceIndex;
 #endif
 #if defined(USE_NORMAL)
 	mat3 normalMatrix = transpose(inverse(mat3(modelview)));

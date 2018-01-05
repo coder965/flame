@@ -2,6 +2,18 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+layout(binding = 1) uniform ubo_matrix_
+{
+	mat4 proj;
+	mat4 projInv;
+	mat4 view;
+	mat4 viewInv;
+	mat4 projView;
+	mat4 projViewRotate;
+	vec4 frustumPlanes[6];
+	vec2 viewportDim;
+}ubo_matrix;
+
 struct Terrain
 {
 	vec3 coord;
@@ -14,22 +26,10 @@ struct Terrain
 	uint material_index;
 };
 
-layout(binding = 4) uniform TERRAIN
+layout(binding = 3) uniform ubo_terrain_
 {
 	Terrain d[8];
-}u_terrain;
-
-layout(binding = 2) uniform MATRIX
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}u_matrix;
+}ubo_terrain;
 
 layout (location = 0) in vec4 inNormalHeight;
 layout (location = 1) in vec3 inTangent;
@@ -43,14 +43,14 @@ void main(void)
 {
 	outTerrainId = gl_InstanceIndex >> 16;
 	uint tileIndex = gl_InstanceIndex & 0xffff;
-	uint block_count = u_terrain.d[outTerrainId].block_count;
-	float block_size = u_terrain.d[outTerrainId].block_size;
-	float height = u_terrain.d[outTerrainId].terrain_height * inNormalHeight.a;
-	vec3 coord = u_terrain.d[outTerrainId].coord;
+	uint block_count = ubo_terrain.d[outTerrainId].block_count;
+	float block_size = ubo_terrain.d[outTerrainId].block_size;
+	float height = ubo_terrain.d[outTerrainId].terrain_height * inNormalHeight.a;
+	vec3 coord = ubo_terrain.d[outTerrainId].coord;
 	outUV = vec2((tileIndex % block_count) + (gl_VertexIndex & 2), (tileIndex / block_count) + ((gl_VertexIndex + 3) & 2));
 	gl_Position = vec4(vec3((outUV.x - 0.5) * block_size, height, (outUV.y - 0.5) * block_size) + coord, 1.0);
 	outUV /= block_count;
-	mat3 normalMatrix = transpose(inverse(mat3(u_matrix.view)));
+	mat3 normalMatrix = transpose(inverse(mat3(ubo_matrix.view)));
 	outNormal = normalMatrix * inNormalHeight.rgb;
 	outTangent = normalMatrix * inTangent;
 }

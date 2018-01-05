@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(binding = 2) uniform MATRIX
+layout(binding = 1) uniform ubo_matrix_
 {
 	mat4 proj;
 	mat4 projInv;
@@ -12,7 +12,7 @@ layout(binding = 2) uniform MATRIX
 	mat4 projViewRotate;
 	vec4 frustumPlanes[6];
 	vec2 viewportDim;
-}u_matrix;
+}ubo_matrix;
 
 layout(quads, equal_spacing, ccw) in;
 
@@ -57,5 +57,5 @@ void main()
 			mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x), 
 			gl_TessCoord.y
 		);
-	gl_Position = u_matrix.projView * pos;
+	gl_Position = ubo_matrix.projView * pos;
 }
