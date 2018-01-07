@@ -162,6 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\editor\editor.cpp" />
+    <ClCompile Include="..\src\editor\select.cpp" />
     <ClCompile Include="..\src\editor\tool\tool.cpp" />
     <ClCompile Include="..\src\editor\tool\transformer_tool.cpp" />
     <ClCompile Include="..\src\editor\window\hierarchy.cpp" />

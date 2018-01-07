@@ -9,7 +9,6 @@
 struct SceneEditor
 {
 	std::shared_ptr<tke::Scene> scene;
-	std::weak_ptr<tke::Node> selected;
 
 	tke::DisplayLayer layer;
 

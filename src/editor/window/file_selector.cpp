@@ -139,7 +139,7 @@ void FileSelector::do_show()
 				left_region_width -
 				splitter_width;
 			ImGui::Splitter(true, splitter_width, &left_region_width, &right_region_width, 50.f, 50.f);
-			ImGui::BeginChild("left", ImVec2(left_region_width, 0));
+			ImGui::BeginChild("left", ImVec2(left_region_width, 0), true);
 		}
 
 		on_top_area_show();
@@ -235,7 +235,7 @@ void FileSelector::do_show()
 		{
 			ImGui::EndChild();
 			ImGui::SameLine();
-			ImGui::BeginChild("right", ImVec2(right_region_width, 0));
+			ImGui::BeginChild("right", ImVec2(right_region_width, 0), true);
 			on_right_area_show();
 			ImGui::EndChild();
 		}

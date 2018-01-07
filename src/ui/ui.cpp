@@ -78,60 +78,67 @@ namespace tke
 				renderPass_window, 0, true);
 		}
 
-		ImGuiIO& io = ImGui::GetIO();
 		{
-			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
-			io.Fonts->AddFontDefault();
-			static const ImWchar icons_ranges[] = { 
-				ICON_MIN_FA, 
-				ICON_MAX_FA, 
-				0 
+			ImGuiIO& io = ImGui::GetIO();
+			{
+				//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
+				io.Fonts->AddFontDefault();
+				static const ImWchar icons_ranges[] = {
+					ICON_MIN_FA,
+					ICON_MAX_FA,
+					0
+				};
+				ImFontConfig icons_config;
+				icons_config.MergeMode = true;
+				icons_config.PixelSnapH = true;
+				io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
+				unsigned char* pixels; int width, height;
+				io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+				auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+					VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
+				fontImage->fillData(0, pixels, width * height * 4);
+				io.Fonts->TexID = (void*)0; // image index
+
+				updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, 0, fontImage, colorSampler));
+			}
+
+			cb_ui = new CommandBuffer;
+			cb_ui->begin();
+			cb_ui->end();
+
+			io.KeyMap[ImGuiKey_Tab] = VK_TAB;
+			io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
+			io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
+			io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
+			io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
+			io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
+			io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
+			io.KeyMap[ImGuiKey_Home] = VK_HOME;
+			io.KeyMap[ImGuiKey_End] = VK_END;
+			io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
+			io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
+			io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
+			io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
+			io.KeyMap[ImGuiKey_A] = 'A';
+			io.KeyMap[ImGuiKey_C] = 'C';
+			io.KeyMap[ImGuiKey_V] = 'V';
+			io.KeyMap[ImGuiKey_X] = 'X';
+			io.KeyMap[ImGuiKey_Y] = 'Y';
+			io.KeyMap[ImGuiKey_Z] = 'Z';
+			io.SetClipboardTextFn = [](void *user_data, const char *s) {
+				set_clipBoard(s);
 			};
-			ImFontConfig icons_config; 
-			icons_config.MergeMode = true; 
-			icons_config.PixelSnapH = true;
-			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
-			unsigned char* pixels; int width, height;
-			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM, 
-				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			fontImage->fillData(0, pixels, width * height * 4);
-			io.Fonts->TexID = (void*)0; // image index
+			io.GetClipboardTextFn = [](void *user_data) {
+				static std::string s;
+				s = get_clipBoard();
+				return s.c_str();
+			};
 
-			updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, 0, fontImage, colorSampler));
+			ImGuiStyle& style = ImGui::GetStyle();
+			style.Colors[ImGuiCol_Separator] = ImVec4(0.50f, 0.50f, 0.50f, 0.00f);
+			style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.60f, 0.60f, 0.70f, 0.50f);
+			style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.70f, 0.70f, 0.90f, 0.50f);
 		}
-
-		cb_ui = new CommandBuffer;
-		cb_ui->begin();
-		cb_ui->end();
-		
-		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-		io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-		io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-		io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-		io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-		io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-		io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-		io.KeyMap[ImGuiKey_Home] = VK_HOME;
-		io.KeyMap[ImGuiKey_End] = VK_END;
-		io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-		io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-		io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-		io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-		io.KeyMap[ImGuiKey_A] = 'A';
-		io.KeyMap[ImGuiKey_C] = 'C';
-		io.KeyMap[ImGuiKey_V] = 'V';
-		io.KeyMap[ImGuiKey_X] = 'X';
-		io.KeyMap[ImGuiKey_Y] = 'Y';
-		io.KeyMap[ImGuiKey_Z] = 'Z';
-		io.SetClipboardTextFn = [](void *user_data, const char *s) {
-			set_clipBoard(s);
-		};
-		io.GetClipboardTextFn = [](void *user_data) {
-			static std::string s;
-			s = get_clipBoard();
-			return s.c_str();
-		};
 	}
 
 	void ui_onKeyDown(int k)

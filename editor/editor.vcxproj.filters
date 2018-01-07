@@ -51,6 +51,9 @@
     <ClCompile Include="..\src\editor\window\inspector.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\editor\select.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\editor\tool\tool.h">

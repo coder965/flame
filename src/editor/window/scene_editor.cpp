@@ -12,6 +12,7 @@
 #include "../../input.h"
 #include "../../global.h"
 #include "../../application.h"
+#include "../select.h"
 #include "resource_explorer.h"
 #include "scene_editor.h"
 
@@ -147,9 +148,9 @@ void SceneEditor::on_menu_bar()
 	}
 	if (target || follow)
 	{
-		auto s = selected.lock();
-		if (s && s->type == tke::NodeTypeObject)
-			scene->camera.object = (tke::Object*)s.get();
+		auto n = selected.get_node();
+		if (n && n->type == tke::NodeTypeObject)
+			scene->camera.object = (tke::Object*)n;
 		else
 			scene->camera.object = nullptr;
 	}
@@ -335,10 +336,10 @@ void SceneEditor::do_show()
 	}
 
 	{
-		auto sel = selected.lock();
-		if (sel && sel->type == tke::NodeTypeObject)
+		auto n = selected.get_node();
+		if (n && n->type == tke::NodeTypeObject)
 		{
-			auto obj = (tke::Object*)sel.get();
+			auto obj = (tke::Object*)n;
 			obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
 			obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
 			obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
@@ -426,10 +427,10 @@ void SceneEditor::do_show()
 
 	if (showSelectedWireframe)
 	{
-		auto s = selected.lock();
-		if (s && s->type == tke::NodeTypeObject)
+		auto n = selected.get_node();
+		if (n && n->type == tke::NodeTypeObject)
 		{
-			auto obj = (tke::Object*)s.get();
+			auto obj = (tke::Object*)n;
 			tke::PlainRenderer::DrawData data;
 			data.mode = tke::PlainRenderer::mode_wireframe;
 			tke::PlainRenderer::DrawData::ObjData obj_data;
@@ -444,16 +445,16 @@ void SceneEditor::do_show()
 	}
 
 	{
-		auto s = selected.lock();
-		if (s)
+		auto n = selected.get_node();
+		if (n)
 		{
-			switch (s->type)
+			switch (n->type)
 			{
 			case tke::NodeTypeLight:
-				transformerTool->transformer = (tke::Light*)s.get();
+				transformerTool->transformer = (tke::Light*)n;
 				break;
 			case tke::NodeTypeObject:
-				transformerTool->transformer = (tke::Object*)s.get();
+				transformerTool->transformer = (tke::Object*)n;
 				break;
 			default:
 				transformerTool->transformer = nullptr;
