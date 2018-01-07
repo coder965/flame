@@ -22,6 +22,7 @@ namespace tke
 	static const float gravity = 9.81f;
 
 	Scene::Scene()
+		:Node(NodeTypeScene)
 	{
 		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
 		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);

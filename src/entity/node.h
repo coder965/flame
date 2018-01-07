@@ -7,12 +7,11 @@ namespace tke
 {
 	enum NodeType
 	{
-		NodeTypeSky,
+		NodeTypeScene,
 		NodeTypeLight,
 		NodeTypeObject,
 		NodeTypeTerrain,
-		NodeTypeWater,
-		NodeTypeScene
+		NodeTypeWater
 	};
 
 	struct Node

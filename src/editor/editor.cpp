@@ -84,8 +84,6 @@ int main(int argc, char** argv)
 						;
 					if (ImGui::MenuItem("Image"))
 						new NewImageDialog;
-					if (ImGui::MenuItem("Terrain"))
-						;
 
 					ImGui::EndMenu();
 				}

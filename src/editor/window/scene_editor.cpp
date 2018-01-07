@@ -153,39 +153,6 @@ void SceneEditor::on_menu_bar()
 		else
 			scene->camera.object = nullptr;
 	}
-
-	if (ImGui::BeginMenu_keepalive("Sky"))
-	{
-		if (ImGui::BeginMenu("Type"))
-		{
-			if (ImGui::MenuItem("Null", "", !scene->sky))
-			{
-				if (scene->sky)
-					scene->setSkyType(tke::SkyType::null);
-			}
-			if (ImGui::MenuItem("Atmosphere Scattering", "", scene->sky && scene->sky->type == tke::SkyType::atmosphere_scattering))
-			{
-				if (!scene->sky || scene->sky->type != tke::SkyType::atmosphere_scattering)
-					scene->setSkyType(tke::SkyType::atmosphere_scattering);
-			}
-			if (ImGui::MenuItem("Panorama", "", scene->sky && scene->sky->type == tke::SkyType::panorama))
-			{
-				if (!scene->sky || scene->sky->type != tke::SkyType::panorama)
-					scene->setSkyType(tke::SkyType::panorama);
-			}
-
-			ImGui::EndMenu();
-		}
-
-		auto ambientColor = scene->ambientColor;
-		if (ImGui::DragFloat3("Ambient Color", &ambientColor[0], 0.1f, 0.f, 100.f))
-			scene->setAmbientColor(ambientColor);
-		auto fogColor = scene->fogColor;
-		if (ImGui::DragFloat3("Fog Color", &fogColor[0], 0.1f, 0.f, 100.f))
-			scene->setFogColor(fogColor);
-
-		ImGui::EndMenu();
-	}
 }
 
 void SceneEditor::do_show()
@@ -364,6 +331,18 @@ void SceneEditor::do_show()
 			//if (ImGui::Button(names[i])) transformerTool->mode = TransformerTool::Mode(i);
 			if (needPop) ImGui::PopStyleColor(3);
 			if (i < 3) ImGui::SameLine();
+		}
+	}
+
+	{
+		auto sel = selected.lock();
+		if (sel && sel->type == tke::NodeTypeObject)
+		{
+			auto obj = (tke::Object*)sel.get();
+			obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
+			obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
+			obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
+			obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
 		}
 	}
 

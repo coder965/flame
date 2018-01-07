@@ -1,7 +1,5 @@
 #pragma once
 
-#include "node.h"
-
 namespace tke
 {
 	struct Scene;
@@ -15,7 +13,7 @@ namespace tke
 		panorama = 1 << 1
 	};
 
-	struct Sky : Node
+	struct Sky
 	{
 		SkyType type;
 

@@ -3,6 +3,7 @@
 #include <mutex>
 
 #include "../math/math.h"
+#include "node.h"
 #include "camera.h"
 #include "light.h"
 #include "sky.h"
@@ -21,7 +22,7 @@ namespace tke
 	struct Water;
 	struct CollisionGroup;
 
-	REFLECTABLE struct Scene
+	REFLECTABLE struct Scene : Node
 	{
 		REFL_BANK;
 
@@ -30,7 +31,7 @@ namespace tke
 		std::string filename;
 		std::string filepath;
 
-		std::shared_ptr<Sky> sky;
+		std::unique_ptr<Sky> sky;
 		bool enable_sun_light = true;
 
 		float hdrExposure = 0.01f;
