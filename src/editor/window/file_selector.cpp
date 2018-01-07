@@ -2,8 +2,8 @@
 #include "../../ui/ui.h"
 #include "file_selector.h"
 
-FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, int _mode, int _cx, int _cy)
-	:title(_title), modal(_modal), enable_file(_enable_file), mode(_mode)
+FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, bool _enable_right_region, int _mode, int _cx, int _cy)
+	:title(_title), modal(_modal), enable_file(_enable_file), enable_right_region(_enable_right_region), mode(_mode)
 {
 	first_cx = _cx;
 	first_cy = _cy;
@@ -131,7 +131,16 @@ void FileSelector::do_show()
 	{
 		const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
 
-		ImGui::BeginChild("left", ImVec2(on_left_area_width(), 0));
+		if (enable_right_region)
+		{
+			const auto splitter_width = 8.f;
+			right_region_width = ImGui::GetWindowWidth() - 
+				ImGui::GetStyle().FramePadding.x * 2.f - 
+				left_region_width -
+				splitter_width;
+			ImGui::Splitter(true, splitter_width, &left_region_width, &right_region_width, 50.f, 50.f);
+			ImGui::BeginChild("left", ImVec2(left_region_width, 0));
+		}
 
 		on_top_area_show();
 
@@ -222,20 +231,20 @@ void FileSelector::do_show()
 
 		on_bottom_area_show();
 
-		ImGui::EndChild();
-
-		on_right_area_show();
+		if (enable_right_region)
+		{
+			ImGui::EndChild();
+			ImGui::SameLine();
+			ImGui::BeginChild("right", ImVec2(right_region_width, 0));
+			on_right_area_show();
+			ImGui::EndChild();
+		}
 	}
 
 	if (modal)
 		ImGui::EndPopup();
 	else
 		ImGui::End();
-}
-
-int FileSelector::on_left_area_width() 
-{
-	return 0; 
 }
 
 bool FileSelector::on_refresh() 
@@ -314,7 +323,7 @@ void FileSelector::on_right_area_show()
 }
 
 DirSelectorDialog::DirSelectorDialog()
-	:FileSelector("Dir Selector", true, false, 0, 800, 600)
+	:FileSelector("Dir Selector", true, false, false, 0, 800, 600)
 {
 }
 

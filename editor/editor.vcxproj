@@ -176,6 +176,7 @@
     <ClCompile Include="..\src\editor\window\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\editor\select.h" />
     <ClInclude Include="..\src\editor\tool\tool.h" />
     <ClInclude Include="..\src\editor\tool\transformer_tool.h" />
     <ClInclude Include="..\src\editor\window\hierarchy.h" />

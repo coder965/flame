@@ -16,7 +16,7 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog()
-		:FileSelector("New Image", true, true, 1, 800, 600)
+		:FileSelector("New Image", true, true, true, 1, 800, 600)
 	{
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
@@ -26,15 +26,8 @@ struct NewImageDialog : FileSelector
 		};
 	}
 
-	virtual int on_left_area_width() override
-	{
-		return 300;
-	}
-
 	virtual void on_right_area_show() override
 	{
-		ImGui::SameLine();
-		ImGui::BeginGroup();
 		ImGui::PushItemWidth(200);
 		ImGui::DragInt("cx", &cx);
 		ImGui::DragInt("cy", &cy);
@@ -44,7 +37,6 @@ struct NewImageDialog : FileSelector
 		static int type = 0;
 		ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
 		ImGui::PopItemWidth();
-		ImGui::EndGroup();
 	}
 };
 

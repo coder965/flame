@@ -18,18 +18,13 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 }
 
 ResourceExplorer::ResourceExplorer()
-	:FileSelector("Resource Explorer", false, true, 0)
+	:FileSelector("Resource Explorer", false, true, true, 0)
 {
 }
 
 ResourceExplorer::~ResourceExplorer()
 {
 	resourceExplorer = nullptr;
-}
-
-int ResourceExplorer::on_left_area_width()
-{
-	return 300;
 }
 
 FileSelector::FileItem *ResourceExplorer::on_new_file_item()
@@ -97,8 +92,6 @@ void ResourceExplorer::on_bottom_area_show()
 
 void ResourceExplorer::on_right_area_show()
 {
-	ImGui::SameLine();
-	ImGui::BeginGroup();
 	if (list_index != -1 && list_index >= dir_list.size())
 	{
 		auto i = (ResourceExplorerFileItem*)file_list[list_index - dir_list.size()].get();
@@ -106,7 +99,7 @@ void ResourceExplorer::on_right_area_show()
 		{
 			case tke::FileTypeImage:
 			{
-				auto w = ImGui::GetWindowWidth() - 300;
+				auto w = right_region_width;
 				auto h = ImGui::GetWindowHeight() - ImGui::GetFrameHeightWithSpacing() * 3;
 				ImGui::Text("%d x %d", i->image->levels[0].cx, i->image->levels[0].cy);
 				auto image_rect = tke::fit_rect_no_zoom_in(glm::vec2(w, h), glm::vec2(i->image->levels[0].cx, i->image->levels[0].cy));
@@ -117,5 +110,4 @@ void ResourceExplorer::on_right_area_show()
 			}
 		}
 	}
-	ImGui::EndGroup();
 }

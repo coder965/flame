@@ -27,7 +27,7 @@ struct SaveModelDialog : FileSelector
 	bool first = true;
 
 	SaveModelDialog()
-		:FileSelector("Save Model", true, true, 1, 800, 600)
+		:FileSelector("Save Model", true, true, false, 1, 800, 600)
 	{
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}

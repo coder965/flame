@@ -18,7 +18,6 @@ struct ResourceExplorer : FileSelector
 {
 	ResourceExplorer();
 	virtual ~ResourceExplorer() override;
-	virtual int on_left_area_width() override;
 	virtual FileItem *on_new_file_item() override;
 	virtual void on_file_item_selected(FileItem *i, bool doubleClicked) override;
 	virtual void on_top_area_show() override;

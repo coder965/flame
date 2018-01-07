@@ -89,5 +89,8 @@
     <ClInclude Include="..\src\editor\window\inspector.h">
       <Filter>src\window</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\editor\select.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
