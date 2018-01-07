@@ -5,6 +5,7 @@
 #include "..\src\editor\window\file_selector.h"
 #include "..\src\editor\window\hierarchy.h"
 #include "..\src\editor\window\image_editor.h"
+#include "..\src\editor\window\inspector.h"
 #include "..\src\editor\window\model_editor.h"
 #include "..\src\editor\window\resource_explorer.h"
 #include "..\src\editor\window\scene_editor.h"
@@ -190,6 +191,7 @@ currentBank = Scene::b;
 currentBank = Terrain::b;
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
 currentBank->addV<int>("block_cx", offsetof(Terrain, block_cx));
+currentBank->addV<int>("block_cy", offsetof(Terrain, block_cy));
 currentBank->addV<float>("block_size", offsetof(Terrain, block_size));
 currentBank->addV<float>("height", offsetof(Terrain, height));
 currentBank->addV<float>("displacement_height", offsetof(Terrain, displacement_height));

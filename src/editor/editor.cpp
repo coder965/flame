@@ -2,10 +2,10 @@
 #include "../input.h"
 #include "../global.h"
 #include "../application.h"
-
 #include "window/file_selector.h"
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
+#include "window/inspector.h"
 #include "window/scene_editor.h"
 #include "window/image_editor.h"
 
@@ -64,6 +64,8 @@ int main(int argc, char** argv)
 					resourceExplorer = new ResourceExplorer;
 				else if (n->name == "hierarchy_window")
 					hierarchy_window = new HierarchyWindow;
+				else if (n->name == "inspector_window")
+					inspector_window = new InspectorWindow;
 			}
 		}
 	}
@@ -129,6 +131,12 @@ int main(int argc, char** argv)
 						hierarchy_window = new HierarchyWindow;
 					hierarchy_window->_need_focus = true;
 				}
+				if (ImGui::MenuItem("Inspector"))
+				{
+					if (!inspector_window)
+						inspector_window = new InspectorWindow;
+					inspector_window->_need_focus = true;
+				}
 
 				ImGui::EndMenu();
 			}
@@ -173,13 +181,15 @@ int main(int argc, char** argv)
 				it++;
 		}
 	};
-
+	
 	tke::onDestroy = []() {
 		tke::XMLDoc at("data");
 		if (resourceExplorer)
 			at.newNode("resource_explorer");
 		if (hierarchy_window)
 			at.newNode("hierarchy_window");
+		if (inspector_window)
+			at.newNode("inspector_window");
 		if (SelectObject)
 			at.newNode("select");
 		at.save("ui.xml");

@@ -48,6 +48,9 @@
     <ClCompile Include="..\src\editor\window\hierarchy.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\editor\window\inspector.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\editor\tool\tool.h">
@@ -81,6 +84,9 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="..\src\editor\window\hierarchy.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\inspector.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>

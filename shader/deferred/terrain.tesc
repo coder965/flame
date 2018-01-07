@@ -17,12 +17,14 @@ layout(binding = 1) uniform ubo_matrix_
 struct Terrain
 {
 	vec3 coord;
-	int block_count;
+	int block_cx;
+	int block_cy;
 	float block_size;
 	float terrain_height;
 	float displacement_height;
 	float tessellation_factor;
 	float tiling_scale;
+	uint material_count;
 	uint material_index;
 };
 

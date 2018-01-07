@@ -9,17 +9,6 @@
 #include "terrain_editor.h"
 #include "scene_editor.h"
 
-const char *basic_model_names[] = {
-	"[triangle].tkm",
-	"[cube].tkm",
-	"[sphere].tkm",
-	"[cylinder].tkm",
-	"[cone].tkm",
-	"[arrow].tkm",
-	"[torus].tkm",
-	"[hammer].tkm"
-};
-
 ResourceExplorer *resourceExplorer = nullptr;
 
 ResourceExplorerFileItem::~ResourceExplorerFileItem()
@@ -31,7 +20,6 @@ ResourceExplorerFileItem::~ResourceExplorerFileItem()
 ResourceExplorer::ResourceExplorer()
 	:FileSelector("Resource Explorer", false, true, 0)
 {
-	user_define_extra_path = "[basic models]";
 }
 
 ResourceExplorer::~ResourceExplorer()
@@ -47,21 +35,6 @@ int ResourceExplorer::on_left_area_width()
 FileSelector::FileItem *ResourceExplorer::on_new_file_item()
 {
 	return new ResourceExplorerFileItem;
-}
-
-void ResourceExplorer::on_refresh_user_define_dir()
-{
-	auto fAddBasicModel = [&](const char *name) {
-		{
-			auto i = on_new_file_item();
-			i->file_type = tke::FileTypeModel;
-			i->value = name;
-			i->name = ICON_FA_FILE_O" " + i->value;
-			file_list.push_back(std::move(std::unique_ptr<FileItem>(i)));
-		}
-	};
-	for (int i = 0; i < TK_ARRAYSIZE(basic_model_names); i++)
-		fAddBasicModel(basic_model_names[i]);
 }
 
 void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)

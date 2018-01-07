@@ -19,14 +19,15 @@ layout(binding = 1) uniform ubo_matrix_
 struct Terrain
 {
 	vec3 coord;
-	int block_count;
+	int block_cx;
+	int block_cy;
 	float block_size;
 	float terrain_height;
 	float displacement_height;
 	float tessellation_factor;
 	float tiling_scale;
-	uint material_index;
 	uint material_count;
+	uint material_index;
 };
 
 layout(binding = 3) uniform ubo_terrain_
@@ -116,7 +117,8 @@ void main()
 	roughness = 0.0;
 
 	vec4 blend = texture(imgs_blend[inTerrainId], inUV);
-	tilledUV = inUV * ubo_terrain.d[inTerrainId].block_count * ubo_terrain.d[inTerrainId].tiling_scale;
+	tilledUV = inUV * ubo_terrain.d[inTerrainId].tiling_scale * 
+		vec2(ubo_terrain.d[inTerrainId].block_cx, ubo_terrain.d[inTerrainId].block_cy);
 
 	uint curr_mat_index = ubo_terrain.d[inTerrainId].material_index;
 	for(int i = 0 ; i < ubo_terrain.d[inTerrainId].material_count; i++)

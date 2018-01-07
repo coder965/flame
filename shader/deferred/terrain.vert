@@ -17,12 +17,14 @@ layout(binding = 1) uniform ubo_matrix_
 struct Terrain
 {
 	vec3 coord;
-	int block_count;
+	int block_cx;
+	int block_cy;
 	float block_size;
 	float terrain_height;
 	float displacement_height;
 	float tessellation_factor;
 	float tiling_scale;
+	uint material_count;
 	uint material_index;
 };
 
@@ -43,11 +45,11 @@ void main(void)
 {
 	outTerrainId = gl_InstanceIndex >> 16;
 	uint tileIndex = gl_InstanceIndex & 0xffff;
-	uint block_count = ubo_terrain.d[outTerrainId].block_count;
+	ivec2 block_count = ivec2(ubo_terrain.d[outTerrainId].block_cx, ubo_terrain.d[outTerrainId].block_cy);
 	float block_size = ubo_terrain.d[outTerrainId].block_size;
 	float height = ubo_terrain.d[outTerrainId].terrain_height * inNormalHeight.a;
 	vec3 coord = ubo_terrain.d[outTerrainId].coord;
-	outUV = vec2((tileIndex % block_count) + (gl_VertexIndex & 2), (tileIndex / block_count) + ((gl_VertexIndex + 3) & 2));
+	outUV = vec2((tileIndex % block_count.x) + (gl_VertexIndex & 2), (tileIndex / block_count.x) + ((gl_VertexIndex + 3) & 2));
 	gl_Position = vec4(vec3((outUV.x - 0.5) * block_size, height, (outUV.y - 0.5) * block_size) + coord, 1.0);
 	outUV /= block_count;
 	mat3 normalMatrix = transpose(inverse(mat3(ubo_matrix.view)));

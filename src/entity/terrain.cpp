@@ -1,3 +1,4 @@
+#include "../graphics/buffer.h"
 #include "../graphics/image.h"
 #include "../graphics/material.h"
 #include "../graphics/pipeline.h"
@@ -5,14 +6,17 @@
 
 namespace tke
 {
-	Terrain::Terrain(bool _use_physx, std::shared_ptr<Image> _blendMap)
-		:Node(NodeTypeTerrain), use_physx(_use_physx), blendMap(_blendMap)
+	Terrain::Terrain(int _block_cx, int _block_cy, bool _use_physx, 
+		std::shared_ptr<Image> _blendMap)
+		:Node(NodeTypeTerrain), block_cx(_block_cx), block_cy(_block_cy), 
+		use_physx(_use_physx), blendMap(_blendMap)
 	{
+
+
 		if (!blendMap)
 			 blendMap = default_blend_image;
 
-		for (int i = 0; i < 4; i++)
-			materials[i] = defaultMaterial;
+		add_material(defaultMaterial);
 	}
 
 	void Terrain::add_material(std::shared_ptr<Material> m)

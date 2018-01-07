@@ -38,14 +38,23 @@ void SceneEditor::on_file_menu()
 }
 
 bool openCreateLightPopup = false;
-bool openCreateObjectPopup = false;
 bool openCreateTerrainPopup = false;
 bool openCreateWaterPopup = false;
+
+const char *basic_model_names[] = {
+	"triangle",
+	"cube",
+	"sphere",
+	"cylinder",
+	"cone",
+	"arrow",
+	"torus",
+	"hammer"
+};
 
 void SceneEditor::on_menu_bar()
 {
 	openCreateLightPopup = false;
-	openCreateObjectPopup = false;
 	openCreateTerrainPopup = false;
 	openCreateWaterPopup = false;
 
@@ -53,8 +62,23 @@ void SceneEditor::on_menu_bar()
 	{
 		if (ImGui::MenuItem("Light"))
 			openCreateLightPopup = true;
-		if (ImGui::MenuItem("Object"))
-			openCreateObjectPopup = true;
+		if (ImGui::BeginMenu("Object"))
+		{
+			for (int i = 0; i < TK_ARRAYSIZE(basic_model_names); i++)
+			{
+				if (ImGui::MenuItem(basic_model_names[i]))
+				{
+					auto m = tke::getModel(basic_model_names[i]);
+					if (m)
+					{
+						auto o = new tke::Object(m, 0);
+						o->setCoord(scene->camera.target);
+						scene->addObject(o);
+					}
+				}
+			}
+			ImGui::EndMenu();
+		}
 		if (ImGui::MenuItem("Terrain"))
 			openCreateTerrainPopup = true;
 		if (ImGui::MenuItem("Water"))
@@ -190,88 +214,10 @@ void SceneEditor::do_show()
 
 	if (openCreateLightPopup)
 		ImGui::OpenPopup("Create Light");
-	if (openCreateObjectPopup)
-		ImGui::OpenPopup("Create Object");
 	if (openCreateTerrainPopup)
 		ImGui::OpenPopup("Create Terrain");
 	if (openCreateWaterPopup)
 		ImGui::OpenPopup("Create Water");
-	if (ImGui::BeginPopupModal("Create Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		static bool basicModel = false;
-		static int model_index = 0;
-		static char model_filename[260];
-		ImGui::Checkbox("Basic Model", &basicModel);
-		if (basicModel)
-			ImGui::Combo("##Model", &model_index, basic_model_names, TK_ARRAYSIZE(basic_model_names));
-		else
-			ImGui::InputText("Filename", model_filename, TK_ARRAYSIZE(model_filename));
-
-		if (ImGui::TreeNode("Transform"))
-		{
-			funShowCoordUi();
-			ImGui::DragFloat3("euler", (float*)&euler[0], 0.5f);
-			ImGui::DragFloat3("scale", (float*)&scale[0], 0.5f);
-
-			ImGui::TreePop();
-		}
-
-		static bool physx_enable = false;
-		static bool physx_dynamic = false;
-		static bool physx_use_controller = false;
-		if (ImGui::TreeNode("Physx"))
-		{
-			ImGui::Checkbox("enable", &physx_enable);
-			if (physx_enable)
-			{
-				ImGui::Checkbox("dynamic", &physx_dynamic);
-				ImGui::Checkbox("use controller", &physx_use_controller);
-			}
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::Button("Create"))
-		{
-			unsigned int _physxType = 0;
-			if (physx_enable)
-				_physxType |= (int)tke::ObjectPhysicsType::enable;
-			if (physx_dynamic)
-				_physxType |= (int)tke::ObjectPhysicsType::dynamic;
-			if (physx_use_controller)
-				_physxType |= (int)tke::ObjectPhysicsType::controller;
-
-			if (basicModel)
-				strcpy(model_filename, basic_model_names[model_index]);
-
-			auto m = tke::getModel(model_filename);
-			if (m)
-			{
-				auto o = new tke::Object(m, _physxType);
-
-				glm::vec3 _coord;
-				if (use_camera_position)
-				{
-					if (use_camera_target_position)
-						_coord = scene->camera.target;
-					else
-						_coord = scene->camera.getCoord();
-				}
-				else
-					_coord = coord;
-				o->setCoord(_coord);
-				o->setEuler(euler);
-				o->setScale(scale);
-
-				scene->addObject(o);
-			}
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
-	}
 	if (ImGui::BeginPopupModal("Create Terrain", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		if (ImGui::TreeNode("Transform"))
@@ -287,7 +233,7 @@ void SceneEditor::do_show()
 		ImGui::Checkbox("Use Physx", &use_physx);
 		if (ImGui::Button("Create"))
 		{
-			auto t = new tke::Terrain(use_physx, tke::getImage(blend_image_name));
+			auto t = new tke::Terrain(64, 64, use_physx, tke::getImage(blend_image_name));
 			t->setCoord(coord);
 			t->height = height;
 			scene->addTerrain(t);

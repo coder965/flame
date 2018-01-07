@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../file_utils.h"
 #include "../../entity/scene.h"
 #include "../../graphics/display_layer.h"
 #include "../../graphics/renderer.h"

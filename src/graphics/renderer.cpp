@@ -345,12 +345,14 @@ namespace tke
 	struct TerrainShaderStruct
 	{
 		glm::vec3 coord;
-		int block_count;
+		int block_cx;
+		int block_cy;
 		float block_size;
 		float terrain_height;
 		float displacement_height;
 		float tessellation_factor;
 		float tiling_scale;
+		unsigned int material_count;
 		union
 		{
 			struct
@@ -360,10 +362,9 @@ namespace tke
 				unsigned char z;
 				unsigned char w;
 			};
+			unsigned char v[4];
 			unsigned int packed;
 		}material_index;
-		unsigned int material_count;
-		unsigned int dummy0;
 	};
 
 	struct WaterShaderStruct
@@ -815,16 +816,18 @@ namespace tke
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
 					stru.coord = t->getCoord();
-					stru.block_count = t->block_cx;
+					stru.block_cx = t->block_cx;
+					stru.block_cy = t->block_cy;
 					stru.block_size = t->block_size;
 					stru.terrain_height = t->height;
 					stru.displacement_height = t->displacement_height;
 					stru.tessellation_factor = t->tessellation_factor;
 					stru.tiling_scale = t->tiling_scale;
-					stru.material_index.x = t->materials[0]->index;
-					stru.material_index.y = t->materials[1]->index;
-					stru.material_index.z = t->materials[2]->index;
-					stru.material_index.w = t->materials[3]->index;
+					for (int i = 0; i < 4; i++)
+					{
+						stru.material_index.v[i] = t->materials[i] ?
+							t->materials[0]->index : 0;
+					}
 					stru.material_count = t->material_count;
 					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
 					VkBufferCopy range = {};
