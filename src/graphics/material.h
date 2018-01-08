@@ -39,7 +39,7 @@ namespace tke
 	IMPL(nullptr) UniformBuffer *materialBuffer;
 
 	IMPL() std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
-	std::shared_ptr<Image> getMaterialImage(const std::string &filename, bool sRGB = false);
+	std::shared_ptr<Image> getMaterialImage(const std::string &filename);
 	IMPL(nullptr) DescriptorSet *ds_material;
 
 	void init_material();

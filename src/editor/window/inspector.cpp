@@ -122,7 +122,7 @@ void InspectorWindow::do_show()
 												auto ext = path.extension();
 												if (tke::is_image_file(ext.string()))
 												{
-													pa->panoImage = tke::getImage(filename);
+													pa->panoImage = tke::get_image(filename);
 													scene->needUpdateSky = true;
 												}
 											}

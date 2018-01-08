@@ -12,7 +12,7 @@ namespace tke
 		levels.resize(1);
 	}
 
-	std::shared_ptr<ImageData> createImageData(const std::string &filename)
+	std::unique_ptr<ImageData> createImageData(const std::string &filename)
 	{
 		std::experimental::filesystem::path path(filename);
 		if (!std::experimental::filesystem::exists(path))
@@ -31,7 +31,7 @@ namespace tke
 			assert(!gli::is_compressed(Texture.format()) && Target == gli::TARGET_2D);
 			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
 
-			auto data = std::make_shared<ImageData>();
+			auto data = std::make_unique<ImageData>();
 			data->file_type = ext == ".ktx" ? ImageFileTypeKTX : ImageFileTypeDDS;
 			switch (Format.External)
 			{
@@ -214,7 +214,7 @@ namespace tke
 		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			FreeImage_FlipVertical(dib);
 
-		auto data = std::make_shared<ImageData>();
+		auto data = std::make_unique<ImageData>();
 		auto colorType = FreeImage_GetColorType(dib);
 		switch (fif)
 		{

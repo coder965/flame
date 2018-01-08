@@ -41,7 +41,7 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 		case tke::FileTypeImage:
 			if (!i->image)
 			{
-				i->image = tke::getImage(i->filename);
+				i->image = tke::get_image(i->filename);
 				if (i->image)
 					tke::addUiImage(i->image.get());
 			}

@@ -3,6 +3,7 @@
 #include <map>
 
 #include "../hash.h"
+#include "../file_utils.h"
 #include "buffer.h"
 #include "image.h"
 #include "command_buffer.h"
@@ -260,13 +261,16 @@ namespace tke
 #undef gd
 	}
 
-	Image *load_image(const std::string &filename, int min_level, bool sRGB, bool saveData)
+	Image *load_image(const std::string &filename)
 	{
 		auto image_data = createImageData(filename);
 		if (!image_data)
 			return nullptr;
 
-		auto level_count = std::max((int)image_data->levels.size(), min_level);
+		bool sRGB = false;
+		if (std::fs::exists(filename + ".srgb"))
+			sRGB = true;
+		sRGB = sRGB || image_data->sRGB;
 
 		VkFormat _format = VK_FORMAT_UNDEFINED;
 		switch (image_data->channel)
@@ -282,6 +286,9 @@ namespace tke
 				break;
 			}
 			break;
+		case 3:
+			// vk do not support 3 channels
+			break;
 		case 4:
 			switch (image_data->bpp)
 			{
@@ -296,7 +303,7 @@ namespace tke
 		assert(_format != VK_FORMAT_UNDEFINED);
 
 		auto i = new Image(image_data->levels[0].cx, image_data->levels[0].cy,
-			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, level_count, 1, false);
+			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_data->levels.size(), 1, false);
 		for (int l = 0; l < image_data->levels.size(); l++)
 		{
 			i->fillData(l, image_data->levels[l].v.get(), image_data->levels[l].size);
@@ -304,33 +311,25 @@ namespace tke
 		}
 		i->filename = filename;
 		i->bpp = image_data->bpp;
-		i->sRGB = sRGB || image_data->sRGB;
-
-		if (saveData)
-		{
-			for (int l = 0; l < image_data->levels.size(); l++)
-			{
-				i->levels[l].v = std::move(image_data->levels[l].v);
-				image_data->levels[l].v = nullptr;
-			}
-		}
+		i->sRGB = sRGB;
 
 		return i;
 	}
 
 	static std::map<unsigned int, std::weak_ptr<Image>> _images;
 
-	std::shared_ptr<Image> getImage(const std::string &filename, int min_level, bool sRGB, bool saveData)
+	std::shared_ptr<Image> get_image(const std::string &filename)
 	{
 		auto hash = HASH(filename.c_str());
 		auto it = _images.find(hash);
 		if (it != _images.end())
 		{
 			auto s = it->second.lock();
-			if (s) return s;
+			if (s)
+				return s;
 		}
 
-		auto i = std::shared_ptr<Image>(load_image(filename, min_level, sRGB, saveData));
+		auto i = std::shared_ptr<Image>(load_image(filename));
 		if (!i)
 			return nullptr;
 

@@ -122,7 +122,7 @@ namespace tke
 		return std::shared_ptr<Material>();
 	}
 
-	std::shared_ptr<Image> getMaterialImage(const std::string &_filename, bool sRGB)
+	std::shared_ptr<Image> getMaterialImage(const std::string &_filename)
 	{
 		for (int i = 0; i < MaxMaterialImageCount; i++)
 		{
@@ -138,7 +138,7 @@ namespace tke
 		{
 			if (!materialImages[i].lock())
 			{
-				auto t = getImage(_filename, 0, sRGB);
+				auto t = get_image(_filename);
 				if (!t)
 					return nullptr;
 

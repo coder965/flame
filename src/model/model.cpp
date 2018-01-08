@@ -637,7 +637,7 @@ namespace tke
 							{
 								std::string filename;
 								ss >> filename;
-								albedoAlphaMap = getMaterialImage(m->filepath + "/" + filename, true);
+								albedoAlphaMap = getMaterialImage(m->filepath + "/" + filename);
 							}
 							else if (token == "map_bump")
 							{
@@ -823,7 +823,7 @@ namespace tke
 
 				auto g = new Geometry;
 				g->material = getMaterial(data.diffuse, 0.f, 1.f, 
-					getMaterialImage(m->filepath + "/" + data.mapName, true), nullptr, nullptr);
+					getMaterialImage(m->filepath + "/" + data.mapName), nullptr, nullptr);
 				g->indiceBase = currentIndiceVertex;
 				g->indiceCount = data.indiceCount;
 
@@ -1330,9 +1330,9 @@ namespace tke
 
 				auto g = new Geometry;
 				g->material = getMaterial(albedo_alpha, spec, roughness,
-					getMaterialImage(m->filepath + "/" + albedoAlphaMapName, true),
-					getMaterialImage(m->filepath + "/" + normalHeightMapName, true),
-					getMaterialImage(m->filepath + "/" + specRoughnessMapName, true));
+					getMaterialImage(m->filepath + "/" + albedoAlphaMapName),
+					getMaterialImage(m->filepath + "/" + normalHeightMapName),
+					getMaterialImage(m->filepath + "/" + specRoughnessMapName));
 				file & g->indiceBase;
 				file & g->indiceCount;
 				file & g->visible;

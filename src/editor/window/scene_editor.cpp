@@ -201,7 +201,7 @@ void SceneEditor::do_show()
 		ImGui::Checkbox("Use Physx", &use_physx);
 		if (ImGui::Button("Create"))
 		{
-			auto t = new tke::Terrain(64, 64, use_physx, tke::getImage(blend_image_name));
+			auto t = new tke::Terrain(64, 64, use_physx, tke::get_image(blend_image_name));
 			t->setCoord(coord);
 			t->height = height;
 			scene->addTerrain(t);
