@@ -60,9 +60,9 @@ namespace tke
 		stru.albedo_alpha.alpha = albedo_alpha.a * 255.f;
 		stru.spec_roughness.spec = glm::clamp(m->spec, 0.f, 1.f) * 255.f;
 		stru.spec_roughness.roughness = glm::clamp(m->roughness, 0.f, 1.f) * 255.f;
-		stru.map_index.albedo_alpha = m->albedoAlphaMap ? m->albedoAlphaMap->index + 1 : 0;
-		stru.map_index.normal_height = m->normalHeightMap ? m->normalHeightMap->index + 1 : 0;
-		stru.map_index.spec_roughness = m->specRoughnessMap ? m->specRoughnessMap->index + 1 : 0;
+		stru.map_index.albedo_alpha = m->albedoAlphaMap ? m->albedoAlphaMap->material_index + 1 : 0;
+		stru.map_index.normal_height = m->normalHeightMap ? m->normalHeightMap->material_index + 1 : 0;
+		stru.map_index.spec_roughness = m->specRoughnessMap ? m->specRoughnessMap->material_index + 1 : 0;
 		memcpy(map, &stru, sizeof(MaterialShaderStruct));
 		defalut_staging_buffer->unmap();
 
@@ -142,7 +142,7 @@ namespace tke
 				if (!t)
 					return nullptr;
 
-				t->index = i;
+				t->material_index = i;
 				materialImages[i] = t;
 
 				updateDescriptorSets(1, &ds_material->imageWrite(MaterialImagesDescriptorBinding, i, t.get(), colorSampler));

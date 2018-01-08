@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "../../imgui/imgui.h"
@@ -35,6 +36,5 @@ namespace tke
 	void ui_onChar(int);
 	void beginUi(bool _need_clear);
 	void endUi();
-	void addUiImage(Image*image);
-	void removeUiImage(Image *image);
+	int get_ui_image_index(std::shared_ptr<Image> i);
 }

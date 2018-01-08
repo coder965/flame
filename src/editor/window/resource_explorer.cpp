@@ -11,12 +11,6 @@
 
 ResourceExplorer *resourceExplorer = nullptr;
 
-ResourceExplorerFileItem::~ResourceExplorerFileItem()
-{
-	if (image && image->index != 0)
-		tke::removeUiImage(image.get());
-}
-
 ResourceExplorer::ResourceExplorer()
 	:FileSelector("Resource Explorer", false, true, true, 0)
 {
@@ -40,11 +34,7 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 	{
 		case tke::FileTypeImage:
 			if (!i->image)
-			{
 				i->image = tke::get_image(i->filename);
-				if (i->image)
-					tke::addUiImage(i->image.get());
-			}
 			if (doubleClicked)
 				new ImageEditor(i->image);
 			break;
@@ -105,7 +95,7 @@ void ResourceExplorer::on_right_area_show()
 				auto image_rect = tke::fit_rect_no_zoom_in(glm::vec2(w, h), glm::vec2(i->image->levels[0].cx, i->image->levels[0].cy));
 				auto pos = ImGui::GetCursorPos();
 				ImGui::SetCursorPos(pos + ImVec2(image_rect.x, image_rect.y));
-				ImGui::Image((ImTextureID)i->image->index, ImVec2(image_rect.z, image_rect.w));
+				ImGui::Image((ImTextureID)tke::get_ui_image_index(i->image), ImVec2(image_rect.z, image_rect.w));
 				break;
 			}
 		}

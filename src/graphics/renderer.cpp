@@ -61,7 +61,7 @@ namespace tke
 				data.first_index = m->indiceBase + g->indiceBase;
 				data.vertex_offset = m->vertexBase;
 				data.instance_count = 1;
-				data.first_instance = g->material->albedoAlphaMap->index;
+				data.first_instance = g->material->albedoAlphaMap->material_index;
 				geo_data.push_back(data);
 			}
 		}

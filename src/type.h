@@ -12,3 +12,10 @@ typedef _W64 long TK_LONG_PTR;
 #define TK_MAKEINT(H, L) ((L) | ((H) << 16))
 
 template<size_t s> struct Sizer {};
+
+namespace tke
+{
+	typedef unsigned char uchar;
+	typedef unsigned short ushort;
+	typedef unsigned int uint;
+}

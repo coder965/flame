@@ -10,8 +10,6 @@
 struct ResourceExplorerFileItem : FileSelector::FileItem
 {
 	std::shared_ptr<tke::Image> image;
-
-	~ResourceExplorerFileItem();
 };
 
 struct ResourceExplorer : FileSelector

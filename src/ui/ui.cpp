@@ -1,4 +1,5 @@
 #include <process.h>
+#include <map>
 
 #include "../global.h"
 #include "../input.h"
@@ -46,6 +47,7 @@ namespace tke
 	static std::unique_ptr<ImmediateVertexBuffer> vertexBuffer_ui;
 	static std::unique_ptr<ImmediateIndexBuffer> indexBuffer_ui;
 
+	static Image *fontImage;
 	void initUi()
 	{
 		{
@@ -94,7 +96,7 @@ namespace tke
 				io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
 				unsigned char* pixels; int width, height;
 				io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-				auto fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+				fontImage = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
 					VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 				fontImage->fillData(0, pixels, width * height * 4);
 				io.Fonts->TexID = (void*)0; // image index
@@ -173,6 +175,9 @@ namespace tke
 			io.AddInputCharacter((unsigned short)c);
 	}
 
+	static std::map<Image*, int> _images_map;
+	static std::pair<std::shared_ptr<Image>, int> _images[127];
+
 	static bool need_clear = false;
 	void beginUi(bool _need_clear)
 	{
@@ -203,10 +208,32 @@ namespace tke
 		ImGui::NewFrame();
 
 		ImGui::main_menu_alive = false;
+
+		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
+			_images[i].second = 0;
 	}
 
 	void endUi()
 	{
+		{
+			std::vector<VkWriteDescriptorSet> writes;
+			for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
+			{
+				if (_images[i].first)
+				{
+					if (_images[i].second == 0)
+					{
+						_images_map.erase(_images[i].first.get());
+						_images[i].first.reset();
+						writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, i + 1, fontImage, colorSampler));
+					}
+					else if (_images[i].second == 2)
+						writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, i + 1, _images[i].first.get(), colorSampler));
+				}
+			}
+			updateDescriptorSets(writes.size(), writes.data());
+		}
+
 		ImGui::last_frame_main_menu_alive = ImGui::main_menu_alive;
 
 		ImGui::Render();
@@ -299,40 +326,24 @@ namespace tke
 		uiAcceptedKey = ImGui::IsAnyItemActive();
 	}
 
-	static std::pair<Image*, int> _images[127];
-
-	void addUiImage(Image *image)
+	int get_ui_image_index(std::shared_ptr<Image> img)
 	{
-		if (image->index != -1)
+		auto it = _images_map.find(img.get());
+		if (it != _images_map.end())
 		{
-			_images[image->index].second++;
-			return;
+			_images[it->second].second = 1;
+			return it->second + 1;
 		}
-
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
 		{
 			if (!_images[i].first)
 			{
-				image->index = i + 1;
-				_images[i].first = image;
-				_images[i].second = 1;
-				updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, image->index, image, colorSampler));
-				return;
+				_images[i].first = img;
+				_images[i].second = 2;
+				_images_map[img.get()] = i;
+				return i + 1;
 			}
 		}
-	}
-
-	void removeUiImage(Image *image)
-	{
-		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
-		{
-			if (_images[i].first == image)
-			{
-				_images[i].second--;
-				if (_images[i].second == 0)
-					_images[i].first = nullptr;
-				return;
-			}
-		}
+		return 0;
 	}
 }
