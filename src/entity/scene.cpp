@@ -66,7 +66,7 @@ namespace tke
 	{
 		mtx.lock();
 		lights.push_back(std::shared_ptr<Light>(l));
-		needUpdateLightCount = true;
+		light_count_dirty = true;
 		mtx.unlock();
 	}
 
@@ -87,7 +87,7 @@ namespace tke
 				break;
 			}
 		}
-		needUpdateLightCount = true;
+		light_count_dirty = true;
 		mtx.unlock();
 		return l;
 	}
@@ -252,7 +252,7 @@ namespace tke
 
 		objects.push_back(std::shared_ptr<Object>(o));
 
-		needUpdateIndirectBuffer = true;
+		object_count_dirty = true;
 		mtx.unlock();
 	}
 
@@ -275,7 +275,7 @@ namespace tke
 				break;
 			}
 		}
-		needUpdateIndirectBuffer = true;
+		object_count_dirty = true;
 		mtx.unlock();
 		return o;
 	}
@@ -335,7 +335,7 @@ namespace tke
 		//}
 
 		terrains.push_back(std::shared_ptr<Terrain>(t));
-
+		terrain_count_dirty = true;
 		mtx.unlock();
 	}
 
@@ -359,7 +359,7 @@ namespace tke
 		}
 
 		mtx.unlock();
-
+		terrain_count_dirty = true;
 		return t;
 	}
 
@@ -367,6 +367,7 @@ namespace tke
 	{
 		mtx.lock();
 		waters.emplace_back(w);
+		water_count_dirty = true;
 		mtx.unlock();
 	}
 
@@ -388,6 +389,7 @@ namespace tke
 			}
 		}
 		mtx.unlock();
+		water_count_dirty = true;
 		return w;
 	}
 
@@ -395,8 +397,10 @@ namespace tke
 	{
 		needUpdateSky = false;
 		needUpdateAmbientBuffer = false;
-		needUpdateIndirectBuffer = false;
-		needUpdateLightCount = false;
+		light_count_dirty = false;
+		object_count_dirty = false;
+		terrain_count_dirty = false;
+		water_count_dirty = false;
 		camera.changed = false;
 		for (auto &l : lights)
 			l->changed = false;

@@ -21,23 +21,6 @@
 
 namespace tke
 {
-	Renderer::Renderer()
-	{
-		cb = std::make_unique<CommandBuffer>();
-	}
-
-	void Renderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
-	{
-		cb->reset();
-		cb->begin();
-
-		do_render(framebuffer, clear, camera, user_data);
-
-		cb->end(); 
-
-		addCb(cb->v);
-	}
-
 	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)
 	{
 		geo_data.resize(1);
@@ -141,13 +124,15 @@ namespace tke
 
 			first = false;
 		}
+
+		cb = std::make_unique<CommandBuffer>();
 	}
 
-	void PlainRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
+	void PlainRenderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data)
 	{
-		auto data = (DrawData*)user_data;
-
-		RenderPass *rp = nullptr;
+		cb->reset();
+		cb->begin();
+		RenderPass *rp;
 		if (data->mode == mode_wireframe)
 		{
 			if (clear)
@@ -163,11 +148,13 @@ namespace tke
 				rp = renderPass_depthC_image8;
 		}
 		cb->beginRenderPass(rp, framebuffer);
-		render_to(cb.get(), camera, data);
+		do_render(cb.get(), camera, data);
 		cb->endRenderPass();
+		cb->end();
+		addCb(cb->v);
 	}
 
-	void PlainRenderer::render_to(CommandBuffer *cb, Camera *camera, DrawData *data)
+	void PlainRenderer::do_render(CommandBuffer *cb, Camera *camera, DrawData *data)
 	{
 		if (data->vbuffer0)
 		{
@@ -197,7 +184,7 @@ namespace tke
 
 			switch (data->mode)
 			{
-				case 0:
+				case mode_just_color:
 					if (!d.bone_buffer)
 						cb->bindPipeline(pipeline_plain);
 					else
@@ -211,10 +198,10 @@ namespace tke
 						cb->bindDescriptorSet();
 					}
 					break;
-				case 1:
+				case mode_color_and_front_light:
 					cb->bindPipeline(pipeline_frontlight);
 					break;
-				case 2:
+				case mode_just_texture:
 				{
 					if (!d.bone_buffer)
 					{
@@ -237,7 +224,7 @@ namespace tke
 					}
 					break;
 				}
-				case 3:
+				case mode_wireframe:
 					if (!d.bone_buffer)
 						cb->bindPipeline(pipeline_wireframe);
 					else
@@ -288,10 +275,15 @@ namespace tke
 
 			first = false;
 		}
+
+		cb = std::make_unique<CommandBuffer>();
 	}
 
-	void LinesRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
+	void LinesRenderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
+		cb->reset();
+		cb->begin();
+
 		auto data = (DrawData*)user_data;
 
 		cb->beginRenderPass(renderPass_image8, framebuffer);
@@ -304,6 +296,10 @@ namespace tke
 		cb->draw(data->vertex_count);
 
 		cb->endRenderPass();
+
+		cb->end();
+
+		addCb(cb->v);
 	}
 
 	struct MatrixBufferShaderStruct
@@ -538,6 +534,8 @@ namespace tke
 			defe_inited = true;
 		}
 
+		cb = std::make_unique<CommandBuffer>();
+
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
 		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxObjectCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
@@ -656,7 +654,7 @@ namespace tke
 		}
 	}
 
-	void DeferredRenderer::do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
+	void DeferredRenderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data)
 	{
 		auto scene = (Scene*)user_data;
 
@@ -672,6 +670,7 @@ namespace tke
 			stru.viewportDim = glm::vec2(res_cx, res_cy);
 			matrixBuffer->update(&stru, defalut_staging_buffer);
 		}
+
 		if (scene->needUpdateSky)
 		{
 			auto funUpdateIBL = [&]() {
@@ -880,7 +879,7 @@ namespace tke
 
 		std::vector<Object*> staticObjects;
 		std::vector<Object*> animatedObjects;
-		if (scene->needUpdateIndirectBuffer)
+		if (scene->object_count_dirty)
 		{
 			staticObjects.clear();
 			animatedObjects.clear();
@@ -1029,6 +1028,12 @@ namespace tke
 			}
 		}
 
+		if (scene->light_count_dirty)
+		{
+			unsigned int count = scene->lights.size();
+			lightBuffer->update(&count, defalut_staging_buffer, sizeof(int));
+		}
+
 		if (scene->lights.size() > 0)
 		{ // light attribute
 			int lightIndex = 0;
@@ -1061,6 +1066,9 @@ namespace tke
 		}
 
 		updateDescriptorSets(writes.size(), writes.data());
+
+		cb->reset();
+		cb->begin();
 
 		if (enable_shadow)
 		{
@@ -1192,5 +1200,9 @@ namespace tke
 		cb->draw(3);
 
 		cb->endRenderPass();
+
+		cb->end();
+
+		addCb(cb->v);
 	}
 }

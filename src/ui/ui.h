@@ -37,4 +37,12 @@ namespace tke
 	void beginUi(bool _need_clear);
 	void endUi();
 	int get_ui_image_index(std::shared_ptr<Image> i);
+
+	namespace ui
+	{
+		struct Window
+		{
+			bool dirty = true;
+		};
+	}
 }

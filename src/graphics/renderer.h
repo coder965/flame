@@ -21,19 +21,11 @@ namespace tke
 	struct CommandBuffer;
 	struct Object;
 
-	struct Renderer
-	{
-		std::unique_ptr<CommandBuffer> cb;
-
-		Renderer();
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) = 0;
-		void render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
-
-	};
-
-	struct PlainRenderer : Renderer
+	struct PlainRenderer
 	{
 		static bool first;
+
+		std::unique_ptr<CommandBuffer> cb;
 
 		static UniformBuffer *last_bone_buffer_mode0;
 		static UniformBuffer *last_bone_buffer_mode2;
@@ -77,13 +69,15 @@ namespace tke
 		};
 
 		PlainRenderer();
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
-		void render_to(CommandBuffer *cb, Camera *camera, DrawData *data);
+		void render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data);
+		void do_render(CommandBuffer *cb, Camera *camera, DrawData *data);
 	};
 
-	struct LinesRenderer : Renderer
+	struct LinesRenderer
 	{
 		static bool first;
+
+		std::unique_ptr<CommandBuffer> cb;
 
 		struct Vertex
 		{
@@ -98,7 +92,7 @@ namespace tke
 		};
 
 		LinesRenderer();
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
+		void render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
 	};
 
 	enum { MaxObjectCount = 1024 };
@@ -114,10 +108,12 @@ namespace tke
 
 	enum { MaxIndirectCount = 1024 };
 
-	struct DeferredRenderer : Renderer
+	struct DeferredRenderer
 	{
 		static bool defe_inited;
 		static bool shad_inited;
+
+		std::unique_ptr<CommandBuffer> cb;
 
 		std::unique_ptr<UniformBuffer> matrixBuffer;
 		std::unique_ptr<UniformBuffer> objectMatrixBuffer;
@@ -157,6 +153,6 @@ namespace tke
 		int animatedIndirectCount = 0;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
-		virtual void do_render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data) override;
+		void render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
 	};
 }

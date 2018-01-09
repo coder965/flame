@@ -2,6 +2,22 @@
 
 namespace tke
 {
+	glm::vec3 physx_u32_to_vec3(const physx::PxU32 &src)
+	{
+		unsigned int t = src;
+		float r = (t % 256) / 255.f;
+		t /= 256;
+		float g = (t % 256) / 255.f;
+		t /= 256;
+		float b = (t % 256) / 255.f;
+		return glm::vec3(r, g, b);
+	}
+
+	glm::vec3 physx_vec3_to_vec3(const physx::PxVec3 &src)
+	{
+		return glm::vec3(src.x, src.y, src.z);
+	}
+
 	std::string shapeTypeName(ShapeType t)
 	{
 		char *names[] = {

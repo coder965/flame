@@ -55,8 +55,10 @@ namespace tke
 
 		bool needUpdateSky = true;
 		bool needUpdateAmbientBuffer = true;
-		bool needUpdateIndirectBuffer = true;
-		bool needUpdateLightCount = true;
+		bool light_count_dirty = true;
+		bool object_count_dirty = true;
+		bool terrain_count_dirty = true;
+		bool water_count_dirty = true;
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 

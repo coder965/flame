@@ -53,7 +53,7 @@ bool TransformerTool::leftDown(int x, int y)
 	if (!draw_data.obj_data.empty())
 	{
 		draw_data.mode = tke::PlainRenderer::mode_just_color;
-		auto index = tke::pick_up(x, y, std::bind( &tke::PlainRenderer::render_to, 
+		auto index = tke::pick_up(x, y, std::bind( &tke::PlainRenderer::do_render, 
 			renderer.get(), std::placeholders::_1, currentCamera, &draw_data));
 		selectedAxis = index - 1;
 		return index != 0;

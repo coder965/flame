@@ -304,7 +304,7 @@ void SceneEditor::do_show()
 						draw_data.obj_data.push_back(obj_data);
 					}
 					auto index = tke::pick_up(x, y, std::bind(
-						&tke::PlainRenderer::render_to,
+						&tke::PlainRenderer::do_render,
 						plain_renderer.get(), std::placeholders::_1, &scene->camera, &draw_data));
 					if (index == 0)
 						selected.reset();
@@ -403,18 +403,10 @@ void SceneEditor::do_show()
 			for (int i = 0; i < lineCount; i++)
 			{
 				auto &line = rb.getLines()[i];
-				vtx_dst[0].position.x = line.pos0.x;
-				vtx_dst[0].position.y = line.pos0.y;
-				vtx_dst[0].position.z = line.pos0.z;
-				vtx_dst[0].color.r = line.color0 % 256;
-				vtx_dst[0].color.g = (line.color0 / 256) % 256;
-				vtx_dst[0].color.b = (line.color0 / 65536) % 256;
-				vtx_dst[1].position.x = line.pos1.x;
-				vtx_dst[1].position.y = line.pos1.y;
-				vtx_dst[1].position.z = line.pos1.z;
-				vtx_dst[1].color.r = line.color1 % 256;
-				vtx_dst[1].color.g = (line.color1 / 256) % 256;
-				vtx_dst[1].color.b = (line.color1 / 65536) % 256;
+				vtx_dst[0].position = tke::physx_vec3_to_vec3(line.pos0);
+				vtx_dst[0].color = tke::physx_u32_to_vec3(line.color0);
+				vtx_dst[1].position = tke::physx_vec3_to_vec3(line.pos1);
+				vtx_dst[1].color = tke::physx_u32_to_vec3(line.color1);
 				vtx_dst += 2;
 			}
 			physx_vertex_buffer->unmap();
