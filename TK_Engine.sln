@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "editor", "editor\editor.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Reflect", "program\reflect\reflect.vcxproj", "{8D428B63-50BD-4EEA-B4D8-E1D35630EA21}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "new_ui", "new_ui_test\new_ui.vcxproj", "{44C95411-C43B-4BED-92BC-5D08E7F3751C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -56,6 +58,14 @@ Global
 		{8D428B63-50BD-4EEA-B4D8-E1D35630EA21}.Release|x64.Build.0 = Release|x64
 		{8D428B63-50BD-4EEA-B4D8-E1D35630EA21}.Release|x86.ActiveCfg = Release|Win32
 		{8D428B63-50BD-4EEA-B4D8-E1D35630EA21}.Release|x86.Build.0 = Release|Win32
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Debug|x64.ActiveCfg = Debug|x64
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Debug|x64.Build.0 = Debug|x64
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Debug|x86.ActiveCfg = Debug|Win32
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Debug|x86.Build.0 = Debug|Win32
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Release|x64.ActiveCfg = Release|x64
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Release|x64.Build.0 = Release|x64
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Release|x86.ActiveCfg = Release|Win32
+		{44C95411-C43B-4BED-92BC-5D08E7F3751C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
