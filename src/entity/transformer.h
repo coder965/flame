@@ -32,7 +32,7 @@ namespace tke
 		bool needUpdateQuat = false;
 		bool needUpdateMat = false;
 
-		bool changed = true;
+		bool dirty = true;
 
 		Transformer();
 		Transformer(glm::mat3 &rotation, glm::vec3 coord);

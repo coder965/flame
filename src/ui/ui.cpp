@@ -176,7 +176,7 @@ namespace tke
 	}
 
 	static std::map<Image*, int> _images_map;
-	static std::pair<std::shared_ptr<Image>, int> _images[127];
+	static std::pair<std::shared_ptr<Image>, Op> _images[127];
 
 	static bool need_clear = false;
 	void beginUi(bool _need_clear)
@@ -210,7 +210,7 @@ namespace tke
 		ImGui::main_menu_alive = false;
 
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
-			_images[i].second = 0;
+			_images[i].second = OpNeedRemove;
 	}
 
 	void endUi()
@@ -331,7 +331,7 @@ namespace tke
 		auto it = _images_map.find(img.get());
 		if (it != _images_map.end())
 		{
-			_images[it->second].second = 1;
+			_images[it->second].second = OpKeep;
 			return it->second + 1;
 		}
 		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
@@ -339,7 +339,7 @@ namespace tke
 			if (!_images[i].first)
 			{
 				_images[i].first = img;
-				_images[i].second = 2;
+				_images[i].second = OpNeedUpdate;
 				_images_map[img.get()] = i;
 				return i + 1;
 			}

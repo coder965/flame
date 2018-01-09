@@ -2,6 +2,7 @@
 
 #include <mutex>
 
+#include "../global.h"
 #include "../math/math.h"
 #include "node.h"
 #include "camera.h"
@@ -16,7 +17,6 @@ namespace physx
 
 namespace tke
 {
-	enum { MaxShadowCount = 4 };
 
 	struct Light;
 	struct Object;
@@ -64,7 +64,7 @@ namespace tke
 		bool terrain_count_dirty = true;
 		bool water_count_dirty = true;
 
-		static std::weak_ptr<Light> shadow_lights[MaxShadowCount];
+		std::pair<std::weak_ptr<Light>, Op> shadow_lights[MaxShadowCount];
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 

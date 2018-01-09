@@ -18,6 +18,30 @@ namespace tke
 		return glm::vec3(src.x, src.y, src.z);
 	}
 
+	physx::PxVec3 vec3_to_physx_vec3(const glm::vec3 &src)
+	{
+		return physx::PxVec3(src.x, src.y, src.z);
+	}
+
+	physx::PxMat33 mat3_to_physx_mat3(const glm::mat3 &src)
+	{
+		return physx::PxMat33(
+			physx::PxVec3(src[0][0], src[0][1], src[0][2]),
+			physx::PxVec3(src[1][0], src[1][1], src[1][2]),
+			physx::PxVec3(src[2][0], src[2][1], src[2][2])
+		);
+	}
+
+	physx::PxTransform get_physx_trans(const glm::vec3 &coord, const glm::vec4 &quat)
+	{
+		return physx::PxTransform(vec3_to_physx_vec3(coord), physx::PxQuat(quat.x, quat.y, quat.z, quat.w));
+	}
+
+	physx::PxTransform get_physx_trans(const glm::vec3 &coord, const glm::mat3 &axis)
+	{
+		return physx::PxTransform(vec3_to_physx_vec3(coord), physx::PxQuat(mat3_to_physx_mat3(axis)));
+	}
+
 	std::string shapeTypeName(ShapeType t)
 	{
 		char *names[] = {
@@ -43,15 +67,14 @@ namespace tke
 
 	float Shape::getVolume() const
 	{
-		auto size = getScale();
 		switch (type)
 		{
 		case ShapeType::box:
-			return size.x * size.y * size.z * 8.f;
+			return scale.x * scale.y * scale.z * 8.f;
 		case ShapeType::sphere:
-			return 4.f * size.x * size.x * size.x * M_PI / 3.f;
+			return 4.f * scale.x * scale.x * scale.x * M_PI / 3.f;
 		case ShapeType::capsule:
-			return 4.f * size.x * size.x * size.x * M_PI / 3.f + M_PI * size.x * size.x * size.y;
+			return 4.f * scale.x * scale.x * scale.x * M_PI / 3.f + M_PI * scale.x * scale.x * scale.y;
 		}
 		return 0.f;
 	}
@@ -67,9 +90,7 @@ namespace tke
 
 	Shape *Rigidbody::new_shape()
 	{
-		static auto magicNumber = 0;
 		auto s = new Shape;
-		s->id = magicNumber++;
 		shapes.emplace_back(s);
 		return s;
 	}

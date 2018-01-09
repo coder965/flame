@@ -57,4 +57,13 @@ namespace tke
 		MaterialBufferDescriptorBinding,
 		MaterialImagesDescriptorBinding
 	};
+
+	enum { MaxShadowCount = 4 };
+
+	enum Op
+	{
+		OpNeedRemove,
+		OpKeep,
+		OpNeedUpdate
+	};
 }

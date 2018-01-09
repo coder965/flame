@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "../global.h"
 #include "../math/math.h"
 #include "../resource/resource.h"
 #include "graphics.h"

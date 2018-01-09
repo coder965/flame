@@ -96,7 +96,9 @@ namespace tke
 	glm::mat3 quaternion_to_mat3(glm::vec4 &q);
 	glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
 	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
+	glm::mat3 euler_yzx_to_mat3(float x, float y, float z);
 	glm::mat3 euler_yzx_to_mat3(glm::vec3 &e);
+	glm::mat3 euler_yxz_to_mat3(float x, float y, float z);
 	glm::mat3 euler_yxz_to_mat3(glm::vec3 &e);
 	glm::mat4 makeMatrix(glm::mat3 &rotation, glm::vec3 coord);
 

@@ -78,7 +78,7 @@ namespace tke
 			if (it->get() == l)
 			{
 				for (auto itt = it + 1; itt != lights.end(); itt++)
-					(*itt)->changed = true;
+					(*itt)->dirty = true;
 				it = lights.erase(it);
 				l = it == lights.end() ? nullptr : it->get();
 				break;
@@ -116,41 +116,31 @@ namespace tke
 				auto objScale = o->getScale();
 				auto objCoord = o->getCoord();
 				auto objAxis = o->getAxis();
-				physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
-					physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
-					physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
-					physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
+				auto objTrans = get_physx_trans(objCoord, objAxis);
 
 				for (auto &r : m->rigidbodies)
 				{
 					auto rigidbodyData = new ObjectRigidBodyData;
 					rigidbodyData->rigidbody = r.get();
 
-					auto rigidCoord = r->getCoord();
+					auto rigidCoord = r->coord;
 					if (r->boneID != -1) 
 						rigidCoord += m->bones[r->boneID]->rootCoord;
 					rigidCoord *= objScale;
-					auto rigidAxis = r->getAxis();
+					auto rigidAxis = quaternion_to_mat3(r->quat);
 
 					rigidbodyData->rotation = objAxis * rigidAxis;
 					rigidbodyData->coord = objCoord + objAxis * rigidCoord;
-					physx::PxTransform rigTrans(rigidCoord.x, rigidCoord.y, rigidCoord.z, physx::PxQuat(physx::PxMat33(
-						physx::PxVec3(rigidAxis[0][0], rigidAxis[0][1], rigidAxis[0][2]),
-						physx::PxVec3(rigidAxis[1][0], rigidAxis[1][1], rigidAxis[1][2]),
-						physx::PxVec3(rigidAxis[2][0], rigidAxis[2][1], rigidAxis[2][2]))));
+					auto rigTrans = get_physx_trans(rigidCoord, rigidAxis);
 					rigTrans = objTrans * rigTrans;
-					auto actor = ((o->physics_type & (int)ObjectPhysicsType::dynamic) && (r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
+					auto actor = ((o->physics_type & (int)ObjectPhysicsType::dynamic) && 
+						(r->type == RigidbodyType::dynamic || r->type == RigidbodyType::dynamic_but_location)) ?
 						createDynamicRigidActor(rigTrans, false, r->density) : createStaticRigidActor(rigTrans);
 
 					for (auto &s : r->shapes)
 					{
-						glm::vec3 coord = s->getCoord() * objScale;
-						glm::mat3 axis = s->getAxis();
-						glm::vec3 scale = s->getScale() * objScale;
-						physx::PxTransform trans(coord.x, coord.y, coord.z, physx::PxQuat(physx::PxMat33(
-							physx::PxVec3(axis[0][0], axis[0][1], axis[0][2]),
-							physx::PxVec3(axis[1][0], axis[1][1], axis[1][2]),
-							physx::PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
+						glm::vec3 scale = s->scale * objScale;
+						auto trans = get_physx_trans(s->coord * objScale, s->quat);
 						switch (s->type)
 						{
 						case ShapeType::box:
@@ -160,7 +150,8 @@ namespace tke
 							actor->createShape(physx::PxSphereGeometry(scale[0]), *pxDefaultMaterial, trans);
 							break;
 						case ShapeType::capsule:
-							actor->createShape(physx::PxCapsuleGeometry(scale[0], scale[1]), *pxDefaultMaterial, trans * physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
+							actor->createShape(physx::PxCapsuleGeometry(scale[0], scale[1]), *pxDefaultMaterial, trans * 
+								physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
 							break;
 						}
 					}
@@ -261,7 +252,7 @@ namespace tke
 			if (it->get() == o)
 			{
 				for (auto itt = it + 1; itt != objects.end(); itt++)
-					(*itt)->changed = true;
+					(*itt)->dirty = true;
 				if (o->pxController)
 					o->pxController->release();
 				it = objects.erase(it);
@@ -342,7 +333,7 @@ namespace tke
 			if (it->get() == t)
 			{
 				for (auto itt = it + 1; itt != terrains.end(); itt++)
-					(*itt)->changed = true;
+					(*itt)->dirty = true;
 				it = terrains.erase(it);
 				t = it == terrains.end() ? nullptr : it->get();
 				break;
@@ -370,7 +361,7 @@ namespace tke
 			if (it->get() == w)
 			{
 				for (auto itt = it + 1; itt != waters.end(); itt++)
-					(*itt)->changed = true;
+					(*itt)->dirty = true;
 				it = waters.erase(it);
 				w = it == waters.end() ? nullptr : it->get();
 				break;
@@ -389,15 +380,15 @@ namespace tke
 		object_count_dirty = false;
 		terrain_count_dirty = false;
 		water_count_dirty = false;
-		camera.changed = false;
+		camera.dirty = false;
 		for (auto &l : lights)
-			l->changed = false;
+			l->dirty = false;
 		for (auto &o : objects)
-			o->changed = false;
+			o->dirty = false;
 		for (auto &t : terrains)
-			t->changed = false;
+			t->dirty = false;
 		for (auto &w : waters)
-			w->changed = false;
+			w->dirty = false;
 	}
 
 	void Scene::clear()
@@ -539,9 +530,9 @@ namespace tke
 		}
 
 		camera.move();
-		if (camera.changed || camera.object)
+		if (camera.dirty || camera.object)
 			camera.lookAtTarget();
-		if (camera.changed)
+		if (camera.dirty)
 			camera.updateFrustum();
 	}
 
@@ -607,7 +598,7 @@ namespace tke
 				o->needUpdateAxis = true;
 				o->needUpdateQuat = true;
 				o->needUpdateMat = true;
-				o->changed = true;
+				o->dirty = true;
 				s->addObject(o);
 			}
 			else if (c->name == "light")
@@ -632,7 +623,7 @@ namespace tke
 				t->needUpdateAxis = true;
 				t->needUpdateQuat = true;
 				t->needUpdateMat = true;
-				t->changed = true;
+				t->dirty = true;
 				s->addTerrain(t);
 			}
 		}

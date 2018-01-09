@@ -10,7 +10,7 @@ namespace tke
 	void Light::setColor(const glm::vec3 &v)
 	{
 		color = v;
-		changed = true;
+		dirty = true;
 	}
 
 	std::string getLightTypeName(LightType _type)

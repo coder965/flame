@@ -14,21 +14,21 @@ namespace tke
 	{
 		mode = _mode;
 		needUpdateMat = true;
-		changed = true;
+		dirty = true;
 	}
 
 	void Camera::setLength(float _length)
 	{
 		length = _length;
 		needUpdateMat = true;
-		changed = true;
+		dirty = true;
 	}
 
 	void Camera::setTarget(const glm::vec3 &_target)
 	{
 		target = _target;
 		needUpdateMat = true;
-		changed = true;
+		dirty = true;
 	}
 
 	void Camera::lookAtTarget()
@@ -44,7 +44,7 @@ namespace tke
 			if (needUpdateAxis) updateAxis();
 			coord = target + axis[2] * length;
 			needUpdateMat = true;
-			changed = true;
+			dirty = true;
 		}
 	}
 
@@ -122,7 +122,7 @@ namespace tke
 		coord = glm::vec3(0.f);
 		length = 1.0f;
 		needUpdateMat = true;
-		changed = true;
+		dirty = true;
 	}
 
 	void Camera::rotateByCursor(float x, float y)
@@ -153,7 +153,7 @@ namespace tke
 				coord += glm::normalize(target - coord) * 0.5f;
 			}
 			needUpdateMat = true;
-			changed = true;
+			dirty = true;
 		}
 	}
 

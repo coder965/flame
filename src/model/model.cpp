@@ -85,9 +85,7 @@ namespace tke
 
 	Rigidbody *Model::new_rigidbody()
 	{
-		static auto magicNumber = 0;
 		auto r = new Rigidbody;
-		r->id = magicNumber++;
 		rigidbodies.emplace_back(r);
 		return r;
 	}
@@ -106,9 +104,7 @@ namespace tke
 
 	Joint *Model::new_joint()
 	{
-		static auto magicNumber = 0;
 		auto j = new Joint;
-		j->id = magicNumber++;
 		joints.emplace_back(j);
 		return j;
 	}
@@ -953,10 +949,9 @@ namespace tke
 				r->originCollisionGroupID = data.collisionGroupNumber;
 				r->originCollisionFreeFlag = data.collisionGroupMask;
 				data.location.z *= -1.f;
-				r->setCoord(data.location);
+				r->coord = data.location;
 				data.rotation = glm::degrees(data.rotation);
-				r->setQuat(mat3_to_quaternion(euler_yxz_to_mat3(
-					glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z))));
+				r->quat = mat3_to_quaternion(euler_yxz_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
 				r->type = (RigidbodyType)data.mode;
 				auto s = r->new_shape();
 				switch (data.type)
@@ -981,7 +976,7 @@ namespace tke
 						data.size.z = data.size.x;
 						break;
 				}
-				s->setScale(data.size);
+				s->scale = data.size;
 				auto v = s->getVolume();
 				if (v != 0.f) 
 					r->density = data.mass / v;
@@ -1006,9 +1001,8 @@ namespace tke
 				j->sprintRotationConstant = data.springRotationConstant;
 
 				data.coord.z *= -1.f;
-				j->setCoord(data.coord);
-				j->setQuat(mat3_to_quaternion(euler_yxz_to_mat3(
-					glm::vec3(-data.rotation.y, -data.rotation.x, data.rotation.z))));
+				j->coord = data.coord;
+				j->quat = mat3_to_quaternion(euler_yxz_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
 			}
 
 			_process_model(m, true);
@@ -1395,12 +1389,8 @@ namespace tke
 				file & r->originCollisionGroupID;
 				file & r->originCollisionFreeFlag;
 				file & r->boneID;
-				glm::vec3 coord;
-				file & coord;
-				r->setCoord(coord);
-				glm::vec3 euler;
-				file & euler;
-				r->setEuler(euler);
+				file & r->coord;
+				file & r->quat;
 				file & r->density;
 				file & r->velocityAttenuation;
 				file & r->rotationAttenuation;
@@ -1412,15 +1402,9 @@ namespace tke
 				for (int j = 0; j < shapeCount; j++)
 				{
 					auto s = r->new_shape();
-					glm::vec3 coord;
-					file & coord;
-					s->setCoord(coord);
-					glm::vec3 euler;
-					file & euler;
-					s->setEuler(euler);
-					glm::vec3 scale;
-					file & scale;
-					s->setScale(scale);
+					file & s->coord;
+					file & s->quat;
+					file & s->scale;
 					int type;
 					file & type;
 					s->type = (ShapeType)type;
@@ -1432,12 +1416,8 @@ namespace tke
 			for (int i = 0; i < jointCount; i++)
 			{
 				auto j = m->new_joint();
-				glm::vec3 coord;
-				file & coord;
-				j->setCoord(coord);
-				glm::vec3 euler;
-				file & euler;
-				j->setEuler(euler);
+				file & j->coord;
+				file & j->quat;
 				file & j->rigid0ID;
 				file & j->rigid1ID;
 				file & j->maxCoord;
@@ -1537,8 +1517,8 @@ namespace tke
 				file & r->originCollisionGroupID;
 				file & r->originCollisionFreeFlag;
 				file & r->boneID;
-				file & r->getCoord();
-				file & r->getEuler();
+				file & r->coord;
+				file & r->quat;
 				file & r->density;
 				file & r->velocityAttenuation;
 				file & r->rotationAttenuation;
@@ -1549,9 +1529,9 @@ namespace tke
 				file & shapeCount;
 				for (auto &s : r->shapes)
 				{
-					file & s->getCoord();
-					file & s->getEuler();
-					file & s->getScale();
+					file & s->coord;
+					file & s->quat;
+					file & s->scale;
 					int type = (int)s->type;
 					file & type;
 				}
@@ -1561,8 +1541,8 @@ namespace tke
 			file & jointCount;
 			for (auto &j : m->joints)
 			{
-				file & j->getCoord();
-				file & j->getEuler();
+				file & j->coord;
+				file & j->quat;
 				file & j->rigid0ID;
 				file & j->rigid1ID;
 				file & j->maxCoord;
@@ -1840,7 +1820,7 @@ namespace tke
 			r->type = RigidbodyType::dynamic;
 			auto s = r->new_shape();
 			s->type = ShapeType::box;
-			s->setScale(glm::vec3(0.5f));
+			s->scale = glm::vec3(0.5f);
 
 			_process_model(m.get(), true);
 
@@ -1888,7 +1868,7 @@ namespace tke
 			r->type = RigidbodyType::dynamic;
 			auto s = r->new_shape();
 			s->type = ShapeType::sphere;
-			s->setScale(glm::vec3(0.5f));
+			s->scale = glm::vec3(0.5f);
 
 			_process_model(m.get(), true);
 
@@ -1931,7 +1911,7 @@ namespace tke
 			r->type = RigidbodyType::dynamic;
 			auto s = r->new_shape();
 			s->type = ShapeType::capsule;
-			s->setScale(glm::vec3(0.5f));
+			s->scale = glm::vec3(0.5f);
 
 			_process_model(m.get(), true);
 

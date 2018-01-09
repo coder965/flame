@@ -127,7 +127,7 @@ namespace tke
 	{
 		coord = _coord;
 		needUpdateMat = true;
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::addCoord(const glm::vec3 &_coord)
@@ -144,7 +144,7 @@ namespace tke
 		needUpdateQuat = true;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::addEuler(const glm::vec3 &_euler)
@@ -160,7 +160,7 @@ namespace tke
 		needUpdateQuat = false;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::axisRotate(Axis which, float angle)
@@ -195,7 +195,7 @@ namespace tke
 		needUpdateQuat = true;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::leftRotate(const glm::mat3 &left)
@@ -207,7 +207,7 @@ namespace tke
 		needUpdateQuat = true;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::rightRotate(const glm::mat3 &right)
@@ -219,7 +219,7 @@ namespace tke
 		needUpdateQuat = true;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::setScale(const glm::vec3 &_scale)
@@ -227,7 +227,7 @@ namespace tke
 		scale = _scale;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::addScale(const glm::vec3 &_scale)
@@ -240,7 +240,7 @@ namespace tke
 		worldScale = _scale;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::scaleRelate(Transformer *t)
@@ -252,7 +252,7 @@ namespace tke
 		coord += t->coord;
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 
 	void Transformer::relate(Transformer *t)
@@ -261,6 +261,6 @@ namespace tke
 		axis *= glm::transpose(t->axis);
 		needUpdateMat = true;
 
-		changed = true;
+		dirty = true;
 	}
 }

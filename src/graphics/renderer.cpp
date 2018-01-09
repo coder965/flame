@@ -787,7 +787,7 @@ namespace tke
 
 			for (auto &o : scene->objects)
 			{
-				if (o->changed)
+				if (o->dirty)
 				{
 					auto srcOffset = sizeof(glm::mat4) * ranges.size();
 					memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
@@ -813,7 +813,7 @@ namespace tke
 			auto index = 0;
 			for (auto &t : scene->terrains)
 			{
-				if (t->changed)
+				if (t->dirty)
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
@@ -855,7 +855,7 @@ namespace tke
 			auto index = 0;
 			for (auto &w : scene->waters)
 			{
-				if (w->changed)
+				if (w->dirty)
 				{
 					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
 					WaterShaderStruct stru;
@@ -968,7 +968,7 @@ namespace tke
 
 					if (l->type == LightType::parallax)
 					{
-						if (l->changed || scene->camera.changed)
+						if (l->dirty || scene->camera.dirty)
 						{
 							glm::vec3 p[8];
 							auto cameraCoord = scene->camera.coord;
@@ -1010,7 +1010,7 @@ namespace tke
 					}
 					else if (l->type == LightType::point)
 					{
-						if (l->changed)
+						if (l->dirty)
 						{
 							glm::mat4 shadowMatrix[6];
 
@@ -1044,7 +1044,7 @@ namespace tke
 			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
 			for (auto &l : scene->lights)
 			{
-				if (l->changed)
+				if (l->dirty)
 				{
 					LightShaderStruct stru;
 					if (l->type == LightType::parallax)

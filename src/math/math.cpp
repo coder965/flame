@@ -123,6 +123,11 @@ namespace tke
 		v.z = s * z + i * y - j * x;
 	}
 
+	glm::mat3 euler_yzx_to_mat3(float x, float y, float z)
+	{
+		return euler_yzx_to_mat3(glm::vec3(x, y, z));
+	}
+
 	glm::mat3 euler_yzx_to_mat3(glm::vec3 &e)
 	{
 		using namespace glm;
@@ -141,6 +146,11 @@ namespace tke
 		mat[1] = y;
 		mat[2] = z;
 		return mat;
+	}
+
+	glm::mat3 euler_yxz_to_mat3(float x, float y, float z)
+	{
+		return euler_yxz_to_mat3(x, y, z);
 	}
 
 	glm::mat3 euler_yxz_to_mat3(glm::vec3 &e)
