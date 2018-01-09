@@ -363,7 +363,7 @@ namespace tke
 		std::function<void()> e;
 	};
 	std::vector<_Event> _beforeFrameEvents;
-	void addBeforeFrameEvent(const std::function<void()> &e, int id, EventType event_type)
+	void add_before_frame_event(const std::function<void()> &e, int id, EventType event_type)
 	{
 		bool dontAdd = false;
 		if (id != -1 && event_type == EventTypeOnlyOne)
@@ -381,7 +381,7 @@ namespace tke
 			});
 	}
 
-	void beginFrame(bool clearBackground)
+	void begin_frame(bool clearBackground)
 	{
 		for (auto &e : _beforeFrameEvents)
 			e.e();
@@ -395,12 +395,12 @@ namespace tke
 
 	static std::vector<VkCommandBuffer> _cbs;
 
-	void addCb(VkCommandBuffer cb)
+	void add_to_drawlist(VkCommandBuffer cb)
 	{
 		_cbs.push_back(cb);
 	}
 
-	void endFrame()
+	void end_frame()
 	{
 		endUi();
 

@@ -319,7 +319,7 @@ namespace tke
 
 			cb_ui->end();
 
-			addCb(cb_ui->v);
+			add_to_drawlist(cb_ui->v);
 		}
 
 		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();

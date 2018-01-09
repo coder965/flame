@@ -349,7 +349,7 @@ void SceneEditor::do_show()
 
 	scene->update();
 	if (enableRender)
-		defe_renderer->render(nullptr, true, nullptr, scene.get());
+		defe_renderer->render(scene.get());
 	scene->reset();
 
 	{

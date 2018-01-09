@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 	}
 
 	tke::onRender = []() {
-		tke::beginFrame(true);
+		tke::begin_frame(true);
 
 		if (ImGui::last_frame_main_menu_alive || tke::mouseY <= ImGui::GetFrameHeight())
 		{
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 		ImGui::Text("FPS:%d", tke::FPS);
 		ImGui::End();
 
-		tke::endFrame();
+		tke::end_frame();
 
 		for (auto it = windows.begin(); it != windows.end(); )
 		{

@@ -61,15 +61,15 @@ namespace tke
 		EventTypeEvent,
 		EventTypeOnlyOne
 	};
-	void addBeforeFrameEvent(const std::function<void()>&, int id = -1, EventType event_type = EventTypeEvent);
+	void add_before_frame_event(const std::function<void()>&, int id = -1, EventType event_type = EventTypeEvent);
 
 	// must call in main thread
-	void beginFrame(bool clearBackground);
+	void begin_frame(bool clearBackground);
 
-	void addCb(VkCommandBuffer cb);
+	void add_to_drawlist(VkCommandBuffer cb);
 
 	// must call in main thread
-	void endFrame();
+	void end_frame();
 
 	void run();
 }

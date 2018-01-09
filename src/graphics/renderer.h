@@ -19,6 +19,7 @@ namespace tke
 	struct DescriptorSet;
 	struct Framebuffer;
 	struct CommandBuffer;
+	struct Scene;
 	struct Object;
 
 	struct PlainRenderer
@@ -92,7 +93,7 @@ namespace tke
 		};
 
 		LinesRenderer();
-		void render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
+		void render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data);
 	};
 
 	enum { MaxObjectCount = 1024 };
@@ -113,7 +114,8 @@ namespace tke
 		static bool defe_inited;
 		static bool shad_inited;
 
-		std::unique_ptr<CommandBuffer> cb;
+		std::unique_ptr<CommandBuffer> cb_defe;
+		std::unique_ptr<CommandBuffer> cb_shad;
 
 		std::unique_ptr<UniformBuffer> matrixBuffer;
 		std::unique_ptr<UniformBuffer> objectMatrixBuffer;
@@ -153,6 +155,6 @@ namespace tke
 		int animatedIndirectCount = 0;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
-		void render(Framebuffer *framebuffer, bool clear, Camera *camera, void *user_data);
+		void render(Scene *scene);
 	};
 }
