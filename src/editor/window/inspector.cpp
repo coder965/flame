@@ -149,7 +149,7 @@ void InspectorWindow::do_show()
 
 						auto coord = o->get_coord();
 						if (ImGui::DragFloat3("coord", &coord[0]))
-							o->setCoord(coord);
+							o->set_coord(coord);
 						auto euler = o->get_euler();
 						if (ImGui::DragFloat3("euler", &euler[0]))
 							o->setEuler(euler);

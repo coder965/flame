@@ -116,7 +116,7 @@ namespace tke
 		return matrix;
 	}
 
-	void Transformer::setCoord(const glm::vec3 &_coord)
+	void Transformer::set_coord(const glm::vec3 &_coord)
 	{
 		coord = _coord;
 		matrix_dirty = true;
@@ -125,7 +125,7 @@ namespace tke
 
 	void Transformer::addCoord(const glm::vec3 &_coord)
 	{
-		setCoord(coord + _coord);
+		set_coord(coord + _coord);
 	}
 
 	void Transformer::setEuler(const glm::vec3 &_euler)

@@ -43,12 +43,12 @@ namespace tke
 		glm::mat3 get_axis();
 		glm::mat4 get_matrix();
 
-		void setCoord(const glm::vec3 &_coord);
-		inline void setCoord(float x, float y, float z) { setCoord(glm::vec3(x, y, z)); }
-		inline void setCoord(float v) { setCoord(glm::vec3(v)); }
-		inline void setCoordX(float v) { auto p = get_coord();  setCoord(glm::vec3(v, p.y, p.z)); }
-		inline void setCoordY(float v) { auto p = get_coord();  setCoord(glm::vec3(p.x, v, p.z)); }
-		inline void setCoordZ(float v) { auto p = get_coord();  setCoord(glm::vec3(p.x, p.y, v)); }
+		void set_coord(const glm::vec3 &_coord);
+		inline void set_coord(float x, float y, float z) { set_coord(glm::vec3(x, y, z)); }
+		inline void set_coord(float v) { set_coord(glm::vec3(v)); }
+		inline void setCoordX(float v) { auto p = get_coord();  set_coord(glm::vec3(v, p.y, p.z)); }
+		inline void setCoordY(float v) { auto p = get_coord();  set_coord(glm::vec3(p.x, v, p.z)); }
+		inline void setCoordZ(float v) { auto p = get_coord();  set_coord(glm::vec3(p.x, p.y, v)); }
 		void addCoord(const glm::vec3 &_coord);
 		inline void addCoord(float x, float y, float z) { addCoord(glm::vec3(x, y, z)); }
 		inline void addCoord(float v) { addCoord(glm::vec3(v)); }
@@ -58,9 +58,9 @@ namespace tke
 		void setEuler(const glm::vec3 &_euler);
 		inline void setEuler(float x, float y, float z) { setEuler(glm::vec3(x, y, z)); }
 		inline void setEuler(float v) { setEuler(glm::vec3(v)); }
-		inline void setEulerX(float v) { auto p = get_euler();  setCoord(glm::vec3(v, p.y, p.z)); }
-		inline void setEulerY(float v) { auto p = get_euler();  setCoord(glm::vec3(p.x, v, p.z)); }
-		inline void setEulerZ(float v) { auto p = get_euler();  setCoord(glm::vec3(p.x, p.y, v)); }
+		inline void setEulerX(float v) { auto p = get_euler();  set_coord(glm::vec3(v, p.y, p.z)); }
+		inline void setEulerY(float v) { auto p = get_euler();  set_coord(glm::vec3(p.x, v, p.z)); }
+		inline void setEulerZ(float v) { auto p = get_euler();  set_coord(glm::vec3(p.x, p.y, v)); }
 		void addEuler(const glm::vec3 &_euler);
 		inline void addEuler(float x, float y, float z) { addEuler(glm::vec3(x, y, z)); }
 		inline void addEuler(float v) { addEuler(glm::vec3(v)); }

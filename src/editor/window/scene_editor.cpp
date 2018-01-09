@@ -73,7 +73,7 @@ void SceneEditor::on_menu_bar()
 					if (m)
 					{
 						auto o = new tke::Object(m, 0);
-						o->setCoord(scene->camera.target);
+						o->set_coord(scene->camera.target);
 						scene->addObject(o);
 					}
 				}
@@ -202,7 +202,7 @@ void SceneEditor::do_show()
 		if (ImGui::Button("Create"))
 		{
 			auto t = new tke::Terrain(64, 64, use_physx, tke::get_image(blend_image_name));
-			t->setCoord(coord);
+			t->set_coord(coord);
 			t->height = height;
 			scene->addTerrain(t);
 			ImGui::CloseCurrentPopup();

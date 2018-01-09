@@ -476,7 +476,7 @@ namespace tke
 							auto trans = data->actor->getGlobalPose();
 							auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
 							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
-							o->setCoord(coord);
+							o->set_coord(coord);
 							o->setQuat(quat);
 							data->coord = coord;
 							data->rotation = quaternion_to_mat3(quat);
@@ -524,7 +524,7 @@ namespace tke
 				{
 					auto p = o->pxController->getPosition();
 					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->get_scale();
-					o->setCoord(c);
+					o->set_coord(c);
 				}
 			}
 		}
