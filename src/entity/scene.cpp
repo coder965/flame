@@ -78,10 +78,7 @@ namespace tke
 			if (it->get() == l)
 			{
 				for (auto itt = it + 1; itt != lights.end(); itt++)
-				{
-					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
-				}
 				it = lights.erase(it);
 				l = it == lights.end() ? nullptr : it->get();
 				break;
@@ -264,10 +261,7 @@ namespace tke
 			if (it->get() == o)
 			{
 				for (auto itt = it + 1; itt != objects.end(); itt++)
-				{
-					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
-				}
 				if (o->pxController)
 					o->pxController->release();
 				it = objects.erase(it);
@@ -348,10 +342,7 @@ namespace tke
 			if (it->get() == t)
 			{
 				for (auto itt = it + 1; itt != terrains.end(); itt++)
-				{
-					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
-				}
 				it = terrains.erase(it);
 				t = it == terrains.end() ? nullptr : it->get();
 				break;
@@ -379,10 +370,7 @@ namespace tke
 			if (it->get() == w)
 			{
 				for (auto itt = it + 1; itt != waters.end(); itt++)
-				{
-					(*itt)->sceneIndex--;
 					(*itt)->changed = true;
-				}
 				it = waters.erase(it);
 				w = it == waters.end() ? nullptr : it->get();
 				break;

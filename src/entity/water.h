@@ -14,8 +14,6 @@ namespace tke
 		float height = 10.f;
 		float tessellationFactor = 0.75f;
 		float textureUvFactor = 8.f;
-
-		int sceneIndex = -1;
 	};
 
 }

@@ -16,6 +16,8 @@ namespace physx
 
 namespace tke
 {
+	enum { MaxShadowCount = 4 };
+
 	struct Light;
 	struct Object;
 	struct Terrain;
@@ -34,8 +36,12 @@ namespace tke
 		std::unique_ptr<Sky> sky;
 		bool enable_sun_light = true;
 
+		bool needUpdateSky = true;
+
 		float hdrExposure = 0.01f;
 		float hdrWhite = 1.f;
+
+		bool needUpdateAmbientBuffer = true;
 
 		glm::vec3 ambientColor = glm::vec3(0.5f);
 		glm::vec3 fogColor = glm::vec3(0.5f);
@@ -53,12 +59,12 @@ namespace tke
 		std::vector<std::shared_ptr<Terrain>> terrains;
 		std::vector<std::shared_ptr<Water>> waters;
 
-		bool needUpdateSky = true;
-		bool needUpdateAmbientBuffer = true;
 		bool light_count_dirty = true;
 		bool object_count_dirty = true;
 		bool terrain_count_dirty = true;
 		bool water_count_dirty = true;
+
+		static std::weak_ptr<Light> shadow_lights[MaxShadowCount];
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 

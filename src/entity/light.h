@@ -22,7 +22,6 @@ namespace tke
 
 		bool shadow;
 
-		int sceneIndex = -1;
 		int sceneShadowIndex = -1;
 
 		Light(LightType _type, bool _shadow = false);

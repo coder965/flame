@@ -71,7 +71,7 @@ layout(binding = 14) uniform ubo_shadow_
 	mat4 matrix[8];
 }ubo_shadow;
 
-layout(binding = 15) uniform sampler2D imgs_shadow[48];
+layout(binding = 15) uniform sampler2D imgs_shadow[24];
 
 layout(location = 0) in vec3 inViewDir;
 

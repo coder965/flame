@@ -49,8 +49,6 @@ namespace tke
 		physx::PxController *pxController = nullptr;
 		float floatingTime = 0.f;
 
-		int sceneIndex = -1;
-
 		Object();
 		Object(std::shared_ptr<Model> _model, unsigned int _physicsType = 0);
 		~Object();

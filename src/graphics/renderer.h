@@ -102,7 +102,6 @@ namespace tke
 	enum { MaxLightCount = 256 };
 	enum { MaxTerrainCount = 8 };
 	enum { MaxWaterCount = 8 };
-	enum { MaxShadowCount = 4 };
 
 	enum { EnvrSizeCx = 128 * 4 };
 	enum { EnvrSizeCy = 128 * 2 };

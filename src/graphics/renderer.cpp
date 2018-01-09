@@ -797,7 +797,6 @@ namespace tke
 					range.size = sizeof(glm::mat4);
 					ranges.push_back(range);
 				}
-				o->sceneIndex = index;
 				index++;
 			}
 			defalut_staging_buffer->unmap();
@@ -814,7 +813,6 @@ namespace tke
 			auto index = 0;
 			for (auto &t : scene->terrains)
 			{
-				t->sceneIndex = index;
 				if (t->changed)
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
@@ -857,7 +855,6 @@ namespace tke
 			auto index = 0;
 			for (auto &w : scene->waters)
 			{
-				w->sceneIndex = index;
 				if (w->changed)
 				{
 					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
@@ -990,12 +987,13 @@ namespace tke
 							auto halfDepth = glm::max(vMax.x - vMin.x, near_plane) * 0.5f;
 							auto center = lighAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
 							//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * 
-							glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
-							auto shadowMatrix = glm::mat4(1.f, 0.f, 0.f, 0.f,
-								0.f, 1.f, 0.f, 0.f,
-								0.f, 0.f, 0.5f, 0.f,
-								0.f, 0.f, 0.5f, 1.f) *
-								glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) *
+							//glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
+							auto shadowMatrix = glm::mat4(
+									1.f, 0.f, 0.f, 0.f,
+									0.f, 1.f, 0.f, 0.f,
+									0.f, 0.f, 0.5f, 0.f,
+									0.f, 0.f, 0.5f, 1.f
+								) * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) *
 								glm::lookAt(scene->camera.target + glm::vec3(0, 0, 100), scene->camera.target, glm::vec3(0, 1, 0));
 
 							auto srcOffset = sizeof(glm::mat4) * ranges.size();
@@ -1046,7 +1044,6 @@ namespace tke
 			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
 			for (auto &l : scene->lights)
 			{
-				l->sceneIndex = lightIndex;
 				if (l->changed)
 				{
 					LightShaderStruct stru;

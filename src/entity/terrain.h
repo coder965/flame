@@ -43,8 +43,6 @@ namespace tke
 
 		physx::PxRigidActor *actor = nullptr;
 
-		int sceneIndex = -1;
-
 		Terrain(int _block_cx = 64, int _block_cy = 64, bool _use_physx = false, 
 			std::shared_ptr<Image> _blendMap = nullptr);
 		void add_material(std::shared_ptr<Material> m);
