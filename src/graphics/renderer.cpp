@@ -239,7 +239,7 @@ namespace tke
 					break;
 			}
 
-			pc.modelview = camera->getMatInv() * d.mat;
+			pc.modelview = camera->get_view_matrix() * d.mat;
 			pc.color = d.color;
 			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 			for (auto &d : d.geo_data)
@@ -293,7 +293,7 @@ namespace tke
 		cb->bindVertexBuffer(data->vertex_buffer);
 		cb->bindPipeline(pipeline_lines);
 
-		glm::mat4 mvp = matPerspective * camera->getMatInv();
+		glm::mat4 mvp = matPerspective * camera->get_view_matrix();
 		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
 		cb->draw(data->vertex_count);
 
@@ -667,8 +667,8 @@ namespace tke
 			MatrixBufferShaderStruct stru;
 			stru.proj = matPerspective;
 			stru.projInv = matPerspectiveInv;
-			stru.view = scene->camera.getMatInv();
-			stru.viewInv = scene->camera.getMat();
+			stru.view = scene->camera.get_view_matrix();
+			stru.viewInv = scene->camera.get_matrix();
 			stru.projView = stru.proj * stru.view;
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, scene->camera.frustumPlanes, sizeof(MatrixBufferShaderStruct::frustumPlanes));
@@ -731,7 +731,7 @@ namespace tke
 
 					cb->beginRenderPass(renderPass_image16, fb.get());
 					cb->bindPipeline(scatteringPipeline);
-					auto euler = as->sun_light->getEuler();
+					auto euler = as->sun_light->get_euler();
 					auto dir = glm::vec2(euler.x, euler.z);
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
 					cb->draw(3);
@@ -790,7 +790,7 @@ namespace tke
 				if (o->dirty)
 				{
 					auto srcOffset = sizeof(glm::mat4) * ranges.size();
-					memcpy(map + srcOffset, &o->getMat(), sizeof(glm::mat4));
+					memcpy(map + srcOffset, &o->get_matrix(), sizeof(glm::mat4));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
 					range.dstOffset = sizeof(glm::mat4) * index;
@@ -817,7 +817,7 @@ namespace tke
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
-					stru.coord = t->getCoord();
+					stru.coord = t->get_coord();
 					stru.block_cx = t->block_cx;
 					stru.block_cy = t->block_cy;
 					stru.block_size = t->block_size;
@@ -859,7 +859,7 @@ namespace tke
 				{
 					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
 					WaterShaderStruct stru;
-					stru.coord = w->getCoord();
+					stru.coord = w->get_coord();
 					stru.blockCx = w->blockCx;
 					stru.blockSize = w->blockSize;
 					stru.height = w->height;
@@ -973,7 +973,7 @@ namespace tke
 							glm::vec3 p[8];
 							auto cameraCoord = scene->camera.coord;
 							for (int i = 0; i < 8; i++) p[i] = scene->camera.frustumPoints[i] - cameraCoord;
-							auto lighAxis = l->getAxis();
+							auto lighAxis = l->get_axis();
 							auto axisT = glm::transpose(lighAxis);
 							auto vMax = axisT * p[0], vMin = vMax;
 							for (int i = 1; i < 8; i++)
@@ -1014,7 +1014,7 @@ namespace tke
 						{
 							glm::mat4 shadowMatrix[6];
 
-							auto coord = l->getCoord();
+							auto coord = l->get_coord();
 							auto proj = glm::perspective(90.f, 1.f, near_plane, far_plane);
 							shadowMatrix[0] = proj * glm::lookAt(coord, coord + glm::vec3(1, 0, 0), glm::vec3(0, -1, 0));
 							shadowMatrix[1] = proj * glm::lookAt(coord, coord + glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0));
@@ -1048,11 +1048,11 @@ namespace tke
 				{
 					LightShaderStruct stru;
 					if (l->type == LightType::parallax)
-						stru.coord = glm::vec4(l->getAxis()[2], 0.f);
+						stru.coord = glm::vec4(l->get_axis()[2], 0.f);
 					else
-						stru.coord = glm::vec4(l->getCoord(), l->type);
+						stru.coord = glm::vec4(l->get_coord(), l->type);
 					stru.color = glm::vec4(l->color, l->sceneShadowIndex);
-					stru.spotData = glm::vec4(-l->getAxis()[2], l->range);
+					stru.spotData = glm::vec4(-l->get_axis()[2], l->range);
 					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
 					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
 					VkBufferCopy range = {};

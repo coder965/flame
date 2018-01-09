@@ -140,7 +140,7 @@ void SceneEditor::on_menu_bar()
 		}
 
 		{
-			auto c = scene->camera.getCoord();
+			auto c = scene->camera.get_coord();
 			ImGui::Text("%f, %f, %f coord", c.x, c.y, c.z);
 		}
 
@@ -173,7 +173,7 @@ void SceneEditor::do_show()
 		{
 			glm::vec3 c;
 			if (!use_camera_target_position)
-				c = scene->camera.getCoord();
+				c = scene->camera.get_coord();
 			else
 				c = scene->camera.target;
 			ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
@@ -296,7 +296,7 @@ void SceneEditor::do_show()
 						auto object = scene->objects[i].get();
 
 						tke::PlainRenderer::DrawData::ObjData obj_data;
-						obj_data.mat = object->getMat();
+						obj_data.mat = object->get_matrix();
 						obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 						obj_data.fill_with_model(object->model.get());
 						if (object->model->vertex_skeleton)
@@ -430,7 +430,7 @@ void SceneEditor::do_show()
 			tke::PlainRenderer::DrawData data;
 			data.mode = tke::PlainRenderer::mode_wireframe;
 			tke::PlainRenderer::DrawData::ObjData obj_data;
-			obj_data.mat = obj->getMat();
+			obj_data.mat = obj->get_matrix();
 			obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 			obj_data.fill_with_model(obj->model.get());
 			if (obj->model->vertex_skeleton)

@@ -17,12 +17,12 @@ tke::PlainRenderer::DrawData TransformerTool::getDrawData(int draw_mode)
 	if (!transformer || mode == TransformerTool::ModeNull)
 		return draw_data;
 
-	auto dir = transformer->getCoord() - currentCamera->getCoord();
+	auto dir = transformer->get_coord() - currentCamera->get_coord();
 	if (glm::length(dir) <= 0.f)
 		return draw_data;
 
 	dir = glm::normalize(dir);
-	auto coord = currentCamera->getCoord() + dir * 5.f;
+	auto coord = currentCamera->get_coord() + dir * 5.f;
 
 	auto model = mode == TransformerTool::ModeMove ? tke::arrowModel : 
 		(mode == TransformerTool::ModeRotate ? tke::torusModel : tke::hamerModel);
@@ -73,13 +73,13 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 		auto xDisp = (float)_xDisp / (float)tke::res_cx;
 		auto yDisp = (float)_yDisp / (float)tke::res_cy;
 
-		auto p = tke::matPerspective * currentCamera->getMatInv() * glm::vec4(transformer->getCoord(), 1.f);
+		auto p = tke::matPerspective * currentCamera->get_view_matrix() * glm::vec4(transformer->get_coord(), 1.f);
 		p = p / p.w;
 		p.x += xDisp;
 		p.y += yDisp;
 		p = tke::matPerspectiveInv * p;
 		p = p / p.w;
-		p = currentCamera->getMat() * p;
+		p = currentCamera->get_matrix() * p;
 
 		switch (selectedAxis)
 		{

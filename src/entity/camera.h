@@ -18,6 +18,7 @@ namespace tke
 		CameraMode mode = CameraMode::free;
 		glm::vec3 target = glm::vec3(0.f);
 		float length = 1.f;
+		glm::mat4 view_matrix;
 
 		glm::vec3 frustumPoints[8];
 		glm::vec4 frustumPlanes[6];
@@ -35,5 +36,6 @@ namespace tke
 		void moveByCursor(float x, float y);
 		void scroll(float value);
 		void move();
+		glm::mat4 get_view_matrix();
 	};
 }

@@ -123,37 +123,12 @@ namespace tke
 		v.z = s * z + i * y - j * x;
 	}
 
-	glm::mat3 euler_yzx_to_mat3(float x, float y, float z)
+	glm::mat3 euler_to_mat3(float x, float y, float z)
 	{
-		return euler_yzx_to_mat3(glm::vec3(x, y, z));
+		return euler_to_mat3(x, y, z);
 	}
 
-	glm::mat3 euler_yzx_to_mat3(glm::vec3 &e)
-	{
-		using namespace glm;
-		auto x = vec3(1.f, 0.f, 0.f), y = vec3(0.f, 1.f, 0.f), z = vec3(0.f, 0.f, 1.f);
-		auto matYaw = mat3(glm::rotate(glm::radians(e.x), y));
-		x = matYaw * x;
-		z = matYaw * z;
-		auto matPitch = mat3(glm::rotate(glm::radians(e.y), z));
-		x = matPitch * x;
-		y = matPitch * y;
-		auto matRoll = mat3(glm::rotate(glm::radians(e.z), x));
-		y = matRoll * y;
-		z = matRoll * z;
-		glm::mat3 mat;
-		mat[0] = x;
-		mat[1] = y;
-		mat[2] = z;
-		return mat;
-	}
-
-	glm::mat3 euler_yxz_to_mat3(float x, float y, float z)
-	{
-		return euler_yxz_to_mat3(x, y, z);
-	}
-
-	glm::mat3 euler_yxz_to_mat3(glm::vec3 &e)
+	glm::mat3 euler_to_mat3(glm::vec3 &e)
 	{
 		using namespace glm;
 		auto x = vec3(1.f, 0.f, 0.f), y = vec3(0.f, 1.f, 0.f), z = vec3(0.f, 0.f, 1.f);
@@ -166,11 +141,7 @@ namespace tke
 		auto matRoll = mat3(glm::rotate(glm::radians(e.z), z));
 		y = matRoll * y;
 		x = matRoll * x;
-		glm::mat3 mat;
-		mat[0] = x;
-		mat[1] = y;
-		mat[2] = z;
-		return mat;
+		return glm::mat3(x, y, z);
 	}
 
 	glm::mat4 makeMatrix(glm::mat3 &rotation, glm::vec3 coord)

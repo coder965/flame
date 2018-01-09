@@ -113,9 +113,9 @@ namespace tke
 		{
 			if (m->rigidbodies.size() > 0)
 			{
-				auto objScale = o->getScale();
-				auto objCoord = o->getCoord();
-				auto objAxis = o->getAxis();
+				auto objScale = o->get_scale();
+				auto objCoord = o->get_coord();
+				auto objAxis = o->get_axis();
 				auto objTrans = get_physx_trans(objCoord, objAxis);
 
 				for (auto &r : m->rigidbodies)
@@ -223,10 +223,10 @@ namespace tke
 
 			if (o->physics_type & (int)ObjectPhysicsType::controller)
 			{
-				auto c = m->controller_position * o->getScale() + o->getCoord();
+				auto c = m->controller_position * o->get_scale() + o->get_coord();
 				physx::PxCapsuleControllerDesc capsuleDesc;
-				capsuleDesc.radius = (m->controller_radius * o->getScale().x) / 0.8f;
-				capsuleDesc.height = (m->controller_height * o->getScale().y) / 0.8f;
+				capsuleDesc.radius = (m->controller_radius * o->get_scale().x) / 0.8f;
+				capsuleDesc.height = (m->controller_height * o->get_scale().y) / 0.8f;
 				capsuleDesc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
 				capsuleDesc.material = pxDefaultMaterial;
 				capsuleDesc.position.x = c.x;
@@ -442,7 +442,7 @@ namespace tke
 				if (o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					glm::vec3 e, c;
-					o->move(o->getEuler().x, c, e);
+					o->move(o->get_euler().x, c, e);
 					o->addEuler(e);
 
 					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
@@ -461,9 +461,9 @@ namespace tke
 				{
 					auto pModel = o->model;
 
-					auto objScale = o->getScale();
-					auto objCoord = o->getCoord();
-					auto objAxis = o->getAxis();
+					auto objScale = o->get_scale();
+					auto objCoord = o->get_coord();
+					auto objAxis = o->get_axis();
 					physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
 						physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
 						physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
@@ -523,7 +523,7 @@ namespace tke
 				if (o->physics_type & (int)ObjectPhysicsType::controller)
 				{
 					auto p = o->pxController->getPosition();
-					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->getScale();
+					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->get_scale();
 					o->setCoord(c);
 				}
 			}
@@ -550,17 +550,17 @@ namespace tke
 		for (auto &o : objects)
 		{
 			auto n = at.newNode("object");
-			o->getCoord();
-			o->getEuler();
-			o->getScale();
+			o->get_coord();
+			o->get_euler();
+			o->get_scale();
 			n->addAttributes(o.get(), o->b);
 		}
 		for (auto &t : terrains)
 		{
 			auto n = at.newNode("terrain");
-			t->getCoord();
-			t->getEuler();
-			t->getScale();
+			t->get_coord();
+			t->get_euler();
+			t->get_scale();
 			n->addAttributes(t.get(), t->b);
 		}
 		at.save(filename);
@@ -595,9 +595,9 @@ namespace tke
 				o->model = getModel(o->model_filename);
 				if (o->model && o->model->vertex_skeleton)
 					o->animationComponent = std::make_unique<AnimationRunner>(o->model.get());
-				o->needUpdateAxis = true;
-				o->needUpdateQuat = true;
-				o->needUpdateMat = true;
+				o->axis_dirty = true;
+				o->quat_dirty = true;
+				o->matrix_dirty = true;
 				o->dirty = true;
 				s->addObject(o);
 			}
@@ -620,9 +620,9 @@ namespace tke
 				//t->normalMaps[1] = getTexture(t->normal_map1_filename);
 				//t->normalMaps[2] = getTexture(t->normal_map2_filename);
 				//t->normalMaps[3] = getTexture(t->normal_map3_filename);
-				t->needUpdateAxis = true;
-				t->needUpdateQuat = true;
-				t->needUpdateMat = true;
+				t->axis_dirty = true;
+				t->quat_dirty = true;
+				t->matrix_dirty = true;
 				t->dirty = true;
 				s->addTerrain(t);
 			}

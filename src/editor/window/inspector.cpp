@@ -82,7 +82,7 @@ void InspectorWindow::do_show()
 									if (ImGui::Button("change sun dir"))
 									{
 										ImGui::OpenPopup("Sun Dir");
-										auto euler = as->sun_light->getEuler();
+										auto euler = as->sun_light->get_euler();
 										sun_dir = glm::vec2(euler.x, euler.z);
 									}
 									if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
@@ -147,13 +147,13 @@ void InspectorWindow::do_show()
 						auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
 						ImGui::Text("model:%s", modelName.c_str());
 
-						auto coord = o->getCoord();
+						auto coord = o->get_coord();
 						if (ImGui::DragFloat3("coord", &coord[0]))
 							o->setCoord(coord);
-						auto euler = o->getEuler();
+						auto euler = o->get_euler();
 						if (ImGui::DragFloat3("euler", &euler[0]))
 							o->setEuler(euler);
-						auto scale = o->getScale();
+						auto scale = o->get_scale();
 						if (ImGui::DragFloat3("scale", &scale[0]))
 							o->setScale(scale);
 

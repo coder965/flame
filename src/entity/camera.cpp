@@ -13,21 +13,21 @@ namespace tke
 	void Camera::setMode(CameraMode _mode)
 	{
 		mode = _mode;
-		needUpdateMat = true;
+		matrix_dirty = true;
 		dirty = true;
 	}
 
 	void Camera::setLength(float _length)
 	{
 		length = _length;
-		needUpdateMat = true;
+		matrix_dirty = true;
 		dirty = true;
 	}
 
 	void Camera::setTarget(const glm::vec3 &_target)
 	{
 		target = _target;
-		needUpdateMat = true;
+		matrix_dirty = true;
 		dirty = true;
 	}
 
@@ -37,13 +37,13 @@ namespace tke
 		{
 			if (object)
 			{
-				target = object->getCoord() + object->model->eye_position * object->getScale();
+				target = object->get_coord() + object->model->eye_position * object->get_scale();
 				object = nullptr;
 			}
 
-			if (needUpdateAxis) updateAxis();
+			if (axis_dirty) updateAxis();
 			coord = target + axis[2] * length;
-			needUpdateMat = true;
+			matrix_dirty = true;
 			dirty = true;
 		}
 	}
@@ -80,37 +80,37 @@ namespace tke
 			}
 		}
 
-		auto matrix = matPerspective * mat;
+		auto vp = matPerspective * matrix;
 
-		frustumPlanes[0].x = matrix[0].w + matrix[0].x;
-		frustumPlanes[0].y = matrix[1].w + matrix[1].x;
-		frustumPlanes[0].z = matrix[2].w + matrix[2].x;
-		frustumPlanes[0].w = matrix[3].w + matrix[3].x;
+		frustumPlanes[0].x = vp[0].w + vp[0].x;
+		frustumPlanes[0].y = vp[1].w + vp[1].x;
+		frustumPlanes[0].z = vp[2].w + vp[2].x;
+		frustumPlanes[0].w = vp[3].w + vp[3].x;
 
-		frustumPlanes[1].x = matrix[0].w - matrix[0].x;
-		frustumPlanes[1].y = matrix[1].w - matrix[1].x;
-		frustumPlanes[1].z = matrix[2].w - matrix[2].x;
-		frustumPlanes[1].w = matrix[3].w - matrix[3].x;
+		frustumPlanes[1].x = vp[0].w - vp[0].x;
+		frustumPlanes[1].y = vp[1].w - vp[1].x;
+		frustumPlanes[1].z = vp[2].w - vp[2].x;
+		frustumPlanes[1].w = vp[3].w - vp[3].x;
 
-		frustumPlanes[2].x = matrix[0].w - matrix[0].y;
-		frustumPlanes[2].y = matrix[1].w - matrix[1].y;
-		frustumPlanes[2].z = matrix[2].w - matrix[2].y;
-		frustumPlanes[2].w = matrix[3].w - matrix[3].y;
+		frustumPlanes[2].x = vp[0].w - vp[0].y;
+		frustumPlanes[2].y = vp[1].w - vp[1].y;
+		frustumPlanes[2].z = vp[2].w - vp[2].y;
+		frustumPlanes[2].w = vp[3].w - vp[3].y;
 
-		frustumPlanes[3].x = matrix[0].w + matrix[0].y;
-		frustumPlanes[3].y = matrix[1].w + matrix[1].y;
-		frustumPlanes[3].z = matrix[2].w + matrix[2].y;
-		frustumPlanes[3].w = matrix[3].w + matrix[3].y;
+		frustumPlanes[3].x = vp[0].w + vp[0].y;
+		frustumPlanes[3].y = vp[1].w + vp[1].y;
+		frustumPlanes[3].z = vp[2].w + vp[2].y;
+		frustumPlanes[3].w = vp[3].w + vp[3].y;
 
-		frustumPlanes[4].x = matrix[0].w + matrix[0].z;
-		frustumPlanes[4].y = matrix[1].w + matrix[1].z;
-		frustumPlanes[4].z = matrix[2].w + matrix[2].z;
-		frustumPlanes[4].w = matrix[3].w + matrix[3].z;
+		frustumPlanes[4].x = vp[0].w + vp[0].z;
+		frustumPlanes[4].y = vp[1].w + vp[1].z;
+		frustumPlanes[4].z = vp[2].w + vp[2].z;
+		frustumPlanes[4].w = vp[3].w + vp[3].z;
 
-		frustumPlanes[5].x = matrix[0].w - matrix[0].z;
-		frustumPlanes[5].y = matrix[1].w - matrix[1].z;
-		frustumPlanes[5].z = matrix[2].w - matrix[2].z;
-		frustumPlanes[5].w = matrix[3].w - matrix[3].z;
+		frustumPlanes[5].x = vp[0].w - vp[0].z;
+		frustumPlanes[5].y = vp[1].w - vp[1].z;
+		frustumPlanes[5].z = vp[2].w - vp[2].z;
+		frustumPlanes[5].w = vp[3].w - vp[3].z;
 
 		for (auto i = 0; i < 6; i++)
 			frustumPlanes[i] = glm::normalize(frustumPlanes[i]);
@@ -121,13 +121,13 @@ namespace tke
 		Controller::reset();
 		coord = glm::vec3(0.f);
 		length = 1.0f;
-		needUpdateMat = true;
+		matrix_dirty = true;
 		dirty = true;
 	}
 
 	void Camera::rotateByCursor(float x, float y)
 	{
-		addEuler(glm::vec3(-x * 180.f, 0.f, -y * 180.f));
+		addEuler(glm::vec3(-x * 180.f, -y * 180.f, 0.f));
 		lookAtTarget();
 	}
 
@@ -152,7 +152,7 @@ namespace tke
 				length = 1.f;
 				coord += glm::normalize(target - coord) * 0.5f;
 			}
-			needUpdateMat = true;
+			matrix_dirty = true;
 			dirty = true;
 		}
 	}
@@ -161,7 +161,7 @@ namespace tke
 	{
 		glm::vec3 coord;
 		glm::vec3 euler;
-		if (!Controller::move(getEuler().x, coord, euler))
+		if (!Controller::move(get_euler().x, coord, euler))
 			return;
 		switch (mode)
 		{
@@ -173,5 +173,15 @@ namespace tke
 			break;
 		}
 		addEuler(euler);
+	}
+
+	glm::mat4 Camera::get_view_matrix()
+	{
+		if (matrix_dirty)
+		{
+			updateMat();
+			view_matrix = glm::inverse(matrix);
+		}
+		return view_matrix;
 	}
 }

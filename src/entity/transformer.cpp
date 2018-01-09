@@ -9,25 +9,26 @@ namespace tke
 		axis = rotation;
 		coord = coord;
 
-		needUpdateQuat = true;
-		needUpdateEuler = true;
-		needUpdateMat = true;
+		quat_dirty = true;
+		euler_dirty = true;
+		matrix_dirty = true;
 	}
 
 	void Transformer::updateAxis()
 	{
-		if (!needUpdateQuat)
+		if (!quat_dirty)
 			axis = quaternion_to_mat3(quat);// update by quat
 		else
-			axis = euler_yzx_to_mat3(euler);// update by euler
-		needUpdateAxis = false;
+			axis = euler_to_mat3(euler);// update by euler
+		axis_dirty = false;
 	}
 
 	void Transformer::updateEuler()
 	{
-		if (needUpdateQuat) updateQuat();
-		// updata by quat
-		float heading, attitude, bank;
+		if (quat_dirty) 
+			updateQuat(); // updata by quat
+		
+		float yaw, pitch, roll;
 
 		auto sqw = quat.w * quat.w;
 		auto sqx = quat.x * quat.x;
@@ -38,95 +39,87 @@ namespace tke
 		auto test = quat.x * quat.y + quat.z * quat.w;
 		if (test > 0.499f * unit)
 		{ // singularity at north pole
-			heading = 2.f * atan2(quat.x, quat.w);
-			attitude = M_PI / 2.f;
-			bank = 0;
+			yaw = 2.f * atan2(quat.x, quat.w);
+			pitch = M_PI / 2.f;
+			roll = 0;
 			return;
 		}
 		if (test < -0.499f * unit)
 		{ // singularity at south pole
-			heading = -2.f * atan2(quat.x, quat.w);
-			attitude = -M_PI / 2.f;
-			bank = 0;
+			yaw = -2.f * atan2(quat.x, quat.w);
+			pitch = -M_PI / 2.f;
+			roll = 0;
 			return;
 		}
 
-		heading = atan2(2.f * quat.y * quat.w - 2.f * quat.x * quat.z, sqx - sqy - sqz + sqw);
-		attitude = asin(2.f * test / unit);
-		bank = atan2(2.f * quat.x * quat.w - 2.f * quat.y * quat.z, -sqx + sqy - sqz + sqw);
+		yaw = atan2(2.f * quat.y * quat.w - 2.f * quat.x * quat.z, sqx - sqy - sqz + sqw);
+		pitch = asin(2.f * test / unit);
+		roll = atan2(2.f * quat.x * quat.w - 2.f * quat.y * quat.z, -sqx + sqy - sqz + sqw);
 
-		euler.x = glm::degrees(heading);
-		euler.y = glm::degrees(attitude);
-		euler.z = glm::degrees(bank);
-		needUpdateEuler = false;
+		euler.x = glm::degrees(yaw);
+		euler.y = glm::degrees(pitch);
+		euler.z = glm::degrees(roll);
+		euler_dirty = false;
 	}
 
 	void Transformer::updateQuat()
 	{
-		if (needUpdateAxis) updateAxis();
-		// update by axis
+		if (axis_dirty) 
+			updateAxis(); // update by axis
 		quat = mat3_to_quaternion(axis);
-		needUpdateQuat = false;
+		quat_dirty = false;
 	}
 
 	void Transformer::updateMat()
 	{
-		if (needUpdateAxis) updateAxis();
-		mat = glm::translate(coord * worldScale) * glm::mat4(axis) * glm::scale(scale * worldScale);
-		matInv = glm::inverse(mat);
-		needUpdateMat = false;
+		if (axis_dirty)
+			updateAxis();
+		matrix = glm::translate(coord) * glm::mat4(axis) * glm::scale(scale);
+		matrix_dirty = false;
 	}
 
-	glm::vec3 Transformer::getCoord() const
+	glm::vec3 Transformer::get_coord() const
 	{
 		return coord;
 	}
 
-	glm::mat3 Transformer::getAxis()
+	glm::mat3 Transformer::get_axis()
 	{
-		if (needUpdateAxis) updateAxis();
+		if (axis_dirty) 
+			updateAxis();
 		return axis;
 	}
 
-	glm::vec3 Transformer::getScale() const
+	glm::vec3 Transformer::get_scale() const
 	{
 		return scale;
 	}
 
-	glm::vec3 Transformer::getWorldScale() const
+	glm::vec3 Transformer::get_euler()
 	{
-		return worldScale;
-	}
-
-	glm::vec3 Transformer::getEuler()
-	{
-		if (needUpdateEuler) updateEuler(); // Y -> Z -> X
+		if (euler_dirty) 
+			updateEuler(); // Y -> Z -> X
 		return euler;
 	}
 
-	glm::vec4 Transformer::getQuat()
+	glm::vec4 Transformer::get_quat()
 	{
-		if (needUpdateQuat)
+		if (quat_dirty)
 			updateQuat();
 		return quat;
 	}
 
-	glm::mat4 Transformer::getMat()
+	glm::mat4 Transformer::get_matrix()
 	{
-		if (needUpdateMat) updateMat();
-		return mat;
-	}
-
-	glm::mat4 Transformer::getMatInv()
-	{
-		if (needUpdateMat) updateMat();
-		return matInv;
+		if (matrix_dirty) 
+			updateMat();
+		return matrix;
 	}
 
 	void Transformer::setCoord(const glm::vec3 &_coord)
 	{
 		coord = _coord;
-		needUpdateMat = true;
+		matrix_dirty = true;
 		dirty = true;
 	}
 
@@ -139,26 +132,26 @@ namespace tke
 	{
 		euler = glm::mod(_euler, 360.f);
 
-		needUpdateAxis = true;
-		needUpdateEuler = false;
-		needUpdateQuat = true;
-		needUpdateMat = true;
+		axis_dirty = true;
+		euler_dirty = false;
+		quat_dirty = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
 
 	void Transformer::addEuler(const glm::vec3 &_euler)
 	{
-		setEuler(getEuler() + _euler);
+		setEuler(get_euler() + _euler);
 	}
 
 	void Transformer::setQuat(const glm::vec4 &_quat)
 	{
 		quat = _quat;
-		needUpdateAxis = true;
-		needUpdateEuler = true;
-		needUpdateQuat = false;
-		needUpdateMat = true;
+		axis_dirty = true;
+		euler_dirty = true;
+		quat_dirty = false;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
@@ -190,10 +183,10 @@ namespace tke
 			break;
 		}
 
-		needUpdateAxis = false;
-		needUpdateEuler = true;
-		needUpdateQuat = true;
-		needUpdateMat = true;
+		axis_dirty = false;
+		euler_dirty = true;
+		quat_dirty = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
@@ -202,10 +195,10 @@ namespace tke
 	{
 		axis = left * axis;
 
-		needUpdateAxis = false;
-		needUpdateEuler = true;
-		needUpdateQuat = true;
-		needUpdateMat = true;
+		axis_dirty = false;
+		euler_dirty = true;
+		quat_dirty = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
@@ -214,10 +207,10 @@ namespace tke
 	{
 		axis = axis * right;
 
-		needUpdateAxis = false;
-		needUpdateEuler = true;
-		needUpdateQuat = true;
-		needUpdateMat = true;
+		axis_dirty = false;
+		euler_dirty = true;
+		quat_dirty = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
@@ -225,7 +218,7 @@ namespace tke
 	void Transformer::setScale(const glm::vec3 &_scale)
 	{
 		scale = _scale;
-		needUpdateMat = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
@@ -235,14 +228,6 @@ namespace tke
 		setScale(scale + _scale);
 	}
 
-	void Transformer::setWorldScale(const glm::vec3 &_scale)
-	{
-		worldScale = _scale;
-		needUpdateMat = true;
-
-		dirty = true;
-	}
-
 	void Transformer::scaleRelate(Transformer *t)
 	{
 		coord *= t->scale;
@@ -250,7 +235,7 @@ namespace tke
 		axis = t->axis * axis;
 		coord = t->axis * coord;
 		coord += t->coord;
-		needUpdateMat = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}
@@ -259,7 +244,7 @@ namespace tke
 	{
 		coord -= t->coord;
 		axis *= glm::transpose(t->axis);
-		needUpdateMat = true;
+		matrix_dirty = true;
 
 		dirty = true;
 	}

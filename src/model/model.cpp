@@ -951,7 +951,7 @@ namespace tke
 				data.location.z *= -1.f;
 				r->coord = data.location;
 				data.rotation = glm::degrees(data.rotation);
-				r->quat = mat3_to_quaternion(euler_yxz_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
+				r->quat = mat3_to_quaternion(euler_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
 				r->type = (RigidbodyType)data.mode;
 				auto s = r->new_shape();
 				switch (data.type)
@@ -1002,7 +1002,7 @@ namespace tke
 
 				data.coord.z *= -1.f;
 				j->coord = data.coord;
-				j->quat = mat3_to_quaternion(euler_yxz_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
+				j->quat = mat3_to_quaternion(euler_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
 			}
 
 			_process_model(m, true);
