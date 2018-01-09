@@ -72,6 +72,7 @@ namespace tke
 		PlainRenderer();
 		void render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data);
 		void do_render(CommandBuffer *cb, Camera *camera, DrawData *data);
+		void add_to_drawlist();
 	};
 
 	struct LinesRenderer
@@ -94,6 +95,7 @@ namespace tke
 
 		LinesRenderer();
 		void render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data);
+		void add_to_drawlist();
 	};
 
 	enum { MaxObjectCount = 1024 };
@@ -156,5 +158,6 @@ namespace tke
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		void render(Scene *scene);
+		void add_to_drawlist();
 	};
 }

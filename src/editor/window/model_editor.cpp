@@ -111,4 +111,5 @@ void ModelEditor::do_show()
 	ImGui::End();
 
 	renderer->render(layer.framebuffer.get(), true, &camera, &draw_data);
+	renderer->add_to_drawlist();
 }

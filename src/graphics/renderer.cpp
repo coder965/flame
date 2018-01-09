@@ -151,7 +151,6 @@ namespace tke
 		do_render(cb.get(), camera, data);
 		cb->endRenderPass();
 		cb->end();
-		add_to_drawlist(cb->v);
 	}
 
 	void PlainRenderer::do_render(CommandBuffer *cb, Camera *camera, DrawData *data)
@@ -248,6 +247,11 @@ namespace tke
 		}
 	}
 
+	void PlainRenderer::add_to_drawlist()
+	{
+		tke::add_to_drawlist(cb->v);
+	}
+
 	static Pipeline *pipeline_lines;
 	bool LinesRenderer::first = true;
 	LinesRenderer::LinesRenderer()
@@ -296,8 +300,11 @@ namespace tke
 		cb->endRenderPass();
 
 		cb->end();
+	}
 
-		add_to_drawlist(cb->v);
+	void LinesRenderer::add_to_drawlist()
+	{
+		tke::add_to_drawlist(cb->v);
 	}
 
 	struct MatrixBufferShaderStruct
@@ -1122,8 +1129,6 @@ namespace tke
 			}
 
 			cb_shad->end();
-
-			add_to_drawlist(cb_shad->v);
 		}
 
 		cb_defe->reset();
@@ -1207,7 +1212,12 @@ namespace tke
 		cb_defe->endRenderPass();
 
 		cb_defe->end();
+	}
 
-		add_to_drawlist(cb_defe->v);
+	void DeferredRenderer::add_to_drawlist()
+	{
+		if (enable_shadow)
+			tke::add_to_drawlist(cb_shad->v);
+		tke::add_to_drawlist(cb_defe->v);
 	}
 }

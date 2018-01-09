@@ -106,5 +106,6 @@ void TransformerTool::show(tke::Camera *camera)
 	{
 		draw_data.mode = tke::PlainRenderer::mode_color_and_front_light;
 		renderer->render(fb.get(), false, camera, &draw_data);
+		renderer->add_to_drawlist();
 	}
 }

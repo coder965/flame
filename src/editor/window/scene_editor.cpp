@@ -349,7 +349,10 @@ void SceneEditor::do_show()
 
 	scene->update();
 	if (enableRender)
+	{
 		defe_renderer->render(scene.get());
+		defe_renderer->add_to_drawlist();
+	}
 	scene->reset();
 
 	{
@@ -414,6 +417,7 @@ void SceneEditor::do_show()
 			data.vertex_buffer = physx_vertex_buffer.get();
 			data.vertex_count = vertex_count;
 			lines_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
+			lines_renderer->add_to_drawlist();
 		}
 	}
 
@@ -433,6 +437,7 @@ void SceneEditor::do_show()
 				obj_data.bone_buffer = obj->animationComponent->bone_buffer.get();
 			data.obj_data.push_back(obj_data);
 			plain_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
+			plain_renderer->add_to_drawlist();
 		}
 	}
 

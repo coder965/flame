@@ -227,6 +227,7 @@ void TerrainEditor::do_show()
 		obj_data.geo_data.push_back(geo_data);
 		data.obj_data.push_back(obj_data);
 		renderer->render(layer.framebuffer.get(), true, &camera, &data);
+		renderer->add_to_drawlist();
 	}
 }
 
