@@ -41,7 +41,7 @@ namespace tke
 				object = nullptr;
 			}
 
-			if (axis_dirty) updateAxis();
+			if (axis_dirty) update_axis();
 			coord = target + axis[2] * length;
 			matrix_dirty = true;
 			dirty = true;

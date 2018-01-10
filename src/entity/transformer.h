@@ -44,54 +44,60 @@ namespace tke
 		glm::mat4 get_matrix();
 
 		void set_coord(const glm::vec3 &_coord);
-		inline void set_coord(float x, float y, float z) { set_coord(glm::vec3(x, y, z)); }
-		inline void set_coord(float v) { set_coord(glm::vec3(v)); }
-		inline void setCoordX(float v) { auto p = get_coord();  set_coord(glm::vec3(v, p.y, p.z)); }
-		inline void setCoordY(float v) { auto p = get_coord();  set_coord(glm::vec3(p.x, v, p.z)); }
-		inline void setCoordZ(float v) { auto p = get_coord();  set_coord(glm::vec3(p.x, p.y, v)); }
-		void addCoord(const glm::vec3 &_coord);
-		inline void addCoord(float x, float y, float z) { addCoord(glm::vec3(x, y, z)); }
-		inline void addCoord(float v) { addCoord(glm::vec3(v)); }
-		inline void addCoordX(float v) { addCoord(glm::vec3(v, 0.f, 0.f)); }
-		inline void addCoordY(float v) { addCoord(glm::vec3(0.f, v, 0.f)); }
-		inline void addCoordZ(float v) { addCoord(glm::vec3(0.f, 0.f, v)); }
-		void setEuler(const glm::vec3 &_euler);
-		inline void setEuler(float x, float y, float z) { setEuler(glm::vec3(x, y, z)); }
-		inline void setEuler(float v) { setEuler(glm::vec3(v)); }
-		inline void setEulerX(float v) { auto p = get_euler();  set_coord(glm::vec3(v, p.y, p.z)); }
-		inline void setEulerY(float v) { auto p = get_euler();  set_coord(glm::vec3(p.x, v, p.z)); }
-		inline void setEulerZ(float v) { auto p = get_euler();  set_coord(glm::vec3(p.x, p.y, v)); }
-		void addEuler(const glm::vec3 &_euler);
-		inline void addEuler(float x, float y, float z) { addEuler(glm::vec3(x, y, z)); }
-		inline void addEuler(float v) { addEuler(glm::vec3(v)); }
-		inline void addEulerX(float v) { addEuler(glm::vec3(v, 0.f, 0.f)); }
-		inline void addEulerY(float v) { addEuler(glm::vec3(0.f, v, 0.f)); }
-		inline void addEulerZ(float v) { addEuler(glm::vec3(0.f, 0.f, v)); }
-		void setQuat(const glm::vec4 &_quat);
-		inline void setQuat(float x, float y, float z, float w) { setQuat(glm::vec4(x, y, z, w)); }
-		void leftRotate(const glm::mat3 &left);
-		void rightRotate(const glm::mat3 &right);
-		void axisRotate(Axis which, float angle);
-		void setScale(const glm::vec3 &_scale);
-		inline void setScale(float x, float y, float z) { setScale(glm::vec3(x, y, z)); }
-		inline void setScale(float v) { setScale(glm::vec3(v)); }
-		inline void setScaleX(float v) { auto p = get_scale();  setScale(glm::vec3(v, p.y, p.z)); }
-		inline void setScaleY(float v) { auto p = get_scale();  setScale(glm::vec3(p.x, v, p.z)); }
-		inline void setScaleZ(float v) { auto p = get_scale();  setScale(glm::vec3(p.x, p.y, v)); }
-		void addScale(const glm::vec3 &_scale);
-		inline void addScale(float x, float y, float z) { addScale(glm::vec3(x, y, z)); }
-		inline void addScale(float v) { addScale(glm::vec3(v)); }
-		inline void addScaleX(float v) { addScale(glm::vec3(v, 0.f, 0.f)); }
-		inline void addScaleY(float v) { addScale(glm::vec3(0.f, v, 0.f)); }
-		inline void addScaleZ(float v) { addScale(glm::vec3(0.f, 0.f, v)); }
+		void set_coord(float x, float y, float z);
+		void set_coord(float v);
+		void set_coord_x(float v);
+		void set_coord_y(float v);
+		void set_coord_z(float v);
+		void add_coord(const glm::vec3 &_coord);
+		void add_coord(float x, float y, float z);
+		void add_coord(float v);
+		void add_coord_x(float v);
+		void add_coord_y(float v);
+		void add_coord_z(float v);
+		void set_euler(const glm::vec3 &_euler);
+		void set_euler(float x, float y, float z);
+		void set_euler(float v);
+		void set_euler_x(float v);
+		void set_euler_y(float v);
+		void set_euler_z(float v);
+		void add_euler(const glm::vec3 &_euler);
+		void add_euler(float x, float y, float z);
+		void add_euler(float v);
+		void add_euler_x(float v);
+		void add_euler_y(float v);
+		void add_euler_z(float v);
+		void set_quat(const glm::vec4 &_quat);
+		void set_quat(float x, float y, float z, float w);
+		void left_rotate(const glm::mat3 &left);
+		void right_rotate(const glm::mat3 &right);
+		void axis_rotate(Axis which, float angle);
+		void set_scale(const glm::vec3 &_scale);
+		void set_scale(float x, float y, float z);
+		void set_scale(float v);
+		void set_scale_x(float v);
+		void set_scale_y(float v);
+		void set_scale_z(float v);
+		void add_scale(const glm::vec3 &_scale);
+		void add_scale(float x, float y, float z);
+		void add_scale(float v);
+		void add_scale_x(float v);
+		void add_scale_y(float v);
+		void add_scale_z(float v);
 
 		void relate(Transformer *t);
 		void scaleRelate(Transformer *t);
 
-		void updateMat();
+		void update_matrix();
+		void update_axis();
+		void update_euler();
+		void update_quat();
 
-		void updateAxis();
-		void updateEuler();
-		void updateQuat();
+	private:
+		void mark_coord_setted();
+		void mark_euler_setted();
+		void mark_quat_setted();
+		void mark_axis_setted();
+		void mark_scale_setted();
 	};
 }
