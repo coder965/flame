@@ -5,6 +5,7 @@
 
 #include "../refl.h"
 #include "../math/math.h"
+#include "../_object.h"
 #include "component.h"
 
 namespace tke
@@ -21,7 +22,7 @@ namespace tke
 
 	struct Water;
 
-	REFLECTABLE struct Node
+	REFLECTABLE struct Node : _Object
 	{
 		REFL_BANK;
 
@@ -50,11 +51,12 @@ namespace tke
 
 		NodeType type;
 		Node *parent = nullptr;
-		std::vector<std::shared_ptr<Node>> children;
+		std::vector<std::unique_ptr<Node>> children; 
+
+		virtual void on_message(tke::_Object*, tke::Message) = 0;
 
 		Node(NodeType _type);
 		Node(NodeType _type, const glm::vec3 &_coord, const glm::mat3 &rotation);
-		virtual ~Node() {}
 
 		glm::vec3 get_coord() const;
 		glm::vec3 get_euler();

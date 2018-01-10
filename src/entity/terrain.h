@@ -46,6 +46,7 @@ namespace tke
 			std::shared_ptr<Image> _blendMap = nullptr);
 		void add_material(std::shared_ptr<Material> m);
 		void remove_material(int index);
+		virtual void on_message(_Object*, Message) override {}
 	};
 
 	void init_terrain();

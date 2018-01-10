@@ -86,10 +86,7 @@ void SceneEditor::on_menu_bar()
 			scene->addTerrain(t);
 		}
 		if (ImGui::MenuItem("Water"))
-		{
-			auto w = new tke::Water;
-			scene->addWater(w);
-		}
+			scene->new_water();
 
 		ImGui::EndMenu();
 	}
@@ -237,8 +234,8 @@ void SceneEditor::do_show()
 						plain_renderer.get(), std::placeholders::_1, &scene->camera, &draw_data));
 					if (index == 0)
 						selected.reset();
-					else
-						selected = scene->objects[index - 1];
+					//else
+					//	selected = scene->objects[index - 1];
 				}
 			}
 		}

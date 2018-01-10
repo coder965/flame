@@ -58,6 +58,7 @@
 #include "..\src\time.h"
 #include "..\src\type.h"
 #include "..\src\ui\ui.h"
+#include "..\src\_object.h"
 namespace tke{
 //define:
 UniformBuffer *constantBuffer = nullptr;

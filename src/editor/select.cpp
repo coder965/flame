@@ -6,39 +6,47 @@ Select selected;
 
 void Select::reset()
 {
+	if (type == SelectTypeNode)
+	{
+		for (auto f : followings)
+			f->remove_listener(this);
+		followings.clear();
+	}
 	type = SelectTypeNull;
-	node.reset();
 	select_filename.clear();
 }
 
-void Select::operator=(std::shared_ptr<tke::Node> n)
+void Select::operator=(tke::Node *n)
 {
+	if (type == SelectTypeNode)
+	{
+		for (auto f : followings)
+			f->remove_listener(this);
+		followings.clear();
+	}
 	type = SelectTypeNode;
 	select_filename.clear();
-	node = n;
+	listen_to(n);
 }
 
 void Select::operator=(const std::string &s)
 {
+	if (type == SelectTypeNode)
+	{
+		for (auto f : followings)
+			f->remove_listener(this);
+		followings.clear();
+	}
 	type = SelectTypeFile;
-	node.reset();
 	select_filename = s;
 }
 
 tke::Node *Select::get_node()
 {
-	if (type != SelectTypeNode)
-		return nullptr;
-	auto s = node.lock();
-	if (s)
-		return s.get();
-	reset();
-	return nullptr;
+	return type == SelectTypeNode ? (tke::Node*)followings[0] : nullptr;
 }
 
 const std::string &Select::get_filename()
 {
-	if (type != SelectTypeFile)
-		return "";
-	return select_filename;
+	return type == SelectTypeFile ? select_filename : "";
 }

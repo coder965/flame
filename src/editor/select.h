@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "../_object.h"
 #include "../entity/node.h"
 
 enum SelectType
@@ -12,16 +13,16 @@ enum SelectType
 	SelectTypeFile
 };
 
-struct Select
+struct Select : tke::_Object
 {
 	SelectType type = SelectTypeNull;
-	std::weak_ptr<tke::Node> node;
 
 	void reset();
-	void operator=(std::shared_ptr<tke::Node> n);
+	void operator=(tke::Node *n);
 	void operator=(const std::string &s);
 	tke::Node *get_node();
 	const std::string &get_filename();
+	virtual void on_message(tke::_Object*, tke::Message) override {}
 };
 
 extern Select selected;

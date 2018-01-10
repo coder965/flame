@@ -25,5 +25,6 @@ namespace tke
 
 		Light(LightType _type, bool _shadow = false);
 		void setColor(const glm::vec3 &);
+		virtual void on_message(_Object*, Message) override {}
 	};
 }

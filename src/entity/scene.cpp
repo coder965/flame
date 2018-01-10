@@ -63,7 +63,7 @@ namespace tke
 
 	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
-		lights.push_back(std::shared_ptr<Light>(l));
+		lights.emplace_back(l);
 		light_count_dirty = true;
 	}
 
@@ -231,7 +231,7 @@ namespace tke
 			}
 		}
 
-		objects.push_back(std::shared_ptr<Object>(o));
+		objects.emplace_back(o);
 
 		object_count_dirty = true;
 	}
@@ -307,7 +307,7 @@ namespace tke
 		//	delete[]samples;
 		//}
 
-		terrains.push_back(std::shared_ptr<Terrain>(t));
+		terrains.emplace_back(t);
 		terrain_count_dirty = true;
 	}
 
