@@ -36,21 +36,21 @@ namespace tke
 	{
 		mode = _mode;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Camera::setLength(float _length)
 	{
 		length = _length;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Camera::setTarget(const glm::vec3 &_target)
 	{
 		target = _target;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Camera::lookAtTarget()
@@ -66,7 +66,7 @@ namespace tke
 			if (axis_dirty) update_axis();
 			coord = target + axis[2] * length;
 			matrix_dirty = true;
-			dirty = true;
+			transform_dirty = true;
 		}
 	}
 
@@ -144,7 +144,7 @@ namespace tke
 		coord = glm::vec3(0.f);
 		length = 1.0f;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Camera::rotateByCursor(float x, float y)
@@ -175,7 +175,7 @@ namespace tke
 				coord += glm::normalize(target - coord) * 0.5f;
 			}
 			matrix_dirty = true;
-			dirty = true;
+			transform_dirty = true;
 		}
 	}
 

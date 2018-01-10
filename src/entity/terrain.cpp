@@ -9,12 +9,12 @@ namespace tke
 	Terrain::Terrain(int _block_cx, int _block_cy, bool _use_physx, 
 		std::shared_ptr<Image> _blendMap)
 		:Node(NodeTypeTerrain), block_cx(_block_cx), block_cy(_block_cy), 
-		use_physx(_use_physx), blendMap(_blendMap)
+		enable_physics(_use_physx), blend_image(_blendMap)
 	{
 
 
-		if (!blendMap)
-			 blendMap = default_blend_image;
+		if (!blend_image)
+			 blend_image = default_blend_image;
 
 		add_material(defaultMaterial);
 	}
@@ -25,6 +25,7 @@ namespace tke
 			return;
 		materials[material_count] = m;
 		material_count++;
+		attribute_dirty = true;
 	}
 
 	void Terrain::remove_material(int index)
@@ -35,5 +36,6 @@ namespace tke
 			materials[i] = materials[i + 1];
 		material_count--;
 		materials[material_count].reset();
+		attribute_dirty = true;
 	}
 }

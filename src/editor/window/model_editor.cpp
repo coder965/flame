@@ -53,7 +53,7 @@ void ModelEditor::do_show()
 		if (tke::mouseScroll != 0)
 			camera.scroll(tke::mouseScroll);
 	}
-	if (camera.dirty)
+	if (camera.transform_dirty)
 		camera.lookAtTarget();
 
 	ImGui::SameLine();

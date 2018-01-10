@@ -209,7 +209,7 @@ void TerrainEditor::do_show()
 			}
 		}
 	}
-	if (camera.dirty)
+	if (camera.transform_dirty)
 		camera.lookAtTarget();
 
 	ImGui::End();

@@ -47,13 +47,17 @@ namespace tke
 		bool quat_dirty = false;
 		bool matrix_dirty = false;
 
-		bool dirty = true;
+		bool transform_dirty = true;
+		bool attribute_dirty = true;
+		bool image_dirty = true;
 
 		NodeType type;
 		Node *parent = nullptr;
 		std::vector<std::unique_ptr<Node>> children; 
 
 		virtual bool on_message(_Object*, Message) { return false; }
+
+		bool broadcast(Node *src, Message msg);
 
 		Node(NodeType _type);
 		Node(NodeType _type, const glm::vec3 &_coord, const glm::mat3 &rotation);
@@ -117,10 +121,10 @@ namespace tke
 		void update_euler();
 		void update_quat();
 
+		void clear_dirty();
+
 		Water *new_water();
 		void remove_child(Node *n);
-
-		bool broadcast(Node *src, Message msg);
 
 	private:
 		void mark_coord_setted();

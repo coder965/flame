@@ -21,7 +21,7 @@ namespace tke
 	{
 		REFL_BANK;
 
-		REFLv bool use_physx = false;
+		REFLv bool enable_physics = false;
 
 		REFLv int block_cx;
 		REFLv int block_cy;
@@ -34,7 +34,7 @@ namespace tke
 		std::unique_ptr<TerrainVertex[]> vertex;
 		std::unique_ptr<VertexBuffer> vertex_buffer;
 
-		std::shared_ptr<Image> blendMap;
+		std::shared_ptr<Image> blend_image;
 		int material_count = 0;
 		std::shared_ptr<Material> materials[4];
 

@@ -362,16 +362,25 @@ namespace tke
 	struct WaterShaderStruct
 	{
 		glm::vec3 coord;
-		int blockCx;
-		float blockSize;
+		int block_cx;
+		int block_cy;
+		float block_size;
 		float height;
-		float tessellationFactor;
-		float textureUvFactor;
+		float tessellation_factor;
+		float tiling_scale;
 		float mapDimension;
 		unsigned int dummy0;
 		unsigned int dummy1;
-		unsigned int dummy2;
 	};
+
+	static int light_count = 0;
+	static Light *lights[MaxLightCount] = {};
+
+	static int object_count = 0;
+	static Object *objects[MaxObjectCount] = {};
+
+	static int terrain_count = 0;
+	static Terrain *terrains[MaxTerrainCount] = {};
 
 	static int waters_count = 0;
 	static Water *waters[MaxWaterCount] = {};
@@ -877,7 +886,7 @@ namespace tke
 					ranges.push_back(range);
 
 					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
-						index, t->blendMap.get(), colorBorderSampler));
+						index, t->blend_image.get(), colorBorderSampler));
 				}
 				index++;
 			}

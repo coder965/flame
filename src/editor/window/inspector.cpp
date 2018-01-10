@@ -185,13 +185,13 @@ void InspectorWindow::do_show()
 					{
 						auto t = (tke::Terrain*)n;
 
-						ImGui::Text("Blend Map:%s", t->blendMap ? t->blendMap->filename.c_str() : "Null");
+						ImGui::Text("Blend Map:%s", t->blend_image ? t->blend_image->filename.c_str() : "Null");
 						show_material(t->materials[0].get());
 						//show_material(t->materials[1].get());
 						//show_material(t->materials[2].get());
 						//show_material(t->materials[3].get());
 						ImGui::Text("Height:%f", t->height);
-						ImGui::Text("Use Physx:%s", t->use_physx ? "Yse" : "No");
+						ImGui::Text("Use Physx:%s", t->enable_physics ? "Yse" : "No");
 
 						break;
 					}

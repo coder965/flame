@@ -74,7 +74,7 @@ namespace tke
 			if (it->get() == l)
 			{
 				for (auto itt = it + 1; itt != lights.end(); itt++)
-					(*itt)->dirty = true;
+					(*itt)->transform_dirty = true;
 				it = lights.erase(it);
 				l = it == lights.end() ? nullptr : it->get();
 				break;
@@ -243,7 +243,7 @@ namespace tke
 			if (it->get() == o)
 			{
 				for (auto itt = it + 1; itt != objects.end(); itt++)
-					(*itt)->dirty = true;
+					(*itt)->transform_dirty = true;
 				if (o->pxController)
 					o->pxController->release();
 				it = objects.erase(it);
@@ -318,7 +318,7 @@ namespace tke
 			if (it->get() == t)
 			{
 				for (auto itt = it + 1; itt != terrains.end(); itt++)
-					(*itt)->dirty = true;
+					(*itt)->transform_dirty = true;
 				it = terrains.erase(it);
 				t = it == terrains.end() ? nullptr : it->get();
 				break;
@@ -337,13 +337,13 @@ namespace tke
 		object_count_dirty = false;
 		terrain_count_dirty = false;
 		water_count_dirty = false;
-		camera.dirty = false;
+		camera.transform_dirty = false;
 		for (auto &l : lights)
-			l->dirty = false;
+			l->transform_dirty = false;
 		for (auto &o : objects)
-			o->dirty = false;
+			o->transform_dirty = false;
 		for (auto &t : terrains)
-			t->dirty = false;
+			t->transform_dirty = false;
 	}
 
 	void Scene::clear()
@@ -481,9 +481,9 @@ namespace tke
 		}
 
 		camera.move();
-		if (camera.dirty || camera.object)
+		if (camera.transform_dirty || camera.object)
 			camera.lookAtTarget();
-		if (camera.dirty)
+		if (camera.transform_dirty)
 			camera.updateFrustum();
 	}
 
@@ -549,7 +549,7 @@ namespace tke
 				o->axis_dirty = true;
 				o->quat_dirty = true;
 				o->matrix_dirty = true;
-				o->dirty = true;
+				o->transform_dirty = true;
 				s->addObject(o);
 			}
 			else if (c->name == "light")
@@ -574,7 +574,7 @@ namespace tke
 				t->axis_dirty = true;
 				t->quat_dirty = true;
 				t->matrix_dirty = true;
-				t->dirty = true;
+				t->transform_dirty = true;
 				s->addTerrain(t);
 			}
 		}

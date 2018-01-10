@@ -392,7 +392,7 @@ namespace tke
 		coord += t->coord;
 		matrix_dirty = true;
 
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Node::relate(Node *t)
@@ -401,7 +401,7 @@ namespace tke
 		axis *= glm::transpose(t->axis);
 		matrix_dirty = true;
 
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Node::update_matrix()
@@ -468,6 +468,15 @@ namespace tke
 		quat_dirty = false;
 	}
 
+	void Node::clear_dirty()
+	{
+		transform_dirty = false;
+		attribute_dirty = false;
+		image_dirty = false;
+		for (auto &c : children)
+			c->clear_dirty();
+	}
+
 	Water *Node::new_water()
 	{
 		auto w = new Water;
@@ -508,7 +517,7 @@ namespace tke
 	void Node::mark_coord_setted()
 	{
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Node::mark_euler_setted()
@@ -517,7 +526,7 @@ namespace tke
 		euler_dirty = false;
 		quat_dirty = true;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Node::mark_quat_setted()
@@ -526,7 +535,7 @@ namespace tke
 		euler_dirty = true;
 		quat_dirty = false;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Node::mark_axis_setted()
@@ -535,12 +544,12 @@ namespace tke
 		euler_dirty = true;
 		quat_dirty = true;
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 
 	void Node::mark_scale_setted()
 	{
 		matrix_dirty = true;
-		dirty = true;
+		transform_dirty = true;
 	}
 }
