@@ -26,9 +26,13 @@ namespace tke
 		}
 	}
 
-	void _Object::broadcast(Message msg)
+	bool _Object::broadcast(_Object *o, Message msg)
 	{
 		for (auto f : followers)
-			f->on_message(this, msg);
+		{
+			if (f->on_message(o, msg))
+				return true;
+		}
+		return false;
 	}
 }

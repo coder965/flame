@@ -4,6 +4,7 @@
 
 #include "../global.h"
 #include "../math/math.h"
+#include "../_object.h"
 #include "../resource/resource.h"
 #include "graphics.h"
 #include "renderer.h"
@@ -111,7 +112,7 @@ namespace tke
 
 	enum { MaxIndirectCount = 1024 };
 
-	struct DeferredRenderer
+	struct DeferredRenderer : _Object
 	{
 		static bool defe_inited;
 		static bool shad_inited;
@@ -155,6 +156,8 @@ namespace tke
 
 		int staticIndirectCount = 0;
 		int animatedIndirectCount = 0;
+
+		virtual bool on_message(_Object *sender, Message msg) override;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		void render(Scene *scene);

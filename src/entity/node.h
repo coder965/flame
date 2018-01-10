@@ -53,7 +53,7 @@ namespace tke
 		Node *parent = nullptr;
 		std::vector<std::unique_ptr<Node>> children; 
 
-		virtual void on_message(tke::_Object*, tke::Message) = 0;
+		virtual bool on_message(_Object*, Message) { return false; }
 
 		Node(NodeType _type);
 		Node(NodeType _type, const glm::vec3 &_coord, const glm::mat3 &rotation);
@@ -118,6 +118,8 @@ namespace tke
 
 		Water *new_water();
 		void remove_child(Node *n);
+
+		bool broadcast(Node *src, Message msg);
 
 	private:
 		void mark_coord_setted();

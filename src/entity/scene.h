@@ -84,7 +84,6 @@ namespace tke
 		void update();
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void save(const std::string &filename);
-		virtual void on_message(_Object*, Message) override {}
 	};
 
 	std::shared_ptr<Scene> getScene(const std::string &filename);

@@ -15,6 +15,5 @@ namespace tke
 		float textureUvFactor = 8.f;
 
 		Water();
-		virtual void on_message(_Object*, Message) override {}
 	};
 }

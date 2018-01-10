@@ -463,6 +463,8 @@ namespace tke
 	Water *Node::new_water()
 	{
 		auto w = new Water;
+		w->parent = this;
+		broadcast(w, MessageWaterAdd);
 		children.emplace_back(w);
 		return w;
 	}
@@ -473,10 +475,25 @@ namespace tke
 		{
 			if (it->get() == n)
 			{
+				switch (n->type)
+				{
+					case NodeTypeWater:
+						broadcast(n, MessageWaterRemove);
+						break;
+				}
 				children.erase(it);
 				return;
 			}
 		}
+	}
+
+	bool Node::broadcast(Node *src, Message msg)
+	{
+		if (_Object::broadcast(src, msg))
+			return true;
+		if (parent)
+			return parent->broadcast(src, msg);
+		return false;
 	}
 
 	void Node::mark_coord_setted()

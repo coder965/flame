@@ -52,6 +52,5 @@ namespace tke
 		Object(std::shared_ptr<Model> _model, unsigned int _physicsType = 0);
 		virtual ~Object() override;
 		void setState(Controller::State _s, bool enable);
-		virtual void on_message(_Object*, Message) override {}
 	};
 }

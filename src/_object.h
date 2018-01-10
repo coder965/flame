@@ -7,7 +7,8 @@ namespace tke
 {
 	enum Message
 	{
-
+		MessageWaterAdd,
+		MessageWaterRemove
 	};
 
 	struct _Object
@@ -19,7 +20,7 @@ namespace tke
 		virtual ~_Object();
 		void listen_to(_Object *o);
 		void remove_listener(_Object *o);
-		void broadcast(Message msg);
-		virtual void on_message(_Object *sender, Message msg) = 0;
+		bool broadcast(_Object *o, Message msg);
+		virtual bool on_message(_Object *sender, Message msg) { return false; };
 	};
 }

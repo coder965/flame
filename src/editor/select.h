@@ -22,7 +22,6 @@ struct Select : tke::_Object
 	void operator=(const std::string &s);
 	tke::Node *get_node();
 	const std::string &get_filename();
-	virtual void on_message(tke::_Object*, tke::Message) override {}
 };
 
 extern Select selected;

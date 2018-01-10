@@ -382,6 +382,8 @@ namespace tke
 		unsigned int dummy2;
 	};
 
+	static Water *waters[MaxWaterCount];
+
 	static Pipeline *scatteringPipeline;
 	static Pipeline *downsamplePipeline;
 	static Pipeline *convolvePipeline;
@@ -398,6 +400,12 @@ namespace tke
 	static Image *envrImageDownsample[3] = {};
 	bool DeferredRenderer::defe_inited = false;
 	bool DeferredRenderer::shad_inited = false;
+
+	bool DeferredRenderer::on_message(_Object *sender, Message msg)
+	{
+		return false;
+	}
+
 	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *dst)
 		:enable_shadow(_enable_shadow), resource(&globalResource)
 	{

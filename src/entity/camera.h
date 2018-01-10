@@ -47,7 +47,6 @@ namespace tke
 		void scroll(float value);
 		void move();
 		glm::mat4 get_view_matrix();
-		virtual void on_message(_Object*, Message) override {}
 	};
 
 	IMPL(nullptr) Camera *main_camera;
