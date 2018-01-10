@@ -19,6 +19,8 @@ namespace tke
 		NodeTypeWater
 	};
 
+	struct Water;
+
 	REFLECTABLE struct Node
 	{
 		REFL_BANK;
@@ -52,6 +54,7 @@ namespace tke
 
 		Node(NodeType _type);
 		Node(NodeType _type, const glm::vec3 &_coord, const glm::mat3 &rotation);
+		virtual ~Node() {}
 
 		glm::vec3 get_coord() const;
 		glm::vec3 get_euler();
@@ -110,6 +113,9 @@ namespace tke
 		void update_axis();
 		void update_euler();
 		void update_quat();
+
+		Water *new_water();
+		void remove_child(Node *n);
 
 	private:
 		void mark_coord_setted();

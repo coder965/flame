@@ -65,6 +65,7 @@
     <ClCompile Include="..\src\system.cpp" />
     <ClCompile Include="..\src\time.cpp" />
     <ClCompile Include="..\src\ui\ui.cpp" />
+    <ClCompile Include="..\src\_object.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\imgui\imgui.h" />
@@ -114,6 +115,7 @@
     <ClInclude Include="..\src\time.h" />
     <ClInclude Include="..\src\type.h" />
     <ClInclude Include="..\src\ui\ui.h" />
+    <ClInclude Include="..\src\_object.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6F5FD7B3-5E83-4A48-B23D-497D31A48266}</ProjectGuid>

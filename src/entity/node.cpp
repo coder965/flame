@@ -1,4 +1,5 @@
 #include "node.h"
+#include "water.h"
 
 namespace tke
 {
@@ -457,6 +458,25 @@ namespace tke
 			update_axis(); // update by axis
 		quat = mat3_to_quaternion(axis);
 		quat_dirty = false;
+	}
+
+	Water *Node::new_water()
+	{
+		auto w = new Water;
+		children.emplace_back(w);
+		return w;
+	}
+
+	void Node::remove_child(Node *n)
+	{
+		for (auto it = children.begin(); it != children.end(); it++)
+		{
+			if (it->get() == n)
+			{
+				children.erase(it);
+				return;
+			}
+		}
 	}
 
 	void Node::mark_coord_setted()

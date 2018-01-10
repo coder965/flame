@@ -7,6 +7,7 @@
 #include "../../entity/light.h"
 #include "../../entity/object.h"
 #include "../../entity/terrain.h"
+#include "../../entity/water.h"
 #include "../../physics/physics.h"
 #include "../../pick_up/pick_up.h"
 #include "../../input.h"
@@ -38,10 +39,6 @@ void SceneEditor::on_file_menu()
 		scene_editor.reset();
 }
 
-bool openCreateLightPopup = false;
-bool openCreateTerrainPopup = false;
-bool openCreateWaterPopup = false;
-
 const char *basic_model_names[] = {
 	"triangle",
 	"cube",
@@ -55,14 +52,17 @@ const char *basic_model_names[] = {
 
 void SceneEditor::on_menu_bar()
 {
-	openCreateLightPopup = false;
-	openCreateTerrainPopup = false;
-	openCreateWaterPopup = false;
-
 	if (ImGui::BeginMenu_keepalive("Create"))
 	{
-		if (ImGui::MenuItem("Light"))
-			openCreateLightPopup = true;
+		if (ImGui::BeginMenu("Light"))
+		{
+			if (ImGui::MenuItem("Parallax"))
+				;
+			if (ImGui::MenuItem("Point"))
+				;
+
+			ImGui::EndMenu();
+		}
 		if (ImGui::BeginMenu("Object"))
 		{
 			for (int i = 0; i < TK_ARRAYSIZE(basic_model_names); i++)
@@ -81,9 +81,15 @@ void SceneEditor::on_menu_bar()
 			ImGui::EndMenu();
 		}
 		if (ImGui::MenuItem("Terrain"))
-			openCreateTerrainPopup = true;
+		{
+			auto t = new tke::Terrain;
+			scene->addTerrain(t);
+		}
 		if (ImGui::MenuItem("Water"))
-			openCreateWaterPopup = true;
+		{
+			auto w = new tke::Water;
+			scene->addWater(w);
+		}
 
 		ImGui::EndMenu();
 	}
@@ -158,83 +164,6 @@ void SceneEditor::on_menu_bar()
 
 void SceneEditor::do_show()
 {
-	static bool use_camera_position = false;
-	static bool use_camera_target_position = false;
-	static glm::vec3 coord = glm::vec3(0.f);
-	static glm::vec3 euler = glm::vec3(0.f);
-	static glm::vec3 scale = glm::vec3(1.f);
-	auto funShowCoordUi = [&]() {
-		ImGui::Checkbox("Use Camera Position", &use_camera_position);
-		if (use_camera_position)
-			ImGui::Checkbox("Use Camera Target Position", &use_camera_target_position);
-		if (!use_camera_position)
-			ImGui::DragFloat3("coord", (float*)&coord[0], 0.5f);
-		else
-		{
-			glm::vec3 c;
-			if (!use_camera_target_position)
-				c = scene->camera.get_coord();
-			else
-				c = scene->camera.target;
-			ImGui::Text("%f %f %f coord", c.x, c.y, c.z);
-		}
-	};
-
-	if (openCreateLightPopup)
-		ImGui::OpenPopup("Create Light");
-	if (openCreateTerrainPopup)
-		ImGui::OpenPopup("Create Terrain");
-	if (openCreateWaterPopup)
-		ImGui::OpenPopup("Create Water");
-	if (ImGui::BeginPopupModal("Create Terrain", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		if (ImGui::TreeNode("Transform"))
-		{
-			funShowCoordUi();
-			ImGui::TreePop();
-		}
-		static char blend_image_name[260];
-		ImGui::InputText("Blend Map", blend_image_name, TK_ARRAYSIZE(blend_image_name));
-		static float height = 100.f;
-		ImGui::DragFloat("Height", &height);
-		static bool use_physx = false;
-		ImGui::Checkbox("Use Physx", &use_physx);
-		if (ImGui::Button("Create"))
-		{
-			auto t = new tke::Terrain(64, 64, use_physx, tke::get_image(blend_image_name));
-			t->set_coord(coord);
-			t->height = height;
-			scene->addTerrain(t);
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
-	}
-	if (ImGui::BeginPopupModal("Create Water", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		//for (int i = 0; i < 3; i++)
-		//{
-		//	char *strs[] = {"CoordX", "CoordY", "CoordZ"};
-		//	ImGui::DragFloat(strs[i], &wcs.coord[i], 0.5f);
-		//}
-		//ImGui::DragFloat("Height", &wcs.height);
-		//if (ImGui::Button("Create"))
-		//{
-		//	auto w = new tke::Water;
-		//	w->setCoord(wcs.coord);
-		//	w->height = wcs.height;
-		//	scene->addWater(w);
-		//}
-		//ImGui::SameLine();
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-
-		ImGui::EndPopup();
-	}
-
 	glm::vec4 image_rect = tke::fit_rect(glm::vec2(tke::window_cx, tke::window_cy), tke::res_aspect);
 	ImGui::SetCursorScreenPos(ImVec2(image_rect.x, image_rect.y));
 	ImGui::InvisibleButton("canvas", ImVec2(image_rect.z, image_rect.w));

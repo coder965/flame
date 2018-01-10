@@ -171,6 +171,9 @@
     <ClCompile Include="..\src\entity\component.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\_object.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -313,6 +316,9 @@
     </ClInclude>
     <ClInclude Include="..\src\entity\component.h">
       <Filter>src\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\_object.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

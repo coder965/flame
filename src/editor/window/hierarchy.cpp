@@ -13,6 +13,11 @@ HierarchyWindow::~HierarchyWindow()
 	hierarchy_window = nullptr;
 }
 
+static void show_nodes(tke::Node *n)
+{
+
+}
+
 void HierarchyWindow::do_show()
 {
 	ImGui::Begin("Hierarchy", &opened);

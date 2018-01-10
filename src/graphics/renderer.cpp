@@ -847,37 +847,37 @@ namespace tke
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
 		}
-		if (scene->waters.size() > 0)
-		{
-			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * scene->waters.size());
+		//if (scene->waters.size() > 0)
+		//{
+		//	std::vector<VkBufferCopy> ranges;
+		//	auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * scene->waters.size());
 
-			auto index = 0;
-			for (auto &w : scene->waters)
-			{
-				if (w->dirty)
-				{
-					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
-					WaterShaderStruct stru;
-					stru.coord = w->get_coord();
-					stru.blockCx = w->blockCx;
-					stru.blockSize = w->blockSize;
-					stru.height = w->height;
-					stru.tessellationFactor = w->tessellationFactor;
-					stru.textureUvFactor = w->textureUvFactor;
-					stru.mapDimension = 1024;
-					memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(WaterShaderStruct) * index;
-					range.size = sizeof(WaterShaderStruct);
-					ranges.push_back(range);
-				}
-				index++;
-			}
-			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
-		}
+		//	auto index = 0;
+		//	for (auto &w : scene->waters)
+		//	{
+		//		if (w->dirty)
+		//		{
+		//			auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
+		//			WaterShaderStruct stru;
+		//			stru.coord = w->get_coord();
+		//			stru.blockCx = w->blockCx;
+		//			stru.blockSize = w->blockSize;
+		//			stru.height = w->height;
+		//			stru.tessellationFactor = w->tessellationFactor;
+		//			stru.textureUvFactor = w->textureUvFactor;
+		//			stru.mapDimension = 1024;
+		//			memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
+		//			VkBufferCopy range = {};
+		//			range.srcOffset = srcOffset;
+		//			range.dstOffset = sizeof(WaterShaderStruct) * index;
+		//			range.size = sizeof(WaterShaderStruct);
+		//			ranges.push_back(range);
+		//		}
+		//		index++;
+		//	}
+		//	defalut_staging_buffer->unmap();
+		//	defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
+		//}
 
 		std::vector<Object*> staticObjects;
 		std::vector<Object*> animatedObjects;
@@ -1177,17 +1177,17 @@ namespace tke
 			}
 		}
 		// water
-		if (scene->waters.size() > 0)
-		{
-			cb_defe->bindPipeline(waterPipeline);
-			cb_defe->bindDescriptorSet(&ds_water->v);
-			int index = 0;
-			for (auto &w : scene->waters)
-			{
-				cb_defe->draw(4, 0, (index << 16) + w->blockCx * w->blockCx);
-				index++;
-			}
-		}
+		//if (scene->waters.size() > 0)
+		//{
+		//	cb_defe->bindPipeline(waterPipeline);
+		//	cb_defe->bindDescriptorSet(&ds_water->v);
+		//	int index = 0;
+		//	for (auto &w : scene->waters)
+		//	{
+		//		cb_defe->draw(4, 0, (index << 16) + w->blockCx * w->blockCx);
+		//		index++;
+		//	}
+		//}
 
 		//cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
 		//	VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, 

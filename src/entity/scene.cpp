@@ -329,29 +329,6 @@ namespace tke
 		return t;
 	}
 
-	void Scene::addWater(Water *w)
-	{
-		waters.emplace_back(w);
-		water_count_dirty = true;
-	}
-
-	Water *Scene::removeWater(Water *w)
-	{
-		for (auto it = waters.begin(); it != waters.end(); it++)
-		{
-			if (it->get() == w)
-			{
-				for (auto itt = it + 1; itt != waters.end(); itt++)
-					(*itt)->dirty = true;
-				it = waters.erase(it);
-				w = it == waters.end() ? nullptr : it->get();
-				break;
-			}
-		}
-		water_count_dirty = true;
-		return w;
-	}
-
 	void Scene::reset()
 	{
 		needUpdateSky = false;
@@ -367,8 +344,6 @@ namespace tke
 			o->dirty = false;
 		for (auto &t : terrains)
 			t->dirty = false;
-		for (auto &w : waters)
-			w->dirty = false;
 	}
 
 	void Scene::clear()

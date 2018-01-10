@@ -50,7 +50,7 @@ namespace tke
 
 		Object();
 		Object(std::shared_ptr<Model> _model, unsigned int _physicsType = 0);
-		~Object();
+		virtual ~Object() override;
 		void setState(Controller::State _s, bool enable);
 	};
 }

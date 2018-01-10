@@ -53,7 +53,6 @@ namespace tke
 		std::vector<std::shared_ptr<Light>> lights;
 		std::vector<std::shared_ptr<Object>> objects;
 		std::vector<std::shared_ptr<Terrain>> terrains;
-		std::vector<std::shared_ptr<Water>> waters;
 
 		bool light_count_dirty = true;
 		bool object_count_dirty = true;
@@ -77,8 +76,6 @@ namespace tke
 		int getCollisionGroupID(int ID, unsigned int mask);
 		void addTerrain(Terrain *t);
 		Terrain *removeTerrain(Terrain *t);
-		void addWater(Water *w);
-		Water *removeWater(Water *w);
 		void reset();
 		void clear();
 		void setSunDir(const glm::vec2 &);

@@ -85,6 +85,7 @@ PF_EVENT1 onMouseWheel = nullptr;
 PF_EVENT0 onRender = nullptr;
 PF_EVENT0 onDestroy = nullptr;
 std::uint32_t window_style;
+Camera *main_camera = nullptr;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
 tke::ReflectionBank *Node::b = tke::addReflectionBank("Node");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");

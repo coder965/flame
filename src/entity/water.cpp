@@ -2,5 +2,8 @@
 
 namespace tke
 {
-
+	Water::Water()
+		:Node(NodeTypeWater)
+	{
+	}
 }

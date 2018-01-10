@@ -48,4 +48,6 @@ namespace tke
 		void move();
 		glm::mat4 get_view_matrix();
 	};
+
+	IMPL(nullptr) Camera *main_camera;
 }
