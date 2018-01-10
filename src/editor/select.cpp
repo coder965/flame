@@ -9,7 +9,7 @@ void Select::reset()
 	if (type == SelectTypeNode)
 	{
 		for (auto f : followings)
-			f->remove_listener(this);
+			f->remove_follower(this);
 		followings.clear();
 	}
 	type = SelectTypeNull;
@@ -21,12 +21,12 @@ void Select::operator=(tke::Node *n)
 	if (type == SelectTypeNode)
 	{
 		for (auto f : followings)
-			f->remove_listener(this);
+			f->remove_follower(this);
 		followings.clear();
 	}
 	type = SelectTypeNode;
 	select_filename.clear();
-	listen_to(n);
+	follow_to(n);
 }
 
 void Select::operator=(const std::string &s)
@@ -34,7 +34,7 @@ void Select::operator=(const std::string &s)
 	if (type == SelectTypeNode)
 	{
 		for (auto f : followings)
-			f->remove_listener(this);
+			f->remove_follower(this);
 		followings.clear();
 	}
 	type = SelectTypeFile;

@@ -24,7 +24,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 {
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
-	defe_renderer->listen_to(_scene.get());
+	defe_renderer->follow_to(_scene.get());
 
 	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();

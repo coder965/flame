@@ -5,16 +5,16 @@ namespace tke
 	_Object::~_Object()
 	{
 		for (auto f : followings)
-			f->remove_listener(this);
+			f->remove_follower(this);
 	}
 
-	void _Object::listen_to(_Object *o)
+	void _Object::follow_to(_Object *o)
 	{
 		followings.emplace_back(o);
 		o->followers.emplace_back(this);
 	}
 
-	void _Object::remove_listener(_Object *o)
+	void _Object::remove_follower(_Object *o)
 	{
 		for (auto it = followers.begin(); it != followers.end(); it++)
 		{

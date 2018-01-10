@@ -18,8 +18,8 @@ namespace tke
 		std::vector<_Object*> followers;
 
 		virtual ~_Object();
-		void listen_to(_Object *o);
-		void remove_listener(_Object *o);
+		void follow_to(_Object *o);
+		void remove_follower(_Object *o);
 		bool broadcast(_Object *o, Message msg);
 		virtual bool on_message(_Object *sender, Message msg) { return false; };
 	};

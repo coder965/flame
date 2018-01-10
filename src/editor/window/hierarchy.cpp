@@ -20,7 +20,7 @@ static void show_nodes(tke::Node *n)
 		node_style |= ImGuiTreeNodeFlags_Selected;
 	if (n->children.size() == 0)
 		node_style |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-	auto node_opened = ImGui::TreeNodeEx("123", node_style);
+	auto node_opened = ImGui::TreeNodeEx(n->name.c_str(), node_style);
 	if (ImGui::IsItemClicked())
 		selected = n;
 	if (n->children.size() > 0 && node_opened)

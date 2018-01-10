@@ -382,7 +382,8 @@ namespace tke
 		unsigned int dummy2;
 	};
 
-	static Water *waters[MaxWaterCount];
+	static int waters_count = 0;
+	static Water *waters[MaxWaterCount] = {};
 
 	static Pipeline *scatteringPipeline;
 	static Pipeline *downsamplePipeline;
@@ -403,6 +404,37 @@ namespace tke
 
 	bool DeferredRenderer::on_message(_Object *sender, Message msg)
 	{
+		switch (msg)
+		{
+			case MessageWaterAdd:
+			{
+				auto w = (Water*)sender;
+				for (int i = 0; i < MaxWaterCount; i++)
+				{
+					if (!waters[i])
+					{
+						waters[i] = w;
+						waters_count++;
+						break;
+					}
+				}
+				return true;
+			}
+			case MessageWaterRemove:
+			{
+				auto w = (Water*)sender;
+				for (int i = 0; i < MaxWaterCount; i++)
+				{
+					if (waters[i] == w)
+					{
+						waters[i] = nullptr;
+						waters_count--;
+						break;
+					}
+				}
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -855,37 +887,39 @@ namespace tke
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
 		}
-		//if (scene->waters.size() > 0)
-		//{
-		//	std::vector<VkBufferCopy> ranges;
-		//	auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * scene->waters.size());
+		if (waters_count > 0)
+		{
+			std::vector<VkBufferCopy> ranges;
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * waters_count);
 
-		//	auto index = 0;
-		//	for (auto &w : scene->waters)
-		//	{
-		//		if (w->dirty)
-		//		{
-		//			auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
-		//			WaterShaderStruct stru;
-		//			stru.coord = w->get_coord();
-		//			stru.blockCx = w->blockCx;
-		//			stru.blockSize = w->blockSize;
-		//			stru.height = w->height;
-		//			stru.tessellationFactor = w->tessellationFactor;
-		//			stru.textureUvFactor = w->textureUvFactor;
-		//			stru.mapDimension = 1024;
-		//			memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
-		//			VkBufferCopy range = {};
-		//			range.srcOffset = srcOffset;
-		//			range.dstOffset = sizeof(WaterShaderStruct) * index;
-		//			range.size = sizeof(WaterShaderStruct);
-		//			ranges.push_back(range);
-		//		}
-		//		index++;
-		//	}
-		//	defalut_staging_buffer->unmap();
-		//	defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
-		//}
+			for (int i = 0; i < MaxWaterCount; i++)
+			{
+				if (waters[i])
+				{
+					auto w = waters[i];
+					if (w->dirty)
+					{
+						auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
+						WaterShaderStruct stru;
+						stru.coord = glm::vec3(w->get_world_matrix()[3]);
+						stru.blockCx = w->blockCx;
+						stru.blockSize = w->blockSize;
+						stru.height = w->height;
+						stru.tessellationFactor = w->tessellationFactor;
+						stru.textureUvFactor = w->textureUvFactor;
+						stru.mapDimension = 1024;
+						memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
+						VkBufferCopy range = {};
+						range.srcOffset = srcOffset;
+						range.dstOffset = sizeof(WaterShaderStruct) * i;
+						range.size = sizeof(WaterShaderStruct);
+						ranges.push_back(range);
+					}
+				}
+			}
+			defalut_staging_buffer->unmap();
+			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
+		}
 
 		std::vector<Object*> staticObjects;
 		std::vector<Object*> animatedObjects;
@@ -1185,17 +1219,19 @@ namespace tke
 			}
 		}
 		// water
-		//if (scene->waters.size() > 0)
-		//{
-		//	cb_defe->bindPipeline(waterPipeline);
-		//	cb_defe->bindDescriptorSet(&ds_water->v);
-		//	int index = 0;
-		//	for (auto &w : scene->waters)
-		//	{
-		//		cb_defe->draw(4, 0, (index << 16) + w->blockCx * w->blockCx);
-		//		index++;
-		//	}
-		//}
+		if (waters_count > 0)
+		{
+			cb_defe->bindPipeline(waterPipeline);
+			cb_defe->bindDescriptorSet(&ds_water->v);
+			for (int i = 0; i < MaxWaterCount; i++)
+			{
+				if (waters[i])
+				{
+					auto w = waters[i];
+					cb_defe->draw(4, 0, (i << 16) + w->blockCx * w->blockCx);
+				}
+			}
+		}
 
 		//cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
 		//	VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, 

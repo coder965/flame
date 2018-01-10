@@ -54,6 +54,14 @@ namespace tke
 		return matrix;
 	}
 
+	glm::mat4 Node::get_world_matrix()
+	{
+		auto m = get_matrix();
+		if (parent)
+			m = parent->get_world_matrix() * m;
+		return m;
+	}
+
 	void Node::set_coord(const glm::vec3 &_coord)
 	{
 		coord = _coord;
@@ -464,6 +472,7 @@ namespace tke
 	{
 		auto w = new Water;
 		w->parent = this;
+		w->name = "water";
 		broadcast(w, MessageWaterAdd);
 		children.emplace_back(w);
 		return w;
