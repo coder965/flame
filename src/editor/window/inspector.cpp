@@ -152,10 +152,10 @@ void InspectorWindow::do_show()
 							o->set_coord(coord);
 						auto euler = o->get_euler();
 						if (ImGui::DragFloat3("euler", &euler[0]))
-							o->setEuler(euler);
+							o->set_euler(euler);
 						auto scale = o->get_scale();
 						if (ImGui::DragFloat3("scale", &scale[0]))
-							o->setScale(scale);
+							o->set_scale(scale);
 
 						ImGui::DragFloat("ang offset", &o->ang_offset);
 						ImGui::DragFloat("speed", &o->speed);

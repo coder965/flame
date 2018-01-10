@@ -1,6 +1,6 @@
 #pragma once
 
-#include "transformer.h"
+#include "node.h"
 #include "controller.h"
 
 namespace tke
@@ -13,7 +13,7 @@ namespace tke
 		targeting = 1 << 1
 	};
 
-	struct Camera : Transformer, Controller
+	struct Camera : Node, Controller
 	{
 		CameraMode mode = CameraMode::free;
 		glm::vec3 target = glm::vec3(0.f);

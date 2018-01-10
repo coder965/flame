@@ -1,10 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "../../PhysX-3.3/PhysXSDK/Include/PxPhysicsAPI.h"
 
-#include "../entity/transformer.h"
+#include "../math/math.h"
 
 namespace tke
 {

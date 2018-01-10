@@ -10,7 +10,6 @@
 #include "../physics/physics.h"
 #include "../model/model.h"
 #include "../model/animation.h"
-#include "sky.h"
 #include "light.h"
 #include "object.h"
 #include "terrain.h"
@@ -407,7 +406,7 @@ namespace tke
 		if (!sky || sky->type != SkyType::atmosphere_scattering)
 			return;
 		auto as = (SkyAtmosphereScattering*)sky.get();
-		as->sun_light->setEuler(glm::vec3(v.x, 0.f, v.y));
+		as->sun_light->set_euler(glm::vec3(v.x, 0.f, v.y));
 		needUpdateSky = true;
 		needUpdateAmbientBuffer = true;
 	}
@@ -443,7 +442,7 @@ namespace tke
 				{
 					glm::vec3 e, c;
 					o->move(o->get_euler().x, c, e);
-					o->addEuler(e);
+					o->add_euler(e);
 
 					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
 					o->floatingTime += dist;
@@ -477,7 +476,7 @@ namespace tke
 							auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
 							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
 							o->set_coord(coord);
-							o->setQuat(quat);
+							o->set_quat(quat);
 							data->coord = coord;
 							data->rotation = quaternion_to_mat3(quat);
 						}

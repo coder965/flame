@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../graphics/graphics.h"
-#include "transformer.h"
 #include "node.h"
 
 namespace physx { struct PxRigidActor; }
@@ -20,7 +19,7 @@ namespace tke
 	struct Material;
 	struct VertexBuffer;
 
-	REFLECTABLE struct Terrain : Transformer, Node
+	REFLECTABLE struct Terrain : Node
 	{
 		REFL_BANK;
 

@@ -21,7 +21,6 @@
 #include "..\src\entity\scene.h"
 #include "..\src\entity\sky.h"
 #include "..\src\entity\terrain.h"
-#include "..\src\entity\transformer.h"
 #include "..\src\entity\water.h"
 #include "..\src\error.h"
 #include "..\src\event.h"
@@ -86,11 +85,11 @@ PF_EVENT0 onRender = nullptr;
 PF_EVENT0 onDestroy = nullptr;
 std::uint32_t window_style;
 tke::ReflectionBank *Controller::b = tke::addReflectionBank("Controller");
+tke::ReflectionBank *Node::b = tke::addReflectionBank("Node");
 tke::ReflectionBank *Object::b = tke::addReflectionBank("Object");
 tke::ReflectionBank *Scene::b = tke::addReflectionBank("Scene");
 VkPipelineVertexInputStateCreateInfo terrianVertexInputState;
 tke::ReflectionBank *Terrain::b = tke::addReflectionBank("Terrain");
-tke::ReflectionBank *Transformer::b = tke::addReflectionBank("Transformer");
 tke::ReflectionBank *Water::b = tke::addReflectionBank("Water");
 bool only_2d = false;
 float near_plane = 0.1f;
@@ -183,13 +182,20 @@ currentBank = Controller::b;
 currentBank->addV<float>("ang_offset", offsetof(Controller, ang_offset));
 currentBank->addV<float>("speed", offsetof(Controller, speed));
 currentBank->addV<float>("turn_speed", offsetof(Controller, turn_speed));
+currentBank = Node::b;
+currentBank->addV<glm::vec3>("coord", offsetof(Node, coord));
+currentBank->addV<glm::vec3>("euler", offsetof(Node, euler));
+currentBank->addV<glm::vec3>("scale", offsetof(Node, scale));
 currentBank = Object::b;
+currentBank->parents.emplace_back(Node::b, TK_DERIVE_OFFSET(Object, Node));
 currentBank->parents.emplace_back(Controller::b, TK_DERIVE_OFFSET(Object, Controller));
 currentBank->addV<std::string>("model_filename", offsetof(Object, model_filename));
 currentBank->addV<std::string>("name", offsetof(Object, name));
 currentBank->addV<std::uint32_t>("physics_type", offsetof(Object, physics_type));
 currentBank = Scene::b;
+currentBank->parents.emplace_back(Node::b, TK_DERIVE_OFFSET(Scene, Node));
 currentBank = Terrain::b;
+currentBank->parents.emplace_back(Node::b, TK_DERIVE_OFFSET(Terrain, Node));
 currentBank->addV<bool>("use_physx", offsetof(Terrain, use_physx));
 currentBank->addV<int>("block_cx", offsetof(Terrain, block_cx));
 currentBank->addV<int>("block_cy", offsetof(Terrain, block_cy));
@@ -198,12 +204,8 @@ currentBank->addV<float>("height", offsetof(Terrain, height));
 currentBank->addV<float>("displacement_height", offsetof(Terrain, displacement_height));
 currentBank->addV<float>("tessellation_factor", offsetof(Terrain, tessellation_factor));
 currentBank->addV<float>("tiling_scale", offsetof(Terrain, tiling_scale));
-currentBank = Transformer::b;
-currentBank->addV<glm::vec3>("coord", offsetof(Transformer, coord));
-currentBank->addV<glm::vec3>("euler", offsetof(Transformer, euler));
-currentBank->addV<glm::vec3>("scale", offsetof(Transformer, scale));
 currentBank = Water::b;
-currentBank->parents.emplace_back(Transformer::b, TK_DERIVE_OFFSET(Water, Transformer));
+currentBank->parents.emplace_back(Node::b, TK_DERIVE_OFFSET(Water, Node));
 currentBank = PushConstantRange::b;
 currentBank->addV<int>("offset", offsetof(PushConstantRange, offset));
 currentBank->addV<int>("size", offsetof(PushConstantRange, size));

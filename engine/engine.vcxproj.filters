@@ -51,9 +51,6 @@
     <ClCompile Include="..\src\entity\terrain.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\entity\transformer.cpp">
-      <Filter>src\entity</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\entity\water.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
@@ -89,9 +86,6 @@
     </ClCompile>
     <ClCompile Include="..\..\imgui\imgui_draw.cpp">
       <Filter>src\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\entity\sky.cpp">
-      <Filter>src\entity</Filter>
     </ClCompile>
     <ClCompile Include="..\src\file_utils.cpp">
       <Filter>src</Filter>
@@ -171,6 +165,9 @@
     <ClCompile Include="..\src\application.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\entity\sky.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -189,9 +186,6 @@
       <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\entity\terrain.h">
-      <Filter>src\entity</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\entity\transformer.h">
       <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\entity\water.h">
@@ -223,9 +217,6 @@
     </ClInclude>
     <ClInclude Include="..\..\imgui\imgui.h">
       <Filter>src\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\entity\sky.h">
-      <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\file_utils.h">
       <Filter>src</Filter>
@@ -313,6 +304,9 @@
     </ClInclude>
     <ClInclude Include="..\src\application.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\entity\sky.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -441,24 +441,8 @@ void SceneEditor::do_show()
 		}
 	}
 
-	{
-		auto n = selected.get_node();
-		if (n)
-		{
-			switch (n->type)
-			{
-			case tke::NodeTypeLight:
-				transformerTool->transformer = (tke::Light*)n;
-				break;
-			case tke::NodeTypeObject:
-				transformerTool->transformer = (tke::Object*)n;
-				break;
-			default:
-				transformerTool->transformer = nullptr;
-			}
-		}
-		transformerTool->show(&scene->camera);
-	}
+	transformerTool->node = selected.get_node();
+	transformerTool->show(&scene->camera);
 }
 
 void SceneEditor::save(tke::XMLNode *n)

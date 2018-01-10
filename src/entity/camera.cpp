@@ -6,6 +6,7 @@
 namespace tke
 {
 	Camera::Camera()
+		:Node(NodeTypeCamera)
 	{
 		ang_offset = 90.f;
 	}
@@ -127,7 +128,7 @@ namespace tke
 
 	void Camera::rotateByCursor(float x, float y)
 	{
-		addEuler(-x * 180.f, -y * 180.f, 0.f);
+		add_euler(-x * 180.f, -y * 180.f, 0.f);
 		lookAtTarget();
 	}
 
@@ -166,20 +167,20 @@ namespace tke
 		switch (mode)
 		{
 		case CameraMode::free:
-			addCoord(coord);
+			add_coord(coord);
 			break;
 		case CameraMode::targeting:
 			setTarget(target + coord);
 			break;
 		}
-		addEuler(euler);
+		add_euler(euler);
 	}
 
 	glm::mat4 Camera::get_view_matrix()
 	{
 		if (matrix_dirty)
 		{
-			updateMat();
+			update_matrix();
 			view_matrix = glm::inverse(matrix);
 		}
 		return view_matrix;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "transformer.h"
 #include "node.h"
 
 namespace tke
@@ -14,7 +13,7 @@ namespace tke
 
 	std::string getLightTypeName(LightType _type);
 
-	struct Light : Transformer, Node
+	struct Light : Node
 	{
 		LightType type;
 		glm::vec3 color = glm::vec3(0.5f);

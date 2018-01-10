@@ -30,7 +30,6 @@
     <ClCompile Include="..\src\entity\scene.cpp" />
     <ClCompile Include="..\src\entity\sky.cpp" />
     <ClCompile Include="..\src\entity\terrain.cpp" />
-    <ClCompile Include="..\src\entity\transformer.cpp" />
     <ClCompile Include="..\src\entity\water.cpp" />
     <ClCompile Include="..\src\error.cpp" />
     <ClCompile Include="..\src\event.cpp" />
@@ -77,7 +76,6 @@
     <ClInclude Include="..\src\entity\scene.h" />
     <ClInclude Include="..\src\entity\sky.h" />
     <ClInclude Include="..\src\entity\terrain.h" />
-    <ClInclude Include="..\src\entity\transformer.h" />
     <ClInclude Include="..\src\entity\water.h" />
     <ClInclude Include="..\src\error.h" />
     <ClInclude Include="..\src\event.h" />

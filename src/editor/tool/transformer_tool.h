@@ -13,9 +13,9 @@ struct TransformerTool : Tool
 		ModeScale
 	};
 
-	tke::Transformer *transformer = nullptr;
+	tke::Node *node = nullptr;
 	Mode mode = ModeNull;
-	int selectedAxis = -1;
+	tke::Node::Axis selectedAxis = tke::Node::AxisNull;
 
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
