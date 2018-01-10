@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\src\application.cpp" />
     <ClCompile Include="..\src\entity\camera.cpp" />
+    <ClCompile Include="..\src\entity\component.cpp" />
     <ClCompile Include="..\src\entity\controller.cpp" />
     <ClCompile Include="..\src\entity\light.cpp" />
     <ClCompile Include="..\src\entity\node.cpp" />
@@ -69,6 +70,7 @@
     <ClInclude Include="..\..\imgui\imgui.h" />
     <ClInclude Include="..\src\application.h" />
     <ClInclude Include="..\src\entity\camera.h" />
+    <ClInclude Include="..\src\entity\component.h" />
     <ClInclude Include="..\src\entity\controller.h" />
     <ClInclude Include="..\src\entity\light.h" />
     <ClInclude Include="..\src\entity\node.h" />

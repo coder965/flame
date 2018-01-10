@@ -5,6 +5,7 @@
 
 #include "../refl.h"
 #include "../math/math.h"
+#include "component.h"
 
 namespace tke
 {

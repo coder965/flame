@@ -168,6 +168,9 @@
     <ClCompile Include="..\src\entity\sky.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\entity\component.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -306,6 +309,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\entity\sky.h">
+      <Filter>src\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\entity\component.h">
       <Filter>src\entity</Filter>
     </ClInclude>
   </ItemGroup>
