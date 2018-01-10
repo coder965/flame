@@ -4,6 +4,7 @@ namespace tke
 {
 	enum ComponentType
 	{
+		ComponentTypeController,
 		ComponentTypeCamera,
 		ComponentTypeLight,
 		ComponentTypeMesh,
@@ -16,5 +17,6 @@ namespace tke
 		ComponentType type;
 
 		Component(ComponentType _type);
+		virtual void update() = 0;
 	};
 }

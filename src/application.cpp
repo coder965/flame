@@ -226,16 +226,6 @@ namespace tke
 		res_cy = rcy;
 		res_aspect = (float)res_cx / res_cy;
 
-		if (!only_2d)
-		{
-			auto vkTrans = glm::mat4(glm::vec4(1.f, 0.f, 0.f, 0.f), glm::vec4(0.f, -1.f, 0.f, 0.f),
-				glm::vec4(0.f, 0.f, 1.f, 0.f), glm::vec4(0.f, 0.f, 0.f, 1.f));
-			matOrtho = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
-			matOrthoInv = glm::inverse(matOrtho);
-			matPerspective = vkTrans * glm::perspective(glm::radians(fovy), res_aspect, near_plane, far_plane);
-			matPerspectiveInv = glm::inverse(matPerspective);
-		}
-
 		initVulkan(vulkan_debug);
 
 		initUi();

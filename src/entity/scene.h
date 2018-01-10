@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mutex>
-
 #include "../global.h"
 #include "../math/math.h"
 #include "node.h"
@@ -27,8 +25,6 @@ namespace tke
 	REFLECTABLE struct Scene : Node
 	{
 		REFL_BANK;
-
-		std::mutex mtx;
 
 		std::string filename;
 		std::string filepath;

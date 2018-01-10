@@ -14,6 +14,7 @@
 #include "..\src\editor\window\terrain_editor.h"
 #include "..\src\editor\window\window.h"
 #include "..\src\entity\camera.h"
+#include "..\src\entity\component.h"
 #include "..\src\entity\controller.h"
 #include "..\src\entity\light.h"
 #include "..\src\entity\node.h"
@@ -100,10 +101,6 @@ std::string engine_path;
 int res_cx;
 int res_cy;
 float res_aspect;
-glm::mat4 matOrtho;
-glm::mat4 matOrthoInv;
-glm::mat4 matPerspective;
-glm::mat4 matPerspectiveInv;
 uint32_t FPS;
 StagingBuffer *defalut_staging_buffer = nullptr;
 std::shared_ptr<Image> default_color_image;

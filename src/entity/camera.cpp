@@ -1,4 +1,3 @@
-#include "../global.h"
 #include "../model/model.h"
 #include "camera.h"
 #include "object.h"
@@ -8,7 +7,29 @@ namespace tke
 	Camera::Camera()
 		:Node(NodeTypeCamera)
 	{
+		set_proj(ProjectionTypePerspective);
 		ang_offset = 90.f;
+	}
+
+	void Camera::set_proj(ProjectionType proj_type)
+	{
+		auto vkTrans = glm::mat4(
+			glm::vec4(1.f, 0.f, 0.f, 0.f), 
+			glm::vec4(0.f, -1.f, 0.f, 0.f),
+			glm::vec4(0.f, 0.f, 1.f, 0.f), 
+			glm::vec4(0.f, 0.f, 0.f, 1.f)
+		);
+		switch (proj_type)
+		{
+			case ProjectionTypePerspective:
+				proj_matrix = vkTrans * glm::perspective(glm::radians(fovy), res_aspect, near_plane, far_plane);
+				proj_matrix_inverse = glm::inverse(proj_matrix);
+				break;
+			case ProjectionTypeOrtho:
+				proj_matrix = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
+				proj_matrix_inverse = glm::inverse(proj_matrix);
+				break;
+		}
 	}
 
 	void Camera::setMode(CameraMode _mode)
@@ -81,7 +102,7 @@ namespace tke
 			}
 		}
 
-		auto vp = matPerspective * matrix;
+		auto vp = proj_matrix * matrix;
 
 		frustumPlanes[0].x = vp[0].w + vp[0].x;
 		frustumPlanes[0].y = vp[1].w + vp[1].x;

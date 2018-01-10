@@ -175,7 +175,7 @@ namespace tke
 			glm::mat4 proj;
 			glm::vec4 color;
 		}pc;
-		pc.proj = matPerspective;
+		pc.proj = camera->proj_matrix;
 
 		for (int i = 0; i < data->obj_data.size(); i++)
 		{
@@ -293,7 +293,7 @@ namespace tke
 		cb->bindVertexBuffer(data->vertex_buffer);
 		cb->bindPipeline(pipeline_lines);
 
-		glm::mat4 mvp = matPerspective * camera->get_view_matrix();
+		glm::mat4 mvp = camera->proj_matrix * camera->get_view_matrix();
 		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
 		cb->draw(data->vertex_count);
 
@@ -665,8 +665,8 @@ namespace tke
 	{
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
-			stru.proj = matPerspective;
-			stru.projInv = matPerspectiveInv;
+			stru.proj = scene->camera.proj_matrix;
+			stru.projInv = scene->camera.proj_matrix_inverse;
 			stru.view = scene->camera.get_view_matrix();
 			stru.viewInv = scene->camera.get_matrix();
 			stru.projView = stru.proj * stru.view;

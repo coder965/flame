@@ -18,11 +18,6 @@ namespace tke
 	IMPL() int res_cy;
 	IMPL() float res_aspect;
 
-	IMPL() glm::mat4 matOrtho;
-	IMPL() glm::mat4 matOrthoInv;
-	IMPL() glm::mat4 matPerspective;
-	IMPL() glm::mat4 matPerspectiveInv;
-
 	IMPL() uint32_t FPS;
 
 	enum DescriptorSetBindings

@@ -63,15 +63,12 @@ namespace tke
 
 	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
-		mtx.lock();
 		lights.push_back(std::shared_ptr<Light>(l));
 		light_count_dirty = true;
-		mtx.unlock();
 	}
 
 	Light *Scene::removeLight(Light *l)
 	{
-		mtx.lock();
 		for (auto it = lights.begin(); it != lights.end(); it++)
 		{
 			if (it->get() == l)
@@ -84,7 +81,6 @@ namespace tke
 			}
 		}
 		light_count_dirty = true;
-		mtx.unlock();
 		return l;
 	}
 
@@ -104,8 +100,6 @@ namespace tke
 			o->name = std::to_string(_objectMagicIndex);
 			_objectMagicIndex++;
 		}
-
-		mtx.lock();
 
 		// since object can move to somewhere first, we create physics component here
 		if (o->physics_type != 0)
@@ -240,12 +234,10 @@ namespace tke
 		objects.push_back(std::shared_ptr<Object>(o));
 
 		object_count_dirty = true;
-		mtx.unlock();
 	}
 
 	Object *Scene::removeObject(Object *o)
 	{
-		mtx.lock();
 		for (auto it = objects.begin(); it != objects.end(); it++)
 		{
 			if (it->get() == o)
@@ -260,7 +252,6 @@ namespace tke
 			}
 		}
 		object_count_dirty = true;
-		mtx.unlock();
 		return o;
 	}
 
@@ -285,8 +276,6 @@ namespace tke
 
 	void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	{
-		mtx.lock();
-
 		//if (t->use_physx && t->normalHeightMap)
 		//{
 		//	auto m = t->normalHeightMap;
@@ -320,13 +309,10 @@ namespace tke
 
 		terrains.push_back(std::shared_ptr<Terrain>(t));
 		terrain_count_dirty = true;
-		mtx.unlock();
 	}
 
 	Terrain *Scene::removeTerrain(Terrain *t)
 	{
-		mtx.lock();
-
 		for (auto it = terrains.begin(); it != terrains.end(); it++)
 		{
 			if (it->get() == t)
@@ -339,22 +325,18 @@ namespace tke
 			}
 		}
 
-		mtx.unlock();
 		terrain_count_dirty = true;
 		return t;
 	}
 
 	void Scene::addWater(Water *w)
 	{
-		mtx.lock();
 		waters.emplace_back(w);
 		water_count_dirty = true;
-		mtx.unlock();
 	}
 
 	Water *Scene::removeWater(Water *w)
 	{
-		mtx.lock();
 		for (auto it = waters.begin(); it != waters.end(); it++)
 		{
 			if (it->get() == w)
@@ -366,7 +348,6 @@ namespace tke
 				break;
 			}
 		}
-		mtx.unlock();
 		water_count_dirty = true;
 		return w;
 	}
@@ -392,13 +373,9 @@ namespace tke
 
 	void Scene::clear()
 	{
-		mtx.lock();
-
 		lights.clear();
 		objects.clear();
 		terrains.clear();
-
-		mtx.unlock();
 	}
 
 	void Scene::setSunDir(const glm::vec2 &v)
