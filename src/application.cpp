@@ -233,7 +233,6 @@ namespace tke
 		if (!only_2d)
 		{
 			initModel();
-			init_terrain();
 			init_pick_up();
 
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);

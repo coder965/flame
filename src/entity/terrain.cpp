@@ -36,18 +36,4 @@ namespace tke
 		material_count--;
 		materials[material_count].reset();
 	}
-
-	void init_terrain()
-	{
-		{
-			static VkVertexInputBindingDescription bindings = { 0, sizeof(TerrainVertex), VK_VERTEX_INPUT_RATE_VERTEX };
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(TerrainVertex, normal_height) },
-				{ 1, 0, VK_FORMAT_R32G32_SFLOAT,	offsetof(TerrainVertex, tangent) }
-			};
-
-			terrianVertexInputState = vertexStateInfo(1, &bindings, TK_ARRAYSIZE(attributes), attributes);
-		}
-	}
 }

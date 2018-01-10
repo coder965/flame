@@ -50,35 +50,14 @@ namespace tke
 	static Image *fontImage;
 	void initUi()
 	{
-		{
-			struct Vertex2D
-			{
-				glm::vec2       pos;
-				glm::vec2       uv;
-				std::uint32_t   col;
-			};
-
-			static VkPipelineVertexInputStateCreateInfo vis;
-
-			static VkVertexInputBindingDescription bindings = {0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX};
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex2D, pos)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex2D, uv)},
-				{2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(Vertex2D, col)}
-			};
-
-			vis = vertexStateInfo(1, &bindings, ARRAYSIZE(attributes), attributes);
-
-			pipeline_ui = new Pipeline(PipelineCreateInfo()
-				.vertex_input(&vis)
-				.cullMode(VK_CULL_MODE_NONE)
-				.addBlendAttachmentState(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
-				.addDynamicState(VK_DYNAMIC_STATE_SCISSOR)
-				.addShader(engine_path + "shader/ui.vert", {})
-				.addShader(engine_path + "shader/ui.frag", {}),
-				renderPass_window, 0, true);
-		}
+		pipeline_ui = new Pipeline(PipelineCreateInfo()
+			.vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 },{ TokenB8V4, 0 } })
+			.cull_mode(VK_CULL_MODE_NONE)
+			.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+			.add_dynamic_state(VK_DYNAMIC_STATE_SCISSOR)
+			.add_shader(engine_path + "shader/ui.vert", {})
+			.add_shader(engine_path + "shader/ui.frag", {}),
+			renderPass_window, 0, true);
 
 		{
 			ImGuiIO& io = ImGui::GetIO();

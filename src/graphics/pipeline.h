@@ -29,13 +29,24 @@ namespace tke
 		~PipelineLayout();
 	};
 
-	IMPL() VkPipelineVertexInputStateCreateInfo zeroVertexInputState;
+	IMPL() VkPipelineVertexInputStateCreateInfo null_vertex_input_state;
+
+	enum VertexInputToken
+	{
+		TokenF32,
+		TokenF32V2,
+		TokenF32V3,
+		TokenF32V4,
+		TokenB8V4,
+	};
 
 	struct PipelineCreateInfo
 	{
 		int _cx = 0;
 		int _cy = 0;
-		VkPipelineVertexInputStateCreateInfo *_vertex_input = &zeroVertexInputState;
+		std::vector<VkVertexInputBindingDescription> _vertex_input_state_bindings;
+		std::vector<VkVertexInputAttributeDescription> _vertex_input_state_attributes;
+		VkPipelineVertexInputStateCreateInfo _vertex_input_state = {};
 		int _patch_control_points = 0;
 		bool _depth_test = false;
 		bool _depth_write = false;
@@ -48,17 +59,18 @@ namespace tke
 		std::vector<std::pair<std::string, std::vector<std::string>>> _shaders;
 		std::vector<LinkResource> links;
 
+		PipelineCreateInfo();
 		inline PipelineCreateInfo &cx(int v) { _cx = v; return *this; }
 		inline PipelineCreateInfo &cy(int v) { _cy = v; return *this; }
-		inline PipelineCreateInfo &vertex_input(VkPipelineVertexInputStateCreateInfo *v) { _vertex_input = v; return *this; }
+		PipelineCreateInfo &vertex_input_state(const std::initializer_list<std::pair<VertexInputToken, int>> &tokens);
 		inline PipelineCreateInfo &patch_control_points(int v) { _patch_control_points = v; return *this; }
 		inline PipelineCreateInfo &depth_test(bool v) { _depth_test = v; return *this; }
 		inline PipelineCreateInfo &depth_write(bool v) { _depth_write = v; return *this; }
 		inline PipelineCreateInfo &depth_clamp(bool v) { _depth_clamp = v; return *this; }
-		inline PipelineCreateInfo &primitiveTopology(VkPrimitiveTopology v) { _primitiveTopology = v; return *this; }
-		inline PipelineCreateInfo &polygonMode(VkPolygonMode v) { _polygonMode = v; return *this; }
-		inline PipelineCreateInfo &cullMode(VkCullModeFlagBits v) { _cullMode = v; return *this; }
-		inline PipelineCreateInfo &addBlendAttachmentState(bool enable,
+		inline PipelineCreateInfo &primitive_topology(VkPrimitiveTopology v) { _primitiveTopology = v; return *this; }
+		inline PipelineCreateInfo &polygon_mode(VkPolygonMode v) { _polygonMode = v; return *this; }
+		inline PipelineCreateInfo &cull_mode(VkCullModeFlagBits v) { _cullMode = v; return *this; }
+		inline PipelineCreateInfo &add_blend_attachment_state(bool enable,
 			VkBlendFactor fsrc_color = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_color = VK_BLEND_FACTOR_ZERO,
 			VkBlendFactor fsrc_alpha = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_alpha = VK_BLEND_FACTOR_ZERO)
 		{
@@ -68,18 +80,18 @@ namespace tke
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT});
 			return *this;
 		}
-		inline PipelineCreateInfo &addDynamicState(VkDynamicState v) 
+		inline PipelineCreateInfo &add_dynamic_state(VkDynamicState v) 
 		{ 
 			_dynamicStates.emplace_back(v);
 			return *this; 
 		}
-		inline PipelineCreateInfo &addShader(const std::string &filename, 
+		inline PipelineCreateInfo &add_shader(const std::string &filename, 
 			const std::initializer_list<std::string> &defines)
 		{
 			_shaders.emplace_back(filename, defines);
 			return *this;
 		}
-		inline PipelineCreateInfo &addLink(const std::string &descriptor_name,
+		inline PipelineCreateInfo &add_link(const std::string &descriptor_name,
 			const std::string &resource_name, int array_element = 0, VkSampler sampler = 0)
 		{
 			LinkResource l;
@@ -108,14 +120,11 @@ namespace tke
 		DescriptorSet *descriptorSet = nullptr;
 
 		// must call in main thread
-		Pipeline(PipelineCreateInfo &info, RenderPass *_renderPass, int _subpassIndex, bool need_default_ds = false);
+		Pipeline(PipelineCreateInfo &info, RenderPass *_renderPass, int _subpassIndex, 
+			bool need_default_ds = false);
 		// must call in main thread
 		~Pipeline();
 		void linkDescriptors(DescriptorSet *set, Resource *resource);
 		int descriptorPosition(const std::string &name);
 	};
-
-	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes);
-
-	void initPipeline();
 }

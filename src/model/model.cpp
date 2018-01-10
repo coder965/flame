@@ -1719,37 +1719,6 @@ namespace tke
 	void initModel()
 	{
 		{
-			static VkVertexInputBindingDescription bindings = {0, sizeof(ModelVertex), VK_VERTEX_INPUT_RATE_VERTEX};
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ModelVertex, position)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT,	   offsetof(ModelVertex, uv)},
-				{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ModelVertex, normal)},
-				{3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ModelVertex, tangent)}
-			};
-
-			vertexStatInputState = vertexStateInfo(1, &bindings, TK_ARRAYSIZE(attributes), attributes);
-		}
-
-		{
-			static VkVertexInputBindingDescription bindings[] = {
-				{0, sizeof(ModelVertex), VK_VERTEX_INPUT_RATE_VERTEX},
-				{1, sizeof(ModelVertexSkeleton), VK_VERTEX_INPUT_RATE_VERTEX}
-			};
-
-			static VkVertexInputAttributeDescription attributes[] = {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(ModelVertex, position)},
-				{1, 0, VK_FORMAT_R32G32_SFLOAT,       offsetof(ModelVertex, uv)},
-				{2, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(ModelVertex, normal)},
-				{3, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(ModelVertex, tangent)},
-				{4, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(ModelVertexSkeleton, bone_weight)},
-				{5, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(ModelVertexSkeleton, bone_ID)}
-			};
-
-			vertexAnimInputState = vertexStateInfo(TK_ARRAYSIZE(bindings), bindings, TK_ARRAYSIZE(attributes), attributes);
-		}
-
-		{
 			auto m = std::make_shared<Model>();
 			m->filename = "triangle";
 

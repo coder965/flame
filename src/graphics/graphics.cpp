@@ -221,7 +221,6 @@ namespace tke
 		init_image();
 		init_material();
 		init_renderpass();
-		initPipeline();
 		initSampler();
 
 		return NoErr;

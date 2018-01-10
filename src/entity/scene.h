@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../global.h"
 #include "../math/math.h"
 #include "node.h"
 #include "camera.h"
@@ -58,8 +57,6 @@ namespace tke
 		bool object_count_dirty = true;
 		bool terrain_count_dirty = true;
 		bool water_count_dirty = true;
-
-		std::pair<std::weak_ptr<Light>, Op> shadow_lights[MaxShadowCount];
 
 		std::vector<CollisionGroup*> pCollisionGroups;
 

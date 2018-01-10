@@ -9,6 +9,81 @@
 
 namespace tke
 {
+	PipelineCreateInfo::PipelineCreateInfo()
+	{
+		_vertex_input_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	}
+
+	PipelineCreateInfo &PipelineCreateInfo::vertex_input_state(const std::initializer_list<std::pair<VertexInputToken, int>> &tokens)
+	{
+		auto get_size = [](VertexInputToken t)->unsigned int {
+			switch (t)
+			{
+				case TokenF32:
+					return sizeof(float);
+				case TokenF32V2:
+					return sizeof(glm::vec2);
+				case TokenF32V3:
+					return sizeof(glm::vec3);
+				case TokenF32V4:
+					return sizeof(glm::vec4);
+				case TokenB8V4:
+					return sizeof(char) * 4;
+			}
+			return 0;
+		};
+
+		auto get_format = [](VertexInputToken t)->VkFormat {
+			switch (t)
+			{
+				case TokenF32:
+					return VK_FORMAT_R32_SFLOAT;
+				case TokenF32V2:
+					return VK_FORMAT_R32G32_SFLOAT;
+				case TokenF32V3:
+					return VK_FORMAT_R32G32B32_SFLOAT;
+				case TokenF32V4:
+					return VK_FORMAT_R32G32B32A32_SFLOAT;
+				case TokenB8V4:
+					return VK_FORMAT_R8G8B8A8_UNORM;
+			}
+			return VK_FORMAT_UNDEFINED;
+		};
+		for (auto &t : tokens)
+		{
+			auto buf_id = t.second;
+			auto buf_index = -1;
+			for (int i = 0; i < _vertex_input_state_bindings.size(); i++)
+			{
+				if (_vertex_input_state_bindings[i].binding == buf_id)
+				{
+					buf_index = i;
+					break;
+				}
+			}
+			if (buf_index == -1)
+			{
+				buf_index = _vertex_input_state_bindings.size();
+				_vertex_input_state_bindings.emplace_back();
+				_vertex_input_state_bindings[buf_index].binding = buf_id;
+				_vertex_input_state_bindings[buf_index].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+			}
+			_vertex_input_state_attributes.push_back({
+				(unsigned int)_vertex_input_state_attributes.size(),
+				(unsigned int)buf_id,
+				get_format(t.first),
+				_vertex_input_state_bindings[buf_index].stride
+			});
+			_vertex_input_state_bindings[buf_index].stride += get_size(t.first);
+		}
+
+		_vertex_input_state.vertexBindingDescriptionCount = _vertex_input_state_bindings.size();
+		_vertex_input_state.pVertexBindingDescriptions = _vertex_input_state_bindings.data();
+		_vertex_input_state.vertexAttributeDescriptionCount = _vertex_input_state_attributes.size();
+		_vertex_input_state.pVertexAttributeDescriptions = _vertex_input_state_attributes.data();
+		return *this;
+	}
+
 	PipelineLayout::~PipelineLayout()
 	{
 		vkDestroyPipelineLayout(vk_device.v, v, nullptr);
@@ -250,7 +325,7 @@ namespace tke
 
 		VkPipelineColorBlendStateCreateInfo blendState = {};
 		if (info._blendAttachmentStates.size() == 0)
-			info.addBlendAttachmentState(false);
+			info.add_blend_attachment_state(false);
 
 		blendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		blendState.logicOpEnable = VK_FALSE;
@@ -273,7 +348,7 @@ namespace tke
 		pipelineInfo.layout = pipelineLayout->v;
 		pipelineInfo.stageCount = vkStages.size();
 		pipelineInfo.pStages = vkStages.data();
-		pipelineInfo.pVertexInputState = info._vertex_input;
+		pipelineInfo.pVertexInputState = &info._vertex_input_state;
 		pipelineInfo.pInputAssemblyState = &assemblyState;
 		pipelineInfo.pTessellationState = info._patch_control_points ? &tessState : nullptr;
 		pipelineInfo.pDepthStencilState = &depthStencilState;
@@ -398,22 +473,5 @@ namespace tke
 			}
 		}
 		return -1;
-	}
-
-	VkPipelineVertexInputStateCreateInfo vertexStateInfo(int bindingCount, VkVertexInputBindingDescription *pBindings, int attributeCount, VkVertexInputAttributeDescription *pAttributes)
-	{
-		VkPipelineVertexInputStateCreateInfo state = {};
-		state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		state.vertexBindingDescriptionCount = bindingCount;
-		state.pVertexBindingDescriptions = pBindings;
-		state.vertexAttributeDescriptionCount = attributeCount;
-		state.pVertexAttributeDescriptions = pAttributes;
-
-		return state;
-	}
-
-	void initPipeline()
-	{
-		zeroVertexInputState = vertexStateInfo(0, nullptr, 0, nullptr);
 	}
 }

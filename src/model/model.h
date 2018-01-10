@@ -136,9 +136,6 @@ namespace tke
 		void remove_joint(Joint *j);
 	};
 
-	IMPL() VkPipelineVertexInputStateCreateInfo vertexStatInputState;
-	IMPL() VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
-
 	IMPL() std::unique_ptr<VertexBuffer> vertexStatBuffer;
 	IMPL() std::unique_ptr<VertexBuffer> vertexAnimBuffer;
 	IMPL() std::unique_ptr<IndexBuffer> indexBuffer;
