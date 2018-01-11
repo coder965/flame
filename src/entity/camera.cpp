@@ -4,8 +4,19 @@
 
 namespace tke
 {
-	Camera::Camera()
-		:Node(NodeTypeCamera)
+	void Camera::on_update()
+	{
+		move();
+		if (transform_dirty)
+			view_matrix = glm::inverse(get_matrix());
+		if (transform_dirty)
+			update_frustum();
+	}
+
+	Camera::Camera() :
+		Node(NodeTypeCamera),
+		target(0.f),
+		length(0.f)
 	{
 		set_proj(ProjectionTypePerspective);
 		ang_offset = 90.f;
@@ -32,43 +43,104 @@ namespace tke
 		}
 	}
 
-	void Camera::setMode(CameraMode _mode)
-	{
-		mode = _mode;
-		matrix_dirty = true;
-		transform_dirty = true;
-	}
-
 	void Camera::set_length(float _length)
 	{
 		length = _length;
-		matrix_dirty = true;
-		transform_dirty = true;
+		look_at_target();
 	}
 
-	void Camera::setTarget(const glm::vec3 &_target)
+	void Camera::set_target(const glm::vec3 &_target)
 	{
 		target = _target;
-		matrix_dirty = true;
-		transform_dirty = true;
+		look_at_target();
 	}
 
-	void Camera::lookAtTarget()
+	void Camera::reset()
 	{
-		if (mode == CameraMode::targeting)
-		{
-			if (object)
-			{
-				target = object->get_coord() + object->model->eye_position * object->get_scale();
-				object = nullptr;
-			}
+		Controller::reset();
+		set_coord(glm::vec3(0.f));
+		set_length(0.f);
+	}
 
-			set_coord(target + get_axis()[2] * length);
+	void Camera::rotate_by_cursor(float x, float y)
+	{
+		add_euler(-x * 180.f, -y * 180.f, 0.f);
+		look_at_target();
+	}
+
+	void Camera::move_by_cursor(float x, float y)
+	{
+		if (length != 0.f)
+		{
+			auto l = length / near_plane;
+			auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
+			target += (-x * cy * res_aspect * l) * get_axis()[0] + (y * cy * l) * get_axis()[1];
+			look_at_target();
 		}
 	}
 
+	void Camera::scroll(float value)
+	{
+		if (value < 0.f)
+			set_length((length + 0.1) * 1.1f);
+		else
+			set_length(glm::max((length - 0.1f) / 1.1f, 0.f));
+	}
 
-	void Camera::updateFrustum()
+	void Camera::move()
+	{
+		glm::vec3 coord;
+		glm::vec3 euler;
+		if (!Controller::move(get_euler().x, coord, euler))
+			return;
+		set_target(target + coord);
+		add_euler(euler);
+	}
+
+	glm::vec3 Camera::get_target() const
+	{
+		return target;
+	}
+
+	float Camera::get_length() const
+	{
+		return length;
+	}
+
+	glm::mat4 Camera::get_proj_matrix() const
+	{
+		return proj_matrix;
+	}
+
+	glm::mat4 Camera::get_proj_matrix_inverse() const
+	{
+		return proj_matrix_inverse;
+	}
+
+	glm::mat4 Camera::get_view_matrix() const
+	{
+		return view_matrix;
+	}
+
+	const glm::vec3 *Camera::get_frustum_points() const
+	{
+		return frustum_points;
+	}
+
+	const glm::vec4 *Camera::get_frustum_planes() const
+	{
+		return frustum_planes;
+	}
+
+	void Camera::look_at_target()
+	{
+		if (length != 0.f)
+			set_coord(target + get_axis()[2] * length);
+		else
+			set_coord(target);
+	}
+
+	void Camera::update_frustum()
 	{
 		auto tanHfFovy = glm::tan(glm::radians(fovy * 0.5f));
 
@@ -78,127 +150,64 @@ namespace tke
 		auto _z2 = _y2 * res_aspect;
 		auto axis = get_axis();
 		auto coord = get_coord();
-		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
-		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
-		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
-		frustumPoints[3] = -_z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
-		frustumPoints[4] = -_z2 * axis[2] + _y2 * axis[1] + far_plane * axis[0] + coord;
-		frustumPoints[5] = _z2 * axis[2] + _y2 * axis[1] + far_plane * axis[0] + coord;
-		frustumPoints[6] = _z2 * axis[2] + -_y2 * axis[1] + far_plane * axis[0] + coord;
-		frustumPoints[7] = -_z2 * axis[2] + -_y2 * axis[1] + far_plane * axis[0] + coord;
+		frustum_points[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
+		frustum_points[1] = _z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
+		frustum_points[2] = _z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
+		frustum_points[3] = -_z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
+		frustum_points[4] = -_z2 * axis[2] + _y2 * axis[1] + far_plane * axis[0] + coord;
+		frustum_points[5] = _z2 * axis[2] + _y2 * axis[1] + far_plane * axis[0] + coord;
+		frustum_points[6] = _z2 * axis[2] + -_y2 * axis[1] + far_plane * axis[0] + coord;
+		frustum_points[7] = -_z2 * axis[2] + -_y2 * axis[1] + far_plane * axis[0] + coord;
 		for (int i = 0; i < 4; i++)
 		{
-			auto y = frustumPoints[i + 4].y;
+			auto y = frustum_points[i + 4].y;
 			if (y < 0.f)
 			{
-				auto py = frustumPoints[i + 4].y - frustumPoints[i].y;
+				auto py = frustum_points[i + 4].y - frustum_points[i].y;
 				if (py != 0.f)
 				{
-					frustumPoints[i + 4].x -= y * ((frustumPoints[i + 4].x - frustumPoints[i].x) / py);
-					frustumPoints[i + 4].z -= y * ((frustumPoints[i + 4].z - frustumPoints[i].z) / py);
-					frustumPoints[i + 4].y = 0.f;
+					frustum_points[i + 4].x -= y * ((frustum_points[i + 4].x - frustum_points[i].x) / py);
+					frustum_points[i + 4].z -= y * ((frustum_points[i + 4].z - frustum_points[i].z) / py);
+					frustum_points[i + 4].y = 0.f;
 				}
 			}
 		}
 
 		auto vp = proj_matrix * get_matrix();
 
-		frustumPlanes[0].x = vp[0].w + vp[0].x;
-		frustumPlanes[0].y = vp[1].w + vp[1].x;
-		frustumPlanes[0].z = vp[2].w + vp[2].x;
-		frustumPlanes[0].w = vp[3].w + vp[3].x;
+		frustum_planes[0].x = vp[0].w + vp[0].x;
+		frustum_planes[0].y = vp[1].w + vp[1].x;
+		frustum_planes[0].z = vp[2].w + vp[2].x;
+		frustum_planes[0].w = vp[3].w + vp[3].x;
 
-		frustumPlanes[1].x = vp[0].w - vp[0].x;
-		frustumPlanes[1].y = vp[1].w - vp[1].x;
-		frustumPlanes[1].z = vp[2].w - vp[2].x;
-		frustumPlanes[1].w = vp[3].w - vp[3].x;
+		frustum_planes[1].x = vp[0].w - vp[0].x;
+		frustum_planes[1].y = vp[1].w - vp[1].x;
+		frustum_planes[1].z = vp[2].w - vp[2].x;
+		frustum_planes[1].w = vp[3].w - vp[3].x;
 
-		frustumPlanes[2].x = vp[0].w - vp[0].y;
-		frustumPlanes[2].y = vp[1].w - vp[1].y;
-		frustumPlanes[2].z = vp[2].w - vp[2].y;
-		frustumPlanes[2].w = vp[3].w - vp[3].y;
+		frustum_planes[2].x = vp[0].w - vp[0].y;
+		frustum_planes[2].y = vp[1].w - vp[1].y;
+		frustum_planes[2].z = vp[2].w - vp[2].y;
+		frustum_planes[2].w = vp[3].w - vp[3].y;
 
-		frustumPlanes[3].x = vp[0].w + vp[0].y;
-		frustumPlanes[3].y = vp[1].w + vp[1].y;
-		frustumPlanes[3].z = vp[2].w + vp[2].y;
-		frustumPlanes[3].w = vp[3].w + vp[3].y;
+		frustum_planes[3].x = vp[0].w + vp[0].y;
+		frustum_planes[3].y = vp[1].w + vp[1].y;
+		frustum_planes[3].z = vp[2].w + vp[2].y;
+		frustum_planes[3].w = vp[3].w + vp[3].y;
 
-		frustumPlanes[4].x = vp[0].w + vp[0].z;
-		frustumPlanes[4].y = vp[1].w + vp[1].z;
-		frustumPlanes[4].z = vp[2].w + vp[2].z;
-		frustumPlanes[4].w = vp[3].w + vp[3].z;
+		frustum_planes[4].x = vp[0].w + vp[0].z;
+		frustum_planes[4].y = vp[1].w + vp[1].z;
+		frustum_planes[4].z = vp[2].w + vp[2].z;
+		frustum_planes[4].w = vp[3].w + vp[3].z;
 
-		frustumPlanes[5].x = vp[0].w - vp[0].z;
-		frustumPlanes[5].y = vp[1].w - vp[1].z;
-		frustumPlanes[5].z = vp[2].w - vp[2].z;
-		frustumPlanes[5].w = vp[3].w - vp[3].z;
+		frustum_planes[5].x = vp[0].w - vp[0].z;
+		frustum_planes[5].y = vp[1].w - vp[1].z;
+		frustum_planes[5].z = vp[2].w - vp[2].z;
+		frustum_planes[5].w = vp[3].w - vp[3].z;
 
 		for (auto i = 0; i < 6; i++)
-			frustumPlanes[i] = glm::normalize(frustumPlanes[i]);
+			frustum_planes[i] = glm::normalize(frustum_planes[i]);
 	}
 
-	void Camera::reset()
-	{
-		Controller::reset();
-		set_coord(glm::vec3(0.f));
-		length = 1.0f;
-	}
-
-	void Camera::rotateByCursor(float x, float y)
-	{
-		add_euler(-x * 180.f, -y * 180.f, 0.f);
-		lookAtTarget();
-	}
-
-	void Camera::moveByCursor(float x, float y)
-	{
-		auto l = length / near_plane;
-		auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
-		target += (-x * cy * res_aspect * l) * get_axis()[0] + (y * cy * l) * get_axis()[1];
-		lookAtTarget();
-	}
-
-	void Camera::scroll(float value)
-	{
-		if (mode == CameraMode::targeting)
-		{
-			if (value < 0.f)
-				set_length((length + 0.1) * 1.1f);
-			else
-				set_length((length / 1.1f) - 0.1f);
-			if (length < 1.f)
-			{
-				length = 1.f;
-				add_coord(glm::normalize(target - get_coord()) * 0.5f);
-			}
-		}
-	}
-
-	void Camera::move()
-	{
-		glm::vec3 coord;
-		glm::vec3 euler;
-		if (!Controller::move(get_euler().x, coord, euler))
-			return;
-		switch (mode)
-		{
-		case CameraMode::free:
-			add_coord(coord);
-			break;
-		case CameraMode::targeting:
-			setTarget(target + coord);
-			break;
-		}
-		add_euler(euler);
-	}
-
-	glm::mat4 Camera::get_view_matrix()
-	{
-		if (matrix_dirty)
-		{
-			update_matrix();
-			view_matrix = glm::inverse(get_matrix());
-		}
-		return view_matrix;
-	}
+	Camera *curr_camera = nullptr;
 }

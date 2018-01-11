@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../refl.h"
-
 #include "graphics.h"
 
 namespace tke
@@ -77,7 +75,7 @@ namespace tke
 		IndirectIndexBuffer(size_t _size = sizeof VkDrawIndexedIndirectCommand);
 	};
 
-	IMPL(nullptr) StagingBuffer *defalut_staging_buffer;
+	extern StagingBuffer *defalut_staging_buffer;
 
 	void init_buffer();
 }

@@ -1,5 +1,6 @@
 #include "../ui/ui.h"
 #include "../input.h"
+#include "../type.h"
 #include "../global.h"
 #include "../application.h"
 #include "window/file_selector.h"

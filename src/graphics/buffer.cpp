@@ -154,6 +154,8 @@ namespace tke
 	{
 	}
 
+	StagingBuffer *defalut_staging_buffer = nullptr;
+
 	void init_buffer()
 	{
 		defalut_staging_buffer = new StagingBuffer(67108864);

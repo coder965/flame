@@ -1,6 +1,7 @@
 #include <process.h>
 #include <map>
 
+#include "../type.h"
 #include "../global.h"
 #include "../input.h"
 #include "../graphics/buffer.h"
@@ -42,6 +43,11 @@ namespace ImGui
 
 namespace tke
 {
+	bool uiAcceptedMouse;
+	bool uiAcceptedKey;
+
+	glm::vec3 bkColor = glm::vec3(0.69f, 0.76f, 0.79f);
+
 	static Pipeline *pipeline_ui;
 	static CommandBuffer *cb_ui;
 	static std::unique_ptr<ImmediateVertexBuffer> vertexBuffer_ui;

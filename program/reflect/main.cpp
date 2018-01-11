@@ -8,6 +8,8 @@
 
 #include <windows.h>
 
+// THIS PROJECT IS SEALED SINCE 2018-01-11
+
 int main(int argc, char **argv)
 {
 	auto up_to_date = true;
@@ -25,12 +27,12 @@ int main(int argc, char **argv)
 	}
 
 	auto outputFilename = "../src/REFLECT.cpp";
+	std::vector<std::string> inputFilenames;
 
 	auto outputFilenameExist = std::experimental::filesystem::exists(outputFilename);
 	std::experimental::filesystem::file_time_type output_last_modification_time;
 	if (outputFilenameExist)
 		output_last_modification_time = std::experimental::filesystem::last_write_time(outputFilename);
-	std::vector<std::string> inputFilenames;
 
 	{
 		std::experimental::filesystem::recursive_directory_iterator end_it;

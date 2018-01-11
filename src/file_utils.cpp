@@ -4,7 +4,6 @@
 #include "../../../rapidxml-1.13\rapidxml_utils.hpp"
 #include "../../../rapidxml-1.13\rapidxml_print.hpp"
 
-#include "refl.h"
 #if !defined(TKE_UTILS_NO_MATH)
 #include "math/math.h"
 #endif
@@ -188,65 +187,67 @@ namespace tke
 		return nullptr;
 	}
 
-	void XMLNode::addAttributes(void *src, ReflectionBank *b)
-	{
-		ptr = src;
-		b->enumertateReflections([](Reflection *r, int offset, void *_data) {
-			auto n = (XMLNode*)_data;
+	// THESE TWO FUNCTIONS ARE SEALED SINCE 2018-01-11
 
-			auto a = n->newAttribute();
-			a->name = r->name;
+	//void XMLNode::addAttributes(void *src, ReflectionBank *b)
+	//{
+	//	ptr = src;
+	//	b->enumertateReflections([](Reflection *r, int offset, void *_data) {
+	//		auto n = (XMLNode*)_data;
 
-			if (r->what == Reflection::eVariable)
-			{
-				auto v = r->toVar();
-				a->set(v->type, v->ptr((void*)((TK_LONG_PTR)n->ptr + offset)));
-			}
-			else if (r->what == Reflection::eEnum)
-			{
-				auto e = r->toEnu();
-				auto v = *e->ptr(n->ptr);
+	//		auto a = n->newAttribute();
+	//		a->name = r->name;
 
-				bool first = true;
-				for (int i = 0; i < e->pEnum->items.size(); i++)
-				{
-					auto &item = e->pEnum->items[i];
-					if (v & item.value)
-					{
-						if (!first)a->value += " ";
-						a->value += item.name;
-						first = false;
-					}
-				}
-			}
-		}, this, 0);
-	}
+	//		if (r->what == Reflection::eVariable)
+	//		{
+	//			auto v = r->toVar();
+	//			a->set(v->type, v->ptr((void*)((TK_LONG_PTR)n->ptr + offset)));
+	//		}
+	//		else if (r->what == Reflection::eEnum)
+	//		{
+	//			auto e = r->toEnu();
+	//			auto v = *e->ptr(n->ptr);
 
-	void XMLNode::obtainFromAttributes(void *dst, ReflectionBank *b)
-	{
-		ptr = dst;
-		for (auto &a : attributes)
-		{
-			auto r = b->findReflection(a->name, 0);
-			if (!r.first)
-			{
-				printf("cannot find \"%s\" reflection from %s\n", a->name.c_str(), b->name.c_str());
-				continue;
-			}
-			switch (r.first->what)
-			{
-			case Reflection::eVariable:
-			{
-				auto v = r.first->toVar();
-				a->get(v->type, v->ptr((void*)((TK_LONG_PTR)dst + r.second)));
-				break;
-			}
-			case Reflection::eEnum:
-				r.first->toEnu()->pEnum->get(a->value, r.first->toEnu()->ptr(dst));
-				break;
-			}
-		}
-	}
+	//			bool first = true;
+	//			for (int i = 0; i < e->pEnum->items.size(); i++)
+	//			{
+	//				auto &item = e->pEnum->items[i];
+	//				if (v & item.value)
+	//				{
+	//					if (!first)a->value += " ";
+	//					a->value += item.name;
+	//					first = false;
+	//				}
+	//			}
+	//		}
+	//	}, this, 0);
+	//}
+
+	//void XMLNode::obtainFromAttributes(void *dst, ReflectionBank *b)
+	//{
+	//	ptr = dst;
+	//	for (auto &a : attributes)
+	//	{
+	//		auto r = b->findReflection(a->name, 0);
+	//		if (!r.first)
+	//		{
+	//			printf("cannot find \"%s\" reflection from %s\n", a->name.c_str(), b->name.c_str());
+	//			continue;
+	//		}
+	//		switch (r.first->what)
+	//		{
+	//		case Reflection::eVariable:
+	//		{
+	//			auto v = r.first->toVar();
+	//			a->get(v->type, v->ptr((void*)((TK_LONG_PTR)dst + r.second)));
+	//			break;
+	//		}
+	//		case Reflection::eEnum:
+	//			r.first->toEnu()->pEnum->get(a->value, r.first->toEnu()->ptr(dst));
+	//			break;
+	//		}
+	//	}
+	//}
 
 	XMLDoc::XMLDoc(const std::string &_name)
 		: XMLNode(_name)

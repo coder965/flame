@@ -4,10 +4,8 @@
 
 namespace tke
 {
-	REFLECTABLE class Water : public Node
+	class Water : public Node
 	{
-	public:
-		REFL_BANK;
 	private:
 		int block_cx = 64;
 		int block_cy = 64;

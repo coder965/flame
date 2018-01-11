@@ -13,6 +13,8 @@
 
 struct TerrainEditor : IWindow
 {
+	tke::Camera *camera;
+
 	std::shared_ptr<tke::Terrain> terrain;
 
 	tke::DisplayLayer layer;
@@ -26,12 +28,12 @@ struct TerrainEditor : IWindow
 	std::unique_ptr<tke::VertexBuffer> vertex_buffer;
 	std::unique_ptr<tke::IndexBuffer> index_buffer;
 
-	tke::Camera camera;
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
 	int block_count = 64;
 
 	TerrainEditor();
+	~TerrainEditor();
 	virtual void do_show() override;
 	void create_vertex();
 };

@@ -4,12 +4,10 @@
 
 namespace tke
 {
-	REFLECTABLE struct PushConstantRange
+	struct PushConstantRange
 	{
-		REFL_BANK;
-
-		REFLv int offset = 0;
-		REFLv int size = 0;
+		int offset = 0;
+		int size = 0;
 	};
 
 	struct Descriptor;
@@ -30,5 +28,5 @@ namespace tke
 		~Shader();
 	};
 
-	IMPL() std::vector<std::weak_ptr<Shader>> loaded_shaders;
+	extern std::vector<std::weak_ptr<Shader>> loaded_shaders;
 }

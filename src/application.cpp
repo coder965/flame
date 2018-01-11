@@ -13,6 +13,7 @@
 #include "graphics/framebuffer.h"
 #include "graphics/synchronization.h"
 #include "graphics/renderer.h"
+#include "entity/scene.h"
 #include "ui/ui.h"
 #include "physics/physics.h"
 #include "sound/sound.h"
@@ -22,6 +23,8 @@
 
 namespace tke
 {
+	UniformBuffer *constantBuffer = nullptr;
+
 	void processCmdLine(const std::string &str, bool record)
 	{
 		static std::string last_cmd;
@@ -37,6 +40,33 @@ namespace tke
 				processCmdLine(last_cmd.c_str(), false);
 		}
 	}
+
+	void *hWnd;
+	int window_cx;
+	int window_cy;
+	VkSurfaceKHR window_surface;
+	VkSwapchainKHR swapchain;
+	Image *window_images[2];
+	std::shared_ptr<Framebuffer> window_framebuffers[2];
+	VkSemaphore window_imageAvailable;
+	uint32_t window_imageIndex;
+	VkFence frameDone;
+	PF_EVENT1 onKeyDown = nullptr;
+	PF_EVENT1 onKeyUp = nullptr;
+	PF_EVENT1 onChar = nullptr;
+	PF_EVENT2 onMouseLeftDown = nullptr;
+	PF_EVENT2 onMouseLeftUp = nullptr;
+	PF_EVENT2 onMouseMiddleDown = nullptr;
+	PF_EVENT2 onMouseMiddleUp = nullptr;
+	PF_EVENT2 onMouseRightDown = nullptr;
+	PF_EVENT2 onMouseRightUp = nullptr;
+	PF_EVENT2 onMouseMove = nullptr;
+	PF_EVENT1 onMouseWheel = nullptr;
+	PF_EVENT0 onRender = nullptr;
+	PF_EVENT0 onDestroy = nullptr;
+	std::uint32_t window_style;
+
+	Node *root_node;
 
 	struct ConstantBufferStruct
 	{
@@ -212,6 +242,8 @@ namespace tke
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool _only_2d)
 	{
 		auto init_start_time = GetTickCount();
+
+		root_node = new Node(NodeTypeNode);
 
 		only_2d = _only_2d;
 
@@ -443,8 +475,10 @@ namespace tke
 			{
 				mouseDispX = mouseX - mousePrevX;
 				mouseDispY = mouseY - mousePrevY;
-
+				
+				root_node->update();
 				onRender();
+				root_node->clear();
 
 				mouseLeft.justDown = false;
 				mouseLeft.justUp = false;

@@ -18,7 +18,7 @@ ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
 	draw_data.obj_data[0].color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 	draw_data.obj_data[0].fill_with_model_texture_mode(model.get());
 
-	camera.setMode(tke::CameraMode::targeting);
+	camera.set_length(1.f);
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
@@ -48,13 +48,11 @@ void ModelEditor::do_show()
 			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
 			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
 			if (tke::mouseMiddle.pressing)
-				camera.rotateByCursor(distX, distY);
+				camera.rotate_by_cursor(distX, distY);
 		}
 		if (tke::mouseScroll != 0)
 			camera.scroll(tke::mouseScroll);
 	}
-	if (camera.transform_dirty)
-		camera.lookAtTarget();
 
 	ImGui::SameLine();
 	ImGui::BeginGroup();

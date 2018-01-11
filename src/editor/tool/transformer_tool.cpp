@@ -73,11 +73,11 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 			auto xDisp = (float)_xDisp / (float)tke::res_cx;
 			auto yDisp = (float)_yDisp / (float)tke::res_cy;
 
-			auto p = currentCamera->proj_matrix * currentCamera->get_view_matrix() * glm::vec4(node->get_coord(), 1.f);
+			auto p = currentCamera->get_proj_matrix() * currentCamera->get_view_matrix() * glm::vec4(node->get_coord(), 1.f);
 			p = p / p.w;
 			p.x += xDisp;
 			p.y += yDisp;
-			p = currentCamera->proj_matrix_inverse * p;
+			p = currentCamera->get_proj_matrix_inverse() * p;
 			p = p / p.w;
 			p = currentCamera->get_matrix() * p;
 

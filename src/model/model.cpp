@@ -121,6 +121,10 @@ namespace tke
 		}
 	}
 
+	std::unique_ptr<VertexBuffer> vertexStatBuffer;
+	std::unique_ptr<VertexBuffer> vertexAnimBuffer;
+	std::unique_ptr<IndexBuffer> indexBuffer;
+
 	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center)
 	{
 		int baseVertex = positions.size();
@@ -422,6 +426,15 @@ namespace tke
 			}
 		}
 	}
+
+	std::shared_ptr<Model> triangleModel;
+	std::shared_ptr<Model> cubeModel;
+	std::shared_ptr<Model> sphereModel;
+	std::shared_ptr<Model> cylinderModel;
+	std::shared_ptr<Model> coneModel;
+	std::shared_ptr<Model> arrowModel;
+	std::shared_ptr<Model> torusModel;
+	std::shared_ptr<Model> hamerModel;
 
 	static void _process_model(Model *m, bool generateTangent)
 	{

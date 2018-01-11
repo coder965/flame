@@ -1,3 +1,4 @@
+#include "../type.h"
 #include "../global.h"
 #include "../resource/resource.h"
 #include "../graphics/buffer.h"
@@ -73,6 +74,10 @@ namespace tke
 
 		defalut_staging_buffer->copyTo(materialBuffer, 1, &range);
 	}
+
+	std::weak_ptr<Material> materials[MaxMaterialCount];
+	std::shared_ptr<Material> defaultMaterial;
+	UniformBuffer *materialBuffer = nullptr;
 
 	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
 		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap,
@@ -151,6 +156,10 @@ namespace tke
 			}
 		}
 	}
+
+	std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
+
+	DescriptorSet *ds_material = nullptr;
 
 	static std::shared_ptr<DescriptorSetLayout> _material_layout;
 

@@ -101,6 +101,17 @@ namespace tke
 		vkDestroyRenderPass(vk_device.v, v, nullptr);
 	}
 
+	RenderPass *renderPass_image8 = nullptr;
+	RenderPass *renderPass_image8C = nullptr;
+	RenderPass *renderPass_image16 = nullptr;
+	RenderPass *renderPass_image16C = nullptr;
+	RenderPass *renderPass_depthC = nullptr;
+	RenderPass *renderPass_depthC_image8 = nullptr;
+	RenderPass *renderPass_depthC_image8C = nullptr;
+	RenderPass *renderPass_depthC_image32fC = nullptr;
+	RenderPass *renderPass_window = nullptr;
+	RenderPass *renderPass_windowC = nullptr;
+
 	void init_renderpass()
 	{
 		auto att0 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);

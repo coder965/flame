@@ -1,3 +1,4 @@
+#include "../type.h"
 #include "../graphics/buffer.h"
 #include "../graphics/image.h"
 #include "../graphics/material.h"

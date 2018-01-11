@@ -3,7 +3,6 @@
 #include <string>
 #include <memory>
 
-#include "../refl.h"
 #include "../math/math.h"
 
 namespace tke
@@ -30,17 +29,18 @@ namespace tke
 		int index = -1;
 	};
 
-	IMPL() std::weak_ptr<Material> materials[MaxMaterialCount];
-	IMPL() std::shared_ptr<Material> defaultMaterial;
+	extern std::weak_ptr<Material> materials[MaxMaterialCount];
+	extern std::shared_ptr<Material> defaultMaterial;
+	extern UniformBuffer *materialBuffer;
 	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
 		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, 
 		std::shared_ptr<Image> specRoughnessMap);
 	std::shared_ptr<Material> getMaterial(const std::string name);
-	IMPL(nullptr) UniformBuffer *materialBuffer;
 
-	IMPL() std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
+	extern std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
 	std::shared_ptr<Image> getMaterialImage(const std::string &filename);
-	IMPL(nullptr) DescriptorSet *ds_material;
+
+	extern DescriptorSet *ds_material;
 
 	void init_material();
 }

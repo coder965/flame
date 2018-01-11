@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../refl.h"
+#include <vector>
+
 #include "../math/math.h"
 #include "graphics.h"
 
@@ -28,8 +29,6 @@ namespace tke
 
 		~PipelineLayout();
 	};
-
-	IMPL() VkPipelineVertexInputStateCreateInfo null_vertex_input_state;
 
 	enum VertexInputToken
 	{

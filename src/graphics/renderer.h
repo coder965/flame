@@ -161,7 +161,7 @@ namespace tke
 		virtual bool on_message(_Object *sender, Message msg) override;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
-		void render(Scene *scene);
+		void render(Scene *scene, Camera *camera);
 		void add_to_drawlist();
 	};
 }

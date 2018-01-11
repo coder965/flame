@@ -2,10 +2,10 @@
 
 #include <functional>
 
-#include "refl.h"
+#include "global.h"
 #include "math/math.h"
-#include "event.h"
 #include "graphics/graphics.h"
+#include "entity/node.h"
 
 namespace tke
 {
@@ -15,7 +15,7 @@ namespace tke
 	struct Framebuffer;
 	struct CommandBuffer;
 
-	IMPL(nullptr) UniformBuffer *constantBuffer;
+	extern UniformBuffer *constantBuffer;
 
 	void processCmdLine(const std::string &str, bool record = true);
 
@@ -26,33 +26,35 @@ namespace tke
 		WindowStyleFullscreen = 1 << 2
 	};
 
+	extern void *hWnd;
+	extern int window_cx;
+	extern int window_cy;
+	extern VkSurfaceKHR window_surface;
+	extern VkSwapchainKHR swapchain;
+	extern Image *window_images[2];
+	extern std::shared_ptr<Framebuffer> window_framebuffers[2];
+	extern VkSemaphore window_imageAvailable;
+	extern uint32_t window_imageIndex;
+	extern VkFence frameDone;
+	extern PF_EVENT1 onKeyDown;
+	extern PF_EVENT1 onKeyUp;
+	extern PF_EVENT1 onChar;
+	extern PF_EVENT2 onMouseLeftDown;
+	extern PF_EVENT2 onMouseLeftUp;
+	extern PF_EVENT2 onMouseMiddleDown;
+	extern PF_EVENT2 onMouseMiddleUp;
+	extern PF_EVENT2 onMouseRightDown;
+	extern PF_EVENT2 onMouseRightUp;
+	extern PF_EVENT2 onMouseMove;
+	extern PF_EVENT1 onMouseWheel;
+	extern PF_EVENT0 onRender;
+	extern PF_EVENT0 onDestroy;
+	extern std::uint32_t window_style;
+
+	extern Node *root_node;
+
 	// must call in main thread
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool _only_2d = false);
-
-	IMPL() void *hWnd;
-	IMPL() int window_cx;
-	IMPL() int window_cy;
-	IMPL() VkSurfaceKHR window_surface;
-	IMPL() VkSwapchainKHR swapchain;
-	IMPL() Image *window_images[2];
-	IMPL() std::shared_ptr<Framebuffer> window_framebuffers[2];
-	IMPL() VkSemaphore window_imageAvailable;
-	IMPL() uint32_t window_imageIndex;
-	IMPL() VkFence frameDone;
-	IMPL(nullptr) PF_EVENT1 onKeyDown;
-	IMPL(nullptr) PF_EVENT1 onKeyUp;
-	IMPL(nullptr) PF_EVENT1 onChar;
-	IMPL(nullptr) PF_EVENT2 onMouseLeftDown;
-	IMPL(nullptr) PF_EVENT2 onMouseLeftUp;
-	IMPL(nullptr) PF_EVENT2 onMouseMiddleDown;
-	IMPL(nullptr) PF_EVENT2 onMouseMiddleUp;
-	IMPL(nullptr) PF_EVENT2 onMouseRightDown;
-	IMPL(nullptr) PF_EVENT2 onMouseRightUp;
-	IMPL(nullptr) PF_EVENT2 onMouseMove;
-	IMPL(nullptr) PF_EVENT1 onMouseWheel;
-	IMPL(nullptr) PF_EVENT0 onRender;
-	IMPL(nullptr) PF_EVENT0 onDestroy;
-	IMPL() std::uint32_t window_style;
 
 	std::pair<glm::ivec2, unsigned int> getWin32WndProp();
 

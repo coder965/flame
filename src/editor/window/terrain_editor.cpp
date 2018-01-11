@@ -6,6 +6,7 @@
 #include "../../ui/ui.h"
 #include "../../model/animation.h"
 #include "../../physics/physics.h"
+#include "../../application.h"
 
 #include "terrain_editor.h"
 #include "file_selector.h"
@@ -13,13 +14,19 @@
 TerrainEditor::TerrainEditor()
 	:layer(true)
 {
+	camera = tke::root_node->new_camera();
+
 	first_cx = 800;
 	first_cy = 600;
 
 	create_vertex();
 
-	camera.setMode(tke::CameraMode::targeting);
 	renderer = std::make_unique<tke::PlainRenderer>();
+}
+
+TerrainEditor::~TerrainEditor()
+{
+	camera->get_parent()->remove_child(camera);
 }
 
 struct SaveModelDialog : FileSelector
@@ -121,10 +128,10 @@ void TerrainEditor::do_show()
 			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
 			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
 			if (tke::mouseMiddle.pressing)
-				camera.rotateByCursor(distX, distY);
+				camera->rotate_by_cursor(distX, distY);
 		}
 		if (tke::mouseScroll != 0)
-			camera.scroll(tke::mouseScroll);
+			camera->scroll(tke::mouseScroll);
 
 		if (tke::mouseLeft.justDown || tke::mouseRight.justDown)
 		{
@@ -133,8 +140,8 @@ void TerrainEditor::do_show()
 				auto winx = tke::mouseX - image_pos.x;
 				auto winy = tke::mouseY - image_pos.y;
 
-				auto p0 = glm::unProject(glm::vec3(winx, winy, -1.f), camera.get_view_matrix(), camera.proj_matrix, glm::vec4(0, 0, tke::res_cx, tke::res_cy));
-				auto p1 = glm::unProject(glm::vec3(winx, winy, 1.f), camera.get_view_matrix(), camera.proj_matrix, glm::vec4(0, 0, tke::res_cx, tke::res_cy));
+				auto p0 = glm::unProject(glm::vec3(winx, winy, -1.f), camera->get_view_matrix(), camera->get_proj_matrix(), glm::vec4(0, 0, tke::res_cx, tke::res_cy));
+				auto p1 = glm::unProject(glm::vec3(winx, winy, 1.f), camera->get_view_matrix(), camera->get_proj_matrix(), glm::vec4(0, 0, tke::res_cx, tke::res_cy));
 				auto t = p0.y / (p0.y - p1.y);
 				if (t > 0 && t < 1)
 				{
@@ -209,8 +216,6 @@ void TerrainEditor::do_show()
 			}
 		}
 	}
-	if (camera.transform_dirty)
-		camera.lookAtTarget();
 
 	ImGui::End();
 
@@ -226,7 +231,7 @@ void TerrainEditor::do_show()
 		geo_data.index_count = indices.size();
 		obj_data.geo_data.push_back(geo_data);
 		data.obj_data.push_back(obj_data);
-		renderer->render(layer.framebuffer.get(), true, &camera, &data);
+		renderer->render(layer.framebuffer.get(), true, camera, &data);
 		renderer->add_to_drawlist();
 	}
 }

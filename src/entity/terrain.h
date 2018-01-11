@@ -17,19 +17,17 @@ namespace tke
 	struct Material;
 	struct VertexBuffer;
 
-	REFLECTABLE struct Terrain : Node
+	struct Terrain : Node
 	{
-		REFL_BANK;
+		bool enable_physics = false;
 
-		REFLv bool enable_physics = false;
-
-		REFLv int block_cx;
-		REFLv int block_cy;
-		REFLv float block_size = 16.f;
-		REFLv float height = 100.f;
-		REFLv float displacement_height = 1.f;
-		REFLv float tessellation_factor = 0.75f;
-		REFLv float tiling_scale = 8.f;
+		int block_cx;
+		int block_cy;
+		float block_size = 16.f;
+		float height = 100.f;
+		float displacement_height = 1.f;
+		float tessellation_factor = 0.75f;
+		float tiling_scale = 8.f;
 
 		std::unique_ptr<TerrainVertex[]> vertex;
 		std::unique_ptr<VertexBuffer> vertex_buffer;

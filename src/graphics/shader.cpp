@@ -181,4 +181,6 @@ namespace tke
 	{
 		vkDestroyShaderModule(vk_device.v, vkModule, nullptr);
 	}
+
+	std::vector<std::weak_ptr<Shader>> loaded_shaders;
 }

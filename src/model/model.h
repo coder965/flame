@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
-#include "../refl.h"
 #include "../math/math.h"
 #include "../graphics/graphics.h"
 
@@ -76,10 +76,8 @@ namespace tke
 		std::vector<int> chain;
 	};
 
-	REFLECTABLE struct Model
+	struct Model
 	{
-		REFL_BANK;
-
 		std::string filename;
 		std::string filepath;
 
@@ -99,12 +97,12 @@ namespace tke
 
 		std::shared_ptr<AnimationBinding> stateAnimations[ModelStateAnimationCount];
 
-		REFLv std::string stand_animation_filename;
-		REFLv std::string forward_animation_filename;
-		REFLv std::string leftward_animation_filename;
-		REFLv std::string rightward_animation_filename;
-		REFLv std::string backward_animation_filename;
-		REFLv std::string jump_animation_filename;
+		std::string stand_animation_filename;
+		std::string forward_animation_filename;
+		std::string leftward_animation_filename;
+		std::string rightward_animation_filename;
+		std::string backward_animation_filename;
+		std::string jump_animation_filename;
 
 		std::vector<std::unique_ptr<Rigidbody>> rigidbodies;
 		std::vector<std::unique_ptr<Joint>> joints;
@@ -115,11 +113,11 @@ namespace tke
 		glm::vec3 bounding_position = glm::vec3(0.f);
 		float bounding_size = 1.f;
 
-		REFLv glm::vec3 controller_position = glm::vec3(0.f);
-		REFLv float controller_height = 1.f;
-		REFLv float controller_radius = 0.5f;
+		glm::vec3 controller_position = glm::vec3(0.f);
+		float controller_height = 1.f;
+		float controller_radius = 0.5f;
 
-		REFLv glm::vec3 eye_position = glm::vec3(0.f);
+		glm::vec3 eye_position = glm::vec3(0.f);
 
 		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 
@@ -136,9 +134,9 @@ namespace tke
 		void remove_joint(Joint *j);
 	};
 
-	IMPL() std::unique_ptr<VertexBuffer> vertexStatBuffer;
-	IMPL() std::unique_ptr<VertexBuffer> vertexAnimBuffer;
-	IMPL() std::unique_ptr<IndexBuffer> indexBuffer;
+	extern std::unique_ptr<VertexBuffer> vertexStatBuffer;
+	extern std::unique_ptr<VertexBuffer> vertexAnimBuffer;
+	extern std::unique_ptr<IndexBuffer> indexBuffer;
 
 	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center);
 	void addCubeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float length);
@@ -147,14 +145,14 @@ namespace tke
 	void addConeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
 	void addTorusVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
 
-	IMPL() std::shared_ptr<Model> triangleModel;
-	IMPL() std::shared_ptr<Model> cubeModel;
-	IMPL() std::shared_ptr<Model> sphereModel;
-	IMPL() std::shared_ptr<Model> cylinderModel;
-	IMPL() std::shared_ptr<Model> coneModel;
-	IMPL() std::shared_ptr<Model> arrowModel;
-	IMPL() std::shared_ptr<Model> torusModel;
-	IMPL() std::shared_ptr<Model> hamerModel;
+	extern std::shared_ptr<Model> triangleModel;
+	extern std::shared_ptr<Model> cubeModel;
+	extern std::shared_ptr<Model> sphereModel;
+	extern std::shared_ptr<Model> cylinderModel;
+	extern std::shared_ptr<Model> coneModel;
+	extern std::shared_ptr<Model> arrowModel;
+	extern std::shared_ptr<Model> torusModel;
+	extern std::shared_ptr<Model> hamerModel;
 
 	std::shared_ptr<Model> getModel(const std::string &filename);
 	void saveModel(Model *m, const std::string &filename);

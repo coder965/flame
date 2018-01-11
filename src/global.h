@@ -1,24 +1,27 @@
 #pragma once
 
-#include "refl.h"
 #include "math/math.h"
+
+typedef void(*PF_EVENT0)();
+typedef void(*PF_EVENT1)(int);
+typedef void(*PF_EVENT2)(int, int);
 
 namespace tke
 {
-	IMPL(false) bool only_2d;
+	extern bool only_2d;
 
-	IMPL(0.1f) float near_plane;
-	IMPL(1000.f) float far_plane;
-	IMPL(60.f) float fovy;
+	extern float near_plane;
+	extern float far_plane;
+	extern float fovy;
 
-	IMPL() int nowTime;
+	extern int nowTime;
 
-	IMPL() std::string engine_path;
-	IMPL() int res_cx;
-	IMPL() int res_cy;
-	IMPL() float res_aspect;
+	extern std::string engine_path;
+	extern int res_cx;
+	extern int res_cy;
+	extern float res_aspect;
 
-	IMPL() uint32_t FPS;
+	extern uint32_t FPS;
 
 	enum DescriptorSetBindings
 	{

@@ -5,8 +5,6 @@
 #include <memory>
 #include <typeindex>
 
-#include "refl.h"
-
 template<class T>
 inline std::ifstream& operator&(std::ifstream &file, T &v)
 {
@@ -148,8 +146,9 @@ namespace tke
 			newAttribute(_Val...);
 		}
 
-		void addAttributes(void *src, ReflectionBank *b);
-		void obtainFromAttributes(void *dst, ReflectionBank *b);
+		// THESE TWO FUNCTIONS ARE SEALED SINCE 2018-01-11
+		//void addAttributes(void *src, ReflectionBank *b);
+		//void obtainFromAttributes(void *dst, ReflectionBank *b);
 	};
 
 	struct XMLDoc : XMLNode

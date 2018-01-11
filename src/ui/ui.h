@@ -8,7 +8,6 @@
 #include "../../imgui/imgui_internal.h"
 #include "../../IconFontCppHeaders/IconsFontAwesome.h"
 
-#include "../refl.h"
 #include "../math/math.h"
 
 namespace ImGui
@@ -25,10 +24,10 @@ namespace tke
 {
 	struct Image;
 
-	IMPL() bool uiAcceptedMouse;
-	IMPL() bool uiAcceptedKey;
+	extern bool uiAcceptedMouse;
+	extern bool uiAcceptedKey;
 
-	IMPL(glm::vec3(0.69f,0.76f,0.79f)) glm::vec3 bkColor;
+	extern glm::vec3 bkColor;
 
 	void initUi();
 	void ui_onKeyDown(int);

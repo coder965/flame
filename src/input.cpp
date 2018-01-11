@@ -5,6 +5,20 @@
 
 namespace tke
 {
+	int mouseX;
+	int mouseY;
+	int mousePrevX;
+	int mousePrevY;
+	int mouseDispX;
+	int mouseDispY;
+	int mouseScroll;
+
+	KeyState mouseLeft;
+	KeyState mouseMiddle;
+	KeyState mouseRight;
+
+	KeyState keyStates[256];
+
 	std::string get_clipBoard()
 	{
 		OpenClipboard(NULL);

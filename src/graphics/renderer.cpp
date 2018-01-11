@@ -1,6 +1,7 @@
 #include "../global.h"
 #include "../model/model.h"
 #include "../entity/scene.h"
+#include "../type.h"
 #include "synchronization.h"
 #include "buffer.h"
 #include "image.h"
@@ -175,7 +176,7 @@ namespace tke
 			glm::mat4 proj;
 			glm::vec4 color;
 		}pc;
-		pc.proj = camera->proj_matrix;
+		pc.proj = camera->get_proj_matrix();
 
 		for (int i = 0; i < data->obj_data.size(); i++)
 		{
@@ -284,7 +285,7 @@ namespace tke
 		cb->bindVertexBuffer(data->vertex_buffer);
 		cb->bindPipeline(pipeline_lines);
 
-		glm::mat4 mvp = camera->proj_matrix * camera->get_view_matrix();
+		glm::mat4 mvp = camera->get_proj_matrix() * camera->get_view_matrix();
 		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
 		cb->draw(data->vertex_count);
 
@@ -708,17 +709,17 @@ namespace tke
 		}
 	}
 
-	void DeferredRenderer::render(Scene *scene)
+	void DeferredRenderer::render(Scene *scene, Camera *camera)
 	{
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
-			stru.proj = scene->camera.proj_matrix;
-			stru.projInv = scene->camera.proj_matrix_inverse;
-			stru.view = scene->camera.get_view_matrix();
-			stru.viewInv = scene->camera.get_matrix();
+			stru.proj = camera->get_proj_matrix();
+			stru.projInv = camera->get_proj_matrix_inverse();
+			stru.view = camera->get_view_matrix();
+			stru.viewInv = camera->get_matrix();
 			stru.projView = stru.proj * stru.view;
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
-			memcpy(stru.frustumPlanes, scene->camera.frustumPlanes, sizeof(MatrixBufferShaderStruct::frustumPlanes));
+			memcpy(stru.frustumPlanes, camera->get_frustum_planes(), sizeof(MatrixBufferShaderStruct::frustumPlanes));
 			stru.viewportDim = glm::vec2(res_cx, res_cy);
 			matrixBuffer->update(&stru, defalut_staging_buffer);
 		}
@@ -1018,11 +1019,12 @@ namespace tke
 
 					if (l->type == LightType::parallax)
 					{
-						if (l->is_transform_dirty() || scene->camera.is_transform_dirty())
+						if (l->is_transform_dirty() || camera->is_transform_dirty())
 						{
 							glm::vec3 p[8];
-							auto cameraCoord = scene->camera.get_world_coord();
-							for (int i = 0; i < 8; i++) p[i] = scene->camera.frustumPoints[i] - cameraCoord;
+							auto cameraCoord = camera->get_world_coord();
+							for (int i = 0; i < 8; i++) 
+								p[i] = camera->get_frustum_points()[i] - cameraCoord;
 							auto lighAxis = l->get_axis();
 							auto axisT = glm::transpose(lighAxis);
 							auto vMax = axisT * p[0], vMin = vMax;
@@ -1044,7 +1046,7 @@ namespace tke
 								0.f, 0.f, 0.5f, 0.f,
 								0.f, 0.f, 0.5f, 1.f
 							) * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) *
-								glm::lookAt(scene->camera.target + glm::vec3(0, 0, 100), scene->camera.target, glm::vec3(0, 1, 0));
+								glm::lookAt(camera->get_target() + glm::vec3(0, 0, 100), camera->get_target(), glm::vec3(0, 1, 0));
 
 							auto srcOffset = sizeof(glm::mat4) * ranges.size();
 							memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));

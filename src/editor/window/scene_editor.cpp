@@ -1,3 +1,4 @@
+#include "../../type.h"
 #include "../../ui/ui.h"
 #include "../../file_utils.h"
 #include "../../graphics/buffer.h"
@@ -22,6 +23,10 @@ std::unique_ptr<SceneEditor> scene_editor = nullptr;
 SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	:scene(_scene)
 {
+	tke::root_node->add_child(scene.get());
+
+	camera = tke::root_node->new_camera();
+
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
 	defe_renderer->follow_to(_scene.get());
@@ -30,6 +35,11 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
 
 	transformerTool = std::make_unique<TransformerTool>(layer.image.get());
+}
+
+SceneEditor::~SceneEditor()
+{
+	camera->get_parent()->remove_child(camera);
 }
 
 void SceneEditor::on_file_menu()
@@ -74,7 +84,7 @@ void SceneEditor::on_menu_bar()
 					if (m)
 					{
 						auto o = new tke::Object(m, 0);
-						o->set_coord(scene->camera.target);
+						o->set_coord(camera->get_target());
 						scene->addObject(o);
 					}
 				}
@@ -133,18 +143,8 @@ void SceneEditor::on_menu_bar()
 			target = true;
 		ImGui::MenuItem("Follow", "", &follow);
 
-		if (ImGui::BeginMenu("Mode"))
 		{
-			if (ImGui::MenuItem("Free", "", scene->camera.mode == tke::CameraMode::free))
-				scene->camera.setMode(tke::CameraMode::free);
-			if (ImGui::MenuItem("Targeting", "", scene->camera.mode == tke::CameraMode::targeting))
-				scene->camera.setMode(tke::CameraMode::targeting);
-
-			ImGui::EndMenu();
-		}
-
-		{
-			auto c = scene->camera.get_coord();
+			auto c = camera->get_coord();
 			ImGui::Text("%f, %f, %f coord", c.x, c.y, c.z);
 		}
 
@@ -152,11 +152,7 @@ void SceneEditor::on_menu_bar()
 	}
 	if (target || follow)
 	{
-		auto n = selected.get_node();
-		if (n && n->type == tke::NodeTypeObject)
-			scene->camera.object = (tke::Object*)n;
-		else
-			scene->camera.object = nullptr;
+		// TODO : FIX THIS
 	}
 }
 
@@ -195,11 +191,11 @@ void SceneEditor::do_show()
 			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
 			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
 			if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
-				scene->camera.moveByCursor(distX, distY);
+				camera->move_by_cursor(distX, distY);
 			else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
-				scene->camera.scroll(distX);
+				camera->scroll(distX);
 			else if (tke::mouseMiddle.pressing)
-				scene->camera.rotateByCursor(distX, distY);
+				camera->rotate_by_cursor(distX, distY);
 			else if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
 			{
 				if (tke::mouseLeft.pressing)
@@ -207,7 +203,7 @@ void SceneEditor::do_show()
 			}
 		}
 		if (tke::mouseScroll != 0)
-			scene->camera.scroll(tke::mouseScroll);
+			camera->scroll(tke::mouseScroll);
 		if (tke::mouseLeft.justDown)
 		{
 			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
@@ -232,7 +228,7 @@ void SceneEditor::do_show()
 					}
 					auto index = tke::pick_up(x, y, std::bind(
 						&tke::PlainRenderer::do_render,
-						plain_renderer.get(), std::placeholders::_1, &scene->camera, &draw_data));
+						plain_renderer.get(), std::placeholders::_1, camera, &draw_data));
 					if (index == 0)
 						selected.reset();
 					//else
@@ -264,7 +260,7 @@ void SceneEditor::do_show()
 
 	{
 		auto n = selected.get_node();
-		if (n && n->type == tke::NodeTypeObject)
+		if (n && n->get_type() == tke::NodeTypeObject)
 		{
 			auto obj = (tke::Object*)n;
 			obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
@@ -274,13 +270,11 @@ void SceneEditor::do_show()
 		}
 	}
 
-	scene->update();
 	if (enableRender)
 	{
-		defe_renderer->render(scene.get());
+		defe_renderer->render(scene.get(), camera);
 		defe_renderer->add_to_drawlist();
 	}
-	scene->reset();
 
 	{
 		//for (int i = 0; i < rb.getNbPoints(); i++)
@@ -343,7 +337,7 @@ void SceneEditor::do_show()
 			tke::LinesRenderer::DrawData data;
 			data.vertex_buffer = physx_vertex_buffer.get();
 			data.vertex_count = vertex_count;
-			lines_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
+			lines_renderer->render(layer.framebuffer.get(), false, camera, &data);
 			lines_renderer->add_to_drawlist();
 		}
 	}
@@ -351,7 +345,7 @@ void SceneEditor::do_show()
 	if (showSelectedWireframe)
 	{
 		auto n = selected.get_node();
-		if (n && n->type == tke::NodeTypeObject)
+		if (n && n->get_type() == tke::NodeTypeObject)
 		{
 			auto obj = (tke::Object*)n;
 			tke::PlainRenderer::DrawData data;
@@ -363,13 +357,13 @@ void SceneEditor::do_show()
 			if (obj->model->vertex_skeleton)
 				obj_data.bone_buffer = obj->animationComponent->bone_buffer.get();
 			data.obj_data.push_back(obj_data);
-			plain_renderer->render(layer.framebuffer.get(), false, &scene->camera, &data);
+			plain_renderer->render(layer.framebuffer.get(), false, camera, &data);
 			plain_renderer->add_to_drawlist();
 		}
 	}
 
 	transformerTool->node = selected.get_node();
-	transformerTool->show(&scene->camera);
+	transformerTool->show(camera);
 }
 
 void SceneEditor::save(tke::XMLNode *n)

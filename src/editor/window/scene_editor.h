@@ -8,6 +8,8 @@
 
 struct SceneEditor
 {
+	tke::Camera *camera;
+
 	std::shared_ptr<tke::Scene> scene;
 
 	tke::DisplayLayer layer;
@@ -28,6 +30,7 @@ struct SceneEditor
 	bool follow = false;
 
 	SceneEditor(std::shared_ptr<tke::Scene> _scene);
+	~SceneEditor();
 	void on_file_menu();
 	void on_menu_bar();
 	void do_show();

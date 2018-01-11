@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "../refl.h"
 #include "graphics.h"
 
 namespace tke
@@ -24,16 +23,18 @@ namespace tke
 		~RenderPass();
 	};
 
-	IMPL(nullptr) RenderPass *renderPass_image8;
-	IMPL(nullptr) RenderPass *renderPass_image8C;
-	IMPL(nullptr) RenderPass *renderPass_image16;
-	IMPL(nullptr) RenderPass *renderPass_image16C;
-	IMPL(nullptr) RenderPass *renderPass_depthC;
-	IMPL(nullptr) RenderPass *renderPass_depthC_image8;
-	IMPL(nullptr) RenderPass *renderPass_depthC_image8C;
-	IMPL(nullptr) RenderPass *renderPass_depthC_image32fC;
-	IMPL(nullptr) RenderPass *renderPass_window;
-	IMPL(nullptr) RenderPass *renderPass_windowC;
+	// C means clear
+
+	extern RenderPass *renderPass_image8;
+	extern RenderPass *renderPass_image8C;
+	extern RenderPass *renderPass_image16;
+	extern RenderPass *renderPass_image16C;
+	extern RenderPass *renderPass_depthC;
+	extern RenderPass *renderPass_depthC_image8;
+	extern RenderPass *renderPass_depthC_image8C;
+	extern RenderPass *renderPass_depthC_image32fC;
+	extern RenderPass *renderPass_window;
+	extern RenderPass *renderPass_windowC;
 
 	void init_renderpass();
 }

@@ -33,8 +33,8 @@
     <ClCompile Include="..\src\entity\terrain.cpp" />
     <ClCompile Include="..\src\entity\water.cpp" />
     <ClCompile Include="..\src\error.cpp" />
-    <ClCompile Include="..\src\event.cpp" />
     <ClCompile Include="..\src\file_utils.cpp" />
+    <ClCompile Include="..\src\global.cpp" />
     <ClCompile Include="..\src\graphics\buffer.cpp" />
     <ClCompile Include="..\src\graphics\command_buffer.cpp" />
     <ClCompile Include="..\src\graphics\descriptor.cpp" />
@@ -50,15 +50,13 @@
     <ClCompile Include="..\src\graphics\shader.cpp" />
     <ClCompile Include="..\src\graphics\synchronization.cpp" />
     <ClCompile Include="..\src\image_data.cpp" />
-    <ClCompile Include="..\src\inpit.cpp" />
+    <ClCompile Include="..\src\input.cpp" />
     <ClCompile Include="..\src\language.cpp" />
     <ClCompile Include="..\src\math\math.cpp" />
     <ClCompile Include="..\src\model\animation.cpp" />
     <ClCompile Include="..\src\model\model.cpp" />
     <ClCompile Include="..\src\physics\physics.cpp" />
     <ClCompile Include="..\src\pick_up\pick_up.cpp" />
-    <ClCompile Include="..\src\refl.cpp" />
-    <ClCompile Include="..\src\REFLECT.cpp" />
     <ClCompile Include="..\src\resource\resource.cpp" />
     <ClCompile Include="..\src\sound\sound.cpp" />
     <ClCompile Include="..\src\string_utils.cpp" />
@@ -81,7 +79,6 @@
     <ClInclude Include="..\src\entity\terrain.h" />
     <ClInclude Include="..\src\entity\water.h" />
     <ClInclude Include="..\src\error.h" />
-    <ClInclude Include="..\src\event.h" />
     <ClInclude Include="..\src\file_utils.h" />
     <ClInclude Include="..\src\global.h" />
     <ClInclude Include="..\src\graphics\buffer.h" />
@@ -107,7 +104,6 @@
     <ClInclude Include="..\src\model\model.h" />
     <ClInclude Include="..\src\physics\physics.h" />
     <ClInclude Include="..\src\pick_up\pick_up.h" />
-    <ClInclude Include="..\src\refl.h" />
     <ClInclude Include="..\src\resource\resource.h" />
     <ClInclude Include="..\src\sound\sound.h" />
     <ClInclude Include="..\src\string_utils.h" />
@@ -227,7 +223,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"./../bin/Reflect.exe"</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <BuildLog>
       <Path>$(MSBuildProjectName).log</Path>

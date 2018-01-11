@@ -1,19 +1,32 @@
 #include "node.h"
+#include "camera.h"
 #include "water.h"
 
 namespace tke
 {
-	Node::Node(NodeType _type)
-		:type(_type)
+	Node::Node(NodeType _type) :
+		coord(0.f), 
+		euler(0.f), 
+		quat(0.f, 0.f, 0.f, 1.f), 
+		scale(1.f),
+		axis(1.f),
+		matrix(1.f),
+		axis_dirty(false),
+		euler_dirty(false),
+		quat_dirty(false),
+		matrix_dirty(false),
+		transform_dirty(true),
+		attribute_dirty(true),
+		image_dirty(true),
+		type(_type),
+		parent(nullptr)
 	{
 	}
 
-	Node::Node(NodeType _type, const glm::vec3 &_coord, const glm::mat3 &rotation)
-		:type(_type), coord(_coord), axis(rotation)
+	Node::~Node()
 	{
-		quat_dirty = true;
-		euler_dirty = true;
-		matrix_dirty = true;
+		if (parent)
+			parent->remove_child(this);
 	}
 
 	glm::vec3 Node::get_coord() const
@@ -388,7 +401,7 @@ namespace tke
 		mark_scale_setted();
 	}
 
-	void Node::scaleRelate(Node *t)
+	void Node::scale_relate(Node *t)
 	{
 		coord *= t->scale;
 		coord *= t->scale;
@@ -458,13 +471,21 @@ namespace tke
 		return image_dirty;
 	}
 
-	void Node::clear_dirty()
+	void Node::update()
+	{
+		on_update();
+		for (auto &c : children)
+			c->update();
+	}
+
+	void Node::clear()
 	{
 		transform_dirty = false;
 		attribute_dirty = false;
 		image_dirty = false;
+		on_clear();
 		for (auto &c : children)
-			c->clear_dirty();
+			c->clear();
 	}
 
 	NodeType Node::get_type() const
@@ -482,6 +503,15 @@ namespace tke
 		return children;
 	}
 
+	Camera *Node::new_camera()
+	{
+		auto c = new Camera;
+		c->parent = this;
+		c->name = "camera";
+		children.emplace_back(c);
+		return c;
+	}
+
 	Water *Node::new_water()
 	{
 		auto w = new Water;
@@ -490,6 +520,12 @@ namespace tke
 		broadcast(w, MessageWaterAdd);
 		children.emplace_back(w);
 		return w;
+	}
+
+	void Node::add_child(Node *n)
+	{
+		n->parent = this;
+		children.emplace_back(n);
 	}
 
 	void Node::remove_child(Node *n)

@@ -1,3 +1,4 @@
+#include "../../type.h"
 #include "../../input.h"
 #include "../../graphics/buffer.h"
 #include "../../graphics/command_buffer.h"

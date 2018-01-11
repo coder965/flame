@@ -1,3 +1,4 @@
+#include "../type.h"
 #include "../global.h"
 #include "../graphics/buffer.h"
 #include "../graphics/image.h"
@@ -9,6 +10,10 @@
 
 namespace tke
 {
+	Image *pick_up_image = nullptr;
+	Image *pick_up_depth_image = nullptr;
+	std::shared_ptr<Framebuffer> pick_up_fb;
+
 	unsigned int pick_up(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback)
 	{
 		if (x < 0 || y < 0 || x > pick_up_image->levels[0].cx || y > pick_up_image->levels[0].cy)

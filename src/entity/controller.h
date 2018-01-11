@@ -1,11 +1,10 @@
 #pragma once
 
-#include "../refl.h"
 #include "../math/math.h"
 
 namespace tke
 {
-	REFLECTABLE struct Controller
+	struct Controller
 	{
 		enum class State
 		{
@@ -22,12 +21,10 @@ namespace tke
 			turn_down = 1 << 9
 		};
 
-		REFL_BANK;
-
 		int lastTime = 0;
-		REFLv float ang_offset = 0.f;
-		REFLv float speed = 1.f;
-		REFLv float turn_speed = 75.f;
+		float ang_offset = 0.f;
+		float speed = 1.f;
+		float turn_speed = 75.f;
 		State state = State::stand;
 
 		bool setState(State _s, bool enable);

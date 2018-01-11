@@ -78,9 +78,6 @@
     <ClCompile Include="..\src\image_data.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\REFLECT.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\imgui\imgui.cpp">
       <Filter>src\ui</Filter>
     </ClCompile>
@@ -92,9 +89,6 @@
     </ClCompile>
     <ClCompile Include="..\src\entity\node.cpp">
       <Filter>src\entity</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\refl.cpp">
-      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\graphics\buffer.cpp">
       <Filter>src\graphics</Filter>
@@ -138,12 +132,6 @@
     <ClCompile Include="..\src\graphics\synchronization.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\event.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\inpit.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\error.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -172,6 +160,12 @@
       <Filter>src\entity</Filter>
     </ClCompile>
     <ClCompile Include="..\src\_object.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\global.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\input.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -233,9 +227,6 @@
     <ClInclude Include="..\src\entity\node.h">
       <Filter>src\entity</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\refl.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphics\buffer.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
@@ -277,9 +268,6 @@
     </ClInclude>
     <ClInclude Include="..\src\graphics\synchronization.h">
       <Filter>src\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\event.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\input.h">
       <Filter>src</Filter>

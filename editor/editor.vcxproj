@@ -169,7 +169,9 @@
     <ClCompile Include="..\src\editor\window\file_selector.cpp" />
     <ClCompile Include="..\src\editor\window\image_editor.cpp" />
     <ClCompile Include="..\src\editor\window\inspector.cpp" />
-    <ClCompile Include="..\src\editor\window\model_editor.cpp" />
+    <ClCompile Include="..\src\editor\window\model_editor.cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
+    </ClCompile>
     <ClCompile Include="..\src\editor\window\resource_explorer.cpp" />
     <ClCompile Include="..\src\editor\window\scene_editor.cpp" />
     <ClCompile Include="..\src\editor\window\show_material.cpp" />

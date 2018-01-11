@@ -21,10 +21,8 @@ namespace tke
 	struct Water;
 	struct CollisionGroup;
 
-	REFLECTABLE struct Scene : Node
+	struct Scene : Node
 	{
-		REFL_BANK;
-
 		std::string filename;
 		std::string filepath;
 
@@ -47,8 +45,6 @@ namespace tke
 
 		float fogThickness = 0.01f;
 
-		Camera camera;
-
 		std::vector<std::unique_ptr<Light>> lights;
 		std::vector<std::unique_ptr<Object>> objects;
 		std::vector<std::unique_ptr<Terrain>> terrains;
@@ -63,6 +59,9 @@ namespace tke
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
 
+		virtual void on_clear() override;
+		virtual void on_update() override;
+
 		Scene();
 		~Scene();
 		void setSkyType(SkyType skyType);
@@ -73,12 +72,9 @@ namespace tke
 		int getCollisionGroupID(int ID, unsigned int mask);
 		void addTerrain(Terrain *t);
 		Terrain *removeTerrain(Terrain *t);
-		void reset();
-		void clear();
 		void setSunDir(const glm::vec2 &);
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);
-		void update();
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void save(const std::string &filename);
 	};

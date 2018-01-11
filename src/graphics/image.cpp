@@ -337,6 +337,10 @@ namespace tke
 		return i;
 	}
 
+	std::shared_ptr<Image> default_color_image;
+	std::shared_ptr<Image> default_normal_image;
+	std::shared_ptr<Image> default_blend_image;
+
 	void init_image()
 	{
 		default_color_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);

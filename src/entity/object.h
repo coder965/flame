@@ -15,11 +15,11 @@ namespace tke
 	struct AnimationRunner;
 	struct Rigidbody;
 
-	REFLECTABLE enum class ObjectPhysicsType
+	enum class ObjectPhysicsType
 	{
-		REFLe enable = 1 << 0,
-		REFLe dynamic = 1 << 1,
-		REFLe controller = 1 << 2
+		enable = 1 << 0,
+		dynamic = 1 << 1,
+		controller = 1 << 2
 	};
 
 	struct ObjectRigidBodyData
@@ -32,16 +32,14 @@ namespace tke
 		~ObjectRigidBodyData();
 	};
 
-	REFLECTABLE struct Object : Node, Controller
+	struct Object : Node, Controller
 	{
-		REFL_BANK;
-
-		REFLv std::string model_filename;
+		std::string model_filename;
 		std::shared_ptr<Model> model;
 
-		REFLv std::string name;
+		std::string name;
 
-		REFLv std::uint32_t physics_type = 0; // cannot change
+		std::uint32_t physics_type = 0; // cannot change
 
 		std::unique_ptr<AnimationRunner> animationComponent;
 		std::vector<std::unique_ptr<ObjectRigidBodyData>> rigidbodyDatas;

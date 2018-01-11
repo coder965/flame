@@ -3,7 +3,6 @@
 #include <vector>
 #include <memory>
 
-#include "../refl.h"
 #include "../math/math.h"
 #include "../_object.h"
 #include "component.h"
@@ -12,6 +11,7 @@ namespace tke
 {
 	enum NodeType
 	{
+		NodeTypeNode,
 		NodeTypeScene,
 		NodeTypeCamera,
 		NodeTypeLight,
@@ -20,13 +20,13 @@ namespace tke
 		NodeTypeWater
 	};
 
+	struct Scene;
+	struct Camera;
 	struct Water;
 
-	REFLECTABLE class Node : public _Object
+	 class Node : public _Object
 	{
 	public:
-		REFL_BANK;
-
 		enum Axis
 		{
 			AxisNull = -1,
@@ -35,25 +35,25 @@ namespace tke
 			AxisZ
 		};
 	private:
-		REFLv glm::vec3 coord = glm::vec3(0.f);
-		REFLv glm::vec3 euler = glm::vec3(0.f); // (yaw, pitch, roll)
-		glm::vec4 quat = glm::vec4(0.f, 0.f, 0.f, 1.f);
-		REFLv glm::vec3 scale = glm::vec3(1.f);
+		glm::vec3 coord;
+		glm::vec3 euler; // (yaw, pitch, roll)
+		glm::vec4 quat;
+		glm::vec3 scale;
 
-		glm::mat3 axis = glm::mat3(1.f);
-		glm::mat4 matrix = glm::mat4(1.f);
+		glm::mat3 axis;
+		glm::mat4 matrix;
+
+		bool axis_dirty;
+		bool euler_dirty;
+		bool quat_dirty;
+		bool matrix_dirty;
 	protected:
-		bool axis_dirty = false;
-		bool euler_dirty = false;
-		bool quat_dirty = false;
-		bool matrix_dirty = false;
-
-		bool transform_dirty = true;
-		bool attribute_dirty = true;
-		bool image_dirty = true;
+		bool transform_dirty;
+		bool attribute_dirty;
+		bool image_dirty;
 	private:
 		NodeType type;
-		Node *parent = nullptr;
+		Node *parent;
 		std::vector<std::unique_ptr<Node>> children; 
 	public:
 		virtual bool on_message(_Object*, Message) { return false; }
@@ -61,7 +61,7 @@ namespace tke
 		bool broadcast(Node *src, Message msg);
 
 		Node(NodeType _type);
-		Node(NodeType _type, const glm::vec3 &_coord, const glm::mat3 &rotation);
+		virtual ~Node();
 
 		glm::vec3 get_coord() const;
 		glm::vec3 get_euler();
@@ -116,27 +116,33 @@ namespace tke
 		void add_scale_z(float v);
 
 		void relate(Node *t);
-		void scaleRelate(Node *t);
-
-		void update_matrix();
-		void update_axis();
-		void update_euler();
-		void update_quat();
+		void scale_relate(Node *t);
 
 		bool is_transform_dirty();
 		bool is_attribute_dirty();
 		bool is_image_dirty();
 
-		void clear_dirty();
-
 		NodeType get_type() const;
 		Node *get_parent() const;
 		const std::vector<std::unique_ptr<Node>> &get_children() const;
-
+		
+		Camera *new_camera();
 		Water *new_water();
+		void add_child(Node *n);
 		void remove_child(Node *n);
 
+		void update();
+		void clear();
+	protected:
+		virtual void on_update() {};
+		virtual void on_clear() {};
+
 	private:
+		void update_matrix();
+		void update_axis();
+		void update_euler();
+		void update_quat();
+
 		void mark_coord_setted();
 		void mark_euler_setted();
 		void mark_quat_setted();

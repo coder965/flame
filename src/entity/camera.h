@@ -6,48 +6,48 @@
 
 namespace tke
 {
-	struct Object;
-
-	enum class CameraMode
-	{
-		free = 1 << 0,
-		targeting = 1 << 1
-	};
-
 	enum ProjectionType
 	{
 		ProjectionTypePerspective,
 		ProjectionTypeOrtho
 	};
 
-	struct Camera : public Node, Controller
+	class Camera : public Node, Controller
 	{
-		CameraMode mode = CameraMode::free;
-		glm::vec3 target = glm::vec3(0.f);
-		float length = 1.f;
+	private:
+		glm::vec3 target;
+		float length;
 		glm::mat4 proj_matrix;
 		glm::mat4 proj_matrix_inverse;
 		glm::mat4 view_matrix;
 
-		glm::vec3 frustumPoints[8];
-		glm::vec4 frustumPlanes[6];
-
-		Object *object = nullptr;
-
+		glm::vec3 frustum_points[8];
+		glm::vec4 frustum_planes[6];
+	protected:
+		virtual void on_update() override;
+	public:
 		Camera();
+
+		glm::vec3 get_target() const;
+		float get_length() const;
+		glm::mat4 get_proj_matrix() const;
+		glm::mat4 get_proj_matrix_inverse() const;
+		glm::mat4 get_view_matrix() const;
+		const glm::vec3 *get_frustum_points() const;
+		const glm::vec4 *get_frustum_planes() const;
+
 		void set_proj(ProjectionType proj_type);
-		void setMode(CameraMode _mode);
 		void set_length(float _length);
-		void setTarget(const glm::vec3 &_target);
-		void lookAtTarget();
-		void updateFrustum();
-		void reset();
-		void rotateByCursor(float x, float y);
-		void moveByCursor(float x, float y);
+		void set_target(const glm::vec3 &_target);
+		void rotate_by_cursor(float x, float y);
+		void move_by_cursor(float x, float y);
 		void scroll(float value);
 		void move();
-		glm::mat4 get_view_matrix();
+		void reset();
+	private:
+		void look_at_target();
+		void update_frustum();
 	};
 
-	IMPL(nullptr) Camera *main_camera;
+	extern Camera *curr_camera;
 }

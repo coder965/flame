@@ -1,5 +1,6 @@
 #include <filesystem>
 
+#include "../../type.h"
 #include "../../ui/ui.h"
 #include "../../graphics/descriptor.h"
 
@@ -57,7 +58,6 @@ void ResourceExplorer::on_file_item_selected(FileItem *_i, bool doubleClicked)
 				if (s)
 				{
 					s->name = "scene";
-					s->camera.setMode(tke::CameraMode::targeting);
 					if (!scene_editor)
 						scene_editor = std::make_unique<SceneEditor>(s);
 					else

@@ -1,3 +1,4 @@
+#include "../../type.h"
 #include "../../global.h"
 #include "../../graphics/renderpass.h"
 #include "tool.h"

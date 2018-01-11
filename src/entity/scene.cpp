@@ -20,6 +20,122 @@ namespace tke
 {
 	static const float gravity = 9.81f;
 
+	void Scene::on_update()
+	{
+		// update animation and bones
+		for (auto &o : objects)
+		{
+			if (o->animationComponent)
+				o->animationComponent->update();
+		}
+
+		// update physics (controller should move first, then simulate, and then get the result coord)
+		auto dist = 1.f / FPS;
+		if (dist > 0.f)
+		{
+			for (auto &o : objects) // set controller coord
+			{
+				if (o->physics_type & (int)ObjectPhysicsType::controller)
+				{
+					glm::vec3 e, c;
+					o->move(o->get_euler().x, c, e);
+					o->add_euler(e);
+
+					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
+					o->floatingTime += dist;
+
+					if (o->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
+						o->floatingTime = 0.f;
+				}
+			}
+			pxScene->simulate(dist);
+			//pxScene->simulate(1.f / 60.f);
+			pxScene->fetchResults(true);
+			for (auto &o : objects)
+			{
+				if (o->physics_type & (int)ObjectPhysicsType::dynamic)
+				{
+					auto pModel = o->model;
+
+					auto objScale = o->get_scale();
+					auto objCoord = o->get_coord();
+					auto objAxis = o->get_axis();
+					physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
+						physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
+						physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
+						physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
+
+					for (auto &data : o->rigidbodyDatas)
+					{
+						if (data->rigidbody->boneID == -1)
+						{
+							auto trans = data->actor->getGlobalPose();
+							auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
+							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
+							o->set_coord(coord);
+							o->set_quat(quat);
+							data->coord = coord;
+							data->rotation = quaternion_to_mat3(quat);
+						}
+						//else
+						//{
+						//	auto solver = pObject->animationSolver;
+						//	if (r->mode == Rigidbody::Mode::eStatic)
+						//	{
+						//		auto pBone = &pModel->bones[r->boneID];
+						//		auto coord = objAxis * (glm::vec3(solver->boneMatrix[r->boneID][3]) + glm::mat3(solver->boneMatrix[r->boneID]) * r->getCoord()) * objScale + objCoord;
+						//		auto axis = objAxis * glm::mat3(solver->boneMatrix[r->boneID]) * r->getAxis();
+						//		PxTransform trans(coord.x, coord.y, coord.z, PxQuat(PxMat33(
+						//			PxVec3(axis[0][0], axis[0][1], axis[0][2]),
+						//			PxVec3(axis[1][0], axis[1][1], axis[1][2]),
+						//			PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
+						//		((PxRigidDynamic*)body)->setKinematicTarget(trans);
+						//		pObject->rigidDatas[id].coord = coord;
+						//		pObject->rigidDatas[id].rotation = axis;
+						//	}
+						//	else
+						//	{
+						//		auto objAxisT = glm::transpose(objAxis);
+						//		auto rigidAxis = r->getAxis();
+						//		auto rigidAxisT = glm::transpose(rigidAxis);
+						//		auto trans = body->getGlobalPose();
+						//		auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
+						//		glm::mat3 axis;
+						//		Math::quaternionToMatrix(glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w), axis);
+						//		pObject->rigidDatas[id].coord = coord;
+						//		pObject->rigidDatas[id].rotation = axis;
+						//		auto boneAxis = objAxisT * axis * rigidAxisT;
+						//		glm::vec3 boneCoord;
+						//		if (r->mode != Rigidbody::Mode::eDynamicLockLocation)
+						//			boneCoord = (objAxisT * (coord - objCoord) - boneAxis * (r->getCoord() * objScale)) / objScale;
+						//		else
+						//			boneCoord = glm::vec3(solver->boneMatrix[r->boneID][3]);
+						//		solver->boneMatrix[r->boneID] = Math::makeMatrix(boneAxis, boneCoord);
+						//	}
+						//}
+					}
+				}
+
+				if (o->physics_type & (int)ObjectPhysicsType::controller)
+				{
+					auto p = o->pxController->getPosition();
+					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->get_scale();
+					o->set_coord(c);
+				}
+			}
+		}
+	}
+
+	void Scene::on_clear()
+	{
+		needUpdateSky = false;
+		needUpdateAmbientBuffer = false;
+		light_count_dirty = false;
+		object_count_dirty = false;
+		terrain_count_dirty = false;
+		water_count_dirty = false;
+	}
+
 	Scene::Scene()
 		:Node(NodeTypeScene)
 	{
@@ -73,8 +189,6 @@ namespace tke
 		{
 			if (it->get() == l)
 			{
-				for (auto itt = it + 1; itt != lights.end(); itt++)
-					(*itt)->transform_dirty = true;
 				it = lights.erase(it);
 				l = it == lights.end() ? nullptr : it->get();
 				break;
@@ -242,8 +356,6 @@ namespace tke
 		{
 			if (it->get() == o)
 			{
-				for (auto itt = it + 1; itt != objects.end(); itt++)
-					(*itt)->transform_dirty = true;
 				if (o->pxController)
 					o->pxController->release();
 				it = objects.erase(it);
@@ -317,8 +429,6 @@ namespace tke
 		{
 			if (it->get() == t)
 			{
-				for (auto itt = it + 1; itt != terrains.end(); itt++)
-					(*itt)->transform_dirty = true;
 				it = terrains.erase(it);
 				t = it == terrains.end() ? nullptr : it->get();
 				break;
@@ -327,30 +437,6 @@ namespace tke
 
 		terrain_count_dirty = true;
 		return t;
-	}
-
-	void Scene::reset()
-	{
-		needUpdateSky = false;
-		needUpdateAmbientBuffer = false;
-		light_count_dirty = false;
-		object_count_dirty = false;
-		terrain_count_dirty = false;
-		water_count_dirty = false;
-		camera.transform_dirty = false;
-		for (auto &l : lights)
-			l->transform_dirty = false;
-		for (auto &o : objects)
-			o->transform_dirty = false;
-		for (auto &t : terrains)
-			t->transform_dirty = false;
-	}
-
-	void Scene::clear()
-	{
-		lights.clear();
-		objects.clear();
-		terrains.clear();
 	}
 
 	void Scene::setSunDir(const glm::vec2 &v)
@@ -375,118 +461,6 @@ namespace tke
 		needUpdateAmbientBuffer = true;
 	}
 
-	void Scene::update()
-	{
-		// update animation and bones
-		for (auto &o : objects)
-		{
-			if (o->animationComponent)
-				o->animationComponent->update();
-		}
-
-		// update physics (controller should move first, then simulate, and then get the result coord)
-		auto dist = 1.f / FPS;
-		if (dist > 0.f)
-		{
-			for (auto &o : objects) // set controller coord
-			{
-				if (o->physics_type & (int)ObjectPhysicsType::controller)
-				{
-					glm::vec3 e, c;
-					o->move(o->get_euler().x, c, e);
-					o->add_euler(e);
-
-					physx::PxVec3 disp(c.x, -gravity * o->floatingTime * o->floatingTime, c.z);
-					o->floatingTime += dist;
-
-					if (o->pxController->move(disp, 0.f, dist, nullptr) & physx::PxControllerCollisionFlag::eCOLLISION_DOWN)
-						o->floatingTime = 0.f;
-				}
-			}
-			pxScene->simulate(dist);
-			//pxScene->simulate(1.f / 60.f);
-			pxScene->fetchResults(true);
-			for (auto &o : objects)
-			{
-				if (o->physics_type & (int)ObjectPhysicsType::dynamic)
-				{
-					auto pModel = o->model;
-
-					auto objScale = o->get_scale();
-					auto objCoord = o->get_coord();
-					auto objAxis = o->get_axis();
-					physx::PxTransform objTrans(objCoord.x, objCoord.y, objCoord.z, physx::PxQuat(physx::PxMat33(
-						physx::PxVec3(objAxis[0][0], objAxis[0][1], objAxis[0][2]),
-						physx::PxVec3(objAxis[1][0], objAxis[1][1], objAxis[1][2]),
-						physx::PxVec3(objAxis[2][0], objAxis[2][1], objAxis[2][2]))));
-
-					for (auto &data : o->rigidbodyDatas)
-					{
-						if (data->rigidbody->boneID == -1)
-						{
-							auto trans = data->actor->getGlobalPose();
-							auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
-							auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
-							o->set_coord(coord);
-							o->set_quat(quat);
-							data->coord = coord;
-							data->rotation = quaternion_to_mat3(quat);
-						}
-						//else
-						//{
-						//	auto solver = pObject->animationSolver;
-						//	if (r->mode == Rigidbody::Mode::eStatic)
-						//	{
-						//		auto pBone = &pModel->bones[r->boneID];
-						//		auto coord = objAxis * (glm::vec3(solver->boneMatrix[r->boneID][3]) + glm::mat3(solver->boneMatrix[r->boneID]) * r->getCoord()) * objScale + objCoord;
-						//		auto axis = objAxis * glm::mat3(solver->boneMatrix[r->boneID]) * r->getAxis();
-						//		PxTransform trans(coord.x, coord.y, coord.z, PxQuat(PxMat33(
-						//			PxVec3(axis[0][0], axis[0][1], axis[0][2]),
-						//			PxVec3(axis[1][0], axis[1][1], axis[1][2]),
-						//			PxVec3(axis[2][0], axis[2][1], axis[2][2]))));
-						//		((PxRigidDynamic*)body)->setKinematicTarget(trans);
-						//		pObject->rigidDatas[id].coord = coord;
-						//		pObject->rigidDatas[id].rotation = axis;
-						//	}
-						//	else
-						//	{
-						//		auto objAxisT = glm::transpose(objAxis);
-						//		auto rigidAxis = r->getAxis();
-						//		auto rigidAxisT = glm::transpose(rigidAxis);
-						//		auto trans = body->getGlobalPose();
-						//		auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
-						//		glm::mat3 axis;
-						//		Math::quaternionToMatrix(glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w), axis);
-						//		pObject->rigidDatas[id].coord = coord;
-						//		pObject->rigidDatas[id].rotation = axis;
-						//		auto boneAxis = objAxisT * axis * rigidAxisT;
-						//		glm::vec3 boneCoord;
-						//		if (r->mode != Rigidbody::Mode::eDynamicLockLocation)
-						//			boneCoord = (objAxisT * (coord - objCoord) - boneAxis * (r->getCoord() * objScale)) / objScale;
-						//		else
-						//			boneCoord = glm::vec3(solver->boneMatrix[r->boneID][3]);
-						//		solver->boneMatrix[r->boneID] = Math::makeMatrix(boneAxis, boneCoord);
-						//	}
-						//}
-					}
-				}
-
-				if (o->physics_type & (int)ObjectPhysicsType::controller)
-				{
-					auto p = o->pxController->getPosition();
-					auto c = glm::vec3(p.x, p.y, p.z) - o->model->controller_position * o->get_scale();
-					o->set_coord(c);
-				}
-			}
-		}
-
-		camera.move();
-		if (camera.transform_dirty || camera.object)
-			camera.lookAtTarget();
-		if (camera.transform_dirty)
-			camera.updateFrustum();
-	}
-
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
 	{
 
@@ -496,24 +470,25 @@ namespace tke
 
 	void Scene::save(const std::string &filename)
 	{
+		// TODO : FIX THIS
 		tke::XMLDoc at("scene");
-		at.addAttributes(this, b);
-		for (auto &o : objects)
-		{
-			auto n = at.newNode("object");
-			o->get_coord();
-			o->get_euler();
-			o->get_scale();
-			n->addAttributes(o.get(), o->b);
-		}
-		for (auto &t : terrains)
-		{
-			auto n = at.newNode("terrain");
-			t->get_coord();
-			t->get_euler();
-			t->get_scale();
-			n->addAttributes(t.get(), t->b);
-		}
+		//at.addAttributes(this, b);
+		//for (auto &o : objects)
+		//{
+		//	auto n = at.newNode("object");
+		//	o->get_coord();
+		//	o->get_euler();
+		//	o->get_scale();
+		//	n->addAttributes(o.get(), o->b);
+		//}
+		//for (auto &t : terrains)
+		//{
+		//	auto n = at.newNode("terrain");
+		//	t->get_coord();
+		//	t->get_euler();
+		//	t->get_scale();
+		//	n->addAttributes(t.get(), t->b);
+		//}
 		at.save(filename);
 	}
 
@@ -536,48 +511,49 @@ namespace tke
 		s->filename = filename;
 
 		tke::XMLDoc at("scene", filename);
-		at.obtainFromAttributes(s.get(), s->b);
-		for (auto &c : at.children)
-		{
-			if (c->name == "object")
-			{
-				auto o = new Object;
-				c->obtainFromAttributes(o, o->b);
-				o->model = getModel(o->model_filename);
-				if (o->model && o->model->vertex_skeleton)
-					o->animationComponent = std::make_unique<AnimationRunner>(o->model.get());
-				o->axis_dirty = true;
-				o->quat_dirty = true;
-				o->matrix_dirty = true;
-				o->transform_dirty = true;
-				s->addObject(o);
-			}
-			else if (c->name == "light")
-			{
-				;
-			}
-			else if (c->name == "terrain")
-			{
-				auto t = new Terrain;
-				c->obtainFromAttributes(t, t->b);
-				//t->heightMap = getTexture(t->height_map_filename);
-				//t->normalMap = getTexture(t->normal_map_filename);
-				//t->blendMap = getTexture(t->blend_map_filename);
-				//t->colorMaps[0] = getTexture(t->color_map0_filename);
-				//t->colorMaps[1] = getTexture(t->color_map1_filename);
-				//t->colorMaps[2] = getTexture(t->color_map2_filename);
-				//t->colorMaps[3] = getTexture(t->color_map3_filename);
-				//t->normalMaps[0] = getTexture(t->normal_map0_filename);
-				//t->normalMaps[1] = getTexture(t->normal_map1_filename);
-				//t->normalMaps[2] = getTexture(t->normal_map2_filename);
-				//t->normalMaps[3] = getTexture(t->normal_map3_filename);
-				t->axis_dirty = true;
-				t->quat_dirty = true;
-				t->matrix_dirty = true;
-				t->transform_dirty = true;
-				s->addTerrain(t);
-			}
-		}
+		// TODO : FIX THIS
+		//at.obtainFromAttributes(s.get(), s->b);
+		//for (auto &c : at.children)
+		//{
+		//	if (c->name == "object")
+		//	{
+		//		auto o = new Object;
+		//		c->obtainFromAttributes(o, o->b);
+		//		o->model = getModel(o->model_filename);
+		//		if (o->model && o->model->vertex_skeleton)
+		//			o->animationComponent = std::make_unique<AnimationRunner>(o->model.get());
+		//		o->axis_dirty = true;
+		//		o->quat_dirty = true;
+		//		o->matrix_dirty = true;
+		//		o->transform_dirty = true;
+		//		s->addObject(o);
+		//	}
+		//	else if (c->name == "light")
+		//	{
+		//		;
+		//	}
+		//	else if (c->name == "terrain")
+		//	{
+		//		auto t = new Terrain;
+		//		c->obtainFromAttributes(t, t->b);
+		//		//t->heightMap = getTexture(t->height_map_filename);
+		//		//t->normalMap = getTexture(t->normal_map_filename);
+		//		//t->blendMap = getTexture(t->blend_map_filename);
+		//		//t->colorMaps[0] = getTexture(t->color_map0_filename);
+		//		//t->colorMaps[1] = getTexture(t->color_map1_filename);
+		//		//t->colorMaps[2] = getTexture(t->color_map2_filename);
+		//		//t->colorMaps[3] = getTexture(t->color_map3_filename);
+		//		//t->normalMaps[0] = getTexture(t->normal_map0_filename);
+		//		//t->normalMaps[1] = getTexture(t->normal_map1_filename);
+		//		//t->normalMaps[2] = getTexture(t->normal_map2_filename);
+		//		//t->normalMaps[3] = getTexture(t->normal_map3_filename);
+		//		t->axis_dirty = true;
+		//		t->quat_dirty = true;
+		//		t->matrix_dirty = true;
+		//		t->transform_dirty = true;
+		//		s->addTerrain(t);
+		//	}
+		//}
 
 		_scenes[hash] = s;
 		return s;

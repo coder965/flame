@@ -1,3 +1,4 @@
+#include "../../type.h"
 #include "../../language.h"
 #include "../../ui/ui.h"
 #include "../../graphics/image.h"
