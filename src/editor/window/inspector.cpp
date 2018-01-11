@@ -27,7 +27,7 @@ void InspectorWindow::do_show()
 			auto n = selected.get_node();
 			if (n)
 			{
-				switch (n->type)
+				switch (n->get_type())
 				{
 					case tke::NodeTypeScene:
 					{

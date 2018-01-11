@@ -22,8 +22,9 @@ namespace tke
 
 	struct Water;
 
-	REFLECTABLE struct Node : _Object
+	REFLECTABLE class Node : public _Object
 	{
+	public:
 		REFL_BANK;
 
 		enum Axis
@@ -33,7 +34,7 @@ namespace tke
 			AxisY,
 			AxisZ
 		};
-
+	private:
 		REFLv glm::vec3 coord = glm::vec3(0.f);
 		REFLv glm::vec3 euler = glm::vec3(0.f); // (yaw, pitch, roll)
 		glm::vec4 quat = glm::vec4(0.f, 0.f, 0.f, 1.f);
@@ -41,7 +42,7 @@ namespace tke
 
 		glm::mat3 axis = glm::mat3(1.f);
 		glm::mat4 matrix = glm::mat4(1.f);
-
+	protected:
 		bool axis_dirty = false;
 		bool euler_dirty = false;
 		bool quat_dirty = false;
@@ -50,11 +51,11 @@ namespace tke
 		bool transform_dirty = true;
 		bool attribute_dirty = true;
 		bool image_dirty = true;
-
+	private:
 		NodeType type;
 		Node *parent = nullptr;
 		std::vector<std::unique_ptr<Node>> children; 
-
+	public:
 		virtual bool on_message(_Object*, Message) { return false; }
 
 		bool broadcast(Node *src, Message msg);
@@ -70,6 +71,7 @@ namespace tke
 		glm::mat3 get_axis();
 		glm::mat4 get_matrix();
 		glm::mat4 get_world_matrix();
+		glm::vec3 get_world_coord();
 
 		void set_coord(const glm::vec3 &_coord);
 		void set_coord(float x, float y, float z);
@@ -121,7 +123,15 @@ namespace tke
 		void update_euler();
 		void update_quat();
 
+		bool is_transform_dirty();
+		bool is_attribute_dirty();
+		bool is_image_dirty();
+
 		void clear_dirty();
+
+		NodeType get_type() const;
+		Node *get_parent() const;
+		const std::vector<std::unique_ptr<Node>> &get_children() const;
 
 		Water *new_water();
 		void remove_child(Node *n);

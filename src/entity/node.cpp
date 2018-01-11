@@ -62,6 +62,11 @@ namespace tke
 		return m;
 	}
 
+	glm::vec3 Node::get_world_coord()
+	{
+		return glm::vec3(get_world_matrix()[3]);
+	}
+
 	void Node::set_coord(const glm::vec3 &_coord)
 	{
 		coord = _coord;
@@ -426,37 +431,7 @@ namespace tke
 		if (quat_dirty)
 			update_quat(); // updata by quat
 
-		float yaw, pitch, roll;
-
-		auto sqw = quat.w * quat.w;
-		auto sqx = quat.x * quat.x;
-		auto sqy = quat.y * quat.y;
-		auto sqz = quat.z * quat.z;
-
-		auto unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
-		auto test = quat.x * quat.y + quat.z * quat.w;
-		if (test > 0.499f * unit)
-		{ // singularity at north pole
-			yaw = 2.f * atan2(quat.x, quat.w);
-			pitch = M_PI / 2.f;
-			roll = 0;
-			return;
-		}
-		if (test < -0.499f * unit)
-		{ // singularity at south pole
-			yaw = -2.f * atan2(quat.x, quat.w);
-			pitch = -M_PI / 2.f;
-			roll = 0;
-			return;
-		}
-
-		yaw = atan2(2.f * quat.y * quat.w - 2.f * quat.x * quat.z, sqx - sqy - sqz + sqw);
-		pitch = asin(2.f * test / unit);
-		roll = atan2(2.f * quat.x * quat.w - 2.f * quat.y * quat.z, -sqx + sqy - sqz + sqw);
-
-		euler.x = glm::degrees(yaw);
-		euler.y = glm::degrees(pitch);
-		euler.z = glm::degrees(roll);
+		euler = quaternion_to_euler(quat);
 		euler_dirty = false;
 	}
 
@@ -468,6 +443,21 @@ namespace tke
 		quat_dirty = false;
 	}
 
+	bool Node::is_transform_dirty()
+	{
+		return transform_dirty;
+	}
+
+	bool Node::is_attribute_dirty()
+	{
+		return attribute_dirty;
+	}
+
+	bool Node::is_image_dirty()
+	{
+		return image_dirty;
+	}
+
 	void Node::clear_dirty()
 	{
 		transform_dirty = false;
@@ -475,6 +465,21 @@ namespace tke
 		image_dirty = false;
 		for (auto &c : children)
 			c->clear_dirty();
+	}
+
+	NodeType Node::get_type() const
+	{
+		return type;
+	}
+
+	Node *Node::get_parent() const
+	{
+		return parent;
+	}
+
+	const std::vector<std::unique_ptr<Node>> &Node::get_children() const
+	{
+		return children;
 	}
 
 	Water *Node::new_water()

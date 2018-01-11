@@ -39,7 +39,7 @@ namespace tke
 		transform_dirty = true;
 	}
 
-	void Camera::setLength(float _length)
+	void Camera::set_length(float _length)
 	{
 		length = _length;
 		matrix_dirty = true;
@@ -63,10 +63,7 @@ namespace tke
 				object = nullptr;
 			}
 
-			if (axis_dirty) update_axis();
-			coord = target + axis[2] * length;
-			matrix_dirty = true;
-			transform_dirty = true;
+			set_coord(target + get_axis()[2] * length);
 		}
 	}
 
@@ -79,6 +76,8 @@ namespace tke
 		auto _z1 = _y1 * res_aspect;
 		auto _y2 = far_plane * tanHfFovy;
 		auto _z2 = _y2 * res_aspect;
+		auto axis = get_axis();
+		auto coord = get_coord();
 		frustumPoints[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
 		frustumPoints[1] = _z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
 		frustumPoints[2] = _z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
@@ -102,7 +101,7 @@ namespace tke
 			}
 		}
 
-		auto vp = proj_matrix * matrix;
+		auto vp = proj_matrix * get_matrix();
 
 		frustumPlanes[0].x = vp[0].w + vp[0].x;
 		frustumPlanes[0].y = vp[1].w + vp[1].x;
@@ -141,10 +140,8 @@ namespace tke
 	void Camera::reset()
 	{
 		Controller::reset();
-		coord = glm::vec3(0.f);
+		set_coord(glm::vec3(0.f));
 		length = 1.0f;
-		matrix_dirty = true;
-		transform_dirty = true;
 	}
 
 	void Camera::rotateByCursor(float x, float y)
@@ -157,7 +154,7 @@ namespace tke
 	{
 		auto l = length / near_plane;
 		auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
-		target += (-x * cy * res_aspect * l) * axis[0] + (y * cy * l) * axis[1];
+		target += (-x * cy * res_aspect * l) * get_axis()[0] + (y * cy * l) * get_axis()[1];
 		lookAtTarget();
 	}
 
@@ -166,16 +163,14 @@ namespace tke
 		if (mode == CameraMode::targeting)
 		{
 			if (value < 0.f)
-				length = (length + 0.1) * 1.1f;
+				set_length((length + 0.1) * 1.1f);
 			else
-				length = (length / 1.1f) - 0.1f;
+				set_length((length / 1.1f) - 0.1f);
 			if (length < 1.f)
 			{
 				length = 1.f;
-				coord += glm::normalize(target - coord) * 0.5f;
+				add_coord(glm::normalize(target - get_coord()) * 0.5f);
 			}
-			matrix_dirty = true;
-			transform_dirty = true;
 		}
 	}
 
@@ -202,7 +197,7 @@ namespace tke
 		if (matrix_dirty)
 		{
 			update_matrix();
-			view_matrix = glm::inverse(matrix);
+			view_matrix = glm::inverse(get_matrix());
 		}
 		return view_matrix;
 	}

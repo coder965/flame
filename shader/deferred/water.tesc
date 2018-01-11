@@ -17,11 +17,12 @@ layout(binding = 1) uniform ubo_matrix_
 struct Water
 {
 	vec3 coord;
-	int blockCx;
-	float blockSize;
+	int block_cx;
+	int block_cy;
+	float block_size;
 	float height;
-	float tessellationFactor;
-	float textureUvFactor;
+	float tessellation_factor;
+	float tiling_scale;
 	float mapDimension;
 };
 
@@ -54,14 +55,14 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 	clip0.xy *= ubo_matrix.viewportDim;
 	clip1.xy *= ubo_matrix.viewportDim;
 	
-	return clamp(distance(clip0, clip1) / ubo_water.d[inWaterId[0]].blockSize * ubo_water.d[inWaterId[0]].tessellationFactor, 1.0, 64.0);
+	return clamp(distance(clip0, clip1) / ubo_water.d[inWaterId[0]].block_size * ubo_water.d[inWaterId[0]].tessellation_factor, 1.0, 64.0);
 }
 
 bool frustumCheck()
 {
 	vec2 uv = (inUV[0] + inUV[1] + inUV[2] + inUV[3]) * 0.25;
 	
-	const float radius = max(ubo_water.d[inWaterId[0]].blockSize, ubo_water.d[inWaterId[0]].height);
+	const float radius = max(ubo_water.d[inWaterId[0]].block_size, ubo_water.d[inWaterId[0]].height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
 	//pos.y += texture(heightMap, uv).r * ubo_water.d[inWaterId[0]].height;
 	pos.xyz += ubo_water.d[inWaterId[0]].coord;
@@ -95,7 +96,7 @@ void main()
 		else
 		{
 			
-			if (ubo_water.d[inWaterId[0]].tessellationFactor > 0.0)
+			if (ubo_water.d[inWaterId[0]].tessellation_factor > 0.0)
 			{
 				gl_TessLevelOuter[0] = screenSpaceTessFactor(gl_in[3].gl_Position, gl_in[0].gl_Position);
 				gl_TessLevelOuter[1] = screenSpaceTessFactor(gl_in[0].gl_Position, gl_in[1].gl_Position);

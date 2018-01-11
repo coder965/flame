@@ -20,7 +20,7 @@ namespace tke
 		ProjectionTypeOrtho
 	};
 
-	struct Camera : Node, Controller
+	struct Camera : public Node, Controller
 	{
 		CameraMode mode = CameraMode::free;
 		glm::vec3 target = glm::vec3(0.f);
@@ -37,7 +37,7 @@ namespace tke
 		Camera();
 		void set_proj(ProjectionType proj_type);
 		void setMode(CameraMode _mode);
-		void setLength(float _length);
+		void set_length(float _length);
 		void setTarget(const glm::vec3 &_target);
 		void lookAtTarget();
 		void updateFrustum();

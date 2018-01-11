@@ -834,7 +834,7 @@ namespace tke
 
 			for (auto &o : scene->objects)
 			{
-				if (o->dirty)
+				if (o->is_transform_dirty())
 				{
 					auto srcOffset = sizeof(glm::mat4) * ranges.size();
 					memcpy(map + srcOffset, &o->get_matrix(), sizeof(glm::mat4));
@@ -860,7 +860,7 @@ namespace tke
 			auto index = 0;
 			for (auto &t : scene->terrains)
 			{
-				if (t->dirty)
+				if (t->is_transform_dirty())
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
@@ -904,16 +904,17 @@ namespace tke
 				if (waters[i])
 				{
 					auto w = waters[i];
-					if (w->dirty)
+					if (w->is_transform_dirty() || w->is_attribute_dirty())
 					{
 						auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
 						WaterShaderStruct stru;
 						stru.coord = glm::vec3(w->get_world_matrix()[3]);
-						stru.blockCx = w->blockCx;
-						stru.blockSize = w->blockSize;
-						stru.height = w->height;
-						stru.tessellationFactor = w->tessellationFactor;
-						stru.textureUvFactor = w->textureUvFactor;
+						stru.block_cx = w->get_block_cx();
+						stru.block_cy = w->get_block_cy();
+						stru.block_size = w->get_block_size();
+						stru.height = w->get_height();
+						stru.tessellation_factor = w->get_tessellation_factor();
+						stru.tiling_scale = w->get_tiling_scale();
 						stru.mapDimension = 1024;
 						memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
 						VkBufferCopy range = {};
@@ -1017,10 +1018,10 @@ namespace tke
 
 					if (l->type == LightType::parallax)
 					{
-						if (l->dirty || scene->camera.dirty)
+						if (l->is_transform_dirty() || scene->camera.is_transform_dirty())
 						{
 							glm::vec3 p[8];
-							auto cameraCoord = scene->camera.coord;
+							auto cameraCoord = scene->camera.get_world_coord();
 							for (int i = 0; i < 8; i++) p[i] = scene->camera.frustumPoints[i] - cameraCoord;
 							auto lighAxis = l->get_axis();
 							auto axisT = glm::transpose(lighAxis);
@@ -1059,7 +1060,7 @@ namespace tke
 					}
 					else if (l->type == LightType::point)
 					{
-						if (l->dirty)
+						if (l->is_transform_dirty())
 						{
 							glm::mat4 shadowMatrix[6];
 
@@ -1093,7 +1094,7 @@ namespace tke
 			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
 			for (auto &l : scene->lights)
 			{
-				if (l->dirty)
+				if (l->is_transform_dirty())
 				{
 					LightShaderStruct stru;
 					if (l->type == LightType::parallax)
@@ -1235,7 +1236,7 @@ namespace tke
 				if (waters[i])
 				{
 					auto w = waters[i];
-					cb_defe->draw(4, 0, (i << 16) + w->blockCx * w->blockCx);
+					cb_defe->draw(4, 0, (i << 16) + w->get_block_cx() * w->get_block_cy());
 				}
 			}
 		}

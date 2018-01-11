@@ -5,11 +5,10 @@
 
 #include "../src/math/math.h"
 
-#include "a.h"
-
 int main(int argc, char** argv)
 {
-	A a;
+	auto m = glm::translate(glm::vec3(1, 2, 3));
+	auto v = glm::vec3(m[3]);
 
 	return 0;
 }

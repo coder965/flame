@@ -18,14 +18,14 @@ static void show_nodes(tke::Node *n)
 	auto node_style = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 	if (n == selected.get_node())
 		node_style |= ImGuiTreeNodeFlags_Selected;
-	if (n->children.size() == 0)
+	if (n->get_children().size() == 0)
 		node_style |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 	auto node_opened = ImGui::TreeNodeEx(n->name.c_str(), node_style);
 	if (ImGui::IsItemClicked())
 		selected = n;
-	if (n->children.size() > 0 && node_opened)
+	if (n->get_children().size() > 0 && node_opened)
 	{
-		for (auto &c : n->children)
+		for (auto &c : n->get_children())
 			show_nodes(c.get());
 		ImGui::TreePop();
 	}

@@ -17,11 +17,12 @@ layout(binding = 1) uniform ubo_matrix_
 struct Water
 {
 	vec3 coord;
-	int blockCx;
-	float blockSize;
+	int block_cx;
+	int block_cy;
+	float block_size;
 	float height;
-	float tessellationFactor;
-	float textureUvFactor;
+	float tessellation_factor;
+	float tiling_scale;
 	float mapDimension;
 };
 

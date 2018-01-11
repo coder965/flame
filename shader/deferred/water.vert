@@ -5,11 +5,12 @@
 struct Water
 {
 	vec3 coord;
-	int blockCx;
-	float blockSize;
+	int block_cx;
+	int block_cy;
+	float block_size;
 	float height;
-	float tessellationFactor;
-	float textureUvFactor;
+	float tessellation_factor;
+	float tiling_scale;
 	float mapDimension;
 };
 
@@ -25,7 +26,7 @@ void main(void)
 {
 	outWaterId = gl_InstanceIndex >> 16;
 	uint tileIndex = gl_InstanceIndex & 0xffff;
-	outUV = vec2((tileIndex % ubo_water.d[outWaterId].blockCx) + (gl_VertexIndex & 2), (tileIndex / ubo_water.d[outWaterId].blockCx) + ((gl_VertexIndex + 3) & 2));
-	gl_Position = vec4(outUV.x * ubo_water.d[outWaterId].blockSize, 0.0, outUV.y * ubo_water.d[outWaterId].blockSize, 1.0);
-	outUV /= vec2(ubo_water.d[outWaterId].blockCx, ubo_water.d[outWaterId].blockCx);
+	outUV = vec2((tileIndex % ubo_water.d[outWaterId].block_cx) + (gl_VertexIndex & 2), (tileIndex / ubo_water.d[outWaterId].block_cx) + ((gl_VertexIndex + 3) & 2));
+	gl_Position = vec4(outUV.x * ubo_water.d[outWaterId].block_size, 0.0, outUV.y * ubo_water.d[outWaterId].block_size, 1.0);
+	outUV /= vec2(ubo_water.d[outWaterId].block_cx, ubo_water.d[outWaterId].block_cy);
 }

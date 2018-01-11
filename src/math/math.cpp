@@ -106,6 +106,43 @@ namespace tke
 		return q;
 	}
 
+	glm::vec3 quaternion_to_euler(glm::vec4 &q)
+	{
+		float yaw, pitch, roll;
+
+		auto sqw = q.w * q.w;
+		auto sqx = q.x * q.x;
+		auto sqy = q.y * q.y;
+		auto sqz = q.z * q.z;
+
+		auto unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
+		auto test = q.x * q.y + q.z * q.w;
+		if (test > 0.499f * unit)
+		{ // singularity at north pole
+			yaw = 2.f * atan2(q.x, q.w);
+			pitch = M_PI / 2.f;
+			roll = 0;
+			return glm::vec3(0.f);
+		}
+		if (test < -0.499f * unit)
+		{ // singularity at south pole
+			yaw = -2.f * atan2(q.x, q.w);
+			pitch = -M_PI / 2.f;
+			roll = 0;
+			return glm::vec3(0.f);
+		}
+
+		yaw = atan2(2.f * q.y * q.w - 2.f * q.x * q.z, sqx - sqy - sqz + sqw);
+		pitch = asin(2.f * test / unit);
+		roll = atan2(2.f * q.x * q.w - 2.f * q.y * q.z, -sqx + sqy - sqz + sqw);
+
+		return glm::vec3(
+			glm::degrees(yaw),
+			glm::degrees(pitch),
+			glm::degrees(roll)
+		);
+	}
+
 	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v)
 	{
 		auto s = -q.x * v.x - q.y * v.y - q.z * v.z;
