@@ -1,12 +1,6 @@
 # TK_Engine
 A lightweight and powerful 3D Game Engine.
 
-C++:C++17 and STL
-
-Platform:PC
-
-OS:Windows 10
-
 # Used Third-Party Libraries
 rapidxml http://rapidxml.sourceforge.net/
 
@@ -27,3 +21,8 @@ FontAwesome https://github.com/juliettef/IconFontCppHeaders
 PhysX https://github.com/NVIDIAGameWorks/PhysX-3.3
 
 # Features
+* C++11
+* STL
+* Node
+* Component
+* pbr
