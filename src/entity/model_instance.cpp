@@ -1,11 +1,22 @@
 //#include "../graphics/buffer.h"
 //#include "../model/animation.h"
 //#include "../physics/physics.h"
+#include "component.h"
 #include "../model/model.h"
 #include "model_instance.h"
 
 namespace tke
 {
+	ModelInstanceComponent::ModelInstanceComponent(std::shared_ptr<Model> _model) :
+		Component(ComponentTypeModelInstance)
+	{
+	}
+
+	Model *ModelInstanceComponent::get_model() const
+	{
+		return model.get();
+	}
+
 	//ObjectRigidBodyData::~ObjectRigidBodyData()
 	//{
 	//	if (actor)

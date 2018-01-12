@@ -11,8 +11,6 @@
 namespace tke
 {
 	struct Model;
-	struct AnimationRunner;
-	struct Rigidbody;
 
 	//enum ModelInstanceComponentPhysicsType
 	//{
@@ -44,5 +42,7 @@ namespace tke
 		//float floatingTime = 0.f;
 	public:
 		ModelInstanceComponent(std::shared_ptr<Model> _model);
+
+		Model *get_model() const;
 	};
 }

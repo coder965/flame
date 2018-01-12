@@ -41,10 +41,6 @@ namespace tke
 
 		float fogThickness = 0.01f;
 
-		std::vector<std::unique_ptr<Light>> lights;
-		std::vector<std::unique_ptr<Object>> objects;
-		std::vector<std::unique_ptr<Terrain>> terrains;
-
 		std::vector<CollisionGroup*> pCollisionGroups;
 
 		physx::PxScene *pxScene = nullptr;
@@ -56,13 +52,7 @@ namespace tke
 		~Scene();
 		void setSkyType(SkyType skyType);
 		void set_pano_sky_image(std::shared_ptr<Image> i);
-		void addLight(Light *l);
-		Light *removeLight(Light *l);
-		void addObject(Object *o);
-		Object *removeObject(Object *o);
 		int getCollisionGroupID(int ID, unsigned int mask);
-		void addTerrain(Terrain *t);
-		Terrain *removeTerrain(Terrain *t);
 		void setSunDir(const glm::vec2 &);
 		void setAmbientColor(const glm::vec3 &);
 		void setFogColor(const glm::vec3 &);
