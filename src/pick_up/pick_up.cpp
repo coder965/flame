@@ -1,4 +1,3 @@
-#include "../type.h"
 #include "../global.h"
 #include "../graphics/buffer.h"
 #include "../graphics/image.h"
@@ -47,9 +46,10 @@ namespace tke
 	void init_pick_up() 
 	{
 		pick_up_image = new Image(res_cx, res_cy, VK_FORMAT_R8G8B8A8_UNORM, 
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | 
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		pick_up_depth_image = new Image(res_cx, res_cy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | 
+			VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		pick_up_depth_image = new Image(res_cx, res_cy, VK_FORMAT_D16_UNORM, 
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		VkImageView views[] = {
 			pick_up_image->getView(),

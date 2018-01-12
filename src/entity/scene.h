@@ -29,12 +29,8 @@ namespace tke
 		std::unique_ptr<Sky> sky;
 		bool enable_sun_light = true;
 
-		bool needUpdateSky = true;
-
 		float hdrExposure = 0.01f;
 		float hdrWhite = 1.f;
-
-		bool needUpdateAmbientBuffer = true;
 
 		glm::vec3 ambientColor = glm::vec3(0.5f);
 		glm::vec3 fogColor = glm::vec3(0.5f);
@@ -49,22 +45,17 @@ namespace tke
 		std::vector<std::unique_ptr<Object>> objects;
 		std::vector<std::unique_ptr<Terrain>> terrains;
 
-		bool light_count_dirty = true;
-		bool object_count_dirty = true;
-		bool terrain_count_dirty = true;
-		bool water_count_dirty = true;
-
 		std::vector<CollisionGroup*> pCollisionGroups;
 
 		physx::PxScene *pxScene = nullptr;
 		physx::PxControllerManager *pxControllerManager = nullptr;
 
-		virtual void on_clear() override;
 		virtual void on_update() override;
 
 		Scene();
 		~Scene();
 		void setSkyType(SkyType skyType);
+		void set_pano_sky_image(std::shared_ptr<Image> i);
 		void addLight(Light *l);
 		Light *removeLight(Light *l);
 		void addObject(Object *o);

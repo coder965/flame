@@ -1,7 +1,6 @@
 #include <process.h>
 #include <map>
 
-#include "../type.h"
 #include "../global.h"
 #include "../input.h"
 #include "../graphics/buffer.h"
@@ -11,7 +10,7 @@
 #include "../graphics/pipeline.h"
 #include "../graphics/sampler.h"
 #include "../graphics/command_buffer.h"
-#include "../application.h"
+#include "../engine.h"
 
 #include "ui.h"
 

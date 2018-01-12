@@ -474,18 +474,11 @@ namespace tke
 	void Node::update()
 	{
 		on_update();
-		for (auto &c : children)
-			c->update();
-	}
-
-	void Node::clear()
-	{
 		transform_dirty = false;
 		attribute_dirty = false;
 		image_dirty = false;
-		on_clear();
 		for (auto &c : children)
-			c->clear();
+			c->update();
 	}
 
 	NodeType Node::get_type() const

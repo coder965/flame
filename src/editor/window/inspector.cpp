@@ -1,5 +1,5 @@
-#include "../../type.h"
-#include "../../language.h"
+#include "../../global.h"
+#include "../../string_utils.h"
 #include "../../ui/ui.h"
 #include "../../graphics/image.h"
 #include "../../model/model.h"
@@ -122,10 +122,7 @@ void InspectorWindow::do_show()
 												std::experimental::filesystem::path path(filename);
 												auto ext = path.extension();
 												if (tke::is_image_file(ext.string()))
-												{
-													pa->panoImage = tke::get_image(filename);
-													scene->needUpdateSky = true;
-												}
+													scene->set_pano_sky_image(tke::get_image(filename));
 											}
 										}
 										ImGui::EndDragDropTarget();

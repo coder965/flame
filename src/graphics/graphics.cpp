@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <set>
 
-#include "../error.h"
+#include "../global.h"
 #include "graphics.h"
 #include "command_buffer.h"
 #include "buffer.h"

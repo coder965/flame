@@ -132,10 +132,8 @@ namespace tke
 		void remove_child(Node *n);
 
 		void update();
-		void clear();
 	protected:
 		virtual void on_update() {};
-		virtual void on_clear() {};
 
 	private:
 		void update_matrix();

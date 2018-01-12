@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <map>
 
-#include "../hash.h"
+#include "../string_utils.h"
 #include "../file_utils.h"
 #include "buffer.h"
 #include "image.h"

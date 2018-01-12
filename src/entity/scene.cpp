@@ -1,7 +1,7 @@
 #include <map>
 
 #include "../math/math.h"
-#include "../hash.h"
+#include "../string_utils.h"
 #include "../file_utils.h"
 #include "../global.h"
 #include "../graphics/buffer.h"
@@ -126,16 +126,6 @@ namespace tke
 		}
 	}
 
-	void Scene::on_clear()
-	{
-		needUpdateSky = false;
-		needUpdateAmbientBuffer = false;
-		light_count_dirty = false;
-		object_count_dirty = false;
-		terrain_count_dirty = false;
-		water_count_dirty = false;
-	}
-
 	Scene::Scene()
 		:Node(NodeTypeScene)
 	{
@@ -173,14 +163,27 @@ namespace tke
 			sky = std::move(std::make_unique<SkyPanorama>());
 			break;
 		}
-		needUpdateSky = true;
-		needUpdateAmbientBuffer = true;
+
+		broadcast(this, MessageSkyDirty);
+		broadcast(this, MessageAmbientDirty);
+	}
+
+	void Scene::set_pano_sky_image(std::shared_ptr<Image> i)
+	{
+		if (!sky || sky->type != SkyType::panorama)
+			return;
+
+		auto pa = (SkyPanorama*)sky.get();
+		pa->panoImage = i;
+
+		broadcast(this, MessageSkyDirty);
+		broadcast(this, MessageAmbientDirty);
 	}
 
 	void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	{
 		lights.emplace_back(l);
-		light_count_dirty = true;
+		broadcast(this, MessageLightCountDirty);
 	}
 
 	Light *Scene::removeLight(Light *l)
@@ -194,7 +197,7 @@ namespace tke
 				break;
 			}
 		}
-		light_count_dirty = true;
+		broadcast(this, MessageLightCountDirty);
 		return l;
 	}
 
@@ -347,7 +350,7 @@ namespace tke
 
 		objects.emplace_back(o);
 
-		object_count_dirty = true;
+		broadcast(this, MessageObjectCountDirty);
 	}
 
 	Object *Scene::removeObject(Object *o)
@@ -363,7 +366,7 @@ namespace tke
 				break;
 			}
 		}
-		object_count_dirty = true;
+		broadcast(this, MessageObjectCountDirty);
 		return o;
 	}
 
@@ -420,7 +423,7 @@ namespace tke
 		//}
 
 		terrains.emplace_back(t);
-		terrain_count_dirty = true;
+		broadcast(this, MessageTerrainCountDirty);
 	}
 
 	Terrain *Scene::removeTerrain(Terrain *t)
@@ -435,7 +438,7 @@ namespace tke
 			}
 		}
 
-		terrain_count_dirty = true;
+		broadcast(this, MessageTerrainCountDirty);
 		return t;
 	}
 
@@ -445,27 +448,27 @@ namespace tke
 			return;
 		auto as = (SkyAtmosphereScattering*)sky.get();
 		as->sun_light->set_euler(glm::vec3(v.x, 0.f, v.y));
-		needUpdateSky = true;
-		needUpdateAmbientBuffer = true;
+		broadcast(this, MessageSkyDirty);
+		broadcast(this, MessageAmbientDirty);
 	}
 
 	void Scene::setAmbientColor(const glm::vec3 &v)
 	{
 		ambientColor = v;
-		needUpdateAmbientBuffer = true;
+		broadcast(this, MessageAmbientDirty);
 	}
 
 	void Scene::setFogColor(const glm::vec3 &v)
 	{
 		fogColor = v;
-		needUpdateAmbientBuffer = true;
+		broadcast(this, MessageAmbientDirty);
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
 	{
 
-		needUpdateSky = true;
-		needUpdateAmbientBuffer = true;
+		broadcast(this, MessageSkyDirty);
+		broadcast(this, MessageAmbientDirty);
 	}
 
 	void Scene::save(const std::string &filename)

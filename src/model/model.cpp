@@ -5,8 +5,7 @@
 #include <map>
 
 #include "../file_utils.h"
-#include "../hash.h"
-#include "../language.h"
+#include "../string_utils.h"
 #include "../resource/resource.h"
 #include "../graphics/buffer.h"
 #include "../graphics/image.h"

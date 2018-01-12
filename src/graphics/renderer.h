@@ -118,6 +118,12 @@ namespace tke
 		static bool defe_inited;
 		static bool shad_inited;
 
+		bool sky_dirty;
+		bool ambient_dirty;
+		bool light_count_dirty;
+		bool object_count_dirty;
+		bool terrain_count_dirty;
+
 		std::unique_ptr<CommandBuffer> cb_defe;
 		std::unique_ptr<CommandBuffer> cb_shad;
 

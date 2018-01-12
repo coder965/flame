@@ -6,7 +6,7 @@
 #include "../../ui/ui.h"
 #include "../../model/animation.h"
 #include "../../physics/physics.h"
-#include "../../application.h"
+#include "../../engine.h"
 
 #include "terrain_editor.h"
 #include "file_selector.h"

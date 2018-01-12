@@ -1,4 +1,4 @@
-#include "../../type.h"
+#include "../../global.h"
 #include "../../system.h"
 #include "../../ui/ui.h"
 #include "file_selector.h"

@@ -1,9 +1,8 @@
 #include <iostream>
 #include <map>
 
-#include "../hash.h"
+#include "../string_utils.h"
 #include "../file_utils.h"
-#include "../language.h"
 #include "../global.h"
 #include "../graphics/buffer.h"
 #include "animation.h"

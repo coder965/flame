@@ -1,4 +1,3 @@
-#include "../type.h"
 #include "../global.h"
 #include "../resource/resource.h"
 #include "../graphics/buffer.h"

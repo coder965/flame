@@ -51,6 +51,8 @@ namespace tke
 	extern PF_EVENT0 onDestroy;
 	extern std::uint32_t window_style;
 
+	long long get_now_time_ms();
+
 	extern Node *root_node;
 
 	// must call in main thread
@@ -61,7 +63,7 @@ namespace tke
 	enum EventType
 	{
 		EventTypeEvent,
-		EventTypeOnlyOne
+		EventTypeOnlyOne // only one can exist in the list
 	};
 	void add_before_frame_event(const std::function<void()>&, int id = -1, EventType event_type = EventTypeEvent);
 

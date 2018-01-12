@@ -132,26 +132,14 @@
     <ClCompile Include="..\src\graphics\synchronization.cpp">
       <Filter>src\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\error.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\time.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\string_utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\system.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\language.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\pick_up\pick_up.cpp">
       <Filter>src\pick_up</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\application.cpp">
-      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\entity\sky.cpp">
       <Filter>src\entity</Filter>
@@ -166,6 +154,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\engine.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -221,9 +212,6 @@
     <ClInclude Include="..\src\file_utils.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\hash.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\entity\node.h">
       <Filter>src\entity</Filter>
     </ClInclude>
@@ -272,31 +260,16 @@
     <ClInclude Include="..\src\input.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\error.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\time.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\string_utils.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\language.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\pick_up\pick_up.h">
       <Filter>src\pick_up</Filter>
     </ClInclude>
     <ClInclude Include="..\src\global.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\type.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\application.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\entity\sky.h">
@@ -306,6 +279,9 @@
       <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\_object.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\engine.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

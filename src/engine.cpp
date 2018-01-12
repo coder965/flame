@@ -1,12 +1,12 @@
 #include <map>
 #include <regex>
+#include <chrono>
 
-#include "error.h"
 #include "global.h"
 #include "system.h"
 #include "input.h"
 #include "global.h"
-#include "application.h"
+#include "engine.h"
 #include "graphics/buffer.h"
 #include "graphics/image.h"
 #include "graphics/renderpass.h"
@@ -20,6 +20,7 @@
 #include "model/model.h"
 #include "entity/terrain.h"
 #include "pick_up/pick_up.h"
+#include "engine.h"
 
 namespace tke
 {
@@ -65,6 +66,11 @@ namespace tke
 	PF_EVENT0 onRender = nullptr;
 	PF_EVENT0 onDestroy = nullptr;
 	std::uint32_t window_style;
+
+	long long get_now_time_ms()
+	{
+		return std::chrono::system_clock::now().time_since_epoch().count() / 10000;
+	}
 
 	Node *root_node;
 
@@ -300,7 +306,7 @@ namespace tke
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.hInstance = (HINSTANCE)get_hinst();
-			wcex.hIcon = CreateIcon(wcex.hInstance, iconData->levels[0].cx, 
+			wcex.hIcon = CreateIcon(wcex.hInstance, iconData->levels[0].cx,
 				iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v.get());
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
@@ -311,8 +317,8 @@ namespace tke
 		{
 			auto wndProp = getWin32WndProp();
 			hWnd = CreateWindowA("tke_wnd", title.c_str(), wndProp.second,
-				(get_screen_cx() - wndProp.first.x) / 2,  
-				(get_screen_cy() - wndProp.first.y) / 2, wndProp.first.x, 
+				(get_screen_cx() - wndProp.first.x) / 2,
+				(get_screen_cy() - wndProp.first.y) / 2, wndProp.first.x,
 				wndProp.first.y, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
 		}
 
@@ -321,16 +327,16 @@ namespace tke
 			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			surfaceInfo.hinstance = (HINSTANCE)get_hinst();
 			surfaceInfo.hwnd = (HWND)hWnd;
-			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surfaceInfo, nullptr, 
+			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surfaceInfo, nullptr,
 				&window_surface);
 			assert(res == VK_SUCCESS);
 
 			VkBool32 supported;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, window_surface, 
+			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, window_surface,
 				&supported);
 
 			VkSurfaceCapabilitiesKHR surfaceCapabilities;
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, window_surface, 
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, window_surface,
 				&surfaceCapabilities);
 		}
 
@@ -352,7 +358,7 @@ namespace tke
 
 		if (window_style & WindowStyleFrame)
 		{
-			RECT rect = {0, 0, window_cx, window_cy};
+			RECT rect = { 0, 0, window_cx, window_cy };
 			AdjustWindowRect(&rect, WS_CAPTION, false);
 			result.first.x = rect.right - rect.left;
 			result.first.y = rect.bottom - rect.top;
@@ -475,10 +481,9 @@ namespace tke
 			{
 				mouseDispX = mouseX - mousePrevX;
 				mouseDispY = mouseY - mousePrevY;
-				
+
 				root_node->update();
 				onRender();
-				root_node->clear();
 
 				mouseLeft.justDown = false;
 				mouseLeft.justUp = false;

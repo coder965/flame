@@ -1,7 +1,6 @@
 #include "../global.h"
 #include "../model/model.h"
 #include "../entity/scene.h"
-#include "../type.h"
 #include "synchronization.h"
 #include "buffer.h"
 #include "image.h"
@@ -18,7 +17,7 @@
 #include "../entity/object.h"
 #include "../entity/terrain.h"
 #include "../entity/water.h"
-#include "../application.h"
+#include "../engine.h"
 
 namespace tke
 {
@@ -414,6 +413,21 @@ namespace tke
 	{
 		switch (msg)
 		{
+			case MessageSkyDirty:
+				sky_dirty = true;
+				return true;
+			case MessageAmbientDirty:
+				ambient_dirty = true;
+				return true;
+			case MessageLightCountDirty:
+				light_count_dirty = true;
+				return true;
+			case MessageObjectCountDirty:
+				object_count_dirty = true;
+				return true;
+			case MessageTerrainCountDirty:
+				terrain_count_dirty = true;
+				return true;
 			case MessageWaterAdd:
 			{
 				auto w = (Water*)sender;
@@ -449,6 +463,12 @@ namespace tke
 	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *dst)
 		:enable_shadow(_enable_shadow), resource(&globalResource)
 	{
+		sky_dirty = true;
+		ambient_dirty = true;
+		light_count_dirty = true;
+		object_count_dirty = true;
+		terrain_count_dirty = true;
+
 		if (!defe_inited)
 		{
 			VkAttachmentDescription atts[] = {
@@ -724,7 +744,7 @@ namespace tke
 			matrixBuffer->update(&stru, defalut_staging_buffer);
 		}
 
-		if (scene->needUpdateSky)
+		if (sky_dirty)
 		{
 			auto funUpdateIBL = [&]() {
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
@@ -818,14 +838,18 @@ namespace tke
 					}
 				}
 			}
+
+			sky_dirty = false;
 		}
-		if (scene->needUpdateAmbientBuffer)
+		if (ambient_dirty)
 		{
 			AmbientBufferShaderStruct stru;
 			stru.color = scene->ambientColor;
 			stru.envr_max_mipmap = envrImage->levels.size() - 1;
 			stru.fogcolor = glm::vec4(scene->fogColor, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 			ambientBuffer->update(&stru, defalut_staging_buffer);
+
+			ambient_dirty = false;
 		}
 		if (scene->objects.size() > 0)
 		{
@@ -932,7 +956,7 @@ namespace tke
 
 		std::vector<Object*> staticObjects;
 		std::vector<Object*> animatedObjects;
-		if (scene->object_count_dirty)
+		if (object_count_dirty)
 		{
 			staticObjects.clear();
 			animatedObjects.clear();
@@ -995,6 +1019,8 @@ namespace tke
 				if (animatedCommands.size() > 0)
 					animatedObjectIndirectBuffer->update(animatedCommands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 			}
+
+			object_count_dirty = false;
 		}
 
 		std::vector<Light*> shadowLights;
@@ -1083,10 +1109,12 @@ namespace tke
 			}
 		}
 
-		if (scene->light_count_dirty)
+		if (light_count_dirty)
 		{
 			unsigned int count = scene->lights.size();
 			lightBuffer->update(&count, defalut_staging_buffer, sizeof(int));
+
+			light_count_dirty = false;
 		}
 
 		if (scene->lights.size() > 0)

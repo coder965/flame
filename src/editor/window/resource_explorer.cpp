@@ -1,6 +1,6 @@
 #include <filesystem>
 
-#include "../../type.h"
+#include "../../global.h"
 #include "../../ui/ui.h"
 #include "../../graphics/descriptor.h"
 
