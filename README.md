@@ -27,3 +27,6 @@ FontAwesome https://github.com/juliettef/IconFontCppHeaders
 PhysX https://github.com/NVIDIAGameWorks/PhysX-3.3
 
 # Features
+Node
+
+Component
