@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../global.h"
-#include "node.h"
+#include "component.h"
 #include "controller.h"
 
 namespace tke
@@ -12,7 +12,7 @@ namespace tke
 		ProjectionTypeOrtho
 	};
 
-	class Camera : public Node, Controller
+	class CameraComponent : public Component
 	{
 	private:
 		glm::vec3 target;
@@ -26,7 +26,7 @@ namespace tke
 	protected:
 		virtual void on_update() override;
 	public:
-		Camera();
+		CameraComponent();
 
 		glm::vec3 get_target() const;
 		float get_length() const;
@@ -42,12 +42,11 @@ namespace tke
 		void rotate_by_cursor(float x, float y);
 		void move_by_cursor(float x, float y);
 		void scroll(float value);
-		void move();
 		void reset();
 	private:
 		void look_at_target();
 		void update_frustum();
 	};
 
-	extern Camera *curr_camera;
+	extern CameraComponent *curr_camera;
 }

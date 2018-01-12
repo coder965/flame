@@ -1,10 +1,10 @@
 #pragma once
 
-#include "node.h"
+#include "component.h"
 
 namespace tke
 {
-	class Water : public Node
+	class WaterComponent : public Component
 	{
 	private:
 		int block_cx = 64;
@@ -13,8 +13,10 @@ namespace tke
 		float height = 10.f;
 		float tessellation_factor = 0.75f;
 		float tiling_scale = 8.f;
+
+		bool attribute_dirty;
 	public:
-		Water();
+		WaterComponent(Node *_parent);
 
 		int get_block_cx() const;
 		int get_block_cy() const;
@@ -29,5 +31,8 @@ namespace tke
 		void set_height(float v);
 		void set_tessellation_factor(float v);
 		void set_tiling_scale(float v);
+
+		bool is_attribute_dirty() const;
+		void clear_attribute_dirty();
 	};
 }

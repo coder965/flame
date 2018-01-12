@@ -42,9 +42,6 @@
     <ClCompile Include="..\src\entity\light.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\entity\object.cpp">
-      <Filter>src\entity</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\entity\scene.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
@@ -159,6 +156,9 @@
     <ClCompile Include="..\src\engine.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\entity\model_instance.cpp">
+      <Filter>src\entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -168,9 +168,6 @@
       <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\entity\light.h">
-      <Filter>src\entity</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\entity\object.h">
       <Filter>src\entity</Filter>
     </ClInclude>
     <ClInclude Include="..\src\entity\scene.h">
@@ -283,6 +280,9 @@
     </ClInclude>
     <ClInclude Include="..\src\engine.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\entity\model_instance.h">
+      <Filter>src\entity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

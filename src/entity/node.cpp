@@ -4,6 +4,15 @@
 
 namespace tke
 {
+	bool Node::broadcast(_Object *src, Message msg)
+	{
+		if (_Object::broadcast(src, msg))
+			return true;
+		if (parent)
+			return parent->broadcast(src, msg);
+		return false;
+	}
+
 	Node::Node(NodeType _type) :
 		coord(0.f), 
 		euler(0.f), 
@@ -16,8 +25,6 @@ namespace tke
 		quat_dirty(false),
 		matrix_dirty(false),
 		transform_dirty(true),
-		attribute_dirty(true),
-		image_dirty(true),
 		type(_type),
 		parent(nullptr)
 	{
@@ -461,22 +468,10 @@ namespace tke
 		return transform_dirty;
 	}
 
-	bool Node::is_attribute_dirty()
-	{
-		return attribute_dirty;
-	}
-
-	bool Node::is_image_dirty()
-	{
-		return image_dirty;
-	}
-
 	void Node::update()
 	{
 		on_update();
 		transform_dirty = false;
-		attribute_dirty = false;
-		image_dirty = false;
 		for (auto &c : children)
 			c->update();
 	}
@@ -496,29 +491,11 @@ namespace tke
 		return children;
 	}
 
-	Camera *Node::new_camera()
-	{
-		auto c = new Camera;
-		c->parent = this;
-		c->name = "camera";
-		children.emplace_back(c);
-		return c;
-	}
-
-	Water *Node::new_water()
-	{
-		auto w = new Water;
-		w->parent = this;
-		w->name = "water";
-		broadcast(w, MessageWaterAdd);
-		children.emplace_back(w);
-		return w;
-	}
-
 	void Node::add_child(Node *n)
 	{
 		n->parent = this;
 		children.emplace_back(n);
+		broadcast(n, MessageNodeAdd);
 	}
 
 	void Node::remove_child(Node *n)
@@ -527,25 +504,31 @@ namespace tke
 		{
 			if (it->get() == n)
 			{
-				switch (n->type)
-				{
-					case NodeTypeWater:
-						broadcast(n, MessageWaterRemove);
-						break;
-				}
 				children.erase(it);
+				broadcast(n, MessageNodeRemove);
 				return;
 			}
 		}
 	}
 
-	bool Node::broadcast(Node *src, Message msg)
+	void Node::add_component(Component *c)
 	{
-		if (_Object::broadcast(src, msg))
-			return true;
-		if (parent)
-			return parent->broadcast(src, msg);
-		return false;
+		c->parent = this;
+		components.emplace_back(c);
+		broadcast(c, MessageComponentAdd);
+	}
+
+	void Node::remove_component(Component *c)
+	{
+		for (auto it = components.begin(); it != components.end(); it++)
+		{
+			if (it->get() == c)
+			{
+				components.erase(it);
+				broadcast(c, MessageComponentRemove);
+				return;
+			}
+		}
 	}
 
 	void Node::mark_coord_setted()

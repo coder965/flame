@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../_object.h"
+
 namespace tke
 {
 	enum ComponentType
@@ -7,16 +9,24 @@ namespace tke
 		ComponentTypeController,
 		ComponentTypeCamera,
 		ComponentTypeLight,
-		ComponentTypeMesh,
+		ComponentTypeModelInstance,
 		ComponentTypeTerrain,
 		ComponentTypeWater
 	};
 
-	struct Component
-	{
-		ComponentType type;
+	class Node;
 
+	class Component : public _Object
+	{
+	private:
+		Node *parent;
+		ComponentType type;
+		friend class Node;
+	public:
 		Component(ComponentType _type);
-		virtual void update() = 0;
+		virtual ~Component();
+		Node *get_parent() const;
+	protected:
+		virtual void on_update() {};
 	};
 }

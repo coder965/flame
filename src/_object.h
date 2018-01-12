@@ -7,13 +7,10 @@ namespace tke
 {
 	enum Message
 	{
-		MessageSkyDirty,
-		MessageAmbientDirty,
-		MessageLightCountDirty,
-		MessageObjectCountDirty,
-		MessageTerrainCountDirty,
-		MessageWaterAdd,
-		MessageWaterRemove
+		MessageNodeAdd,
+		MessageNodeRemove,
+		MessageComponentAdd,
+		MessageComponentRemove
 	};
 
 	struct _Object

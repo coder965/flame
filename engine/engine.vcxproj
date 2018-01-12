@@ -27,7 +27,7 @@
     <ClCompile Include="..\src\entity\controller.cpp" />
     <ClCompile Include="..\src\entity\light.cpp" />
     <ClCompile Include="..\src\entity\node.cpp" />
-    <ClCompile Include="..\src\entity\object.cpp" />
+    <ClCompile Include="..\src\entity\model_instance.cpp" />
     <ClCompile Include="..\src\entity\scene.cpp" />
     <ClCompile Include="..\src\entity\sky.cpp" />
     <ClCompile Include="..\src\entity\terrain.cpp" />
@@ -70,7 +70,7 @@
     <ClInclude Include="..\src\entity\controller.h" />
     <ClInclude Include="..\src\entity\light.h" />
     <ClInclude Include="..\src\entity\node.h" />
-    <ClInclude Include="..\src\entity\object.h" />
+    <ClInclude Include="..\src\entity\model_instance.h" />
     <ClInclude Include="..\src\entity\scene.h" />
     <ClInclude Include="..\src\entity\sky.h" />
     <ClInclude Include="..\src\entity\terrain.h" />

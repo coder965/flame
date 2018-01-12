@@ -1,28 +1,26 @@
-#include "../model/model.h"
+#include "node.h"
 #include "camera.h"
-#include "object.h"
 
 namespace tke
 {
-	void Camera::on_update()
+	void CameraComponent::on_update()
 	{
 		move();
-		if (transform_dirty)
-			view_matrix = glm::inverse(get_matrix());
-		if (transform_dirty)
+		if (get_parent()->is_transform_dirty())
+			view_matrix = glm::inverse(get_parent()->get_matrix());
+		if (get_parent()->is_transform_dirty())
 			update_frustum();
 	}
 
-	Camera::Camera() :
-		Node(NodeTypeCamera),
+	CameraComponent::CameraComponent() :
+		Component(ComponentTypeCamera),
 		target(0.f),
 		length(0.f)
 	{
 		set_proj(ProjectionTypePerspective);
-		ang_offset = 90.f;
 	}
 
-	void Camera::set_proj(ProjectionType proj_type)
+	void CameraComponent::set_proj(ProjectionType proj_type)
 	{
 		auto vkTrans = glm::mat4(
 			glm::vec4(1.f, 0.f, 0.f, 0.f), 
@@ -43,43 +41,43 @@ namespace tke
 		}
 	}
 
-	void Camera::set_length(float _length)
+	void CameraComponent::set_length(float _length)
 	{
 		length = _length;
 		look_at_target();
 	}
 
-	void Camera::set_target(const glm::vec3 &_target)
+	void CameraComponent::set_target(const glm::vec3 &_target)
 	{
 		target = _target;
 		look_at_target();
 	}
 
-	void Camera::reset()
+	void CameraComponent::reset()
 	{
-		Controller::reset();
-		set_coord(glm::vec3(0.f));
+		get_parent()->set_coord(glm::vec3(0.f));
 		set_length(0.f);
 	}
 
-	void Camera::rotate_by_cursor(float x, float y)
+	void CameraComponent::rotate_by_cursor(float x, float y)
 	{
-		add_euler(-x * 180.f, -y * 180.f, 0.f);
+		get_parent()->add_euler(-x * 180.f, -y * 180.f, 0.f);
 		look_at_target();
 	}
 
-	void Camera::move_by_cursor(float x, float y)
+	void CameraComponent::move_by_cursor(float x, float y)
 	{
 		if (length != 0.f)
 		{
 			auto l = length / near_plane;
 			auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
-			target += (-x * cy * res_aspect * l) * get_axis()[0] + (y * cy * l) * get_axis()[1];
+			target += (-x * cy * res_aspect * l) * get_parent()->get_axis()[0] + (y * cy * l) * 
+				get_parent()->get_axis()[1];
 			look_at_target();
 		}
 	}
 
-	void Camera::scroll(float value)
+	void CameraComponent::scroll(float value)
 	{
 		if (value < 0.f)
 			set_length((length + 0.1) * 1.1f);
@@ -87,60 +85,50 @@ namespace tke
 			set_length(glm::max((length - 0.1f) / 1.1f, 0.f));
 	}
 
-	void Camera::move()
-	{
-		glm::vec3 coord;
-		glm::vec3 euler;
-		if (!Controller::move(get_euler().x, coord, euler))
-			return;
-		set_target(target + coord);
-		add_euler(euler);
-	}
-
-	glm::vec3 Camera::get_target() const
+	glm::vec3 CameraComponent::get_target() const
 	{
 		return target;
 	}
 
-	float Camera::get_length() const
+	float CameraComponent::get_length() const
 	{
 		return length;
 	}
 
-	glm::mat4 Camera::get_proj_matrix() const
+	glm::mat4 CameraComponent::get_proj_matrix() const
 	{
 		return proj_matrix;
 	}
 
-	glm::mat4 Camera::get_proj_matrix_inverse() const
+	glm::mat4 CameraComponent::get_proj_matrix_inverse() const
 	{
 		return proj_matrix_inverse;
 	}
 
-	glm::mat4 Camera::get_view_matrix() const
+	glm::mat4 CameraComponent::get_view_matrix() const
 	{
 		return view_matrix;
 	}
 
-	const glm::vec3 *Camera::get_frustum_points() const
+	const glm::vec3 *CameraComponent::get_frustum_points() const
 	{
 		return frustum_points;
 	}
 
-	const glm::vec4 *Camera::get_frustum_planes() const
+	const glm::vec4 *CameraComponent::get_frustum_planes() const
 	{
 		return frustum_planes;
 	}
 
-	void Camera::look_at_target()
+	void CameraComponent::look_at_target()
 	{
 		if (length != 0.f)
-			set_coord(target + get_axis()[2] * length);
+			get_parent()->set_coord(target + get_parent()->get_axis()[2] * length);
 		else
-			set_coord(target);
+			get_parent()->set_coord(target);
 	}
 
-	void Camera::update_frustum()
+	void CameraComponent::update_frustum()
 	{
 		auto tanHfFovy = glm::tan(glm::radians(fovy * 0.5f));
 
@@ -148,8 +136,8 @@ namespace tke
 		auto _z1 = _y1 * res_aspect;
 		auto _y2 = far_plane * tanHfFovy;
 		auto _z2 = _y2 * res_aspect;
-		auto axis = get_axis();
-		auto coord = get_coord();
+		auto axis = get_parent()->get_axis();
+		auto coord = get_parent()->get_coord();
 		frustum_points[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
 		frustum_points[1] = _z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
 		frustum_points[2] = _z1 * axis[2] + -_y1 * axis[1] + near_plane * axis[0] + coord;
@@ -173,7 +161,7 @@ namespace tke
 			}
 		}
 
-		auto vp = proj_matrix * get_matrix();
+		auto vp = proj_matrix * get_parent()->get_matrix();
 
 		frustum_planes[0].x = vp[0].w + vp[0].x;
 		frustum_planes[0].y = vp[1].w + vp[1].x;
@@ -209,5 +197,5 @@ namespace tke
 			frustum_planes[i] = glm::normalize(frustum_planes[i]);
 	}
 
-	Camera *curr_camera = nullptr;
+	CameraComponent *curr_camera = nullptr;
 }

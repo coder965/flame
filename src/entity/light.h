@@ -1,29 +1,41 @@
 #pragma once
 
-#include "node.h"
+#include "../math/math.h"
+#include "component.h"
 
 namespace tke
 {
-	enum class LightType
+	enum LightType
 	{
-		parallax = 1 << 0,
-		point = 1 << 1,
-		spot = 1 << 2
+		LightTypeParallax,
+		LightTypePoint,
+		LightTypeSpot
 	};
 
-	std::string getLightTypeName(LightType _type);
+	std::string get_light_type_name(LightType type);
 
-	struct Light : Node
+	class LightComponent : Component
 	{
+	private:
 		LightType type;
-		glm::vec3 color = glm::vec3(0.5f);
-		float range = 0.5f;
+		glm::vec3 color;
+		float range;
 
 		bool shadow;
 
-		int sceneShadowIndex = -1;
+		bool attribute_dirty;
+	public:
+		LightComponent(LightType _type);
 
-		Light(LightType _type, bool _shadow = false);
-		void setColor(const glm::vec3 &);
+		LightType get_type() const;
+		glm::vec3 get_color() const;
+		float get_range() const;
+
+		void set_type(LightType v);
+		void set_color(const glm::vec3 &v);
+		void set_ranget(float v);
+
+		bool is_attribute_dirty();
+		void clear_attribute_dirty();
 	};
 }

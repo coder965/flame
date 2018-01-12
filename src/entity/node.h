@@ -12,17 +12,10 @@ namespace tke
 	enum NodeType
 	{
 		NodeTypeNode,
-		NodeTypeScene,
-		NodeTypeCamera,
-		NodeTypeLight,
-		NodeTypeObject,
-		NodeTypeTerrain,
-		NodeTypeWater
+		NodeTypeScene
 	};
 
-	struct Scene;
-	struct Camera;
-	struct Water;
+	struct Component;
 
 	 class Node : public _Object
 	{
@@ -49,16 +42,15 @@ namespace tke
 		bool matrix_dirty;
 	protected:
 		bool transform_dirty;
-		bool attribute_dirty;
-		bool image_dirty;
 	private:
 		NodeType type;
 		Node *parent;
 		std::vector<std::unique_ptr<Node>> children; 
+		std::vector<std::unique_ptr<Component>> components;
 	public:
 		virtual bool on_message(_Object*, Message) { return false; }
 
-		bool broadcast(Node *src, Message msg);
+		bool broadcast(_Object *src, Message msg);
 
 		Node(NodeType _type);
 		virtual ~Node();
@@ -119,17 +111,15 @@ namespace tke
 		void scale_relate(Node *t);
 
 		bool is_transform_dirty();
-		bool is_attribute_dirty();
-		bool is_image_dirty();
 
 		NodeType get_type() const;
 		Node *get_parent() const;
 		const std::vector<std::unique_ptr<Node>> &get_children() const;
 		
-		Camera *new_camera();
-		Water *new_water();
 		void add_child(Node *n);
 		void remove_child(Node *n);
+		void add_component(Component *c);
+		void remove_component(Component *c);
 
 		void update();
 	protected:

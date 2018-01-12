@@ -1,15 +1,41 @@
 #include "../global.h"
+#include "node.h"
 #include "controller.h"
 
 namespace tke
 {
-	bool Controller::setState(State _s, bool enable)
+	ControllerComponent::ControllerComponent() :
+		Component(ComponentTypeController)
 	{
-		if (_s == State::stand)
+	}
+
+	ControllerComponent::State ControllerComponent::get_state() const
+	{
+		return state;
+	}
+
+	float ControllerComponent::get_ang_offset() const
+	{
+		return ang_offset;
+	}
+
+	float ControllerComponent::get_speed() const
+	{
+		return speed;
+	}
+
+	float ControllerComponent::get_turn_speed() const
+	{
+		return turn_speed;
+	}
+
+	bool ControllerComponent::set_state(State _s, bool enable)
+	{
+		if (_s == State::StateStand)
 		{
-			if (state != State::stand)
+			if (state != State::StateStand)
 			{
-				state = State::stand;
+				state = State::StateStand;
 				return true;
 			}
 			return false;
@@ -17,108 +43,95 @@ namespace tke
 
 		if (enable)
 		{
-			if (!((int)state & (int)_s))
+			if (!(state & _s))
 			{
-				state = State((int)state | (int)_s);
+				state = State(state | _s);
 				return true;
 			}
 			return false;
 		}
 		else
 		{
-			if ((int)state & (int)_s)
+			if (state & _s)
 			{
-				state = State((int)state & ~(int)_s);
+				state = State(state & ~_s);
 				return true;
 			}
 			return false;
 		}
 	}
 
-	void Controller::reset()
+	void ControllerComponent::set_ang_offset(float v)
 	{
-		state = State::stand;
-		lastTime = nowTime;
+		ang_offset = v;
 	}
 
-	bool Controller::move(float inEulerX, glm::vec3 &outCoord, glm::vec3 &outEuler)
+	void ControllerComponent::set_speed(float v)
 	{
-		outCoord = glm::vec3();
-		outEuler = glm::vec3();
+		speed = v;
+	}
 
-		float dist = (nowTime - lastTime) / 1000.f;
-		lastTime = nowTime;
+	void ControllerComponent::set_turn_speed(float v)
+	{
+		turn_speed = v;
+	}
 
-		if (state == State::stand)
-			return false;
+	void ControllerComponent::reset()
+	{
+		state = State::StateStand;
+		last_time = nowTime;
+	}
 
-		inEulerX = glm::radians(inEulerX + ang_offset);
+	void ControllerComponent::on_update()
+	{
+		auto coord = get_parent()->get_coord();
+		auto yaw = get_parent()->get_euler().x;
 
-		bool changed = false;
+		float dist = (nowTime - last_time) / 1000.f;
+		last_time = nowTime;
 
-		if (speed > 0.f)
-		{
-			if (((int)state & (int)State::forward) && !((int)state & (int)State::backward))
-			{
-				outCoord.x -= sin(inEulerX) * speed * dist;
-				outCoord.z -= cos(inEulerX) * speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::backward) && !((int)state & (int)State::forward))
-			{
-				outCoord.x += sin(inEulerX) * speed * dist;
-				outCoord.z += cos(inEulerX) * speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::left) && !((int)state & (int)State::right))
-			{
-				outCoord.x -= cos(inEulerX) * speed * dist;
-				outCoord.z += sin(inEulerX) * speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::right) && !((int)state & (int)State::left))
-			{
-				outCoord.x += cos(inEulerX) * speed * dist;
-				outCoord.z -= sin(inEulerX) * speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::up) && !((int)state & (int)State::down))
-			{
-				outCoord.y += speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::down) && !((int)state & (int)State::up))
-			{
-				outCoord.y -= speed * dist;
-				changed = true;
-			}
-		}
+		if (state == StateStand)
+			return;
 
 		if (turn_speed > 0.f)
 		{
-			if (((int)state & (int)State::turn_left) && !((int)state & (int)State::turn_right))
-			{
-				outEuler.x += turn_speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::turn_right) && !((int)state & (int)State::turn_left))
-			{
-				outEuler.x -= turn_speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::turn_up) && !((int)state & (int)State::turn_down))
-			{
-				outEuler.z += turn_speed * dist;
-				changed = true;
-			}
-			if (((int)state & (int)State::turn_down) && !((int)state & (int)State::turn_up))
-			{
-				outEuler.z -= turn_speed * dist;
-				changed = true;
-			}
+			if ((state & StateTurnLeft) && !(state & StateTurnRight))
+				yaw += turn_speed * dist;
+			if ((state & StateTurnRight) && !(state & StateTurnLeft))
+				yaw -= turn_speed * dist;
 		}
 
-		return changed;
-	}
+		auto rad = glm::radians(yaw + ang_offset);
 
+		if (speed > 0.f)
+		{
+			if ((state & StateForward) && !(state & StateBackward))
+			{
+				coord.x -= sin(rad) * speed * dist;
+				coord.z -= cos(rad) * speed * dist;
+			}
+			if ((state & StateBackward) && !(state & StateForward))
+			{
+				coord.x += sin(rad) * speed * dist;
+				coord.z += cos(rad) * speed * dist;
+			}
+			if ((state & StateLeft) && !(state & StateRight))
+			{
+				coord.x -= cos(rad) * speed * dist;
+				coord.z += sin(rad) * speed * dist;
+			}
+			if ((state & StateRight) && !(state & StateLeft))
+			{
+				coord.x += cos(rad) * speed * dist;
+				coord.z -= sin(rad) * speed * dist;
+			}
+			if ((state & StateUp) && !(state & StateDown))
+				coord.y += speed * dist;
+			if ((state & StateDown) && !(state & StateUp))
+				coord.y -= speed * dist;
+		}
+
+		get_parent()->set_coord(coord);
+		get_parent()->set_euler_x(yaw);
+	}
 }

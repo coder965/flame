@@ -1,34 +1,46 @@
 #pragma once
 
 #include "../math/math.h"
+#include "component.h"
 
 namespace tke
 {
-	struct Controller
+	class ControllerComponent : Component
 	{
-		enum class State
+	public:
+		enum State
 		{
-			stand = 0,
-			forward = 1 << 0,
-			backward = 1 << 1,
-			left = 1 << 2,
-			right = 1 << 3,
-			up = 1 << 4,
-			down = 1 << 5,
-			turn_left = 1 << 6,
-			turn_right = 1 << 7,
-			turn_up = 1 << 8,
-			turn_down = 1 << 9
+			StateStand = 0,
+			StateForward = 1 << 0,
+			StateBackward = 1 << 1,
+			StateLeft = 1 << 2,
+			StateRight = 1 << 3,
+			StateUp = 1 << 4,
+			StateDown = 1 << 5,
+			StateTurnLeft = 1 << 6,
+			StateTurnRight = 1 << 7
 		};
-
-		int lastTime = 0;
+	private:
+		State state = State::StateStand;
 		float ang_offset = 0.f;
 		float speed = 1.f;
 		float turn_speed = 75.f;
-		State state = State::stand;
+		int last_time = 0;
+	public:
+		ControllerComponent();
+		
+		State get_state() const;
+		float get_ang_offset() const;
+		float get_speed() const;
+		float get_turn_speed() const;
 
-		bool setState(State _s, bool enable);
+		bool set_state(State _s, bool enable);
+		void set_ang_offset(float v);
+		void set_speed(float v);
+		void set_turn_speed(float v);
+
 		void reset();
-		bool move(float inEulerX, glm::vec3 &outCoord, glm::vec3 &outEuler);
+	protected:
+		virtual void on_update() override;
 	};
 }

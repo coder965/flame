@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../graphics/graphics.h"
-#include "node.h"
+#include "component.h"
 
 namespace physx { struct PxRigidActor; }
 
@@ -17,30 +17,59 @@ namespace tke
 	struct Material;
 	struct VertexBuffer;
 
-	struct Terrain : Node
+	class Terrain : Component
 	{
-		bool enable_physics = false;
-
+	private:
 		int block_cx;
 		int block_cy;
-		float block_size = 16.f;
-		float height = 100.f;
-		float displacement_height = 1.f;
-		float tessellation_factor = 0.75f;
-		float tiling_scale = 8.f;
+		float block_size;
+		float height;
+		float displacement_height;
+		float tessellation_factor;
+		float tiling_scale;
+
+		std::shared_ptr<Image> blend_image;
+
+		int material_count;
+		std::shared_ptr<Material> materials[4];
+
+		bool enable_physics;
 
 		std::unique_ptr<TerrainVertex[]> vertex;
 		std::unique_ptr<VertexBuffer> vertex_buffer;
 
-		std::shared_ptr<Image> blend_image;
-		int material_count = 0;
-		std::shared_ptr<Material> materials[4];
+		physx::PxRigidActor *actor;
 
-		physx::PxRigidActor *actor = nullptr;
+		bool attribute_dirty;
+		bool blend_image_dirty;
+	public:
+		Terrain(Node *_parent);
 
-		Terrain(int _block_cx = 64, int _block_cy = 64, bool _use_physx = false, 
-			std::shared_ptr<Image> _blendMap = nullptr);
+		int get_block_cx() const;
+		int get_block_cy() const;
+		float get_block_size() const;
+		float get_height() const;
+		float get_displacement_height() const;
+		float get_tessellation_factor() const;
+		float get_tiling_scale() const;
+		Image *get_blend_image() const;
+		int get_material_count() const;
+		Material *get_material(int index) const;
+
+		void set_block_cx(int v);
+		void set_block_cy(int v);
+		void set_block_size(float v);
+		void set_height(float v);
+		void set_displacement_height(float v);
+		void set_tessellation_factor(float v);
+		void set_tiling_scale(float v);
+		void set_blend_image(std::shared_ptr<Image> i);
 		void add_material(std::shared_ptr<Material> m);
 		void remove_material(int index);
+
+		bool is_attribute_dirty() const;
+		bool is_blend_image_dirty() const;
+		void clear_attribute_dirty();
+		void clear_blend_image_dirty();
 	};
 }
