@@ -44,6 +44,11 @@ namespace tke
 		return tiling_scale;
 	}
 
+	int WaterComponent::get_water_index() const
+	{
+		return water_index;
+	}
+
 	void WaterComponent::set_block_cx(int v)
 	{
 		block_cx = v;
@@ -78,6 +83,11 @@ namespace tke
 	{
 		tiling_scale = v;
 		attribute_dirty = true;
+	}
+
+	void WaterComponent::set_water_index(int v)
+	{
+		water_index = v;
 	}
 
 	bool WaterComponent::is_attribute_dirty() const

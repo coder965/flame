@@ -5,7 +5,6 @@ namespace tke
 {
 	void CameraComponent::on_update()
 	{
-		move();
 		if (get_parent()->is_transform_dirty())
 			view_matrix = glm::inverse(get_parent()->get_matrix());
 		if (get_parent()->is_transform_dirty())
@@ -196,6 +195,4 @@ namespace tke
 		for (auto i = 0; i < 6; i++)
 			frustum_planes[i] = glm::normalize(frustum_planes[i]);
 	}
-
-	CameraComponent *curr_camera = nullptr;
 }

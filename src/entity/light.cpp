@@ -17,7 +17,9 @@ namespace tke
 		type(_type),
 		color(0.5f),
 		range(0.5f),
-		shadow(false)
+		enable_shadow(false),
+		light_index(-1),
+		shadow_index(-1)
 	{
 	}
 
@@ -36,6 +38,21 @@ namespace tke
 		return range;
 	}
 
+	bool LightComponent::is_enable_shadow() const
+	{
+		return enable_shadow;
+	}
+
+	int LightComponent::get_light_index() const
+	{
+		return light_index;
+	}
+
+	int LightComponent::get_shadow_index() const
+	{
+		return shadow_index;
+	}
+
 	void LightComponent::set_type(LightType v)
 	{
 		type = v;
@@ -52,6 +69,26 @@ namespace tke
 	{
 		range = v;
 		attribute_dirty = true;
+	}
+
+	void LightComponent::set_enable_shadow(bool v)
+	{
+		if (enable_shadow == v)
+			return;
+
+		enable_shadow = v;
+		attribute_dirty = true;
+		broadcast(this, MessageToggleShaodw);
+	}
+
+	void LightComponent::set_light_index(int v)
+	{
+		light_index = v;
+	}
+
+	void LightComponent::set_shadow_index(int v)
+	{
+		shadow_index = v;
 	}
 
 	bool LightComponent::is_attribute_dirty()

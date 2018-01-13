@@ -1,7 +1,4 @@
 #include "../../ui/ui.h"
-#include "../../entity/object.h"
-#include "../../entity/terrain.h"
-#include "../../entity/water.h"
 #include "../select.h"
 #include "scene_editor.h"
 #include "hierarchy.h"

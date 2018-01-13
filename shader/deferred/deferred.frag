@@ -71,7 +71,7 @@ layout(binding = 14) uniform ubo_shadow_
 	mat4 matrix[8];
 }ubo_shadow;
 
-layout(binding = 15) uniform sampler2D imgs_shadow[24];
+layout(binding = 15) uniform sampler2DArray img_shadow;
 
 layout(location = 0) in vec3 inViewDir;
 
@@ -169,7 +169,7 @@ void main()
 				shadowCoord /= shadowCoord.w;
 				if (shadowCoord.z >= 0.0 && shadowCoord.z <= 1.0)
 				{
-					float occluder = texture(imgs_shadow[shadowId * 6], (shadowCoord.xy * 0.5 + 0.5)).r;
+					float occluder = texture(img_shadow, (shadowCoord.xy * 0.5 + 0.5), shadowId * 6).r;
 					float reciever = shadowCoord.z;
 					//visibility = clamp(occluder * exp(-esm_factor * reciever), 0.0, 1.0);
 					visibility = occluder < exp(esm_factor * reciever) ? 0.0 : 1.0;

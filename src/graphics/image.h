@@ -50,6 +50,7 @@ namespace tke
 		bool sRGB = false;
 
 		int material_index = -1;
+		int ui_index = -1;
 
 		// must call in main thread
 		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);

@@ -159,6 +159,9 @@
     <ClCompile Include="..\src\entity\model_instance.cpp">
       <Filter>src\entity</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\spare_list.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -283,6 +286,9 @@
     </ClInclude>
     <ClInclude Include="..\src\entity\model_instance.h">
       <Filter>src\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\spare_list.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

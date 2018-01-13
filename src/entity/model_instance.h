@@ -29,7 +29,7 @@ namespace tke
 	//	~ModelInstanceComponentRigidBodyData();
 	//};
 
-	class ModelInstanceComponent : Component
+	class ModelInstanceComponent : public Component
 	{
 	private:
 		std::shared_ptr<Model> model;
@@ -40,9 +40,15 @@ namespace tke
 		//std::vector<std::unique_ptr<ModelInstanceComponentRigidBodyData>> rigidbodyDatas;
 		//physx::PxController *pxController = nullptr;
 		//float floatingTime = 0.f;
+
+		int instance_index;
 	public:
 		ModelInstanceComponent(std::shared_ptr<Model> _model);
 
 		Model *get_model() const;
+
+		int get_instance_index() const;
+
+		void set_instance_index(int v);
 	};
 }

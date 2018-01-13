@@ -53,7 +53,7 @@ namespace tke
 		bool broadcast(_Object *src, Message msg);
 
 		Node(NodeType _type);
-		virtual ~Node();
+		virtual ~Node() {}
 
 		glm::vec3 get_coord() const;
 		glm::vec3 get_euler();
@@ -136,5 +136,7 @@ namespace tke
 		void mark_quat_setted();
 		void mark_axis_setted();
 		void mark_scale_setted();
+
+		void component_boardcast(Node *n, Message msg);
 	};
 }

@@ -47,6 +47,4 @@ namespace tke
 		void look_at_target();
 		void update_frustum();
 	};
-
-	extern CameraComponent *curr_camera;
 }

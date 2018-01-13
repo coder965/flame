@@ -30,12 +30,6 @@ namespace tke
 	{
 	}
 
-	Node::~Node()
-	{
-		if (parent)
-			parent->remove_child(this);
-	}
-
 	glm::vec3 Node::get_coord() const
 	{
 		return coord;
@@ -496,6 +490,7 @@ namespace tke
 		n->parent = this;
 		children.emplace_back(n);
 		broadcast(n, MessageNodeAdd);
+		component_boardcast(n, MessageComponentAdd);
 	}
 
 	void Node::remove_child(Node *n)
@@ -505,6 +500,7 @@ namespace tke
 			if (it->get() == n)
 			{
 				children.erase(it);
+				component_boardcast(n, MessageComponentRemove);
 				broadcast(n, MessageNodeRemove);
 				return;
 			}
@@ -568,5 +564,13 @@ namespace tke
 	{
 		matrix_dirty = true;
 		transform_dirty = true;
+	}
+
+	void Node::component_boardcast(Node *n, Message msg)
+	{
+		for (auto &c : n->components)
+			n->broadcast(c.get(), msg);
+		for (auto &c : n->children)
+			c->component_boardcast(c.get(), msg);
 	}
 }

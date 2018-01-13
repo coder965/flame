@@ -1,4 +1,5 @@
 #include "../global.h"
+#include "../spare_list.h"
 #include "../model/model.h"
 #include "../entity/scene.h"
 #include "synchronization.h"
@@ -13,8 +14,9 @@
 #include "command_buffer.h"
 #include "renderer.h"
 #include "../model/animation.h"
+#include "../entity/camera.h"
 #include "../entity/light.h"
-#include "../entity/object.h"
+#include "../entity/model_instance.h"
 #include "../entity/terrain.h"
 #include "../entity/water.h"
 #include "../engine.h"
@@ -128,7 +130,7 @@ namespace tke
 		cb = std::make_unique<CommandBuffer>();
 	}
 
-	void PlainRenderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data)
+	void PlainRenderer::render(Framebuffer *framebuffer, bool clear, CameraComponent *camera, DrawData *data)
 	{
 		cb->reset();
 		cb->begin();
@@ -153,7 +155,7 @@ namespace tke
 		cb->end();
 	}
 
-	void PlainRenderer::do_render(CommandBuffer *cb, Camera *camera, DrawData *data)
+	void PlainRenderer::do_render(CommandBuffer *cb, CameraComponent *camera, DrawData *data)
 	{
 		if (data->vbuffer0)
 		{
@@ -274,7 +276,7 @@ namespace tke
 		cb = std::make_unique<CommandBuffer>();
 	}
 
-	void LinesRenderer::render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data)
+	void LinesRenderer::render(Framebuffer *framebuffer, bool clear, CameraComponent *camera, DrawData *data)
 	{
 		cb->reset();
 		cb->begin();
@@ -373,20 +375,11 @@ namespace tke
 		unsigned int dummy1;
 	};
 
-	static int light_count = 0;
-	static Light *lights[MaxLightCount] = {};
-
-	static int object_count = 0;
-	static Object *objects[MaxObjectCount] = {};
-
-	static int terrain_count = 0;
-	static Terrain *terrains[MaxTerrainCount] = {};
-
-	static int waters_count = 0;
-	static Water *waters[MaxWaterCount] = {};
-
-	static int shadow_count = 0;
-	static Light *shadow_lights[MaxShadowCount] = {};
+	static SpareList lights(MaxLightCount);
+	static SpareList model_instances(MaxModelInstanceCount);
+	static SpareList terrains(MaxTerrainCount);
+	static SpareList waters(MaxWaterCount);
+	static SpareList shadow_lights(MaxShadowCount);
 
 	VkPipelineVertexInputStateCreateInfo vertexStatInputState;
 	VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
@@ -419,40 +412,131 @@ namespace tke
 			case MessageAmbientDirty:
 				ambient_dirty = true;
 				return true;
-			case MessageLightCountDirty:
-				light_count_dirty = true;
-				return true;
-			case MessageObjectCountDirty:
-				object_count_dirty = true;
-				return true;
-			case MessageTerrainCountDirty:
-				terrain_count_dirty = true;
-				return true;
-			case MessageWaterAdd:
+			case MessageComponentAdd:
 			{
-				auto w = (Water*)sender;
-				for (int i = 0; i < MaxWaterCount; i++)
+				auto c = (Component*)sender;
+				switch (c->get_type())
 				{
-					if (!waters[i])
+					case ComponentTypeLight:
 					{
-						waters[i] = w;
-						waters_count++;
+						auto l = (LightComponent*)c;
+						auto index = lights.add(l);
+						if (index != -2)
+						{
+							l->set_light_index(index);
+							light_count_dirty = true;
+							if (l->is_enable_shadow())
+							{
+								auto index = shadow_lights.add(l);
+								if (index != -2)
+									l->set_shadow_index(index);
+							}
+						}
+						break;
+					}
+					case ComponentTypeModelInstance:
+					{
+						auto i = (ModelInstanceComponent*)c;
+						auto index = model_instances.add(i);
+						if (index != -2)
+						{
+							i->set_instance_index(index);
+							model_instance_count_dirty = true;
+						}
+						break;
+					}
+					case ComponentTypeTerrain:
+					{
+						auto t = (TerrainComponent*)c;
+						auto index = terrains.add(t);
+						if (index != -2)
+						{
+							t->set_terrain_index(index);
+							terrain_count_dirty = true;
+						}
+						break;
+					}
+					case ComponentTypeWater:
+					{
+						auto w = (WaterComponent*)c;
+						auto index = waters.add(w);
+						if (index != -2)
+						{
+							w->set_water_index(index);
+							water_count_dirty = true;
+						}
 						break;
 					}
 				}
 				return true;
 			}
-			case MessageWaterRemove:
+			case MessageComponentRemove:
 			{
-				auto w = (Water*)sender;
-				for (int i = 0; i < MaxWaterCount; i++)
+				auto c = (Component*)sender;
+				switch (c->get_type())
 				{
-					if (waters[i] == w)
+					case ComponentTypeLight:
 					{
-						waters[i] = nullptr;
-						waters_count--;
+						auto l = (LightComponent*)c;
+						auto index = l->get_light_index();
+						if (index != -1)
+						{
+							lights.remove(l);
+							light_count_dirty = true;
+							if (l->is_enable_shadow() && l->get_shadow_index() != -1)
+								shadow_lights.remove(l);
+						}
 						break;
 					}
+					case ComponentTypeModelInstance:
+					{
+						auto i = (ModelInstanceComponent*)c;
+						auto index = i->get_instance_index();
+						if (index != -1)
+						{
+							model_instances.remove(i);
+							model_instance_count_dirty = true;
+						}
+						break;
+					}
+					case ComponentTypeTerrain:
+					{
+						auto t = (TerrainComponent*)c;
+						auto index = t->get_terrain_index();
+						if (index != -1)
+						{
+							model_instances.remove(t);
+							terrain_count_dirty = true;
+						}
+						break;
+					}
+					case ComponentTypeWater:
+					{
+						auto w = (WaterComponent*)c;
+						auto index = w->get_water_index();
+						if (index != -1)
+						{
+							model_instances.remove(w);
+							water_count_dirty = true;
+						}
+						break;
+					}
+				}
+				return true;
+			}
+			case MessageToggleShaodw:
+			{
+				auto l = (LightComponent*)sender;
+				if (l->is_enable_shadow())
+				{
+					auto index = shadow_lights.add(l);
+					if (index != -2)
+						l->set_shadow_index(index);
+				}
+				else
+				{
+					if (l->get_shadow_index() != -1)
+						shadow_lights.remove(l);
 				}
 				return true;
 			}
@@ -466,7 +550,7 @@ namespace tke
 		sky_dirty = true;
 		ambient_dirty = true;
 		light_count_dirty = true;
-		object_count_dirty = true;
+		model_instance_count_dirty = true;
 		terrain_count_dirty = true;
 
 		if (!defe_inited)
@@ -594,6 +678,7 @@ namespace tke
 				.add_link("ubo_light_", "Light.UniformBuffer")
 				.add_link("img_envr", "Envr.Image", 0, colorSampler)
 				.add_link("ubo_ambient_", "Ambient.UniformBuffer")
+				.add_link("img_shadow", "Shadow.Image")
 				.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
 				defeRenderPass, 1);
 			composePipeline = new Pipeline(PipelineCreateInfo()
@@ -610,7 +695,7 @@ namespace tke
 		cb_defe = std::make_unique<CommandBuffer>();
 
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
-		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxObjectCount);
+		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxModelInstanceCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
@@ -653,13 +738,6 @@ namespace tke
 		resource.setBuffer(staticObjectIndirectBuffer.get(), "Scene.Static.IndirectBuffer");
 		resource.setBuffer(animatedObjectIndirectBuffer.get(), "Scene.Animated.IndirectBuffer");
 
-		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
-		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
-		terrainPipeline->linkDescriptors(ds_terrain.get(), &resource);
-		waterPipeline->linkDescriptors(ds_water.get(), &resource);
-		deferredPipeline->linkDescriptors(ds_defe.get(), &resource);
-		composePipeline->linkDescriptors(ds_comp.get(), &resource);
-
 		if (enable_shadow)
 		{
 			if (!shad_inited)
@@ -697,6 +775,8 @@ namespace tke
 			esmImage = std::make_unique<Image>(ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, MaxShadowCount * 6);
 			esmDepthImage = std::make_unique<Image>(ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
+			resource.setImage(esmImage.get(), "Shadow.Image");
+
 			for (int i = 0; i < MaxShadowCount * 6; i++)
 			{
 				VkImageView views[] = {
@@ -715,6 +795,12 @@ namespace tke
 			esmAnimPipeline->linkDescriptors(ds_esmAnim.get(), &resource);
 		}
 
+		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
+		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
+		terrainPipeline->linkDescriptors(ds_terrain.get(), &resource);
+		waterPipeline->linkDescriptors(ds_water.get(), &resource);
+		deferredPipeline->linkDescriptors(ds_defe.get(), &resource);
+		composePipeline->linkDescriptors(ds_comp.get(), &resource);
 
 		{
 			VkImageView views[] = {
@@ -729,14 +815,14 @@ namespace tke
 		}
 	}
 
-	void DeferredRenderer::render(Scene *scene, Camera *camera)
+	void DeferredRenderer::render(Scene *scene, CameraComponent *camera)
 	{
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
 			stru.proj = camera->get_proj_matrix();
 			stru.projInv = camera->get_proj_matrix_inverse();
 			stru.view = camera->get_view_matrix();
-			stru.viewInv = camera->get_matrix();
+			stru.viewInv = camera->get_parent()->get_matrix();
 			stru.projView = stru.proj * stru.view;
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, camera->get_frustum_planes(), sizeof(MatrixBufferShaderStruct::frustumPlanes));
@@ -799,7 +885,7 @@ namespace tke
 
 						cb->beginRenderPass(renderPass_image16, fb.get());
 						cb->bindPipeline(scatteringPipeline);
-						auto euler = as->sun_light->get_euler();
+						auto euler = as->sun_light->get_parent()->get_euler();
 						auto dir = glm::vec2(euler.x, euler.z);
 						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
 						cb->draw(3);
@@ -851,26 +937,25 @@ namespace tke
 
 			ambient_dirty = false;
 		}
-		if (scene->objects.size() > 0)
+		if (model_instances.get_size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * scene->objects.size());
-			int index = 0;
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * model_instances.get_size());
 
-			for (auto &o : scene->objects)
-			{
-				if (o->is_transform_dirty())
+			model_instances.iterate([&](int index, void *p, bool &remove) {
+				auto i = (ModelInstanceComponent*)p;
+				auto n = i->get_parent();
+				if (n->is_transform_dirty())
 				{
 					auto srcOffset = sizeof(glm::mat4) * ranges.size();
-					memcpy(map + srcOffset, &o->get_matrix(), sizeof(glm::mat4));
+					memcpy(map + srcOffset, &n->get_world_matrix(), sizeof(glm::mat4));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
 					range.dstOffset = sizeof(glm::mat4) * index;
 					range.size = sizeof(glm::mat4);
 					ranges.push_back(range);
 				}
-				index++;
-			}
+			});
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(objectMatrixBuffer.get(), ranges.size(), ranges.data());
 		}
@@ -956,7 +1041,7 @@ namespace tke
 
 		std::vector<Object*> staticObjects;
 		std::vector<Object*> animatedObjects;
-		if (object_count_dirty)
+		if (model_instance_count_dirty)
 		{
 			staticObjects.clear();
 			animatedObjects.clear();
@@ -1020,7 +1105,7 @@ namespace tke
 					animatedObjectIndirectBuffer->update(animatedCommands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
 			}
 
-			object_count_dirty = false;
+			model_instance_count_dirty = false;
 		}
 
 		std::vector<Light*> shadowLights;
@@ -1081,8 +1166,6 @@ namespace tke
 							range.dstOffset = sizeof(glm::mat4) * shadowIndex;
 							range.size = sizeof(glm::mat4);
 							ranges.push_back(range);
-
-							writes.push_back(ds_defe->imageWrite(ShadowImageDescriptorBinding, shadowIndex, esmImage.get(), colorSampler, 0, 1, shadowIndex, 1));
 						}
 						shadowIndex += 6;
 					}

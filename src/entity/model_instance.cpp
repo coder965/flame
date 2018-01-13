@@ -8,13 +8,25 @@
 namespace tke
 {
 	ModelInstanceComponent::ModelInstanceComponent(std::shared_ptr<Model> _model) :
-		Component(ComponentTypeModelInstance)
+		Component(ComponentTypeModelInstance),
+		model(_model),
+		instance_index(-1)
 	{
 	}
 
 	Model *ModelInstanceComponent::get_model() const
 	{
 		return model.get();
+	}
+
+	int ModelInstanceComponent::get_instance_index() const
+	{
+		return instance_index;
+	}
+
+	void ModelInstanceComponent::set_instance_index(int v)
+	{
+		instance_index = v;
 	}
 
 	//ObjectRigidBodyData::~ObjectRigidBodyData()

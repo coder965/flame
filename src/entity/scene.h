@@ -14,11 +14,6 @@ namespace physx
 
 namespace tke
 {
-
-	struct Light;
-	struct Object;
-	struct Terrain;
-	struct Water;
 	struct CollisionGroup;
 
 	struct Scene : Node

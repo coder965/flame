@@ -14,26 +14,34 @@ namespace tke
 
 	std::string get_light_type_name(LightType type);
 
-	class LightComponent : Component
+	class LightComponent : public Component
 	{
 	private:
 		LightType type;
 		glm::vec3 color;
 		float range;
-
-		bool shadow;
+		bool enable_shadow;
+		int light_index;
+		int shadow_index;
 
 		bool attribute_dirty;
+
 	public:
 		LightComponent(LightType _type);
 
 		LightType get_type() const;
 		glm::vec3 get_color() const;
 		float get_range() const;
+		bool is_enable_shadow() const;
+		int get_light_index() const;
+		int get_shadow_index() const;
 
 		void set_type(LightType v);
 		void set_color(const glm::vec3 &v);
 		void set_ranget(float v);
+		void set_enable_shadow(bool v);
+		void set_light_index(int v);
+		void set_shadow_index(int v);
 
 		bool is_attribute_dirty();
 		void clear_attribute_dirty();

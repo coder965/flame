@@ -17,7 +17,7 @@ namespace tke
 	struct Material;
 	struct VertexBuffer;
 
-	class Terrain : Component
+	class TerrainComponent : Component
 	{
 	private:
 		int block_cx;
@@ -40,10 +40,12 @@ namespace tke
 
 		physx::PxRigidActor *actor;
 
+		int terrain_index;
+
 		bool attribute_dirty;
 		bool blend_image_dirty;
 	public:
-		Terrain(Node *_parent);
+		TerrainComponent(Node *_parent);
 
 		int get_block_cx() const;
 		int get_block_cy() const;
@@ -55,6 +57,7 @@ namespace tke
 		Image *get_blend_image() const;
 		int get_material_count() const;
 		Material *get_material(int index) const;
+		int get_terrain_index() const;
 
 		void set_block_cx(int v);
 		void set_block_cy(int v);
@@ -66,6 +69,7 @@ namespace tke
 		void set_blend_image(std::shared_ptr<Image> i);
 		void add_material(std::shared_ptr<Material> m);
 		void remove_material(int index);
+		void set_terrain_index(int v);
 
 		bool is_attribute_dirty() const;
 		bool is_blend_image_dirty() const;

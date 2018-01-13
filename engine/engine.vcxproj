@@ -57,6 +57,7 @@
     <ClCompile Include="..\src\pick_up\pick_up.cpp" />
     <ClCompile Include="..\src\resource\resource.cpp" />
     <ClCompile Include="..\src\sound\sound.cpp" />
+    <ClCompile Include="..\src\spare_list.cpp" />
     <ClCompile Include="..\src\string_utils.cpp" />
     <ClCompile Include="..\src\system.cpp" />
     <ClCompile Include="..\src\ui\ui.cpp" />
@@ -100,6 +101,7 @@
     <ClInclude Include="..\src\pick_up\pick_up.h" />
     <ClInclude Include="..\src\resource\resource.h" />
     <ClInclude Include="..\src\sound\sound.h" />
+    <ClInclude Include="..\src\spare_list.h" />
     <ClInclude Include="..\src\string_utils.h" />
     <ClInclude Include="..\src\system.h" />
     <ClInclude Include="..\src\ui\ui.h" />

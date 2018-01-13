@@ -10,7 +10,10 @@ namespace tke
 		MessageNodeAdd,
 		MessageNodeRemove,
 		MessageComponentAdd,
-		MessageComponentRemove
+		MessageComponentRemove,
+		MessageSkyDirty,
+		MessageAmbientDirty,
+		MessageToggleShaodw
 	};
 
 	struct _Object

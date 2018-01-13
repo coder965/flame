@@ -11,7 +11,7 @@
 
 namespace tke
 {
-	struct Camera;
+	struct CameraComponent;
 	struct Model;
 	struct UniformBuffer;
 	struct ImmediateVertexBuffer;
@@ -22,7 +22,11 @@ namespace tke
 	struct Framebuffer;
 	struct CommandBuffer;
 	struct Scene;
-	struct Object;
+
+	struct Renderer : _Object
+	{
+
+	};
 
 	struct PlainRenderer
 	{
@@ -72,8 +76,8 @@ namespace tke
 		};
 
 		PlainRenderer();
-		void render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data);
-		void do_render(CommandBuffer *cb, Camera *camera, DrawData *data);
+		void render(Framebuffer *framebuffer, bool clear, CameraComponent *camera, DrawData *data);
+		void do_render(CommandBuffer *cb, CameraComponent *camera, DrawData *data);
 		void add_to_drawlist();
 	};
 
@@ -96,12 +100,12 @@ namespace tke
 		};
 
 		LinesRenderer();
-		void render(Framebuffer *framebuffer, bool clear, Camera *camera, DrawData *data);
+		void render(Framebuffer *framebuffer, bool clear, CameraComponent *camera, DrawData *data);
 		void add_to_drawlist();
 	};
 
-	enum { MaxObjectCount = 1024 };
 	enum { MaxLightCount = 256 };
+	enum { MaxModelInstanceCount = 1024 };
 	enum { MaxTerrainCount = 8 };
 	enum { MaxWaterCount = 8 };
 
@@ -113,7 +117,7 @@ namespace tke
 
 	enum { MaxIndirectCount = 1024 };
 
-	struct DeferredRenderer : _Object
+	struct DeferredRenderer : Renderer
 	{
 		static bool defe_inited;
 		static bool shad_inited;
@@ -121,8 +125,9 @@ namespace tke
 		bool sky_dirty;
 		bool ambient_dirty;
 		bool light_count_dirty;
-		bool object_count_dirty;
+		bool model_instance_count_dirty;
 		bool terrain_count_dirty;
+		bool water_count_dirty;
 
 		std::unique_ptr<CommandBuffer> cb_defe;
 		std::unique_ptr<CommandBuffer> cb_shad;
@@ -167,7 +172,7 @@ namespace tke
 		virtual bool on_message(_Object *sender, Message msg) override;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
-		void render(Scene *scene, Camera *camera);
+		void render(Scene *scene, CameraComponent *camera);
 		void add_to_drawlist();
 	};
 }

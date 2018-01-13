@@ -8,10 +8,9 @@ namespace tke
 	{
 	}
 
-	Component::~Component()
+	ComponentType Component::get_type() const
 	{
-		if (parent)
-			parent->remove_component(this);
+		return type;
 	}
 
 	Node *Component::get_parent() const

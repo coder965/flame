@@ -3,7 +3,8 @@
 namespace tke
 {
 	struct Scene;
-	struct Light;
+	struct Node;
+	struct LightComponent;
 	struct Image;
 
 	enum class SkyType
@@ -31,7 +32,8 @@ namespace tke
 		float atmosphereKr = 0.001f;
 		glm::vec3 sun_color = glm::vec3(1.f);
 		Scene *scene;
-		Light *sun_light;
+		Node *node;
+		LightComponent *sun_light;
 		float sun_power = 1.f;
 
 		SkyAtmosphereScattering(Scene *_scene);

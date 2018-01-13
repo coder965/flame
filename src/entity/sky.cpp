@@ -1,4 +1,6 @@
+#include "node.h"
 #include "scene.h"
+#include "light.h"
 #include "sky.h"
 
 namespace tke
@@ -11,13 +13,15 @@ namespace tke
 	SkyAtmosphereScattering::SkyAtmosphereScattering(Scene *_scene)
 		:Sky(SkyType::atmosphere_scattering), scene(_scene)
 	{
-		sun_light = new Light(LightType::parallax);
-		scene->addLight(sun_light);
+		node = new Node(NodeTypeNode);
+		sun_light = new LightComponent(LightTypeParallax);
+		node->add_component(sun_light);
+		scene->add_child(node);
 	}
 
 	SkyAtmosphereScattering::~SkyAtmosphereScattering()
 	{
-		scene->removeLight(sun_light);
+		scene->remove_child(node);
 	}
 
 	SkyPanorama::SkyPanorama()

@@ -2,6 +2,7 @@
 #include <map>
 
 #include "../global.h"
+#include "../spare_list.h"
 #include "../input.h"
 #include "../graphics/buffer.h"
 #include "../graphics/image.h"
@@ -159,8 +160,10 @@ namespace tke
 			io.AddInputCharacter((unsigned short)c);
 	}
 
-	static std::map<Image*, int> _images_map;
-	static std::pair<std::shared_ptr<Image>, Op> _images[127];
+	const unsigned int ImageCount = 127;
+
+	static SpareList _image_list(ImageCount);
+	static std::pair<std::shared_ptr<Image>, Op> _image_ops[ImageCount];
 
 	static bool need_clear = false;
 	void beginUi(bool _need_clear)
@@ -193,28 +196,29 @@ namespace tke
 
 		ImGui::main_menu_alive = false;
 
-		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
-			_images[i].second = OpNeedRemove;
+		_image_list.iterate([&](int index, void *p, bool &remove) {
+			_image_ops[index].second = OpNeedRemove;
+		});
 	}
 
 	void endUi()
 	{
 		{
 			std::vector<VkWriteDescriptorSet> writes;
-			for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
-			{
-				if (_images[i].first)
+			_image_list.iterate([&](int index, void *p, bool &remove) {
+				auto op = _image_ops[index].second;
+				if (op == OpNeedRemove)
 				{
-					if (_images[i].second == 0)
-					{
-						_images_map.erase(_images[i].first.get());
-						_images[i].first.reset();
-						writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, i + 1, fontImage, colorSampler));
-					}
-					else if (_images[i].second == 2)
-						writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, i + 1, _images[i].first.get(), colorSampler));
+					remove = true;
+					_image_ops[index].first.reset();
+					writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, index + 1, fontImage, colorSampler));
 				}
-			}
+				else if (op == OpNeedUpdate)
+				{
+					auto image = (Image*)p;
+					writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, index + 1, image, colorSampler));
+				}
+			});
 			updateDescriptorSets(writes.size(), writes.data());
 		}
 
@@ -312,22 +316,20 @@ namespace tke
 
 	int get_ui_image_index(std::shared_ptr<Image> img)
 	{
-		auto it = _images_map.find(img.get());
-		if (it != _images_map.end())
+		auto index = _image_list.add(img.get());
+		if (index == -2)
 		{
-			_images[it->second].second = OpKeep;
-			return it->second + 1;
+			_image_ops[img->ui_index].second = OpKeep;
+			return img->ui_index + 1;
 		}
-		for (int i = 0; i < TK_ARRAYSIZE(_images); i++)
+		else if (index == -1)
 		{
-			if (!_images[i].first)
-			{
-				_images[i].first = img;
-				_images[i].second = OpNeedUpdate;
-				_images_map[img.get()] = i;
-				return i + 1;
-			}
+			img->ui_index = -1;
+			return 0;
 		}
-		return 0;
+		img->ui_index = index;
+		_image_ops[index].first = img;
+		_image_ops[index].second = OpNeedUpdate;
+		return index + 1;
 	}
 }
