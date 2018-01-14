@@ -17,7 +17,7 @@ namespace tke
 	struct Material;
 	struct VertexBuffer;
 
-	class TerrainComponent : Component
+	class TerrainComponent : public Component
 	{
 	private:
 		int block_cx;

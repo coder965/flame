@@ -105,7 +105,8 @@ namespace tke
 	};
 
 	enum { MaxLightCount = 256 };
-	enum { MaxModelInstanceCount = 1024 };
+	enum { MaxStaticModelInstanceCount = 1024 };
+	enum { MaxAnimatedModelInstanceCount = 8 };
 	enum { MaxTerrainCount = 8 };
 	enum { MaxWaterCount = 8 };
 

@@ -376,7 +376,9 @@ namespace tke
 	};
 
 	static SpareList lights(MaxLightCount);
-	static SpareList model_instances(MaxModelInstanceCount);
+	static SpareList model_instances(MaxIndirectCount);
+	static std::vector<ModelInstanceComponent*> static_model_instances;
+	static std::vector<ModelInstanceComponent*> animated_model_instances;
 	static SpareList terrains(MaxTerrainCount);
 	static SpareList waters(MaxWaterCount);
 	static SpareList shadow_lights(MaxShadowCount);
@@ -440,6 +442,10 @@ namespace tke
 						auto index = model_instances.add(i);
 						if (index != -2)
 						{
+							if (i->get_model()->vertex_skeleton)
+								animated_model_instances.push_back(i);
+							else
+								static_model_instances.push_back(i);
 							i->set_instance_index(index);
 							model_instance_count_dirty = true;
 						}
@@ -495,6 +501,32 @@ namespace tke
 						if (index != -1)
 						{
 							model_instances.remove(i);
+							if (i->get_model()->vertex_skeleton)
+							{
+								for (auto it = animated_model_instances.begin();
+									it != animated_model_instances.end(); it++)
+								{
+									if (*it == i)
+
+									{
+										animated_model_instances.erase(it);
+										break;
+									}
+								}
+							}
+							else
+							{
+								for (auto it = static_model_instances.begin();
+									it != static_model_instances.end(); it++)
+								{
+									if (*it == i)
+
+									{
+										static_model_instances.erase(it);
+										break;
+									}
+								}
+							}
 							model_instance_count_dirty = true;
 						}
 						break;
@@ -505,7 +537,7 @@ namespace tke
 						auto index = t->get_terrain_index();
 						if (index != -1)
 						{
-							model_instances.remove(t);
+							terrains.remove(t);
 							terrain_count_dirty = true;
 						}
 						break;
@@ -516,7 +548,7 @@ namespace tke
 						auto index = w->get_water_index();
 						if (index != -1)
 						{
-							model_instances.remove(w);
+							waters.remove(w);
 							water_count_dirty = true;
 						}
 						break;
@@ -695,7 +727,7 @@ namespace tke
 		cb_defe = std::make_unique<CommandBuffer>();
 
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
-		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxModelInstanceCount);
+		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxIndirectCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
@@ -962,89 +994,87 @@ namespace tke
 
 		std::vector<VkWriteDescriptorSet> writes;
 
-		if (scene->terrains.size() > 0)
+		if (terrains.get_size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(TerrainShaderStruct) * scene->terrains.size());
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(TerrainShaderStruct) * terrains.get_size());
 
-			auto index = 0;
-			for (auto &t : scene->terrains)
-			{
-				if (t->is_transform_dirty())
+			terrains.iterate([&](int index, void *p, bool &remove) {
+				auto t = (TerrainComponent*)p;
+				auto n = t->get_parent();
+				if (n->is_transform_dirty() || t->is_attribute_dirty())
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
-					stru.coord = t->get_coord();
-					stru.block_cx = t->block_cx;
-					stru.block_cy = t->block_cy;
-					stru.block_size = t->block_size;
-					stru.terrain_height = t->height;
-					stru.displacement_height = t->displacement_height;
-					stru.tessellation_factor = t->tessellation_factor;
-					stru.tiling_scale = t->tiling_scale;
+					stru.coord = n->get_world_coord();
+					stru.block_cx = t->get_block_cx();
+					stru.block_cy = t->get_block_cy();
+					stru.block_size = t->get_block_size();
+					stru.terrain_height = t->get_height();
+					stru.displacement_height = t->get_displacement_height();
+					stru.tessellation_factor = t->get_tessellation_factor();
+					stru.tiling_scale = t->get_tiling_scale();
 					for (int i = 0; i < 4; i++)
 					{
-						stru.material_index.v[i] = t->materials[i] ?
-							t->materials[0]->index : 0;
+						stru.material_index.v[i] = t->get_material(i) ?
+							t->get_material(i)->index : 0;
 					}
-					stru.material_count = t->material_count;
+					stru.material_count = t->get_material_count();
 					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
 					VkBufferCopy range = {};
 					range.srcOffset = srcOffset;
 					range.dstOffset = sizeof(TerrainShaderStruct) * index;
 					range.size = sizeof(TerrainShaderStruct);
 					ranges.push_back(range);
-
-					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
-						index, t->blend_image.get(), colorBorderSampler));
 				}
-				index++;
-			}
+				if (t->is_blend_image_dirty())
+				{
+					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
+						index, t->get_blend_image(), colorBorderSampler));
+				}
+			});
 
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
 		}
-		if (waters_count > 0)
+		if (waters.get_size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * waters_count);
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * waters.get_size());
 
-			for (int i = 0; i < MaxWaterCount; i++)
-			{
-				if (waters[i])
+			waters.iterate([&](int index, void *p, bool &remove) {
+				auto w = (WaterComponent*)p;
+				auto n = w->get_parent();
+				if (n->is_transform_dirty() || w->is_attribute_dirty())
 				{
-					auto w = waters[i];
-					if (w->is_transform_dirty() || w->is_attribute_dirty())
-					{
-						auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
-						WaterShaderStruct stru;
-						stru.coord = glm::vec3(w->get_world_matrix()[3]);
-						stru.block_cx = w->get_block_cx();
-						stru.block_cy = w->get_block_cy();
-						stru.block_size = w->get_block_size();
-						stru.height = w->get_height();
-						stru.tessellation_factor = w->get_tessellation_factor();
-						stru.tiling_scale = w->get_tiling_scale();
-						stru.mapDimension = 1024;
-						memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
-						VkBufferCopy range = {};
-						range.srcOffset = srcOffset;
-						range.dstOffset = sizeof(WaterShaderStruct) * i;
-						range.size = sizeof(WaterShaderStruct);
-						ranges.push_back(range);
-					}
+					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
+					WaterShaderStruct stru;
+					stru.coord = glm::vec3(n->get_world_matrix()[3]);
+					stru.block_cx = w->get_block_cx();
+					stru.block_cy = w->get_block_cy();
+					stru.block_size = w->get_block_size();
+					stru.height = w->get_height();
+					stru.tessellation_factor = w->get_tessellation_factor();
+					stru.tiling_scale = w->get_tiling_scale();
+					stru.mapDimension = 1024;
+					memcpy(map + srcOffset, &stru, sizeof(WaterShaderStruct));
+					VkBufferCopy range = {};
+					range.srcOffset = srcOffset;
+					range.dstOffset = sizeof(WaterShaderStruct) * index;
+					range.size = sizeof(WaterShaderStruct);
+					ranges.push_back(range);
 				}
-			}
+			});
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
-		std::vector<Object*> staticObjects;
-		std::vector<Object*> animatedObjects;
+		std::vector<ModelInstanceComponent*> staticModelInstances;
+		std::vector<ModelInstanceComponent*> animatedModelInstances;
 		if (model_instance_count_dirty)
 		{
-			staticObjects.clear();
-			animatedObjects.clear();
+			staticModelInstances.clear();
+			animatedModelInstances.clear();
 
 			if (scene->objects.size() > 0)
 			{
