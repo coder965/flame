@@ -14,10 +14,17 @@ layout(binding = 1) uniform ubo_matrix_
 	vec2 viewportDim;
 }ubo_matrix;
 
-layout(binding = 2) uniform ubo_object_
+#if defined(ANIM)
+layout(binding = 2) uniform ubo_object_animated_
+{
+	mat4 matrix[8];
+}ubo_object;
+#else
+layout(binding = 2) uniform ubo_object_static_
 {
 	mat4 matrix[1024];
 }ubo_object;
+#endif
 
 #if defined(ANIM)
 layout(set = 2, binding = 0) uniform ubo_bone_

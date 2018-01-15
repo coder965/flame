@@ -2,10 +2,17 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(binding = 2) uniform ubo_object_
+#if defined(ANIM)
+layout(binding = 2) uniform ubo_object_animated_
+{
+	mat4 matrix[8];
+}ubo_object;
+#else
+layout(binding = 2) uniform ubo_object_static_
 {
 	mat4 matrix[1024];
 }ubo_object;
+#endif
 
 layout(binding = 14) uniform ubo_shadow_
 {

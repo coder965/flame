@@ -443,7 +443,7 @@ namespace tke
 		if (!sky || sky->type != SkyType::atmosphere_scattering)
 			return;
 		auto as = (SkyAtmosphereScattering*)sky.get();
-		as->sun_light->set_euler(glm::vec3(v.x, 0.f, v.y));
+		as->node->set_euler(glm::vec3(v.x, 0.f, v.y));
 		broadcast(this, MessageSkyDirty);
 		broadcast(this, MessageAmbientDirty);
 	}

@@ -81,6 +81,14 @@ namespace tke
 		return glm::vec3(get_world_matrix()[3]);
 	}
 
+	glm::mat3 Node::get_world_axis()
+	{
+		auto a = get_axis();
+		if (parent)
+			a = parent->get_world_axis() * a;
+		return a;
+	}
+
 	void Node::set_coord(const glm::vec3 &_coord)
 	{
 		coord = _coord;

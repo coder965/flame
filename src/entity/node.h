@@ -64,6 +64,7 @@ namespace tke
 		glm::mat4 get_matrix();
 		glm::mat4 get_world_matrix();
 		glm::vec3 get_world_coord();
+		glm::mat3 get_world_axis();
 
 		void set_coord(const glm::vec3 &_coord);
 		void set_coord(float x, float y, float z);

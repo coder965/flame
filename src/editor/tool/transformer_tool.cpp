@@ -1,4 +1,5 @@
 #include "../../global.h"
+#include "../../entity/node.h"
 #include "../../model/model.h"
 #include "../../pick_up/pick_up.h"
 #include "transformer_tool.h"
@@ -9,7 +10,7 @@ TransformerTool::TransformerTool(tke::Image *dst)
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
-static tke::Camera *currentCamera = nullptr;
+static tke::CameraComponent *currentCamera = nullptr;
 tke::PlainRenderer::DrawData TransformerTool::getDrawData(int draw_mode)
 {
 	tke::PlainRenderer::DrawData draw_data;
@@ -17,12 +18,14 @@ tke::PlainRenderer::DrawData TransformerTool::getDrawData(int draw_mode)
 	if (!node || mode == TransformerTool::ModeNull)
 		return draw_data;
 
-	auto dir = node->get_coord() - currentCamera->get_coord();
+	auto camera_coord = currentCamera->get_parent()->get_world_coord();
+
+	auto dir = node->get_world_coord() - camera_coord;
 	if (glm::length(dir) <= 0.f)
 		return draw_data;
 
 	dir = glm::normalize(dir);
-	auto coord = currentCamera->get_coord() + dir * 5.f;
+	auto coord = camera_coord + dir * 5.f;
 
 	auto model = mode == TransformerTool::ModeMove ? tke::arrowModel :
 		(mode == TransformerTool::ModeRotate ? tke::torusModel : tke::hamerModel);
@@ -79,7 +82,7 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 			p.y += yDisp;
 			p = currentCamera->get_proj_matrix_inverse() * p;
 			p = p / p.w;
-			p = currentCamera->get_matrix() * p;
+			p = currentCamera->get_parent()->get_world_matrix() * p;
 
 			switch (selectedAxis)
 			{
@@ -98,7 +101,7 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 	}
 }
 
-void TransformerTool::show(tke::Camera *camera)
+void TransformerTool::show(tke::CameraComponent *camera)
 {
 	currentCamera = camera;
 	auto draw_data = getDrawData(0);

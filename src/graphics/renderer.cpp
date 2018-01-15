@@ -376,9 +376,8 @@ namespace tke
 	};
 
 	static SpareList lights(MaxLightCount);
-	static SpareList model_instances(MaxIndirectCount);
-	static std::vector<ModelInstanceComponent*> static_model_instances;
-	static std::vector<ModelInstanceComponent*> animated_model_instances;
+	static SpareList static_model_instances(MaxStaticModelInstanceCount);
+	static SpareList animated_model_instances(MaxAnimatedModelInstanceCount);
 	static SpareList terrains(MaxTerrainCount);
 	static SpareList waters(MaxWaterCount);
 	static SpareList shadow_lights(MaxShadowCount);
@@ -439,15 +438,16 @@ namespace tke
 					case ComponentTypeModelInstance:
 					{
 						auto i = (ModelInstanceComponent*)c;
-						auto index = model_instances.add(i);
+						auto index = i->get_model()->vertex_skeleton ? 
+							animated_model_instances.add(i) :
+							static_model_instances.add(i);
 						if (index != -2)
 						{
-							if (i->get_model()->vertex_skeleton)
-								animated_model_instances.push_back(i);
-							else
-								static_model_instances.push_back(i);
 							i->set_instance_index(index);
-							model_instance_count_dirty = true;
+							if (i->get_model()->vertex_skeleton)
+								animated_model_instance_count_dirty = true;
+							else
+								static_model_instance_count_dirty = true;
 						}
 						break;
 					}
@@ -500,34 +500,14 @@ namespace tke
 						auto index = i->get_instance_index();
 						if (index != -1)
 						{
-							model_instances.remove(i);
 							if (i->get_model()->vertex_skeleton)
-							{
-								for (auto it = animated_model_instances.begin();
-									it != animated_model_instances.end(); it++)
-								{
-									if (*it == i)
-
-									{
-										animated_model_instances.erase(it);
-										break;
-									}
-								}
-							}
+								animated_model_instances.remove(i);
 							else
-							{
-								for (auto it = static_model_instances.begin();
-									it != static_model_instances.end(); it++)
-								{
-									if (*it == i)
-
-									{
-										static_model_instances.erase(it);
-										break;
-									}
-								}
-							}
-							model_instance_count_dirty = true;
+								static_model_instances.remove(i);
+							if (i->get_model()->vertex_skeleton)
+								animated_model_instance_count_dirty = true;
+							else
+								static_model_instance_count_dirty = true;
 						}
 						break;
 					}
@@ -582,7 +562,8 @@ namespace tke
 		sky_dirty = true;
 		ambient_dirty = true;
 		light_count_dirty = true;
-		model_instance_count_dirty = true;
+		static_model_instance_count_dirty = true;
+		animated_model_instance_count_dirty = true;
 		terrain_count_dirty = true;
 
 		if (!defe_inited)
@@ -648,7 +629,7 @@ namespace tke
 				.add_shader(engine_path + "shader/deferred/mrt.vert", {})
 				.add_shader(engine_path + "shader/deferred/mrt.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("ubo_object_", "ObjectMatrix.UniformBuffer"),
+				.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -661,7 +642,7 @@ namespace tke
 				.add_shader(engine_path + "shader/deferred/mrt.vert", { "ANIM" })
 				.add_shader(engine_path + "shader/deferred/mrt.frag", { "ANIM" })
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("ubo_object_", "ObjectMatrix.UniformBuffer"),
+				.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
 				defeRenderPass, 0);
 			terrainPipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
@@ -727,13 +708,14 @@ namespace tke
 		cb_defe = std::make_unique<CommandBuffer>();
 
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
-		objectMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxIndirectCount);
+		staticModelInstanceMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticModelInstanceCount);
+		animatedModelInstanceMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedModelInstanceCount);
 		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
 		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
 		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
 		ambientBuffer = std::make_unique<UniformBuffer>(sizeof AmbientBufferShaderStruct);
-		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxIndirectCount);
-		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxIndirectCount);
+		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxStaticModelInstanceCount);
+		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxAnimatedModelInstanceCount);
 
 		envrImage = std::make_unique<Image>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
@@ -762,7 +744,8 @@ namespace tke
 		resource.setImage(specRoughnessImage.get(), "SpecRoughness.Image");
 
 		resource.setBuffer(matrixBuffer.get(), "Matrix.UniformBuffer");
-		resource.setBuffer(objectMatrixBuffer.get(), "ObjectMatrix.UniformBuffer");
+		resource.setBuffer(staticModelInstanceMatrixBuffer.get(), "StaticObjectMatrix.UniformBuffer");
+		resource.setBuffer(animatedModelInstanceMatrixBuffer.get(), "AnimatedObjectMatrix.UniformBuffer");
 		resource.setBuffer(terrainBuffer.get(), "Terrain.UniformBuffer");
 		resource.setBuffer(waterBuffer.get(), "Water.UniformBuffer");
 		resource.setBuffer(lightBuffer.get(), "Light.UniformBuffer");
@@ -782,7 +765,7 @@ namespace tke
 					.add_shader(engine_path + "shader/esm/esm.vert", {})
 					.add_shader(engine_path + "shader/esm/esm.frag", {})
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
-					.add_link("ubo_object_", "ObjectMatrix.UniformBuffer")
+					.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
 				esmAnimPipeline = new Pipeline(PipelineCreateInfo()
@@ -793,7 +776,7 @@ namespace tke
 					.add_shader(engine_path + "shader/esm/esm.vert", { "ANIM" })
 					.add_shader(engine_path + "shader/esm/esm.frag", { "ANIM" })
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
-					.add_link("ubo_object_", "ObjectMatrix.UniformBuffer")
+					.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
 
@@ -864,7 +847,7 @@ namespace tke
 
 		if (sky_dirty)
 		{
-			auto funUpdateIBL = [&]() {
+			static const auto funUpdateIBL = [&]() {
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
 				{
 					auto cb = begineOnceCommandBuffer();
@@ -969,28 +952,32 @@ namespace tke
 
 			ambient_dirty = false;
 		}
-		if (model_instances.get_size() > 0)
-		{
-			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * model_instances.get_size());
+		static const auto fUpdateModelInstanceMatrixBuffer = [&](SpareList &list, Buffer *buffer) {
+			if (list.get_size() > 0)
+			{
+				std::vector<VkBufferCopy> ranges;
+				auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * list.get_size());
 
-			model_instances.iterate([&](int index, void *p, bool &remove) {
-				auto i = (ModelInstanceComponent*)p;
-				auto n = i->get_parent();
-				if (n->is_transform_dirty())
-				{
-					auto srcOffset = sizeof(glm::mat4) * ranges.size();
-					memcpy(map + srcOffset, &n->get_world_matrix(), sizeof(glm::mat4));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = sizeof(glm::mat4) * index;
-					range.size = sizeof(glm::mat4);
-					ranges.push_back(range);
-				}
-			});
-			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(objectMatrixBuffer.get(), ranges.size(), ranges.data());
-		}
+				list.iterate([&](int index, void *p, bool &remove) {
+					auto i = (ModelInstanceComponent*)p;
+					auto n = i->get_parent();
+					if (n->is_transform_dirty())
+					{
+						auto srcOffset = sizeof(glm::mat4) * ranges.size();
+						memcpy(map + srcOffset, &n->get_world_matrix(), sizeof(glm::mat4));
+						VkBufferCopy range = {};
+						range.srcOffset = srcOffset;
+						range.dstOffset = sizeof(glm::mat4) * index;
+						range.size = sizeof(glm::mat4);
+						ranges.push_back(range);
+					}
+				});
+				defalut_staging_buffer->unmap();
+				defalut_staging_buffer->copyTo(buffer, ranges.size(), ranges.data());
+			}
+		};
+		fUpdateModelInstanceMatrixBuffer(static_model_instances, staticModelInstanceMatrixBuffer.get());
+		fUpdateModelInstanceMatrixBuffer(animated_model_instances, animatedModelInstanceMatrixBuffer.get());
 
 		std::vector<VkWriteDescriptorSet> writes;
 
@@ -1069,104 +1056,92 @@ namespace tke
 			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
-		std::vector<ModelInstanceComponent*> staticModelInstances;
-		std::vector<ModelInstanceComponent*> animatedModelInstances;
-		if (model_instance_count_dirty)
-		{
-			staticModelInstances.clear();
-			animatedModelInstances.clear();
-
-			if (scene->objects.size() > 0)
+		static const auto fUpdateIndirect = [](SpareList &list, Buffer *buffer) {
+			if (list.get_size() > 0)
 			{
-				std::vector<VkDrawIndexedIndirectCommand> staticCommands;
-				std::vector<VkDrawIndexedIndirectCommand> animatedCommands;
-
-				int staticIndex = 0;
-				int animatedIndex = 0;
-
-				for (auto &o : scene->objects)
-				{
-					auto m = o->model;
-
-					if (!m->vertex_skeleton)
+				std::vector<VkDrawIndexedIndirectCommand> commands;
+				list.iterate([&](int index, void *p, bool &remove) {
+					auto i = (ModelInstanceComponent*)p;
+					auto m = i->get_model();
+					for (auto &g : m->geometries)
 					{
-						for (auto &g : m->geometries)
-						{
-							VkDrawIndexedIndirectCommand command = {};
-							command.instanceCount = 1;
-							command.indexCount = g->indiceCount;
-							command.vertexOffset = m->vertexBase;
-							command.firstIndex = m->indiceBase + g->indiceBase;
-							command.firstInstance = (staticIndex << 8) + g->material->index;
-
-							staticCommands.push_back(command);
-						}
-
-						staticObjects.push_back(o.get());
-						staticIndex++;
+						VkDrawIndexedIndirectCommand command = {};
+						command.instanceCount = 1;
+						command.indexCount = g->indiceCount;
+						command.vertexOffset = m->vertexBase;
+						command.firstIndex = m->indiceBase + g->indiceBase;
+						command.firstInstance = (index << 8) + g->material->index;
+						commands.push_back(command);
 					}
-					else
-					{
-						for (auto &g : m->geometries)
-						{
-							VkDrawIndexedIndirectCommand command = {};
-							command.instanceCount = 1;
-							command.indexCount = g->indiceCount;
-							command.vertexOffset = m->vertexBase;
-							command.firstIndex = m->indiceBase + g->indiceBase;
-							command.firstInstance = (animatedIndex << 8) + g->material->index;
-
-							animatedCommands.push_back(command);
-						}
-
-						writes.push_back(ds_mrtAnim_bone->bufferWrite(0, animatedIndex, o->animationComponent->bone_buffer.get()));
-
-						animatedObjects.push_back(o.get());
-						animatedIndex++;
-					}
-				}
-
-				staticIndirectCount = staticCommands.size();
-				animatedIndirectCount = animatedCommands.size();
-
-				if (staticCommands.size() > 0)
-					staticObjectIndirectBuffer->update(staticCommands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * staticCommands.size());
-				if (animatedCommands.size() > 0)
-					animatedObjectIndirectBuffer->update(animatedCommands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * animatedCommands.size());
+				});
+				buffer->update(commands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * commands.size());
 			}
-
-			model_instance_count_dirty = false;
+		};
+		if (static_model_instance_count_dirty)
+		{
+			fUpdateIndirect(static_model_instances, staticObjectIndirectBuffer.get());
+			static_model_instance_count_dirty = false;
+		}
+		if (animated_model_instance_count_dirty)
+		{
+			fUpdateIndirect(animated_model_instances, animatedObjectIndirectBuffer.get());
+			animated_model_instance_count_dirty = false;
 		}
 
-		std::vector<Light*> shadowLights;
+
+		if (light_count_dirty)
+		{
+			unsigned int count = lights.get_size();
+			lightBuffer->update(&count, defalut_staging_buffer, sizeof(int));
+
+			light_count_dirty = false;
+		}
+
+		if (lights.get_size() > 0)
+		{ // light attribute
+			std::vector<VkBufferCopy> ranges;
+			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * lights.get_size());
+
+			lights.iterate([&](int index, void *p, bool &remove) {
+				auto l = (LightComponent*)p;
+				auto n = l->get_parent();
+				LightShaderStruct stru;
+				if (l->get_type() == LightTypeParallax)
+					stru.coord = glm::vec4(n->get_world_axis()[2], 0.f);
+				else
+					stru.coord = glm::vec4(n->get_world_coord(), l->get_type());
+				stru.color = glm::vec4(l->get_color(), l->get_shadow_index() * 6);
+				stru.spotData = glm::vec4(-n->get_world_axis()[2], l->get_range());
+				auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
+				memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
+				VkBufferCopy range = {};
+				range.srcOffset = srcOffset;
+				range.dstOffset = 16 + sizeof(LightShaderStruct) * l->get_light_index();
+				range.size = sizeof(LightShaderStruct);
+				ranges.push_back(range);
+			});
+			defalut_staging_buffer->unmap();
+			defalut_staging_buffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
+		}
 		if (enable_shadow)
 		{
-			if (scene->lights.size() > 0)
+			if (shadow_lights.get_size() > 0)
 			{
-				auto shadowIndex = 0;
-				std::vector<VkBufferCopy> ranges;
-				auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * scene->lights.size());
+				shadow_lights.iterate([&](int index, void *p, bool &remove) {
+					std::vector<VkBufferCopy> ranges;
+					auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * shadow_lights.get_size());
 
-				for (auto &l : scene->lights)
-				{
-					if (!l->shadow)
+					auto l = (LightComponent*)p;
+					auto n = l->get_parent();
+					if (l->get_type() == LightTypeParallax)
 					{
-						l->sceneShadowIndex = -1;
-						continue;
-					}
-
-					l->sceneShadowIndex = shadowIndex;
-					shadowLights.push_back(l.get());
-
-					if (l->type == LightType::parallax)
-					{
-						if (l->is_transform_dirty() || camera->is_transform_dirty())
+						if (n->is_transform_dirty() || camera->get_parent()->is_transform_dirty())
 						{
 							glm::vec3 p[8];
-							auto cameraCoord = camera->get_world_coord();
-							for (int i = 0; i < 8; i++) 
+							auto cameraCoord = camera->get_parent()->get_world_coord();
+							for (int i = 0; i < 8; i++)
 								p[i] = camera->get_frustum_points()[i] - cameraCoord;
-							auto lighAxis = l->get_axis();
+							auto lighAxis = n->get_world_axis();
 							auto axisT = glm::transpose(lighAxis);
 							auto vMax = axisT * p[0], vMin = vMax;
 							for (int i = 1; i < 8; i++)
@@ -1193,19 +1168,18 @@ namespace tke
 							memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));
 							VkBufferCopy range = {};
 							range.srcOffset = srcOffset;
-							range.dstOffset = sizeof(glm::mat4) * shadowIndex;
+							range.dstOffset = sizeof(glm::mat4) * (index * 6);
 							range.size = sizeof(glm::mat4);
 							ranges.push_back(range);
 						}
-						shadowIndex += 6;
 					}
-					else if (l->type == LightType::point)
+					else if (l->get_type() == LightTypePoint)
 					{
-						if (l->is_transform_dirty())
+						if (n->is_transform_dirty())
 						{
 							glm::mat4 shadowMatrix[6];
 
-							auto coord = l->get_coord();
+							auto coord = n->get_world_coord();
 							auto proj = glm::perspective(90.f, 1.f, near_plane, far_plane);
 							shadowMatrix[0] = proj * glm::lookAt(coord, coord + glm::vec3(1, 0, 0), glm::vec3(0, -1, 0));
 							shadowMatrix[1] = proj * glm::lookAt(coord, coord + glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0));
@@ -1214,50 +1188,11 @@ namespace tke
 							shadowMatrix[4] = proj * glm::lookAt(coord, coord + glm::vec3(0, 0, 1), glm::vec3(0, -1, 0));
 							shadowMatrix[5] = proj * glm::lookAt(coord, coord + glm::vec3(0, 0, -1), glm::vec3(0, -1, 0));
 						}
-						shadowIndex += 6;
 					}
-				}
-				defalut_staging_buffer->unmap();
-				defalut_staging_buffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
+					defalut_staging_buffer->unmap();
+					defalut_staging_buffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
+				});
 			}
-		}
-
-		if (light_count_dirty)
-		{
-			unsigned int count = scene->lights.size();
-			lightBuffer->update(&count, defalut_staging_buffer, sizeof(int));
-
-			light_count_dirty = false;
-		}
-
-		if (scene->lights.size() > 0)
-		{ // light attribute
-			int lightIndex = 0;
-			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * scene->lights.size());
-			for (auto &l : scene->lights)
-			{
-				if (l->is_transform_dirty())
-				{
-					LightShaderStruct stru;
-					if (l->type == LightType::parallax)
-						stru.coord = glm::vec4(l->get_axis()[2], 0.f);
-					else
-						stru.coord = glm::vec4(l->get_coord(), l->type);
-					stru.color = glm::vec4(l->color, l->sceneShadowIndex);
-					stru.spotData = glm::vec4(-l->get_axis()[2], l->range);
-					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
-					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
-					VkBufferCopy range = {};
-					range.srcOffset = srcOffset;
-					range.dstOffset = 16 + sizeof(LightShaderStruct) * lightIndex;
-					range.size = sizeof(LightShaderStruct);
-					ranges.push_back(range);
-				}
-				lightIndex++;
-			}
-			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		updateDescriptorSets(writes.size(), writes.data());
@@ -1267,21 +1202,27 @@ namespace tke
 			cb_shad->reset();
 			cb_shad->begin();
 
-			for (int i = 0; i < shadowLights.size(); i++)
-			{
-				auto l = shadowLights[i];
+			shadow_lights.iterate([&](int index, void *p, bool &remove) {
+				auto l = (LightComponent*)p;
 
-				VkClearValue clearValues[] = {
-					{1.f, 0},
-				{1.f, 1.f, 1.f, 1.f}
+				static VkClearValue clearValues[] = {
+					{ 1.f, 0 },
+					{ 1.f, 1.f, 1.f, 1.f }
 				};
-				cb_shad->beginRenderPass(renderPass_depthC_image32fC, fb_esm[i].get(), clearValues);
+				cb_shad->beginRenderPass(renderPass_depthC_image32fC, fb_esm[index].get(), clearValues);
 
 				cb_shad->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
 				cb_shad->bindIndexBuffer(indexBuffer.get());
 
-				// static
-				if (staticObjects.size() > 0)
+				static const auto fDrawDepth = [&](SpareList &list) {
+					list.iterate([&](int index, void *p, bool &remove) {
+						auto i = (ModelInstanceComponent*)p;
+						auto m = i->get_model();
+						for (int gId = 0; gId < m->geometries.size(); gId++)
+							cb_shad->drawModel(m, gId, 1, ((l->get_shadow_index() * 6) << 28) + (index << 8) + gId);
+					});
+				};
+				if (static_model_instances.get_size() > 0)
 				{
 					cb_shad->bindPipeline(esmPipeline);
 					VkDescriptorSet sets[] = {
@@ -1289,16 +1230,10 @@ namespace tke
 						ds_material->v
 					};
 					cb_shad->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-					for (int oId = 0; oId < staticObjects.size(); oId++)
-					{
-						auto o = staticObjects[oId];
-						auto m = o->model;
-						for (int gId = 0; gId < m->geometries.size(); gId++)
-							cb_shad->drawModel(m.get(), gId, 1, (i << 28) + (oId << 8) + gId);
-					}
+					fDrawDepth(static_model_instances);
 				}
-				// animated
-				if (animatedObjects.size() > 0)
+
+				if (animated_model_instances.get_size() > 0)
 				{
 					cb_shad->bindPipeline(esmAnimPipeline);
 					VkDescriptorSet sets[] = {
@@ -1307,16 +1242,10 @@ namespace tke
 						ds_mrtAnim_bone->v
 					};
 					cb_shad->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-					for (int oId = 0; oId < animatedObjects.size(); oId++)
-					{
-						auto o = animatedObjects[oId];
-						auto m = o->model;
-						for (int gId = 0; gId < m->geometries.size(); gId++)
-							cb_shad->drawModel(m.get(), gId, 1, (i << 28) + (oId << 8) + gId);
-					}
+					fDrawDepth(animated_model_instances);
 				}
 				cb_shad->endRenderPass();
-			}
+			});
 
 			cb_shad->end();
 		}
@@ -1331,7 +1260,7 @@ namespace tke
 
 		// mrt
 		// static
-		if (staticIndirectCount > 0)
+		if (static_model_instances.get_size() > 0)
 		{
 			cb_defe->bindPipeline(mrtPipeline);
 			VkDescriptorSet sets[] = {
@@ -1339,10 +1268,10 @@ namespace tke
 				ds_material->v
 			};
 			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb_defe->drawIndirectIndex(staticObjectIndirectBuffer.get(), staticIndirectCount);
+			cb_defe->drawIndirectIndex(staticObjectIndirectBuffer.get(), static_model_instances.get_size());
 		}
 		// animated
-		if (animatedIndirectCount)
+		if (animated_model_instances.get_size())
 		{
 			cb_defe->bindPipeline(mrtAnimPipeline);
 			VkDescriptorSet sets[] = {
@@ -1351,10 +1280,10 @@ namespace tke
 				ds_mrtAnim_bone->v
 			};
 			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb_defe->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animatedIndirectCount);
+			cb_defe->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animated_model_instances.get_size());
 		}
 		// terrain
-		if (scene->terrains.size() > 0)
+		if (terrains.get_size() > 0)
 		{
 			cb_defe->bindPipeline(terrainPipeline);
 			VkDescriptorSet sets[] = {
@@ -1362,26 +1291,20 @@ namespace tke
 				ds_material->v
 			};
 			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			int index = 0;
-			for (auto &t : scene->terrains)
-			{
-				cb_defe->draw(4, 0, (index << 16) + t->block_cx * t->block_cx);
-				index++;
-			}
+			terrains.iterate([&](int index, void *p, bool &remove) {
+				auto t = (TerrainComponent*)p;
+				cb_defe->draw(4, 0, (index << 16) + t->get_block_cx() * t->get_block_cx());
+			});
 		}
 		// water
-		if (waters_count > 0)
+		if (waters.get_size() > 0)
 		{
 			cb_defe->bindPipeline(waterPipeline);
 			cb_defe->bindDescriptorSet(&ds_water->v);
-			for (int i = 0; i < MaxWaterCount; i++)
-			{
-				if (waters[i])
-				{
-					auto w = waters[i];
-					cb_defe->draw(4, 0, (i << 16) + w->get_block_cx() * w->get_block_cy());
-				}
-			}
+			waters.iterate([&](int index, void *p, bool &remove) {
+				auto w = (WaterComponent*)p;
+				cb_defe->draw(4, 0, (index << 16) + w->get_block_cx() * w->get_block_cx());
+			});
 		}
 
 		//cb->imageBarrier(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 

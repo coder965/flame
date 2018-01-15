@@ -17,7 +17,7 @@ struct Tool
 	Tool(tke::Image *dst);
 	virtual bool leftDown(int x, int y);
 	virtual void mouseMove(int xDisp, int yDisp);
-	virtual void show(tke::Camera *camera) = 0;
+	virtual void show(tke::CameraComponent *camera) = 0;
 	virtual ~Tool();
 };
 

@@ -116,8 +116,6 @@ namespace tke
 	enum { ShadowMapCx = 2048 };
 	enum { ShadowMapCy = 2048 };
 
-	enum { MaxIndirectCount = 1024 };
-
 	struct DeferredRenderer : Renderer
 	{
 		static bool defe_inited;
@@ -126,7 +124,8 @@ namespace tke
 		bool sky_dirty;
 		bool ambient_dirty;
 		bool light_count_dirty;
-		bool model_instance_count_dirty;
+		bool static_model_instance_count_dirty;
+		bool animated_model_instance_count_dirty;
 		bool terrain_count_dirty;
 		bool water_count_dirty;
 
@@ -134,7 +133,8 @@ namespace tke
 		std::unique_ptr<CommandBuffer> cb_shad;
 
 		std::unique_ptr<UniformBuffer> matrixBuffer;
-		std::unique_ptr<UniformBuffer> objectMatrixBuffer;
+		std::unique_ptr<UniformBuffer> staticModelInstanceMatrixBuffer;
+		std::unique_ptr<UniformBuffer> animatedModelInstanceMatrixBuffer;
 		std::unique_ptr<UniformBuffer> terrainBuffer;
 		std::unique_ptr<UniformBuffer> waterBuffer;
 		std::unique_ptr<UniformBuffer> lightBuffer;
@@ -166,9 +166,6 @@ namespace tke
 		Resource resource;
 
 		std::shared_ptr<Framebuffer> framebuffer;
-
-		int staticIndirectCount = 0;
-		int animatedIndirectCount = 0;
 
 		virtual bool on_message(_Object *sender, Message msg) override;
 
