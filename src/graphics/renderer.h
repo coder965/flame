@@ -4,7 +4,7 @@
 
 #include "../global.h"
 #include "../math/math.h"
-#include "../_object.h"
+#include "../object.h"
 #include "../resource/resource.h"
 #include "graphics.h"
 #include "renderer.h"
@@ -23,7 +23,7 @@ namespace tke
 	struct CommandBuffer;
 	struct Scene;
 
-	struct Renderer : _Object
+	struct Renderer : Object
 	{
 
 	};
@@ -167,7 +167,7 @@ namespace tke
 
 		std::shared_ptr<Framebuffer> framebuffer;
 
-		virtual bool on_message(_Object *sender, Message msg) override;
+		virtual bool on_message(Object *sender, Message msg) override;
 
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		void render(Scene *scene, CameraComponent *camera);

@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "../_object.h"
+#include "../object.h"
 #include "../entity/node.h"
 
 enum SelectType
@@ -13,7 +13,7 @@ enum SelectType
 	SelectTypeFile
 };
 
-struct Select : tke::_Object
+struct Select : tke::Object
 {
 	SelectType type = SelectTypeNull;
 

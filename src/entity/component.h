@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../_object.h"
+#include "../object.h"
 
 namespace tke
 {
@@ -16,7 +16,7 @@ namespace tke
 
 	class Node;
 
-	class Component : public _Object
+	class Component : public Object
 	{
 	private:
 		ComponentType type;

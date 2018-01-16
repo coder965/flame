@@ -1,20 +1,20 @@
-#include "_object.h"
+#include "object.h"
 
 namespace tke
 {
-	_Object::~_Object()
+	Object::~Object()
 	{
 		for (auto f : followings)
 			f->remove_follower(this);
 	}
 
-	void _Object::follow_to(_Object *o)
+	void Object::follow_to(Object *o)
 	{
 		followings.emplace_back(o);
 		o->followers.emplace_back(this);
 	}
 
-	void _Object::remove_follower(_Object *o)
+	void Object::remove_follower(Object *o)
 	{
 		for (auto it = followers.begin(); it != followers.end(); it++)
 		{
@@ -26,7 +26,7 @@ namespace tke
 		}
 	}
 
-	bool _Object::broadcast(_Object *o, Message msg)
+	bool Object::broadcast(Object *o, Message msg)
 	{
 		for (auto f : followers)
 		{

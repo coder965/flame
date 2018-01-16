@@ -4,9 +4,9 @@
 
 namespace tke
 {
-	bool Node::broadcast(_Object *src, Message msg)
+	bool Node::broadcast(Object *src, Message msg)
 	{
-		if (_Object::broadcast(src, msg))
+		if (Object::broadcast(src, msg))
 			return true;
 		if (parent)
 			return parent->broadcast(src, msg);

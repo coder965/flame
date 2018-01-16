@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "../math/math.h"
-#include "../_object.h"
+#include "../object.h"
 #include "component.h"
 
 namespace tke
@@ -17,7 +17,7 @@ namespace tke
 
 	struct Component;
 
-	 class Node : public _Object
+	 class Node : public Object
 	{
 	public:
 		enum Axis
@@ -48,9 +48,9 @@ namespace tke
 		std::vector<std::unique_ptr<Node>> children; 
 		std::vector<std::unique_ptr<Component>> components;
 	public:
-		virtual bool on_message(_Object*, Message) { return false; }
+		virtual bool on_message(Object*, Message) { return false; }
 
-		bool broadcast(_Object *src, Message msg);
+		bool broadcast(Object *src, Message msg);
 
 		Node(NodeType _type);
 		virtual ~Node() {}

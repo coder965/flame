@@ -404,7 +404,7 @@ namespace tke
 	bool DeferredRenderer::defe_inited = false;
 	bool DeferredRenderer::shad_inited = false;
 
-	bool DeferredRenderer::on_message(_Object *sender, Message msg)
+	bool DeferredRenderer::on_message(Object *sender, Message msg)
 	{
 		switch (msg)
 		{
