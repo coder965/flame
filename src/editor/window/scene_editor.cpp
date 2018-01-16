@@ -53,21 +53,14 @@ void SceneEditor::on_file_menu()
 		scene_editor.reset();
 }
 
-const char *basic_model_names[] = {
-	"triangle",
-	"cube",
-	"sphere",
-	"cylinder",
-	"cone",
-	"arrow",
-	"torus",
-	"hammer"
-};
-
 void SceneEditor::on_menu_bar()
 {
 	if (ImGui::BeginMenu_keepalive("Create"))
 	{
+		if (ImGui::MenuItem("Empty"))
+			;
+		if (ImGui::MenuItem("Empty Child"))
+			;
 		if (ImGui::BeginMenu("Light"))
 		{
 			if (ImGui::MenuItem("Parallax"))
@@ -77,8 +70,18 @@ void SceneEditor::on_menu_bar()
 
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("Object"))
+		if (ImGui::BeginMenu("3D"))
 		{
+			const char *basic_model_names[] = {
+				"Triangle",
+				"Cube",
+				"Sphere",
+				"Cylinder",
+				"Cone",
+				"Arrow",
+				"Torus",
+				"Hammer"
+			};
 			for (int i = 0; i < TK_ARRAYSIZE(basic_model_names); i++)
 			{
 				if (ImGui::MenuItem(basic_model_names[i]))
@@ -87,6 +90,7 @@ void SceneEditor::on_menu_bar()
 					if (m)
 					{
 						auto n = new tke::Node(tke::NodeTypeNode);
+						n->name = "Object";
 						n->set_coord(camera->get_target());
 						auto i = new tke::ModelInstanceComponent(m);
 						n->add_component(i);
@@ -94,24 +98,27 @@ void SceneEditor::on_menu_bar()
 					}
 				}
 			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Terrain"))
+			{
+				auto n = new tke::Node(tke::NodeTypeNode);
+				n->set_coord(camera->get_target());
+				auto t = new tke::TerrainComponent;
+				n->add_component(t);
+				scene->add_child(n);
+			}
+			if (ImGui::MenuItem("Water"))
+			{
+				auto n = new tke::Node(tke::NodeTypeNode);
+				n->set_coord(camera->get_target());
+				auto w = new tke::WaterComponent;
+				n->add_component(w);
+				scene->add_child(n);
+			}
 			ImGui::EndMenu();
 		}
-		if (ImGui::MenuItem("Terrain"))
-		{
-			auto n = new tke::Node(tke::NodeTypeNode);
-			n->set_coord(camera->get_target());
-			auto t = new tke::TerrainComponent;
-			n->add_component(t);
-			scene->add_child(n);
-		}
-		if (ImGui::MenuItem("Water"))
-		{
-			auto n = new tke::Node(tke::NodeTypeNode);
-			n->set_coord(camera->get_target());
-			auto w = new tke::WaterComponent;
-			n->add_component(w);
-			scene->add_child(n);
-		}
+		if (ImGui::MenuItem("Camera"))
+			;
 
 		ImGui::EndMenu();
 	}

@@ -85,16 +85,18 @@ void InspectorWindow::do_show()
 								case tke::SkyTypeAtmosphereScattering:
 								{
 									static glm::vec2 sun_dir;
-									//auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
-									//if (ImGui::Button("change sun dir"))
-									//{
-									//	ImGui::OpenPopup("Sun Dir");
-									//	auto euler = as->sun_light->get_euler();
-									//	sun_dir = glm::vec2(euler.x, euler.z);
-									//}
-									//if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
-									//	as->sun_light->setColor(as->sun_color * as->sun_power);
-									//ImGui::Checkbox("sun shadow", &as->sun_light->shadow);
+									auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
+									if (ImGui::Button("change sun dir"))
+									{
+										ImGui::OpenPopup("Sun Dir");
+										auto euler = as->node->get_euler();
+										sun_dir = glm::vec2(euler.x, euler.z);
+									}
+									if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
+										as->sun_light->set_color(as->sun_color * as->sun_power);
+									bool shadow = as->sun_light->is_enable_shadow();
+									if (ImGui::Checkbox("sun shadow", &shadow))
+										as->sun_light->set_enable_shadow(shadow);
 
 									if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 									{
@@ -140,27 +142,139 @@ void InspectorWindow::do_show()
 
 						break;
 					}
-					//case tke::NodeTypeLight:
-					//{
-					//	break;
-					//}
+					case tke::NodeTypeNode:
+					{
+						auto coord = n->get_coord();
+						if (ImGui::DragFloat3("coord", &coord[0]))
+							n->set_coord(coord);
+						auto euler = n->get_euler();
+						if (ImGui::DragFloat3("euler", &euler[0]))
+							n->set_euler(euler);
+						auto scale = n->get_scale();
+						if (ImGui::DragFloat3("scale", &scale[0]))
+							n->set_scale(scale);
+
+						for (auto &c : n->get_components())
+						{
+							switch (c->get_type())
+							{
+								case tke::ComponentTypeController:
+								{
+									if (ImGui::TreeNode("Controller"))
+									{
+										ImGui::TreePop();
+									}
+									break;
+								}
+								case tke::ComponentTypeCamera:
+								{
+									if (ImGui::TreeNode("Camera"))
+									{
+										ImGui::TreePop();
+									}
+									break;
+								}
+								case tke::ComponentTypeLight:
+								{
+									if (ImGui::TreeNode("Light"))
+									{
+										ImGui::TreePop();
+									}
+									break;
+								}
+								case tke::ComponentTypeModelInstance:
+								{
+									if (ImGui::TreeNode("Model Instance"))
+									{
+										auto i = (tke::ModelInstanceComponent*)c.get();
+										auto m = i->get_model();
+										ImGui::Text("model:%s", m->filename.c_str());
+										if (ImGui::TreeNode("Bake"))
+										{
+											ImGui::TextUnformatted("UV:");
+
+											ImDrawList* draw_list = ImGui::GetWindowDrawList();
+											ImVec2 pos = ImGui::GetCursorScreenPos();
+											ImVec2 size = ImVec2(256.f, 256.f);
+											draw_list->AddRect(pos, pos + size, ImColor(255, 255, 255));
+											ImGui::InvisibleButton("canvas", size);
+											draw_list->PushClipRect(pos, pos + size, true);
+											for (int i = 0; i < m->vertex_count; i += 2)
+											{
+												draw_list->AddLine(
+													pos + ImVec2(m->vertex[i].uv.x, m->vertex[i].uv.y) * size,
+													pos + ImVec2(m->vertex[i + 1].uv.x, m->vertex[i + 1].uv.y) * size,
+													IM_COL32(255, 255, 0, 255)
+												);
+												
+											}
+											draw_list->PopClipRect();
+
+											if (ImGui::Button("Create UV"))
+											{
+												m->create_geometry_aux();
+
+												auto triangle_count = m->vertex_count / 3;
+
+												float tl = 0.f, tr = 0.f, bl = 0.f, br = 0.f;
+
+												std::vector<int> remain_triangles;
+												remain_triangles.resize(triangle_count);
+												for (int i = 0; i < triangle_count; i++)
+													remain_triangles[i] = i;
+											}
+
+											ImGui::TreePop();
+										}
+										if (ImGui::TreeNode("Geometries"))
+										{
+											static int geo_index = -1;
+											ImGui::Combo("##geometry", &geo_index, [](void *data, int idx, const char **out_text) {
+												auto m = (tke::Model*)data;
+												*out_text = m->geometries[idx]->name.c_str();
+												return true;
+											}, m, m->geometries.size());
+											if (geo_index >= 0 && geo_index < m->geometries.size())
+											{
+												auto g = m->geometries[geo_index].get();
+												ImGui::Text("Indice Base:%d", g->indiceBase);
+												ImGui::Text("Indice Count:%d", g->indiceCount);
+												ImGui::Separator();
+												ImGui::Text("Material:%s", g->material->name.c_str());
+											}
+
+											ImGui::TreePop();
+										}
+
+										ImGui::TreePop();
+									}
+									break;
+								}
+								case tke::ComponentTypeTerrain:
+								{
+									if (ImGui::TreeNode("Terrain"))
+									{
+										auto t = (tke::TerrainComponent*)c.get();
+
+										ImGui::TreePop();
+									}
+									break;
+								}
+								case tke::ComponentTypeWater:
+								{
+									if (ImGui::TreeNode("Water"))
+									{
+										ImGui::TreePop();
+									}
+									break;
+								}
+							}
+						}
+
+						break;
+					}
 					//case tke::NodeTypeObject:
 					//{
-					//	auto o = (tke::Object*)n;
-
-					//	auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
-					//	ImGui::Text("model:%s", modelName.c_str());
-
-					//	auto coord = o->get_coord();
-					//	if (ImGui::DragFloat3("coord", &coord[0]))
-					//		o->set_coord(coord);
-					//	auto euler = o->get_euler();
-					//	if (ImGui::DragFloat3("euler", &euler[0]))
-					//		o->set_euler(euler);
-					//	auto scale = o->get_scale();
-					//	if (ImGui::DragFloat3("scale", &scale[0]))
-					//		o->set_scale(scale);
-
 					//	ImGui::DragFloat("ang offset", &o->ang_offset);
 					//	ImGui::DragFloat("speed", &o->speed);
 					//	ImGui::DragFloat("turn speed", &o->turn_speed);
@@ -197,10 +311,6 @@ void InspectorWindow::do_show()
 					//	ImGui::Text("Height:%f", t->height);
 					//	ImGui::Text("Use Physx:%s", t->enable_physics ? "Yse" : "No");
 
-					//	break;
-					//}
-					//case tke::NodeTypeWater:
-					//{
 					//	break;
 					//}
 				}

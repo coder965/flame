@@ -60,23 +60,23 @@ bool inline operator >= (glm::vec3 a, float b)
 	return a.x >= b && a.y >= b && a.z >= b;
 }
 
-#define TK_EPS (0.001f)
+#define TK_EPS (0.000001f)
 
 namespace tke
 {
-	inline bool fEqual(const float a, const float b)
+	inline bool is_same(const float a, const float b)
 	{
 		return std::abs(a - b) <= TK_EPS;
 	}
 
-	inline bool fEqual(const glm::vec2 &a, const glm::vec2 &b)
+	inline bool is_same(const glm::vec2 &a, const glm::vec2 &b)
 	{
 		return 
 			std::abs(a.x - b.x) <= TK_EPS &&
 			std::abs(a.y - b.y) <= TK_EPS;
 	}
 
-	inline bool fEqual(const glm::vec3 &a, const glm::vec3 &b)
+	inline bool is_same(const glm::vec3 &a, const glm::vec3 &b)
 	{
 		return
 			std::abs(a.x - b.x) <= TK_EPS &&
@@ -84,7 +84,7 @@ namespace tke
 			std::abs(a.z - b.z) <= TK_EPS;
 	}
 
-	inline bool fEqual(const glm::vec4 &a, const glm::vec4 &b)
+	inline bool is_same(const glm::vec4 &a, const glm::vec4 &b)
 	{
 		return
 			std::abs(a.x - b.x) <= TK_EPS &&

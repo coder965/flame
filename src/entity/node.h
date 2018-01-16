@@ -116,6 +116,7 @@ namespace tke
 		NodeType get_type() const;
 		Node *get_parent() const;
 		const std::vector<std::unique_ptr<Node>> &get_children() const;
+		const std::vector<std::unique_ptr<Component>> &get_components() const;
 		
 		void add_child(Node *n);
 		void remove_child(Node *n);

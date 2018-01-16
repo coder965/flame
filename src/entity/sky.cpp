@@ -15,6 +15,7 @@ namespace tke
 		scene(_scene)
 	{
 		node = new Node(NodeTypeNode);
+		node->name = "Sun Light";
 		sun_light = new LightComponent(LightTypeParallax);
 		node->add_component(sun_light);
 		scene->add_child(node);

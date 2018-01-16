@@ -46,10 +46,12 @@ namespace tke
 
 	struct Geometry
 	{
-		std::shared_ptr<Material> material;
+		std::string name;
 
 		int indiceBase = 0; // offset of model base
 		int indiceCount = 0;
+
+		std::shared_ptr<Material> material;
 
 		bool visible = true;
 	};
@@ -76,6 +78,18 @@ namespace tke
 		std::vector<int> chain;
 	};
 
+	struct GeometryAux
+	{
+		struct Triangle
+		{
+			int indices[3];
+			int adjacency[3];
+		};
+
+		std::vector<glm::vec3> unique_vertex;
+		std::unique_ptr<Triangle[]> triangles;
+	};
+
 	struct Model
 	{
 		std::string filename;
@@ -89,6 +103,8 @@ namespace tke
 		std::unique_ptr<ModelVertexSkeleton[]> vertex_skeleton;
 		int indice_count = 0;
 		std::unique_ptr<int[]> indices;
+
+		std::unique_ptr<GeometryAux> geometry_aux;
 
 		std::vector<std::unique_ptr<Geometry>> geometries;
 
@@ -118,6 +134,8 @@ namespace tke
 		float controller_radius = 0.5f;
 
 		glm::vec3 eye_position = glm::vec3(0.f);
+
+		void create_geometry_aux();
 
 		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 

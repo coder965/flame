@@ -6,9 +6,10 @@ namespace tke
 	void CameraComponent::on_update()
 	{
 		if (get_parent()->is_transform_dirty())
+		{
 			view_matrix = glm::inverse(get_parent()->get_matrix());
-		if (get_parent()->is_transform_dirty())
 			update_frustum();
+		}
 	}
 
 	CameraComponent::CameraComponent() :

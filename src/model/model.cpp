@@ -18,6 +18,78 @@
 
 namespace tke
 {
+	void Model::create_geometry_aux()
+	{
+		if (geometry_aux)
+			return;
+
+		auto triangle_count = indice_count / 3;
+
+		geometry_aux = std::make_unique<GeometryAux>();
+		geometry_aux->triangles = std::make_unique<GeometryAux::Triangle[]>(triangle_count);
+		for (int i = 0; i < triangle_count; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				auto ii = indices[i * 3 + j];
+
+				auto idx = -1;
+				for (int k = 0; k < geometry_aux->unique_vertex.size(); k++)
+				{
+					if (is_same(vertex[ii].position, geometry_aux->unique_vertex[k]))
+					{
+						idx = k;
+						break;
+					}
+				}
+				if (idx == -1)
+				{
+					idx = geometry_aux->unique_vertex.size();
+					geometry_aux->unique_vertex.push_back(vertex[ii].position);
+				}
+				geometry_aux->triangles[i].indices[j] = idx;
+				geometry_aux->triangles[i].adjacency[j] = -1;
+			}
+		}
+		for (int i = 0; i < triangle_count; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (geometry_aux->triangles[i].adjacency[j] == -1)
+				{
+					bool ok = false;
+
+					auto i0 = geometry_aux->triangles[i].indices[j];
+					auto i1 = geometry_aux->triangles[i].indices[(j + 1) % 3];
+					for (int k = 0; k < triangle_count; k++)
+					{
+						if (i == k)
+							continue;
+
+						for (int l = 0; l < 3; l++)
+						{
+							if (geometry_aux->triangles[k].adjacency[l] == -1)
+							{
+								auto i2 = geometry_aux->triangles[k].indices[l];
+								auto i3 = geometry_aux->triangles[k].indices[(l + 1) % 3];
+								if (i0 == i3 && i1 == i2)
+								{
+									geometry_aux->triangles[k].adjacency[l] = geometry_aux->triangles[i].indices[(j + 2) % 3];
+									geometry_aux->triangles[i].adjacency[j] = geometry_aux->triangles[k].indices[(l + 2) % 3];
+									ok = true;
+									break;
+								}
+							}
+						}
+
+						if (ok)
+							break;
+					}
+				}
+			}
+		}
+	}
+
 	void Model::setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b)
 	{
 		stateAnimations[kind] = b;
@@ -465,7 +537,8 @@ namespace tke
 				auto e1 = m->vertex[id[2]].position - m->vertex[id[0]].position;
 
 				auto d = u0 * v1 - u1 * v0;
-				if (d == 0.f) continue;
+				if (d == 0.f) 
+					continue;
 
 				auto tangent = glm::vec3(v1 * e0.x - v0 * e1.x, v1 * e0.y - v0 * e1.y, v1 * e0.z - v0 * e1.z);
 				if (glm::length(tangent) > 0.f)
@@ -1732,7 +1805,7 @@ namespace tke
 	{
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "triangle";
+			m->filename = "Triangle";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -1756,6 +1829,7 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = new Geometry;
+			g->name = "0";
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
 			m->geometries.emplace_back(g);
@@ -1769,7 +1843,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "cube";
+			m->filename = "Cube";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -1793,6 +1867,7 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = new Geometry;
+			g->name = "0";
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
 			m->geometries.emplace_back(g);
@@ -1812,7 +1887,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "sphere";
+			m->filename = "Sphere";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -1836,9 +1911,11 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g0 = new Geometry;
+			g0->name = "0";
 			g0->material = defaultMaterial;
 			g0->indiceCount = m->indice_count / 2;
 			auto g1 = new Geometry;
+			g1->name = "1";
 			g1->material = defaultMaterial;
 			g1->indiceBase = g0->indiceCount;
 			g1->indiceCount = g0->indiceCount;
@@ -1860,7 +1937,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "cylinder";
+			m->filename = "Cylinder";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -1884,6 +1961,7 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = new Geometry;
+			g->name = "0";
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
 			m->geometries.emplace_back(g);
@@ -1903,7 +1981,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "cone";
+			m->filename = "Cone";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -1927,6 +2005,7 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = new Geometry;
+			g->name = "0";
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
 			m->geometries.emplace_back(g);
@@ -1940,7 +2019,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "arrow";
+			m->filename = "Arrow";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -1967,6 +2046,7 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = new Geometry;
+			g->name = "0";
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
 			m->geometries.emplace_back(g);
@@ -1980,7 +2060,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "torus";
+			m->filename = "Torus";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2006,6 +2086,7 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g = new Geometry;
+			g->name = "0";
 			g->material = defaultMaterial;
 			g->indiceCount = m->indice_count;
 			m->geometries.emplace_back(g);
@@ -2019,7 +2100,7 @@ namespace tke
 
 		{
 			auto m = std::make_shared<Model>();
-			m->filename = "hammer";
+			m->filename = "Hammer";
 
 			std::vector<glm::vec3> vertexs;
 			std::vector<glm::vec3> normals;
@@ -2048,9 +2129,11 @@ namespace tke
 			memcpy(m->indices.get(), indices.data(), sizeof(int) * m->indice_count);
 
 			auto g0 = new Geometry;
+			g0->name = "0";
 			g0->material = defaultMaterial;
 			g0->indiceCount = ic0;
 			auto g1 = new Geometry;
+			g1->name = "1";
 			g1->material = defaultMaterial;
 			g1->indiceBase = ic0;
 			g1->indiceCount = ic1 - ic0;

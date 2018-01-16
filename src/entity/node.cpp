@@ -495,6 +495,11 @@ namespace tke
 		return children;
 	}
 
+	const std::vector<std::unique_ptr<Component>> &Node::get_components() const
+	{
+		return components;
+	}
+
 	void Node::add_child(Node *n)
 	{
 		n->parent = this;

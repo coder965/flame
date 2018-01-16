@@ -2,7 +2,6 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#include "..\debug.h"
 #include "..\depth.h"
 #include "..\pi.h"
 #include "..\panorama.h"
@@ -11,6 +10,9 @@
 #if !defined(USE_PHGON) && !defined(USE_PBR)
 #define USE_PHONG
 #endif
+
+//#define DEBUG_NORMAL
+//#define DEBUG_WORLD_COORD
 
 layout(binding = 0) uniform ubo_constant_
 {
@@ -214,14 +216,13 @@ void main()
 		lightSumColor += brdf(-viewDir, lightDir, normal, roughness, spec, albedo, lightColor) * nl;
 #endif
 	}
-
-	//outColor = vec4(lightSumColor, 1.0); return;
 	
 	vec3 color = lightSumColor;
 #if defined(USE_IBL)
 	mat3 matrixViewInv3 = mat3(ubo_matrix.viewInv);
 	vec3 irradiance = albedo * textureLod(img_envr, panorama(matrixViewInv3 * normal), ubo_ambient.envr_max_mipmap).rgb;
-	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * textureLod(img_envr, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * ubo_ambient.envr_max_mipmap).rgb;
+	vec3 radiance = smothness * F_schlick(spec, dot(-viewDir, normal)) * 
+	textureLod(img_envr, panorama(matrixViewInv3 * reflect(viewDir, normal)), roughness * ubo_ambient.envr_max_mipmap).rgb;
 	color += ubo_ambient.color * (irradiance + radiance);
 #else
 	color += ubo_ambient.color * albedo;
@@ -229,4 +230,5 @@ void main()
 	
 	float fog = clamp(exp2(-0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
 	outColor = vec4(mix(ubo_ambient.fogColor.rgb, color, fog), 1.0);
+	outColor = vec4(1.0);
 }

@@ -87,8 +87,8 @@ namespace tke
 			auto m = materials[i].lock();
 			if (m)
 			{
-				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && fEqual(m->albedo_alpha, albedo_alpha))
-					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && fEqual(m->spec, spec) && fEqual(m->roughness, roughness))
+				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && is_same(m->albedo_alpha, albedo_alpha))
+					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && is_same(m->spec, spec) && is_same(m->roughness, roughness))
 					&& m->normalHeightMap == normalHeightMap)
 					return m;
 			}
