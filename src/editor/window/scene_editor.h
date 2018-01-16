@@ -8,6 +8,7 @@
 
 struct SceneEditor
 {
+	tke::Node *camera_node;
 	tke::CameraComponent *camera;
 
 	std::shared_ptr<tke::Scene> scene;

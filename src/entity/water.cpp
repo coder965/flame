@@ -2,7 +2,7 @@
 
 namespace tke
 {
-	WaterComponent::WaterComponent(Node *_parent) :
+	WaterComponent::WaterComponent() :
 		Component(ComponentTypeWater),
 		block_cx(64),
 		block_cy(64),

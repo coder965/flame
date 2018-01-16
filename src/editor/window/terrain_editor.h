@@ -13,9 +13,11 @@
 
 struct TerrainEditor : IWindow
 {
+	tke::Node *camera_node;
 	tke::CameraComponent *camera;
 
-	std::shared_ptr<tke::Terrain> terrain;
+	tke::Node *terrain_node;
+	tke::TerrainComponent* terrain;
 
 	tke::DisplayLayer layer;
 

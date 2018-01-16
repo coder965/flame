@@ -45,7 +45,7 @@ namespace tke
 		bool attribute_dirty;
 		bool blend_image_dirty;
 	public:
-		TerrainComponent(Node *_parent);
+		TerrainComponent();
 
 		int get_block_cx() const;
 		int get_block_cy() const;

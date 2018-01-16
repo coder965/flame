@@ -14,7 +14,10 @@
 TerrainEditor::TerrainEditor()
 	:layer(true)
 {
-	camera = tke::root_node->new_camera();
+	camera_node = new tke::Node(tke::NodeTypeNode);
+	camera = new tke::CameraComponent;
+	camera_node->add_component(camera);
+	tke::root_node->add_child(camera_node);
 
 	first_cx = 800;
 	first_cy = 600;
@@ -26,7 +29,7 @@ TerrainEditor::TerrainEditor()
 
 TerrainEditor::~TerrainEditor()
 {
-	camera->get_parent()->remove_child(camera);
+	tke::root_node->remove_child(camera_node);
 }
 
 struct SaveModelDialog : FileSelector

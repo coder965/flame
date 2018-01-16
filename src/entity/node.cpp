@@ -473,6 +473,8 @@ namespace tke
 	void Node::update()
 	{
 		on_update();
+		for (auto &c : components)
+			c->on_update();
 		transform_dirty = false;
 		for (auto &c : children)
 			c->update();

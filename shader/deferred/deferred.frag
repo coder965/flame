@@ -169,7 +169,7 @@ void main()
 				shadowCoord /= shadowCoord.w;
 				if (shadowCoord.z >= 0.0 && shadowCoord.z <= 1.0)
 				{
-					float occluder = texture(img_shadow, (shadowCoord.xy * 0.5 + 0.5), shadowId * 6).r;
+					float occluder = texture(img_shadow, vec3(shadowCoord.xy * 0.5 + 0.5, shadowId * 6)).r;
 					float reciever = shadowCoord.z;
 					//visibility = clamp(occluder * exp(-esm_factor * reciever), 0.0, 1.0);
 					visibility = occluder < exp(esm_factor * reciever) ? 0.0 : 1.0;

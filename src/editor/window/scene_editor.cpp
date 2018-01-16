@@ -6,7 +6,7 @@
 #include "../../model/model.h"
 #include "../../model/animation.h"
 #include "../../entity/light.h"
-#include "../../entity/object.h"
+#include "../../entity/model_instance.h"
 #include "../../entity/terrain.h"
 #include "../../entity/water.h"
 #include "../../physics/physics.h"
@@ -23,9 +23,12 @@ std::unique_ptr<SceneEditor> scene_editor = nullptr;
 SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 	:scene(_scene)
 {
-	tke::root_node->add_child(scene.get());
+	camera_node = new tke::Node(tke::NodeTypeNode);
+	camera = new tke::CameraComponent;
+	camera_node->add_component(camera);
+	tke::root_node->add_child(camera_node);
 
-	camera = tke::root_node->new_camera();
+	tke::root_node->add_child(scene.get());
 
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
@@ -39,7 +42,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 
 SceneEditor::~SceneEditor()
 {
-	camera->get_parent()->remove_child(camera);
+	tke::root_node->remove_child(camera_node);
 }
 
 void SceneEditor::on_file_menu()
@@ -83,9 +86,11 @@ void SceneEditor::on_menu_bar()
 					auto m = tke::getModel(basic_model_names[i]);
 					if (m)
 					{
-						auto o = new tke::Object(m, 0);
-						o->set_coord(camera->get_target());
-						scene->addObject(o);
+						auto n = new tke::Node(tke::NodeTypeNode);
+						n->set_coord(camera->get_target());
+						auto i = new tke::ModelInstanceComponent(m);
+						n->add_component(i);
+						scene->add_child(n);
 					}
 				}
 			}
@@ -93,11 +98,20 @@ void SceneEditor::on_menu_bar()
 		}
 		if (ImGui::MenuItem("Terrain"))
 		{
-			auto t = new tke::Terrain;
-			scene->addTerrain(t);
+			auto n = new tke::Node(tke::NodeTypeNode);
+			n->set_coord(camera->get_target());
+			auto t = new tke::TerrainComponent;
+			n->add_component(t);
+			scene->add_child(n);
 		}
 		if (ImGui::MenuItem("Water"))
-			scene->new_water();
+		{
+			auto n = new tke::Node(tke::NodeTypeNode);
+			n->set_coord(camera->get_target());
+			auto w = new tke::WaterComponent;
+			n->add_component(w);
+			scene->add_child(n);
+		}
 
 		ImGui::EndMenu();
 	}
@@ -144,7 +158,7 @@ void SceneEditor::on_menu_bar()
 		ImGui::MenuItem("Follow", "", &follow);
 
 		{
-			auto c = camera->get_coord();
+			auto c = camera_node->get_coord();
 			ImGui::Text("%f, %f, %f coord", c.x, c.y, c.z);
 		}
 
@@ -177,8 +191,11 @@ void SceneEditor::do_show()
 				auto m = tke::getModel(filename);
 				if (m)
 				{
-					auto o = new tke::Object(m, 0);
-					scene->addObject(o);
+					auto n = new tke::Node(tke::NodeTypeNode);
+					n->set_coord(camera->get_target());
+					auto i = new tke::ModelInstanceComponent(m);
+					n->add_component(i);
+					scene->add_child(n);
 				}
 			}
 		}
@@ -212,25 +229,25 @@ void SceneEditor::do_show()
 				auto y = (tke::mouseY - image_rect.y) / image_rect.w * tke::res_cy;
 				if (!transformerTool->leftDown(x, y))
 				{
-					tke::PlainRenderer::DrawData draw_data;
-					draw_data.mode = tke::PlainRenderer::mode_just_color;
-					for (int i = 0; i < scene->objects.size(); i++)
-					{
-						auto object = scene->objects[i].get();
+					//tke::PlainRenderer::DrawData draw_data;
+					//draw_data.mode = tke::PlainRenderer::mode_just_color;
+					//for (int i = 0; i < scene->objects.size(); i++)
+					//{
+					//	auto object = scene->objects[i].get();
 
-						tke::PlainRenderer::DrawData::ObjData obj_data;
-						obj_data.mat = object->get_matrix();
-						obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
-						obj_data.fill_with_model(object->model.get());
-						if (object->model->vertex_skeleton)
-							obj_data.bone_buffer = object->animationComponent->bone_buffer.get();
-						draw_data.obj_data.push_back(obj_data);
-					}
-					auto index = tke::pick_up(x, y, std::bind(
-						&tke::PlainRenderer::do_render,
-						plain_renderer.get(), std::placeholders::_1, camera, &draw_data));
-					if (index == 0)
-						selected.reset();
+					//	tke::PlainRenderer::DrawData::ObjData obj_data;
+					//	obj_data.mat = object->get_matrix();
+					//	obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
+					//	obj_data.fill_with_model(object->model.get());
+					//	if (object->model->vertex_skeleton)
+					//		obj_data.bone_buffer = object->animationComponent->bone_buffer.get();
+					//	draw_data.obj_data.push_back(obj_data);
+					//}
+					//auto index = tke::pick_up(x, y, std::bind(
+					//	&tke::PlainRenderer::do_render,
+					//	plain_renderer.get(), std::placeholders::_1, camera, &draw_data));
+					//if (index == 0)
+					//	selected.reset();
 					//else
 					//	selected = scene->objects[index - 1];
 				}
@@ -258,17 +275,17 @@ void SceneEditor::do_show()
 		}
 	}
 
-	{
-		auto n = selected.get_node();
-		if (n && n->get_type() == tke::NodeTypeObject)
-		{
-			auto obj = (tke::Object*)n;
-			obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
-			obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
-			obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
-			obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
-		}
-	}
+	//{
+	//	auto n = selected.get_node();
+	//	if (n && n->get_type() == tke::NodeTypeObject)
+	//	{
+	//		auto obj = (tke::Object*)n;
+	//		obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
+	//		obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
+	//		obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
+	//		obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
+	//	}
+	//}
 
 	if (enableRender)
 	{
@@ -344,22 +361,22 @@ void SceneEditor::do_show()
 
 	if (showSelectedWireframe)
 	{
-		auto n = selected.get_node();
-		if (n && n->get_type() == tke::NodeTypeObject)
-		{
-			auto obj = (tke::Object*)n;
-			tke::PlainRenderer::DrawData data;
-			data.mode = tke::PlainRenderer::mode_wireframe;
-			tke::PlainRenderer::DrawData::ObjData obj_data;
-			obj_data.mat = obj->get_matrix();
-			obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-			obj_data.fill_with_model(obj->model.get());
-			if (obj->model->vertex_skeleton)
-				obj_data.bone_buffer = obj->animationComponent->bone_buffer.get();
-			data.obj_data.push_back(obj_data);
-			plain_renderer->render(layer.framebuffer.get(), false, camera, &data);
-			plain_renderer->add_to_drawlist();
-		}
+		//auto n = selected.get_node();
+		//if (n && n->get_type() == tke::NodeTypeObject)
+		//{
+		//	auto obj = (tke::Object*)n;
+		//	tke::PlainRenderer::DrawData data;
+		//	data.mode = tke::PlainRenderer::mode_wireframe;
+		//	tke::PlainRenderer::DrawData::ObjData obj_data;
+		//	obj_data.mat = obj->get_matrix();
+		//	obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
+		//	obj_data.fill_with_model(obj->model.get());
+		//	if (obj->model->vertex_skeleton)
+		//		obj_data.bone_buffer = obj->animationComponent->bone_buffer.get();
+		//	data.obj_data.push_back(obj_data);
+		//	plain_renderer->render(layer.framebuffer.get(), false, camera, &data);
+		//	plain_renderer->add_to_drawlist();
+		//}
 	}
 
 	transformerTool->node = selected.get_node();

@@ -7,7 +7,7 @@
 
 namespace tke
 {
-	TerrainComponent::TerrainComponent(Node *_parent) :
+	TerrainComponent::TerrainComponent() :
 		Component(ComponentTypeTerrain),
 		block_cx(64), 
 		block_cy(64), 

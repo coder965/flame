@@ -4,7 +4,7 @@
 #include "../../graphics/image.h"
 #include "../../model/model.h"
 #include "../../entity/scene.h"
-#include "../../entity/object.h"
+#include "../../entity/model_instance.h"
 #include "../../entity/terrain.h"
 #include "../select.h"
 #include "inspector.h"
@@ -79,16 +79,16 @@ void InspectorWindow::do_show()
 								case tke::SkyType::atmosphere_scattering:
 								{
 									static glm::vec2 sun_dir;
-									auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
-									if (ImGui::Button("change sun dir"))
-									{
-										ImGui::OpenPopup("Sun Dir");
-										auto euler = as->sun_light->get_euler();
-										sun_dir = glm::vec2(euler.x, euler.z);
-									}
-									if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
-										as->sun_light->setColor(as->sun_color * as->sun_power);
-									ImGui::Checkbox("sun shadow", &as->sun_light->shadow);
+									//auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
+									//if (ImGui::Button("change sun dir"))
+									//{
+									//	ImGui::OpenPopup("Sun Dir");
+									//	auto euler = as->sun_light->get_euler();
+									//	sun_dir = glm::vec2(euler.x, euler.z);
+									//}
+									//if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
+									//	as->sun_light->setColor(as->sun_color * as->sun_power);
+									//ImGui::Checkbox("sun shadow", &as->sun_light->shadow);
 
 									if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 									{
@@ -134,69 +134,69 @@ void InspectorWindow::do_show()
 
 						break;
 					}
-					case tke::NodeTypeLight:
-					{
-						break;
-					}
-					case tke::NodeTypeObject:
-					{
-						auto o = (tke::Object*)n;
+					//case tke::NodeTypeLight:
+					//{
+					//	break;
+					//}
+					//case tke::NodeTypeObject:
+					//{
+					//	auto o = (tke::Object*)n;
 
-						auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
-						ImGui::Text("model:%s", modelName.c_str());
+					//	auto modelName = tke::translate(936, CP_UTF8, o->model->filename.c_str());
+					//	ImGui::Text("model:%s", modelName.c_str());
 
-						auto coord = o->get_coord();
-						if (ImGui::DragFloat3("coord", &coord[0]))
-							o->set_coord(coord);
-						auto euler = o->get_euler();
-						if (ImGui::DragFloat3("euler", &euler[0]))
-							o->set_euler(euler);
-						auto scale = o->get_scale();
-						if (ImGui::DragFloat3("scale", &scale[0]))
-							o->set_scale(scale);
+					//	auto coord = o->get_coord();
+					//	if (ImGui::DragFloat3("coord", &coord[0]))
+					//		o->set_coord(coord);
+					//	auto euler = o->get_euler();
+					//	if (ImGui::DragFloat3("euler", &euler[0]))
+					//		o->set_euler(euler);
+					//	auto scale = o->get_scale();
+					//	if (ImGui::DragFloat3("scale", &scale[0]))
+					//		o->set_scale(scale);
 
-						ImGui::DragFloat("ang offset", &o->ang_offset);
-						ImGui::DragFloat("speed", &o->speed);
-						ImGui::DragFloat("turn speed", &o->turn_speed);
+					//	ImGui::DragFloat("ang offset", &o->ang_offset);
+					//	ImGui::DragFloat("speed", &o->speed);
+					//	ImGui::DragFloat("turn speed", &o->turn_speed);
 
-						if (o->model->vertex_skeleton)
-						{
-							static int boneID = -1;
-							if (boneID >= o->model->bones.size()) boneID = -1;
+					//	if (o->model->vertex_skeleton)
+					//	{
+					//		static int boneID = -1;
+					//		if (boneID >= o->model->bones.size()) boneID = -1;
 
-							if (ImGui::TreeNode("Bones Motion"))
-							{
-								for (int i = 0; i < o->model->bones.size(); i++)
-								{
-									auto str = tke::translate(936, CP_UTF8, o->model->bones[i]->name);
-									if (ImGui::Selectable(str.c_str(), i == boneID))
-										boneID = i;
-								}
+					//		if (ImGui::TreeNode("Bones Motion"))
+					//		{
+					//			for (int i = 0; i < o->model->bones.size(); i++)
+					//			{
+					//				auto str = tke::translate(936, CP_UTF8, o->model->bones[i]->name);
+					//				if (ImGui::Selectable(str.c_str(), i == boneID))
+					//					boneID = i;
+					//			}
 
-								ImGui::TreePop();
-							}
-						}
+					//			ImGui::TreePop();
+					//		}
+					//	}
 
-						break;
-					}
-					case tke::NodeTypeTerrain:
-					{
-						auto t = (tke::Terrain*)n;
+					//	break;
+					//}
+					//case tke::NodeTypeTerrain:
+					//{
+					//	auto t = (tke::Terrain*)n;
 
-						ImGui::Text("Blend Map:%s", t->blend_image ? t->blend_image->filename.c_str() : "Null");
-						show_material(t->materials[0].get());
-						//show_material(t->materials[1].get());
-						//show_material(t->materials[2].get());
-						//show_material(t->materials[3].get());
-						ImGui::Text("Height:%f", t->height);
-						ImGui::Text("Use Physx:%s", t->enable_physics ? "Yse" : "No");
+					//	ImGui::Text("Blend Map:%s", t->blend_image ? t->blend_image->filename.c_str() : "Null");
+					//	show_material(t->materials[0].get());
+					//	//show_material(t->materials[1].get());
+					//	//show_material(t->materials[2].get());
+					//	//show_material(t->materials[3].get());
+					//	ImGui::Text("Height:%f", t->height);
+					//	ImGui::Text("Use Physx:%s", t->enable_physics ? "Yse" : "No");
 
-						break;
-					}
-					case tke::NodeTypeWater:
-					{
-						break;
-					}
+					//	break;
+					//}
+					//case tke::NodeTypeWater:
+					//{
+					//	break;
+					//}
 				}
 			}
 			break;

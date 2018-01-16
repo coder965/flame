@@ -18,7 +18,7 @@ namespace tke
 
 		bool attribute_dirty;
 	public:
-		WaterComponent(Node *_parent);
+		WaterComponent();
 
 		int get_block_cx() const;
 		int get_block_cy() const;
