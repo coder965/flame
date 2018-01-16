@@ -7,11 +7,12 @@ namespace tke
 	struct LightComponent;
 	struct Image;
 
-	enum class SkyType
+	enum SkyType
 	{
-		null,
-		atmosphere_scattering = 1 << 0,
-		panorama = 1 << 1
+		SkyTypeNull,
+		SkyTypeDebug,
+		SkyTypeAtmosphereScattering,
+		SkyTypePanorama
 	};
 
 	struct Sky

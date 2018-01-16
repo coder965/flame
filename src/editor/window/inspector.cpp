@@ -46,13 +46,16 @@ void InspectorWindow::do_show()
 							sky_type_index = 0;
 						else
 						{
-							if (scene->sky->type == tke::SkyType::atmosphere_scattering)
+							if (scene->sky->type == tke::SkyTypeDebug)
 								sky_type_index = 1;
-							else if (scene->sky->type == tke::SkyType::panorama)
+							else if (scene->sky->type == tke::SkyTypeAtmosphereScattering)
 								sky_type_index = 2;
+							else if (scene->sky->type == tke::SkyTypePanorama)
+								sky_type_index = 3;
 						}
 						const char *sky_type_names[] = {
 							"Null",
+							"Debug",
 							"Atmosphere Scattering",
 							"Panorama"
 						};
@@ -61,13 +64,16 @@ void InspectorWindow::do_show()
 							switch (sky_type_index)
 							{
 								case 0:
-									scene->setSkyType(tke::SkyType::null);
+									scene->setSkyType(tke::SkyTypeNull);
 									break;
 								case 1:
-									scene->setSkyType(tke::SkyType::atmosphere_scattering);
+									scene->setSkyType(tke::SkyTypeDebug);
 									break;
 								case 2:
-									scene->setSkyType(tke::SkyType::panorama);
+									scene->setSkyType(tke::SkyTypeAtmosphereScattering);
+									break;
+								case 3:
+									scene->setSkyType(tke::SkyTypePanorama);
 									break;
 							}
 						}
@@ -76,7 +82,7 @@ void InspectorWindow::do_show()
 						{
 							switch (scene->sky->type)
 							{
-								case tke::SkyType::atmosphere_scattering:
+								case tke::SkyTypeAtmosphereScattering:
 								{
 									static glm::vec2 sun_dir;
 									//auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
@@ -107,7 +113,7 @@ void InspectorWindow::do_show()
 									}
 									break;
 								}
-								case tke::SkyType::panorama:
+								case tke::SkyTypePanorama:
 								{
 									auto pa = (tke::SkyPanorama*)scene->sky.get();
 									ImGui::Text("Image:%s", pa->panoImage ? pa->panoImage->filename.c_str() : "Null");

@@ -386,20 +386,21 @@ namespace tke
 	VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
 	VkPipelineVertexInputStateCreateInfo terrian_vertex_input_state;
 
-	static Pipeline *scatteringPipeline;
-	static Pipeline *downsamplePipeline;
-	static Pipeline *convolvePipeline;
-	static Pipeline *copyPipeline;
-	static Pipeline *mrtPipeline;
-	static Pipeline *mrtAnimPipeline;
-	static Pipeline *terrainPipeline;
-	static Pipeline *waterPipeline;
-	static Pipeline *deferredPipeline;
-	static Pipeline *composePipeline;
-	static Pipeline *esmPipeline;
-	static Pipeline *esmAnimPipeline;
-	static RenderPass *defeRenderPass;
-	static Image *envrImageDownsample[3] = {};
+	static Pipeline *scattering_pipeline;
+	static Pipeline *output_debug_panorama_pipeline;
+	static Pipeline *downsample_pipeline;
+	static Pipeline *convolve_pipeline;
+	static Pipeline *copy_pipeline;
+	static Pipeline *mrt_pipeline;
+	static Pipeline *mrt_anim_pipeline;
+	static Pipeline *terrain_pipeline;
+	static Pipeline *water_pipeline;
+	static Pipeline *deferred_pipeline;
+	static Pipeline *compose_pipeline;
+	static Pipeline *esm_pipeline;
+	static Pipeline *esm_anim_pipeline;
+	static RenderPass *defe_renderpass;
+	static Image *envr_image_downsample[3] = {};
 	bool DeferredRenderer::defe_inited = false;
 	bool DeferredRenderer::shad_inited = false;
 
@@ -595,30 +596,36 @@ namespace tke
 				subpassDependency(1, 2)
 			};
 
-			defeRenderPass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
+			defe_renderpass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
 
-			scatteringPipeline = new Pipeline(PipelineCreateInfo()
+			scattering_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(512).cy(256)
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/scattering.frag", {}),
 				renderPass_image16, 0);
-			downsamplePipeline = new Pipeline(PipelineCreateInfo()
+			output_debug_panorama_pipeline = new Pipeline(PipelineCreateInfo()
+				.cx(512).cy(256)
+				.cull_mode(VK_CULL_MODE_NONE)
+				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
+				.add_shader(engine_path + "shader/sky/output_debug_panorama.frag", {}),
+				renderPass_image8, 0);
+			downsample_pipeline = new Pipeline(PipelineCreateInfo()
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/downsample.frag", {})
 				, renderPass_image16, 0, true);
-			convolvePipeline = new Pipeline(PipelineCreateInfo()
+			convolve_pipeline = new Pipeline(PipelineCreateInfo()
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/convolve.frag", {}),
 				renderPass_image16, 0, true);
-			copyPipeline = new Pipeline(PipelineCreateInfo()
+			copy_pipeline = new Pipeline(PipelineCreateInfo()
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/copy.frag", {}),
 				renderPass_image16, 0, true);
-			mrtPipeline = new Pipeline(PipelineCreateInfo()
+			mrt_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 				.depth_test(true)
@@ -630,8 +637,8 @@ namespace tke
 				.add_shader(engine_path + "shader/deferred/mrt.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
-				defeRenderPass, 0);
-			mrtAnimPipeline = new Pipeline(PipelineCreateInfo()
+				defe_renderpass, 0);
+			mrt_anim_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 				.depth_test(true)
@@ -643,8 +650,8 @@ namespace tke
 				.add_shader(engine_path + "shader/deferred/mrt.frag", { "ANIM" })
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
-				defeRenderPass, 0);
-			terrainPipeline = new Pipeline(PipelineCreateInfo()
+				defe_renderpass, 0);
+			terrain_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 } })
 				.patch_control_points(4)
@@ -660,8 +667,8 @@ namespace tke
 				.add_shader(engine_path + "shader/deferred/terrain.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_terrain_", "Terrain.UniformBuffer"),
-				defeRenderPass, 0);
-			waterPipeline = new Pipeline(PipelineCreateInfo()
+				defe_renderpass, 0);
+			water_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.patch_control_points(4)
 				.depth_test(true)
@@ -676,8 +683,8 @@ namespace tke
 				.add_shader(engine_path + "shader/deferred/water.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_water_", "Water.UniformBuffer"),
-				defeRenderPass, 0);
-			deferredPipeline = new Pipeline(PipelineCreateInfo()
+				defe_renderpass, 0);
+			deferred_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_VIEW" })
@@ -693,14 +700,14 @@ namespace tke
 				.add_link("ubo_ambient_", "Ambient.UniformBuffer")
 				.add_link("img_shadow", "Shadow.Image")
 				.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
-				defeRenderPass, 1);
-			composePipeline = new Pipeline(PipelineCreateInfo()
+				defe_renderpass, 1);
+			compose_pipeline = new Pipeline(PipelineCreateInfo()
 				.cx(-1).cy(-1)
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", {})
 				.add_shader(engine_path + "shader/compose/compose.frag", {})
 				.add_link("img_source", "Main.Image", 0, plainUnnormalizedSampler),
-				defeRenderPass, 2);
+				defe_renderpass, 2);
 
 			defe_inited = true;
 		}
@@ -720,7 +727,7 @@ namespace tke
 		envrImage = std::make_unique<Image>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
 		for (int i = 0; i < 3; i++)
-			envrImageDownsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
+			envr_image_downsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
 				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		mainImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		depthImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -728,13 +735,13 @@ namespace tke
 		normalHeightImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		specRoughnessImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-		ds_mrt = std::make_unique<DescriptorSet>(mrtPipeline);
-		ds_mrtAnim = std::make_unique<DescriptorSet>(mrtAnimPipeline);
-		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrtAnimPipeline, 2);
-		ds_terrain = std::make_unique<DescriptorSet>(terrainPipeline);
-		ds_water = std::make_unique<DescriptorSet>(waterPipeline);
-		ds_defe = std::make_unique<DescriptorSet>(deferredPipeline);
-		ds_comp = std::make_unique<DescriptorSet>(composePipeline);
+		ds_mrt = std::make_unique<DescriptorSet>(mrt_pipeline);
+		ds_mrtAnim = std::make_unique<DescriptorSet>(mrt_anim_pipeline);
+		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrt_anim_pipeline, 2);
+		ds_terrain = std::make_unique<DescriptorSet>(terrain_pipeline);
+		ds_water = std::make_unique<DescriptorSet>(water_pipeline);
+		ds_defe = std::make_unique<DescriptorSet>(deferred_pipeline);
+		ds_comp = std::make_unique<DescriptorSet>(compose_pipeline);
 
 		resource.setImage(envrImage.get(), "Envr.Image");
 		resource.setImage(mainImage.get(), "Main.Image");
@@ -757,7 +764,7 @@ namespace tke
 		{
 			if (!shad_inited)
 			{
-				esmPipeline = new Pipeline(PipelineCreateInfo()
+				esm_pipeline = new Pipeline(PipelineCreateInfo()
 					.cx(2048).cy(2048)
 					.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 					.depth_test(true)
@@ -768,7 +775,7 @@ namespace tke
 					.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
-				esmAnimPipeline = new Pipeline(PipelineCreateInfo()
+				esm_anim_pipeline = new Pipeline(PipelineCreateInfo()
 					.cx(2048).cy(2048)
 					.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 					.depth_test(true)
@@ -801,21 +808,21 @@ namespace tke
 				fb_esm[i] = getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depthC_image32fC, TK_ARRAYSIZE(views), views);
 			}
 
-			ds_esm = std::make_unique<DescriptorSet>(esmPipeline);
-			ds_esmAnim = std::make_unique<DescriptorSet>(esmAnimPipeline);
+			ds_esm = std::make_unique<DescriptorSet>(esm_pipeline);
+			ds_esmAnim = std::make_unique<DescriptorSet>(esm_anim_pipeline);
 
 			resource.setBuffer(shadowBuffer.get(), "Shadow.UniformBuffer");
 
-			esmPipeline->linkDescriptors(ds_esm.get(), &resource);
-			esmAnimPipeline->linkDescriptors(ds_esmAnim.get(), &resource);
+			esm_pipeline->linkDescriptors(ds_esm.get(), &resource);
+			esm_anim_pipeline->linkDescriptors(ds_esmAnim.get(), &resource);
 		}
 
-		mrtPipeline->linkDescriptors(ds_mrt.get(), &resource);
-		mrtAnimPipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
-		terrainPipeline->linkDescriptors(ds_terrain.get(), &resource);
-		waterPipeline->linkDescriptors(ds_water.get(), &resource);
-		deferredPipeline->linkDescriptors(ds_defe.get(), &resource);
-		composePipeline->linkDescriptors(ds_comp.get(), &resource);
+		mrt_pipeline->linkDescriptors(ds_mrt.get(), &resource);
+		mrt_anim_pipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
+		terrain_pipeline->linkDescriptors(ds_terrain.get(), &resource);
+		water_pipeline->linkDescriptors(ds_water.get(), &resource);
+		deferred_pipeline->linkDescriptors(ds_defe.get(), &resource);
+		compose_pipeline->linkDescriptors(ds_comp.get(), &resource);
 
 		{
 			VkImageView views[] = {
@@ -826,7 +833,7 @@ namespace tke
 				specRoughnessImage->getView(),
 				dst->getView(),
 			};
-			framebuffer = getFramebuffer(res_cx, res_cy, defeRenderPass, ARRAYSIZE(views), views);
+			framebuffer = getFramebuffer(res_cx, res_cy, defe_renderpass, ARRAYSIZE(views), views);
 		}
 	}
 
@@ -851,14 +858,14 @@ namespace tke
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
 				{
 					auto cb = begineOnceCommandBuffer();
-					auto fb = getFramebuffer(envrImageDownsample[i], renderPass_image16);
+					auto fb = getFramebuffer(envr_image_downsample[i], renderPass_image16);
 
 					cb->beginRenderPass(renderPass_image16, fb.get());
-					cb->bindPipeline(downsamplePipeline);
+					cb->bindPipeline(downsample_pipeline);
 					cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-					updateDescriptorSets(1, &downsamplePipeline->descriptorSet->imageWrite(0, 0, i == 0 ? envrImage.get() : envrImageDownsample[i - 1], plainSampler));
+					updateDescriptorSets(1, &downsample_pipeline->descriptorSet->imageWrite(0, 0, i == 0 ? envrImage.get() : envr_image_downsample[i - 1], plainSampler));
 					cb->bindDescriptorSet();
 					cb->draw(3);
 					cb->endRenderPass();
@@ -872,11 +879,11 @@ namespace tke
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
 
 					cb->beginRenderPass(renderPass_image16, fb.get());
-					cb->bindPipeline(convolvePipeline);
+					cb->bindPipeline(convolve_pipeline);
 					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 					cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
-					updateDescriptorSets(1, &convolvePipeline->descriptorSet->imageWrite(0, 0, envrImageDownsample[i - 1], plainSampler));
+					updateDescriptorSets(1, &convolve_pipeline->descriptorSet->imageWrite(0, 0, envr_image_downsample[i - 1], plainSampler));
 					cb->bindDescriptorSet();
 					cb->draw(3);
 					cb->endRenderPass();
@@ -891,7 +898,23 @@ namespace tke
 			{
 				switch (scene->sky->type)
 				{
-					case SkyType::atmosphere_scattering:
+					case SkyTypeDebug:
+					{
+						auto cb = begineOnceCommandBuffer();
+						auto fb = getFramebuffer(envrImage.get(), renderPass_image8);
+
+						cb->beginRenderPass(renderPass_image8, fb.get());
+						cb->bindPipeline(output_debug_panorama_pipeline);
+						cb->draw(3);
+						cb->endRenderPass();
+
+						endOnceCommandBuffer(cb);
+
+						funUpdateIBL();
+
+						break;
+					}
+					case SkyTypeAtmosphereScattering:
 					{
 						auto as = (SkyAtmosphereScattering*)scene->sky.get();
 
@@ -899,7 +922,7 @@ namespace tke
 						auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 						cb->beginRenderPass(renderPass_image16, fb.get());
-						cb->bindPipeline(scatteringPipeline);
+						cb->bindPipeline(scattering_pipeline);
 						auto euler = as->sun_light->get_parent()->get_euler();
 						auto dir = glm::vec2(euler.x, euler.z);
 						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
@@ -912,7 +935,7 @@ namespace tke
 
 						break;
 					}
-					case SkyType::panorama:
+					case SkyTypePanorama:
 					{
 						auto pa = (SkyPanorama*)scene->sky.get();
 
@@ -922,9 +945,9 @@ namespace tke
 							auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 							cb->beginRenderPass(renderPass_image16, fb.get());
-							cb->bindPipeline(copyPipeline);
+							cb->bindPipeline(copy_pipeline);
 							cb->setViewportAndScissor(EnvrSizeCx, EnvrSizeCy);
-							updateDescriptorSets(1, &copyPipeline->descriptorSet->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
+							updateDescriptorSets(1, &copy_pipeline->descriptorSet->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
 							cb->bindDescriptorSet();
 							cb->draw(3);
 							cb->endRenderPass();
@@ -1224,7 +1247,7 @@ namespace tke
 				};
 				if (static_model_instances.get_size() > 0)
 				{
-					cb_shad->bindPipeline(esmPipeline);
+					cb_shad->bindPipeline(esm_pipeline);
 					VkDescriptorSet sets[] = {
 						ds_esm->v,
 						ds_material->v
@@ -1235,7 +1258,7 @@ namespace tke
 
 				if (animated_model_instances.get_size() > 0)
 				{
-					cb_shad->bindPipeline(esmAnimPipeline);
+					cb_shad->bindPipeline(esm_anim_pipeline);
 					VkDescriptorSet sets[] = {
 						ds_esmAnim->v,
 						ds_material->v,
@@ -1253,7 +1276,7 @@ namespace tke
 		cb_defe->reset();
 		cb_defe->begin();
 
-		cb_defe->beginRenderPass(defeRenderPass, this->framebuffer.get());
+		cb_defe->beginRenderPass(defe_renderpass, this->framebuffer.get());
 
 		cb_defe->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
 		cb_defe->bindIndexBuffer(indexBuffer.get());
@@ -1262,7 +1285,7 @@ namespace tke
 		// static
 		if (static_model_instances.get_size() > 0)
 		{
-			cb_defe->bindPipeline(mrtPipeline);
+			cb_defe->bindPipeline(mrt_pipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
 				ds_material->v
@@ -1273,7 +1296,7 @@ namespace tke
 		// animated
 		if (animated_model_instances.get_size())
 		{
-			cb_defe->bindPipeline(mrtAnimPipeline);
+			cb_defe->bindPipeline(mrt_anim_pipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
 				ds_material->v,
@@ -1285,7 +1308,7 @@ namespace tke
 		// terrain
 		if (terrains.get_size() > 0)
 		{
-			cb_defe->bindPipeline(terrainPipeline);
+			cb_defe->bindPipeline(terrain_pipeline);
 			VkDescriptorSet sets[] = {
 				ds_terrain->v,
 				ds_material->v
@@ -1299,7 +1322,7 @@ namespace tke
 		// water
 		if (waters.get_size() > 0)
 		{
-			cb_defe->bindPipeline(waterPipeline);
+			cb_defe->bindPipeline(water_pipeline);
 			cb_defe->bindDescriptorSet(&ds_water->v);
 			waters.iterate([&](int index, void *p, bool &remove) {
 				auto w = (WaterComponent*)p;
@@ -1314,13 +1337,13 @@ namespace tke
 
 		// deferred
 		cb_defe->nextSubpass();
-		cb_defe->bindPipeline(deferredPipeline);
+		cb_defe->bindPipeline(deferred_pipeline);
 		cb_defe->bindDescriptorSet(&ds_defe->v);
 		cb_defe->draw(3);
 
 		// compose
 		cb_defe->nextSubpass();
-		cb_defe->bindPipeline(composePipeline);
+		cb_defe->bindPipeline(compose_pipeline);
 		cb_defe->bindDescriptorSet(&ds_comp->v);
 		cb_defe->draw(3);
 

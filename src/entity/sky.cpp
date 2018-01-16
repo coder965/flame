@@ -10,8 +10,9 @@ namespace tke
 	{
 	}
 
-	SkyAtmosphereScattering::SkyAtmosphereScattering(Scene *_scene)
-		:Sky(SkyType::atmosphere_scattering), scene(_scene)
+	SkyAtmosphereScattering::SkyAtmosphereScattering(Scene *_scene) :
+		Sky(SkyTypeAtmosphereScattering), 
+		scene(_scene)
 	{
 		node = new Node(NodeTypeNode);
 		sun_light = new LightComponent(LightTypeParallax);
@@ -24,8 +25,8 @@ namespace tke
 		scene->remove_child(node);
 	}
 
-	SkyPanorama::SkyPanorama()
-		:Sky(SkyType::panorama)
+	SkyPanorama::SkyPanorama() :
+		Sky(SkyTypePanorama)
 	{
 	}
 }

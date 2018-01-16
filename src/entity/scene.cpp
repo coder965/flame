@@ -143,18 +143,23 @@ namespace tke
 	{
 		switch (skyType)
 		{
-		case SkyType::null:
+		case SkyTypeNull:
 			if (!sky)
 				return;
 			sky = nullptr;
 			break;
-		case SkyType::atmosphere_scattering:
-			if (sky && sky->type == SkyType::atmosphere_scattering)
+		case SkyTypeDebug:
+			if (sky && sky->type == SkyTypeDebug)
+				return;
+			sky = std::make_unique<Sky>(SkyTypeDebug);
+			break;
+		case SkyTypeAtmosphereScattering:
+			if (sky && sky->type == SkyTypeAtmosphereScattering)
 				return;
 			sky = std::move(std::make_unique<SkyAtmosphereScattering>(this));
 			break;
-		case SkyType::panorama:
-			if (sky && sky->type == SkyType::panorama)
+		case SkyTypePanorama:
+			if (sky && sky->type == SkyTypePanorama)
 				return;
 			sky = std::move(std::make_unique<SkyPanorama>());
 			break;
@@ -166,7 +171,7 @@ namespace tke
 
 	void Scene::set_pano_sky_image(std::shared_ptr<Image> i)
 	{
-		if (!sky || sky->type != SkyType::panorama)
+		if (!sky || sky->type != SkyTypePanorama)
 			return;
 
 		auto pa = (SkyPanorama*)sky.get();
@@ -440,7 +445,7 @@ namespace tke
 
 	void Scene::setSunDir(const glm::vec2 &v)
 	{
-		if (!sky || sky->type != SkyType::atmosphere_scattering)
+		if (!sky || sky->type != SkyTypeAtmosphereScattering)
 			return;
 		auto as = (SkyAtmosphereScattering*)sky.get();
 		as->node->set_euler(glm::vec3(v.x, 0.f, v.y));

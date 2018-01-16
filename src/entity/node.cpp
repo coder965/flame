@@ -509,9 +509,9 @@ namespace tke
 		{
 			if (it->get() == n)
 			{
-				children.erase(it);
 				component_boardcast(n, MessageComponentRemove);
 				broadcast(n, MessageNodeRemove);
+				children.erase(it);
 				return;
 			}
 		}
