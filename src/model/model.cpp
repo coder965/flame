@@ -48,14 +48,15 @@ namespace tke
 					geometry_aux->unique_vertex.push_back(vertex[ii].position);
 				}
 				geometry_aux->triangles[i].indices[j] = idx;
-				geometry_aux->triangles[i].adjacency[j] = -1;
+				geometry_aux->triangles[i].adjacency[j].first = -1;
+				geometry_aux->triangles[i].adjacency[j].second = -1;
 			}
 		}
 		for (int i = 0; i < triangle_count; i++)
 		{
 			for (int j = 0; j < 3; j++)
 			{
-				if (geometry_aux->triangles[i].adjacency[j] == -1)
+				if (geometry_aux->triangles[i].adjacency[j].first == -1)
 				{
 					bool ok = false;
 
@@ -68,14 +69,14 @@ namespace tke
 
 						for (int l = 0; l < 3; l++)
 						{
-							if (geometry_aux->triangles[k].adjacency[l] == -1)
+							if (geometry_aux->triangles[k].adjacency[l].first == -1)
 							{
 								auto i2 = geometry_aux->triangles[k].indices[l];
 								auto i3 = geometry_aux->triangles[k].indices[(l + 1) % 3];
 								if (i0 == i3 && i1 == i2)
 								{
-									geometry_aux->triangles[k].adjacency[l] = geometry_aux->triangles[i].indices[(j + 2) % 3];
-									geometry_aux->triangles[i].adjacency[j] = geometry_aux->triangles[k].indices[(l + 2) % 3];
+									geometry_aux->triangles[k].adjacency[l] = { i, (j + 2) % 3 };
+									geometry_aux->triangles[i].adjacency[j] = { k, (l + 2) % 3 };
 									ok = true;
 									break;
 								}

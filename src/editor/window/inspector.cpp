@@ -191,22 +191,47 @@ void InspectorWindow::do_show()
 										ImGui::Text("model:%s", m->filename.c_str());
 										if (ImGui::TreeNode("Bake"))
 										{
+											auto triangle_count = m->indice_count / 3;
+
+											auto aux = m->geometry_aux.get();
+
 											ImGui::TextUnformatted("UV:");
 
 											ImDrawList* draw_list = ImGui::GetWindowDrawList();
 											ImVec2 pos = ImGui::GetCursorScreenPos();
 											ImVec2 size = ImVec2(256.f, 256.f);
-											draw_list->AddRect(pos, pos + size, ImColor(255, 255, 255));
+											draw_list->AddRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), ImColor(255, 255, 255));
 											ImGui::InvisibleButton("canvas", size);
-											draw_list->PushClipRect(pos, pos + size, true);
-											for (int i = 0; i < m->vertex_count; i += 2)
+											draw_list->PushClipRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), true);
+											for (int i = 0; i < triangle_count; i++)
 											{
+												if (!(i == 0 || /*i == 8 || */i == 9))
+													continue;
+
+												glm::vec2 uv[3];
+												int indices[3];
+												for (int j = 0; j < 3; j++)
+												{
+													indices[j] = m->indices[i * 3 + j];
+													uv[j] = m->vertex[indices[j]].uv;
+												}
+
 												draw_list->AddLine(
-													pos + ImVec2(m->vertex[i].uv.x, m->vertex[i].uv.y) * size,
-													pos + ImVec2(m->vertex[i + 1].uv.x, m->vertex[i + 1].uv.y) * size,
+													pos + ImVec2(uv[0].x, uv[0].y) * size,
+													pos + ImVec2(uv[1].x, uv[1].y) * size,
 													IM_COL32(255, 255, 0, 255)
 												);
-												
+												draw_list->AddLine(
+													pos + ImVec2(uv[1].x, uv[1].y) * size,
+													pos + ImVec2(uv[2].x, uv[2].y) * size,
+													IM_COL32(255, 255, 0, 255)
+												);
+												draw_list->AddLine(
+													pos + ImVec2(uv[2].x, uv[2].y) * size,
+													pos + ImVec2(uv[0].x, uv[0].y) * size,
+													IM_COL32(255, 255, 0, 255)
+												);
+
 											}
 											draw_list->PopClipRect();
 
@@ -214,14 +239,119 @@ void InspectorWindow::do_show()
 											{
 												m->create_geometry_aux();
 
-												auto triangle_count = m->vertex_count / 3;
+												auto aux = m->geometry_aux.get();
 
-												float tl = 0.f, tr = 0.f, bl = 0.f, br = 0.f;
+												float min_x = 0.f, max_x = 0.f, min_z = 0.f, max_z = 0.f;
 
 												std::vector<int> remain_triangles;
 												remain_triangles.resize(triangle_count);
 												for (int i = 0; i < triangle_count; i++)
 													remain_triangles[i] = i;
+
+												static const auto up_dir = glm::vec3(0.f, 1.f, 0.f);
+
+												static std::function<void(int tri_idx, glm::ivec3 swizzle, glm::vec4 base)> fProcessTri;
+
+												auto count = 0;
+												fProcessTri = [&](int tri_idx, glm::ivec3 swizzle, glm::vec4 base) {
+													if (count == 2)
+														return;
+													count++;		
+
+													//glm::ivec3 swizzle;
+													//swizzle.x = swizzle_base;
+													//swizzle.y = (swizzle_base + 1) % 3;
+													//swizzle.z = (swizzle_base + 2) % 3;
+													//if (swizzle_inverse)
+													//	std::swap(swizzle.y, swizzle.z);
+
+													int indices[3];
+													glm::vec3 positions[3];
+													for (int i = 0; i < 3; i++)
+													{
+														indices[i] = aux->triangles[tri_idx].indices[i];
+														positions[i] = aux->unique_vertex[indices[i]];
+													}
+													auto v0 = glm::normalize(positions[swizzle[0]] - positions[swizzle[1]]);
+													auto v1 = glm::normalize(positions[swizzle[2]] - positions[swizzle[1]]);
+													auto n = glm::normalize(glm::cross(v1, v0));
+													auto b = glm::cross(v0, n);
+													auto src_mat = tke::make_matrix(glm::mat3(v0, n, b), positions[swizzle[1]]);
+													auto src_mat_inv = glm::inverse(src_mat);
+													glm::vec2 uv[3];
+													auto base_dir = glm::vec3(base.x, 0.f, base.y);
+													auto dst_mat = tke::make_matrix(glm::mat3(base_dir, up_dir, glm::cross(base_dir, up_dir)), glm::vec3(base.z, 0.f, base.w));
+													for (int i = 0; i < 3; i++)
+													{
+														auto p = src_mat_inv * glm::vec4(positions[i], 1.f);
+														p = dst_mat * p;
+														uv[i].x = p.x;
+														uv[i].y = p.z;
+														if (p.x < min_x)
+															min_x = p.x;
+														if (p.x > max_x)
+															max_x = p.x;
+														if (p.z < min_z)
+															min_z = p.z;
+														if (p.z > max_z)
+															max_z = p.z;
+														auto indice = m->indices[tri_idx * 3 + i];
+														m->vertex[indice].uv = uv[i];
+													}
+
+													for (int i = 0; i < 3; i++)
+													{
+														auto adj_idx = aux->triangles[tri_idx].adjacency[i];
+														if (adj_idx.first != -1)
+														{
+															auto it = std::find(remain_triangles.begin(), remain_triangles.end(), adj_idx.first);
+															if (it != remain_triangles.end())
+															{
+																remain_triangles.erase(it);
+																glm::ivec3 swizzle;
+																glm::vec4 base;
+																switch (adj_idx.second)
+																{
+																	case 0:
+																		swizzle = glm::ivec3(2, 1, 0);
+																		break;
+																	case 1:
+																		swizzle = glm::ivec3(0, 2, 1);
+																		break;
+																	case 2:
+																		swizzle = glm::ivec3(1, 0, 2);
+																		break;
+																}
+																switch (i)
+																{
+																	case 0:
+																		base = glm::vec4(glm::normalize(uv[1] - uv[0]), uv[0]);
+																		break;
+																	case 1:
+																		base = glm::vec4(glm::normalize(uv[2] - uv[1]), uv[1]);
+																		break;
+																	case 2:
+																		base = glm::vec4(glm::normalize(uv[0] - uv[2]), uv[2]);
+																		break;
+																}
+																fProcessTri(adj_idx.first, swizzle, base);
+															}
+														}
+													}
+												};
+
+												fProcessTri(0, glm::ivec3(0, 1, 2), glm::vec4(1.f, 0.f, 0.f, 0.f));
+
+												auto cx = max_x - min_x;
+												auto cz = max_z - min_z;
+												for (int i = 0; i < m->vertex_count; i++)
+												{
+													auto &uv = m->vertex[i].uv;
+													uv.x -= min_x;
+													uv.y -= min_z;
+													uv.x /= cx;
+													uv.y /= cz;
+												}
 											}
 
 											ImGui::TreePop();

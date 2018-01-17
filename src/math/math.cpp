@@ -181,9 +181,14 @@ namespace tke
 		return glm::mat3(x, y, z);
 	}
 
-	glm::mat4 makeMatrix(glm::mat3 &rotation, glm::vec3 coord)
+	glm::mat4 make_matrix(glm::mat3 &rotation, glm::vec3 coord)
 	{
-		return glm::mat4(glm::vec4(rotation[0], 0.f), glm::vec4(rotation[1], 0.f), glm::vec4(rotation[2], 0.f), glm::vec4(coord, 1.f));
+		return glm::mat4(
+			glm::vec4(rotation[0], 0.f), 
+			glm::vec4(rotation[1], 0.f), 
+			glm::vec4(rotation[2], 0.f), 
+			glm::vec4(coord, 1.f)
+		);
 	}
 
 	float rand2d(const glm::vec2 &v)

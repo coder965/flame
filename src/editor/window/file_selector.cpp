@@ -51,11 +51,11 @@ void FileSelector::refresh()
 		return;
 	}
 
-	std::experimental::filesystem::directory_iterator end_it;
-	for (std::experimental::filesystem::directory_iterator it(current_path); it != end_it; it++)
+	std::fs::directory_iterator end_it;
+	for (std::fs::directory_iterator it(current_path); it != end_it; it++)
 	{
 		auto str = it->path().filename().string();
-		if (std::experimental::filesystem::is_directory(it->status()))
+		if (std::fs::is_directory(it->status()))
 		{
 			auto i = std::make_unique<DirItem>();
 			i->value = str;
@@ -68,7 +68,7 @@ void FileSelector::refresh()
 
 			{
 				std::error_code e;
-				i->file_size = std::experimental::filesystem::file_size(it->path(), e);
+				i->file_size = std::fs::file_size(it->path(), e);
 			}
 
 			auto ext = it->path().extension().string();
