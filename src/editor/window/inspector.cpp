@@ -197,15 +197,35 @@ void InspectorWindow::do_show()
 
 											ImGui::TextUnformatted("UV:");
 
+											static bool show_[12];
+											static const char *names_[12] = {
+												"a0",
+												"a1",
+												"a2",
+												"a3",
+												"a4",
+												"a5",
+												"a6",
+												"a7",
+												"a8",
+												"a9",
+												"a10",
+												"a11"
+											};
+											for (int i = 0; i < 12; i++)
+												ImGui::Checkbox(names_[i], &show_[i]);
+											// 4-5 6-7
+
 											ImDrawList* draw_list = ImGui::GetWindowDrawList();
 											ImVec2 pos = ImGui::GetCursorScreenPos();
 											ImVec2 size = ImVec2(256.f, 256.f);
-											draw_list->AddRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), ImColor(255, 255, 255));
+											draw_list->AddRect(pos - ImVec2(2.f, 2.f), pos + size + ImVec2(3.f, 3.f), ImColor(255, 255, 255));
 											ImGui::InvisibleButton("canvas", size);
 											draw_list->PushClipRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), true);
+
 											for (int i = 0; i < triangle_count; i++)
 											{
-												if (!(i == 0 || /*i == 8 || */i == 9))
+												if (!show_[i])
 													continue;
 
 												glm::vec2 uv[3];
@@ -254,16 +274,8 @@ void InspectorWindow::do_show()
 
 												auto count = 0;
 												fProcessTri = [&](int tri_idx, glm::ivec3 swizzle, glm::vec4 base) {
-													if (count == 2)
-														return;
-													count++;		
-
-													//glm::ivec3 swizzle;
-													//swizzle.x = swizzle_base;
-													//swizzle.y = (swizzle_base + 1) % 3;
-													//swizzle.z = (swizzle_base + 2) % 3;
-													//if (swizzle_inverse)
-													//	std::swap(swizzle.y, swizzle.z);
+													if (tri_idx >= 4 && tri_idx <= 7)
+														int cut = 1;
 
 													int indices[3];
 													glm::vec3 positions[3];
@@ -313,15 +325,17 @@ void InspectorWindow::do_show()
 																switch (adj_idx.second)
 																{
 																	case 0:
-																		swizzle = glm::ivec3(2, 1, 0);
+																		swizzle = glm::ivec3(1, 2, 0);
 																		break;
 																	case 1:
 																		swizzle = glm::ivec3(0, 2, 1);
 																		break;
 																	case 2:
-																		swizzle = glm::ivec3(1, 0, 2);
+																		swizzle = glm::ivec3(0, 1, 2);
 																		break;
 																}
+																if (indices[0] == aux->triangles[adj_idx.first].indices[swizzle[0]])
+																	std::swap(swizzle[0], swizzle[1]);
 																switch (i)
 																{
 																	case 0:
