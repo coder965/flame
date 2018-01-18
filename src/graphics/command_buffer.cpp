@@ -265,8 +265,8 @@ namespace tke
 	{
 		cb->end();
 
-		graphicsQueue.submit(1, &cb->v);
-		graphicsQueue.waitIdle();
+		vk_graphics_queue.submit(1, &cb->v);
+		vk_graphics_queue.waitIdle();
 
 		delete cb;
 	}

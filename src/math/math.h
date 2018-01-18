@@ -102,8 +102,8 @@ namespace tke
 	glm::mat4 make_matrix(const glm::mat3 &rotation, const glm::vec3 coord);
 	glm::mat4 make_matrix(const glm::vec3 &x, const glm::vec3 &y, const glm::vec3 coord);
 
-	float linearDepthOrtho(float z, float depth_near, float depth_far);
-	float linearDepthPerspective(float z, float depth_near, float depth_far);
+	float linear_depth_ortho(float z, float depth_near, float depth_far);
+	float linear_depth_perspective(float z, float depth_near, float depth_far);
 	float rand2d(const glm::vec2 &v);
 	float noise2d(glm::vec2 v);
 	float fbm2d(glm::vec2 v);

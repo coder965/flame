@@ -41,21 +41,29 @@ namespace tke
 		info.signalSemaphoreCount = signalSemaphore ? 1 : 0;
 		info.pSignalSemaphores = signalSemaphore ? &signalSemaphore : nullptr;
 
-		graphicsQueue.mtx.lock();
-		auto res = vkQueueSubmit(graphicsQueue.v, 1, &info, fence);
+		vk_graphics_queue.mtx.lock();
+		auto res = vkQueueSubmit(vk_graphics_queue.v, 1, &info, fence);
 		assert(res == VK_SUCCESS);
-		graphicsQueue.mtx.unlock();
+		vk_graphics_queue.mtx.unlock();
 	}
 
+	const char *vk_device_type_names[] = {
+		"other",
+		"integrated gpu",
+		"discrete gpu",
+		"virtual gpu",
+		"cpu"
+	};
+
 	VkInstance vk_instance;
-	VkPhysicalDevice physicalDevice;
-	VkPhysicalDeviceProperties physicalDeviceProperties;
-	VkPhysicalDeviceFeatures physicalDeviceFeatures;
+	VkPhysicalDevice vk_physical_device;
+	VkPhysicalDeviceProperties vk_physical_device_properties;
+	VkPhysicalDeviceFeatures vk_physical_device_features;
 	Device vk_device;
-	Queue graphicsQueue;
+	Queue vk_graphics_queue;
 	static VkPhysicalDeviceMemoryProperties memProperties;
 
-	int findVkMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+	int find_vk_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 	{
 		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
 		{
@@ -65,7 +73,7 @@ namespace tke
 		return -1;
 	}
 
-	struct _vulkan_error
+	struct VulkanError
 	{
 		VkDebugReportObjectTypeEXT objectType;
 		uint64_t object;
@@ -73,12 +81,12 @@ namespace tke
 		int32_t messageCode;
 	};
 
-	bool operator<(const _vulkan_error &a, const _vulkan_error &b)
+	bool operator<(const VulkanError &a, const VulkanError &b)
 	{
 		return a.messageCode < b.messageCode;
 	}
 
-	std::set<_vulkan_error> _vulkan_errors;
+	std::set<VulkanError> _vulkan_errors;
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL _vkDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location,
 		int32_t messageCode,
@@ -171,18 +179,18 @@ namespace tke
 		}
 
 		uint32_t gpuCount = 1;
-		res = vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &physicalDevice);
+		res = vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &vk_physical_device);
 		if (res != VkResult::VK_SUCCESS)
 			return ErrContextLost;
 
 		VkPhysicalDeviceFeatures features;
 
-		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+		vkGetPhysicalDeviceProperties(vk_physical_device, &vk_physical_device_properties);
 		unsigned int queueFamilyPropertyCount = 0;
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertyCount, nullptr);
+		vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &queueFamilyPropertyCount, nullptr);
 		queueFamilyProperties.resize(queueFamilyPropertyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertyCount, queueFamilyProperties.data());
+		vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &queueFamilyPropertyCount, queueFamilyProperties.data());
 
 		float queuePriorities[1] = { 0.0 };
 		VkDeviceQueueCreateInfo queueInfo = {};
@@ -197,9 +205,9 @@ namespace tke
 		unsigned int extensionCount;
 
 
-		vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+		vkGetPhysicalDeviceFeatures(vk_physical_device, &vk_physical_device_features);
 
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+		vkGetPhysicalDeviceMemoryProperties(vk_physical_device, &memProperties);
 
 		std::vector<char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		VkDeviceCreateInfo deviceInfo = {};
@@ -208,11 +216,11 @@ namespace tke
 		deviceInfo.queueCreateInfoCount = queueInfos.size();
 		deviceInfo.enabledExtensionCount = deviceExtensions.size();
 		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
-		deviceInfo.pEnabledFeatures = &physicalDeviceFeatures;
-		res = vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &vk_device.v);
+		deviceInfo.pEnabledFeatures = &vk_physical_device_features;
+		res = vkCreateDevice(vk_physical_device, &deviceInfo, nullptr, &vk_device.v);
 		assert(res == VK_SUCCESS);
 
-		vkGetDeviceQueue(vk_device.v, 0, 0, &graphicsQueue.v);
+		vkGetDeviceQueue(vk_device.v, 0, 0, &vk_graphics_queue.v);
 
 		commandPool = new CommandPool;
 		descriptorPool = new DescriptorPool;

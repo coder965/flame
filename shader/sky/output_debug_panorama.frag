@@ -16,20 +16,21 @@ void main()
     vec3 eyedir = inversePanorama(inTexcoord);
     
     vec3 color = vec3(0.0);
+
     if (eyedir.x > hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
         color = vec3(1.0, 0.0, 0.0);
-        /*
-    else if (eyedir.y > hf_sqrt2 && abs(eyedir.x) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
+        
+    if (eyedir.y > hf_sqrt2 && abs(eyedir.x) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
         color = vec3(0.0, 1.0, 0.0);
-    else if (eyedir.z > hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.x) < hf_sqrt2)
+    if (eyedir.z > hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.x) < hf_sqrt2)
         color = vec3(0.0, 0.0, 1.0);
-    else if (eyedir.x < -hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
+    if (eyedir.x < -hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
         color = vec3(0.2, 0.0, 0.0);
-    else if (eyedir.y < -hf_sqrt2 && abs(eyedir.x) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
+    if (eyedir.y < -hf_sqrt2 && abs(eyedir.x) < hf_sqrt2 && abs(eyedir.z) < hf_sqrt2)
         color = vec3(0.0, 0.2, 0.0);
-    else if (eyedir.z < -hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.x) < hf_sqrt2)
+    if (eyedir.z < -hf_sqrt2 && abs(eyedir.y) < hf_sqrt2 && abs(eyedir.x) < hf_sqrt2)
         color = vec3(0.0, 0.0, 0.2);
-        */
+        
 
     outColor = vec4(color, 1.0);
 }

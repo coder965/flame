@@ -48,7 +48,7 @@ SceneEditor::~SceneEditor()
 void SceneEditor::on_file_menu()
 {
 	if (ImGui::MenuItem("Save", "Ctrl+S"))
-		scene->save(scene->filename);
+		scene->save(scene->get_filename());
 	if (ImGui::MenuItem("Close", "Ctrl+S"))
 		scene_editor.reset();
 }
@@ -145,17 +145,17 @@ void SceneEditor::on_menu_bar()
 		ImGui::MenuItem("Show Selected Wire Frame", "", &showSelectedWireframe);
 		if (ImGui::MenuItem("View Physx", "", &viewPhysx))
 		{
-			if (viewPhysx)
-			{
-				scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 1.f);
-				////scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1.f);
-				scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.f);
-				//scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.f);
-				//pxScene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LOCAL_FRAMES, 1.f);
-				////scene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LIMITS, 1.f);
-			}
-			else
-				scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 0.f);
+			//if (viewPhysx)
+			//{
+			//	scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 1.f);
+			//	////scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1.f);
+			//	scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.f);
+			//	//scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.f);
+			//	//pxScene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LOCAL_FRAMES, 1.f);
+			//	////scene->setVisualizationParameter(PxVisualizationParameter::eJOINT_LIMITS, 1.f);
+			//}
+			//else
+			//	scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 0.f);
 		}
 
 		ImGui::EndMenu();
@@ -346,29 +346,29 @@ void SceneEditor::do_show()
 	}
 	if (viewPhysx)
 	{
-		auto &rb = scene->pxScene->getRenderBuffer();
-		auto lineCount = rb.getNbLines();
-		if (lineCount > 0)
-		{
-			auto vertex_count = lineCount * 2;
-			auto size = vertex_count * sizeof(tke::LinesRenderer::Vertex);
-			auto vtx_dst = (tke::LinesRenderer::Vertex*)physx_vertex_buffer->map(0, size);
-			for (int i = 0; i < lineCount; i++)
-			{
-				auto &line = rb.getLines()[i];
-				vtx_dst[0].position = tke::physx_vec3_to_vec3(line.pos0);
-				vtx_dst[0].color = tke::physx_u32_to_vec3(line.color0);
-				vtx_dst[1].position = tke::physx_vec3_to_vec3(line.pos1);
-				vtx_dst[1].color = tke::physx_u32_to_vec3(line.color1);
-				vtx_dst += 2;
-			}
-			physx_vertex_buffer->unmap();
-			tke::LinesRenderer::DrawData data;
-			data.vertex_buffer = physx_vertex_buffer.get();
-			data.vertex_count = vertex_count;
-			lines_renderer->render(layer.framebuffer.get(), false, camera, &data);
-			lines_renderer->add_to_drawlist();
-		}
+		//auto &rb = scene->pxScene->getRenderBuffer();
+		//auto lineCount = rb.getNbLines();
+		//if (lineCount > 0)
+		//{
+		//	auto vertex_count = lineCount * 2;
+		//	auto size = vertex_count * sizeof(tke::LinesRenderer::Vertex);
+		//	auto vtx_dst = (tke::LinesRenderer::Vertex*)physx_vertex_buffer->map(0, size);
+		//	for (int i = 0; i < lineCount; i++)
+		//	{
+		//		auto &line = rb.getLines()[i];
+		//		vtx_dst[0].position = tke::physx_vec3_to_vec3(line.pos0);
+		//		vtx_dst[0].color = tke::physx_u32_to_vec3(line.color0);
+		//		vtx_dst[1].position = tke::physx_vec3_to_vec3(line.pos1);
+		//		vtx_dst[1].color = tke::physx_u32_to_vec3(line.color1);
+		//		vtx_dst += 2;
+		//	}
+		//	physx_vertex_buffer->unmap();
+		//	tke::LinesRenderer::DrawData data;
+		//	data.vertex_buffer = physx_vertex_buffer.get();
+		//	data.vertex_count = vertex_count;
+		//	lines_renderer->render(layer.framebuffer.get(), false, camera, &data);
+		//	lines_renderer->add_to_drawlist();
+		//}
 	}
 
 	if (showSelectedWireframe)
@@ -397,6 +397,6 @@ void SceneEditor::do_show()
 
 void SceneEditor::save(tke::XMLNode *n)
 {
-	n->addAttribute("filename", scene->filename);
+	n->addAttribute("filename", scene->get_filename());
 	n->addAttribute("follow", &follow);
 }

@@ -8,7 +8,7 @@
 
 namespace tke
 {
-	const VkFormat swapchainFormat = VK_FORMAT_B8G8R8A8_UNORM;
+	const VkFormat swapchain_format = VK_FORMAT_B8G8R8A8_UNORM;
 
 	struct Device
 	{
@@ -27,14 +27,16 @@ namespace tke
 		void submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
 	};
 
-	extern VkInstance vk_instance;
-	extern VkPhysicalDevice physicalDevice;
-	extern VkPhysicalDeviceProperties physicalDeviceProperties;
-	extern VkPhysicalDeviceFeatures physicalDeviceFeatures;
-	extern Device vk_device;
-	extern Queue graphicsQueue;
+	extern const char *vk_device_type_names[];
 
-	int findVkMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	extern VkInstance vk_instance;
+	extern VkPhysicalDevice vk_physical_device;
+	extern VkPhysicalDeviceProperties vk_physical_device_properties;
+	extern VkPhysicalDeviceFeatures vk_physical_device_features;
+	extern Device vk_device;
+	extern Queue vk_graphics_queue;
+
+	int find_vk_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	int initVulkan(bool debug);
 }

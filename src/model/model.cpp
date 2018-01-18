@@ -1500,7 +1500,6 @@ namespace tke
 					getMaterialImage(m->filepath + "/" + specRoughnessMapName));
 				file & g->indiceBase;
 				file & g->indiceCount;
-				file & g->visible;
 
 				m->geometries.emplace_back(g);
 			}
@@ -1641,7 +1640,6 @@ namespace tke
 
 				file & g->indiceBase;
 				file & g->indiceCount;
-				file & g->visible;
 			}
 
 			int boneCount = m->bones.size();

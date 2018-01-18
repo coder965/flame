@@ -65,6 +65,7 @@ int main(int argc, char** argv)
 	tke::onRender = []() {
 		tke::begin_frame(true);
 
+		bool show_device_Props = false;
 		if (ImGui::last_frame_main_menu_alive || tke::mouseY <= ImGui::GetFrameHeight())
 		{
 			ImGui::BeginMainMenuBar();
@@ -130,7 +131,77 @@ int main(int argc, char** argv)
 
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu_keepalive("Help"))
+			{
+				if (ImGui::MenuItem("Device Properties"))
+					show_device_Props = true;
+
+				ImGui::EndMenu();
+			}
 			ImGui::EndMainMenuBar();
+		}
+
+		if (show_device_Props)
+			ImGui::OpenPopup("Device Properties");
+		if (ImGui::BeginPopupModal("Device Properties"))
+		{
+			if (ImGui::TreeNode("Physical Device Properties"))
+			{
+				auto &p = tke::vk_physical_device_properties;
+				ImGui::Text("api version: %d", p.apiVersion);
+				ImGui::Text("driver version: %d", p.driverVersion);
+				ImGui::Text("vendor ID: %d", p.vendorID);
+				ImGui::Text("device ID: %d", p.deviceID);
+				ImGui::Text("device type: %s", tke::vk_device_type_names[p.deviceType]);
+				ImGui::Text("device name: %s", p.deviceName);
+
+				if (ImGui::TreeNode("Limits"))
+				{
+					ImGui::BeginChild("##limits", ImVec2(0, 300), true);
+					auto &l = p.limits;
+					ImGui::Text("max image dimension 1D: %d", l.maxImageDimension1D);
+					ImGui::Text("max image dimension 2D: %d", l.maxImageDimension2D);
+					ImGui::Text("max image dimension 3D: %d", l.maxImageDimension3D);
+					ImGui::Text("max image dimension cube: %d", l.maxImageDimensionCube);
+					ImGui::Text("max image array layers: %d", l.maxImageArrayLayers);
+					ImGui::Text("max texel buffer range: %d", l.maxTexelBufferElements);
+					ImGui::Text("max uniform buffer range: %d", l.maxUniformBufferRange);
+					ImGui::Text("max storage buffer range: %d", l.maxStorageBufferRange);
+					ImGui::Text("max push constants size: %d", l.maxPushConstantsSize);
+					ImGui::Text("max memory allocation count: %d", l.maxMemoryAllocationCount);
+					ImGui::Text("max sampler allocation count: %d", l.maxSamplerAllocationCount);
+					ImGui::Text("buffer image granularity: %lld", l.bufferImageGranularity);
+					ImGui::Text("sparse address space size: %lld", l.sparseAddressSpaceSize);
+					ImGui::Text("max bound descriptor sets: %d", l.maxBoundDescriptorSets);
+					ImGui::Text("max per stage descriptor samplers: %d", l.maxPerStageDescriptorSamplers);
+					ImGui::Text("max per stage descriptor uniform buffers: %d", l.maxPerStageDescriptorUniformBuffers);
+					ImGui::Text("max per stage descriptor storage buffers: %d", l.maxPerStageDescriptorStorageBuffers);
+					ImGui::Text("max per stage descriptor sampled images: %d", l.maxPerStageDescriptorSampledImages);
+					ImGui::Text("max per stage descriptor storage images: %d", l.maxPerStageDescriptorStorageImages);
+					ImGui::Text("max per stage descriptor input attachments: %d", l.maxPerStageDescriptorInputAttachments);
+					ImGui::Text("max per stage resources: %d", l.maxPerStageResources);
+					ImGui::Text("max descriptor set samplers: %d", l.maxDescriptorSetSamplers);
+					ImGui::EndChild();
+
+					ImGui::TreePop();
+				}
+
+				if (ImGui::TreeNode("Sparse Properties"))
+				{
+					ImGui::TreePop();
+				}
+
+				ImGui::TreePop();
+			}
+			if (ImGui::TreeNode("Physical Device Features"))
+			{
+				ImGui::TreePop();
+			}
+
+			if (ImGui::Button("Ok"))
+				ImGui::CloseCurrentPopup();
+
+			ImGui::EndPopup();
 		}
 
 		if (scene_editor)

@@ -91,15 +91,15 @@ namespace tke
 	{
 		unsigned int physicalDeviceSurfaceFormatCount = 0;
 		std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, window_surface, &physicalDeviceSurfaceFormatCount, nullptr);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface, &physicalDeviceSurfaceFormatCount, nullptr);
 		physicalDeviceSurfaceFormats.resize(physicalDeviceSurfaceFormatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, window_surface, &physicalDeviceSurfaceFormatCount, physicalDeviceSurfaceFormats.data());
+		vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface, &physicalDeviceSurfaceFormatCount, physicalDeviceSurfaceFormats.data());
 
 		VkSwapchainCreateInfoKHR swapchainInfo = {};
 		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainInfo.surface = window_surface;
 		swapchainInfo.minImageCount = 2;
-		swapchainInfo.imageFormat = swapchainFormat;
+		swapchainInfo.imageFormat = swapchain_format;
 		swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 		swapchainInfo.imageExtent.width = window_cx;
 		swapchainInfo.imageExtent.height = window_cy;
@@ -120,7 +120,7 @@ namespace tke
 
 		for (int i = 0; i < 2; i++)
 		{
-			window_images[i] = new Image(Image::eSwapchain, vkImages[i], window_cx, window_cy, swapchainFormat);
+			window_images[i] = new Image(Image::eSwapchain, vkImages[i], window_cx, window_cy, swapchain_format);
 			window_framebuffers[i] = getFramebuffer(window_images[i], renderPass_window);
 		}
 	}
@@ -332,11 +332,11 @@ namespace tke
 			assert(res == VK_SUCCESS);
 
 			VkBool32 supported;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, 0, window_surface,
+			vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, 0, window_surface,
 				&supported);
 
 			VkSurfaceCapabilitiesKHR surfaceCapabilities;
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, window_surface,
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device, window_surface,
 				&surfaceCapabilities);
 		}
 
@@ -432,7 +432,7 @@ namespace tke
 		endUi();
 
 		if (_cbs.size())
-			tke::graphicsQueue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frameDone);
+			tke::vk_graphics_queue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frameDone);
 		waitFence(frameDone);
 
 		VkPresentInfoKHR info = {};
@@ -441,10 +441,10 @@ namespace tke
 		info.pSwapchains = &swapchain;
 		info.pImageIndices = &window_imageIndex;
 
-		graphicsQueue.mtx.lock();
-		auto res = vkQueuePresentKHR(graphicsQueue.v, &info);
+		vk_graphics_queue.mtx.lock();
+		auto res = vkQueuePresentKHR(vk_graphics_queue.v, &info);
 		assert(res == VK_SUCCESS);
-		graphicsQueue.mtx.unlock();
+		vk_graphics_queue.mtx.unlock();
 
 		_cbs.clear();
 	}

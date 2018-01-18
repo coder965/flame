@@ -122,24 +122,63 @@ namespace tke
 		//}
 	}
 
-	Scene::Scene()
-		:Node(NodeTypeScene)
+	Scene::Scene() :
+		Node(NodeTypeScene),
+		enable_sun_light(true),
+		hdr_exposure(0.01f),
+		hdr_white(1.f),
+		ambient_color(0.5f),
+		fog_color(0.5f),
+		ssao_radius(10.f),
+		ssao_bias(0.01f),
+		ssao_intensity(100000.f),
+		fog_thickness(0.01f)
 	{
-		physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
-		pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
-		pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-		pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-		pxScene = pxPhysics->createScene(pxSceneDesc);
-		pxControllerManager = PxCreateControllerManager(*pxScene);
+		//physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
+		//pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
+		//pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+		//pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+		//pxScene = pxPhysics->createScene(pxSceneDesc);
+		//pxControllerManager = PxCreateControllerManager(*pxScene);
 	}
 
 	Scene::~Scene()
 	{
-		pxControllerManager->release();
-		pxScene->release();
+		//pxControllerManager->release();
+		//pxScene->release();
 	}
 
-	void Scene::setSkyType(SkyType skyType)
+	std::string Scene::get_filename() const
+	{
+		return filename;
+	}
+
+	SkyType Scene::get_sky_type() const
+	{
+		return sky ? sky->type : SkyTypeNull;
+	}
+
+	Sky *Scene::get_sky() const
+	{
+		return sky.get();
+	}
+
+	glm::vec3 Scene::get_ambient_color() const
+	{
+		return ambient_color;
+	}
+
+	glm::vec3 Scene::get_fog_color() const
+	{
+		return fog_color;
+	}
+
+	void Scene::set_filename(const std::string &_filename)
+	{
+		filename = _filename;
+	}
+
+	void Scene::set_sky_type(SkyType skyType)
 	{
 		switch (skyType)
 		{
@@ -371,24 +410,24 @@ namespace tke
 	//	return o;
 	//}
 
-	int Scene::getCollisionGroupID(int ID, unsigned int mask)
-	{
-		if (mask == 0)
-		{
-			return -1;
-		}
-		auto count = pCollisionGroups.size();
-		for (int i = 0; i < count; i++)
-		{
-			if (pCollisionGroups[i]->originalID == ID && pCollisionGroups[i]->originalmask == mask)
-				return i;
-		}
-		auto c = new CollisionGroup;
-		c->originalID = ID;
-		c->originalmask = mask;
-		pCollisionGroups.push_back(c);
-		return count;
-	}
+	//int Scene::getCollisionGroupID(int ID, unsigned int mask)
+	//{
+	//	if (mask == 0)
+	//	{
+	//		return -1;
+	//	}
+	//	auto count = pCollisionGroups.size();
+	//	for (int i = 0; i < count; i++)
+	//	{
+	//		if (pCollisionGroups[i]->originalID == ID && pCollisionGroups[i]->originalmask == mask)
+	//			return i;
+	//	}
+	//	auto c = new CollisionGroup;
+	//	c->originalID = ID;
+	//	c->originalmask = mask;
+	//	pCollisionGroups.push_back(c);
+	//	return count;
+	//}
 
 	//void Scene::addTerrain(Terrain *t) // when a terrain is added to scene, the owner is the scene, terrain cannot be deleted elsewhere
 	//{
@@ -448,20 +487,20 @@ namespace tke
 		if (!sky || sky->type != SkyTypeAtmosphereScattering)
 			return;
 		auto as = (SkyAtmosphereScattering*)sky.get();
-		as->node->set_euler(glm::vec3(v.x, 0.f, v.y));
+		as->node->set_euler(glm::vec3(v.x, v.y, 0.f));
 		broadcast(this, MessageSkyDirty);
 		broadcast(this, MessageAmbientDirty);
 	}
 
-	void Scene::setAmbientColor(const glm::vec3 &v)
+	void Scene::set_ambient_color(const glm::vec3 &v)
 	{
-		ambientColor = v;
+		ambient_color = v;
 		broadcast(this, MessageAmbientDirty);
 	}
 
-	void Scene::setFogColor(const glm::vec3 &v)
+	void Scene::set_fog_color(const glm::vec3 &v)
 	{
-		fogColor = v;
+		fog_color = v;
 		broadcast(this, MessageAmbientDirty);
 	}
 
@@ -512,7 +551,7 @@ namespace tke
 			return nullptr;
 
 		auto s = std::make_shared<Scene>();
-		s->filename = filename;
+		s->set_filename(filename);
 
 		tke::XMLDoc at("scene", filename);
 		// TODO : FIX THIS

@@ -36,7 +36,7 @@ namespace tke
 	VkAttachmentDescription swapchainAttachmentDesc(VkAttachmentLoadOp loadOp)
 	{
 		VkAttachmentDescription desc = {};
-		desc.format = swapchainFormat;
+		desc.format = swapchain_format;
 		desc.samples = VK_SAMPLE_COUNT_1_BIT;
 		desc.loadOp = loadOp;
 		desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

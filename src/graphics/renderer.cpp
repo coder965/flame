@@ -894,74 +894,71 @@ namespace tke
 				}
 			};
 
-			if (!scene->sky)
-				envrImage->clear(glm::vec4(0.f));
-			else
+			switch (scene->get_sky_type())
 			{
-				switch (scene->sky->type)
+				case SkyTypeNull:
+					envrImage->clear(glm::vec4(0.f));
+					break;
+				case SkyTypeDebug:
 				{
-					case SkyTypeDebug:
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImage.get(), renderPass_image8);
+
+					cb->beginRenderPass(renderPass_image8, fb.get());
+					cb->bindPipeline(output_debug_panorama_pipeline);
+					cb->draw(3);
+					cb->endRenderPass();
+
+					endOnceCommandBuffer(cb);
+
+					funUpdateIBL();
+
+					break;
+				}
+				case SkyTypeAtmosphereScattering:
+				{
+					auto as = (SkyAtmosphereScattering*)scene->get_sky();
+
+					auto cb = begineOnceCommandBuffer();
+					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
+
+					cb->beginRenderPass(renderPass_image16, fb.get());
+					cb->bindPipeline(scattering_pipeline);
+					auto dir = -as->sun_light->get_parent()->get_axis()[2];
+					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
+					cb->draw(3);
+					cb->endRenderPass();
+
+					endOnceCommandBuffer(cb);
+
+					funUpdateIBL();
+
+					break;
+				}
+				case SkyTypePanorama:
+				{
+					auto pa = (SkyPanorama*)scene->get_sky();
+
+					if (pa->panoImage)
 					{
-						auto cb = begineOnceCommandBuffer();
-						auto fb = getFramebuffer(envrImage.get(), renderPass_image8);
-
-						cb->beginRenderPass(renderPass_image8, fb.get());
-						cb->bindPipeline(output_debug_panorama_pipeline);
-						cb->draw(3);
-						cb->endRenderPass();
-
-						endOnceCommandBuffer(cb);
-
-						funUpdateIBL();
-
-						break;
-					}
-					case SkyTypeAtmosphereScattering:
-					{
-						auto as = (SkyAtmosphereScattering*)scene->sky.get();
-
 						auto cb = begineOnceCommandBuffer();
 						auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 						cb->beginRenderPass(renderPass_image16, fb.get());
-						cb->bindPipeline(scattering_pipeline);
-						auto euler = as->sun_light->get_parent()->get_euler();
-						auto dir = glm::vec2(euler.x, euler.z);
-						cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
+						cb->bindPipeline(copy_pipeline);
+						cb->setViewportAndScissor(EnvrSizeCx, EnvrSizeCy);
+						updateDescriptorSets(1, &copy_pipeline->descriptorSet->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
+						cb->bindDescriptorSet();
 						cb->draw(3);
 						cb->endRenderPass();
 
 						endOnceCommandBuffer(cb);
 
 						funUpdateIBL();
-
-						break;
 					}
-					case SkyTypePanorama:
-					{
-						auto pa = (SkyPanorama*)scene->sky.get();
-
-						if (pa->panoImage)
-						{
-							auto cb = begineOnceCommandBuffer();
-							auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
-
-							cb->beginRenderPass(renderPass_image16, fb.get());
-							cb->bindPipeline(copy_pipeline);
-							cb->setViewportAndScissor(EnvrSizeCx, EnvrSizeCy);
-							updateDescriptorSets(1, &copy_pipeline->descriptorSet->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
-							cb->bindDescriptorSet();
-							cb->draw(3);
-							cb->endRenderPass();
-
-							endOnceCommandBuffer(cb);
-
-							funUpdateIBL();
-						}
-						else
-							envrImage->clear(glm::vec4(0.f));
-						break;
-					}
+					else
+						envrImage->clear(glm::vec4(0.f));
+					break;
 				}
 			}
 
@@ -970,9 +967,9 @@ namespace tke
 		if (ambient_dirty)
 		{
 			AmbientBufferShaderStruct stru;
-			stru.color = scene->ambientColor;
+			stru.color = scene->get_ambient_color();
 			stru.envr_max_mipmap = envrImage->levels.size() - 1;
-			stru.fogcolor = glm::vec4(scene->fogColor, 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
+			stru.fogcolor = glm::vec4(scene->get_fog_color(), 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
 			ambientBuffer->update(&stru, defalut_staging_buffer);
 
 			ambient_dirty = false;

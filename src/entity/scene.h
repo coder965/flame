@@ -16,41 +16,49 @@ namespace tke
 {
 	struct CollisionGroup;
 
-	struct Scene : Node
+	class Scene : public Node
 	{
+	private:
 		std::string filename;
-		std::string filepath;
 
 		std::unique_ptr<Sky> sky;
-		bool enable_sun_light = true;
+		bool enable_sun_light;
 
-		float hdrExposure = 0.01f;
-		float hdrWhite = 1.f;
+		float hdr_exposure;
+		float hdr_white;
 
-		glm::vec3 ambientColor = glm::vec3(0.5f);
-		glm::vec3 fogColor = glm::vec3(0.5f);
+		glm::vec3 ambient_color ;
+		glm::vec3 fog_color;
 
-		float ssaoRadius = 10.f;
-		float ssaoBias = 0.01f;
-		float ssaoIntensity = 100000.f;
+		float ssao_radius;
+		float ssao_bias;
+		float ssao_intensity;
 
-		float fogThickness = 0.01f;
+		float fog_thickness;
 
-		std::vector<CollisionGroup*> pCollisionGroups;
+		//std::vector<CollisionGroup*> pCollisionGroups;
 
-		physx::PxScene *pxScene = nullptr;
-		physx::PxControllerManager *pxControllerManager = nullptr;
-
+		//physx::PxScene *pxScene = nullptr;
+		//physx::PxControllerManager *pxControllerManager = nullptr;
+	protected:
 		virtual void on_update() override;
-
+	public:
 		Scene();
 		~Scene();
-		void setSkyType(SkyType skyType);
+
+		std::string get_filename() const;
+		SkyType get_sky_type() const;
+		Sky *get_sky() const;
+		glm::vec3 get_ambient_color() const;
+		glm::vec3 get_fog_color() const;
+
+		void set_filename(const std::string &_filename);
+		void set_sky_type(SkyType skyType);
 		void set_pano_sky_image(std::shared_ptr<Image> i);
-		int getCollisionGroupID(int ID, unsigned int mask);
+		//int getCollisionGroupID(int ID, unsigned int mask);
 		void setSunDir(const glm::vec2 &);
-		void setAmbientColor(const glm::vec3 &);
-		void setFogColor(const glm::vec3 &);
+		void set_ambient_color(const glm::vec3 &);
+		void set_fog_color(const glm::vec3 &);
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
 		void save(const std::string &filename);
 	};

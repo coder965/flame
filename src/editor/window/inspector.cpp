@@ -34,109 +34,79 @@ void InspectorWindow::do_show()
 					{
 						auto scene = (tke::Scene*)n;
 
-						auto ambientColor = scene->ambientColor;
-						if (ImGui::DragFloat3("Ambient Color", &ambientColor[0], 0.1f, 0.f, 100.f))
-							scene->setAmbientColor(ambientColor);
-						auto fogColor = scene->fogColor;
-						if (ImGui::DragFloat3("Fog Color", &fogColor[0], 0.1f, 0.f, 100.f))
-							scene->setFogColor(fogColor);
+						auto ambient_color = scene->get_ambient_color();
+						if (ImGui::DragFloat3("Ambient Color", &ambient_color[0], 0.1f, 0.f, 100.f))
+							scene->set_ambient_color(ambient_color);
+						auto fog_color = scene->get_fog_color();
+						if (ImGui::DragFloat3("Fog Color", &fog_color[0], 0.1f, 0.f, 100.f))
+							scene->set_fog_color(fog_color);
 
-						int sky_type_index;
-						if (!scene->sky)
-							sky_type_index = 0;
-						else
-						{
-							if (scene->sky->type == tke::SkyTypeDebug)
-								sky_type_index = 1;
-							else if (scene->sky->type == tke::SkyTypeAtmosphereScattering)
-								sky_type_index = 2;
-							else if (scene->sky->type == tke::SkyTypePanorama)
-								sky_type_index = 3;
-						}
+						int sky_type = scene->get_sky_type();
 						const char *sky_type_names[] = {
 							"Null",
 							"Debug",
 							"Atmosphere Scattering",
 							"Panorama"
 						};
-						if (ImGui::Combo("sky type", &sky_type_index, sky_type_names, TK_ARRAYSIZE(sky_type_names)))
+						if (ImGui::Combo("sky type", &sky_type, sky_type_names, TK_ARRAYSIZE(sky_type_names)))
+							scene->set_sky_type((tke::SkyType)sky_type);
+
+						switch (scene->get_sky_type())
 						{
-							switch (sky_type_index)
+							case tke::SkyTypeAtmosphereScattering:
 							{
-								case 0:
-									scene->setSkyType(tke::SkyTypeNull);
-									break;
-								case 1:
-									scene->setSkyType(tke::SkyTypeDebug);
-									break;
-								case 2:
-									scene->setSkyType(tke::SkyTypeAtmosphereScattering);
-									break;
-								case 3:
-									scene->setSkyType(tke::SkyTypePanorama);
-									break;
+								static glm::vec2 sun_dir;
+								auto as = (tke::SkyAtmosphereScattering*)scene->get_sky();
+								if (ImGui::Button("change sun dir"))
+								{
+									ImGui::OpenPopup("Sun Dir");
+									auto euler = as->node->get_euler();
+									sun_dir = glm::vec2(euler.x, euler.z);
+								}
+								if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
+									as->sun_light->set_color(as->sun_color * as->sun_power);
+								bool shadow = as->sun_light->is_enable_shadow();
+								if (ImGui::Checkbox("sun shadow", &shadow))
+									as->sun_light->set_enable_shadow(shadow);
+
+								if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+								{
+									ImGui::DragFloat("x", &sun_dir[0]);
+									ImGui::DragFloat("y", &sun_dir[1]);
+									if (ImGui::Button("Ok"))
+									{
+										scene->setSunDir(sun_dir);
+										ImGui::CloseCurrentPopup();
+									}
+									ImGui::SameLine();
+									if (ImGui::Button("Cancel"))
+										ImGui::CloseCurrentPopup();
+
+									ImGui::EndPopup();
+								}
+								break;
 							}
-						}
-
-						if (scene->sky)
-						{
-							switch (scene->sky->type)
+							case tke::SkyTypePanorama:
 							{
-								case tke::SkyTypeAtmosphereScattering:
+								auto pa = (tke::SkyPanorama*)scene->get_sky();
+								ImGui::Text("Image:%s", pa->panoImage ? pa->panoImage->filename.c_str() : "Null");
+								if (ImGui::BeginDragDropTarget())
 								{
-									static glm::vec2 sun_dir;
-									auto as = (tke::SkyAtmosphereScattering*)scene->sky.get();
-									if (ImGui::Button("change sun dir"))
+									if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
 									{
-										ImGui::OpenPopup("Sun Dir");
-										auto euler = as->node->get_euler();
-										sun_dir = glm::vec2(euler.x, euler.z);
-									}
-									if (ImGui::DragFloat("sun power", &as->sun_power, 0.1f, 0.f, 1000.f))
-										as->sun_light->set_color(as->sun_color * as->sun_power);
-									bool shadow = as->sun_light->is_enable_shadow();
-									if (ImGui::Checkbox("sun shadow", &shadow))
-										as->sun_light->set_enable_shadow(shadow);
-
-									if (ImGui::BeginPopupModal("Sun Dir", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-									{
-										ImGui::DragFloat("x", &sun_dir[0]);
-										ImGui::DragFloat("y", &sun_dir[1]);
-										if (ImGui::Button("Ok"))
+										static char filename[260];
+										strcpy(filename, (char*)payload->Data);
+										if (!pa->panoImage || pa->panoImage->filename != filename)
 										{
-											scene->setSunDir(sun_dir);
-											ImGui::CloseCurrentPopup();
+											std::experimental::filesystem::path path(filename);
+											auto ext = path.extension();
+											if (tke::is_image_file(ext.string()))
+												scene->set_pano_sky_image(tke::get_image(filename));
 										}
-										ImGui::SameLine();
-										if (ImGui::Button("Cancel"))
-											ImGui::CloseCurrentPopup();
-
-										ImGui::EndPopup();
 									}
-									break;
+									ImGui::EndDragDropTarget();
 								}
-								case tke::SkyTypePanorama:
-								{
-									auto pa = (tke::SkyPanorama*)scene->sky.get();
-									ImGui::Text("Image:%s", pa->panoImage ? pa->panoImage->filename.c_str() : "Null");
-									if (ImGui::BeginDragDropTarget())
-									{
-										if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
-										{
-											static char filename[260];
-											strcpy(filename, (char*)payload->Data);
-											if (!pa->panoImage || pa->panoImage->filename != filename)
-											{
-												std::experimental::filesystem::path path(filename);
-												auto ext = path.extension();
-												if (tke::is_image_file(ext.string()))
-													scene->set_pano_sky_image(tke::get_image(filename));
-											}
-										}
-										ImGui::EndDragDropTarget();
-									}
-									break;
-								}
+								break;
 							}
 						}
 

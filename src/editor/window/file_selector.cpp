@@ -240,11 +240,12 @@ void FileSelector::do_show()
 			on_right_area_show();
 			ImGui::EndChild();
 		}
+
+		if (modal)
+			ImGui::EndPopup();
 	}
 
-	if (modal)
-		ImGui::EndPopup();
-	else
+	if (!modal)
 		ImGui::End();
 }
 

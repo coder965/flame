@@ -42,7 +42,7 @@ namespace tke
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findVkMemoryType(memRequirements.memoryTypeBits, memoryProperty);
+		allocInfo.memoryTypeIndex = find_vk_memory_type(memRequirements.memoryTypeBits, memoryProperty);
 
 		res = vkAllocateMemory(vk_device.v, &allocInfo, nullptr, &memory);
 		assert(res == VK_SUCCESS);
@@ -96,7 +96,7 @@ namespace tke
 		endOnceCommandBuffer(cb);
 	}
 
-	void Buffer::update(void *data, StagingBuffer *stagingBuffer, size_t _size)
+	void Buffer::update(void *data, Buffer *stagingBuffer, size_t _size)
 	{
 		if (_size == 0) 
 			_size = size;

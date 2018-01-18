@@ -52,8 +52,6 @@ namespace tke
 		int indiceCount = 0;
 
 		std::shared_ptr<Material> material;
-
-		bool visible = true;
 	};
 
 	struct Bone
@@ -76,6 +74,11 @@ namespace tke
 		unsigned short iterations = 0;
 		float weight = 0.f;
 		std::vector<int> chain;
+	};
+
+	struct GeometryUV
+	{
+		
 	};
 
 	struct GeometryAux
@@ -105,9 +108,8 @@ namespace tke
 		int indice_count = 0;
 		std::unique_ptr<int[]> indices;
 
-		std::unique_ptr<GeometryAux> geometry_aux;
-
 		std::vector<std::unique_ptr<Geometry>> geometries;
+		std::unique_ptr<GeometryAux> geometry_aux;
 
 		std::vector<std::unique_ptr<Bone>> bones;
 		std::vector<std::unique_ptr<BoneIK>> iks;
