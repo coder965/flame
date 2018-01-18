@@ -28,6 +28,19 @@ namespace ImGui
 		return open;
 	}
 
+	void TextVFilted(const char* fmt, const char* filter, va_list args)
+	{
+		ImGuiWindow* window = GetCurrentWindow();
+		if (window->SkipItems)
+			return;
+
+		ImGuiContext& g = *GImGui;
+		const char* text_end = g.TempBuffer + ImFormatStringV(g.TempBuffer, IM_ARRAYSIZE(g.TempBuffer), fmt, args);
+		if (filter[0] && !strstr(g.TempBuffer, filter))
+			return;
+		TextUnformatted(g.TempBuffer, text_end);
+	}
+
 	bool Splitter(bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size)
 	{
 		using namespace ImGui;

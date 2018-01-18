@@ -16,6 +16,7 @@ namespace ImGui
 	extern bool last_frame_main_menu_alive;
 
 	bool BeginMenu_keepalive(const char* label, bool enabled = true);
+	void TextVFilted(const char* fmt, const char* filter, va_list args);
 
 	bool Splitter(bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f);
 }
