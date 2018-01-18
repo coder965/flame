@@ -199,6 +199,7 @@ void SceneEditor::do_show()
 				if (m)
 				{
 					auto n = new tke::Node(tke::NodeTypeNode);
+					n->name = "Object";
 					n->set_coord(camera->get_target());
 					auto i = new tke::ModelInstanceComponent(m);
 					n->add_component(i);

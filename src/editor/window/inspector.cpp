@@ -193,67 +193,43 @@ void InspectorWindow::do_show()
 										{
 											auto triangle_count = m->indice_count / 3;
 
-											auto aux = m->geometry_aux.get();
-
 											ImGui::TextUnformatted("UV:");
-
-											static bool show_[12];
-											static const char *names_[12] = {
-												"a0",
-												"a1",
-												"a2",
-												"a3",
-												"a4",
-												"a5",
-												"a6",
-												"a7",
-												"a8",
-												"a9",
-												"a10",
-												"a11"
-											};
-											for (int i = 0; i < 12; i++)
-												ImGui::Checkbox(names_[i], &show_[i]);
-											// 4-5 6-7
 
 											ImDrawList* draw_list = ImGui::GetWindowDrawList();
 											ImVec2 pos = ImGui::GetCursorScreenPos();
 											ImVec2 size = ImVec2(256.f, 256.f);
 											draw_list->AddRect(pos - ImVec2(2.f, 2.f), pos + size + ImVec2(3.f, 3.f), ImColor(255, 255, 255));
 											ImGui::InvisibleButton("canvas", size);
-											draw_list->PushClipRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), true);
 
-											for (int i = 0; i < triangle_count; i++)
+											auto aux = m->geometry_aux.get();
+											if (aux)
 											{
-												if (!show_[i])
-													continue;
-
-												glm::vec2 uv[3];
-												int indices[3];
-												for (int j = 0; j < 3; j++)
+												draw_list->PushClipRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), true);
+												for (int i = 0; i < triangle_count; i++)
 												{
-													indices[j] = m->indices[i * 3 + j];
-													uv[j] = m->vertex[indices[j]].uv;
+													glm::vec2 uv[3];
+													for (int j = 0; j < 3; j++)
+														uv[j] = aux->triangles[i].bake_uv[j];
+
+													draw_list->AddLine(
+														pos + ImVec2(uv[0].x, uv[0].y) * size,
+														pos + ImVec2(uv[1].x, uv[1].y) * size,
+														IM_COL32(255, 255, 0, 255)
+													);
+													draw_list->AddLine(
+														pos + ImVec2(uv[1].x, uv[1].y) * size,
+														pos + ImVec2(uv[2].x, uv[2].y) * size,
+														IM_COL32(255, 255, 0, 255)
+													);
+													draw_list->AddLine(
+														pos + ImVec2(uv[2].x, uv[2].y) * size,
+														pos + ImVec2(uv[0].x, uv[0].y) * size,
+														IM_COL32(255, 255, 0, 255)
+													);
+
 												}
-
-												draw_list->AddLine(
-													pos + ImVec2(uv[0].x, uv[0].y) * size,
-													pos + ImVec2(uv[1].x, uv[1].y) * size,
-													IM_COL32(255, 255, 0, 255)
-												);
-												draw_list->AddLine(
-													pos + ImVec2(uv[1].x, uv[1].y) * size,
-													pos + ImVec2(uv[2].x, uv[2].y) * size,
-													IM_COL32(255, 255, 0, 255)
-												);
-												draw_list->AddLine(
-													pos + ImVec2(uv[2].x, uv[2].y) * size,
-													pos + ImVec2(uv[0].x, uv[0].y) * size,
-													IM_COL32(255, 255, 0, 255)
-												);
-
+												draw_list->PopClipRect();
 											}
-											draw_list->PopClipRect();
 
 											if (ImGui::Button("Create UV"))
 											{
@@ -264,9 +240,9 @@ void InspectorWindow::do_show()
 												float min_x = 0.f, max_x = 0.f, min_z = 0.f, max_z = 0.f;
 
 												std::vector<int> remain_triangles;
-												remain_triangles.resize(triangle_count);
-												for (int i = 0; i < triangle_count; i++)
-													remain_triangles[i] = i;
+												remain_triangles.resize(triangle_count - 1);
+												for (int i = 0; i < triangle_count - 1; i++)
+													remain_triangles[i] = i + 1;
 
 												static const auto up_dir = glm::vec3(0.f, 1.f, 0.f);
 
@@ -274,7 +250,7 @@ void InspectorWindow::do_show()
 
 												auto count = 0;
 												fProcessTri = [&](int tri_idx, glm::ivec3 swizzle, glm::vec4 base) {
-													if (tri_idx >= 4 && tri_idx <= 7)
+													if (tri_idx >= 4 && tri_idx <= 5)
 														int cut = 1;
 
 													int indices[3];
@@ -307,8 +283,7 @@ void InspectorWindow::do_show()
 															min_z = p.z;
 														if (p.z > max_z)
 															max_z = p.z;
-														auto indice = m->indices[tri_idx * 3 + i];
-														m->vertex[indice].uv = uv[i];
+														aux->triangles[tri_idx].bake_uv[i] = uv[i];
 													}
 
 													for (int i = 0; i < 3; i++)
@@ -328,14 +303,12 @@ void InspectorWindow::do_show()
 																		swizzle = glm::ivec3(1, 2, 0);
 																		break;
 																	case 1:
-																		swizzle = glm::ivec3(0, 2, 1);
+																		swizzle = glm::ivec3(2, 0, 1);
 																		break;
 																	case 2:
 																		swizzle = glm::ivec3(0, 1, 2);
 																		break;
 																}
-																if (indices[0] == aux->triangles[adj_idx.first].indices[swizzle[0]])
-																	std::swap(swizzle[0], swizzle[1]);
 																switch (i)
 																{
 																	case 0:
@@ -358,13 +331,17 @@ void InspectorWindow::do_show()
 
 												auto cx = max_x - min_x;
 												auto cz = max_z - min_z;
-												for (int i = 0; i < m->vertex_count; i++)
+												for (int i = 0; i < triangle_count; i++)
 												{
-													auto &uv = m->vertex[i].uv;
-													uv.x -= min_x;
-													uv.y -= min_z;
-													uv.x /= cx;
-													uv.y /= cz;
+													for (int j = 0; j < 3; j++)
+													{
+														auto &uv = aux->triangles[i].bake_uv[j];
+														uv.x -= min_x;
+														uv.y -= min_z;
+														uv.x /= cx;
+														uv.y /= cz;
+														int cut = 1;
+													}
 												}
 											}
 

@@ -83,7 +83,8 @@ namespace tke
 		struct Triangle
 		{
 			int indices[3];
-			std::pair<int, int> adjacency[3];
+			std::pair<int, int> adjacency[3]; // tri idx and vtx idx
+			glm::vec2 bake_uv[3];
 		};
 
 		std::vector<glm::vec3> unique_vertex;

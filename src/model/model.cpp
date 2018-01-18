@@ -661,7 +661,7 @@ namespace tke
 						}
 						if (index == -1)
 						{
-							index = m->vertex_count;
+							index = vertexs.size();
 							vertexs.push_back({
 								rawPositions[ids[0]],
 								ids[1] != -1 ? rawTexcoords[ids[1]] : glm::vec2(0.f),
@@ -696,7 +696,7 @@ namespace tke
 						std::ifstream file(m->filepath + "/" + libName);
 
 						std::string mtlName;
-						float spec, roughness;
+						float spec = 0.f, roughness = 1.f;
 						std::shared_ptr<Image> albedoAlphaMap;
 						std::shared_ptr<Image> normalHeightMap;
 
