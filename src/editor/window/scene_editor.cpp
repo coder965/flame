@@ -131,7 +131,11 @@ void SceneEditor::on_menu_bar()
 		if (ImGui::MenuItem("Paste", "Ctrl+V"))
 			;
 		if (ImGui::MenuItem("Delete", "Del"))
-			;
+		{
+			auto n = selected.get_node();
+			if (n)
+				n->get_parent()->remove_child(n);
+		}
 
 		ImGui::EndMenu();
 	}

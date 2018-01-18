@@ -162,6 +162,12 @@ void InspectorWindow::do_show()
 								{
 									if (ImGui::TreeNode("Controller"))
 									{
+
+										//	ImGui::DragFloat("ang offset", &o->ang_offset);
+										//	ImGui::DragFloat("speed", &o->speed);
+										//	ImGui::DragFloat("turn speed", &o->turn_speed);
+
+
 										ImGui::TreePop();
 									}
 									break;
@@ -232,118 +238,7 @@ void InspectorWindow::do_show()
 											}
 
 											if (ImGui::Button("Create UV"))
-											{
-												m->create_geometry_aux();
-
-												auto aux = m->geometry_aux.get();
-
-												float min_x = 0.f, max_x = 0.f, min_z = 0.f, max_z = 0.f;
-
-												std::vector<int> remain_triangles;
-												remain_triangles.resize(triangle_count - 1);
-												for (int i = 0; i < triangle_count - 1; i++)
-													remain_triangles[i] = i + 1;
-
-												static const auto up_dir = glm::vec3(0.f, 1.f, 0.f);
-
-												static std::function<void(int tri_idx, glm::ivec3 swizzle, glm::vec4 base)> fProcessTri;
-
-												auto count = 0;
-												fProcessTri = [&](int tri_idx, glm::ivec3 swizzle, glm::vec4 base) {
-													if (tri_idx >= 4 && tri_idx <= 5)
-														int cut = 1;
-
-													int indices[3];
-													glm::vec3 positions[3];
-													for (int i = 0; i < 3; i++)
-													{
-														indices[i] = aux->triangles[tri_idx].indices[i];
-														positions[i] = aux->unique_vertex[indices[i]];
-													}
-													auto v0 = glm::normalize(positions[swizzle[0]] - positions[swizzle[1]]);
-													auto v1 = glm::normalize(positions[swizzle[2]] - positions[swizzle[1]]);
-													auto n = glm::normalize(glm::cross(v1, v0));
-													auto b = glm::cross(v0, n);
-													auto src_mat = tke::make_matrix(glm::mat3(v0, n, b), positions[swizzle[1]]);
-													auto src_mat_inv = glm::inverse(src_mat);
-													glm::vec2 uv[3];
-													auto base_dir = glm::vec3(base.x, 0.f, base.y);
-													auto dst_mat = tke::make_matrix(glm::mat3(base_dir, up_dir, glm::cross(base_dir, up_dir)), glm::vec3(base.z, 0.f, base.w));
-													for (int i = 0; i < 3; i++)
-													{
-														auto p = src_mat_inv * glm::vec4(positions[i], 1.f);
-														p = dst_mat * p;
-														uv[i].x = p.x;
-														uv[i].y = p.z;
-														if (p.x < min_x)
-															min_x = p.x;
-														if (p.x > max_x)
-															max_x = p.x;
-														if (p.z < min_z)
-															min_z = p.z;
-														if (p.z > max_z)
-															max_z = p.z;
-														aux->triangles[tri_idx].bake_uv[i] = uv[i];
-													}
-
-													for (int i = 0; i < 3; i++)
-													{
-														auto adj_idx = aux->triangles[tri_idx].adjacency[i];
-														if (adj_idx.first != -1)
-														{
-															auto it = std::find(remain_triangles.begin(), remain_triangles.end(), adj_idx.first);
-															if (it != remain_triangles.end())
-															{
-																remain_triangles.erase(it);
-																glm::ivec3 swizzle;
-																glm::vec4 base;
-																switch (adj_idx.second)
-																{
-																	case 0:
-																		swizzle = glm::ivec3(1, 2, 0);
-																		break;
-																	case 1:
-																		swizzle = glm::ivec3(2, 0, 1);
-																		break;
-																	case 2:
-																		swizzle = glm::ivec3(0, 1, 2);
-																		break;
-																}
-																switch (i)
-																{
-																	case 0:
-																		base = glm::vec4(glm::normalize(uv[1] - uv[0]), uv[0]);
-																		break;
-																	case 1:
-																		base = glm::vec4(glm::normalize(uv[2] - uv[1]), uv[1]);
-																		break;
-																	case 2:
-																		base = glm::vec4(glm::normalize(uv[0] - uv[2]), uv[2]);
-																		break;
-																}
-																fProcessTri(adj_idx.first, swizzle, base);
-															}
-														}
-													}
-												};
-
-												fProcessTri(0, glm::ivec3(0, 1, 2), glm::vec4(1.f, 0.f, 0.f, 0.f));
-
-												auto cx = max_x - min_x;
-												auto cz = max_z - min_z;
-												for (int i = 0; i < triangle_count; i++)
-												{
-													for (int j = 0; j < 3; j++)
-													{
-														auto &uv = aux->triangles[i].bake_uv[j];
-														uv.x -= min_x;
-														uv.y -= min_z;
-														uv.x /= cx;
-														uv.y /= cz;
-														int cut = 1;
-													}
-												}
-											}
+												m->create_uv();
 
 											ImGui::TreePop();
 										}
@@ -367,6 +262,24 @@ void InspectorWindow::do_show()
 											ImGui::TreePop();
 										}
 
+										//	if (o->model->vertex_skeleton)
+										//	{
+										//		static int boneID = -1;
+										//		if (boneID >= o->model->bones.size()) boneID = -1;
+
+										//		if (ImGui::TreeNode("Bones Motion"))
+										//		{
+										//			for (int i = 0; i < o->model->bones.size(); i++)
+										//			{
+										//				auto str = tke::translate(936, CP_UTF8, o->model->bones[i]->name);
+										//				if (ImGui::Selectable(str.c_str(), i == boneID))
+										//					boneID = i;
+										//			}
+
+										//			ImGui::TreePop();
+										//		}
+										//	}
+
 										ImGui::TreePop();
 									}
 									break;
@@ -376,6 +289,14 @@ void InspectorWindow::do_show()
 									if (ImGui::TreeNode("Terrain"))
 									{
 										auto t = (tke::TerrainComponent*)c.get();
+
+										//	ImGui::Text("Blend Map:%s", t->blend_image ? t->blend_image->filename.c_str() : "Null");
+										//	show_material(t->materials[0].get());
+										//	//show_material(t->materials[1].get());
+										//	//show_material(t->materials[2].get());
+										//	//show_material(t->materials[3].get());
+										//	ImGui::Text("Height:%f", t->height);
+										//	ImGui::Text("Use Physx:%s", t->enable_physics ? "Yse" : "No");
 
 										ImGui::TreePop();
 									}
@@ -394,46 +315,6 @@ void InspectorWindow::do_show()
 
 						break;
 					}
-					//case tke::NodeTypeObject:
-					//{
-					//	ImGui::DragFloat("ang offset", &o->ang_offset);
-					//	ImGui::DragFloat("speed", &o->speed);
-					//	ImGui::DragFloat("turn speed", &o->turn_speed);
-
-					//	if (o->model->vertex_skeleton)
-					//	{
-					//		static int boneID = -1;
-					//		if (boneID >= o->model->bones.size()) boneID = -1;
-
-					//		if (ImGui::TreeNode("Bones Motion"))
-					//		{
-					//			for (int i = 0; i < o->model->bones.size(); i++)
-					//			{
-					//				auto str = tke::translate(936, CP_UTF8, o->model->bones[i]->name);
-					//				if (ImGui::Selectable(str.c_str(), i == boneID))
-					//					boneID = i;
-					//			}
-
-					//			ImGui::TreePop();
-					//		}
-					//	}
-
-					//	break;
-					//}
-					//case tke::NodeTypeTerrain:
-					//{
-					//	auto t = (tke::Terrain*)n;
-
-					//	ImGui::Text("Blend Map:%s", t->blend_image ? t->blend_image->filename.c_str() : "Null");
-					//	show_material(t->materials[0].get());
-					//	//show_material(t->materials[1].get());
-					//	//show_material(t->materials[2].get());
-					//	//show_material(t->materials[3].get());
-					//	ImGui::Text("Height:%f", t->height);
-					//	ImGui::Text("Use Physx:%s", t->enable_physics ? "Yse" : "No");
-
-					//	break;
-					//}
 				}
 			}
 			break;

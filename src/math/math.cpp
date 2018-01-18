@@ -181,12 +181,22 @@ namespace tke
 		return glm::mat3(x, y, z);
 	}
 
-	glm::mat4 make_matrix(glm::mat3 &rotation, glm::vec3 coord)
+	glm::mat4 make_matrix(const glm::mat3 &rotation, const glm::vec3 coord)
 	{
 		return glm::mat4(
 			glm::vec4(rotation[0], 0.f), 
 			glm::vec4(rotation[1], 0.f), 
 			glm::vec4(rotation[2], 0.f), 
+			glm::vec4(coord, 1.f)
+		);
+	}
+
+	glm::mat4 make_matrix(const glm::vec3 &x, const glm::vec3 &y, const glm::vec3 coord)
+	{
+		return glm::mat4(
+			glm::vec4(x, 0.f),
+			glm::vec4(y, 0.f),
+			glm::vec4(glm::cross(x, y), 0.f),
 			glm::vec4(coord, 1.f)
 		);
 	}

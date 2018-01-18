@@ -4,14 +4,26 @@ namespace tke
 {
 	Object::~Object()
 	{
-		for (auto f : followings)
-			f->remove_follower(this);
+		for (auto f : followers)
+			f->remove_following(this);
 	}
 
 	void Object::follow_to(Object *o)
 	{
 		followings.emplace_back(o);
 		o->followers.emplace_back(this);
+	}
+
+	void Object::remove_following(Object *o)
+	{
+		for (auto it = followings.begin(); it != followings.end(); it++)
+		{
+			if (*it == o)
+			{
+				followings.erase(it);
+				break;
+			}
+		}
 	}
 
 	void Object::remove_follower(Object *o)

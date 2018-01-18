@@ -137,6 +137,7 @@ namespace tke
 		glm::vec3 eye_position = glm::vec3(0.f);
 
 		void create_geometry_aux();
+		void create_uv();
 
 		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 

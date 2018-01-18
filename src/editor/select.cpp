@@ -43,7 +43,13 @@ void Select::operator=(const std::string &s)
 
 tke::Node *Select::get_node()
 {
-	return type == SelectTypeNode ? (tke::Node*)followings[0] : nullptr;
+	if (type == SelectTypeNode)
+	{
+		if (followings.size() > 0)
+			return (tke::Node*)followings[0];
+		type = SelectTypeNull;
+	}
+	return nullptr;
 }
 
 const std::string &Select::get_filename()

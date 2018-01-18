@@ -91,6 +91,91 @@ namespace tke
 		}
 	}
 
+	void Model::create_uv()
+	{
+		create_geometry_aux();
+
+		auto aux = geometry_aux.get();
+
+		float min_x = 0.f, max_x = 0.f, min_z = 0.f, max_z = 0.f;
+
+		auto triangle_count = indice_count / 3;
+
+		std::vector<int> remain_triangles;
+		remain_triangles.resize(triangle_count - 1);
+		for (int i = 0; i < triangle_count - 1; i++)
+			remain_triangles[i] = i + 1;
+
+		static const auto up_dir = glm::vec3(0.f, 1.f, 0.f);
+
+		static std::function<void(int tri_idx, int swizzle_base, glm::vec4 base)> fProcessTri;
+
+		fProcessTri = [&](int tri_idx, int swizzle_base, glm::vec4 base) {
+			int indices[3];
+			glm::vec3 positions[3];
+			for (int i = 0; i < 3; i++)
+			{
+				indices[i] = aux->triangles[tri_idx].indices[i];
+				positions[i] = aux->unique_vertex[indices[i]];
+			}
+			glm::ivec3 swizzle;
+			swizzle.z = swizzle_base;
+			swizzle.x = (swizzle_base + 1) % 3;
+			swizzle.y = (swizzle_base + 2) % 3;
+			auto v0 = glm::normalize(positions[swizzle[0]] - positions[swizzle[1]]);
+			auto v1 = glm::normalize(positions[swizzle[2]] - positions[swizzle[1]]);
+			auto src_mat_inv = glm::inverse(make_matrix(v0, glm::normalize(glm::cross(v1, v0)), positions[swizzle[1]]));
+			glm::vec2 uv[3];
+			auto dst_mat = make_matrix(glm::vec3(base.x, 0.f, base.y), up_dir, glm::vec3(base.z, 0.f, base.w));
+			for (int i = 0; i < 3; i++)
+			{
+				auto p = src_mat_inv * glm::vec4(positions[i], 1.f);
+				p = dst_mat * p;
+				uv[i].x = p.x;
+				uv[i].y = p.z;
+				if (p.x < min_x)
+					min_x = p.x;
+				if (p.x > max_x)
+					max_x = p.x;
+				if (p.z < min_z)
+					min_z = p.z;
+				if (p.z > max_z)
+					max_z = p.z;
+				aux->triangles[tri_idx].bake_uv[i] = uv[i];
+			}
+
+			for (int i = 0; i < 3; i++)
+			{
+				auto adj_idx = aux->triangles[tri_idx].adjacency[i];
+				if (adj_idx.first != -1)
+				{
+					auto it = std::find(remain_triangles.begin(), remain_triangles.end(), adj_idx.first);
+					if (it != remain_triangles.end())
+					{
+						remain_triangles.erase(it);
+						fProcessTri(adj_idx.first, adj_idx.second, glm::vec4(glm::normalize(uv[(i + 1) % 3] - uv[i]), uv[i]));
+					}
+				}
+			}
+		};
+
+		fProcessTri(0, 2, glm::vec4(1.f, 0.f, 0.f, 0.f));
+
+		auto cx = max_x - min_x;
+		auto cz = max_z - min_z;
+		for (int i = 0; i < triangle_count; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				auto &uv = aux->triangles[i].bake_uv[j];
+				uv.x -= min_x;
+				uv.y -= min_z;
+				uv.x /= cx;
+				uv.y /= cz;
+			}
+		}
+	}
+
 	void Model::setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b)
 	{
 		stateAnimations[kind] = b;

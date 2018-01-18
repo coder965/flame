@@ -129,6 +129,9 @@ namespace tke
 		bool terrain_count_dirty;
 		bool water_count_dirty;
 
+		int static_indirect_count;
+		int animated_indirect_count;
+
 		std::unique_ptr<CommandBuffer> cb_defe;
 		std::unique_ptr<CommandBuffer> cb_shad;
 

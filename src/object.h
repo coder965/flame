@@ -24,6 +24,7 @@ namespace tke
 
 		~Object();
 		void follow_to(Object *o);
+		void remove_following(Object *o);
 		void remove_follower(Object *o);
 		bool broadcast(Object *o, Message msg);
 		virtual bool on_message(Object *sender, Message msg) { return false; };

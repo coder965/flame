@@ -99,7 +99,8 @@ namespace tke
 	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
 	glm::mat3 euler_to_mat3(float x, float y, float z);
 	glm::mat3 euler_to_mat3(glm::vec3 &e);
-	glm::mat4 make_matrix(glm::mat3 &rotation, glm::vec3 coord);
+	glm::mat4 make_matrix(const glm::mat3 &rotation, const glm::vec3 coord);
+	glm::mat4 make_matrix(const glm::vec3 &x, const glm::vec3 &y, const glm::vec3 coord);
 
 	float linearDepthOrtho(float z, float depth_near, float depth_far);
 	float linearDepthPerspective(float z, float depth_near, float depth_far);

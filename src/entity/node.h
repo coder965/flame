@@ -53,7 +53,6 @@ namespace tke
 		bool broadcast(Object *src, Message msg);
 
 		Node(NodeType _type);
-		virtual ~Node() {}
 
 		glm::vec3 get_coord() const;
 		glm::vec3 get_euler();

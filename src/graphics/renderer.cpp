@@ -557,16 +557,18 @@ namespace tke
 		return false;
 	}
 
-	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *dst)
-		:enable_shadow(_enable_shadow), resource(&globalResource)
+	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *dst) :
+		sky_dirty(true),
+		ambient_dirty(true),
+		light_count_dirty(true),
+		static_model_instance_count_dirty(true),
+		animated_model_instance_count_dirty(true),
+		terrain_count_dirty(true),
+		static_indirect_count(0),
+		animated_indirect_count(0),
+		enable_shadow(_enable_shadow), 
+		resource(&globalResource)
 	{
-		sky_dirty = true;
-		ambient_dirty = true;
-		light_count_dirty = true;
-		static_model_instance_count_dirty = true;
-		animated_model_instance_count_dirty = true;
-		terrain_count_dirty = true;
-
 		if (!defe_inited)
 		{
 			VkAttachmentDescription atts[] = {
@@ -580,8 +582,8 @@ namespace tke
 			VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
 			VkAttachmentReference mrt_col_ref[] = {
 				{2, VK_IMAGE_LAYOUT_GENERAL},
-			{3, VK_IMAGE_LAYOUT_GENERAL},
-			{4, VK_IMAGE_LAYOUT_GENERAL}
+				{3, VK_IMAGE_LAYOUT_GENERAL},
+				{4, VK_IMAGE_LAYOUT_GENERAL}
 			};
 			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
 			VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_GENERAL };
@@ -1079,7 +1081,7 @@ namespace tke
 			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
-		static const auto fUpdateIndirect = [](SpareList &list, Buffer *buffer) {
+		static const auto fUpdateIndirect = [](SpareList &list, Buffer *buffer, int &out_count) {
 			if (list.get_size() > 0)
 			{
 				std::vector<VkDrawIndexedIndirectCommand> commands;
@@ -1098,16 +1100,17 @@ namespace tke
 					}
 				});
 				buffer->update(commands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * commands.size());
+				out_count = commands.size();
 			}
 		};
 		if (static_model_instance_count_dirty)
 		{
-			fUpdateIndirect(static_model_instances, staticObjectIndirectBuffer.get());
+			fUpdateIndirect(static_model_instances, staticObjectIndirectBuffer.get(), static_indirect_count);
 			static_model_instance_count_dirty = false;
 		}
 		if (animated_model_instance_count_dirty)
 		{
-			fUpdateIndirect(animated_model_instances, animatedObjectIndirectBuffer.get());
+			fUpdateIndirect(animated_model_instances, animatedObjectIndirectBuffer.get(), animated_indirect_count);
 			animated_model_instance_count_dirty = false;
 		}
 
@@ -1291,7 +1294,7 @@ namespace tke
 				ds_material->v
 			};
 			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb_defe->drawIndirectIndex(staticObjectIndirectBuffer.get(), static_model_instances.get_size());
+			cb_defe->drawIndirectIndex(staticObjectIndirectBuffer.get(), static_indirect_count);
 		}
 		// animated
 		if (animated_model_instances.get_size())
@@ -1303,7 +1306,7 @@ namespace tke
 				ds_mrtAnim_bone->v
 			};
 			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb_defe->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animated_model_instances.get_size());
+			cb_defe->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animated_indirect_count);
 		}
 		// terrain
 		if (terrains.get_size() > 0)
