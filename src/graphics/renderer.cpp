@@ -26,9 +26,9 @@ namespace tke
 	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)
 	{
 		geo_data.resize(1);
-		geo_data[0].index_count = m->indice_count;
-		geo_data[0].first_index = m->indiceBase;
-		geo_data[0].vertex_offset = m->vertexBase;
+		geo_data[0].index_count = m->indices.size();
+		geo_data[0].first_index = m->indice_base;
+		geo_data[0].vertex_offset = m->vertex_base;
 		geo_data[0].instance_count = 1;
 		geo_data[0].first_instance = 0;
 	}
@@ -38,15 +38,15 @@ namespace tke
 		for (int i = 0; i < m->geometries.size(); i++)
 		{
 			auto &g = m->geometries[i];
-			if (g->material->albedoAlphaMap)
+			if (g->material->albedo_alpha_map)
 			{
 				GeoData data;
 				auto &g = m->geometries[i];
 				data.index_count = g->indiceCount;
-				data.first_index = m->indiceBase + g->indiceBase;
-				data.vertex_offset = m->vertexBase;
+				data.first_index = m->indice_base + g->indiceBase;
+				data.vertex_offset = m->vertex_base;
 				data.instance_count = 1;
-				data.first_instance = g->material->albedoAlphaMap->material_index;
+				data.first_instance = g->material->albedo_alpha_map->material_index;
 				geo_data.push_back(data);
 			}
 		}
@@ -167,8 +167,8 @@ namespace tke
 		}
 		else
 		{
-			cb->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
-			cb->bindIndexBuffer(indexBuffer.get());
+			cb->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
+			cb->bindIndexBuffer(index_buffer.get());
 		}
 
 		struct
@@ -439,13 +439,13 @@ namespace tke
 					case ComponentTypeModelInstance:
 					{
 						auto i = (ModelInstanceComponent*)c;
-						auto index = i->get_model()->vertex_skeleton ? 
+						auto index = i->get_model()->vertexes_skeleton.size() > 0 ? 
 							animated_model_instances.add(i) :
 							static_model_instances.add(i);
 						if (index != -2)
 						{
 							i->set_instance_index(index);
-							if (i->get_model()->vertex_skeleton)
+							if (i->get_model()->vertexes_skeleton.size() > 0)
 								animated_model_instance_count_dirty = true;
 							else
 								static_model_instance_count_dirty = true;
@@ -501,11 +501,11 @@ namespace tke
 						auto index = i->get_instance_index();
 						if (index != -1)
 						{
-							if (i->get_model()->vertex_skeleton)
+							if (i->get_model()->vertexes_skeleton.size())
 								animated_model_instances.remove(i);
 							else
 								static_model_instances.remove(i);
-							if (i->get_model()->vertex_skeleton)
+							if (i->get_model()->vertexes_skeleton.size())
 								animated_model_instance_count_dirty = true;
 							else
 								static_model_instance_count_dirty = true;
@@ -1090,8 +1090,8 @@ namespace tke
 						VkDrawIndexedIndirectCommand command = {};
 						command.instanceCount = 1;
 						command.indexCount = g->indiceCount;
-						command.vertexOffset = m->vertexBase;
-						command.firstIndex = m->indiceBase + g->indiceBase;
+						command.vertexOffset = m->vertex_base;
+						command.firstIndex = m->indice_base + g->indiceBase;
 						command.firstInstance = (index << 8) + g->material->index;
 						commands.push_back(command);
 					}
@@ -1234,8 +1234,8 @@ namespace tke
 				};
 				cb_shad->beginRenderPass(renderPass_depthC_image32fC, fb_esm[index].get(), clearValues);
 
-				cb_shad->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
-				cb_shad->bindIndexBuffer(indexBuffer.get());
+				cb_shad->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
+				cb_shad->bindIndexBuffer(index_buffer.get());
 
 				static const auto fDrawDepth = [&](SpareList &list) {
 					list.iterate([&](int index, void *p, bool &remove) {
@@ -1278,8 +1278,8 @@ namespace tke
 
 		cb_defe->beginRenderPass(defe_renderpass, this->framebuffer.get());
 
-		cb_defe->bindVertexBuffer2(vertexStatBuffer.get(), vertexAnimBuffer.get());
-		cb_defe->bindIndexBuffer(indexBuffer.get());
+		cb_defe->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
+		cb_defe->bindIndexBuffer(index_buffer.get());
 
 		// mrt
 		// static

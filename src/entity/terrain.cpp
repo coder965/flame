@@ -24,7 +24,7 @@ namespace tke
 		attribute_dirty(true),
 		blend_image_dirty(true)
 	{
-		add_material(defaultMaterial);
+		add_material(default_material);
 	}
 
 	int TerrainComponent::get_block_cx() const

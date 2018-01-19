@@ -132,11 +132,9 @@ void InspectorWindow::do_show()
 								{
 									if (ImGui::TreeNode("Controller"))
 									{
-
 										//	ImGui::DragFloat("ang offset", &o->ang_offset);
 										//	ImGui::DragFloat("speed", &o->speed);
 										//	ImGui::DragFloat("turn speed", &o->turn_speed);
-
 
 										ImGui::TreePop();
 									}
@@ -165,11 +163,78 @@ void InspectorWindow::do_show()
 										auto i = (tke::ModelInstanceComponent*)c.get();
 										auto m = i->get_model();
 										ImGui::Text("model:%s", m->filename.c_str());
-										if (ImGui::TreeNode("Bake"))
+										if (ImGui::TreeNode("UV"))
 										{
-											auto triangle_count = m->indice_count / 3;
+											static int uv_index = 0;
+											tke::Model::UV *uv = nullptr;
+											ImGui::Combo("uv", &uv_index, [](void *data, int idx, const char **out_text) {
+												auto m = (tke::Model*)data;
+												*out_text = m->uvs[idx]->name.c_str();
+												return true;
+											}, m, m->uvs.size());
+											if (uv_index < m->uvs.size())
+												uv = m->uvs[uv_index].get();
+											int use_index = -1;
+											if (uv)
+											{
+												if (m->geometry_uv == uv && m->bake_uv == uv)
+													use_index = 3;
+												else if (m->geometry_uv == uv)
+													use_index = 1;
+												else if (m->bake_uv == uv)
+													use_index = 2;
+												else
+													use_index = 0;
+											}
+											static const char *use_names[] = {
+												"null",
+												"geometry",
+												"bake",
+												"geometry and bake"
+											};
+											if (ImGui::Combo("use as", &use_index, use_names, TK_ARRAYSIZE(use_names)))
+											{
+												if (uv)
+												{
+													switch (use_index)
+													{
+														case 0:
+															if (m->geometry_uv == uv)
+																m->assign_uv_to_geometry(nullptr);
+															if (m->bake_uv == uv)
+																m->assign_uv_to_bake(nullptr);
+															break;
+														case 1:
+															m->assign_uv_to_geometry(uv);
+															if (m->bake_uv == uv)
+																m->assign_uv_to_bake(nullptr);
+															break;
+														case 2:
+															if (m->geometry_uv == uv)
+																m->assign_uv_to_geometry(nullptr);
+															m->assign_uv_to_bake(uv);
+															break;
+														case 3:
+															m->assign_uv_to_geometry(uv);
+															m->assign_uv_to_bake(uv);
+															break;
+													}
+												}
+											}
 
-											ImGui::TextUnformatted("UV:");
+											if (ImGui::Button("Create"))
+												m->create_uv();
+											ImGui::SameLine();
+											if (ImGui::Button("Remove"))
+											{
+												if (uv)
+												{
+													m->remove_uv(uv);
+													uv = nullptr;
+												}
+											}
+
+											auto triangle_count = m->indices.size() / 3;
 
 											ImDrawList* draw_list = ImGui::GetWindowDrawList();
 											ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -177,44 +242,66 @@ void InspectorWindow::do_show()
 											draw_list->AddRect(pos - ImVec2(2.f, 2.f), pos + size + ImVec2(3.f, 3.f), ImColor(255, 255, 255));
 											ImGui::InvisibleButton("canvas", size);
 
-											auto aux = m->geometry_aux.get();
-											if (aux)
+											static bool overlap_bake_grid = false;
+											ImGui::Checkbox("overlap bake grid", &overlap_bake_grid);
+
+											draw_list->PushClipRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), true);
+											if (uv)
 											{
-												draw_list->PushClipRect(pos - ImVec2(1.f, 1.f), pos + size + ImVec2(1.f, 1.f), true);
 												for (int i = 0; i < triangle_count; i++)
 												{
-													glm::vec2 uv[3];
+													glm::vec2 p[3];
 													for (int j = 0; j < 3; j++)
-														uv[j] = aux->triangles[i].bake_uv[j];
-
+														p[j] = uv->unique[uv->indices[i * 3 + j]];
 													draw_list->AddLine(
-														pos + ImVec2(uv[0].x, uv[0].y) * size,
-														pos + ImVec2(uv[1].x, uv[1].y) * size,
-														IM_COL32(255, 255, 0, 255)
+														pos + ImVec2(p[0].x, p[0].y) * size,
+														pos + ImVec2(p[1].x, p[1].y) * size,
+														IM_COL32(255, 255, 255, 255)
 													);
 													draw_list->AddLine(
-														pos + ImVec2(uv[1].x, uv[1].y) * size,
-														pos + ImVec2(uv[2].x, uv[2].y) * size,
-														IM_COL32(255, 255, 0, 255)
+														pos + ImVec2(p[1].x, p[1].y) * size,
+														pos + ImVec2(p[2].x, p[2].y) * size,
+														IM_COL32(255, 255, 255, 255)
 													);
 													draw_list->AddLine(
-														pos + ImVec2(uv[2].x, uv[2].y) * size,
-														pos + ImVec2(uv[0].x, uv[0].y) * size,
-														IM_COL32(255, 255, 0, 255)
+														pos + ImVec2(p[2].x, p[2].y) * size,
+														pos + ImVec2(p[0].x, p[0].y) * size,
+														IM_COL32(255, 255, 255, 255)
 													);
-
 												}
-												draw_list->PopClipRect();
 											}
+											if (overlap_bake_grid)
+											{
+												for (int x = 0; x <= 256; x += m->bake_grid_pixel_size)
+												{
+													draw_list->AddLine(
+														pos + ImVec2(x, 0),
+														pos + ImVec2(x, 256),
+														IM_COL32(255, 255, 0, 128)
+													);
+												}
+												for (int y = 0; y <= 256; y += m->bake_grid_pixel_size)
+												{
+													draw_list->AddLine(
+														pos + ImVec2(0, y),
+														pos + ImVec2(256, y),
+														IM_COL32(255, 255, 0, 128)
+													);
+												}
+											}
+											draw_list->PopClipRect();
 
-											if (ImGui::Button("Create UV"))
-												m->create_uv();
+											if (ImGui::TreeNode("Bake"))
+											{
+
+												ImGui::TreePop();
+											}
 
 											ImGui::TreePop();
 										}
 										if (ImGui::TreeNode("Geometries"))
 										{
-											static int geo_index = -1;
+											static int geo_index = 0;
 											ImGui::Combo("##geometry", &geo_index, [](void *data, int idx, const char **out_text) {
 												auto m = (tke::Model*)data;
 												*out_text = m->geometries[idx]->name.c_str();
@@ -227,6 +314,7 @@ void InspectorWindow::do_show()
 												ImGui::Text("Indice Count:%d", g->indiceCount);
 												ImGui::Separator();
 												ImGui::Text("Material:%s", g->material->name.c_str());
+												show_material(g->material.get());
 											}
 
 											ImGui::TreePop();

@@ -58,9 +58,9 @@ void ModelEditor::do_show()
 	ImGui::BeginGroup();
 	ImGui::BeginChild("right", ImVec2(500, 0));
 
-	ImGui::Text("indice count:%d", model->indice_count);
-	ImGui::Text("indice base:%d", model->indiceBase);
-	ImGui::Text("vertex base:%d", model->vertexBase);
+	ImGui::Text("indice count:%d", model->indices.size());
+	ImGui::Text("indice base:%d", model->indice_base);
+	ImGui::Text("vertex base:%d", model->vertex_base);
 
 	//auto funShowAndSelectAnim = [&](tke::ModelStateAnimationKind kind, const char *name) {
 	//	int index = 0;

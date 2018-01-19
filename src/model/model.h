@@ -76,18 +76,12 @@ namespace tke
 		std::vector<int> chain;
 	};
 
-	struct GeometryUV
-	{
-		
-	};
-
 	struct GeometryAux
 	{
 		struct Triangle
 		{
 			int indices[3];
 			std::pair<int, int> adjacency[3]; // tri idx and vtx idx
-			glm::vec2 bake_uv[3];
 		};
 
 		std::vector<glm::vec3> unique_vertex;
@@ -96,20 +90,35 @@ namespace tke
 
 	struct Model
 	{
+		struct UV
+		{
+			std::string name;
+			std::vector<glm::vec2> unique;
+			std::vector<int> indices;
+			std::vector<std::pair<int, int>> series;
+
+			void add(const glm::vec2 &v);
+		};
+
 		std::string filename;
 		std::string filepath;
 
-		int vertexBase = 0;
-		int indiceBase = 0;
+		int vertex_base = 0;
+		int indice_base = 0;
 
-		int vertex_count = 0;
-		std::unique_ptr<ModelVertex[]> vertex;
-		std::unique_ptr<ModelVertexSkeleton[]> vertex_skeleton;
-		int indice_count = 0;
-		std::unique_ptr<int[]> indices;
+		std::vector<ModelVertex> vertexes;
+		std::vector<ModelVertexSkeleton> vertexes_skeleton;
+		std::vector<int> indices;
 
 		std::vector<std::unique_ptr<Geometry>> geometries;
+		std::vector<std::unique_ptr<UV>> uvs;
+		UV *geometry_uv = nullptr;
+		UV *bake_uv = nullptr;
 		std::unique_ptr<GeometryAux> geometry_aux;
+
+		int bake_grid_pixel_size = 4;
+		int bake_image_cx = 256;
+		int bake_image_cy = 256;
 
 		std::vector<std::unique_ptr<Bone>> bones;
 		std::vector<std::unique_ptr<BoneIK>> iks;
@@ -126,8 +135,8 @@ namespace tke
 		std::vector<std::unique_ptr<Rigidbody>> rigidbodies;
 		std::vector<std::unique_ptr<Joint>> joints;
 
-		glm::vec3 maxCoord = glm::vec3(0.f);
-		glm::vec3 minCoord = glm::vec3(0.f);
+		glm::vec3 max_coord = glm::vec3(0.f);
+		glm::vec3 min_coord = glm::vec3(0.f);
 
 		glm::vec3 bounding_position = glm::vec3(0.f);
 		float bounding_size = 1.f;
@@ -138,10 +147,15 @@ namespace tke
 
 		glm::vec3 eye_position = glm::vec3(0.f);
 
+		void add_vertex_position_normal(const glm::vec3 &position, const glm::vec3 &normal);
+
 		void create_geometry_aux();
 		void create_uv();
+		void remove_uv(UV *uv);
+		void assign_uv_to_geometry(UV *uv);
+		void assign_uv_to_bake(UV *uv);
 
-		void setStateAnimation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
+		void set_state_animation(ModelStateAnimationKind kind, std::shared_ptr<AnimationBinding> b);
 
 		Bone *new_bone();
 		void remove_bone(Bone *b);
@@ -156,16 +170,19 @@ namespace tke
 		void remove_joint(Joint *j);
 	};
 
-	extern std::unique_ptr<VertexBuffer> vertexStatBuffer;
-	extern std::unique_ptr<VertexBuffer> vertexAnimBuffer;
-	extern std::unique_ptr<IndexBuffer> indexBuffer;
+	extern std::unique_ptr<VertexBuffer> vertex_static_buffer;
+	extern std::unique_ptr<VertexBuffer> vertex_skeleton_Buffer;
+	extern std::unique_ptr<IndexBuffer> index_buffer;
 
-	void addTriangleVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center);
-	void addCubeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float length);
-	void addSphereVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv);
-	void addCylinderVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, int subdiv);
-	void addConeVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
-	void addTorusVertex(std::vector<glm::vec3> &positions, std::vector<glm::vec3> &normals, std::vector<int> &indices, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, int axisSubdiv, int heightSubdiv);
+	void add_triangle_vertex(Model *m, glm::mat3 rotation, glm::vec3 center);
+	void add_cube_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float length);
+	void add_sphere_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, 
+		int vertSubdiv);
+	void add_cylinder_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float halfHeight, float radius, 
+		int subdiv);
+	void add_cone_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float height, float radius, int subdiv);
+	void add_torus_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, float sectionRadius, 
+		int axisSubdiv, int heightSubdiv);
 
 	extern std::shared_ptr<Model> triangleModel;
 	extern std::shared_ptr<Model> cubeModel;

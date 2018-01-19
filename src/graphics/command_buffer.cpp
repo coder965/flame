@@ -209,9 +209,9 @@ namespace tke
 	void CommandBuffer::drawModel(Model *m, int gIndex, int instanceCount, int firstInstance)
 	{
 		if (gIndex == -1)
-			drawIndex(m->indice_count, m->indiceBase, m->vertexBase, instanceCount, firstInstance);
+			drawIndex(m->indices.size(), m->indice_base, m->vertex_base, instanceCount, firstInstance);
 		else
-			drawIndex(m->geometries[gIndex]->indiceCount, m->indiceBase + m->geometries[gIndex]->indiceBase, m->vertexBase, instanceCount, firstInstance);
+			drawIndex(m->geometries[gIndex]->indiceCount, m->indice_base + m->geometries[gIndex]->indiceBase, m->vertex_base, instanceCount, firstInstance);
 	}
 
 	void CommandBuffer::drawIndirect(IndirectVertexBuffer *b, int count, int offset)

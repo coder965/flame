@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "../math/math.h"
+#include "../spare_list.h"
 
 namespace tke
 {
@@ -19,25 +20,30 @@ namespace tke
 		std::string name;
 
 		glm::vec4 albedo_alpha = glm::vec4(1.f);
-		float spec = 0.f;
-		float roughness = 1.f;
+		glm::vec2 spec_roughness = glm::vec2(0.f, 1.f);
 
-		std::shared_ptr<Image> albedoAlphaMap;
-		std::shared_ptr<Image> normalHeightMap;
-		std::shared_ptr<Image> specRoughnessMap;
+		std::shared_ptr<Image> albedo_alpha_map;
+		std::shared_ptr<Image> spec_roughness_map;
+		std::shared_ptr<Image> normal_height_map;
 
 		int index = -1;
+
+		std::shared_ptr<Image> get_albedo_alpha_map() const;
+		std::shared_ptr<Image> get_spec_roughness_map() const;
+		std::shared_ptr<Image> get_normal_height_map() const;
+
+		void set_albedo_alpha_map(std::shared_ptr<Image> i);
+		void set_spec_roughness_map(std::shared_ptr<Image> i);
+		void set_normal_height_map(std::shared_ptr<Image> i);
 	};
 
-	extern std::weak_ptr<Material> materials[MaxMaterialCount];
-	extern std::shared_ptr<Material> defaultMaterial;
+	extern std::shared_ptr<Material> default_material;
 	extern UniformBuffer *materialBuffer;
-	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap, 
-		std::shared_ptr<Image> specRoughnessMap);
+	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, glm::vec2 spec_roughness,
+		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> specRoughnessMap, 
+		std::shared_ptr<Image> normalHeightMap);
 	std::shared_ptr<Material> getMaterial(const std::string name);
 
-	extern std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
 	std::shared_ptr<Image> getMaterialImage(const std::string &filename);
 
 	extern DescriptorSet *ds_material;

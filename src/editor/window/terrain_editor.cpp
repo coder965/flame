@@ -64,18 +64,18 @@ void TerrainEditor::do_show()
 					if (std::experimental::filesystem::exists(s))
 						return false;
 
-					tke::Model m;
-					m.vertex_count = vertexs.size();
-					m.vertex = std::make_unique<tke::ModelVertex[]>(m.vertex_count);
-					memcpy(m.vertex.get(), vertexs.data(), m.vertex_count * sizeof(tke::ModelVertex));
-					m.indice_count = indices.size();
-					m.indices = std::make_unique<int[]>(m.indice_count);
-					memcpy(m.indices.get(), indices.data(), m.indice_count * sizeof(int));
-					auto g = std::make_unique<tke::Geometry>();
-					g->material = tke::defaultMaterial;
-					g->indiceCount = m.indice_count;
-					m.geometries.push_back(std::move(g));
-					tke::saveModel(&m, s);
+					//tke::Model m;
+					//m.vertex_count = vertexs.size();
+					//m.vertexs = std::make_unique<tke::ModelVertex[]>(m.vertex_count);
+					//memcpy(m.vertexs.get(), vertexs.data(), m.vertex_count * sizeof(tke::ModelVertex));
+					//m.indice_count = indices.size();
+					//m.indices = std::make_unique<int[]>(m.indice_count);
+					//memcpy(m.indices.get(), indices.data(), m.indice_count * sizeof(int));
+					//auto g = std::make_unique<tke::Geometry>();
+					//g->material = tke::default_material;
+					//g->indiceCount = m.indice_count;
+					//m.geometries.push_back(std::move(g));
+					//tke::saveModel(&m, s);
 
 					return true;
 				};

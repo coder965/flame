@@ -58,11 +58,11 @@ namespace tke
 		stru.albedo_alpha.albedo_g = albedo_alpha.g * 255.f;
 		stru.albedo_alpha.albedo_b = albedo_alpha.b * 255.f;
 		stru.albedo_alpha.alpha = albedo_alpha.a * 255.f;
-		stru.spec_roughness.spec = glm::clamp(m->spec, 0.f, 1.f) * 255.f;
-		stru.spec_roughness.roughness = glm::clamp(m->roughness, 0.f, 1.f) * 255.f;
-		stru.map_index.albedo_alpha = m->albedoAlphaMap ? m->albedoAlphaMap->material_index + 1 : 0;
-		stru.map_index.normal_height = m->normalHeightMap ? m->normalHeightMap->material_index + 1 : 0;
-		stru.map_index.spec_roughness = m->specRoughnessMap ? m->specRoughnessMap->material_index + 1 : 0;
+		stru.spec_roughness.spec = glm::clamp(m->spec_roughness.x, 0.f, 1.f) * 255.f;
+		stru.spec_roughness.roughness = glm::clamp(m->spec_roughness.y, 0.f, 1.f) * 255.f;
+		stru.map_index.albedo_alpha = m->albedo_alpha_map ? m->albedo_alpha_map->material_index + 1 : 0;
+		stru.map_index.normal_height = m->normal_height_map ? m->normal_height_map->material_index + 1 : 0;
+		stru.map_index.spec_roughness = m->spec_roughness_map ? m->spec_roughness_map->material_index + 1 : 0;
 		memcpy(map, &stru, sizeof(MaterialShaderStruct));
 		defalut_staging_buffer->unmap();
 
@@ -74,89 +74,142 @@ namespace tke
 		defalut_staging_buffer->copyTo(materialBuffer, 1, &range);
 	}
 
-	std::weak_ptr<Material> materials[MaxMaterialCount];
-	std::shared_ptr<Material> defaultMaterial;
+	std::shared_ptr<Image> Material::get_albedo_alpha_map() const
+	{
+		return albedo_alpha_map;
+	}
+
+	std::shared_ptr<Image> Material::get_spec_roughness_map() const
+	{
+		return spec_roughness_map;
+	}
+
+	std::shared_ptr<Image> Material::get_normal_height_map() const
+	{
+		return normal_height_map;
+	}
+
+	void Material::set_albedo_alpha_map(std::shared_ptr<Image> i)
+	{
+		if (albedo_alpha_map == i)
+			return;
+
+		albedo_alpha_map = i;
+	}
+
+	void Material::set_spec_roughness_map(std::shared_ptr<Image> i)
+	{
+		if (spec_roughness_map == i)
+			return;
+
+		spec_roughness_map = i;
+	}
+	void Material::set_normal_height_map(std::shared_ptr<Image> i)
+	{
+		if (normal_height_map == i)
+			return;
+
+		normal_height_map = i;
+	}
+
+
+	static SpareList _material_list(MaxMaterialCount);
+	static std::weak_ptr<Material> _materials[MaxMaterialCount];
+	std::shared_ptr<Material> default_material;
 	UniformBuffer *materialBuffer = nullptr;
 
-	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
+	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, glm::vec2 spec_roughness,
 		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap,
 		std::shared_ptr<Image> specRoughnessMap)
 	{
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			auto m = materials[i].lock();
-			if (m)
+		std::shared_ptr<Material> m;
+		_material_list.iterate([&](int index, void *p, bool &remove) {
+			auto _m = _materials[index].lock();
+			if (_m)
 			{
-				if (m->albedoAlphaMap != albedoAlphaMap ? false : (!albedoAlphaMap && is_same(m->albedo_alpha, albedo_alpha))
-					&& m->specRoughnessMap != specRoughnessMap ? false : (!specRoughnessMap && is_same(m->spec, spec) && is_same(m->roughness, roughness))
-					&& m->normalHeightMap == normalHeightMap)
-					return m;
+				if (_m->albedo_alpha_map != albedoAlphaMap ? false : (!albedoAlphaMap && is_same(_m->albedo_alpha, albedo_alpha))
+					&& _m->spec_roughness_map != specRoughnessMap ? false : (!specRoughnessMap && is_same(_m->spec_roughness, spec_roughness))
+					&& _m->normal_height_map == normalHeightMap)
+					m = _m;
 			}
+			else
+			{
+				_materials[index].reset();
+				remove = true;
+			}
+		});
+
+		if (!m)
+		{
+			m = std::make_shared<Material>();
+			m->albedo_alpha = albedo_alpha;
+			m->spec_roughness = spec_roughness;
+			m->albedo_alpha_map = albedoAlphaMap;
+			m->normal_height_map = normalHeightMap;
+			m->spec_roughness_map = specRoughnessMap;
+			auto index = _material_list.add(m.get());
+			m->index = index;
+			_materials[index] = m;
 		}
 
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			if (!materials[i].lock())
-			{
-				auto m = std::make_shared<Material>();
-				m->albedo_alpha = albedo_alpha;
-				m->spec = spec;
-				m->roughness = roughness;
-				m->albedoAlphaMap = albedoAlphaMap;
-				m->normalHeightMap = normalHeightMap;
-				m->specRoughnessMap = specRoughnessMap;
-				m->index = i;
-				materials[i] = m;
-
-				_update_material(m.get(), i);
-
-				return m;
-			}
-		}
+		return m;
 	}
 
 	std::shared_ptr<Material> getMaterial(const std::string name)
 	{
-		for (int i = 0; i < MaxMaterialCount; i++)
-		{
-			auto m = materials[i].lock();
-			if (m && m->name == name)
-				return m;
-		}
-		return std::shared_ptr<Material>();
+		std::shared_ptr<Material> m;
+		_material_list.iterate([&](int index, void *p, bool &remove) {
+			auto _m = _materials[index].lock();
+			if (_m)
+			{
+				if (_m->name == name)
+					m = _m;
+			}
+			else
+			{
+				_materials[index].reset();
+				remove = true;
+			}
+		});
+
+		return m ? m : default_material;
 	}
+
+	static SpareList _material_image_list(MaxMaterialImageCount);
+	static std::weak_ptr<Image> _material_images[MaxMaterialImageCount];
 
 	std::shared_ptr<Image> getMaterialImage(const std::string &_filename)
 	{
-		for (int i = 0; i < MaxMaterialImageCount; i++)
-		{
-			auto t = materialImages[i].lock();
-			if (t)
+		std::shared_ptr<Image> i;
+		_material_image_list.iterate([&](int index, void *p, bool &remove) {
+			auto _i = _material_images[index].lock();
+			if (_i)
 			{
-				if (t->filename == _filename)
-					return t;
+				if (_i->filename == _filename)
+					i = _i;
 			}
+			else
+			{
+				_material_images[index].reset();
+				remove = true;
+			}
+		});
+
+		if (!i)
+		{
+			i = get_image(_filename);
+			if (!i)
+				return nullptr;
+
+			auto index = _material_image_list.add(i.get());
+			i->material_index = index;
+			_material_images[index] = i;
+
+			updateDescriptorSets(1, &ds_material->imageWrite(MaterialImagesDescriptorBinding, index, i.get(), colorSampler));
 		}
 
-		for (int i = 0; i < MaxMaterialImageCount; i++)
-		{
-			if (!materialImages[i].lock())
-			{
-				auto t = get_image(_filename);
-				if (!t)
-					return nullptr;
-
-				t->material_index = i;
-				materialImages[i] = t;
-
-				updateDescriptorSets(1, &ds_material->imageWrite(MaterialImagesDescriptorBinding, i, t.get(), colorSampler));
-
-				return t;
-			}
-		}
+		return i;
 	}
-
-	std::weak_ptr<Image> materialImages[MaxMaterialImageCount];
 
 	DescriptorSet *ds_material = nullptr;
 
@@ -186,11 +239,14 @@ namespace tke
 
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
 
-		defaultMaterial = std::make_shared<Material>();
-		defaultMaterial->name = "[default_material]";
-		defaultMaterial->index = 0;
-		materials[0] = defaultMaterial;
-		_update_material(defaultMaterial.get(), 0);
+		default_material = std::make_shared<Material>();
+		default_material->name = "[default_material]";
+		default_material->index = 0;
+		{
+			auto index = _material_list.add(default_material.get());
+			_materials[index] = default_material;
+		}
+		_update_material(default_material.get(), 0);
 
 		updateDescriptorSets(1, &ds_material->bufferWrite(MaterialBufferDescriptorBinding, 0, materialBuffer));
 	}

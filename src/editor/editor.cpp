@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 			ImGui::BeginChild("##items", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
 
 			static char filter[260];
-			ImGui::InputText("filter", filter, 260);
+			ImGui::InputText(ICON_FA_SEARCH, filter, 260);
 
 			auto fText = [](const char* fmt, ...) {
 				va_list args;
@@ -330,6 +330,31 @@ int main(int argc, char** argv)
 				fText("shader tessellation and geometry point size: %s", f.shaderTessellationAndGeometryPointSize ? "true" : "false");
 				fText("shader image gather extended: %s", f.shaderImageGatherExtended ? "true" : "false");
 				fText("shader storage image extended formats: %s", f.shaderStorageImageExtendedFormats ? "true" : "false");
+				fText("shader storage image multisample: %s", f.shaderStorageImageMultisample ? "true" : "false");
+				fText("shader storage image read without format: %s", f.shaderStorageImageReadWithoutFormat ? "true" : "false");
+				fText("shader storage image write without format: %s", f.shaderStorageImageWriteWithoutFormat ? "true" : "false");
+				fText("shader uniform buffer array dynamic indexing: %s", f.shaderUniformBufferArrayDynamicIndexing ? "true" : "false");
+				fText("shader sample image array dynamic indexing: %s", f.shaderSampledImageArrayDynamicIndexing ? "true" : "false");
+				fText("shader storage buffer array dynamic indexing: %s", f.shaderStorageBufferArrayDynamicIndexing ? "true" : "false");
+				fText("shader storage image array dynamic indexing: %s", f.shaderStorageImageArrayDynamicIndexing ? "true" : "false");
+				fText("shader clip distance: %s", f.shaderClipDistance ? "true" : "false");
+				fText("shader cull distance: %s", f.shaderCullDistance ? "true" : "false");
+				fText("shader float64: %s", f.shaderFloat64 ? "true" : "false");
+				fText("shader int64: %s", f.shaderInt64 ? "true" : "false");
+				fText("shader int16: %s", f.shaderInt16 ? "true" : "false");
+				fText("shader resource residency: %s", f.shaderResourceResidency ? "true" : "false");
+				fText("shader resource min lod: %s", f.shaderResourceMinLod ? "true" : "false");
+				fText("sparse binding: %s", f.sparseBinding ? "true" : "false");
+				fText("sparse residency buffer: %s", f.sparseResidencyBuffer ? "true" : "false");
+				fText("sparse residency image2D: %s", f.sparseResidencyImage2D ? "true" : "false");
+				fText("sparse residency image3D: %s", f.sparseResidencyImage3D ? "true" : "false");
+				fText("sparse residency 2 samples: %s", f.sparseResidency2Samples ? "true" : "false");
+				fText("sparse residency 4 samples: %s", f.sparseResidency4Samples ? "true" : "false");
+				fText("sparse residency 8 samples: %s", f.sparseResidency8Samples ? "true" : "false");
+				fText("sparse residency 16 samples: %s", f.sparseResidency16Samples ? "true" : "false");
+				fText("sparse residency aliased: %s", f.sparseResidencyAliased ? "true" : "false");
+				fText("variable multisample rate: %s", f.variableMultisampleRate ? "true" : "false");
+				fText("inherited queries: %s", f.inheritedQueries ? "true" : "false");
 
 				ImGui::TreePop();
 			}

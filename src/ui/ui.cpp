@@ -52,6 +52,23 @@ namespace ImGui
 		bb.Max = bb.Min + CalcItemSize(split_vertically ? ImVec2(thickness, splitter_long_axis_size) : ImVec2(splitter_long_axis_size, thickness), 0.0f, 0.0f);
 		return SplitterBehavior(id, bb, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1, min_size2, 0.0f);
 	}
+
+	void ImageBorder(ImTextureID user_texture_id, const ImVec2& size, const ImVec4& border_col)
+	{
+		ImGuiWindow* window = GetCurrentWindow();
+		if (window->SkipItems)
+			return;
+
+		ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
+		bb.Max += ImVec2(2, 2);
+		ItemSize(bb);
+		if (!ItemAdd(bb, 0))
+			return;
+
+		window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(border_col), 0.0f);
+		if (user_texture_id != nullptr)
+			window->DrawList->AddImage(user_texture_id, bb.Min + ImVec2(1, 1), bb.Max - ImVec2(1, 1), ImVec2(0, 0), ImVec2(1, 1), GetColorU32(ImVec4(1, 1, 1, 1)));
+	}
 }
 
 namespace tke
