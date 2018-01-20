@@ -187,7 +187,7 @@ void SceneEditor::do_show()
 	ImGui::SetCursorScreenPos(ImVec2(image_rect.x, image_rect.y));
 	ImGui::InvisibleButton("canvas", ImVec2(image_rect.z, image_rect.w));
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImTextureID(tke::get_ui_image_index(layer.image)), ImVec2(image_rect.x, image_rect.y), ImVec2(image_rect.x +
+	draw_list->AddImage(ImGui::ImageID(layer.image), ImVec2(image_rect.x, image_rect.y), ImVec2(image_rect.x +
 		image_rect.z, image_rect.y + image_rect.w));
 	if (ImGui::BeginDragDropTarget())
 	{

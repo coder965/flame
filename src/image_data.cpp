@@ -1,7 +1,7 @@
 #define NOMINMAX
 #include "../../FreeImage/Dist/x64/FreeImage.h"
 #include "../../gli/gli/gli.hpp"
-#include <filesystem>
+#include "file_utils.h"
 
 #include "image_data.h"
 
@@ -14,8 +14,8 @@ namespace tke
 
 	std::unique_ptr<ImageData> createImageData(const std::string &filename)
 	{
-		std::experimental::filesystem::path path(filename);
-		if (!std::experimental::filesystem::exists(path))
+		std::fs::path path(filename);
+		if (!std::fs::exists(path))
 			return nullptr;
 
 		auto ext = path.extension().string();

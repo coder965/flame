@@ -6,9 +6,9 @@
 
 #include "image_editor.h"
 
-ImageEditor::ImageEditor(std::shared_ptr<tke::Image> _image)
-	:image(_image)
+ImageEditor::ImageEditor(const std::string &filename)
 {
+	image = tke::get_image(filename);
 	first_cx = 800;
 	first_cy = 600;
 }
@@ -58,7 +58,7 @@ void ImageEditor::do_show()
 	ImVec2 image_size = ImVec2(image->levels[0].cx, image->levels[0].cy);
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImTextureID(tke::get_ui_image_index(image)), image_pos, image_pos + image_size);
+	draw_list->AddImage(ImGui::ImageID(image), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
 		if (tke::mouseLeft.pressing && penId != -1)

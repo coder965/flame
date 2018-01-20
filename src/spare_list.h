@@ -22,7 +22,7 @@ namespace tke
 		int add(void *p);
 		void remove(void *p);
 
-		void iterate(const std::function<void(int index, void *p, bool &remove)> 
+		void iterate(const std::function<bool(int index, void *p, bool &remove)> 
 			&callback);
 	};
 }

@@ -50,14 +50,14 @@ namespace tke
 		spare_list.push_back(index);
 	}
 
-	void SpareList::iterate(const std::function<void(int index, void *p, bool &remove)> 
+	void SpareList::iterate(const std::function<bool(int index, void *p, bool &remove)> 
 		&callback)
 	{
 		for (auto it = map.begin(); it != map.end(); )
 		{
 			bool remove = false;
 			auto index = it->second;
-			callback(index, it->first, remove);
+			auto _continue = callback(index, it->first, remove);
 			if (remove)
 			{
 				it = map.erase(it);
@@ -65,6 +65,8 @@ namespace tke
 			}
 			else
 				it++;
+			if (!_continue)
+				break;
 		}
 	}
 }

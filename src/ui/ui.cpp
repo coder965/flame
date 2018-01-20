@@ -15,6 +15,11 @@
 
 #include "ui.h"
 
+const unsigned int ImageCount = 127;
+
+static tke::SpareList _image_list(ImageCount);
+static std::pair<std::shared_ptr<tke::Image>, tke::Op> _image_ops[ImageCount];
+
 namespace ImGui
 {
 	bool main_menu_alive = false;
@@ -53,21 +58,52 @@ namespace ImGui
 		return SplitterBehavior(id, bb, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1, min_size2, 0.0f);
 	}
 
-	void ImageBorder(ImTextureID user_texture_id, const ImVec2& size, const ImVec4& border_col)
+	ImTextureID ImageID(std::shared_ptr<tke::Image> i)
+	{
+		auto index = _image_list.add(i.get());
+		if (index == -2)
+		{
+			index = i->ui_index;
+			if (_image_ops[index].second == tke::OpNeedRemove)
+				_image_ops[index].second = tke::OpKeep;
+			return ImTextureID(index + 1);
+		}
+		else if (index == -1)
+		{
+			i->ui_index = -1;
+			return 0;
+		}
+		i->ui_index = index;
+		_image_ops[index].first = i;
+		_image_ops[index].second = tke::OpNeedUpdate;
+		return ImTextureID(index + 1);
+	}
+
+	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col)
 	{
 		ImGuiWindow* window = GetCurrentWindow();
 		if (window->SkipItems)
 			return;
 
 		ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
-		bb.Max += ImVec2(2, 2);
+		if (border_col.w > 0.0f)
+			bb.Max += ImVec2(2, 2);
 		ItemSize(bb);
 		if (!ItemAdd(bb, 0))
 			return;
 
-		window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(border_col), 0.0f);
-		if (user_texture_id != nullptr)
-			window->DrawList->AddImage(user_texture_id, bb.Min + ImVec2(1, 1), bb.Max - ImVec2(1, 1), ImVec2(0, 0), ImVec2(1, 1), GetColorU32(ImVec4(1, 1, 1, 1)));
+		if (border_col.w > 0.0f)
+		{
+			window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(border_col), 0.0f);
+			bb.Expand(-1);
+		}
+
+		if (filename != "")
+		{
+			auto i = tke::get_image(filename);
+			if (i)
+				window->DrawList->AddImage(ImageID(i), bb.Min, bb.Max, ImVec2(0, 0), ImVec2(1, 1), GetColorU32(ImVec4(1, 1, 1, 1)));
+		}
 	}
 }
 
@@ -190,11 +226,6 @@ namespace tke
 			io.AddInputCharacter((unsigned short)c);
 	}
 
-	const unsigned int ImageCount = 127;
-
-	static SpareList _image_list(ImageCount);
-	static std::pair<std::shared_ptr<Image>, Op> _image_ops[ImageCount];
-
 	static bool need_clear = false;
 	void beginUi(bool _need_clear)
 	{
@@ -228,6 +259,7 @@ namespace tke
 
 		_image_list.iterate([&](int index, void *p, bool &remove) {
 			_image_ops[index].second = OpNeedRemove;
+			return true;
 		});
 	}
 
@@ -248,6 +280,7 @@ namespace tke
 					auto image = (Image*)p;
 					writes.push_back(pipeline_ui->descriptorSet->imageWrite(0, index + 1, image, colorSampler));
 				}
+				return true;
 			});
 			updateDescriptorSets(writes.size(), writes.data());
 		}
@@ -342,24 +375,5 @@ namespace tke
 
 		uiAcceptedMouse = ImGui::IsMouseHoveringAnyWindow();
 		uiAcceptedKey = ImGui::IsAnyItemActive();
-	}
-
-	int get_ui_image_index(std::shared_ptr<Image> img)
-	{
-		auto index = _image_list.add(img.get());
-		if (index == -2)
-		{
-			_image_ops[img->ui_index].second = OpKeep;
-			return img->ui_index + 1;
-		}
-		else if (index == -1)
-		{
-			img->ui_index = -1;
-			return 0;
-		}
-		img->ui_index = index;
-		_image_ops[index].first = img;
-		_image_ops[index].second = OpNeedUpdate;
-		return index + 1;
 	}
 }

@@ -14,21 +14,27 @@ struct FileSelector : IWindow
 	bool enable_right_region = false;
 	float left_region_width = 300.f;
 	float right_region_width;
-	int mode; // 0 - for open, 1 - for save
+	bool save_mode;
+	bool tree_mode;
 
-	struct DirItem
+	struct ItemData
 	{
 		std::string value;
 		std::string name;
 		std::string filename;
 	};
 
-	struct FileItem
-	{
-		std::string value;
-		std::string name;
-		std::string filename;
+	struct DirItem;
+	struct FileItem;
 
+	struct DirItem : ItemData
+	{
+		std::vector<std::unique_ptr<DirItem>> dir_list;
+		std::vector<std::unique_ptr<FileItem>> file_list;
+	};
+
+	struct FileItem : ItemData
+	{
 		int file_size = 0;
 		tke::FileType file_type = tke::FileTypeUnknown;
 
@@ -36,18 +42,17 @@ struct FileSelector : IWindow
 	};
 
 	int driver_index = 0;
-	std::experimental::filesystem::path current_path;
 	char filename[260];
-	std::vector<std::unique_ptr<DirItem>> dir_list;
-	std::vector<std::unique_ptr<FileItem>> file_list;
-	int list_index = -1;
+	DirItem curr_dir;
+	int select_index = -1;
+	DirItem *select_dir = nullptr;
 	bool need_refresh = true;
 
 	std::function<bool(std::string)> callback;
 	std::string user_define_extra_path;
 
 	// mode: 0 - for open, 1 - for save
-	FileSelector(const std::string &_title, bool _modal, bool _enable_file, bool _enable_right_region, int _mode, int _cx = 0, int _cy = 0);
+	FileSelector(const std::string &_title, bool _modal, bool _enable_file, bool _enable_right_region, bool _save_mode, int _cx = 0, int _cy = 0, bool _tree_mode = false);
 	void set_current_path(const std::string &s);
 	void refresh();
 	virtual void do_show() override;

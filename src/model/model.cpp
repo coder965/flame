@@ -19,6 +19,20 @@
 
 namespace tke
 {
+	bool ModelVertex::operator==(const ModelVertex &right)
+	{
+		return is_same(position, right.position) &&
+			is_same(normal, right.normal) &&
+			is_same(tangent, right.tangent) &&
+			is_same(uv, right.uv);
+	}
+
+	bool ModelVertexSkeleton::operator==(const ModelVertexSkeleton &right)
+	{
+		return is_same(bone_weight, right.bone_weight) &&
+			is_same(bone_ID, right.bone_ID);
+	}
+
 	std::map<unsigned int, std::weak_ptr<Model>> _models;
 	void _create_vertex_and_index_buffer()
 	{
@@ -358,17 +372,71 @@ namespace tke
 
 		geometry_uv = uv;
 
-		std::vector<ModelVertex> new_vertexes;
-		std::vector<ModelVertexSkeleton> new_vertexes_skeleton;
-		std::vector<int> new_indices;
-
-		for (int i = 0; i < indices.size(); i++)
+		if (vertexes_skeleton.size() == 0)
 		{
-			int index = -1;
-			for (int j = 0; j < new_vertexes.size(); j++)
+
+			std::vector<ModelVertex> new_vertexes;
+			std::vector<int> new_indices;
+
+			for (int i = 0; i < indices.size(); i++)
 			{
-				;
+				ModelVertex a = vertexes[indices[i]];
+				a.uv = uv ? uv->unique[uv->indices[i]] : glm::vec2(0.f);
+
+				int index = -1;
+				for (int j = 0; j < new_vertexes.size(); j++)
+				{
+					if (a == new_vertexes[j])
+					{
+						index = j;
+						break;
+					}
+				}
+				if (index == -1)
+				{
+					index = new_vertexes.size();
+					new_vertexes.push_back(a);
+				}
+				new_indices.push_back(index);
 			}
+
+			vertexes = new_vertexes;
+			indices = new_indices;
+		}
+		else
+		{
+
+			std::vector<ModelVertex> new_vertexes;
+			std::vector<ModelVertexSkeleton> new_vertexes_skeleton;
+			std::vector<int> new_indices;
+
+			for (int i = 0; i < indices.size(); i++)
+			{
+				ModelVertex a0 = vertexes[indices[i]];
+				a0.uv = uv ? uv->unique[uv->indices[i]] : glm::vec2(0.f);
+				ModelVertexSkeleton a1 = vertexes_skeleton[indices[i]];
+
+				int index = -1;
+				for (int j = 0; j < new_vertexes.size(); j++)
+				{
+					if (a0 == new_vertexes[j] && a1 == new_vertexes_skeleton[j])
+					{
+						index = j;
+						break;
+					}
+				}
+				if (index == -1)
+				{
+					index = new_vertexes.size();
+					new_vertexes.push_back(a0);
+					new_vertexes_skeleton.push_back(a1);
+				}
+				new_indices.push_back(index);
+			}
+
+			vertexes = new_vertexes;
+			vertexes_skeleton = new_vertexes_skeleton;
+			indices = new_indices;
 		}
 
 		_create_vertex_and_index_buffer();
@@ -893,6 +961,8 @@ namespace tke
 			std::vector<glm::vec3> temp_normals;
 			std::vector<glm::ivec3> temp_indices;
 
+			std::vector<std::shared_ptr<Material>> temp_materials;
+
 			while (!file.eof())
 			{
 				std::string line;
@@ -970,7 +1040,11 @@ namespace tke
 					ss >> name;
 					auto g = new Geometry;
 					currentGeometry = g;
-					currentGeometry->material = getMaterial(name);
+					for (auto &m : temp_materials)
+					{
+						if (m->get_name() == name)
+							currentGeometry->material = m;
+					}
 					currentGeometry->indiceBase = m->indices.size();
 					m->geometries.emplace_back(g);
 				}
@@ -987,8 +1061,8 @@ namespace tke
 
 							std::string mtlName;
 							float spec = 0.f, roughness = 1.f;
-							std::shared_ptr<Image> albedoAlphaMap;
-							std::shared_ptr<Image> normalHeightMap;
+							std::string albedo_alpha_map_name;
+							std::string normal_height_map_name;
 
 							while (!file.eof())
 							{
@@ -1009,18 +1083,19 @@ namespace tke
 								{
 									std::string filename;
 									ss >> filename;
-									albedoAlphaMap = getMaterialImage(m->filepath + "/" + filename);
+									albedo_alpha_map_name = m->filepath + "/" + filename;
 								}
 								else if (token == "map_bump")
 								{
 									std::string filename;
 									ss >> filename;
-									normalHeightMap = getMaterialImage(m->filepath + "/" + filename);
+									normal_height_map_name = m->filepath + "/" + filename;
 								}
 							}
 
-							auto m = getMaterial(glm::vec4(1.f), glm::vec2(spec, roughness), albedoAlphaMap, nullptr, normalHeightMap);
-							m->name = mtlName;
+							auto m = getMaterial(glm::vec4(1.f), glm::vec2(spec, roughness), albedo_alpha_map_name, "", normal_height_map_name);
+							m->set_name(mtlName);
+							temp_materials.push_back(m);
 						}
 					}
 				}
@@ -1191,7 +1266,7 @@ namespace tke
 
 				auto g = new Geometry;
 				g->material = getMaterial(data.diffuse, glm::vec2(0.f, 1.f), 
-					getMaterialImage(m->filepath + "/" + data.mapName), nullptr, nullptr);
+					m->filepath + "/" + data.mapName, "", "");
 				g->indiceBase = currentIndiceVertex;
 				g->indiceCount = data.indiceCount;
 
@@ -1680,17 +1755,17 @@ namespace tke
 				file & albedo_alpha;
 				file & spec_roughness;
 				std::string albedoAlphaMapName;
-				std::string normalHeightMapName;
 				std::string specRoughnessMapName;
+				std::string normalHeightMapName;
 				file > albedoAlphaMapName;
-				file > normalHeightMapName;
 				file > specRoughnessMapName;
+				file > normalHeightMapName;
 
 				auto g = new Geometry;
 				g->material = getMaterial(albedo_alpha, spec_roughness,
-					getMaterialImage(m->filepath + "/" + albedoAlphaMapName),
-					getMaterialImage(m->filepath + "/" + specRoughnessMapName),
-					getMaterialImage(m->filepath + "/" + normalHeightMapName));
+					m->filepath + "/" + albedoAlphaMapName,
+					m->filepath + "/" + specRoughnessMapName,
+					m->filepath + "/" + normalHeightMapName);
 				file & g->indiceBase;
 				file & g->indiceCount;
 
@@ -1826,11 +1901,11 @@ namespace tke
 			file & geometryCount;
 			for (auto &g : m->geometries)
 			{
-				file & g->material->albedo_alpha;
-				file & g->material->spec_roughness;
-				file < (g->material->albedo_alpha_map ? g->material->albedo_alpha_map->filename : "");
-				file < (g->material->normal_height_map ? g->material->normal_height_map->filename : "");
-				file < (g->material->spec_roughness_map ? g->material->spec_roughness_map->filename : "");
+				file & g->material->get_albedo_alpha();
+				file & g->material->get_spec_roughness();
+				file < g->material->get_albedo_alpha_map_name();
+				file < g->material->get_spec_roughness_map_name();
+				file < g->material->get_normal_height_map_name();
 
 				file & g->indiceBase;
 				file & g->indiceCount;

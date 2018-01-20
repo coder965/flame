@@ -228,7 +228,9 @@ void main()
 	color += ubo_ambient.color * albedo;
 #endif
 	
+#if defined(USE_FOG)
 	float fog = clamp(exp2(-0.01 * 0.01 * linerDepth * linerDepth * 1.442695), 0.0, 1.0);
-	outColor = vec4(mix(ubo_ambient.fogColor.rgb, color, fog), 1.0);
-	//outColor = vec4(1.0);
+	color = mix(ubo_ambient.fogColor.rgb, color, fog);
+#endif
+	outColor = vec4(color, 1.0);
 }

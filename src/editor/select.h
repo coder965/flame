@@ -21,7 +21,7 @@ struct Select : tke::Object
 	void operator=(tke::Node *n);
 	void operator=(const std::string &s);
 	tke::Node *get_node();
-	const std::string &get_filename();
+	std::string get_filename();
 };
 
 extern Select selected;

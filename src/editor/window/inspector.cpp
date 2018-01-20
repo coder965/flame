@@ -313,7 +313,7 @@ void InspectorWindow::do_show()
 												ImGui::Text("Indice Base:%d", g->indiceBase);
 												ImGui::Text("Indice Count:%d", g->indiceCount);
 												ImGui::Separator();
-												ImGui::Text("Material:%s", g->material->name.c_str());
+												ImGui::Text("Material:%s", g->material->get_name().c_str());
 												show_material(g->material.get());
 											}
 

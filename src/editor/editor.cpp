@@ -16,7 +16,7 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog() :
-		FileSelector("New Image", true, true, true, 1, 800, 600)
+		FileSelector("New Image", true, true, true, true, 800, 600)
 	{
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))

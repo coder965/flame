@@ -28,12 +28,16 @@ namespace tke
 		glm::vec2 uv;
 		glm::vec3 normal;
 		glm::vec3 tangent;
+
+		bool operator==(const ModelVertex &right);
 	};
 
 	struct ModelVertexSkeleton
 	{
 		glm::vec4 bone_weight;
 		glm::vec4 bone_ID;
+
+		bool operator==(const ModelVertexSkeleton &right);
 	};
 
 	struct Material;

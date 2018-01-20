@@ -52,7 +52,7 @@ tke::Node *Select::get_node()
 	return nullptr;
 }
 
-const std::string &Select::get_filename()
+std::string Select::get_filename()
 {
 	return type == SelectTypeFile ? select_filename : "";
 }

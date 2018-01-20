@@ -49,69 +49,160 @@ namespace tke
 		unsigned int dummy;
 	};
 
-	static void _update_material(Material *m, int index)
+	static void _update_material(Material *m)
 	{
 		auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(MaterialShaderStruct));
 		MaterialShaderStruct stru;
-		auto albedo_alpha = glm::clamp(m->albedo_alpha, 0.f, 1.f);
+		auto albedo_alpha = glm::clamp(m->get_albedo_alpha(), 0.f, 1.f);
+		auto spec_roughness = glm::clamp(m->get_spec_roughness(), 0.f, 1.f) * 255.f;
+		auto albedo_alpha_map = m->get_albedo_alpha_map();
+		auto spec_roughness_map = m->get_spec_roughness_map();
+		auto normal_height_map = m->get_normal_height_map();
 		stru.albedo_alpha.albedo_r = albedo_alpha.r * 255.f;
 		stru.albedo_alpha.albedo_g = albedo_alpha.g * 255.f;
 		stru.albedo_alpha.albedo_b = albedo_alpha.b * 255.f;
 		stru.albedo_alpha.alpha = albedo_alpha.a * 255.f;
-		stru.spec_roughness.spec = glm::clamp(m->spec_roughness.x, 0.f, 1.f) * 255.f;
-		stru.spec_roughness.roughness = glm::clamp(m->spec_roughness.y, 0.f, 1.f) * 255.f;
-		stru.map_index.albedo_alpha = m->albedo_alpha_map ? m->albedo_alpha_map->material_index + 1 : 0;
-		stru.map_index.normal_height = m->normal_height_map ? m->normal_height_map->material_index + 1 : 0;
-		stru.map_index.spec_roughness = m->spec_roughness_map ? m->spec_roughness_map->material_index + 1 : 0;
+		stru.spec_roughness.spec = spec_roughness.x;
+		stru.spec_roughness.roughness = spec_roughness.y;
+		stru.map_index.albedo_alpha = albedo_alpha_map ? albedo_alpha_map->material_index + 1 : 0;
+		stru.map_index.spec_roughness = spec_roughness_map ? spec_roughness_map->material_index + 1 : 0;
+		stru.map_index.normal_height = normal_height_map ? normal_height_map->material_index + 1 : 0;
 		memcpy(map, &stru, sizeof(MaterialShaderStruct));
 		defalut_staging_buffer->unmap();
 
 		VkBufferCopy range = {};
 		range.srcOffset = 0;
-		range.dstOffset = sizeof(MaterialShaderStruct) * index;
+		range.dstOffset = sizeof(MaterialShaderStruct) * m->get_index();
 		range.size = sizeof(MaterialShaderStruct);
 
 		defalut_staging_buffer->copyTo(materialBuffer, 1, &range);
 	}
 
-	std::shared_ptr<Image> Material::get_albedo_alpha_map() const
+	Material::Material() :
+		albedo_alpha(1.f),
+		spec_roughness(0.f, 1.f),
+		index(-1)
 	{
-		return albedo_alpha_map;
 	}
 
-	std::shared_ptr<Image> Material::get_spec_roughness_map() const
+	std::string Material::get_name() const
 	{
-		return spec_roughness_map;
+		return name;
 	}
 
-	std::shared_ptr<Image> Material::get_normal_height_map() const
+	glm::vec4 Material::get_albedo_alpha() const
 	{
-		return normal_height_map;
+		return albedo_alpha;
 	}
 
-	void Material::set_albedo_alpha_map(std::shared_ptr<Image> i)
+	glm::vec2 Material::get_spec_roughness() const
 	{
-		if (albedo_alpha_map == i)
-			return;
-
-		albedo_alpha_map = i;
+		return spec_roughness;
 	}
 
-	void Material::set_spec_roughness_map(std::shared_ptr<Image> i)
+	Image *Material::get_albedo_alpha_map() const
 	{
-		if (spec_roughness_map == i)
-			return;
-
-		spec_roughness_map = i;
-	}
-	void Material::set_normal_height_map(std::shared_ptr<Image> i)
-	{
-		if (normal_height_map == i)
-			return;
-
-		normal_height_map = i;
+		return albedo_alpha_map.get();
 	}
 
+	Image *Material::get_spec_roughness_map() const
+	{
+		return spec_roughness_map.get();
+	}
+
+	Image *Material::get_normal_height_map() const
+	{
+		return normal_height_map.get();
+	}
+
+	std::string Material::get_albedo_alpha_map_name() const
+	{
+		if (albedo_alpha_map)
+			return albedo_alpha_map->filename;
+		return "";
+	}
+
+	std::string Material::get_spec_roughness_map_name() const
+	{
+		if (spec_roughness_map)
+			return spec_roughness_map->filename;
+		return "";
+	}
+
+	std::string Material::get_normal_height_map_name() const
+	{
+		if (normal_height_map)
+			return normal_height_map->filename;
+		return "";
+	}
+
+	int Material::get_index() const
+	{
+		return index;
+	}
+
+	void Material::set_name(const std::string &v)
+	{
+		name = v;
+	}
+
+	void Material::set_albedo_alpha(const glm::vec4 &v)
+	{
+		albedo_alpha = v;
+		_update_material(this);
+	}
+
+	void Material::set_spec_roughness(const glm::vec2 &v)
+	{
+		spec_roughness = v;
+		_update_material(this);
+	}
+
+	void Material::set_albedo_alpha_map(const std::string &filename)
+	{
+		if (filename == "")
+			albedo_alpha_map.reset();
+		else
+		{
+			if (albedo_alpha_map && albedo_alpha_map->filename == filename)
+				return;
+
+			albedo_alpha_map = getMaterialImage(filename);
+		}
+		_update_material(this);
+	}
+
+	void Material::set_spec_roughness_map(const std::string &filename)
+	{
+		if (filename == "")
+			spec_roughness_map.reset();
+		else
+		{
+			if (spec_roughness_map && spec_roughness_map->filename == filename)
+				return;
+
+			spec_roughness_map = getMaterialImage(filename);
+		}
+		_update_material(this);
+	}
+	void Material::set_normal_height_map(const std::string &filename)
+	{
+		if (filename == "")
+			normal_height_map.reset();
+		else
+		{
+			if (normal_height_map && normal_height_map->filename == filename)
+				return;
+
+			normal_height_map = getMaterialImage(filename);
+		}
+		_update_material(this);
+	}
+
+	void Material::set_index(int v)
+	{
+		index = v;
+	}
 
 	static SpareList _material_list(MaxMaterialCount);
 	static std::weak_ptr<Material> _materials[MaxMaterialCount];
@@ -119,37 +210,44 @@ namespace tke
 	UniformBuffer *materialBuffer = nullptr;
 
 	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, glm::vec2 spec_roughness,
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> normalHeightMap,
-		std::shared_ptr<Image> specRoughnessMap)
+		const std::string &albedo_alpha_map_filename, const std::string &spec_roughness_map_filename,
+		const std::string &normal_height_map_filename)
 	{
 		std::shared_ptr<Material> m;
 		_material_list.iterate([&](int index, void *p, bool &remove) {
 			auto _m = _materials[index].lock();
 			if (_m)
 			{
-				if (_m->albedo_alpha_map != albedoAlphaMap ? false : (!albedoAlphaMap && is_same(_m->albedo_alpha, albedo_alpha))
-					&& _m->spec_roughness_map != specRoughnessMap ? false : (!specRoughnessMap && is_same(_m->spec_roughness, spec_roughness))
-					&& _m->normal_height_map == normalHeightMap)
+				if (is_same(_m->get_albedo_alpha(), albedo_alpha) &&
+					is_same(_m->get_spec_roughness(), spec_roughness) &&
+					_m->get_albedo_alpha_map_name() == albedo_alpha_map_filename &&
+					_m->get_spec_roughness_map_name() == spec_roughness_map_filename &&
+					_m->get_normal_height_map_name() == normal_height_map_filename)
+				{
 					m = _m;
+					return false;
+				}
 			}
 			else
 			{
 				_materials[index].reset();
 				remove = true;
 			}
+			return true;
 		});
 
 		if (!m)
 		{
 			m = std::make_shared<Material>();
-			m->albedo_alpha = albedo_alpha;
-			m->spec_roughness = spec_roughness;
-			m->albedo_alpha_map = albedoAlphaMap;
-			m->normal_height_map = normalHeightMap;
-			m->spec_roughness_map = specRoughnessMap;
+			m->set_albedo_alpha(albedo_alpha);
+			m->set_spec_roughness(spec_roughness);
+			m->set_albedo_alpha_map(albedo_alpha_map_filename);
+			m->set_spec_roughness_map(spec_roughness_map_filename);
+			m->set_normal_height_map(normal_height_map_filename);
 			auto index = _material_list.add(m.get());
-			m->index = index;
+			m->set_index(index);
 			_materials[index] = m;
+			_update_material(m.get());
 		}
 
 		return m;
@@ -162,14 +260,18 @@ namespace tke
 			auto _m = _materials[index].lock();
 			if (_m)
 			{
-				if (_m->name == name)
+				if (_m->get_name() == name)
+				{
 					m = _m;
+					return false;
+				}
 			}
 			else
 			{
 				_materials[index].reset();
 				remove = true;
 			}
+			return true;
 		});
 
 		return m ? m : default_material;
@@ -180,19 +282,26 @@ namespace tke
 
 	std::shared_ptr<Image> getMaterialImage(const std::string &_filename)
 	{
+		if (_filename == "")
+			return nullptr;
+
 		std::shared_ptr<Image> i;
 		_material_image_list.iterate([&](int index, void *p, bool &remove) {
 			auto _i = _material_images[index].lock();
 			if (_i)
 			{
 				if (_i->filename == _filename)
+				{
 					i = _i;
+					return false;
+				}
 			}
 			else
 			{
 				_material_images[index].reset();
 				remove = true;
 			}
+			return true;
 		});
 
 		if (!i)
@@ -240,13 +349,13 @@ namespace tke
 		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
 
 		default_material = std::make_shared<Material>();
-		default_material->name = "[default_material]";
-		default_material->index = 0;
+		default_material->set_name("[default_material]");
+		default_material->set_index(0);
 		{
 			auto index = _material_list.add(default_material.get());
 			_materials[index] = default_material;
 		}
-		_update_material(default_material.get(), 0);
+		_update_material(default_material.get());
 
 		updateDescriptorSets(1, &ds_material->bufferWrite(MaterialBufferDescriptorBinding, 0, materialBuffer));
 	}

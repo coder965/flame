@@ -8,6 +8,6 @@ struct ImageEditor : IWindow
 {
 	std::shared_ptr<tke::Image> image;
 
-	ImageEditor(std::shared_ptr<tke::Image> _image);
+	ImageEditor(const std::string &filename);
 	virtual void do_show() override;
 };

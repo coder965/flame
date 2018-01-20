@@ -10,6 +10,11 @@
 
 #include "../math/math.h"
 
+namespace tke
+{
+	struct Image;
+}
+
 namespace ImGui
 {
 	extern bool main_menu_alive;
@@ -18,13 +23,12 @@ namespace ImGui
 	bool BeginMenu_keepalive(const char* label, bool enabled = true);
 	void TextVFilted(const char* fmt, const char* filter, va_list args);
 	bool Splitter(bool split_vertically, float thickness, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f);
-	void ImageBorder(ImTextureID user_texture_id, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+	ImTextureID ImageID(std::shared_ptr<tke::Image> i);
+	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 }
 
 namespace tke
 {
-	struct Image;
-
 	extern bool uiAcceptedMouse;
 	extern bool uiAcceptedKey;
 
@@ -36,7 +40,6 @@ namespace tke
 	void ui_onChar(int);
 	void beginUi(bool _need_clear);
 	void endUi();
-	int get_ui_image_index(std::shared_ptr<Image> i);
 
 	namespace ui
 	{

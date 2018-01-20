@@ -38,7 +38,7 @@ namespace tke
 		for (int i = 0; i < m->geometries.size(); i++)
 		{
 			auto &g = m->geometries[i];
-			if (g->material->albedo_alpha_map)
+			if (g->material->get_albedo_alpha_map())
 			{
 				GeoData data;
 				auto &g = m->geometries[i];
@@ -46,7 +46,7 @@ namespace tke
 				data.first_index = m->indice_base + g->indiceBase;
 				data.vertex_offset = m->vertex_base;
 				data.instance_count = 1;
-				data.first_instance = g->material->albedo_alpha_map->material_index;
+				data.first_instance = g->material->get_albedo_alpha_map()->material_index;
 				geo_data.push_back(data);
 			}
 		}
@@ -690,7 +690,7 @@ namespace tke
 				.cx(-1).cy(-1)
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_VIEW" })
-				.add_shader(engine_path + "shader/deferred/deferred.frag", { "USE_PBR", "USE_IBL" })
+				.add_shader(engine_path + "shader/deferred/deferred.frag", { "USE_PBR" })
 				.add_link("ubo_constant_", "Constant.UniformBuffer")
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("img_depth", "Depth.Image", 0, plainUnnormalizedSampler)
@@ -993,6 +993,7 @@ namespace tke
 						range.size = sizeof(glm::mat4);
 						ranges.push_back(range);
 					}
+					return true;
 				});
 				defalut_staging_buffer->unmap();
 				defalut_staging_buffer->copyTo(buffer, ranges.size(), ranges.data());
@@ -1026,7 +1027,7 @@ namespace tke
 					for (int i = 0; i < 4; i++)
 					{
 						stru.material_index.v[i] = t->get_material(i) ?
-							t->get_material(i)->index : 0;
+							t->get_material(i)->get_index() : 0;
 					}
 					stru.material_count = t->get_material_count();
 					memcpy(map + srcOffset, &stru, sizeof(TerrainShaderStruct));
@@ -1041,6 +1042,7 @@ namespace tke
 					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
 						index, t->get_blend_image(), colorBorderSampler));
 				}
+				return true;
 			});
 
 			defalut_staging_buffer->unmap();
@@ -1073,6 +1075,7 @@ namespace tke
 					range.size = sizeof(WaterShaderStruct);
 					ranges.push_back(range);
 				}
+				return true;
 			});
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
@@ -1092,9 +1095,10 @@ namespace tke
 						command.indexCount = g->indiceCount;
 						command.vertexOffset = m->vertex_base;
 						command.firstIndex = m->indice_base + g->indiceBase;
-						command.firstInstance = (index << 8) + g->material->index;
+						command.firstInstance = (index << 8) + g->material->get_index();
 						commands.push_back(command);
 					}
+					return true;
 				});
 				buffer->update(commands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * commands.size());
 				out_count = commands.size();
@@ -1142,6 +1146,7 @@ namespace tke
 				range.dstOffset = 16 + sizeof(LightShaderStruct) * l->get_light_index();
 				range.size = sizeof(LightShaderStruct);
 				ranges.push_back(range);
+				return true;
 			});
 			defalut_staging_buffer->unmap();
 			defalut_staging_buffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
@@ -1214,6 +1219,7 @@ namespace tke
 					}
 					defalut_staging_buffer->unmap();
 					defalut_staging_buffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
+					return true;
 				});
 			}
 		}
@@ -1243,6 +1249,7 @@ namespace tke
 						auto m = i->get_model();
 						for (int gId = 0; gId < m->geometries.size(); gId++)
 							cb_shad->drawModel(m, gId, 1, ((l->get_shadow_index() * 6) << 28) + (index << 8) + gId);
+						return true;
 					});
 				};
 				if (static_model_instances.get_size() > 0)
@@ -1268,6 +1275,7 @@ namespace tke
 					fDrawDepth(animated_model_instances);
 				}
 				cb_shad->endRenderPass();
+				return true;
 			});
 
 			cb_shad->end();
@@ -1317,6 +1325,7 @@ namespace tke
 			terrains.iterate([&](int index, void *p, bool &remove) {
 				auto t = (TerrainComponent*)p;
 				cb_defe->draw(4, 0, (index << 16) + t->get_block_cx() * t->get_block_cx());
+				return true;
 			});
 		}
 		// water
@@ -1327,6 +1336,7 @@ namespace tke
 			waters.iterate([&](int index, void *p, bool &remove) {
 				auto w = (WaterComponent*)p;
 				cb_defe->draw(4, 0, (index << 16) + w->get_block_cx() * w->get_block_cx());
+				return true;
 			});
 		}
 

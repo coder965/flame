@@ -15,33 +15,47 @@ namespace tke
 	struct Image;
 	struct DescriptorSet;
 
-	struct Material
+	class Material
 	{
+	private:
 		std::string name;
 
-		glm::vec4 albedo_alpha = glm::vec4(1.f);
-		glm::vec2 spec_roughness = glm::vec2(0.f, 1.f);
+		glm::vec4 albedo_alpha;
+		glm::vec2 spec_roughness;
 
 		std::shared_ptr<Image> albedo_alpha_map;
 		std::shared_ptr<Image> spec_roughness_map;
 		std::shared_ptr<Image> normal_height_map;
 
 		int index = -1;
+	public:
+		Material();
 
-		std::shared_ptr<Image> get_albedo_alpha_map() const;
-		std::shared_ptr<Image> get_spec_roughness_map() const;
-		std::shared_ptr<Image> get_normal_height_map() const;
+		std::string get_name() const;
+		glm::vec4 get_albedo_alpha() const;
+		glm::vec2 get_spec_roughness() const;
+		Image *get_albedo_alpha_map() const;
+		Image *get_spec_roughness_map() const;
+		Image *get_normal_height_map() const;
+		std::string get_albedo_alpha_map_name() const;
+		std::string get_spec_roughness_map_name() const;
+		std::string get_normal_height_map_name() const;
+		int get_index() const;
 
-		void set_albedo_alpha_map(std::shared_ptr<Image> i);
-		void set_spec_roughness_map(std::shared_ptr<Image> i);
-		void set_normal_height_map(std::shared_ptr<Image> i);
+		void set_name(const std::string &v);
+		void set_albedo_alpha(const glm::vec4 &v);
+		void set_spec_roughness(const glm::vec2 &v);
+		void set_albedo_alpha_map(const std::string &filename);
+		void set_spec_roughness_map(const std::string &filename);
+		void set_normal_height_map(const std::string &filename);
+		void set_index(int v);
 	};
 
 	extern std::shared_ptr<Material> default_material;
 	extern UniformBuffer *materialBuffer;
 	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, glm::vec2 spec_roughness,
-		std::shared_ptr<Image> albedoAlphaMap, std::shared_ptr<Image> specRoughnessMap, 
-		std::shared_ptr<Image> normalHeightMap);
+		const std::string &albedo_alpha_map_filename, const std::string &spec_roughness_map_filename,
+		const std::string &normal_height_map_filename);
 	std::shared_ptr<Material> getMaterial(const std::string name);
 
 	std::shared_ptr<Image> getMaterialImage(const std::string &filename);

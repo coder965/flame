@@ -37,7 +37,7 @@ struct SaveModelDialog : FileSelector
 	bool first = true;
 
 	SaveModelDialog()
-		:FileSelector("Save Model", true, true, false, 1, 800, 600)
+		:FileSelector("Save Model", true, true, false, true, 800, 600)
 	{
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}
@@ -123,7 +123,7 @@ void TerrainEditor::do_show()
 	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImTextureID(tke::get_ui_image_index(layer.image)), image_pos, image_pos + image_size);
+	draw_list->AddImage(ImGui::ImageID(layer.image), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)

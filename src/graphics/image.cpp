@@ -275,30 +275,38 @@ namespace tke
 		VkFormat _format = VK_FORMAT_UNDEFINED;
 		switch (image_data->channel)
 		{
-		case 1:
-			switch (image_data->bpp)
-			{
-			case 8:
-				_format = VK_FORMAT_R8_UNORM;
+			case 0:
+				switch (image_data->bpp)
+				{
+					case 8:
+						_format = VK_FORMAT_R8_UNORM;
+						break;
+				}
 				break;
-			case 16:
-				_format = VK_FORMAT_R16_UNORM;
+			case 1:
+				switch (image_data->bpp)
+				{
+					case 8:
+						_format = VK_FORMAT_R8_UNORM;
+						break;
+					case 16:
+						_format = VK_FORMAT_R16_UNORM;
+						break;
+				}
 				break;
-			}
-			break;
-		case 3:
-			// vk do not support 3 channels
-			break;
-		case 4:
-			switch (image_data->bpp)
-			{
-			case 32:
-				if (sRGB)
-					_format = VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
-				else
-					_format = VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
+			case 3:
+				// vk do not support 3 channels
 				break;
-			}
+			case 4:
+				switch (image_data->bpp)
+				{
+					case 32:
+						if (sRGB)
+							_format = VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
+						else
+							_format = VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
+						break;
+				}
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
