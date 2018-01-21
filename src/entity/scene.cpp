@@ -514,43 +514,36 @@ namespace tke
 	void Scene::save(const std::string &filename)
 	{
 		// TODO : FIX THIS
-		tke::XMLDoc at("scene");
-		//at.addAttributes(this, b);
-		//for (auto &o : objects)
-		//{
-		//	auto n = at.newNode("object");
-		//	o->get_coord();
-		//	o->get_euler();
-		//	o->get_scale();
-		//	n->addAttributes(o.get(), o->b);
-		//}
-		//for (auto &t : terrains)
-		//{
-		//	auto n = at.newNode("terrain");
-		//	t->get_coord();
-		//	t->get_euler();
-		//	t->get_scale();
-		//	n->addAttributes(t.get(), t->b);
-		//}
+		XMLDoc at("scene");
+
+		std::function<void(XMLNode *, Node *)> fSaveNode;
+
+		fSaveNode = [&](XMLNode *dst, Node *src) {
+			auto n = dst->new_node("node");
+			auto coord = src->get_coord();
+			auto euler = src->get_euler();
+			auto scale = src->get_scale();
+			n->new_attribute("coord", &coord);
+			n->new_attribute("euler", &euler);
+			n->new_attribute("scale", &scale);
+			for (auto &c : src->get_components())
+				c->serialize(dst);
+			for (auto &c : src->get_children())
+				fSaveNode(n, c.get());
+		};
+
+		fSaveNode(&at, this);
+
 		at.save(filename);
 	}
 
-	std::map<unsigned int, std::weak_ptr<Scene>> _scenes;
-	std::shared_ptr<Scene> getScene(const std::string &filename)
+	Scene*create_scene(const std::string &filename)
 	{
-		auto hash = HASH(filename.c_str());
-		auto it = _scenes.find(hash);
-		if (it != _scenes.end())
-		{
-			auto s = it->second.lock();
-			if (s) return s;
-		}
-
 		std::fs::path path(filename);
 		if (!std::fs::exists(filename))
 			return nullptr;
 
-		auto s = std::make_shared<Scene>();
+		auto s = new Scene;
 		s->set_filename(filename);
 
 		tke::XMLDoc at("scene", filename);
@@ -598,7 +591,6 @@ namespace tke
 		//	}
 		//}
 
-		_scenes[hash] = s;
 		return s;
 	}
 }

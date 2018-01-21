@@ -63,5 +63,5 @@ namespace tke
 		void save(const std::string &filename);
 	};
 
-	std::shared_ptr<Scene> getScene(const std::string &filename);
+	Scene *create_scene(const std::string &filename);
 }

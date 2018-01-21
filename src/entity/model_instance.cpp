@@ -7,6 +7,11 @@
 
 namespace tke
 {
+	void ModelInstanceComponent::serialize(XMLNode *dst)
+	{
+
+	}
+
 	ModelInstanceComponent::ModelInstanceComponent(std::shared_ptr<Model> _model) :
 		Component(ComponentTypeModelInstance),
 		model(_model),

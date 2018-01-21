@@ -23,6 +23,66 @@ void InspectorWindow::do_show()
 
 	switch (selected.type)
 	{
+		case SelectTypeFile:
+		{
+			static std::string filename;
+			static bool is_folder;
+			static long long file_size;
+			static std::string file_size_text;
+			static tke::FileType file_type;
+			static glm::ivec2 image_file_resolution;
+			if (selected.get_filename() != filename)
+			{
+				filename = selected.get_filename();
+				std::fs::path path(filename);
+				is_folder = std::fs::is_directory(path);
+				if (!is_folder)
+				{
+					std::error_code e;
+					file_size = std::fs::file_size(path, e);
+					if (file_size < 1024)
+						file_size_text = "size: " + std::to_string(file_size) + " Byte";
+					else if (file_size < 1024 * 1024)
+						file_size_text = "size: " + std::_Floating_to_string("%.2f", float(file_size) / 1024.f) + " KB";
+					else if (file_size < 1024 * 1024 * 1024)
+						file_size_text = "size: " + std::_Floating_to_string("%.2f", float(file_size) / 1024.f / 1024.f) + " MB";
+					else
+						file_size_text = "size: " + std::_Floating_to_string("%.2f", float(file_size) / 1024.f / 1024.f / 1024.f) + " GB";
+					
+					auto ext = path.extension().string();
+					file_type = tke::get_file_type(ext);
+
+					switch (file_type)
+					{
+						case tke::FileTypeImage:
+						{
+							auto i = tke::get_image(filename);
+							if (i)
+							{
+								image_file_resolution.x = i->levels[0].cx;
+								image_file_resolution.y = i->levels[0].cy;
+							}
+							break;
+						}
+					}
+				}
+			}
+			ImGui::Text("filename: %s", selected.get_filename().c_str());
+			if (!is_folder)
+			{
+				ImGui::TextUnformatted(file_size_text.c_str());
+
+				switch (file_type)
+				{
+					case tke::FileTypeImage:
+					{
+						ImGui::Text("resolution: %d x %d", image_file_resolution.x, image_file_resolution.y);
+						break;
+					}
+				}
+			}
+			break;
+		}
 		case SelectTypeNode:
 		{
 			auto n = selected.get_node();

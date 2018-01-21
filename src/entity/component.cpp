@@ -8,6 +8,8 @@ namespace tke
 	{
 	}
 
+	Component::~Component() {}
+
 	ComponentType Component::get_type() const
 	{
 		return type;

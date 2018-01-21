@@ -15,6 +15,7 @@ namespace tke
 	};
 
 	class Node;
+	struct XMLNode;
 
 	class Component : public Object
 	{
@@ -24,10 +25,13 @@ namespace tke
 		friend class Node;
 	public:
 		Component(ComponentType _type);
-		virtual ~Component() {}
+		virtual ~Component();
 
 		ComponentType get_type() const;
 		Node *get_parent() const;
+
+		virtual void serialize(XMLNode *dst) {};
+		virtual bool unserialize(XMLNode *src) {};
 	protected:
 		virtual void on_update() {};
 	};

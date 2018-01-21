@@ -1,6 +1,4 @@
 #include "node.h"
-#include "camera.h"
-#include "water.h"
 
 namespace tke
 {
@@ -29,6 +27,8 @@ namespace tke
 		parent(nullptr)
 	{
 	}
+
+	Node::~Node() {}
 
 	glm::vec3 Node::get_coord() const
 	{

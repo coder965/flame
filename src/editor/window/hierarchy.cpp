@@ -35,7 +35,7 @@ void HierarchyWindow::do_show()
 	if (scene_editor)
 	{
 		auto scene = scene_editor->scene;
-		show_nodes(scene.get());
+		show_nodes(scene);
 	}
 
 	ImGui::End();

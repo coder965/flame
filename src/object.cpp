@@ -6,6 +6,8 @@ namespace tke
 	{
 		for (auto f : followers)
 			f->remove_following(this);
+		for (auto f : followings)
+			f->remove_follower(this);
 	}
 
 	void Object::follow_to(Object *o)

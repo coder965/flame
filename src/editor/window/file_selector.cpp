@@ -78,11 +78,6 @@ void FileSelector::refresh()
 			{
 				auto i = on_new_file_item();
 
-				{
-					std::error_code e;
-					i->file_size = std::fs::file_size(it->path(), e);
-				}
-
 				auto ext = it->path().extension().string();
 				const char *prefix;
 				if (tke::is_text_file(ext))
@@ -235,7 +230,7 @@ void FileSelector::do_show()
 					if (ImGui::BeginDragDropSource())
 					{
 						ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size() + 1);
-						ImGui::Text(i->filename.c_str());
+						ImGui::TextUnformatted(i->filename.c_str());
 						ImGui::EndDragDropSource();
 					}
 					index++;

@@ -35,7 +35,6 @@ struct FileSelector : IWindow
 
 	struct FileItem : ItemData
 	{
-		int file_size = 0;
 		tke::FileType file_type = tke::FileTypeUnknown;
 
 		virtual ~FileItem() {}

@@ -5,21 +5,40 @@
 #include <memory>
 #include <typeindex>
 
-template<class T>
-inline std::ifstream& operator&(std::ifstream &file, T &v)
+namespace glm
 {
-	file.read((char*)&v, sizeof(T));
-	return file;
+	struct ivec2;
+	struct ivec3;
+	struct ivec4;
+	struct vec2;
+	struct vec3;
+	struct vec4;
 }
 
-template<class T>
-inline std::ofstream& operator&(std::ofstream &file, T &v)
+namespace tke
 {
-	file.write((char*)&v, sizeof(T));
-	return file;
+	int read_int(std::ifstream &file);
+	glm::ivec2 read_int2(std::ifstream &file);
+	glm::ivec3 read_int3(std::ifstream &file);
+	glm::ivec4 read_int4(std::ifstream &file);
+	float read_float(std::ifstream &file);
+	glm::vec2 read_float2(std::ifstream &file);
+	glm::vec3 read_float3(std::ifstream &file);
+	glm::vec4 read_float4(std::ifstream &file);
+	std::string read_string(std::ifstream &file);
+
+	void write_int(std::ifstream &file, int v);
+	void write_int2(std::ifstream &file, const glm::ivec2 &v);
+	void write_int3(std::ifstream &file, const glm::ivec3 &v);
+	void write_int4(std::ifstream &file, const glm::ivec4 &v);
+	void write_float(std::ifstream &file, float v);
+	void write_float2(std::ifstream &file, const glm::vec2 &v);
+	void write_float3(std::ifstream &file, const glm::vec3 &v);
+	void write_float4(std::ifstream &file, const glm::vec4 &v);
+	void write_string(std::ifstream &file, const std::string &v);
 }
 
-inline std::ifstream& operator>(std::ifstream &file, std::string &str)
+inline std::ifstream& operator&(std::ifstream &file, std::string &str)
 {
 	int size = 0;
 	int q = 1;
@@ -59,7 +78,7 @@ inline std::ofstream& operator<(std::ofstream &file, std::string &str)
 
 namespace std
 {
-	namespace fs = std::experimental::filesystem;
+	namespace fs = experimental::filesystem;
 }
 
 namespace tke
@@ -67,6 +86,7 @@ namespace tke
 	enum FileType
 	{
 		FileTypeUnknown,
+		FileTypeFolder,
 		FileTypeText,
 		FileTypeImage,
 		FileTypeModel,
@@ -79,6 +99,7 @@ namespace tke
 	bool is_model_file(const std::string &ext);
 	bool is_terrain_file(const std::string &ext);
 	bool is_scene_file(const std::string &ext);
+	FileType get_file_type(const std::string &ext);
 
 	size_t get_file_length(std::ifstream &f);
 
@@ -123,27 +144,27 @@ namespace tke
 		std::vector<std::unique_ptr<XMLNode>> children;
 
 		XMLNode(const std::string &_name);
-		XMLAttribute *newAttribute();
-		XMLAttribute *newAttribute(const std::string &, const std::string &);
-		XMLAttribute *newAttribute(const std::string &, const char *);
-		XMLAttribute *newAttribute(const std::string &, char *);
+		XMLAttribute *new_attribute();
+		XMLAttribute *new_attribute(const std::string &, const std::string &);
+		XMLAttribute *new_attribute(const std::string &, const char *);
+		XMLAttribute *new_attribute(const std::string &, char *);
 
 		template<class T>
-		XMLAttribute *newAttribute(const std::string &n, T *v)
+		XMLAttribute *new_attribute(const std::string &n, T *v)
 		{
-			auto a = newAttribute();
+			auto a = new_attribute();
 			a->set(v);
 			return a;
 		}
 
-		XMLNode *newNode(const std::string &_name);
-		XMLAttribute *firstAttribute(const std::string &_name);
-		XMLNode *firstNode(const std::string &_name);
+		XMLNode *new_node(const std::string &_name);
+		XMLAttribute *first_attribute(const std::string &_name);
+		XMLNode *first_node(const std::string &_name);
 
 		template <class... _Valty>
-		inline void addAttribute(_Valty&&... _Val)
+		inline void add_attribute(_Valty&&... _Val)
 		{
-			newAttribute(_Val...);
+			new_attribute(_Val...);
 		}
 
 		// THESE TWO FUNCTIONS ARE SEALED SINCE 2018-01-11

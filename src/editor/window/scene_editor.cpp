@@ -18,21 +18,30 @@
 #include "resource_explorer.h"
 #include "scene_editor.h"
 
+void SceneEditor::on_delete()
+{
+	auto n = selected.get_node();
+	if (!n || n == scene)
+		return;
+
+	n->get_parent()->remove_child(n);
+}
+
 std::unique_ptr<SceneEditor> scene_editor = nullptr;
 
-SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
-	:scene(_scene)
+SceneEditor::SceneEditor(tke::Scene *_scene)
 {
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
 	camera_node->add_component(camera);
 	tke::root_node->add_child(camera_node);
 
-	tke::root_node->add_child(scene.get());
+	scene = _scene;
+	tke::root_node->add_child(scene);
 
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
-	defe_renderer->follow_to(_scene.get());
+	defe_renderer->follow_to(scene);
 
 	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
@@ -43,6 +52,7 @@ SceneEditor::SceneEditor(std::shared_ptr<tke::Scene> _scene)
 SceneEditor::~SceneEditor()
 {
 	tke::root_node->remove_child(camera_node);
+	tke::root_node->remove_child(scene);
 }
 
 void SceneEditor::on_file_menu()
@@ -131,11 +141,7 @@ void SceneEditor::on_menu_bar()
 		if (ImGui::MenuItem("Paste", "Ctrl+V"))
 			;
 		if (ImGui::MenuItem("Delete", "Del"))
-		{
-			auto n = selected.get_node();
-			if (n)
-				n->get_parent()->remove_child(n);
-		}
+			on_delete();
 
 		ImGui::EndMenu();
 	}
@@ -265,6 +271,9 @@ void SceneEditor::do_show()
 				}
 			}
 		}
+
+		if (ImGui::IsKeyDown(VK_DELETE))
+			on_delete();
 	}
 
 	{
@@ -301,7 +310,7 @@ void SceneEditor::do_show()
 
 	if (enableRender)
 	{
-		defe_renderer->render(scene.get(), camera);
+		defe_renderer->render(scene, camera);
 		defe_renderer->add_to_drawlist();
 	}
 

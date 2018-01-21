@@ -58,6 +58,16 @@ int main(int argc, char** argv)
 					hierarchy_window = new HierarchyWindow;
 				else if (n->name == "inspector_window")
 					inspector_window = new InspectorWindow;
+				else if (n->name == "scene_editor")
+				{
+					auto s = tke::create_scene(n->firstAttribute("filename")->value);
+					if (s)
+					{
+						s->name = "scene";
+						if (!scene_editor)
+							scene_editor = std::make_unique<SceneEditor>(s);
+					}
+				}
 			}
 		}
 	}
@@ -413,6 +423,11 @@ int main(int argc, char** argv)
 			at.newNode("hierarchy_window");
 		if (inspector_window)
 			at.newNode("inspector_window");
+		if (scene_editor)
+		{
+			auto n = at.newNode("scene_editor");
+			n->newAttribute("filename", scene_editor->scene->get_filename());
+		}
 		if (SelectObject)
 			at.newNode("select");
 		at.save("ui.xml");

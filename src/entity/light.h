@@ -25,8 +25,10 @@ namespace tke
 		int shadow_index;
 
 		bool attribute_dirty;
-
 	public:
+		virtual void serialize(XMLNode *dst) override;
+		virtual bool unserialize(XMLNode *src) override;
+
 		LightComponent(LightType _type);
 
 		LightType get_type() const;

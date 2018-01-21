@@ -1,15 +1,29 @@
 #include "light.h"
+#include "../file_utils.h"
 
 namespace tke
 {
 	std::string get_light_type_name(LightType type)
 	{
 		char *names[] = {
-			"parallax light",
-			"point light",
-			"spot light"
+			"parallax",
+			"point",
+			"spot"
 		};
 		return names[type];
+	}
+
+	void LightComponent::serialize(XMLNode *dst)
+	{
+		dst->new_attribute("type", get_light_type_name(type));
+		dst->new_attribute("color", &color);
+		dst->new_attribute("range", &range);
+		dst->new_attribute("enable_shadow", &enable_shadow);
+	}
+
+	bool LightComponent::unserialize(XMLNode *src)
+	{
+
 	}
 
 	LightComponent::LightComponent(LightType _type) :

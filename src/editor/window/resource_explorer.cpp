@@ -14,7 +14,7 @@
 ResourceExplorer *resourceExplorer = nullptr;
 
 ResourceExplorer::ResourceExplorer()
-	:FileSelector("Resource Explorer", false, true, true, false, 500, 300, true)
+	:FileSelector("Resource Explorer", false, true, true, false, 0, 0, true)
 {
 }
 
@@ -23,58 +23,10 @@ ResourceExplorer::~ResourceExplorer()
 	resourceExplorer = nullptr;
 }
 
-void ResourceExplorer::on_file_item_selected(FileItem *i, bool doubleClicked)
-{
-	switch (i->file_type)
-	{
-		case tke::FileTypeImage:
-			if (doubleClicked)
-				new ImageEditor(i->filename);
-			break;
-		case tke::FileTypeModel:
-			if (doubleClicked)
-			{
-				auto m = tke::getModel(i->filename);
-				if (m)
-					new ModelEditor(m);
-			}
-			break;
-		case tke::FileTypeTerrain:
-			if (doubleClicked)
-				new TerrainEditor;
-			break;
-		case tke::FileTypeScene:
-			if (doubleClicked)
-			{
-				auto s = tke::getScene(i->filename);
-				if (s)
-				{
-					s->name = "scene";
-					if (!scene_editor)
-						scene_editor = std::make_unique<SceneEditor>(s);
-					else
-						scene_editor->scene = s;
-				}
-			}
-			break;
-	}
-}
-
-void ResourceExplorer::on_top_area_show()
-{
-}
-
-void ResourceExplorer::on_bottom_area_show()
-{
-	//if (list_index != -1 && list_index >= dir_list.size())
-	//{
-	//	auto i = file_list[list_index - dir_list.size()].get();
-	//	ImGui::Text("size: %d byte", i->file_size);
-	//}
-}
-
 void ResourceExplorer::on_right_area_show()
 {
+	static char filter[260];
+	ImGui::InputText(ICON_FA_SEARCH, filter, TK_ARRAYSIZE(filter));
 	if (select_dir)
 	{
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -94,9 +46,57 @@ void ResourceExplorer::on_right_area_show()
 			int sel = 0;
 			if (ImGui::IsItemHovered())
 			{
-				if (ImGui::IsMouseClicked(0))
+				if (ImGui::IsMouseClicked(1))
 					selected = d->filename;
+				if (ImGui::IsMouseDoubleClicked(0))
+				{
+					if (is_folder)
+						select_dir = (DirItem*)d;
+					else
+					{
+						auto f = (FileItem*)d;
+						switch (f->file_type)
+						{
+							case tke::FileTypeImage:
+							{
+								new ImageEditor(f->filename);
+								break;
+							}
+							case tke::FileTypeModel:
+							{
+								auto m = tke::getModel(f->filename);
+								if (m)
+									new ModelEditor(m);
+								break;
+							}
+							case tke::FileTypeTerrain:
+							{
+								new TerrainEditor;
+								break;
+							}
+							case tke::FileTypeScene:
+							{
+								auto s = tke::create_scene(f->filename);
+								if (s)
+								{
+									s->name = "scene";
+									if (!scene_editor)
+										scene_editor = std::make_unique<SceneEditor>(s);
+									else
+										scene_editor->scene = s;
+								}
+								break;
+							}
+						}
+					}
+				}
 				sel = 1;
+			}
+			if (ImGui::BeginDragDropSource())
+			{
+				ImGui::SetDragDropPayload("file", d->filename.c_str(), d->filename.size() + 1);
+				ImGui::TextUnformatted(d->filename.c_str());
+				ImGui::EndDragDropSource();
 			}
 			if (selected.get_filename() == d->filename)
 				sel = 2;
