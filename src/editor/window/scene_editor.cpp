@@ -36,12 +36,12 @@ SceneEditor::SceneEditor(tke::Scene *_scene)
 	camera_node->add_component(camera);
 	tke::root_node->add_child(camera_node);
 
-	scene = _scene;
-	tke::root_node->add_child(scene);
-
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
-	defe_renderer->follow_to(scene);
+	defe_renderer->follow_to(tke::root_node);
+
+	scene = _scene;
+	tke::root_node->add_child(scene);
 
 	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
