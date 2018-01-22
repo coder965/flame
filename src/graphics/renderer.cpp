@@ -505,7 +505,7 @@ namespace tke
 								animated_model_instances.remove(i);
 							else
 								static_model_instances.remove(i);
-							if (i->get_model()->vertexes_skeleton.size())
+							if (i->get_model()->vertexes_skeleton.size() > 0)
 								animated_model_instance_count_dirty = true;
 							else
 								static_model_instance_count_dirty = true;
@@ -551,6 +551,15 @@ namespace tke
 					if (l->get_shadow_index() != -1)
 						shadow_lights.remove(l);
 				}
+				return true;
+			}
+			case MessageChangeModel:
+			{
+				auto i = (ModelInstanceComponent*)sender;
+				if (i->get_model()->vertexes_skeleton.size() > 0)
+					animated_model_instance_count_dirty = true;
+				else
+					static_model_instance_count_dirty = true;
 				return true;
 			}
 		}

@@ -58,8 +58,8 @@ SceneEditor::~SceneEditor()
 void SceneEditor::on_file_menu()
 {
 	if (ImGui::MenuItem("Save", "Ctrl+S"))
-		scene->save(scene->get_filename());
-	if (ImGui::MenuItem("Close", "Ctrl+S"))
+		tke::save_scene(scene);
+	if (ImGui::MenuItem("Close"))
 		scene_editor.reset();
 }
 
@@ -102,7 +102,8 @@ void SceneEditor::on_menu_bar()
 						auto n = new tke::Node(tke::NodeTypeNode);
 						n->name = "Object";
 						n->set_coord(camera->get_target());
-						auto i = new tke::ModelInstanceComponent(m);
+						auto i = new tke::ModelInstanceComponent;
+						i->set_model(m);
 						n->add_component(i);
 						scene->add_child(n);
 					}
@@ -211,7 +212,8 @@ void SceneEditor::do_show()
 					auto n = new tke::Node(tke::NodeTypeNode);
 					n->name = "Object";
 					n->set_coord(camera->get_target());
-					auto i = new tke::ModelInstanceComponent(m);
+					auto i = new tke::ModelInstanceComponent;
+					i->set_model(m);
 					n->add_component(i);
 					scene->add_child(n);
 				}
@@ -406,6 +408,6 @@ void SceneEditor::do_show()
 
 void SceneEditor::save(tke::XMLNode *n)
 {
-	n->addAttribute("filename", scene->get_filename());
-	n->addAttribute("follow", &follow);
+	n->add_attribute(new tke::XMLAttribute("filename", scene->get_filename()));
+	n->add_attribute(new tke::XMLAttribute("follow", follow));
 }

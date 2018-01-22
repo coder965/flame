@@ -5,7 +5,7 @@
 
 namespace tke
 {
-	class ControllerComponent : Component
+	class ControllerComponent : public Component
 	{
 	public:
 		enum State

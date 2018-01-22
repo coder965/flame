@@ -1,5 +1,5 @@
-#include "light.h"
 #include "../file_utils.h"
+#include "light.h"
 
 namespace tke
 {
@@ -21,14 +21,25 @@ namespace tke
 		dst->add_attribute(new XMLAttribute("enable_shadow", enable_shadow));
 	}
 
-	bool LightComponent::unserialize(XMLNode *src)
+	void LightComponent::unserialize(XMLNode *src)
 	{
-		return true;
+		auto type_name = src->first_attribute("type")->get_string(); // required
+		if (type_name == "parallax")
+			type = LightTypeParallax;
+		else if (type_name == "point")
+			type = LightTypePoint;
+		else if (type_name == "spot")
+			type = LightTypeSpot;
+		else
+			assert(0); // require a vaild type name
+		src->get_attribute_float3("color", color);
+		src->get_attribute_float("range", range);
+		src->get_attribute_bool("enable_shadow", enable_shadow);
 	}
 
-	LightComponent::LightComponent(LightType _type) :
+	LightComponent::LightComponent() :
 		Component(ComponentTypeLight), 
-		type(_type),
+		type(LightTypePoint),
 		color(0.5f),
 		range(0.5f),
 		enable_shadow(false),

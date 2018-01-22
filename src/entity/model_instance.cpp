@@ -3,18 +3,28 @@
 //#include "../physics/physics.h"
 #include "component.h"
 #include "../model/model.h"
+#include "../file_utils.h"
 #include "model_instance.h"
 
 namespace tke
 {
 	void ModelInstanceComponent::serialize(XMLNode *dst)
 	{
-
+		dst->add_attribute(new XMLAttribute("model", model->filename));
 	}
 
-	ModelInstanceComponent::ModelInstanceComponent(std::shared_ptr<Model> _model) :
+	void ModelInstanceComponent::unserialize(XMLNode *dst)
+	{
+		auto m = getModel(dst->first_attribute("model")->get_string());
+		if (m)
+			model = m;
+		else
+			model = cubeModel;
+	}
+
+	ModelInstanceComponent::ModelInstanceComponent() :
 		Component(ComponentTypeModelInstance),
-		model(_model),
+		model(cubeModel),
 		instance_index(-1)
 	{
 	}
@@ -27,6 +37,13 @@ namespace tke
 	int ModelInstanceComponent::get_instance_index() const
 	{
 		return instance_index;
+	}
+
+	void ModelInstanceComponent::set_model(std::shared_ptr<Model> _model)
+	{
+		model = _model;
+
+		broadcast(this, MessageChangeModel);
 	}
 
 	void ModelInstanceComponent::set_instance_index(int v)

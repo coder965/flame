@@ -258,6 +258,12 @@ namespace tke
 	{
 	}
 
+	XMLAttribute::XMLAttribute(const std::string &_name, bool v) :
+		name(_name)
+	{
+		set(v);
+	}
+
 	XMLAttribute::XMLAttribute(const std::string &_name, int v) :
 		name(_name)
 	{
@@ -311,6 +317,11 @@ namespace tke
 	{
 	}
 
+	void XMLAttribute::set(bool v)
+	{
+		value = v ? "true" : "false";
+	}
+
 	void XMLAttribute::set(int v)
 	{
 		value = std::to_string(v);
@@ -354,6 +365,11 @@ namespace tke
 	void XMLAttribute::set(const std::string &v)
 	{
 		value = v;
+	}
+
+	bool XMLAttribute::get_bool() const
+	{
+		return value == "true";
 	}
 
 	int XMLAttribute::get_int() const
@@ -423,7 +439,7 @@ namespace tke
 		attributes.emplace_back(a);
 	}
 
-	XMLAttribute *XMLNode::first_attribute(const std::string &_name)
+	XMLAttribute *XMLNode::first_attribute(const std::string &_name) const
 	{
 		for (auto &a : attributes)
 		{
@@ -433,12 +449,82 @@ namespace tke
 		return nullptr;
 	}
 
+	void XMLNode::get_attribute_bool(const std::string &_name, bool &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_bool();
+	}
+
+	void XMLNode::get_attribute_int(const std::string &_name, int &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_int();
+	}
+
+	void XMLNode::get_attribute_int2(const std::string &_name, glm::ivec2 &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_int2();
+	}
+
+	void XMLNode::get_attribute_int3(const std::string &_name, glm::ivec3 &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_int3();
+	}
+
+	void XMLNode::get_attribute_int4(const std::string &_name, glm::ivec4 &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_int4();
+	}
+
+	void XMLNode::get_attribute_float(const std::string &_name, float &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_float();
+	}
+
+	void XMLNode::get_attribute_float2(const std::string &_name, glm::vec2 &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_float2();
+	}
+
+	void XMLNode::get_attribute_float3(const std::string &_name, glm::vec3 &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_float3();
+	}
+
+	void XMLNode::get_attribute_float4(const std::string &_name, glm::vec4 &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_float4();
+	}
+
+	void XMLNode::get_attribute_string(const std::string &_name, std::string &dst) const
+	{
+		auto a = first_attribute(_name);
+		if (a)
+			dst = a->get_string();
+	}
+
 	void XMLNode::add_node(XMLNode *n)
 	{
 		children.emplace_back(n);
 	}
 
-	XMLNode *XMLNode::first_node(const std::string &_name)
+	XMLNode *XMLNode::first_node(const std::string &_name) const
 	{
 		for (auto &c : children)
 		{
@@ -510,13 +596,13 @@ namespace tke
 	//	}
 	//}
 
-	XMLDoc::XMLDoc(const std::string &_name)
-		: XMLNode(_name)
+	XMLDoc::XMLDoc(const std::string &_name) : 
+		XMLNode(_name)
 	{
 	}
 
-	XMLDoc::XMLDoc(const std::string &_name, const std::string &_filename)
-		: XMLNode(_name)
+	XMLDoc::XMLDoc(const std::string &_name, const std::string &_filename) : 
+		XMLNode(_name)
 	{
 		load(_filename);
 	}
@@ -525,7 +611,7 @@ namespace tke
 	{
 		dst->content = src->value();
 		for (auto a = src->first_attribute(); a; a = a->next_attribute())
-			dst->add_attribute(new XMLAttribute(a->name(), a->value()));
+			dst->add_attribute(new XMLAttribute(a->name(), std::string(a->value())));
 
 		for (auto n = src->first_node(); n; n = n->next_sibling())
 		{

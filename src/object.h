@@ -13,7 +13,8 @@ namespace tke
 		MessageComponentRemove,
 		MessageSkyDirty,
 		MessageAmbientDirty,
-		MessageToggleShaodw
+		MessageToggleShaodw,
+		MessageChangeModel
 	};
 
 	struct Object

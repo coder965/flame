@@ -27,9 +27,9 @@ namespace tke
 		bool attribute_dirty;
 	public:
 		virtual void serialize(XMLNode *dst) override;
-		virtual bool unserialize(XMLNode *src) override;
+		virtual void unserialize(XMLNode *src) override;
 
-		LightComponent(LightType _type);
+		LightComponent();
 
 		LightType get_type() const;
 		glm::vec3 get_color() const;

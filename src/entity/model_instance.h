@@ -44,13 +44,14 @@ namespace tke
 		int instance_index;
 	public:
 		virtual void serialize(XMLNode *dst) override;
+		virtual void unserialize(XMLNode *src) override;
 
-		ModelInstanceComponent(std::shared_ptr<Model> _model);
+		ModelInstanceComponent();
 
 		Model *get_model() const;
-
 		int get_instance_index() const;
 
+		void set_model(std::shared_ptr<Model> _model);
 		void set_instance_index(int v);
 	};
 }

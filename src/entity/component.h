@@ -31,7 +31,7 @@ namespace tke
 		Node *get_parent() const;
 
 		virtual void serialize(XMLNode *dst) {};
-		virtual bool unserialize(XMLNode *src) { return true; };
+		virtual void unserialize(XMLNode *src) {};
 	protected:
 		virtual void on_update() {};
 	};

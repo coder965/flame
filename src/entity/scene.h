@@ -60,8 +60,8 @@ namespace tke
 		void set_ambient_color(const glm::vec3 &);
 		void set_fog_color(const glm::vec3 &);
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);
-		void save(const std::string &filename);
 	};
 
 	Scene *create_scene(const std::string &filename);
+	void save_scene(Scene *src);
 }

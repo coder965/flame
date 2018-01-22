@@ -428,6 +428,8 @@ int main(int argc, char** argv)
 			auto n = new tke::XMLNode("scene_editor");
 			n->add_attribute(new tke::XMLAttribute("filename", scene_editor->scene->get_filename()));
 			at.add_node(n);
+
+			tke::save_scene(scene_editor->scene);
 		}
 		if (SelectObject)
 			at.add_node(new tke::XMLNode("select"));

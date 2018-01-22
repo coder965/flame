@@ -1,2 +1,8 @@
-<scene/>
+<scene>
+	<node coord="0./0./0." euler="0./0./0." scale="1./1./1.">
+		<node coord="0./0./0." euler="1./0./0." scale="1./1./1.">
+			<component component_type="model_instance" model="Cube"/>
+		</node>
+	</node>
+</scene>
 

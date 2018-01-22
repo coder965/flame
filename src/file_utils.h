@@ -14,6 +14,7 @@ namespace std
 namespace tke
 {
 	void skip(std::ifstream &file, int byte_count);
+
 	char read_char(std::ifstream &file);
 	short read_short(std::ifstream &file);
 	int read_int(std::ifstream &file);
@@ -68,6 +69,7 @@ namespace tke
 		std::string value;
 
 		XMLAttribute();
+		XMLAttribute(const std::string &_name, bool v);
 		XMLAttribute(const std::string &_name, int v);
 		XMLAttribute(const std::string &_name, const glm::ivec2 &v);
 		XMLAttribute(const std::string &_name, const glm::ivec3 &v);
@@ -78,6 +80,7 @@ namespace tke
 		XMLAttribute(const std::string &_name, const glm::vec4 &v);
 		XMLAttribute(const std::string &_name, const std::string &v);
 
+		void set(bool v);
 		void set(int v);
 		void set(const glm::ivec2 &v);
 		void set(const glm::ivec3 &v);
@@ -88,6 +91,7 @@ namespace tke
 		void set(const glm::vec4 &v);
 		void set(const std::string &v);
 
+		bool get_bool() const;
 		int get_int() const;
 		glm::ivec2 get_int2() const;
 		glm::ivec3 get_int3() const;
@@ -111,10 +115,20 @@ namespace tke
 		XMLNode(const std::string &_name);
 
 		void add_attribute(XMLAttribute *a);
-		XMLAttribute *first_attribute(const std::string &_name);
+		XMLAttribute *first_attribute(const std::string &_name) const;
+		void get_attribute_bool(const std::string &_name, bool &dst) const;
+		void get_attribute_int(const std::string &_name, int &dst) const;
+		void get_attribute_int2(const std::string &_name, glm::ivec2 &dst) const;
+		void get_attribute_int3(const std::string &_name, glm::ivec3 &dst) const;
+		void get_attribute_int4(const std::string &_name, glm::ivec4 &dst) const;
+		void get_attribute_float(const std::string &_name, float &dst) const;
+		void get_attribute_float2(const std::string &_name, glm::vec2 &dst) const;
+		void get_attribute_float3(const std::string &_name, glm::vec3 &dst) const;
+		void get_attribute_float4(const std::string &_name, glm::vec4 &dst) const;
+		void get_attribute_string(const std::string &_name, std::string &dst) const;
 
 		void add_node(XMLNode *n);
-		XMLNode *first_node(const std::string &_name);
+		XMLNode *first_node(const std::string &_name) const;
 
 		// THESE TWO FUNCTIONS ARE SEALED SINCE 2018-01-11
 		//void addAttributes(void *src, ReflectionBank *b);
