@@ -1221,8 +1221,7 @@ namespace tke
 			Header header;
 			file.read((char*)&header, sizeof(Header));
 
-			int vertex_count;
-			file & vertex_count;
+			auto vertex_count = read_int(file);
 			m->vertexes.resize(vertex_count);
 			m->vertexes_skeleton.resize(vertex_count);
 			for (int i = 0; i < vertex_count; i++)
@@ -1242,22 +1241,16 @@ namespace tke
 				m->vertexes_skeleton[i].bone_ID.y = data.boneID1;
 			}
 
-			int indice_count;
-			file & indice_count;
+			auto indice_count = read_int(file);
 			m->indices.resize(indice_count);
 			for (int i = 0; i < indice_count; i += 3)
 			{
-				unsigned short indice;
-				file & indice;
-				m->indices[i + 0] = indice;
-				file & indice;
-				m->indices[i + 2] = indice;
-				file & indice;
-				m->indices[i + 1] = indice;
+				m->indices[i + 0] = (unsigned short)read_short(file);
+				m->indices[i + 2] = (unsigned short)read_short(file);
+				m->indices[i + 1] = (unsigned short)read_short(file);
 			}
 
-			int materialCount;
-			file & materialCount;
+			auto materialCount = read_int(file);
 			int currentIndiceVertex = 0;
 			for (int i = 0; i < materialCount; i++)
 			{
@@ -1275,8 +1268,7 @@ namespace tke
 				m->geometries.emplace_back(g);
 			}
 
-			unsigned short boneCount;
-			file & boneCount;
+			unsigned short boneCount = read_short(file);
 			for (int i = 0; i < boneCount; i++)
 			{
 				BoneData data;
@@ -1291,8 +1283,7 @@ namespace tke
 				b->rootCoord.z *= -1.f;
 			}
 
-			unsigned short ikCount;
-			file & ikCount;
+			unsigned short ikCount = read_short(file);
 			for (int i = 0; i < ikCount; i++)
 			{
 				IkData data;
@@ -1306,85 +1297,42 @@ namespace tke
 				b->weight = data.weight;
 				b->chain.resize(data.chainLength);
 				for (int j = 0; j < data.chainLength; j++)
-				{
-					short boneID;
-					file & boneID;
-					b->chain[j] = boneID;
-				}
+					b->chain[j] = read_short(file); // bone id
 			}
 
-			unsigned short morphsCount;
-			file & morphsCount;
+			unsigned short morphsCount = read_short(file);
 			for (int i = 0; i < morphsCount; i++)
 			{
 				MorphHeadData data;
 				file.read((char*)&data, sizeof(MorphHeadData));
 
 				for (int j = 0; j < data.size; j++)
-				{
-					MorphData data;
-					file.read((char*)&data, sizeof(MorphData));
-				}
+					skip(file, sizeof(MorphData)); // MorphData
 			}
 
-			char dispMorphsListLength;
-			file & dispMorphsListLength;
-			for (int i = 0; i < dispMorphsListLength; i++)
-			{
-				unsigned short id;
-				file & id;
-			}
-			char dispBoneListLength;
-			file & dispBoneListLength;
-			for (int i = 0; i < dispBoneListLength; i++)
-			{
-				char name[50];
-				file.read(name, 50);
-			}
+			auto dispMorphsListLength = read_char(file);
+			skip(file, sizeof(short) * dispMorphsListLength); //id
+			auto dispBoneListLength = read_char(file);
+			skip(file, 50 * dispBoneListLength); // char name[50]
 
-			unsigned int dispBoneCount;
-			file & dispBoneCount;
-			for (int i = 0; i < dispBoneCount; i++)
-			{
-				unsigned short boneIndex;
-				char index;
-				file & boneIndex;
-				file & index;
-			}
+			auto dispBoneCount = read_int(file);
+			skip(file, (sizeof(short) + sizeof(char)) * dispBoneCount); // bone index, index
 
-			char endFlag;
-			file & endFlag;
+			auto endFlag = read_char(file);
 			if (endFlag)
 			{
-				char englishName[20];
-				char englishComment[256];
-				file.read(englishName, 20);
-				file.read(englishComment, 256);
-				for (int i = 0; i < boneCount; i++)
-				{
-					char name[20];
-					file.read(name, 20);
-				}
-				for (int i = 1; i < morphsCount; i++)
-				{
-					char name[20];
-					file.read(name, 20);
-				}
-				for (int i = 0; i < dispBoneListLength; i++)
-				{
-					char name[50];
-					file.read(name, 50);
-				}
+				skip(file,
+					20 + // english name
+					256 + // english comment
+					20 * boneCount + // char name[20]
+					20 * morphsCount + // char name[20]
+					50 * dispBoneListLength // char name[50]
+				);
 			}
 
-			for (int i = 0; i < 10; i++)
-			{
-				char toonTextureName[100];
-				file.read(toonTextureName, 100);
-			}
+			skip(file, 10 * 100); // char toonTextureName[100] * 10
 
-			unsigned int rigidCount;
-			file & rigidCount;
+			auto rigidCount = read_int(file);
 			for (int i = 0; i < rigidCount; i++)
 			{
 				RigidData data;
@@ -1429,8 +1377,7 @@ namespace tke
 					r->density = data.mass / v;
 			}
 
-			unsigned int jointCount;
-			file & jointCount;
+			auto jointCount = read_int(file);
 			for (int i = 0; i < jointCount; i++)
 			{
 				JointData data;
@@ -1493,9 +1440,9 @@ namespace tke
 		{
 			XMLDoc at("COLLADA", filename);
 			XMLNode *n;
-			n = at.firstNode("library_geometries"); assert(n);
-			n = n->firstNode("geometry"); assert(n);
-			n = n->firstNode("mesh"); assert(n);
+			n = at.first_node("library_geometries"); assert(n);
+			n = n->first_node("geometry"); assert(n);
+			n = n->first_node("mesh"); assert(n);
 			std::vector<std::unique_ptr<Source>> sources;
 			VertexInfo vertex_info;
 
@@ -1506,21 +1453,19 @@ namespace tke
 					XMLNode *n;
 					XMLAttribute *a;
 					auto s = new Source;
-					a = c->firstAttribute("id"); assert(a);
+					a = c->first_attribute("id"); assert(a);
 					s->id = a->value;
-					n = c->firstNode("float_array"); assert(n);
-					a = n->firstAttribute("count"); assert(a);
+					n = c->first_node("float_array"); assert(n);
+					a = n->first_attribute("count"); assert(a);
 					auto count = std::stoi(a->value);
 					s->float_array = new float[count];
-					auto str = n->value;
-					std::regex pattern(R"(([0-9e\.\+\-]+))");
-					std::smatch match;
+					auto str = n->content;
+					int offset = 0, read_count;
 					int id = 0;
-					while (std::regex_search(str, match, pattern) && id < count)
+					while (sscanf(str.c_str() + offset, "%f%n", &s->float_array[id], &read_count) == 1 && id < count)
 					{
-						s->float_array[id] = std::stof(match[1].str());
+						offset += read_count;
 						id++;
-						str = match.suffix();
 					}
 					sources.emplace_back(s);
 				}
@@ -1530,10 +1475,10 @@ namespace tke
 					{
 						if (cc->name == "input")
 						{
-							auto a = cc->firstAttribute("semantic"); assert(a);
+							auto a = cc->first_attribute("semantic"); assert(a);
 							if (a->value == "POSITION")
 							{
-								a = cc->firstAttribute("source"); assert(a);
+								a = cc->first_attribute("source"); assert(a);
 								auto id = getId(a->value);
 								for (int i = 0; i < sources.size(); i++)
 								{
@@ -1562,7 +1507,7 @@ namespace tke
 						if (cc->name == "input")
 						{
 							XMLAttribute *a;
-							a = cc->firstAttribute("source"); assert(a);
+							a = cc->first_attribute("source"); assert(a);
 							auto id = getId(a->value);
 							int source_index = -1;
 							for (int i = 0; i < sources.size(); i++)
@@ -1573,9 +1518,9 @@ namespace tke
 									break;
 								}
 							}
-							a = cc->firstAttribute("offset"); assert(a);
+							a = cc->first_attribute("offset"); assert(a);
 							auto offset = std::stoi(a->value);
-							a = cc->firstAttribute("semantic"); assert(a);
+							a = cc->first_attribute("semantic"); assert(a);
 							if (a->value == "VERTEX")
 							{
 								position_source_index = vertex_info.position_source_index;
@@ -1590,31 +1535,29 @@ namespace tke
 						}
 						else if (cc->name == "vcount")
 						{
-							auto str = cc->value;
-							std::regex pattern(R"([0-9]+)");
-							std::smatch match;
-							while (std::regex_search(str, match, pattern))
+							auto str = cc->content;
+							int offset = 0, read_count;
+							int count;
+							while (sscanf(str.c_str() + offset, "%d%n", &count, &read_count) == 1)
 							{
-								auto count = std::stoi(match[0].str());
 								assert(count == 3);
 								vcount.push_back(count);
-								str = match.suffix();
+								offset += read_count;
 							}
 						}
 						else if (cc->name == "p")
 						{
-							auto str = cc->value;
-							std::smatch match;
+							auto str = cc->content;
+							int offset = 0, read_count;
 							assert(element_count_per_vertex > 0 && element_count_per_vertex <= 3);
 							switch (element_count_per_vertex)
 							{
 								case 1:
 								{
-									std::regex pattern(R"([0-9]+)");
 									auto indice_count = vcount.size() * 3;
-									while (std::regex_search(str, match, pattern) && indice_count > 0)
+									int index;
+									while (sscanf(str.c_str() + offset, "%d%n", &index, &read_count) == 1 && indice_count > 0)
 									{
-										auto index = std::stoi(match[0].str());
 										m->vertexes.push_back({
 											sources[position_source_index]->v3(index),
 											glm::vec2(0.f),
@@ -1623,7 +1566,7 @@ namespace tke
 											});
 										m->indices.push_back(index);
 										indice_count--;
-										str = match.suffix();
+										offset += read_count;
 									}
 									break;
 								}
@@ -1632,11 +1575,9 @@ namespace tke
 									std::vector<glm::ivec2> ids;
 									std::regex pattern(R"(([0-9]+)\s+([0-9]+))");
 									auto indice_count = vcount.size() * 3;
-									while (std::regex_search(str, match, pattern) && indice_count > 0)
+									glm::ivec2 id;
+									while (sscanf(str.c_str() + offset, "%d %d%n", &id.x, &id.y, &read_count) == 2 && indice_count > 0)
 									{
-										glm::ivec2 id;
-										id[0] = std::stoi(match[1].str());
-										id[1] = std::stoi(match[2].str());
 										auto index = -1;
 										for (int i = 0; i < ids.size(); i++)
 										{
@@ -1660,7 +1601,7 @@ namespace tke
 										}
 										m->indices.push_back(index);
 										indice_count--;
-										str = match.suffix();
+										offset += read_count;
 									}
 									break;
 								}
@@ -1669,12 +1610,9 @@ namespace tke
 									std::vector<glm::ivec3> ids;
 									std::regex pattern(R"(([0-9]+)\s+([0-9]+)\s+([0-9]+))");
 									auto indice_count = vcount.size() * 3;
-									while (std::regex_search(str, match, pattern) && indice_count > 0)
+									glm::ivec3 id;
+									while (sscanf(str.c_str() + offset, "%d %d %d%n", &id.x, &id.y, &id.z, &read_count) == 3 && indice_count > 0)
 									{
-										glm::ivec3 id;
-										id[0] = std::stoi(match[1].str());
-										id[1] = std::stoi(match[2].str());
-										id[2] = std::stoi(match[3].str());
 										auto index = -1;
 										for (int i = 0; i < ids.size(); i++)
 										{
@@ -1698,7 +1636,7 @@ namespace tke
 										}
 										m->indices.push_back(index);
 										indice_count--;
-										str = match.suffix();
+										offset += read_count;
 									}
 									break;
 								}
@@ -1723,13 +1661,10 @@ namespace tke
 		{
 			std::ifstream file(filename, std::ios::binary);
 
-			bool animated;
-			file & animated;
+			bool animated = read_char(file);
 
-			int vertex_count;
-			int indice_count;
-			file & vertex_count;
-			file & indice_count;
+			auto vertex_count = read_int(file);
+			auto indice_count = read_int(file);
 			if (vertex_count > 0)
 			{
 				m->vertexes.resize(vertex_count);
@@ -1746,133 +1681,114 @@ namespace tke
 				file.read((char*)m->indices.data(), sizeof(int) * indice_count);
 			}
 
-			int geometryCount;
-			file & geometryCount;
+			auto geometryCount = read_int(file);
 			for (int i = 0; i < geometryCount; i++)
 			{
-				glm::vec4 albedo_alpha;
-				glm::vec2 spec_roughness;
-				file & albedo_alpha;
-				file & spec_roughness;
-				std::string albedoAlphaMapName;
-				std::string specRoughnessMapName;
-				std::string normalHeightMapName;
-				file > albedoAlphaMapName;
-				file > specRoughnessMapName;
-				file > normalHeightMapName;
+				auto albedo_alpha = read_float4(file);
+				auto spec_roughness = read_float2(file);
+				auto albedoAlphaMapName = read_string(file);
+				auto specRoughnessMapName = read_string(file);
+				auto normalHeightMapName = read_string(file);
 
 				auto g = new Geometry;
 				g->material = getMaterial(albedo_alpha, spec_roughness,
 					m->filepath + "/" + albedoAlphaMapName,
 					m->filepath + "/" + specRoughnessMapName,
 					m->filepath + "/" + normalHeightMapName);
-				file & g->indiceBase;
-				file & g->indiceCount;
+				g->indiceBase = read_int(file);
+				g->indiceCount = read_int(file);
 
 				m->geometries.emplace_back(g);
 			}
 
-			int boneCount;
-			file & boneCount;
+			auto boneCount = read_int(file);
 			for (int i = 0; i < boneCount; i++)
 			{
 				auto b = m->new_bone();
 
-				char name[20];
-				file.read(name, 20);
-				b->name = name;
-
-				file & b->type;
-				file & b->parent;
-				file & b->rootCoord;
+				b->name = read_string(file);
+				b->type = read_char(file);
+				b->parent = read_int(file);
+				b->rootCoord = read_float3(file);
 			}
 
-			int ikCount;
-			file & ikCount;
+			auto ikCount = read_int(file);
 			m->iks.resize(boneCount);
 			for (int i = 0; i < ikCount; i++)
 			{
 				auto b = m->new_bone_ik();
 
-				file & b->targetID;
-				file & b->effectorID;
-				file & b->iterations;
-				file & b->weight;
+				b->targetID = read_int(file);
+				b->effectorID = read_int(file);
+				b->iterations = read_short(file);
+				b->weight = read_float(file);
 
-				int chainLength;
-				file & chainLength;
-				b->chain.resize(chainLength);
-				file.read((char*)b->chain.data(), sizeof(int) * chainLength);
+				b->chain.resize(read_int(file));
+				file.read((char*)b->chain.data(), sizeof(int) * b->chain.size());
 			}
 
 			if (animated)
 			{
-				file > m->stand_animation_filename;
-				file > m->forward_animation_filename;
-				file > m->backward_animation_filename;
-				file > m->leftward_animation_filename;
-				file > m->rightward_animation_filename;
-				file > m->jump_animation_filename;
+				m->stand_animation_filename = read_string(file);
+				m->forward_animation_filename = read_string(file);
+				m->backward_animation_filename = read_string(file);
+				m->leftward_animation_filename = read_string(file);
+				m->rightward_animation_filename = read_string(file);
+				m->jump_animation_filename = read_string(file);
 			}
 
-			int rigidbodyCount;
-			file & rigidbodyCount;
+			auto rigidbodyCount = read_int(file);
 			for (int i = 0; i < rigidbodyCount; i++)
 			{
 				auto r = m->new_rigidbody();
-				int type;
-				file & type;
-				r->type = (RigidbodyType)type;
-				file > r->name;
-				file & r->originCollisionGroupID;
-				file & r->originCollisionFreeFlag;
-				file & r->boneID;
-				file & r->coord;
-				file & r->quat;
-				file & r->density;
-				file & r->velocityAttenuation;
-				file & r->rotationAttenuation;
-				file & r->bounce;
-				file & r->friction;
 
-				int shapeCount;
-				file & shapeCount;
+				r->type = (RigidbodyType)read_int(file);
+				r->name = read_string(file);
+				r->originCollisionGroupID = read_int(file);
+				r->originCollisionFreeFlag = read_int(file);
+				r->boneID = read_int(file);
+				r->coord = read_float3(file);
+				r->quat = read_float4(file);
+				r->density = read_float(file);
+				r->velocityAttenuation = read_float(file);
+				r->rotationAttenuation = read_float(file);
+				r->bounce = read_float(file);
+				r->friction = read_float(file);
+
+				auto shapeCount = read_int(file);
 				for (int j = 0; j < shapeCount; j++)
 				{
 					auto s = r->new_shape();
-					file & s->coord;
-					file & s->quat;
-					file & s->scale;
-					int type;
-					file & type;
-					s->type = (ShapeType)type;
+					s->coord = read_float3(file);
+					s->quat = read_float4(file);
+					s->scale = read_float3(file);
+					s->type = (ShapeType)read_int(file);
 				}
 			}
 
-			int jointCount = 0;
-			file & jointCount;
+			auto jointCount = read_int(file);
 			for (int i = 0; i < jointCount; i++)
 			{
 				auto j = m->new_joint();
-				file & j->coord;
-				file & j->quat;
-				file & j->rigid0ID;
-				file & j->rigid1ID;
-				file & j->maxCoord;
-				file & j->minCoord;
-				file & j->maxRotation;
-				file & j->minRotation;
-				file & j->springConstant;
-				file & j->sprintRotationConstant;
+				j->coord = read_float3(file);
+				j->quat = read_float4(file);
+				j->rigid0ID = read_int(file);
+				j->rigid1ID = read_int(file);
+				j->maxCoord = read_float3(file);
+				j->minCoord = read_float3(file);
+				j->maxRotation = read_float3(file);
+				j->minRotation = read_float3(file);
+				j->springConstant = read_float3(file);
+				j->sprintRotationConstant = read_float3(file);
 			}
 
-			file & m->bounding_position;
-			file & m->bounding_size;
+			m->bounding_position = read_float3(file);
+			m->bounding_size = read_float(file);
 
-			file & m->controller_height;
-			file & m->controller_radius;
+			m->controller_height = read_float(file);
+			m->controller_radius = read_float(file);
 
-			file & m->eye_position;
+			m->eye_position = read_float3(file);
 
 			_process_model(m, false);
 		}
@@ -1881,123 +1797,111 @@ namespace tke
 		{
 			std::ofstream file(filename, std::ios::binary);
 
-			bool animated = m->vertexes_skeleton.size() > 0;
-			file & animated;
+			write_char(file, m->vertexes_skeleton.size() > 0);
 
-			int vertex_count = m->vertexes.size();
-			int indice_count = m->indices.size();
-			file & vertex_count;
-			file & indice_count;
-			if (vertex_count > 0)
+			write_int(file, m->vertexes.size());
+			write_int(file, m->indices.size());
+			if (m->vertexes.size() > 0)
 			{
-				file.write((char*)m->vertexes.data(), sizeof(ModelVertex) * vertex_count);
-				if (animated)
-					file.write((char*)m->vertexes_skeleton.data(), sizeof(ModelVertexSkeleton) * vertex_count);
+				file.write((char*)m->vertexes.data(), sizeof(ModelVertex) * m->vertexes.size());
+				if (m->vertexes_skeleton.size() > 0)
+					file.write((char*)m->vertexes_skeleton.data(), sizeof(ModelVertexSkeleton) * m->vertexes.size());
 			}
-			if (indice_count > 0)
-				file.write((char*)m->indices.data(), sizeof(int) * indice_count);
+			if (m->indices.size() > 0)
+				file.write((char*)m->indices.data(), sizeof(int) * m->indices.size());
 
-			int geometryCount = m->geometries.size();
-			file & geometryCount;
+			write_int(file, m->geometries.size());
 			for (auto &g : m->geometries)
 			{
-				file & g->material->get_albedo_alpha();
-				file & g->material->get_spec_roughness();
-				file < g->material->get_albedo_alpha_map_name();
-				file < g->material->get_spec_roughness_map_name();
-				file < g->material->get_normal_height_map_name();
+				write_float4(file, g->material->get_albedo_alpha());
+				write_float2(file, g->material->get_spec_roughness());
+				write_string(file, g->material->get_albedo_alpha_map_name());
+				write_string(file, g->material->get_spec_roughness_map_name());
+				write_string(file, g->material->get_normal_height_map_name());
 
-				file & g->indiceBase;
-				file & g->indiceCount;
+				write_int(file, g->indiceBase);
+				write_int(file, g->indiceCount);
 			}
 
-			int boneCount = m->bones.size();
-			file & boneCount;
+			write_int(file, m->bones.size());
 			for (auto &b : m->bones)
 			{
-				file & b->name;
-				file & b->type;
-				file & b->parent;
-				file & b->rootCoord;
+				write_string(file, b->name);
+				write_char(file, b->type);
+				write_int(file, b->parent);
+				write_float3(file, b->rootCoord);
 			}
 
-			int ikCount = m->iks.size();
-			file & ikCount;
+			write_int(file, m->iks.size());
 			for (auto &b : m->iks)
 			{
-				file & b->targetID;
-				file & b->effectorID;
-				file & b->iterations;
-				file & b->weight;
+				write_int(file, b->targetID);
+				write_int(file, b->effectorID);
+				write_short(file, b->iterations);
+				write_float(file, b->weight);
 
-				int chainSize = b->chain.size();
-				file & chainSize;
+				write_int(file, b->chain.size());
 				file.write((char*)b->chain.data(), sizeof(int) * b->chain.size());
 			}
 
-			if (animated)
+			if (m->vertexes_skeleton.size() > 0)
 			{
-				file < m->stand_animation_filename;
-				file < m->forward_animation_filename;
-				file < m->backward_animation_filename;
-				file < m->leftward_animation_filename;
-				file < m->rightward_animation_filename;
-				file < m->jump_animation_filename;
+				write_string(file, m->stand_animation_filename);
+				write_string(file, m->forward_animation_filename);
+				write_string(file, m->backward_animation_filename);
+				write_string(file, m->leftward_animation_filename);
+				write_string(file, m->rightward_animation_filename);
+				write_string(file, m->jump_animation_filename);
 			}
 
-			int rigidbodyCount = m->rigidbodies.size();
-			file & rigidbodyCount;
+			write_int(file, m->rigidbodies.size());
 			for (auto &r : m->rigidbodies)
 			{
-				int mode = (int)r->type;
-				file & mode;
-				file < r->name;
-				file & r->originCollisionGroupID;
-				file & r->originCollisionFreeFlag;
-				file & r->boneID;
-				file & r->coord;
-				file & r->quat;
-				file & r->density;
-				file & r->velocityAttenuation;
-				file & r->rotationAttenuation;
-				file & r->bounce;
-				file & r->friction;
+				write_int(file, (int)r->type);
+				write_string(file, r->name);
+				write_int(file, r->originCollisionGroupID);
+				write_int(file, r->originCollisionFreeFlag);
+				write_int(file, r->boneID);
+				write_float3(file, r->coord);
+				write_float4(file, r->quat);
+				write_float(file, r->density);
+				write_float(file, r->velocityAttenuation);
+				write_float(file, r->rotationAttenuation);
+				write_float(file, r->bounce);
+				write_float(file, r->friction);
 
-				int shapeCount = r->shapes.size();
-				file & shapeCount;
+				write_int(file, r->shapes.size());
 				for (auto &s : r->shapes)
 				{
-					file & s->coord;
-					file & s->quat;
-					file & s->scale;
-					int type = (int)s->type;
-					file & type;
+					write_float3(file, s->coord);
+					write_float4(file, s->quat);
+					write_float3(file, s->scale);
+					write_int(file, (int)s->type);
 				}
 			}
 
-			int jointCount = m->joints.size();
-			file & jointCount;
+			write_int(file, m->joints.size());
 			for (auto &j : m->joints)
 			{
-				file & j->coord;
-				file & j->quat;
-				file & j->rigid0ID;
-				file & j->rigid1ID;
-				file & j->maxCoord;
-				file & j->minCoord;
-				file & j->maxRotation;
-				file & j->minRotation;
-				file & j->springConstant;
-				file & j->sprintRotationConstant;
+				write_float3(file, j->coord);
+				write_float4(file, j->quat);
+				write_int(file, j->rigid0ID);
+				write_int(file, j->rigid1ID);
+				write_float3(file, j->maxCoord);
+				write_float3(file, j->minCoord);
+				write_float3(file, j->maxRotation);
+				write_float3(file, j->minRotation);
+				write_float3(file, j->springConstant);
+				write_float3(file, j->sprintRotationConstant);
 			}
 
-			file & m->bounding_position;
-			file & m->bounding_size;
+			write_float3(file, m->bounding_position);
+			write_float(file, m->bounding_size);
 
-			file & m->controller_height;
-			file & m->controller_radius;
+			write_float(file, m->controller_height);
+			write_float(file, m->controller_radius);
 
-			file & m->eye_position;
+			write_float3(file, m->eye_position);
 		}
 	}
 

@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 					inspector_window = new InspectorWindow;
 				else if (n->name == "scene_editor")
 				{
-					auto s = tke::create_scene(n->firstAttribute("filename")->value);
+					auto s = tke::create_scene(n->first_attribute("filename")->value);
 					if (s)
 					{
 						s->name = "scene";
@@ -418,18 +418,19 @@ int main(int argc, char** argv)
 	tke::onDestroy = []() {
 		tke::XMLDoc at("data");
 		if (resourceExplorer)
-			at.newNode("resource_explorer");
+			at.add_node(new tke::XMLNode("resource_explorer"));
 		if (hierarchy_window)
-			at.newNode("hierarchy_window");
+			at.add_node(new tke::XMLNode("hierarchy_window"));
 		if (inspector_window)
-			at.newNode("inspector_window");
+			at.add_node(new tke::XMLNode("inspector_window"));
 		if (scene_editor)
 		{
-			auto n = at.newNode("scene_editor");
-			n->newAttribute("filename", scene_editor->scene->get_filename());
+			auto n = new tke::XMLNode("scene_editor");
+			n->add_attribute(new tke::XMLAttribute("filename", scene_editor->scene->get_filename()));
+			at.add_node(n);
 		}
 		if (SelectObject)
-			at.newNode("select");
+			at.add_node(new tke::XMLNode("select"));
 		at.save("ui.xml");
 	};
 

@@ -98,8 +98,7 @@ namespace tke
 			Header header;
 			file.read((char*)&header, sizeof(Header));
 
-			int count;
-			file & count;
+			int count = read_int(file);
 			for (auto i = 0; i < count; i++)
 			{
 				KeyFrameData data;
@@ -136,20 +135,18 @@ namespace tke
 		{
 			std::ifstream file(filename, std::ios::binary);
 
-			int track_count;
-			file >> track_count;
+			auto track_count = read_int(file);
 			for (auto i = 0; i < track_count; i++)
 			{
 				auto t = a->new_track();
-				file > t->bone_name;
-				int keyframe_count;
-				file >> keyframe_count;
+				t->bone_name = read_string(file);
+				auto keyframe_count = read_int(file);
 				for (auto j = 0; j < keyframe_count; j++)
 				{
 					auto k = t->new_keyframe();
-					file >> k->frame;
-					file & k->coord;
-					file & k->quaternion;
+					k->frame = read_int(file);
+					k->coord = read_float3(file);
+					k->quaternion = read_float4(file);
 				}
 			}
 		}
@@ -158,17 +155,16 @@ namespace tke
 		{
 			std::ofstream file(filename, std::ios::binary);
 
-			int track_count = a->tracks.size();
-			file & track_count;
+			write_int(file, a->tracks.size());
 			for (auto &t : a->tracks)
 			{
-				file < t->bone_name;
-				int keyframe_count = t->keyframes.size();
+				write_string(file, t->bone_name);
+				write_int(file, t->keyframes.size());
 				for (auto &k : t->keyframes)
 				{
-					file << k->frame;
-					file & k->coord;
-					file & k->quaternion;
+					write_int(file, k->frame);
+					write_float3(file, k->coord);
+					write_float4(file, k->quaternion);
 				}
 			}
 		}

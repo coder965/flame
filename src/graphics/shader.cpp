@@ -12,8 +12,8 @@ namespace tke
 {
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines)
 	{
-		std::experimental::filesystem::path path(_filename);
-		filename = std::experimental::filesystem::canonical(path).string();
+		std::fs::path path(_filename);
+		filename = std::fs::canonical(path).string();
 		defines = _defines;
 
 		{
@@ -30,7 +30,7 @@ namespace tke
 				stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		}
 
-		auto shaderFileLastWriteTime = std::experimental::filesystem::last_write_time(path);
+		auto shaderFileLastWriteTime = std::fs::last_write_time(path);
 
 		auto spvFilename = filename;
 		for (auto &d : defines)
@@ -38,12 +38,12 @@ namespace tke
 		spvFilename += ".spv";
 
 		bool spvUpToDate = false;
-		if (std::experimental::filesystem::exists(spvFilename))
+		if (std::fs::exists(spvFilename))
 		{
-			if (std::experimental::filesystem::last_write_time(spvFilename) > shaderFileLastWriteTime)
+			if (std::fs::last_write_time(spvFilename) > shaderFileLastWriteTime)
 				spvUpToDate = true;
 			else
-				std::experimental::filesystem::remove(spvFilename);
+				std::fs::remove(spvFilename);
 		}
 
 		if (!spvUpToDate)
@@ -76,45 +76,40 @@ namespace tke
 		}
 
 		auto resFilename = spvFilename + ".res";
-		if (std::experimental::filesystem::exists(resFilename) && 
-			std::experimental::filesystem::last_write_time(resFilename) > std::experimental::filesystem::last_write_time(spvFilename))
+		if (std::fs::exists(resFilename) && 
+			std::fs::last_write_time(resFilename) > std::fs::last_write_time(spvFilename))
 		{
 			std::ifstream resFile(resFilename, std::ios::binary);
 
-			int uboCount;
-			resFile & uboCount;
+			auto uboCount = read_int(resFile);
 			for (int i = 0; i < uboCount; i++)
 			{
-				int set;
-				resFile & set;
+				auto set = read_int(resFile);
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
 
 				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				resFile > d->name;
-				resFile & d->binding;
-				resFile & d->count;
+				d->name = read_string(resFile);
+				d->binding = read_int(resFile);
+				d->count = read_int(resFile);
 				descriptors[set].emplace_back(d);
 			}
-			int imageCount;
-			resFile & imageCount;
+			auto imageCount = read_int(resFile);
 			for (int i = 0; i < imageCount; i++)
 			{
-				int set;
-				resFile & set;
+				auto set = read_int(resFile);
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
 
 				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				resFile > d->name;
-				resFile & d->binding;
-				resFile & d->count;
+				d->name = read_string(resFile);
+				d->binding = read_int(resFile);
+				d->count = read_int(resFile);
 				descriptors[set].emplace_back(d);
 			}
-			int pcSize;
-			resFile & pcSize;
+			auto pcSize = read_int(resFile);
 			if (pcSize > 0)
 			{
 				PushConstantRange p;
@@ -139,7 +134,7 @@ namespace tke
 				auto set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);
-				resFile & set;
+				write_int(resFile, set);
 
 				auto d = new Descriptor;
 				d->type = desc_type;
@@ -149,17 +144,15 @@ namespace tke
 				d->count = type.array.size() > 0 ? type.array[0] : 1;
 				descriptors[set].emplace_back(d);
 
-				resFile < d->name;
-				resFile & d->binding;
-				resFile & d->count;
+				write_string(resFile, d->name);
+				write_int(resFile, d->binding);
+				write_int(resFile, d->count);
 			};
 
-			int uboCount = resources.uniform_buffers.size();
-			resFile & uboCount;
+			write_int(resFile, resources.uniform_buffers.size());
 			for (auto &r : resources.uniform_buffers)
 				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, r);
-			int imageCount = resources.sampled_images.size();
-			resFile & imageCount;
+			write_int(resFile, resources.sampled_images.size());
 			for (auto &r : resources.sampled_images)
 				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, r);
 
@@ -173,7 +166,7 @@ namespace tke
 
 				pcSize = p.size;
 			}
-			resFile & pcSize;
+			write_int(resFile, pcSize);
 		}
 	}
 

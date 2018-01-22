@@ -1,5 +1,3 @@
-#include <regex>
-
 #include "../../../rapidxml-1.13\rapidxml.hpp"
 #include "../../../rapidxml-1.13\rapidxml_utils.hpp"
 #include "../../../rapidxml-1.13\rapidxml_print.hpp"
@@ -7,104 +5,172 @@
 #include "math/math.h"
 #include "file_utils.h"
 
-std::ifstream& operator&(std::ifstream &file, int v)
-{
-	file.read((char*)&v, sizeof(int));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, glm::ivec2 &v)
-{
-	file.read((char*)&v, sizeof(glm::ivec2));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, glm::ivec3 &v)
-{
-	file.read((char*)&v, sizeof(glm::ivec3));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, glm::ivec4 &v)
-{
-	file.read((char*)&v, sizeof(glm::ivec4));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, float v)
-{
-	file.read((char*)&v, sizeof(float));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, glm::vec2 &v)
-{
-	file.read((char*)&v, sizeof(glm::vec2));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, glm::vec3 &v)
-{
-	file.read((char*)&v, sizeof(glm::vec3));
-	return file;
-}
-
-std::ifstream& operator&(std::ifstream &file, glm::vec4 &v)
-{
-	file.read((char*)&v, sizeof(glm::vec4));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, int v)
-{
-	file.write((char*)&v, sizeof(int));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, const glm::ivec2 &v)
-{
-	file.write((char*)&v, sizeof(glm::ivec2));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, const glm::ivec3 &v)
-{
-	file.write((char*)&v, sizeof(glm::ivec3));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, const glm::ivec4 &v)
-{
-	file.write((char*)&v, sizeof(glm::ivec4));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, float v)
-{
-	file.write((char*)&v, sizeof(float));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, const glm::vec2 &v)
-{
-	file.write((char*)&v, sizeof(glm::vec2));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, const glm::vec3 &v)
-{
-	file.write((char*)&v, sizeof(glm::vec3));
-	return file;
-}
-
-std::ofstream& operator&(std::ofstream &file, const glm::vec4 &v)
-{
-	file.write((char*)&v, sizeof(glm::vec4));
-	return file;
-}
-
 namespace tke
 {
+	void skip(std::ifstream &file, int byte_count)
+	{
+		int length = file.tellg();
+		file.seekg(length + byte_count);
+	}
+
+	char read_char(std::ifstream &file)
+	{
+		char v;
+		file.read((char*)&v, sizeof(char));
+		return v;
+	}
+
+	short read_short(std::ifstream &file)
+	{
+		short v;
+		file.read((char*)&v, sizeof(short));
+		return v;
+	}
+
+	int read_int(std::ifstream &file)
+	{
+		int v;
+		file.read((char*)&v, sizeof(int));
+		return v;
+	}
+
+	glm::ivec2 read_int2(std::ifstream &file)
+	{
+		glm::ivec2 v;
+		file.read((char*)&v, sizeof(glm::ivec2));
+		return v;
+	}
+
+	glm::ivec3 read_int3(std::ifstream &file)
+	{
+		glm::ivec3 v;
+		file.read((char*)&v, sizeof(glm::ivec3));
+		return v;
+	}
+
+	glm::ivec4 read_int4(std::ifstream &file)
+	{
+		glm::ivec4 v;
+		file.read((char*)&v, sizeof(glm::ivec4));
+		return v;
+	}
+
+	float read_float(std::ifstream &file)
+	{
+		float v;
+		file.read((char*)&v, sizeof(float));
+		return v;
+	}
+
+	glm::vec2 read_float2(std::ifstream &file)
+	{
+		glm::vec2 v;
+		file.read((char*)&v, sizeof(glm::vec2));
+		return v;
+	}
+
+	glm::vec3 read_float3(std::ifstream &file)
+	{
+		glm::vec3 v;
+		file.read((char*)&v, sizeof(glm::vec3));
+		return v;
+	}
+
+	glm::vec4 read_float4(std::ifstream &file)
+	{
+		glm::vec4 v;
+		file.read((char*)&v, sizeof(glm::vec4));
+		return v;
+	}
+
+	std::string read_string(std::ifstream &file)
+	{
+		int size = 0;
+		int q = 1;
+		for (int i = 0; i < 4; i++)
+		{
+			unsigned char byte;
+			file.read((char*)&byte, 1);
+			if (byte >= 128)
+				byte -= 128;
+			else
+				i = 4;
+			size += q * byte;
+			q *= 128;
+		}
+		std::string v;
+		v.resize(size);
+		file.read((char*)v.data(), size);
+		return v;
+	}
+
+	void write_char(std::ofstream &file, char v)
+	{
+		file.write((char*)&v, sizeof(char));
+	}
+
+	void write_short(std::ofstream &file, short v)
+	{
+		file.write((char*)&v, sizeof(short));
+	}
+
+	void write_int(std::ofstream &file, int v)
+	{
+		file.write((char*)&v, sizeof(int));
+	}
+
+	void write_int2(std::ofstream &file, const glm::ivec2 &v)
+	{
+		file.write((char*)&v, sizeof(glm::ivec2));
+	}
+
+	void write_int3(std::ofstream &file, const glm::ivec3 &v)
+	{
+		file.write((char*)&v, sizeof(glm::ivec3));
+	}
+
+	void write_int4(std::ofstream &file, const glm::ivec4 &v)
+	{
+		file.write((char*)&v, sizeof(glm::ivec4));
+	}
+
+	void write_float(std::ofstream &file, float v)
+	{
+		file.write((char*)&v, sizeof(float));
+	}
+
+	void write_float2(std::ofstream &file, const glm::vec2 &v)
+	{
+		file.write((char*)&v, sizeof(glm::vec2));
+	}
+
+	void write_float3(std::ofstream &file, const glm::vec3 &v)
+	{
+		file.write((char*)&v, sizeof(glm::vec3));
+	}
+
+	void write_float4(std::ofstream &file, const glm::vec4 &v)
+	{
+		file.write((char*)&v, sizeof(glm::vec4));
+	}
+
+	void write_string(std::ofstream &file, const std::string &v)
+	{
+		int size = v.size();
+		for (int i = 0; i < 4; i++)
+		{
+			unsigned char byte = size % 128;
+			size /= 128;
+			if (size > 0)
+				byte += 128;
+			else
+				i = 4;
+			file.write((char*)&byte, 1);
+
+		}
+		file.write((char*)v.data(), size);
+	}
+
 	bool is_text_file(const std::string &ext)
 	{
 		if (ext == ".txt" ||
@@ -181,95 +247,180 @@ namespace tke
 		return std::make_pair(std::unique_ptr<char[]>(data), length);
 	}
 
-	void XMLAttribute::set(const std::type_index &t, void *_v)
+	std::string float_serialize(float v)
 	{
-		if (t == typeid(std::string))
-			value = *(std::string*)_v;
-		else if (t == typeid(int))
-			value = std::to_string(*(int*)_v);
-		else if (t == typeid(float))
-		{
-			value = std::to_string(*(float*)_v);
-			value.erase(value.find_last_not_of('0') + 1, std::string::npos);
-		}
-		else if (t == typeid(bool))
-			value = *(bool*)_v ? "true" : "false";
-
-		else if (t == typeid(glm::vec3))
-		{
-			auto &v = *(glm::vec3*)_v;
-			auto strX = std::to_string(v.x);
-			strX.erase(strX.find_last_not_of('0') + 1, std::string::npos);
-			auto strY = std::to_string(v.y);
-			strY.erase(strY.find_last_not_of('0') + 1, std::string::npos);
-			auto strZ = std::to_string(v.z);
-			strZ.erase(strZ.find_last_not_of('0') + 1, std::string::npos);
-			value = strX + "/" + strY + "/" + strZ;
-		}
+		auto str = std::to_string(v);
+		str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+		return str;
 	}
 
-	void XMLAttribute::get(const std::type_index &t, void *_v)
+	XMLAttribute::XMLAttribute()
 	{
-		if (t == typeid(std::string))
-			*(std::string*)_v = value;
-		else if (t == typeid(int))
-			*(int*)_v = std::stoi(value);
-		else if (t == typeid(float))
-			*(float*)_v = std::stof(value);
-		else if (t == typeid(bool))
-			*(bool*)_v = value == "true" ? true : false;
-		else if (t == typeid(glm::vec3))
-		{
-			auto &v = *(glm::vec3*)_v;
-			std::regex pattern(R"(([\+\-\.0-9]+)/([\+\-\.0-9]+)/([\+\-\.0-9]+))");
-			std::smatch match;
-			std::regex_search(value, match, pattern);
-			v.x = std::stof(match[1].str());
-			v.y = std::stof(match[2].str());
-			v.z = std::stof(match[3].str());
-		}
 	}
 
-	XMLNode::XMLNode(const std::string &_name)
-		: name(_name)
-	{}
-
-	XMLAttribute *XMLNode::new_attribute()
+	XMLAttribute::XMLAttribute(const std::string &_name, int v) :
+		name(_name)
 	{
-		auto a = new XMLAttribute;
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const glm::ivec2 &v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const glm::ivec3 &v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const glm::ivec4 &v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, float v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const glm::vec2 &v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const glm::vec3 &v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const glm::vec4 &v) :
+		name(_name)
+	{
+		set(v);
+	}
+
+	XMLAttribute::XMLAttribute(const std::string &_name, const std::string &v) :
+		name(_name), value(v)
+	{
+	}
+
+	void XMLAttribute::set(int v)
+	{
+		value = std::to_string(v);
+	}
+
+	void XMLAttribute::set(const glm::ivec2 &v)
+	{
+		value = std::to_string(v.x) + "/" + std::to_string(v.y);
+	}
+
+	void XMLAttribute::set(const glm::ivec3 &v)
+	{
+		value = std::to_string(v.x) + "/" + std::to_string(v.y) + "/" + std::to_string(v.z);
+	}
+
+	void XMLAttribute::set(const glm::ivec4 &v)
+	{
+		value = std::to_string(v.x) + "/" + std::to_string(v.y) + "/" + std::to_string(v.z) + "/" + std::to_string(v.w);
+	}
+
+	void XMLAttribute::set(float v)
+	{
+		value = float_serialize(v);
+	}
+
+	void XMLAttribute::set(const glm::vec2 &v)
+	{
+		value = float_serialize(v.x) + "/" + float_serialize(v.y);
+	}
+
+	void XMLAttribute::set(const glm::vec3 &v)
+	{
+		value = float_serialize(v.x) + "/" + float_serialize(v.y) + "/" + float_serialize(v.z);
+	}
+
+	void XMLAttribute::set(const glm::vec4 &v)
+	{
+		value = float_serialize(v.x) + "/" + float_serialize(v.y) + "/" + float_serialize(v.z) + "/" + float_serialize(v.w);
+	}
+
+	void XMLAttribute::set(const std::string &v)
+	{
+		value = v;
+	}
+
+	int XMLAttribute::get_int() const
+	{
+		return std::stoi(value);
+	}
+
+	glm::ivec2 XMLAttribute::get_int2() const
+	{
+		glm::ivec2 v;
+		assert(sscanf(value.c_str(), "%d/%d", &v.x, &v.y) == 2);
+		return v;
+	}
+
+	glm::ivec3 XMLAttribute::get_int3() const
+	{
+		glm::ivec3 v;
+		assert(sscanf(value.c_str(), "%d/%d/%d", &v.x, &v.y, &v.z) == 3);
+		return v;
+	}
+
+	glm::ivec4 XMLAttribute::get_int4() const
+	{
+		glm::ivec4 v;
+		assert(sscanf(value.c_str(), "%d/%d/%d/%d", &v.x, &v.y, &v.z, &v.w) == 4);
+		return v;
+	}
+
+	int XMLAttribute::get_float() const
+	{
+		return std::stof(value);
+	}
+
+	glm::vec2 XMLAttribute::get_float2() const
+	{
+		glm::vec2 v;
+		assert(sscanf(value.c_str(), "%f/%f", &v.x, &v.y) == 2);
+		return v;
+	}
+
+	glm::vec3 XMLAttribute::get_float3() const
+	{
+		glm::vec3 v;
+		assert(sscanf(value.c_str(), "%f/%f/%f", &v.x, &v.y, &v.z) == 3);
+		return v;
+	}
+
+	glm::vec4 XMLAttribute::get_float4() const
+	{
+		glm::vec4 v;
+		assert(sscanf(value.c_str(), "%f/%f/%f/%f", &v.x, &v.y, &v.z, &v.w) == 4);
+		return v;
+	}
+
+	std::string XMLAttribute::get_string() const
+	{
+		return value;
+	}
+
+	XMLNode::XMLNode(const std::string &_name) : 
+		name(_name)
+	{
+	}
+
+	void XMLNode::add_attribute(XMLAttribute *a)
+	{
 		attributes.emplace_back(a);
-		return a;
-	}
-
-	XMLAttribute *XMLNode::new_attribute(const std::string &n, const std::string &v)
-	{
-		auto a = new_attribute();
-		a->name = n;
-		a->value = v;
-		return a;
-	}
-
-	XMLAttribute *XMLNode::new_attribute(const std::string &n, const char *v)
-	{
-		auto a = new_attribute();
-		a->name = n;
-		a->value = v;
-		return a;
-	}
-
-	XMLAttribute *XMLNode::new_attribute(const std::string &n, char *v)
-	{
-		auto a = new_attribute();
-		a->name = n;
-		a->value = v;
-		return a;
-	}
-
-	XMLNode *XMLNode::new_node(const std::string &_name)
-	{
-		auto n = new XMLNode(_name);
-		children.emplace_back(n);
-		return n;
 	}
 
 	XMLAttribute *XMLNode::first_attribute(const std::string &_name)
@@ -280,6 +431,11 @@ namespace tke
 				return a.get();
 		}
 		return nullptr;
+	}
+
+	void XMLNode::add_node(XMLNode *n)
+	{
+		children.emplace_back(n);
 	}
 
 	XMLNode *XMLNode::first_node(const std::string &_name)
@@ -356,7 +512,8 @@ namespace tke
 
 	XMLDoc::XMLDoc(const std::string &_name)
 		: XMLNode(_name)
-	{}
+	{
+	}
 
 	XMLDoc::XMLDoc(const std::string &_name, const std::string &_filename)
 		: XMLNode(_name)
@@ -364,18 +521,18 @@ namespace tke
 		load(_filename);
 	}
 
-	static void _loadXML(rapidxml::xml_node<> *n, XMLNode *p)
+	static void _loadXML(rapidxml::xml_node<> *src, XMLNode *dst)
 	{
-		p->value = n->value();
-		for (auto a = n->first_attribute(); a; a = a->next_attribute())
-		{
-			auto _a = p->new_attribute();
-			_a->name = a->name();
-			_a->value = a->value();
-		}
+		dst->content = src->value();
+		for (auto a = src->first_attribute(); a; a = a->next_attribute())
+			dst->add_attribute(new XMLAttribute(a->name(), a->value()));
 
-		for (auto nn = n->first_node(); nn; nn = nn->next_sibling())
-			_loadXML(nn, p->new_node(nn->name()));
+		for (auto n = src->first_node(); n; n = n->next_sibling())
+		{
+			auto c = new XMLNode(n->name());
+			dst->add_node(c);
+			_loadXML(n, c);
+		}
 	}
 
 	void XMLDoc::load(const std::string &filename)

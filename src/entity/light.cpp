@@ -15,15 +15,15 @@ namespace tke
 
 	void LightComponent::serialize(XMLNode *dst)
 	{
-		dst->new_attribute("type", get_light_type_name(type));
-		dst->new_attribute("color", &color);
-		dst->new_attribute("range", &range);
-		dst->new_attribute("enable_shadow", &enable_shadow);
+		dst->add_attribute(new XMLAttribute("type", get_light_type_name(type)));
+		dst->add_attribute(new XMLAttribute("color", color));
+		dst->add_attribute(new XMLAttribute("range", range));
+		dst->add_attribute(new XMLAttribute("enable_shadow", enable_shadow));
 	}
 
 	bool LightComponent::unserialize(XMLNode *src)
 	{
-
+		return true;
 	}
 
 	LightComponent::LightComponent(LightType _type) :

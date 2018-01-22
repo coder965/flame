@@ -3,20 +3,19 @@
 #include <fstream>
 #include <filesystem>
 #include <memory>
-#include <typeindex>
 
-namespace glm
+#include "math/math.h" // opt: should we not include this?
+
+namespace std
 {
-	struct ivec2;
-	struct ivec3;
-	struct ivec4;
-	struct vec2;
-	struct vec3;
-	struct vec4;
+	namespace fs = experimental::filesystem;
 }
 
 namespace tke
 {
+	void skip(std::ifstream &file, int byte_count);
+	char read_char(std::ifstream &file);
+	short read_short(std::ifstream &file);
 	int read_int(std::ifstream &file);
 	glm::ivec2 read_int2(std::ifstream &file);
 	glm::ivec3 read_int3(std::ifstream &file);
@@ -27,62 +26,18 @@ namespace tke
 	glm::vec4 read_float4(std::ifstream &file);
 	std::string read_string(std::ifstream &file);
 
-	void write_int(std::ifstream &file, int v);
-	void write_int2(std::ifstream &file, const glm::ivec2 &v);
-	void write_int3(std::ifstream &file, const glm::ivec3 &v);
-	void write_int4(std::ifstream &file, const glm::ivec4 &v);
-	void write_float(std::ifstream &file, float v);
-	void write_float2(std::ifstream &file, const glm::vec2 &v);
-	void write_float3(std::ifstream &file, const glm::vec3 &v);
-	void write_float4(std::ifstream &file, const glm::vec4 &v);
-	void write_string(std::ifstream &file, const std::string &v);
-}
+	void write_char(std::ofstream &file, char v);
+	void write_short(std::ofstream &file, short v);
+	void write_int(std::ofstream &file, int v);
+	void write_int2(std::ofstream &file, const glm::ivec2 &v);
+	void write_int3(std::ofstream &file, const glm::ivec3 &v);
+	void write_int4(std::ofstream &file, const glm::ivec4 &v);
+	void write_float(std::ofstream &file, float v);
+	void write_float2(std::ofstream &file, const glm::vec2 &v);
+	void write_float3(std::ofstream &file, const glm::vec3 &v);
+	void write_float4(std::ofstream &file, const glm::vec4 &v);
+	void write_string(std::ofstream &file, const std::string &v);
 
-inline std::ifstream& operator&(std::ifstream &file, std::string &str)
-{
-	int size = 0;
-	int q = 1;
-	for (int i = 0; i < 4; i++)
-	{
-		unsigned char byte;
-		file.read((char*)&byte, 1);
-		if (byte >= 128)
-			byte -= 128;
-		else
-			i = 4;
-		size += q * byte;
-		q *= 128;
-	}
-	str.resize(size);
-	file.read((char*)str.data(), size);
-	return file;
-}
-
-inline std::ofstream& operator<(std::ofstream &file, std::string &str)
-{
-	int size = str.size();
-	for (int i = 0; i < 4; i++)
-	{
-		unsigned char byte = size % 128;
-		size /= 128;
-		if (size > 0)
-			byte += 128;
-		else
-			i = 4;
-		file.write((char*)&byte, 1);
-
-	}
-	file.write((char*)str.data(), str.size());
-	return file;
-}
-
-namespace std
-{
-	namespace fs = experimental::filesystem;
-}
-
-namespace tke
-{
 	enum FileType
 	{
 		FileTypeUnknown,
@@ -105,67 +60,61 @@ namespace tke
 
 	std::pair<std::unique_ptr<char[]>, size_t> get_file_content(const std::string &filename);
 
+	std::string float_serialize(float v);
+
 	struct XMLAttribute
 	{
 		std::string name;
 		std::string value;
 
-		void set(const std::type_index &t, void *v);
+		XMLAttribute();
+		XMLAttribute(const std::string &_name, int v);
+		XMLAttribute(const std::string &_name, const glm::ivec2 &v);
+		XMLAttribute(const std::string &_name, const glm::ivec3 &v);
+		XMLAttribute(const std::string &_name, const glm::ivec4 &v);
+		XMLAttribute(const std::string &_name, float v);
+		XMLAttribute(const std::string &_name, const glm::vec2 &v);
+		XMLAttribute(const std::string &_name, const glm::vec3 &v);
+		XMLAttribute(const std::string &_name, const glm::vec4 &v);
+		XMLAttribute(const std::string &_name, const std::string &v);
 
-		template<class T>
-		inline void set(T *v)
-		{
-			set(typeid(T), v);
-		}
+		void set(int v);
+		void set(const glm::ivec2 &v);
+		void set(const glm::ivec3 &v);
+		void set(const glm::ivec4 &v);
+		void set(float v);
+		void set(const glm::vec2 &v);
+		void set(const glm::vec3 &v);
+		void set(const glm::vec4 &v);
+		void set(const std::string &v);
 
-		template<class T>
-		inline void set(const std::string &n, T *v)
-		{
-			name = n;
-
-			set(v);
-		}
-
-		void get(const std::type_index &t, void *v);
-
-		template<class T>
-		inline void get(T *v)
-		{
-			get(typeid(T), v);
-		}
+		int get_int() const;
+		glm::ivec2 get_int2() const;
+		glm::ivec3 get_int3() const;
+		glm::ivec4 get_int4() const;
+		int get_float() const;
+		glm::vec2 get_float2() const;
+		glm::vec3 get_float3() const;
+		glm::vec4 get_float4() const;
+		std::string get_string() const;
 	};
 
 	struct XMLNode
 	{
-		void *ptr = nullptr;
 		std::string name;
-		std::string value;
+		std::string content;
 		std::vector<std::unique_ptr<XMLAttribute>> attributes;
 		std::vector<std::unique_ptr<XMLNode>> children;
 
+		void *ptr = nullptr;
+
 		XMLNode(const std::string &_name);
-		XMLAttribute *new_attribute();
-		XMLAttribute *new_attribute(const std::string &, const std::string &);
-		XMLAttribute *new_attribute(const std::string &, const char *);
-		XMLAttribute *new_attribute(const std::string &, char *);
 
-		template<class T>
-		XMLAttribute *new_attribute(const std::string &n, T *v)
-		{
-			auto a = new_attribute();
-			a->set(v);
-			return a;
-		}
-
-		XMLNode *new_node(const std::string &_name);
+		void add_attribute(XMLAttribute *a);
 		XMLAttribute *first_attribute(const std::string &_name);
-		XMLNode *first_node(const std::string &_name);
 
-		template <class... _Valty>
-		inline void add_attribute(_Valty&&... _Val)
-		{
-			new_attribute(_Val...);
-		}
+		void add_node(XMLNode *n);
+		XMLNode *first_node(const std::string &_name);
 
 		// THESE TWO FUNCTIONS ARE SEALED SINCE 2018-01-11
 		//void addAttributes(void *src, ReflectionBank *b);
