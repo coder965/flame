@@ -112,7 +112,7 @@ namespace tke
 	bool uiAcceptedMouse;
 	bool uiAcceptedKey;
 
-	glm::vec4 bg_color = glm::vec4(0.79f, 0.76f, 0.69f, 1.f);
+	glm::vec4 bg_color = glm::vec4(0.35f, 0.57f, 0.1f, 1.f);
 
 	glm::vec4 get_ui_bg_color()
 	{
@@ -132,6 +132,35 @@ namespace tke
 	static Image *fontImage;
 	void initUi()
 	{
+		add_keydown_listener([](int k) {
+			ImGuiIO& io = ImGui::GetIO();
+			io.KeysDown[k] = true;
+
+			io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
+			io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
+			io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
+			io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
+		});
+
+		add_keyup_listener([](int k) {
+			ImGuiIO& io = ImGui::GetIO();
+			io.KeysDown[k] = false;
+
+			io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
+			io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
+			io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
+			io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
+		});
+
+		add_char_listener([](int c) {
+			if (c == VK_TAB)
+				return;
+
+			ImGuiIO& io = ImGui::GetIO();
+			if (c > 0 && c < 0x10000)
+				io.AddInputCharacter((unsigned short)c);
+		});
+
 		pipeline_ui = new Pipeline(PipelineCreateInfo()
 			.vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 },{ TokenB8V4, 0 } })
 			.cull_mode(VK_CULL_MODE_NONE)
@@ -202,38 +231,6 @@ namespace tke
 			style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.60f, 0.60f, 0.70f, 0.50f);
 			style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.70f, 0.70f, 0.90f, 0.50f);
 		}
-	}
-
-	void ui_onKeyDown(int k)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeysDown[k] = true;
-
-		io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
-		io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
-		io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
-		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
-	}
-
-	void ui_onKeyUp(int k)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeysDown[k] = false;
-
-		io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
-		io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
-		io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
-		io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
-	}
-
-	void ui_onChar(int c)
-	{
-		if (c == VK_TAB)
-			return;
-
-		ImGuiIO& io = ImGui::GetIO();
-		if (c > 0 && c < 0x10000)
-			io.AddInputCharacter((unsigned short)c);
 	}
 
 	void beginUi()

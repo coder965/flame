@@ -7,11 +7,14 @@ typedef __int64 TK_LONG_PTR;
 #else
 typedef _W64 long TK_LONG_PTR;
 #endif
+
 #define TK_ARRAYSIZE(_ARR) ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 #define TK_DERIVE_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
 #define TK_LOW(I) ((I) & 0xffff)
 #define TK_HIGH(I) ((I) >> 16)
 #define TK_MAKEINT(H, L) ((L) | ((H) << 16))
+#define TK_INIT_BEGINE(n) struct n##_init{n##_init(){
+#define TK_INIT_END }};
 
 template<size_t s> struct Sizer {};
 
@@ -47,9 +50,24 @@ namespace tke
 	extern int nowTime;
 
 	extern std::string engine_path;
-	extern int res_cx;
-	extern int res_cy;
-	extern float res_aspect;
+	class Resolution
+	{
+	private:
+		int _x, _y;
+		float _aspect;
+		
+		long long _dirty_frame;
+	public:
+		int x() const;
+		int y() const;
+		float aspect() const;
+		long long dirty_frame() const;
+
+		void set(int x, int y);
+		void set_x(int x);
+		void set_y(int y);
+	};
+	extern Resolution resolution;
 
 	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;

@@ -298,6 +298,21 @@ namespace tke
 		tke::add_to_drawlist(cb->v);
 	}
 
+	struct ConstantBufferStruct
+	{
+		float depth_near;
+		float depth_far;
+		float cx;
+		float cy;
+		float aspect;
+		float fovy;
+		float tanHfFovy;
+		float envrCx;
+		float envrCy;
+	};
+
+	long long constant_buffer_updated_frame = -1;
+
 	struct MatrixBufferShaderStruct
 	{
 		glm::mat4 proj;
@@ -749,11 +764,11 @@ namespace tke
 		for (int i = 0; i < 3; i++)
 			envr_image_downsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
 				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		mainImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		depthImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = std::make_unique<Image>(res_cx, res_cy, VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		mainImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		depthImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		ds_mrt = std::make_unique<DescriptorSet>(mrt_pipeline);
 		ds_mrtAnim = std::make_unique<DescriptorSet>(mrt_anim_pipeline);
@@ -853,12 +868,28 @@ namespace tke
 				specRoughnessImage->getView(),
 				dst->getView(),
 			};
-			framebuffer = getFramebuffer(res_cx, res_cy, defe_renderpass, ARRAYSIZE(views), views);
+			framebuffer = getFramebuffer(resolution.x(), resolution.y(), defe_renderpass, ARRAYSIZE(views), views);
 		}
 	}
 
 	void DeferredRenderer::render(Scene *scene, CameraComponent *camera)
 	{
+		if (constant_buffer_updated_frame < resolution.dirty_frame)
+		{
+			ConstantBufferStruct stru;
+			stru.depth_near = near_plane;
+			stru.depth_far = far_plane;
+			stru.cx = resolution.x();
+			stru.cy = resolution.y();
+			stru.aspect = resolution.aspect();
+			stru.fovy = fovy;
+			stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
+			stru.envrCx = EnvrSizeCx;
+			stru.envrCy = EnvrSizeCy;
+			constantBuffer->update(&stru, defalut_staging_buffer);
+
+			constant_buffer_updated_frame = total_frame_count;
+		}
 		{ // always update the matrix buffer
 			MatrixBufferShaderStruct stru;
 			stru.proj = camera->get_proj_matrix();
@@ -868,7 +899,7 @@ namespace tke
 			stru.projView = stru.proj * stru.view;
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, camera->get_frustum_planes(), sizeof(MatrixBufferShaderStruct::frustumPlanes));
-			stru.viewportDim = glm::vec2(res_cx, res_cy);
+			stru.viewportDim = glm::vec2(resolution.x(), resolution.y());
 			matrixBuffer->update(&stru, defalut_staging_buffer);
 		}
 
@@ -1004,7 +1035,7 @@ namespace tke
 					auto &updated_frame = i->get_model()->vertexes_skeleton.size() > 0 ? 
 						animated_model_instance_auxes[index].matrix_updated_frame
 						: static_model_instance_auxes[index].matrix_updated_frame;
-					if (updated_frame != n->get_transform_dirty_frame())
+					if (updated_frame < n->get_transform_dirty_frame())
 					{
 						auto srcOffset = sizeof(glm::mat4) * ranges.size();
 						memcpy(map + srcOffset, &n->get_world_matrix(), sizeof(glm::mat4));
@@ -1035,8 +1066,8 @@ namespace tke
 			terrains.iterate([&](int index, void *p, bool &remove) {
 				auto t = (TerrainComponent*)p;
 				auto n = t->get_parent();
-				if (terrain_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() || 
-					terrain_auxes[index].attribute_updated_frame != t->get_attribute_dirty_frame())
+				if (terrain_auxes[index].attribute_updated_frame < n->get_transform_dirty_frame() || 
+					terrain_auxes[index].attribute_updated_frame < t->get_attribute_dirty_frame())
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
@@ -1063,7 +1094,7 @@ namespace tke
 
 					terrain_auxes[index].attribute_updated_frame = total_frame_count;
 				}
-				if (terrain_auxes[index].blend_map_updated_frame != t->get_blend_image_dirty_frame())
+				if (terrain_auxes[index].blend_map_updated_frame < t->get_blend_image_dirty_frame())
 				{
 					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
 						index, t->get_blend_image(), colorBorderSampler));
@@ -1084,8 +1115,8 @@ namespace tke
 			waters.iterate([&](int index, void *p, bool &remove) {
 				auto w = (WaterComponent*)p;
 				auto n = w->get_parent();
-				if (water_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() || 
-					water_auxes[index].attribute_updated_frame != w->get_attribute_dirty_frame())
+				if (water_auxes[index].attribute_updated_frame < n->get_transform_dirty_frame() || 
+					water_auxes[index].attribute_updated_frame < w->get_attribute_dirty_frame())
 				{
 					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
 					WaterShaderStruct stru;
@@ -1163,8 +1194,8 @@ namespace tke
 			lights.iterate([&](int index, void *p, bool &remove) {
 				auto l = (LightComponent*)p;
 				auto n = l->get_parent();
-				if (light_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() ||
-					light_auxes[index].attribute_updated_frame != l->get_attribute_dirty_frame())
+				if (light_auxes[index].attribute_updated_frame < n->get_transform_dirty_frame() ||
+					light_auxes[index].attribute_updated_frame < l->get_attribute_dirty_frame())
 				{
 					LightShaderStruct stru;
 					if (l->get_type() == LightTypeParallax)
@@ -1200,8 +1231,8 @@ namespace tke
 					auto n = l->get_parent();
 					if (l->get_type() == LightTypeParallax)
 					{
-						if (light_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() || 
-							light_auxes[index].attribute_updated_frame != camera->get_parent()->get_transform_dirty_frame())
+						if (light_auxes[index].attribute_updated_frame < n->get_transform_dirty_frame() || 
+							light_auxes[index].attribute_updated_frame < camera->get_parent()->get_transform_dirty_frame())
 						{
 							glm::vec3 p[8];
 							auto cameraCoord = camera->get_parent()->get_world_coord();
@@ -1243,7 +1274,7 @@ namespace tke
 					}
 					else if (l->get_type() == LightTypePoint)
 					{
-						if (light_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame())
+						if (light_auxes[index].attribute_updated_frame < n->get_transform_dirty_frame())
 						{
 							glm::mat4 shadowMatrix[6];
 

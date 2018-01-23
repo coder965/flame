@@ -133,7 +133,7 @@ namespace tke
 		enable_sun_light(true),
 		hdr_exposure(0.01f),
 		hdr_white(1.f),
-		bg_color(0.f),
+		bg_color(0.7f, 0.8f, 0.44f),
 		ambient_color(0.5f),
 		fog_color(0.5f),
 		ssao_radius(10.f),

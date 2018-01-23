@@ -47,10 +47,10 @@ int main(int argc, char** argv)
 	ShowWindow((HWND)tke::hWnd, SW_SHOWMAXIMIZED);
 
 	{
-		tke::XMLDoc at("data", "ui.xml");
-		if (at.good)
+		tke::XMLDoc doc("data", "ui.xml");
+		if (doc.good)
 		{
-			for (auto &n : at.children)
+			for (auto &n : doc.children)
 			{
 				if (n->name == "resource_explorer")
 					resourceExplorer = new ResourceExplorer;
@@ -71,8 +71,29 @@ int main(int argc, char** argv)
 			}
 		}
 	}
+	
+	tke::add_destroy_listener([]() {
+		tke::XMLDoc at("data");
+		if (resourceExplorer)
+			at.add_node(new tke::XMLNode("resource_explorer"));
+		if (hierarchy_window)
+			at.add_node(new tke::XMLNode("hierarchy_window"));
+		if (inspector_window)
+			at.add_node(new tke::XMLNode("inspector_window"));
+		if (scene_editor)
+		{
+			auto n = new tke::XMLNode("scene_editor");
+			n->add_attribute(new tke::XMLAttribute("filename", scene_editor->scene->get_filename()));
+			at.add_node(n);
 
-	tke::onRender = []() {
+			tke::save_scene(scene_editor->scene);
+		}
+		if (SelectObject)
+			at.add_node(new tke::XMLNode("select"));
+		at.save("ui.xml");
+	});
+
+	tke::run([]() {
 		tke::begin_frame();
 
 		bool show_device_Props = false;
@@ -411,8 +432,8 @@ int main(int argc, char** argv)
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
-			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
-				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | 
+			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing |
 				ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings))
 				scene_editor->do_show();
 			ImGui::End();
@@ -429,7 +450,7 @@ int main(int argc, char** argv)
 		}
 
 		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetFrameHeightWithSpacing()));
-		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | 
+		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Text("FPS:%d", tke::FPS);
 		ImGui::End();
@@ -443,30 +464,7 @@ int main(int argc, char** argv)
 			else
 				it++;
 		}
-	};
-	
-	tke::onDestroy = []() {
-		tke::XMLDoc at("data");
-		if (resourceExplorer)
-			at.add_node(new tke::XMLNode("resource_explorer"));
-		if (hierarchy_window)
-			at.add_node(new tke::XMLNode("hierarchy_window"));
-		if (inspector_window)
-			at.add_node(new tke::XMLNode("inspector_window"));
-		if (scene_editor)
-		{
-			auto n = new tke::XMLNode("scene_editor");
-			n->add_attribute(new tke::XMLAttribute("filename", scene_editor->scene->get_filename()));
-			at.add_node(n);
-
-			tke::save_scene(scene_editor->scene);
-		}
-		if (SelectObject)
-			at.add_node(new tke::XMLNode("select"));
-		at.save("ui.xml");
-	};
-
-	tke::run();
+	});
 
 	return 0;
 }

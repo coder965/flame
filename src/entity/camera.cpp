@@ -5,7 +5,7 @@ namespace tke
 {
 	void CameraComponent::on_update()
 	{
-		if (aux_matrix_updated_frame != get_parent()->get_transform_dirty_frame())
+		if (aux_matrix_updated_frame < get_parent()->get_transform_dirty_frame())
 		{
 			view_matrix = glm::inverse(get_parent()->get_matrix());
 			update_frustum();
@@ -34,7 +34,7 @@ namespace tke
 		switch (proj_type)
 		{
 			case ProjectionTypePerspective:
-				proj_matrix = vkTrans * glm::perspective(glm::radians(fovy), res_aspect, near_plane, far_plane);
+				proj_matrix = vkTrans * glm::perspective(glm::radians(fovy), resolution.aspect(), near_plane, far_plane);
 				proj_matrix_inverse = glm::inverse(proj_matrix);
 				break;
 			case ProjectionTypeOrtho:

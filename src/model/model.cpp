@@ -1093,7 +1093,7 @@ namespace tke
 								}
 							}
 
-							auto m = getMaterial(glm::vec4(1.f), glm::vec2(spec, roughness), albedo_alpha_map_name, "", normal_height_map_name);
+							auto m = getMaterial(glm::vec4(1.f), spec, roughness, albedo_alpha_map_name, "", normal_height_map_name);
 							m->set_name(mtlName);
 							temp_materials.push_back(m);
 						}
@@ -1258,7 +1258,7 @@ namespace tke
 				file.read((char*)&data, sizeof(MaterialData));
 
 				auto g = new Geometry;
-				g->material = getMaterial(data.diffuse, glm::vec2(0.f, 1.f), 
+				g->material = getMaterial(data.diffuse, 0.f, 1.f, 
 					m->filepath + "/" + data.mapName, "", "");
 				g->indiceBase = currentIndiceVertex;
 				g->indiceCount = data.indiceCount;
@@ -1685,13 +1685,14 @@ namespace tke
 			for (int i = 0; i < geometryCount; i++)
 			{
 				auto albedo_alpha = read_float4(file);
-				auto spec_roughness = read_float2(file);
+				auto spec = read_float(file);
+				auto roughness = read_float(file);
 				auto albedoAlphaMapName = read_string(file);
 				auto specRoughnessMapName = read_string(file);
 				auto normalHeightMapName = read_string(file);
 
 				auto g = new Geometry;
-				g->material = getMaterial(albedo_alpha, spec_roughness,
+				g->material = getMaterial(albedo_alpha, spec, roughness,
 					m->filepath + "/" + albedoAlphaMapName,
 					m->filepath + "/" + specRoughnessMapName,
 					m->filepath + "/" + normalHeightMapName);
@@ -1814,7 +1815,8 @@ namespace tke
 			for (auto &g : m->geometries)
 			{
 				write_float4(file, g->material->get_albedo_alpha());
-				write_float2(file, g->material->get_spec_roughness());
+				write_float(file, g->material->get_spec());
+				write_float(file, g->material->get_roughness());
 				write_string(file, g->material->get_albedo_alpha_map_name());
 				write_string(file, g->material->get_spec_roughness_map_name());
 				write_string(file, g->material->get_normal_height_map_name());

@@ -51,6 +51,7 @@ SceneEditor::SceneEditor(tke::Scene *_scene)
 
 SceneEditor::~SceneEditor()
 {
+	tke::break_link(tke::root_node, defe_renderer.get());
 	tke::root_node->remove_child(camera_node);
 	tke::root_node->remove_child(scene);
 }

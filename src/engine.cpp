@@ -1,6 +1,7 @@
 #include <map>
 #include <regex>
 #include <chrono>
+#include <list>
 
 #include "global.h"
 #include "system.h"
@@ -12,7 +13,6 @@
 #include "graphics/renderpass.h"
 #include "graphics/framebuffer.h"
 #include "graphics/synchronization.h"
-#include "graphics/renderer.h"
 #include "entity/scene.h"
 #include "ui/ui.h"
 #include "physics/physics.h"
@@ -52,19 +52,106 @@ namespace tke
 	VkSemaphore window_imageAvailable;
 	uint32_t window_imageIndex;
 	VkFence frameDone;
-	PF_EVENT1 onKeyDown = nullptr;
-	PF_EVENT1 onKeyUp = nullptr;
-	PF_EVENT1 onChar = nullptr;
-	PF_EVENT2 onMouseLeftDown = nullptr;
-	PF_EVENT2 onMouseLeftUp = nullptr;
-	PF_EVENT2 onMouseMiddleDown = nullptr;
-	PF_EVENT2 onMouseMiddleUp = nullptr;
-	PF_EVENT2 onMouseRightDown = nullptr;
-	PF_EVENT2 onMouseRightUp = nullptr;
-	PF_EVENT2 onMouseMove = nullptr;
-	PF_EVENT1 onMouseWheel = nullptr;
-	PF_EVENT0 onRender = nullptr;
-	PF_EVENT0 onDestroy = nullptr;
+
+	static std::list<std::function<void(int)>> keydown_listeners;
+	static std::list<std::function<void(int)>> keyup_listeners;
+	static std::list<std::function<void(int)>> char_listeners;
+	static std::list<std::function<void(int, int)>> resize_listeners;
+	static std::list<std::function<void()>> destroy_listeners;
+
+	void add_keydown_listener(const std::function<void(int)> &e)
+	{
+		keydown_listeners.push_back(e);
+	}
+
+	void add_keyup_listener(const std::function<void(int)> &e)
+	{
+		keyup_listeners.push_back(e);
+	}
+
+	void add_char_listener(const std::function<void(int)> &e)
+	{
+		char_listeners.push_back(e);
+	}
+
+	void add_resize_listener(const std::function<void(int, int)> &e)
+	{
+		resize_listeners.push_back(e);
+	}
+
+	void add_destroy_listener(const std::function<void()> &e)
+	{
+		destroy_listeners.push_back(e);
+	}
+
+	template<typename T, typename... U>
+	size_t TK_GET_ADDRESS(std::function<T(U...)> f)
+	{
+		typedef T(fnType)(U...);
+		fnType ** fnPointer = f.template target<fnType*>();
+		return (size_t)*fnPointer;
+	}
+
+	void remove_keydown_listener(const std::function<void(int)> &e)
+	{
+		for (auto it = keydown_listeners.begin(); it != keydown_listeners.end(); it++)
+		{
+			if (TK_GET_ADDRESS(*it) == TK_GET_ADDRESS(e))
+			{
+				keydown_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_keyup_listener(const std::function<void(int)> &e)
+	{
+		for (auto it = keyup_listeners.begin(); it != keyup_listeners.end(); it++)
+		{
+			if (TK_GET_ADDRESS(*it) == TK_GET_ADDRESS(e))
+			{
+				keyup_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_char_listener(const std::function<void(int)> &e)
+	{
+		for (auto it = char_listeners.begin(); it != char_listeners.end(); it++)
+		{
+			if (TK_GET_ADDRESS(*it) == TK_GET_ADDRESS(e))
+			{
+				char_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_resize_listener(const std::function<void(int, int)> &e)
+	{
+		for (auto it = resize_listeners.begin(); it != resize_listeners.end(); it++)
+		{
+			if (TK_GET_ADDRESS(*it) == TK_GET_ADDRESS(e))
+			{
+				resize_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_destroy_listener(const std::function<void()> &e)
+	{
+		for (auto it = destroy_listeners.begin(); it != destroy_listeners.end(); it++)
+		{
+			if (TK_GET_ADDRESS(*it) == TK_GET_ADDRESS(e))
+			{
+				destroy_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
 	std::uint32_t window_style;
 
 	long long get_now_time_ms()
@@ -74,26 +161,21 @@ namespace tke
 
 	Node *root_node;
 
-	struct ConstantBufferStruct
-	{
-		float depth_near;
-		float depth_far;
-		float cx;
-		float cy;
-		float aspect;
-		float fovy;
-		float tanHfFovy;
-		float envrCx;
-		float envrCy;
-	};
-
 	static void _create_swapchain()
 	{
-		unsigned int physicalDeviceSurfaceFormatCount = 0;
-		std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface, &physicalDeviceSurfaceFormatCount, nullptr);
-		physicalDeviceSurfaceFormats.resize(physicalDeviceSurfaceFormatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface, &physicalDeviceSurfaceFormatCount, physicalDeviceSurfaceFormats.data());
+		static bool first = true;
+		if (first)
+		{
+			static unsigned int count = 0;
+			static std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
+			vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface,
+				&count, nullptr);
+			physicalDeviceSurfaceFormats.resize(count);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface,
+				&count, physicalDeviceSurfaceFormats.data());
+
+			first = false;
+		}
 
 		VkSwapchainCreateInfoKHR swapchainInfo = {};
 		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -135,8 +217,6 @@ namespace tke
 				mouseLeft.justUp = false;
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseLeftDown)
-					onMouseLeftDown(mouseX, mouseY);
 				SetCapture(hWnd);
 				break;
 			case WM_LBUTTONUP:
@@ -145,8 +225,6 @@ namespace tke
 				mouseLeft.justUp = true;
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseLeftUp)
-					onMouseLeftUp(mouseX, mouseY);
 				ReleaseCapture();
 				break;
 			case WM_MBUTTONDOWN:
@@ -155,8 +233,6 @@ namespace tke
 				mouseMiddle.justUp = false;
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseMiddleDown)
-					onMouseMiddleDown(mouseX, mouseY);
 				SetCapture(hWnd);
 				break;
 			case WM_MBUTTONUP:
@@ -165,8 +241,6 @@ namespace tke
 				mouseMiddle.justUp = true;
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseMiddleUp)
-					onMouseMiddleUp(mouseX, mouseY);
 				ReleaseCapture();
 				break;
 			case WM_RBUTTONDOWN:
@@ -175,8 +249,6 @@ namespace tke
 				mouseRight.justUp = false;
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseRightDown)
-					onMouseRightDown(mouseX, mouseY);
 				SetCapture(hWnd);
 				break;
 			case WM_RBUTTONUP:
@@ -185,39 +257,32 @@ namespace tke
 				mouseRight.justUp = true;
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseRightUp)
-					onMouseRightUp(mouseX, mouseY);
 				ReleaseCapture();
 				break;
 			case WM_MOUSEMOVE:
 				mouseX = LOWORD(lParam);
 				mouseY = HIWORD(lParam);
-				if (onMouseMove)
-					onMouseMove(mouseX, mouseY);
 				break;
 			case WM_MOUSEWHEEL:
 				mouseScroll += (short)HIWORD(wParam);
-				if (onMouseWheel)
-					onMouseWheel(mouseScroll);
 				break;
 			case WM_KEYDOWN:
 				keyStates[wParam].pressing = true;
 				keyStates[wParam].justDown = true;
 				keyStates[wParam].justUp = false;
-				ui_onKeyDown(wParam);
-				if (onKeyDown)
-					onKeyDown(wParam);
+				for (auto &e : keydown_listeners)
+					e(wParam);
 				break;
 			case WM_KEYUP:
 				keyStates[wParam].pressing = false;
 				keyStates[wParam].justDown = false;
 				keyStates[wParam].justUp = true;
-				ui_onKeyUp(wParam);
-				if (onKeyUp)
-					onKeyUp(wParam);
+				for (auto &e : keyup_listeners)
+					e(wParam);
 				break;
 			case WM_CHAR:
-				ui_onChar(wParam);
+				for (auto &e : char_listeners)
+					e(wParam);
 				break;
 			case WM_SIZE:
 			{
@@ -234,6 +299,8 @@ namespace tke
 					}
 					vkDestroySwapchainKHR(vk_device.v, swapchain, nullptr);
 					_create_swapchain();
+					for (auto &e : resize_listeners)
+						e(cx, cy);
 				}
 				break;
 			}
@@ -250,6 +317,7 @@ namespace tke
 		auto init_start_time = GetTickCount();
 
 		root_node = new Node(NodeTypeNode);
+		root_node->name = "root";
 
 		only_2d = _only_2d;
 
@@ -260,9 +328,7 @@ namespace tke
 #endif
 
 		engine_path = path;
-		res_cx = rcx;
-		res_cy = rcy;
-		res_aspect = (float)res_cx / res_cy;
+		resolution.set(rcx, rcy);
 
 		initVulkan(vulkan_debug);
 
@@ -275,20 +341,6 @@ namespace tke
 
 			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
 			globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
-
-			{
-				ConstantBufferStruct stru;
-				stru.depth_near = near_plane;
-				stru.depth_far = far_plane;
-				stru.cx = res_cx;
-				stru.cy = res_cy;
-				stru.aspect = res_aspect;
-				stru.fovy = fovy;
-				stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
-				stru.envrCx = EnvrSizeCx;
-				stru.envrCy = EnvrSizeCy;
-				constantBuffer->update(&stru, defalut_staging_buffer);
-			}
 
 			initPhysics();
 		}
@@ -383,37 +435,8 @@ namespace tke
 		return result;
 	}
 
-	struct _Event
-	{
-		int id;
-		EventType type;
-		std::function<void()> e;
-	};
-	std::vector<_Event> _beforeFrameEvents;
-	void add_before_frame_event(const std::function<void()> &e, int id, EventType event_type)
-	{
-		bool dontAdd = false;
-		if (id != -1 && event_type == EventTypeOnlyOne)
-		{
-			for (auto &e : _beforeFrameEvents)
-			{
-				if (e.id == id)
-					return;
-			}
-		}
-		_beforeFrameEvents.push_back({
-			id,
-			event_type,
-			e
-			});
-	}
-
 	void begin_frame()
 	{
-		for (auto &e : _beforeFrameEvents)
-			e.e();
-		_beforeFrameEvents.clear();
-
 		auto res = vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
 		assert(res == VK_SUCCESS);
 
@@ -432,8 +455,10 @@ namespace tke
 		endUi();
 
 		if (_cbs.size())
+		{
 			tke::vk_graphics_queue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frameDone);
-		waitFence(frameDone);
+			waitFence(frameDone);
+		}
 
 		VkPresentInfoKHR info = {};
 		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -451,8 +476,10 @@ namespace tke
 
 	static unsigned int _lastTime = 0;
 
-	void run()
+	void run(PF_EVENT0 on_render)
 	{
+		assert(on_render);
+
 		for (;;)
 		{
 			nowTime = GetTickCount();
@@ -471,8 +498,8 @@ namespace tke
 			{
 				if (msg.message == WM_QUIT)
 				{
-					if (onDestroy)
-						onDestroy();
+					for (auto &e : destroy_listeners)
+						e();
 					return;
 				}
 				TranslateMessage(&msg);
@@ -484,7 +511,7 @@ namespace tke
 				mouseDispY = mouseY - mousePrevY;
 
 				root_node->update();
-				onRender();
+				on_render();
 
 				mouseLeft.justDown = false;
 				mouseLeft.justUp = false;

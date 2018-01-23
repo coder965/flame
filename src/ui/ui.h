@@ -36,9 +36,6 @@ namespace tke
 	void set_ui_bg_color(const glm::vec4 &v);
 
 	void initUi();
-	void ui_onKeyDown(int);
-	void ui_onKeyUp(int);
-	void ui_onChar(int);
 	void beginUi();
 	void endUi();
 

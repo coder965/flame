@@ -49,4 +49,15 @@ namespace tke
 		}
 		return false;
 	}
+
+	void link(Object *host, Object *guest)
+	{
+		guest->follow_to(host);
+	}
+
+	void break_link(Object *host, Object *guest)
+	{
+		host->remove_follower(guest);
+		guest->remove_following(host);
+	}
 }

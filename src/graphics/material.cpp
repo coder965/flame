@@ -54,16 +54,15 @@ namespace tke
 		auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(MaterialShaderStruct));
 		MaterialShaderStruct stru;
 		auto albedo_alpha = glm::clamp(m->get_albedo_alpha(), 0.f, 1.f);
-		auto spec_roughness = glm::clamp(m->get_spec_roughness(), 0.f, 1.f) * 255.f;
-		auto albedo_alpha_map = m->get_albedo_alpha_map();
-		auto spec_roughness_map = m->get_spec_roughness_map();
-		auto normal_height_map = m->get_normal_height_map();
 		stru.albedo_alpha.albedo_r = albedo_alpha.r * 255.f;
 		stru.albedo_alpha.albedo_g = albedo_alpha.g * 255.f;
 		stru.albedo_alpha.albedo_b = albedo_alpha.b * 255.f;
 		stru.albedo_alpha.alpha = albedo_alpha.a * 255.f;
-		stru.spec_roughness.spec = spec_roughness.x;
-		stru.spec_roughness.roughness = spec_roughness.y;
+		stru.spec_roughness.spec = glm::clamp(m->get_spec(), 0.f, 1.f) * 255.f;
+		stru.spec_roughness.roughness = glm::clamp(m->get_roughness(), 0.f, 1.f) * 255.f;
+		auto albedo_alpha_map = m->get_albedo_alpha_map();
+		auto spec_roughness_map = m->get_spec_roughness_map();
+		auto normal_height_map = m->get_normal_height_map();
 		stru.map_index.albedo_alpha = albedo_alpha_map ? albedo_alpha_map->material_index + 1 : 0;
 		stru.map_index.spec_roughness = spec_roughness_map ? spec_roughness_map->material_index + 1 : 0;
 		stru.map_index.normal_height = normal_height_map ? normal_height_map->material_index + 1 : 0;
@@ -95,9 +94,14 @@ namespace tke
 		return albedo_alpha;
 	}
 
-	glm::vec2 Material::get_spec_roughness() const
+	float Material::get_spec() const
 	{
-		return spec_roughness;
+		return spec_roughness.x;
+	}
+
+	float Material::get_roughness() const
+	{
+		return spec_roughness.y;
 	}
 
 	Image *Material::get_albedo_alpha_map() const
@@ -152,9 +156,15 @@ namespace tke
 		_update_material(this);
 	}
 
-	void Material::set_spec_roughness(const glm::vec2 &v)
+	void Material::set_spec(float v)
 	{
-		spec_roughness = v;
+		spec_roughness.x = v;
+		_update_material(this);
+	}
+
+	void Material::set_roughness(float v)
+	{
+		spec_roughness.y = v;
 		_update_material(this);
 	}
 
@@ -209,7 +219,7 @@ namespace tke
 	std::shared_ptr<Material> default_material;
 	UniformBuffer *materialBuffer = nullptr;
 
-	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, glm::vec2 spec_roughness,
+	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
 		const std::string &albedo_alpha_map_filename, const std::string &spec_roughness_map_filename,
 		const std::string &normal_height_map_filename)
 	{
@@ -219,7 +229,8 @@ namespace tke
 			if (_m)
 			{
 				if (is_same(_m->get_albedo_alpha(), albedo_alpha) &&
-					is_same(_m->get_spec_roughness(), spec_roughness) &&
+					is_same(_m->get_spec(), spec) &&
+					is_same(_m->get_roughness(), roughness) &&
 					_m->get_albedo_alpha_map_name() == albedo_alpha_map_filename &&
 					_m->get_spec_roughness_map_name() == spec_roughness_map_filename &&
 					_m->get_normal_height_map_name() == normal_height_map_filename)
@@ -240,7 +251,8 @@ namespace tke
 		{
 			m = std::make_shared<Material>();
 			m->set_albedo_alpha(albedo_alpha);
-			m->set_spec_roughness(spec_roughness);
+			m->set_spec(spec);
+			m->set_roughness(roughness);
 			m->set_albedo_alpha_map(albedo_alpha_map_filename);
 			m->set_spec_roughness_map(spec_roughness_map_filename);
 			m->set_normal_height_map(normal_height_map_filename);

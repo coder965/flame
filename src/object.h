@@ -30,4 +30,7 @@ namespace tke
 		bool broadcast(Object *o, Message msg);
 		virtual bool on_message(Object *sender, Message msg) { return false; };
 	};
+
+	void link(Object *host, Object *guest);
+	void break_link(Object *host, Object *guest);
 }

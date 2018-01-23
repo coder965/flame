@@ -29,27 +29,23 @@ namespace tke
 	extern void *hWnd;
 	extern int window_cx;
 	extern int window_cy;
-	extern VkSurfaceKHR window_surface;
-	extern VkSwapchainKHR swapchain;
-	extern Image *window_images[2];
 	extern std::shared_ptr<Framebuffer> window_framebuffers[2];
 	extern VkSemaphore window_imageAvailable;
 	extern uint32_t window_imageIndex;
 	extern VkFence frameDone;
-	extern PF_EVENT1 onKeyDown;
-	extern PF_EVENT1 onKeyUp;
-	extern PF_EVENT1 onChar;
-	extern PF_EVENT2 onMouseLeftDown;
-	extern PF_EVENT2 onMouseLeftUp;
-	extern PF_EVENT2 onMouseMiddleDown;
-	extern PF_EVENT2 onMouseMiddleUp;
-	extern PF_EVENT2 onMouseRightDown;
-	extern PF_EVENT2 onMouseRightUp;
-	extern PF_EVENT2 onMouseMove;
-	extern PF_EVENT1 onMouseWheel;
-	extern PF_EVENT0 onRender;
-	extern PF_EVENT0 onDestroy;
 	extern std::uint32_t window_style;
+
+	void add_keydown_listener(const std::function<void(int)> &e);
+	void add_keyup_listener(const std::function<void(int)> &e);
+	void add_char_listener(const std::function<void(int)> &e);
+	void add_resize_listener(const std::function<void(int, int)> &e);
+	void add_destroy_listener(const std::function<void()> &e);
+
+	void remove_keydown_listener(const std::function<void(int)> &e);
+	void remove_keyup_listener(const std::function<void(int)> &e);
+	void remove_char_listener(const std::function<void(int)> &e);
+	void remove_resize_listener(const std::function<void(int, int)> &e);
+	void remove_destroy_listener(const std::function<void()> &e);
 
 	long long get_now_time_ms();
 
@@ -60,13 +56,6 @@ namespace tke
 
 	std::pair<glm::ivec2, unsigned int> getWin32WndProp();
 
-	enum EventType
-	{
-		EventTypeEvent,
-		EventTypeOnlyOne // only one can exist in the list
-	};
-	void add_before_frame_event(const std::function<void()>&, int id = -1, EventType event_type = EventTypeEvent);
-
 	// must call in main thread
 	void begin_frame();
 
@@ -75,5 +64,5 @@ namespace tke
 	// must call in main thread
 	void end_frame();
 
-	void run();
+	void run(PF_EVENT0 _on_render);
 }
