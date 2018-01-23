@@ -21,8 +21,8 @@ namespace tke
 		enable_physics(false),
 		actor(nullptr),
 		terrain_index(-1),
-		attribute_dirty(true),
-		blend_image_dirty(true)
+		attribute_dirty_frame(0),
+		blend_image_dirty_frame(0)
 	{
 		add_material(default_material);
 	}
@@ -87,49 +87,49 @@ namespace tke
 	void TerrainComponent::set_block_cx(int v)
 	{
 		block_cx = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_block_cy(int v)
 	{
 		block_cy = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_block_size(float v)
 	{
 		block_size = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_height(float v)
 	{
 		height = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_displacement_height(float v)
 	{
 		displacement_height = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_tessellation_factor(float v)
 	{
 		tessellation_factor = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_tiling_scale(float v)
 	{
 		tiling_scale = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_blend_image(std::shared_ptr<Image> i)
 	{
 		blend_image = i;
-		blend_image_dirty = true;
+		blend_image_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::add_material(std::shared_ptr<Material> m)
@@ -139,7 +139,7 @@ namespace tke
 
 		materials[material_count] = m;
 		material_count++;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::remove_material(int index)
@@ -151,7 +151,7 @@ namespace tke
 			materials[i] = materials[i + 1];
 		material_count--;
 		materials[material_count].reset();
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void TerrainComponent::set_terrain_index(int v)
@@ -159,23 +159,13 @@ namespace tke
 		terrain_index = v;
 	}
 
-	bool TerrainComponent::is_attribute_dirty() const
+	long long TerrainComponent::get_attribute_dirty_frame() const
 	{
-		return attribute_dirty;
+		return attribute_dirty_frame;
 	}
 
-	bool TerrainComponent::is_blend_image_dirty() const
+	long long TerrainComponent::get_blend_image_dirty_frame() const
 	{
-		return blend_image_dirty;
-	}
-
-	void TerrainComponent::clear_attribute_dirty()
-	{
-		attribute_dirty = false;
-	}
-
-	void TerrainComponent::clear_blend_image_dirty()
-	{
-		blend_image_dirty = false;
+		return blend_image_dirty_frame;
 	}
 }

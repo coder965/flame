@@ -382,6 +382,34 @@ namespace tke
 	static SpareList waters(MaxWaterCount);
 	static SpareList shadow_lights(MaxShadowCount);
 
+	struct LightAux
+	{
+		long long attribute_updated_frame;
+		long long shadow_updated_frame;
+	};
+
+	struct ModelInstanceAux
+	{
+		long long matrix_updated_frame;
+	};
+
+	struct TerrainAux
+	{
+		long long attribute_updated_frame;
+		long long blend_map_updated_frame;
+	};
+
+	struct WaterAux
+	{
+		long long attribute_updated_frame;
+	};
+
+	LightAux light_auxes[MaxLightCount];
+	ModelInstanceAux static_model_instance_auxes[MaxStaticModelInstanceCount];
+	ModelInstanceAux animated_model_instance_auxes[MaxAnimatedModelInstanceCount];
+	TerrainAux terrain_auxes[MaxTerrainCount];
+	WaterAux water_auxes[MaxWaterCount];
+
 	VkPipelineVertexInputStateCreateInfo vertexStatInputState;
 	VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
 	VkPipelineVertexInputStateCreateInfo terrian_vertex_input_state;
@@ -426,6 +454,8 @@ namespace tke
 						if (index != -2)
 						{
 							l->set_light_index(index);
+							light_auxes[index].attribute_updated_frame = -1;
+							light_auxes[index].shadow_updated_frame = -1;
 							light_count_dirty = true;
 							if (l->is_enable_shadow())
 							{
@@ -446,9 +476,15 @@ namespace tke
 						{
 							i->set_instance_index(index);
 							if (i->get_model()->vertexes_skeleton.size() > 0)
+							{
+								animated_model_instance_auxes[index].matrix_updated_frame = -1;
 								animated_model_instance_count_dirty = true;
+							}
 							else
+							{
+								static_model_instance_auxes[index].matrix_updated_frame = -1;
 								static_model_instance_count_dirty = true;
+							}
 						}
 						break;
 					}
@@ -459,6 +495,8 @@ namespace tke
 						if (index != -2)
 						{
 							t->set_terrain_index(index);
+							terrain_auxes[index].attribute_updated_frame = -1;
+							terrain_auxes[index].blend_map_updated_frame = -1;
 							terrain_count_dirty = true;
 						}
 						break;
@@ -470,6 +508,7 @@ namespace tke
 						if (index != -2)
 						{
 							w->set_water_index(index);
+							water_auxes[index].attribute_updated_frame = -1;
 							water_count_dirty = true;
 						}
 						break;
@@ -992,7 +1031,10 @@ namespace tke
 				list.iterate([&](int index, void *p, bool &remove) {
 					auto i = (ModelInstanceComponent*)p;
 					auto n = i->get_parent();
-					if (n->is_transform_dirty())
+					auto &updated_frame = i->get_model()->vertexes_skeleton.size() > 0 ? 
+						animated_model_instance_auxes[index].matrix_updated_frame
+						: static_model_instance_auxes[index].matrix_updated_frame;
+					if (updated_frame != n->get_transform_dirty_frame())
 					{
 						auto srcOffset = sizeof(glm::mat4) * ranges.size();
 						memcpy(map + srcOffset, &n->get_world_matrix(), sizeof(glm::mat4));
@@ -1001,6 +1043,8 @@ namespace tke
 						range.dstOffset = sizeof(glm::mat4) * index;
 						range.size = sizeof(glm::mat4);
 						ranges.push_back(range);
+
+						updated_frame = total_frame_count;
 					}
 					return true;
 				});
@@ -1021,7 +1065,8 @@ namespace tke
 			terrains.iterate([&](int index, void *p, bool &remove) {
 				auto t = (TerrainComponent*)p;
 				auto n = t->get_parent();
-				if (n->is_transform_dirty() || t->is_attribute_dirty())
+				if (terrain_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() || 
+					terrain_auxes[index].attribute_updated_frame != t->get_attribute_dirty_frame())
 				{
 					auto srcOffset = sizeof(TerrainShaderStruct) * ranges.size();
 					TerrainShaderStruct stru;
@@ -1045,11 +1090,15 @@ namespace tke
 					range.dstOffset = sizeof(TerrainShaderStruct) * index;
 					range.size = sizeof(TerrainShaderStruct);
 					ranges.push_back(range);
+
+					terrain_auxes[index].attribute_updated_frame = total_frame_count;
 				}
-				if (t->is_blend_image_dirty())
+				if (terrain_auxes[index].blend_map_updated_frame != t->get_blend_image_dirty_frame())
 				{
 					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
 						index, t->get_blend_image(), colorBorderSampler));
+
+					terrain_auxes[index].blend_map_updated_frame = total_frame_count;
 				}
 				return true;
 			});
@@ -1065,7 +1114,8 @@ namespace tke
 			waters.iterate([&](int index, void *p, bool &remove) {
 				auto w = (WaterComponent*)p;
 				auto n = w->get_parent();
-				if (n->is_transform_dirty() || w->is_attribute_dirty())
+				if (water_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() || 
+					water_auxes[index].attribute_updated_frame != w->get_attribute_dirty_frame())
 				{
 					auto srcOffset = sizeof(WaterShaderStruct) * ranges.size();
 					WaterShaderStruct stru;
@@ -1083,6 +1133,8 @@ namespace tke
 					range.dstOffset = sizeof(WaterShaderStruct) * index;
 					range.size = sizeof(WaterShaderStruct);
 					ranges.push_back(range);
+
+					water_auxes[index].attribute_updated_frame = total_frame_count;
 				}
 				return true;
 			});
@@ -1141,20 +1193,26 @@ namespace tke
 			lights.iterate([&](int index, void *p, bool &remove) {
 				auto l = (LightComponent*)p;
 				auto n = l->get_parent();
-				LightShaderStruct stru;
-				if (l->get_type() == LightTypeParallax)
-					stru.coord = glm::vec4(n->get_world_axis()[2], 0.f);
-				else
-					stru.coord = glm::vec4(n->get_world_coord(), l->get_type());
-				stru.color = glm::vec4(l->get_color(), l->get_shadow_index() * 6);
-				stru.spotData = glm::vec4(-n->get_world_axis()[2], l->get_range());
-				auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
-				memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
-				VkBufferCopy range = {};
-				range.srcOffset = srcOffset;
-				range.dstOffset = 16 + sizeof(LightShaderStruct) * l->get_light_index();
-				range.size = sizeof(LightShaderStruct);
-				ranges.push_back(range);
+				if (light_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() ||
+					light_auxes[index].attribute_updated_frame != l->get_attribute_dirty_frame())
+				{
+					LightShaderStruct stru;
+					if (l->get_type() == LightTypeParallax)
+						stru.coord = glm::vec4(n->get_world_axis()[2], 0.f);
+					else
+						stru.coord = glm::vec4(n->get_world_coord(), l->get_type());
+					stru.color = glm::vec4(l->get_color(), l->get_shadow_index() * 6);
+					stru.spotData = glm::vec4(-n->get_world_axis()[2], l->get_range());
+					auto srcOffset = sizeof(LightShaderStruct) * ranges.size();
+					memcpy(map + srcOffset, &stru, sizeof(LightShaderStruct));
+					VkBufferCopy range = {};
+					range.srcOffset = srcOffset;
+					range.dstOffset = 16 + sizeof(LightShaderStruct) * l->get_light_index();
+					range.size = sizeof(LightShaderStruct);
+					ranges.push_back(range);
+
+					light_auxes[index].attribute_updated_frame = total_frame_count;
+				}
 				return true;
 			});
 			defalut_staging_buffer->unmap();
@@ -1172,7 +1230,8 @@ namespace tke
 					auto n = l->get_parent();
 					if (l->get_type() == LightTypeParallax)
 					{
-						if (n->is_transform_dirty() || camera->get_parent()->is_transform_dirty())
+						if (light_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame() || 
+							light_auxes[index].attribute_updated_frame != camera->get_parent()->get_transform_dirty_frame())
 						{
 							glm::vec3 p[8];
 							auto cameraCoord = camera->get_parent()->get_world_coord();
@@ -1208,11 +1267,13 @@ namespace tke
 							range.dstOffset = sizeof(glm::mat4) * (index * 6);
 							range.size = sizeof(glm::mat4);
 							ranges.push_back(range);
+
+							light_auxes[index].attribute_updated_frame = total_frame_count;
 						}
 					}
 					else if (l->get_type() == LightTypePoint)
 					{
-						if (n->is_transform_dirty())
+						if (light_auxes[index].attribute_updated_frame != n->get_transform_dirty_frame())
 						{
 							glm::mat4 shadowMatrix[6];
 
@@ -1224,6 +1285,8 @@ namespace tke
 							shadowMatrix[3] = proj * glm::lookAt(coord, coord + glm::vec3(0, -1, 0), glm::vec3(0, 0, 1));
 							shadowMatrix[4] = proj * glm::lookAt(coord, coord + glm::vec3(0, 0, 1), glm::vec3(0, -1, 0));
 							shadowMatrix[5] = proj * glm::lookAt(coord, coord + glm::vec3(0, 0, -1), glm::vec3(0, -1, 0));
+
+							light_auxes[index].attribute_updated_frame = total_frame_count;
 						}
 					}
 					defalut_staging_buffer->unmap();

@@ -51,6 +51,7 @@ namespace tke
 	extern int res_cy;
 	extern float res_aspect;
 
+	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;
 
 	enum DescriptorSetBindings

@@ -23,6 +23,8 @@ namespace tke
 
 		glm::vec3 frustum_points[8];
 		glm::vec4 frustum_planes[6];
+
+		long long aux_matrix_updated_frame;
 	protected:
 		virtual void on_update() override;
 	public:

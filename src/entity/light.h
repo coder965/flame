@@ -24,7 +24,7 @@ namespace tke
 		int light_index;
 		int shadow_index;
 
-		bool attribute_dirty;
+		long long attribute_dirty_frame;
 	public:
 		virtual void serialize(XMLNode *dst) override;
 		virtual void unserialize(XMLNode *src) override;
@@ -45,7 +45,6 @@ namespace tke
 		void set_light_index(int v);
 		void set_shadow_index(int v);
 
-		bool is_attribute_dirty();
-		void clear_attribute_dirty();
+		long long get_attribute_dirty_frame() const;
 	};
 }

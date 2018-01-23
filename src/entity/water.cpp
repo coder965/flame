@@ -1,3 +1,4 @@
+#include "../global.h"
 #include "water.h"
 
 namespace tke
@@ -10,7 +11,7 @@ namespace tke
 		height(10.f),
 		tessellation_factor(0.75f),
 		tiling_scale(8.f),
-		attribute_dirty(true)
+		attribute_dirty_frame(0)
 	{
 	}
 
@@ -52,37 +53,37 @@ namespace tke
 	void WaterComponent::set_block_cx(int v)
 	{
 		block_cx = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void WaterComponent::set_block_cy(int v)
 	{
 		block_cy = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void WaterComponent::set_block_size(float v)
 	{
 		block_size = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void WaterComponent::set_height(float v)
 	{
 		height = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void WaterComponent::set_tessellation_factor(float v)
 	{
 		tessellation_factor = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void WaterComponent::set_tiling_scale(float v)
 	{
 		tiling_scale = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void WaterComponent::set_water_index(int v)
@@ -90,13 +91,8 @@ namespace tke
 		water_index = v;
 	}
 
-	bool WaterComponent::is_attribute_dirty() const
+	long long WaterComponent::get_attribute_dirty_frame() const
 	{
-		return attribute_dirty;
-	}
-
-	void WaterComponent::clear_attribute_dirty()
-	{
-		attribute_dirty = false;
+		return attribute_dirty_frame;
 	}
 }

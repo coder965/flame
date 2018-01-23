@@ -1,3 +1,4 @@
+#include "../global.h"
 #include "../file_utils.h"
 #include "light.h"
 
@@ -44,7 +45,8 @@ namespace tke
 		range(0.5f),
 		enable_shadow(false),
 		light_index(-1),
-		shadow_index(-1)
+		shadow_index(-1),
+		attribute_dirty_frame(0)
 	{
 	}
 
@@ -81,19 +83,19 @@ namespace tke
 	void LightComponent::set_type(LightType v)
 	{
 		type = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void LightComponent::set_color(const glm::vec3 &v)
 	{
 		color = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void LightComponent::set_ranget(float v)
 	{
 		range = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 	}
 
 	void LightComponent::set_enable_shadow(bool v)
@@ -102,7 +104,7 @@ namespace tke
 			return;
 
 		enable_shadow = v;
-		attribute_dirty = true;
+		attribute_dirty_frame = total_frame_count;
 		broadcast(this, MessageToggleShaodw);
 	}
 
@@ -116,13 +118,8 @@ namespace tke
 		shadow_index = v;
 	}
 
-	bool LightComponent::is_attribute_dirty()
+	long long LightComponent::get_attribute_dirty_frame() const
 	{
-		return attribute_dirty;
-	}
-
-	void LightComponent::clear_attribute_dirty()
-	{
-		attribute_dirty = false;
+		return attribute_dirty_frame;
 	}
 }

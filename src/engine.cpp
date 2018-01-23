@@ -458,6 +458,7 @@ namespace tke
 			nowTime = GetTickCount();
 			static unsigned int frameCount = 0;
 			frameCount++;
+			total_frame_count++;
 			if (nowTime - _lastTime >= 1000)
 			{
 				FPS = std::max(frameCount, 1U);

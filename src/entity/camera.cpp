@@ -5,17 +5,20 @@ namespace tke
 {
 	void CameraComponent::on_update()
 	{
-		if (get_parent()->is_transform_dirty())
+		if (aux_matrix_updated_frame != get_parent()->get_transform_dirty_frame())
 		{
 			view_matrix = glm::inverse(get_parent()->get_matrix());
 			update_frustum();
+
+			aux_matrix_updated_frame = total_frame_count;
 		}
 	}
 
 	CameraComponent::CameraComponent() :
 		Component(ComponentTypeCamera),
 		target(0.f),
-		length(0.f)
+		length(0.f),
+		aux_matrix_updated_frame(-1)
 	{
 		set_proj(ProjectionTypePerspective);
 	}

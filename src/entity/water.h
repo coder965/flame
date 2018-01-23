@@ -16,7 +16,7 @@ namespace tke
 
 		int water_index;
 
-		bool attribute_dirty;
+		long long attribute_dirty_frame;
 	public:
 		WaterComponent();
 
@@ -36,7 +36,6 @@ namespace tke
 		void set_tiling_scale(float v);
 		void set_water_index(int v);
 
-		bool is_attribute_dirty() const;
-		void clear_attribute_dirty();
+		long long get_attribute_dirty_frame() const;
 	};
 }

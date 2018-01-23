@@ -41,7 +41,7 @@ namespace tke
 		bool quat_dirty;
 		bool matrix_dirty;
 	protected:
-		bool transform_dirty;
+		long long transform_dirty_frame;
 	private:
 		NodeType type;
 		Node *parent;
@@ -111,7 +111,7 @@ namespace tke
 		void relate(Node *t);
 		void scale_relate(Node *t);
 
-		bool is_transform_dirty();
+		long long get_transform_dirty_frame();
 
 		NodeType get_type() const;
 		Node *get_parent() const;

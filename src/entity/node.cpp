@@ -1,3 +1,4 @@
+#include "../global.h"
 #include "node.h"
 
 namespace tke
@@ -22,7 +23,7 @@ namespace tke
 		euler_dirty(false),
 		quat_dirty(false),
 		matrix_dirty(false),
-		transform_dirty(true),
+		transform_dirty_frame(0),
 		type(_type),
 		parent(nullptr)
 	{
@@ -419,7 +420,7 @@ namespace tke
 		coord += t->coord;
 		matrix_dirty = true;
 
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::relate(Node *t)
@@ -428,7 +429,7 @@ namespace tke
 		axis *= glm::transpose(t->axis);
 		matrix_dirty = true;
 
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::update_matrix()
@@ -465,9 +466,9 @@ namespace tke
 		quat_dirty = false;
 	}
 
-	bool Node::is_transform_dirty()
+	long long Node::get_transform_dirty_frame()
 	{
-		return transform_dirty;
+		return transform_dirty_frame;
 	}
 
 	void Node::update()
@@ -475,7 +476,6 @@ namespace tke
 		on_update();
 		for (auto &c : components)
 			c->on_update();
-		transform_dirty = false;
 		for (auto &c : children)
 			c->update();
 	}
@@ -545,7 +545,7 @@ namespace tke
 	void Node::mark_coord_setted()
 	{
 		matrix_dirty = true;
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::mark_euler_setted()
@@ -554,7 +554,7 @@ namespace tke
 		euler_dirty = false;
 		quat_dirty = true;
 		matrix_dirty = true;
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::mark_quat_setted()
@@ -563,7 +563,7 @@ namespace tke
 		euler_dirty = true;
 		quat_dirty = false;
 		matrix_dirty = true;
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::mark_axis_setted()
@@ -572,13 +572,13 @@ namespace tke
 		euler_dirty = true;
 		quat_dirty = true;
 		matrix_dirty = true;
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::mark_scale_setted()
 	{
 		matrix_dirty = true;
-		transform_dirty = true;
+		transform_dirty_frame = total_frame_count;
 	}
 
 	void Node::component_boardcast(Node *n, Message msg)

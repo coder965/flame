@@ -42,8 +42,8 @@ namespace tke
 
 		int terrain_index;
 
-		bool attribute_dirty;
-		bool blend_image_dirty;
+		long long attribute_dirty_frame;
+		long long blend_image_dirty_frame;
 	public:
 		TerrainComponent();
 
@@ -71,9 +71,7 @@ namespace tke
 		void remove_material(int index);
 		void set_terrain_index(int v);
 
-		bool is_attribute_dirty() const;
-		bool is_blend_image_dirty() const;
-		void clear_attribute_dirty();
-		void clear_blend_image_dirty();
+		long long get_attribute_dirty_frame() const;
+		long long get_blend_image_dirty_frame() const;
 	};
 }

@@ -38,5 +38,6 @@ namespace tke
 	int res_cy;
 	float res_aspect;
 
+	unsigned long long total_frame_count = 0;
 	uint32_t FPS;
 }
