@@ -1,6 +1,8 @@
 # TK_Engine
 A lightweight and powerful 3D Game Engine.
 
+[![link text](./screenshots/500.png)](https://raw.githubusercontent.com/tkgamegroup/TK_Engine/master/screenshots/500.png)
+
 # Used Third-Party Libraries
 rapidxml http://rapidxml.sourceforge.net/
 
