@@ -1,5 +1,3 @@
-#include "../global.h"
-#include "../spare_list.h"
 #include "../model/model.h"
 #include "../entity/scene.h"
 #include "synchronization.h"
@@ -375,41 +373,6 @@ namespace tke
 		unsigned int dummy1;
 	};
 
-	static SpareList lights(MaxLightCount);
-	static SpareList static_model_instances(MaxStaticModelInstanceCount);
-	static SpareList animated_model_instances(MaxAnimatedModelInstanceCount);
-	static SpareList terrains(MaxTerrainCount);
-	static SpareList waters(MaxWaterCount);
-	static SpareList shadow_lights(MaxShadowCount);
-
-	struct LightAux
-	{
-		long long attribute_updated_frame;
-		long long shadow_updated_frame;
-	};
-
-	struct ModelInstanceAux
-	{
-		long long matrix_updated_frame;
-	};
-
-	struct TerrainAux
-	{
-		long long attribute_updated_frame;
-		long long blend_map_updated_frame;
-	};
-
-	struct WaterAux
-	{
-		long long attribute_updated_frame;
-	};
-
-	LightAux light_auxes[MaxLightCount];
-	ModelInstanceAux static_model_instance_auxes[MaxStaticModelInstanceCount];
-	ModelInstanceAux animated_model_instance_auxes[MaxAnimatedModelInstanceCount];
-	TerrainAux terrain_auxes[MaxTerrainCount];
-	WaterAux water_auxes[MaxWaterCount];
-
 	VkPipelineVertexInputStateCreateInfo vertexStatInputState;
 	VkPipelineVertexInputStateCreateInfo vertexAnimInputState;
 	VkPipelineVertexInputStateCreateInfo terrian_vertex_input_state;
@@ -540,7 +503,7 @@ namespace tke
 						auto index = i->get_instance_index();
 						if (index != -1)
 						{
-							if (i->get_model()->vertexes_skeleton.size())
+							if (i->get_model()->vertexes_skeleton.size() > 0)
 								animated_model_instances.remove(i);
 							else
 								static_model_instances.remove(i);
@@ -615,7 +578,14 @@ namespace tke
 		static_indirect_count(0),
 		animated_indirect_count(0),
 		enable_shadow(_enable_shadow), 
-		resource(&globalResource)
+		resource(&globalResource),
+
+		lights(MaxLightCount),
+		static_model_instances(MaxStaticModelInstanceCount),
+		animated_model_instances(MaxAnimatedModelInstanceCount),
+		terrains(MaxTerrainCount),
+		waters(MaxWaterCount),
+		shadow_lights(MaxShadowCount)
 	{
 		if (!defe_inited)
 		{

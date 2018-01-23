@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "../global.h"
+#include "../spare_list.h"
 #include "../math/math.h"
 #include "../object.h"
 #include "../resource/resource.h"
@@ -175,5 +176,41 @@ namespace tke
 		DeferredRenderer(bool _enable_shadow, Image *dst);
 		void render(Scene *scene, CameraComponent *camera);
 		void add_to_drawlist();
+
+	private:
+		SpareList lights;
+		SpareList static_model_instances;
+		SpareList animated_model_instances;
+		SpareList terrains;
+		SpareList waters;
+		SpareList shadow_lights;
+
+		struct LightAux
+		{
+			long long attribute_updated_frame;
+			long long shadow_updated_frame;
+		};
+
+		struct ModelInstanceAux
+		{
+			long long matrix_updated_frame;
+		};
+
+		struct TerrainAux
+		{
+			long long attribute_updated_frame;
+			long long blend_map_updated_frame;
+		};
+
+		struct WaterAux
+		{
+			long long attribute_updated_frame;
+		};
+
+		LightAux light_auxes[MaxLightCount];
+		ModelInstanceAux static_model_instance_auxes[MaxStaticModelInstanceCount];
+		ModelInstanceAux animated_model_instance_auxes[MaxAnimatedModelInstanceCount];
+		TerrainAux terrain_auxes[MaxTerrainCount];
+		WaterAux water_auxes[MaxWaterCount];
 	};
 }

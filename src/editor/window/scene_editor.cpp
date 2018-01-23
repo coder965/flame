@@ -73,10 +73,23 @@ void SceneEditor::on_menu_bar()
 			;
 		if (ImGui::BeginMenu("Light"))
 		{
+			tke::LightType light_type = tke::LightType(-1);
 			if (ImGui::MenuItem("Parallax"))
-				;
+				light_type = tke::LightTypeParallax;
 			if (ImGui::MenuItem("Point"))
-				;
+				light_type = tke::LightTypePoint;
+			if (ImGui::MenuItem("Spot"))
+				light_type = tke::LightTypeSpot;
+			if (light_type != -1)
+			{
+				auto n = new tke::Node(tke::NodeTypeNode);
+				n->name = "Light";
+				n->set_coord(camera->get_target());
+				auto i = new tke::LightComponent;
+				i->set_type(light_type);
+				n->add_component(i);
+				scene->add_child(n);
+			}
 
 			ImGui::EndMenu();
 		}

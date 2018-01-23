@@ -168,7 +168,7 @@ namespace tke
 			file.write((char*)&byte, 1);
 
 		}
-		file.write((char*)v.data(), size);
+		file.write((char*)v.data(), v.size());
 	}
 
 	bool is_text_file(const std::string &ext)
