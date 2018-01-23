@@ -112,7 +112,17 @@ namespace tke
 	bool uiAcceptedMouse;
 	bool uiAcceptedKey;
 
-	glm::vec3 bkColor = glm::vec3(0.69f, 0.76f, 0.79f);
+	glm::vec4 bg_color = glm::vec4(0.79f, 0.76f, 0.69f, 1.f);
+
+	glm::vec4 get_ui_bg_color()
+	{
+		return bg_color;
+	}
+
+	void set_ui_bg_color(const glm::vec4 &v)
+	{
+		bg_color = v;
+	}
 
 	static Pipeline *pipeline_ui;
 	static CommandBuffer *cb_ui;
@@ -226,13 +236,10 @@ namespace tke
 			io.AddInputCharacter((unsigned short)c);
 	}
 
-	static bool need_clear = false;
-	void beginUi(bool _need_clear)
+	void beginUi()
 	{
 		static int last_time = 0;
 		if (last_time == 0) last_time = nowTime;
-
-		need_clear = _need_clear;
 
 		uiAcceptedMouse = false;
 		uiAcceptedKey = false;
@@ -323,9 +330,14 @@ namespace tke
 			cb_ui->reset();
 			cb_ui->begin();
 
-			VkClearValue clear_value = {bkColor.r, bkColor.g, bkColor.b};
-			cb_ui->beginRenderPass(need_clear ? renderPass_windowC : renderPass_window,
-				window_framebuffers[window_imageIndex].get(), need_clear ? &clear_value : nullptr);
+			if (bg_color.a > 0.f)
+			{
+				VkClearValue clear_value = { bg_color.r, bg_color.g, bg_color.b, 1.f };
+				cb_ui->beginRenderPass(renderPass_windowC, window_framebuffers[window_imageIndex].get(), &clear_value);
+			}
+			else
+				cb_ui->beginRenderPass(renderPass_window,
+					window_framebuffers[window_imageIndex].get());
 
 			if (draw_data->CmdListsCount > 0)
 			{

@@ -26,7 +26,8 @@ namespace tke
 
 		float hdr_exposure;
 		float hdr_white;
-
+	
+		glm::vec3 bg_color;
 		glm::vec3 ambient_color ;
 		glm::vec3 fog_color;
 
@@ -49,6 +50,7 @@ namespace tke
 		std::string get_filename() const;
 		SkyType get_sky_type() const;
 		Sky *get_sky() const;
+		glm::vec3 get_bg_color() const;
 		glm::vec3 get_ambient_color() const;
 		glm::vec3 get_fog_color() const;
 
@@ -57,6 +59,7 @@ namespace tke
 		void set_pano_sky_image(std::shared_ptr<Image> i);
 		//int getCollisionGroupID(int ID, unsigned int mask);
 		void setSunDir(const glm::vec2 &);
+		void set_bg_color(const glm::vec3 &);
 		void set_ambient_color(const glm::vec3 &);
 		void set_fog_color(const glm::vec3 &);
 		void loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename);

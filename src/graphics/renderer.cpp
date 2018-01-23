@@ -915,7 +915,7 @@ namespace tke
 			switch (scene->get_sky_type())
 			{
 				case SkyTypeNull:
-					envrImage->clear(glm::vec4(0.f));
+					envrImage->clear(glm::vec4(scene->get_bg_color(), 0.f));
 					break;
 				case SkyTypeDebug:
 				{

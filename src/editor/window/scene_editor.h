@@ -28,8 +28,6 @@ struct SceneEditor
 
 	std::unique_ptr<TransformerTool> transformerTool;
 
-	bool follow = false;
-
 	SceneEditor(tke::Scene *_scene);
 	~SceneEditor();
 	void on_file_menu();

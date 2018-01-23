@@ -133,6 +133,7 @@ namespace tke
 		enable_sun_light(true),
 		hdr_exposure(0.01f),
 		hdr_white(1.f),
+		bg_color(0.f),
 		ambient_color(0.5f),
 		fog_color(0.5f),
 		ssao_radius(10.f),
@@ -167,6 +168,11 @@ namespace tke
 	Sky *Scene::get_sky() const
 	{
 		return sky.get();
+	}
+
+	glm::vec3 Scene::get_bg_color() const
+	{
+		return bg_color;
 	}
 
 	glm::vec3 Scene::get_ambient_color() const
@@ -496,6 +502,12 @@ namespace tke
 		as->node->set_euler(glm::vec3(v.x, v.y, 0.f));
 		broadcast(this, MessageSkyDirty);
 		broadcast(this, MessageAmbientDirty);
+	}
+
+	void Scene::set_bg_color(const glm::vec3 &v)
+	{
+		bg_color = v;
+		broadcast(this, MessageSkyDirty);
 	}
 
 	void Scene::set_ambient_color(const glm::vec3 &v)

@@ -73,9 +73,10 @@ int main(int argc, char** argv)
 	}
 
 	tke::onRender = []() {
-		tke::begin_frame(true);
+		tke::begin_frame();
 
 		bool show_device_Props = false;
+		bool show_preferences_Props = false;
 		if (ImGui::last_frame_main_menu_alive || tke::mouseY <= ImGui::GetFrameHeight())
 		{
 			ImGui::BeginMainMenuBar();
@@ -143,6 +144,8 @@ int main(int argc, char** argv)
 			}
 			if (ImGui::BeginMenu_keepalive("Help"))
 			{
+				if (ImGui::MenuItem("Preferences"))
+					show_preferences_Props = true;
 				if (ImGui::MenuItem("Device Properties"))
 					show_device_Props = true;
 
@@ -151,6 +154,31 @@ int main(int argc, char** argv)
 			ImGui::EndMainMenuBar();
 		}
 
+		static glm::vec4 bg_color;
+		if (show_preferences_Props)
+		{
+			bg_color = tke::get_ui_bg_color();
+
+			ImGui::OpenPopup("Preferences");
+			ImGui::SetNextWindowSize(ImVec2(400, 300));
+		}
+		if (ImGui::BeginPopupModal("Preferences"))
+		{
+			ImGui::BeginChild("##items", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
+			ImGui::ColorEdit4("background color", &bg_color[0], ImGuiColorEditFlags_NoInputs);
+			ImGui::EndChild();
+
+			if (ImGui::Button("Ok"))
+			{
+				tke::set_ui_bg_color(bg_color);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+				ImGui::CloseCurrentPopup();
+
+			ImGui::EndPopup();
+		}
 		if (show_device_Props)
 		{
 			ImGui::OpenPopup("Device Properties");
@@ -382,11 +410,13 @@ int main(int argc, char** argv)
 			ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
 			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
 				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | 
 				ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings))
 				scene_editor->do_show();
 			ImGui::End();
+			ImGui::PopStyleColor();
 			ImGui::PopStyleVar(2);
 		}
 

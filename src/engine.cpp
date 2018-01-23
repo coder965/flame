@@ -408,7 +408,7 @@ namespace tke
 			});
 	}
 
-	void begin_frame(bool clearBackground)
+	void begin_frame()
 	{
 		for (auto &e : _beforeFrameEvents)
 			e.e();
@@ -417,7 +417,7 @@ namespace tke
 		auto res = vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
 		assert(res == VK_SUCCESS);
 
-		beginUi(clearBackground);
+		beginUi();
 	}
 
 	static std::vector<VkCommandBuffer> _cbs;

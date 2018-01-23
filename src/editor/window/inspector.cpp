@@ -94,19 +94,22 @@ void InspectorWindow::do_show()
 					{
 						auto scene = (tke::Scene*)n;
 
+						auto bg_color = scene->get_bg_color();
+						if (ImGui::ColorEdit3("background color", &bg_color[0], ImGuiColorEditFlags_NoInputs))
+							scene->set_bg_color(bg_color);
 						auto ambient_color = scene->get_ambient_color();
-						if (ImGui::DragFloat3("Ambient Color", &ambient_color[0], 0.1f, 0.f, 100.f))
+						if (ImGui::ColorEdit3("ambient color", &ambient_color[0], ImGuiColorEditFlags_NoInputs))
 							scene->set_ambient_color(ambient_color);
 						auto fog_color = scene->get_fog_color();
-						if (ImGui::DragFloat3("Fog Color", &fog_color[0], 0.1f, 0.f, 100.f))
+						if (ImGui::ColorEdit3("fog color", &fog_color[0], ImGuiColorEditFlags_NoInputs))
 							scene->set_fog_color(fog_color);
 
 						int sky_type = scene->get_sky_type();
 						const char *sky_type_names[] = {
-							"Null",
-							"Debug",
-							"Atmosphere Scattering",
-							"Panorama"
+							"null",
+							"debug",
+							"atmosphere scattering",
+							"panorama"
 						};
 						if (ImGui::Combo("sky type", &sky_type, sky_type_names, TK_ARRAYSIZE(sky_type_names)))
 							scene->set_sky_type((tke::SkyType)sky_type);
@@ -175,13 +178,13 @@ void InspectorWindow::do_show()
 					case tke::NodeTypeNode:
 					{
 						auto coord = n->get_coord();
-						if (ImGui::DragFloat3("coord", &coord[0]))
+						if (ImGui::DragFloat3("coord", &coord[0], 0.05f))
 							n->set_coord(coord);
 						auto euler = n->get_euler();
-						if (ImGui::DragFloat3("euler", &euler[0]))
+						if (ImGui::DragFloat3("euler", &euler[0], 0.05f))
 							n->set_euler(euler);
 						auto scale = n->get_scale();
-						if (ImGui::DragFloat3("scale", &scale[0]))
+						if (ImGui::DragFloat3("scale", &scale[0], 0.05f))
 							n->set_scale(scale);
 
 						for (auto &c : n->get_components())

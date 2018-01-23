@@ -68,7 +68,7 @@ namespace tke
 	void add_before_frame_event(const std::function<void()>&, int id = -1, EventType event_type = EventTypeEvent);
 
 	// must call in main thread
-	void begin_frame(bool clearBackground);
+	void begin_frame();
 
 	void add_to_drawlist(VkCommandBuffer cb);
 

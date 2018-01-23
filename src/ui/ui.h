@@ -32,13 +32,14 @@ namespace tke
 	extern bool uiAcceptedMouse;
 	extern bool uiAcceptedKey;
 
-	extern glm::vec3 bkColor;
+	glm::vec4 get_ui_bg_color();
+	void set_ui_bg_color(const glm::vec4 &v);
 
 	void initUi();
 	void ui_onKeyDown(int);
 	void ui_onKeyUp(int);
 	void ui_onChar(int);
-	void beginUi(bool _need_clear);
+	void beginUi();
 	void endUi();
 
 	namespace ui

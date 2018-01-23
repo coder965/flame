@@ -156,6 +156,9 @@ void SceneEditor::on_menu_bar()
 			;
 		if (ImGui::MenuItem("Delete", "Del"))
 			on_delete();
+		ImGui::Separator();
+		if (ImGui::MenuItem("Target To Selected"))
+			;
 
 		ImGui::EndMenu();
 	}
@@ -179,25 +182,6 @@ void SceneEditor::on_menu_bar()
 		}
 
 		ImGui::EndMenu();
-	}
-
-	bool target = false;
-	if (ImGui::BeginMenu_keepalive("Camera"))
-	{
-		if (ImGui::MenuItem("Target To Selected"))
-			target = true;
-		ImGui::MenuItem("Follow", "", &follow);
-
-		{
-			auto c = camera_node->get_coord();
-			ImGui::Text("%f, %f, %f coord", c.x, c.y, c.z);
-		}
-
-		ImGui::EndMenu();
-	}
-	if (target || follow)
-	{
-		// TODO : FIX THIS
 	}
 }
 
@@ -422,5 +406,4 @@ void SceneEditor::do_show()
 void SceneEditor::save(tke::XMLNode *n)
 {
 	n->add_attribute(new tke::XMLAttribute("filename", scene->get_filename()));
-	n->add_attribute(new tke::XMLAttribute("follow", follow));
 }
