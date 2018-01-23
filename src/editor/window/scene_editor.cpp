@@ -38,7 +38,6 @@ SceneEditor::SceneEditor(tke::Scene *_scene)
 
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, layer.image.get());
-	defe_renderer->follow_to(tke::root_node);
 
 	scene = _scene;
 	tke::root_node->add_child(scene);
@@ -51,7 +50,6 @@ SceneEditor::SceneEditor(tke::Scene *_scene)
 
 SceneEditor::~SceneEditor()
 {
-	tke::break_link(tke::root_node, defe_renderer.get());
 	tke::root_node->remove_child(camera_node);
 	tke::root_node->remove_child(scene);
 }
@@ -188,12 +186,10 @@ void SceneEditor::on_menu_bar()
 
 void SceneEditor::do_show()
 {
-	glm::vec4 image_rect = tke::fit_rect(glm::vec2(tke::window_cx, tke::window_cy), tke::res_aspect);
-	ImGui::SetCursorScreenPos(ImVec2(image_rect.x, image_rect.y));
-	ImGui::InvisibleButton("canvas", ImVec2(image_rect.z, image_rect.w));
+	ImGui::SetCursorScreenPos(ImVec2(0, 0));
+	ImGui::InvisibleButton("canvas", ImVec2(tke::resolution.x(), tke::resolution.y()));
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImGui::ImageID(layer.image), ImVec2(image_rect.x, image_rect.y), ImVec2(image_rect.x +
-		image_rect.z, image_rect.y + image_rect.w));
+	draw_list->AddImage(ImGui::ImageID(layer.image), ImVec2(0, 0), ImVec2(tke::resolution.x(), tke::resolution.y()));
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
@@ -223,8 +219,8 @@ void SceneEditor::do_show()
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
-			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
+			auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
+			auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
 			if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
 				camera->move_by_cursor(distX, distY);
 			else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
@@ -243,8 +239,8 @@ void SceneEditor::do_show()
 		{
 			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
 			{
-				auto x = (tke::mouseX - image_rect.x) / image_rect.z * tke::res_cx;
-				auto y = (tke::mouseY - image_rect.y) / image_rect.w * tke::res_cy;
+				auto x = (tke::mouseX - 0) / tke::resolution.x();
+				auto y = (tke::mouseY - 0) / tke::resolution.y();
 				if (!transformerTool->leftDown(x, y))
 				{
 					//tke::PlainRenderer::DrawData draw_data;

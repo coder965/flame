@@ -2,6 +2,7 @@
 #include "image.h"
 #include "descriptor.h"
 #include "renderpass.h"
+#include "renderer.h"
 #include "shader.h"
 #include "sampler.h"
 #include "../resource/resource.h"
@@ -198,9 +199,9 @@ namespace tke
 		}
 
 		if (info._cx == -1)
-			info._cx = res_cx;
+			info._cx = resolution.x();
 		if (info._cy == -1)
-			info._cy = res_cy;
+			info._cy = resolution.y();
 
 		if (info._cx == 0 && info._cy == 0)
 		{

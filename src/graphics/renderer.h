@@ -24,6 +24,25 @@ namespace tke
 	struct CommandBuffer;
 	struct Scene;
 
+	class Resolution : public Object
+	{
+	private:
+		int _x, _y;
+		float _aspect;
+
+		long long _dirty_frame;
+	public:
+		int x() const;
+		int y() const;
+		float aspect() const;
+		long long dirty_frame() const;
+
+		void set(int x, int y);
+		void set_x(int x);
+		void set_y(int y);
+	};
+	extern Resolution resolution;
+
 	struct Renderer : Object
 	{
 
@@ -136,6 +155,7 @@ namespace tke
 		std::unique_ptr<CommandBuffer> cb_defe;
 		std::unique_ptr<CommandBuffer> cb_shad;
 
+		std::unique_ptr<UniformBuffer> constantBuffer;
 		std::unique_ptr<UniformBuffer> matrixBuffer;
 		std::unique_ptr<UniformBuffer> staticModelInstanceMatrixBuffer;
 		std::unique_ptr<UniformBuffer> animatedModelInstanceMatrixBuffer;
@@ -167,17 +187,22 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_esm;
 		std::unique_ptr<DescriptorSet> ds_esmAnim;
 
+		Image *dst;
+
 		Resource resource;
 
 		std::shared_ptr<Framebuffer> framebuffer;
 
 		virtual bool on_message(Object *sender, Message msg) override;
 
-		DeferredRenderer(bool _enable_shadow, Image *dst);
+		DeferredRenderer(bool _enable_shadow, Image *_dst);
+		~DeferredRenderer();
 		void render(Scene *scene, CameraComponent *camera);
 		void add_to_drawlist();
 
 	private:
+		void create_resolution_related();
+
 		SpareList lights;
 		SpareList static_model_instances;
 		SpareList animated_model_instances;

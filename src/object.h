@@ -7,6 +7,7 @@ namespace tke
 {
 	enum Message
 	{
+		MessageResolutionChange,
 		MessageNodeAdd,
 		MessageNodeRemove,
 		MessageComponentAdd,
@@ -27,7 +28,7 @@ namespace tke
 		void follow_to(Object *o);
 		void remove_following(Object *o);
 		void remove_follower(Object *o);
-		bool broadcast(Object *o, Message msg);
+		bool broadcast(Object *o, Message msg, bool once = true);
 		virtual bool on_message(Object *sender, Message msg) { return false; };
 	};
 

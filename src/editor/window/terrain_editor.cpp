@@ -128,8 +128,8 @@ void TerrainEditor::do_show()
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
-			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
+			auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
+			auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
 			if (tke::mouseMiddle.pressing)
 				camera->rotate_by_cursor(distX, distY);
 		}
@@ -143,8 +143,8 @@ void TerrainEditor::do_show()
 				auto winx = tke::mouseX - image_pos.x;
 				auto winy = tke::mouseY - image_pos.y;
 
-				auto p0 = glm::unProject(glm::vec3(winx, winy, -1.f), camera->get_view_matrix(), camera->get_proj_matrix(), glm::vec4(0, 0, tke::res_cx, tke::res_cy));
-				auto p1 = glm::unProject(glm::vec3(winx, winy, 1.f), camera->get_view_matrix(), camera->get_proj_matrix(), glm::vec4(0, 0, tke::res_cx, tke::res_cy));
+				auto p0 = glm::unProject(glm::vec3(winx, winy, -1.f), camera->get_view_matrix(), camera->get_proj_matrix(), glm::vec4(0, 0, tke::resolution.x(), tke::resolution.y()));
+				auto p1 = glm::unProject(glm::vec3(winx, winy, 1.f), camera->get_view_matrix(), camera->get_proj_matrix(), glm::vec4(0, 0, tke::resolution.x(), tke::resolution.y()));
 				auto t = p0.y / (p0.y - p1.y);
 				if (t > 0 && t < 1)
 				{

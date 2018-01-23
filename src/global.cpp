@@ -35,53 +35,6 @@ namespace tke
 
 	std::string engine_path;
 
-	int Resolution::x() const
-	{
-		return _x;
-	}
-
-	int Resolution::y() const
-	{
-		return _y;
-	}
-
-	float Resolution::aspect() const
-	{
-		return _aspect;
-	}
-
-	long long Resolution::dirty_frame() const
-	{
-		return _dirty_frame;
-	}
-
-	void Resolution::set(int x, int y)
-	{
-		_x = x;
-		_y = y;
-		_aspect = (float)_x / _y;
-
-		_dirty_frame = total_frame_count;
-	}
-
-	void Resolution::set_x(int x)
-	{
-		_x = x;
-		_aspect = (float)_x / _y;
-
-		_dirty_frame = total_frame_count;
-	}
-
-	void Resolution::set_y(int y)
-	{
-		_y = y;
-		_aspect = (float)_x / _y;
-
-		_dirty_frame = total_frame_count;
-	}
-
-	Resolution resolution;
-
 	unsigned long long total_frame_count = 0;
 	uint32_t FPS;
 }

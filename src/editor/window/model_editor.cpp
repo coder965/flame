@@ -45,8 +45,8 @@ void ModelEditor::do_show()
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::res_cx;
-			auto distY = (float)tke::mouseDispY / (float)tke::res_cy;
+			auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
+			auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
 			if (tke::mouseMiddle.pressing)
 				camera.rotate_by_cursor(distX, distY);
 		}

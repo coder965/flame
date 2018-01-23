@@ -40,11 +40,11 @@ namespace tke
 		}
 	}
 
-	bool Object::broadcast(Object *o, Message msg)
+	bool Object::broadcast(Object *o, Message msg, bool once)
 	{
 		for (auto f : followers)
 		{
-			if (f->on_message(o, msg))
+			if (f->on_message(o, msg) && once)
 				return true;
 		}
 		return false;

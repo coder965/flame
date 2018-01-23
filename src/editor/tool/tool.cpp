@@ -1,5 +1,6 @@
 #include "../../global.h"
 #include "../../graphics/renderpass.h"
+#include "../../graphics/renderer.h"
 #include "tool.h"
 
 bool Tool::inited = false;
@@ -10,7 +11,7 @@ Tool::Tool(tke::Image *dst)
 {
 	if (!inited)
 	{
-		depthImage = std::make_unique<tke::Image>(tke::res_cx, tke::res_cy,
+		depthImage = std::make_unique<tke::Image>(tke::resolution.x(), tke::resolution.y(),
 			VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		VkImageView views[] = {

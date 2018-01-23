@@ -42,7 +42,7 @@ struct NewImageDialog : FileSelector
 
 int main(int argc, char** argv)
 {
-	tke::init(true, "../", 1920, 1080, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
+	tke::init(true, "../", 400, 300, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
 
 	ShowWindow((HWND)tke::hWnd, SW_SHOWMAXIMIZED);
 
@@ -134,8 +134,8 @@ int main(int argc, char** argv)
 					{
 						tke::window_style |= tke::WindowStyleFrame;
 						tke::window_style &= (~tke::WindowStyleFullscreen);
-						tke::window_cx = tke::res_cx;
-						tke::window_cy = tke::res_cy;
+						tke::window_cx = tke::resolution.x();
+						tke::window_cy = tke::resolution.y();
 					}
 					auto wndProp = tke::getWin32WndProp();
 					SetWindowLong((HWND)tke::hWnd, GWL_STYLE, wndProp.second);

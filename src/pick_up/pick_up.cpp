@@ -4,6 +4,7 @@
 #include "../graphics/command_buffer.h"
 #include "../graphics/framebuffer.h"
 #include "../graphics/renderpass.h"
+#include "../graphics/renderer.h"
 
 #include "pick_up.h"
 
@@ -45,16 +46,16 @@ namespace tke
 
 	void init_pick_up() 
 	{
-		pick_up_image = new Image(res_cx, res_cy, VK_FORMAT_R8G8B8A8_UNORM, 
+		pick_up_image = new Image(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | 
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		pick_up_depth_image = new Image(res_cx, res_cy, VK_FORMAT_D16_UNORM, 
+		pick_up_depth_image = new Image(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		VkImageView views[] = {
 			pick_up_image->getView(),
 			pick_up_depth_image->getView()
 		};
-		pick_up_fb = getFramebuffer(res_cx, res_cy, renderPass_depthC_image8C, TK_ARRAYSIZE(views), views);
+		pick_up_fb = getFramebuffer(resolution.x(), resolution.y(), renderPass_depthC_image8C, TK_ARRAYSIZE(views), views);
 	}
 }

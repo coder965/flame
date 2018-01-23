@@ -11,6 +11,7 @@
 #include "graphics/buffer.h"
 #include "graphics/image.h"
 #include "graphics/renderpass.h"
+#include "graphics/renderer.h"
 #include "graphics/framebuffer.h"
 #include "graphics/synchronization.h"
 #include "entity/scene.h"
@@ -24,8 +25,6 @@
 
 namespace tke
 {
-	UniformBuffer *constantBuffer = nullptr;
-
 	void processCmdLine(const std::string &str, bool record)
 	{
 		static std::string last_cmd;
@@ -299,6 +298,7 @@ namespace tke
 					}
 					vkDestroySwapchainKHR(vk_device.v, swapchain, nullptr);
 					_create_swapchain();
+					resolution.set(cx, cy);
 					for (auto &e : resize_listeners)
 						e(cx, cy);
 				}
@@ -338,9 +338,6 @@ namespace tke
 		{
 			initModel();
 			init_pick_up();
-
-			constantBuffer = new UniformBuffer(sizeof ConstantBufferStruct);
-			globalResource.setBuffer(constantBuffer, "Constant.UniformBuffer");
 
 			initPhysics();
 		}
@@ -482,17 +479,6 @@ namespace tke
 
 		for (;;)
 		{
-			nowTime = GetTickCount();
-			static unsigned int frameCount = 0;
-			frameCount++;
-			total_frame_count++;
-			if (nowTime - _lastTime >= 1000)
-			{
-				FPS = std::max(frameCount, 1U);
-				_lastTime = nowTime;
-				frameCount = 0;
-			}
-
 			MSG msg;
 			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -507,6 +493,17 @@ namespace tke
 			}
 			else
 			{
+				nowTime = GetTickCount();
+				static unsigned int frameCount = 0;
+				frameCount++;
+				total_frame_count++;
+				if (nowTime - _lastTime >= 1000)
+				{
+					FPS = std::max(frameCount, 1U);
+					_lastTime = nowTime;
+					frameCount = 0;
+				}
+
 				mouseDispX = mouseX - mousePrevX;
 				mouseDispY = mouseY - mousePrevY;
 

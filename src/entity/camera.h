@@ -15,6 +15,7 @@ namespace tke
 	class CameraComponent : public Component
 	{
 	private:
+		ProjectionType proj_type;
 		glm::vec3 target;
 		float length;
 		glm::mat4 proj_matrix;
@@ -26,6 +27,7 @@ namespace tke
 
 		long long aux_matrix_updated_frame;
 	protected:
+		virtual bool on_message(Object *sender, Message msg) override;
 		virtual void on_update() override;
 	public:
 		CameraComponent();
@@ -38,7 +40,7 @@ namespace tke
 		const glm::vec3 *get_frustum_points() const;
 		const glm::vec4 *get_frustum_planes() const;
 
-		void set_proj(ProjectionType proj_type);
+		void set_proj(ProjectionType _proj_type);
 		void set_length(float _length);
 		void set_target(const glm::vec3 &_target);
 		void rotate_by_cursor(float x, float y);
@@ -46,6 +48,7 @@ namespace tke
 		void scroll(float value);
 		void reset();
 	private:
+		void update_proj();
 		void look_at_target();
 		void update_frustum();
 	};

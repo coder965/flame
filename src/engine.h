@@ -15,8 +15,6 @@ namespace tke
 	struct Framebuffer;
 	struct CommandBuffer;
 
-	extern UniformBuffer *constantBuffer;
-
 	void processCmdLine(const std::string &str, bool record = true);
 
 	enum WindowStyle

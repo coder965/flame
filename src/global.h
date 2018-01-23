@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/math.h"
+#include <string>
 
 #if defined(_WIN64)
 typedef __int64 TK_LONG_PTR;
@@ -50,24 +50,6 @@ namespace tke
 	extern int nowTime;
 
 	extern std::string engine_path;
-	class Resolution
-	{
-	private:
-		int _x, _y;
-		float _aspect;
-		
-		long long _dirty_frame;
-	public:
-		int x() const;
-		int y() const;
-		float aspect() const;
-		long long dirty_frame() const;
-
-		void set(int x, int y);
-		void set_x(int x);
-		void set_y(int y);
-	};
-	extern Resolution resolution;
 
 	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;

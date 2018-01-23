@@ -73,8 +73,8 @@ void TransformerTool::mouseMove(int _xDisp, int _yDisp)
 	{
 		case ModeMove:
 		{
-			auto xDisp = (float)_xDisp / (float)tke::res_cx;
-			auto yDisp = (float)_yDisp / (float)tke::res_cy;
+			auto xDisp = (float)_xDisp / (float)tke::resolution.x();
+			auto yDisp = (float)_yDisp / (float)tke::resolution.y();
 
 			auto p = currentCamera->get_proj_matrix() * currentCamera->get_view_matrix() * glm::vec4(node->get_coord(), 1.f);
 			p = p / p.w;

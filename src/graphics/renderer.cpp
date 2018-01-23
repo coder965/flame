@@ -21,6 +21,56 @@
 
 namespace tke
 {
+	int Resolution::x() const
+	{
+		return _x;
+	}
+
+	int Resolution::y() const
+	{
+		return _y;
+	}
+
+	float Resolution::aspect() const
+	{
+		return _aspect;
+	}
+
+	long long Resolution::dirty_frame() const
+	{
+		return _dirty_frame;
+	}
+
+	void Resolution::set(int x, int y)
+	{
+		_x = x;
+		_y = y;
+		_aspect = (float)_x / _y;
+
+		_dirty_frame = total_frame_count;
+		broadcast(this, MessageResolutionChange, false);
+	}
+
+	void Resolution::set_x(int x)
+	{
+		_x = x;
+		_aspect = (float)_x / _y;
+
+		_dirty_frame = total_frame_count;
+		broadcast(this, MessageResolutionChange, false);
+	}
+
+	void Resolution::set_y(int y)
+	{
+		_y = y;
+		_aspect = (float)_x / _y;
+
+		_dirty_frame = total_frame_count;
+		broadcast(this, MessageResolutionChange, false);
+	}
+
+	Resolution resolution;
+
 	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)
 	{
 		geo_data.resize(1);
@@ -66,7 +116,6 @@ namespace tke
 		if (first)
 		{
 			pipeline_plain = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0}, { TokenF32V2, 0}, { TokenF32V3, 0}, { TokenF32V3, 0} })
 				.depth_test(true)
 				.depth_write(true)
@@ -74,7 +123,6 @@ namespace tke
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", {}),
 				renderPass_depthC_image8, 0);
 			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 				.depth_test(true)
 				.depth_write(true)
@@ -82,7 +130,6 @@ namespace tke
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "ANIM" }),
 				renderPass_depthC_image8, 0, true);
 			pipeline_frontlight = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 				.depth_test(true)
 				.depth_write(true)
@@ -90,7 +137,6 @@ namespace tke
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "USE_NORMAL" }),
 				renderPass_depthC_image8, 0);
 			pipeline_material = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 				.depth_test(true)
 				.depth_write(true)
@@ -98,7 +144,6 @@ namespace tke
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "USE_MATERIAL" }),
 				renderPass_depthC_image8, 0);
 			pipeline_material_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 				.depth_test(true)
 				.depth_write(true)
@@ -106,7 +151,6 @@ namespace tke
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "ANIM", "USE_MATERIAL" }),
 				renderPass_depthC_image8, 0, true);
 			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 				.polygon_mode(VK_POLYGON_MODE_LINE)
 				.cull_mode(VK_CULL_MODE_NONE)
@@ -114,7 +158,6 @@ namespace tke
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", {}),
 				renderPass_image8, 0);
 			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 				.polygon_mode(VK_POLYGON_MODE_LINE)
 				.cull_mode(VK_CULL_MODE_NONE)
@@ -155,6 +198,8 @@ namespace tke
 
 	void PlainRenderer::do_render(CommandBuffer *cb, CameraComponent *camera, DrawData *data)
 	{
+		cb->setViewportAndScissor(resolution.x(), resolution.y());
+
 		if (data->vbuffer0)
 		{
 			if (data->vbuffer1)
@@ -259,7 +304,6 @@ namespace tke
 		if (first)
 		{
 			pipeline_lines = new Pipeline(PipelineCreateInfo()
-					.cx(-1).cy(-1)
 					.vertex_input_state({ { TokenF32V3, 0}, { TokenF32V3, 0} })
 					.primitive_topology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
 					.polygon_mode(VK_POLYGON_MODE_LINE)
@@ -280,6 +324,8 @@ namespace tke
 		cb->begin();
 
 		cb->beginRenderPass(renderPass_image8, framebuffer);
+
+		cb->setViewportAndScissor(resolution.x(), resolution.y());
 
 		cb->bindVertexBuffer(data->vertex_buffer);
 		cb->bindPipeline(pipeline_lines);
@@ -414,6 +460,9 @@ namespace tke
 	{
 		switch (msg)
 		{
+			case MessageResolutionChange:
+				create_resolution_related();
+				return true;
 			case MessageSkyDirty:
 				sky_dirty = true;
 				return true;
@@ -583,7 +632,7 @@ namespace tke
 		return false;
 	}
 
-	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *dst) :
+	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *_dst) :
 		sky_dirty(true),
 		ambient_dirty(true),
 		light_count_dirty(true),
@@ -592,7 +641,8 @@ namespace tke
 		terrain_count_dirty(true),
 		static_indirect_count(0),
 		animated_indirect_count(0),
-		enable_shadow(_enable_shadow), 
+		enable_shadow(_enable_shadow),
+		dst(_dst),
 		resource(&globalResource),
 
 		lights(MaxLightCount),
@@ -602,6 +652,9 @@ namespace tke
 		waters(MaxWaterCount),
 		shadow_lights(MaxShadowCount)
 	{
+		follow_to(root_node);
+		follow_to(&resolution);
+
 		if (!defe_inited)
 		{
 			VkAttachmentDescription atts[] = {
@@ -661,7 +714,6 @@ namespace tke
 				.add_shader(engine_path + "shader/copy.frag", {}),
 				renderPass_image16, 0, true);
 			mrt_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 				.depth_test(true)
 				.depth_write(true)
@@ -674,7 +726,6 @@ namespace tke
 				.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
 				defe_renderpass, 0);
 			mrt_anim_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 				.depth_test(true)
 				.depth_write(true)
@@ -687,7 +738,6 @@ namespace tke
 				.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
 				defe_renderpass, 0);
 			terrain_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 } })
 				.patch_control_points(4)
 				.depth_test(true)
@@ -704,7 +754,6 @@ namespace tke
 				.add_link("ubo_terrain_", "Terrain.UniformBuffer"),
 				defe_renderpass, 0);
 			water_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.patch_control_points(4)
 				.depth_test(true)
 				.depth_write(true)
@@ -720,7 +769,6 @@ namespace tke
 				.add_link("ubo_water_", "Water.UniformBuffer"),
 				defe_renderpass, 0);
 			deferred_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_VIEW" })
 				.add_shader(engine_path + "shader/deferred/deferred.frag", { "USE_PBR" })
@@ -737,7 +785,6 @@ namespace tke
 				.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
 				defe_renderpass, 1);
 			compose_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(-1).cy(-1)
 				.cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", {})
 				.add_shader(engine_path + "shader/compose/compose.frag", {})
@@ -749,6 +796,7 @@ namespace tke
 
 		cb_defe = std::make_unique<CommandBuffer>();
 
+		constantBuffer = std::make_unique<UniformBuffer>(sizeof ConstantBufferStruct);
 		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
 		staticModelInstanceMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticModelInstanceCount);
 		animatedModelInstanceMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedModelInstanceCount);
@@ -764,27 +812,8 @@ namespace tke
 		for (int i = 0; i < 3; i++)
 			envr_image_downsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
 				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		mainImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		depthImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-		ds_mrt = std::make_unique<DescriptorSet>(mrt_pipeline);
-		ds_mrtAnim = std::make_unique<DescriptorSet>(mrt_anim_pipeline);
-		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrt_anim_pipeline, 2);
-		ds_terrain = std::make_unique<DescriptorSet>(terrain_pipeline);
-		ds_water = std::make_unique<DescriptorSet>(water_pipeline);
-		ds_defe = std::make_unique<DescriptorSet>(deferred_pipeline);
-		ds_comp = std::make_unique<DescriptorSet>(compose_pipeline);
-
-		resource.setImage(envrImage.get(), "Envr.Image");
-		resource.setImage(mainImage.get(), "Main.Image");
-		resource.setImage(depthImage.get(), "Depth.Image");
-		resource.setImage(albedoAlphaImage.get(), "AlbedoAlpha.Image");
-		resource.setImage(normalHeightImage.get(), "NormalHeight.Image");
-		resource.setImage(specRoughnessImage.get(), "SpecRoughness.Image");
-
+		resource.setBuffer(constantBuffer.get(), "Constant.UniformBuffer");
 		resource.setBuffer(matrixBuffer.get(), "Matrix.UniformBuffer");
 		resource.setBuffer(staticModelInstanceMatrixBuffer.get(), "StaticObjectMatrix.UniformBuffer");
 		resource.setBuffer(animatedModelInstanceMatrixBuffer.get(), "AnimatedObjectMatrix.UniformBuffer");
@@ -852,6 +881,37 @@ namespace tke
 			esm_anim_pipeline->linkDescriptors(ds_esmAnim.get(), &resource);
 		}
 
+		ds_mrt = std::make_unique<DescriptorSet>(mrt_pipeline);
+		ds_mrtAnim = std::make_unique<DescriptorSet>(mrt_anim_pipeline);
+		ds_mrtAnim_bone = std::make_unique<DescriptorSet>(mrt_anim_pipeline, 2);
+		ds_terrain = std::make_unique<DescriptorSet>(terrain_pipeline);
+		ds_water = std::make_unique<DescriptorSet>(water_pipeline);
+		ds_defe = std::make_unique<DescriptorSet>(deferred_pipeline);
+		ds_comp = std::make_unique<DescriptorSet>(compose_pipeline);
+
+		create_resolution_related();
+	}
+
+	DeferredRenderer::~DeferredRenderer()
+	{
+		break_link(root_node, this);
+	}
+
+	void DeferredRenderer::create_resolution_related()
+	{
+		mainImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		depthImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		resource.setImage(envrImage.get(), "Envr.Image");
+		resource.setImage(mainImage.get(), "Main.Image");
+		resource.setImage(depthImage.get(), "Depth.Image");
+		resource.setImage(albedoAlphaImage.get(), "AlbedoAlpha.Image");
+		resource.setImage(normalHeightImage.get(), "NormalHeight.Image");
+		resource.setImage(specRoughnessImage.get(), "SpecRoughness.Image");
+
 		mrt_pipeline->linkDescriptors(ds_mrt.get(), &resource);
 		mrt_anim_pipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
 		terrain_pipeline->linkDescriptors(ds_terrain.get(), &resource);
@@ -874,7 +934,7 @@ namespace tke
 
 	void DeferredRenderer::render(Scene *scene, CameraComponent *camera)
 	{
-		if (constant_buffer_updated_frame < resolution.dirty_frame)
+		if (constant_buffer_updated_frame < resolution.dirty_frame())
 		{
 			ConstantBufferStruct stru;
 			stru.depth_near = near_plane;
@@ -1357,7 +1417,8 @@ namespace tke
 		cb_defe->reset();
 		cb_defe->begin();
 
-		cb_defe->beginRenderPass(defe_renderpass, this->framebuffer.get());
+		cb_defe->beginRenderPass(defe_renderpass, framebuffer.get());
+		cb_defe->setViewportAndScissor(resolution.x(), resolution.y());
 
 		cb_defe->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
 		cb_defe->bindIndexBuffer(index_buffer.get());

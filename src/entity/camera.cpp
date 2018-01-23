@@ -1,8 +1,20 @@
+#include "../graphics/renderer.h"
 #include "node.h"
 #include "camera.h"
 
 namespace tke
 {
+	bool CameraComponent::on_message(Object *sender, Message msg)
+	{
+		switch (msg)
+		{
+			case MessageResolutionChange:
+				update_proj();
+				update_frustum();
+				return true;
+		}
+	}
+
 	void CameraComponent::on_update()
 	{
 		if (aux_matrix_updated_frame < get_parent()->get_transform_dirty_frame())
@@ -16,32 +28,19 @@ namespace tke
 
 	CameraComponent::CameraComponent() :
 		Component(ComponentTypeCamera),
+		proj_type(ProjectionTypePerspective),
 		target(0.f),
 		length(0.f),
 		aux_matrix_updated_frame(-1)
 	{
-		set_proj(ProjectionTypePerspective);
+		follow_to(&resolution);
+		update_proj();
 	}
 
-	void CameraComponent::set_proj(ProjectionType proj_type)
+	void CameraComponent::set_proj(ProjectionType _proj_type)
 	{
-		auto vkTrans = glm::mat4(
-			glm::vec4(1.f, 0.f, 0.f, 0.f), 
-			glm::vec4(0.f, -1.f, 0.f, 0.f),
-			glm::vec4(0.f, 0.f, 1.f, 0.f), 
-			glm::vec4(0.f, 0.f, 0.f, 1.f)
-		);
-		switch (proj_type)
-		{
-			case ProjectionTypePerspective:
-				proj_matrix = vkTrans * glm::perspective(glm::radians(fovy), resolution.aspect(), near_plane, far_plane);
-				proj_matrix_inverse = glm::inverse(proj_matrix);
-				break;
-			case ProjectionTypeOrtho:
-				proj_matrix = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
-				proj_matrix_inverse = glm::inverse(proj_matrix);
-				break;
-		}
+		proj_type = _proj_type;
+		update_proj();
 	}
 
 	void CameraComponent::set_length(float _length)
@@ -74,7 +73,7 @@ namespace tke
 		{
 			auto l = length / near_plane;
 			auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
-			target += (-x * cy * res_aspect * l) * get_parent()->get_axis()[0] + (y * cy * l) * 
+			target += (-x * cy * resolution.aspect() * l) * get_parent()->get_axis()[0] + (y * cy * l) *
 				get_parent()->get_axis()[1];
 			look_at_target();
 		}
@@ -123,6 +122,27 @@ namespace tke
 		return frustum_planes;
 	}
 
+	void CameraComponent::update_proj()
+	{
+		auto vkTrans = glm::mat4(
+			glm::vec4(1.f, 0.f, 0.f, 0.f),
+			glm::vec4(0.f, -1.f, 0.f, 0.f),
+			glm::vec4(0.f, 0.f, 1.f, 0.f),
+			glm::vec4(0.f, 0.f, 0.f, 1.f)
+		);
+		switch (proj_type)
+		{
+			case ProjectionTypePerspective:
+				proj_matrix = vkTrans * glm::perspective(glm::radians(fovy), resolution.aspect(), near_plane, far_plane);
+				proj_matrix_inverse = glm::inverse(proj_matrix);
+				break;
+			case ProjectionTypeOrtho:
+				proj_matrix = vkTrans * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane * 2);
+				proj_matrix_inverse = glm::inverse(proj_matrix);
+				break;
+		}
+	}
+
 	void CameraComponent::look_at_target()
 	{
 		if (length != 0.f)
@@ -136,9 +156,9 @@ namespace tke
 		auto tanHfFovy = glm::tan(glm::radians(fovy * 0.5f));
 
 		auto _y1 = near_plane * tanHfFovy;
-		auto _z1 = _y1 * res_aspect;
+		auto _z1 = _y1 * resolution.aspect();
 		auto _y2 = far_plane * tanHfFovy;
-		auto _z2 = _y2 * res_aspect;
+		auto _z2 = _y2 * resolution.aspect();
 		auto axis = get_parent()->get_axis();
 		auto coord = get_parent()->get_coord();
 		frustum_points[0] = -_z1 * axis[2] + _y1 * axis[1] + near_plane * axis[0] + coord;
