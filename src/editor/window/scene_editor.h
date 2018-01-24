@@ -4,10 +4,10 @@
 #include "../../entity/scene.h"
 #include "../../graphics/display_layer.h"
 #include "../../graphics/renderer.h"
+#include "../../ui/ui.h"
 #include "../tool/transformer_tool.h"
-#include "window.h"
 
-struct SceneEditor : IWindow
+struct SceneEditor : tke::ui::Window
 {
 	tke::Node *camera_node;
 	tke::CameraComponent *camera;
@@ -33,7 +33,7 @@ struct SceneEditor : IWindow
 	~SceneEditor();
 	void on_file_menu();
 	void on_menu_bar();
-	virtual void do_show() override;
+	virtual void on_show() override;
 	void save(tke::XMLNode *);
 
 	void on_delete();

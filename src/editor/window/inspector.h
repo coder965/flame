@@ -1,11 +1,12 @@
 #pragma once
 
-#include "window.h"
+#include "../../ui/ui.h"
 
-struct InspectorWindow : IWindow
+struct InspectorWindow : tke::ui::Window
 {
+	InspectorWindow();
 	~InspectorWindow();
-	virtual void do_show() override;
+	virtual void on_show() override;
 };
 
 extern InspectorWindow *inspector_window;

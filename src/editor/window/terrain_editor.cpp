@@ -11,8 +11,9 @@
 #include "terrain_editor.h"
 #include "file_selector.h"
 
-TerrainEditor::TerrainEditor()
-	:layer(true)
+TerrainEditor::TerrainEditor() :
+	Window("Terrain -", true, false),
+	layer(true)
 {
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
@@ -36,8 +37,8 @@ struct SaveModelDialog : FileSelector
 {
 	bool first = true;
 
-	SaveModelDialog()
-		:FileSelector("Save Model", true, true, false, true, 800, 600)
+	SaveModelDialog() :
+		FileSelector("Save Model", true, true, false, true, 800, 600)
 	{
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}
@@ -45,10 +46,8 @@ struct SaveModelDialog : FileSelector
 
 static tke::Pipeline *update_normal_pipeline;
 
-void TerrainEditor::do_show()
+void TerrainEditor::on_show()
 {
-	ImGui::Begin("Terrain -", &opened, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
-
 	bool openBlockCountPopup = false;
 	static int sBlock_count;
 
@@ -219,8 +218,6 @@ void TerrainEditor::do_show()
 			}
 		}
 	}
-
-	ImGui::End();
 
 	{
 		tke::PlainRenderer::DrawData data;

@@ -7,9 +7,9 @@
 #include "../../entity/terrain.h"
 #include "../../entity/camera.h"
 
-#include "window.h"
+#include "../../ui/ui.h"
 
-struct ModelEditor : IWindow
+struct ModelEditor : tke::ui::Window
 {
 	std::shared_ptr<tke::Model> model;
 	tke::PlainRenderer::DrawData draw_data;
@@ -20,5 +20,5 @@ struct ModelEditor : IWindow
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
 	ModelEditor(std::shared_ptr<tke::Model> _model);
-	virtual void do_show() override;
+	virtual void on_show() override;
 };

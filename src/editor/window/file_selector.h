@@ -4,12 +4,10 @@
 #include <functional>
 
 #include "../../file_utils.h"
-#include "window.h"
+#include "../../ui/ui.h"
 
-struct FileSelector : IWindow
+struct FileSelector : tke::ui::Window
 {
-	std::string title;
-	bool modal;
 	bool enable_file;
 	bool enable_right_region = false;
 	float left_region_width = 300.f;
@@ -54,7 +52,7 @@ struct FileSelector : IWindow
 	FileSelector(const std::string &_title, bool _modal, bool _enable_file, bool _enable_right_region, bool _save_mode, int _cx = 0, int _cy = 0, bool _tree_mode = false);
 	void set_current_path(const std::string &s);
 	void refresh();
-	virtual void do_show() override;
+	virtual void on_show() override;
 	virtual bool on_refresh();
 	virtual bool on_parent_path();
 	virtual FileItem *on_new_file_item();

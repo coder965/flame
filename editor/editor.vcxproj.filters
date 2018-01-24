@@ -36,9 +36,6 @@
     <ClCompile Include="..\src\editor\window\terrain_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\editor\window\window.cpp">
-      <Filter>src\window</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\editor\editor.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -78,9 +75,6 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="..\src\editor\window\terrain_editor.h">
-      <Filter>src\window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\editor\window\window.h">
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="..\src\editor\window\show_material.h">

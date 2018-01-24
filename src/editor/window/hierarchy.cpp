@@ -5,6 +5,12 @@
 
 HierarchyWindow *hierarchy_window = nullptr;
 
+HierarchyWindow::HierarchyWindow() :
+	Window("Hierarchy")
+{
+	tke::ui::main_layout.add_window(this, 0, tke::ui::DockTop);
+}
+
 HierarchyWindow::~HierarchyWindow()
 {
 	hierarchy_window = nullptr;
@@ -28,16 +34,11 @@ static void show_nodes(tke::Node *n)
 	}
 }
 
-void HierarchyWindow::do_show()
+void HierarchyWindow::on_show()
 {
-	if (ImGui::Begin("Hierarchy", &opened))
+	if (scene_editor)
 	{
-		if (scene_editor)
-		{
-			auto scene = scene_editor->scene;
-			show_nodes(scene);
-		}
+		auto scene = scene_editor->scene;
+		show_nodes(scene);
 	}
-
-	ImGui::End();
 }

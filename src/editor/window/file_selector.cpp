@@ -3,8 +3,13 @@
 #include "../../ui/ui.h"
 #include "file_selector.h"
 
-FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, bool _enable_right_region, bool _save_mode, int _cx, int _cy, bool _tree_mode)
-	:title(_title), modal(_modal), enable_file(_enable_file), enable_right_region(_enable_right_region), save_mode(_save_mode), tree_mode(_tree_mode)
+FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, 
+	bool _enable_right_region, bool _save_mode, int _cx, int _cy, bool _tree_mode) :
+	Window(_title, false, true, _modal),
+	enable_file(_enable_file), 
+	enable_right_region(_enable_right_region), 
+	save_mode(_save_mode), 
+	tree_mode(_tree_mode)
 {
 	first_cx = _cx;
 	first_cy = _cy;
@@ -121,7 +126,7 @@ void FileSelector::refresh()
 	fIterDir(&curr_dir, curr_dir.filename);
 }
 
-void FileSelector::do_show()
+void FileSelector::on_show()
 {
 	if (need_refresh)
 	{
@@ -129,161 +134,137 @@ void FileSelector::do_show()
 		need_refresh = false;
 	}
 
-	bool _open;
-	if (modal)
+	const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
+
+	if (enable_right_region)
 	{
-		if (first)
-			ImGui::OpenPopup(title.c_str());
-		_open = ImGui::BeginPopupModal(title.c_str(), &opened);
+		ImGui::Splitter(true, &left_region_width, &right_region_width, 50.f, 50.f);
+		ImGui::BeginChild("left", ImVec2(left_region_width, 0), true);
 	}
-	else
-		_open = ImGui::Begin(title.c_str(), &opened);
 
-	if (_open)
+	if (!tree_mode)
 	{
-		const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
+		on_top_area_show();
 
-		if (enable_right_region)
+		ImGui::PushItemWidth(100);
+		auto driver_count = TK_ARRAYSIZE(drivers) - 1;
+		if (user_define_extra_path.size() != 0)
 		{
-			const auto splitter_width = 8.f;
-			right_region_width = ImGui::GetWindowWidth() - 
-				ImGui::GetStyle().WindowPadding.x * 2.f - 
-				left_region_width -
-				splitter_width;
-			ImGui::Splitter(true, splitter_width, &left_region_width, &right_region_width, 50.f, 50.f);
-			ImGui::BeginChild("left", ImVec2(left_region_width, 0), true);
+			drivers[TK_ARRAYSIZE(drivers) - 1] = user_define_extra_path.c_str();
+			driver_count++;
 		}
-
-		if (!tree_mode)
+		if (ImGui::Combo("##driver", &driver_index, drivers, driver_count))
 		{
-			on_top_area_show();
-
-			ImGui::PushItemWidth(100);
-			auto driver_count = TK_ARRAYSIZE(drivers) - 1;
-			if (user_define_extra_path.size() != 0)
+			auto d = std::string(drivers[driver_index]);
+			if (d != user_define_extra_path)
+				d += "\\";
+			curr_dir.filename = d;
+			need_refresh = true;
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		ImGui::Text(curr_dir.filename.c_str());
+		ImGui::SameLine();
+		{
+			static float buttonWidth = 100.f;
+			ImGui::SameLine(ImGui::GetWindowWidth() - buttonWidth - itemSpacing);
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+			if (ImGui::Button(ICON_FA_CHEVRON_UP))
 			{
-				drivers[TK_ARRAYSIZE(drivers) - 1] = user_define_extra_path.c_str();
-				driver_count++;
-			}
-			if (ImGui::Combo("##driver", &driver_index, drivers, driver_count))
-			{
-				auto d = std::string(drivers[driver_index]);
-				if (d != user_define_extra_path)
-					d += "\\";
-				curr_dir.filename = d;
-				need_refresh = true;
-			}
-			ImGui::PopItemWidth();
-			ImGui::SameLine();
-			ImGui::Text(curr_dir.filename.c_str());
-			ImGui::SameLine();
-			{
-				static float buttonWidth = 100.f;
-				ImGui::SameLine(ImGui::GetWindowWidth() - buttonWidth - itemSpacing);
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-				if (ImGui::Button(ICON_FA_CHEVRON_UP))
+				if (curr_dir.filename != user_define_extra_path && on_parent_path())
 				{
-					if (curr_dir.filename != user_define_extra_path && on_parent_path())
+					std::fs::path path(curr_dir.filename);
+					if (path.root_path() != path)
 					{
-						std::fs::path path(curr_dir.filename);
-						if (path.root_path() != path)
-						{
-							curr_dir.filename = path.parent_path().string();
-							need_refresh = true;
-						}
-					}
-				}
-				buttonWidth = ImGui::GetItemRectSize().x;
-			}
-			if (ImGui::IsItemHovered())
-				ImGui::SetTooltip("Parent Path");
-			ImGui::PopStyleColor();
-			ImGui::Separator();
-
-			ImGui::BeginChild("list", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
-			auto index = 0;
-			for (auto &i : curr_dir.dir_list)
-			{
-				if (ImGui::Selectable(i->name.c_str(), select_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
-				{
-					strcpy(filename, i->value.c_str());
-					on_dir_item_selected(i.get());
-					select_index = index;
-					if (ImGui::IsMouseDoubleClicked(0))
-					{
-						curr_dir.filename = (std::fs::path(curr_dir.filename) / i->value).string();
+						curr_dir.filename = path.parent_path().string();
 						need_refresh = true;
 					}
 				}
+			}
+			buttonWidth = ImGui::GetItemRectSize().x;
+		}
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Parent Path");
+		ImGui::PopStyleColor();
+		ImGui::Separator();
+
+		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
+		auto index = 0;
+		for (auto &i : curr_dir.dir_list)
+		{
+			if (ImGui::Selectable(i->name.c_str(), select_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
+			{
+				strcpy(filename, i->value.c_str());
+				on_dir_item_selected(i.get());
+				select_index = index;
+				if (ImGui::IsMouseDoubleClicked(0))
+				{
+					curr_dir.filename = (std::fs::path(curr_dir.filename) / i->value).string();
+					need_refresh = true;
+				}
+			}
+			index++;
+		}
+		if (enable_file)
+		{
+			for (auto &i : curr_dir.file_list)
+			{
+				if (ImGui::Selectable(i->name.c_str(), index == select_index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
+				{
+					select_index = index;
+					strcpy(filename, i->value.c_str());
+					on_file_item_selected(i.get(), ImGui::IsMouseDoubleClicked(0));
+				}
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size() + 1);
+					ImGui::TextUnformatted(i->filename.c_str());
+					ImGui::EndDragDropSource();
+				}
 				index++;
 			}
-			if (enable_file)
+		}
+		ImGui::EndChild();
+
+		on_bottom_area_show();
+	}
+	else
+	{
+		std::function<void(DirItem *)> fShowDir;
+		fShowDir = [this, &fShowDir](DirItem *src) {
+			auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
+			if (src->dir_list.size() > 0)
 			{
-				for (auto &i : curr_dir.file_list)
+				auto node_open = ImGui::TreeNodeEx(src, node_flags, src->name.c_str());
+				if (ImGui::IsItemClicked())
+					select_dir = src;
+				if (node_open)
 				{
-					if (ImGui::Selectable(i->name.c_str(), index == select_index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
-					{
-						select_index = index;
-						strcpy(filename, i->value.c_str());
-						on_file_item_selected(i.get(), ImGui::IsMouseDoubleClicked(0));
-					}
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size() + 1);
-						ImGui::TextUnformatted(i->filename.c_str());
-						ImGui::EndDragDropSource();
-					}
-					index++;
+					for (auto &d : src->dir_list)
+						fShowDir(d.get());
+					ImGui::TreePop();
 				}
 			}
-			ImGui::EndChild();
-
-			on_bottom_area_show();
-		}
-		else
-		{
-			std::function<void(DirItem *)> fShowDir;
-			fShowDir = [this, &fShowDir](DirItem *src) {
-				auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-				node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
-				if (src->dir_list.size() > 0)
-				{
-					auto node_open = ImGui::TreeNodeEx(src, node_flags, src->name.c_str());
-					if (ImGui::IsItemClicked())
-						select_dir = src;
-					if (node_open)
-					{
-						for (auto &d : src->dir_list)
-							fShowDir(d.get());
-						ImGui::TreePop();
-					}
-				}
-				else
-				{
-					node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-					ImGui::TreeNodeEx(src, node_flags, src->name.c_str());
-					if (ImGui::IsItemClicked())
-						select_dir = src;
-				}
-			};
-			fShowDir(&curr_dir);
-		}
-
-		if (enable_right_region)
-		{
-			ImGui::EndChild();
-			ImGui::SameLine();
-			ImGui::BeginChild("right", ImVec2(0, 0), true);
-			on_right_area_show();
-			ImGui::EndChild();
-		}
-
-		if (modal)
-			ImGui::EndPopup();
+			else
+			{
+				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				ImGui::TreeNodeEx(src, node_flags, src->name.c_str());
+				if (ImGui::IsItemClicked())
+					select_dir = src;
+			}
+		};
+		fShowDir(&curr_dir);
 	}
 
-	if (!modal)
-		ImGui::End();
+	if (enable_right_region)
+	{
+		ImGui::EndChild();
+		ImGui::SameLine();
+		ImGui::BeginChild("right", ImVec2(0, 0), true);
+		on_right_area_show();
+		ImGui::EndChild();
+	}
 }
 
 bool FileSelector::on_refresh() 

@@ -6,17 +6,16 @@
 
 #include "image_editor.h"
 
-ImageEditor::ImageEditor(const std::string &filename)
+ImageEditor::ImageEditor(const std::string &filename) :
+	Window("Image - " + image->filename, true, false)
 {
 	image = tke::get_image(filename);
 	first_cx = 800;
 	first_cy = 600;
 }
 
-void ImageEditor::do_show()
+void ImageEditor::on_show()
 {
-	ImGui::Begin(("Image - " + image->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
-
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
@@ -89,6 +88,4 @@ void ImageEditor::do_show()
 			tke::endOnceCommandBuffer(cb);
 		}
 	}
-
-	ImGui::End();
 }

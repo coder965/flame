@@ -332,7 +332,7 @@ namespace tke
 
 		initVulkan(vulkan_debug);
 
-		initUi();
+		ui::init();
 
 		if (!only_2d)
 		{
@@ -437,7 +437,7 @@ namespace tke
 		auto res = vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
 		assert(res == VK_SUCCESS);
 
-		beginUi();
+		ui::begin();
 	}
 
 	static std::vector<VkCommandBuffer> _cbs;
@@ -449,7 +449,7 @@ namespace tke
 
 	void end_frame()
 	{
-		endUi();
+		ui::end();
 
 		if (_cbs.size())
 		{

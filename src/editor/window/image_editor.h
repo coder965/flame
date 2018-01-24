@@ -2,12 +2,12 @@
 
 #include "../../graphics/image.h"
 
-#include "window.h"
+#include "../../ui/ui.h"
 
-struct ImageEditor : IWindow
+struct ImageEditor : tke::ui::Window
 {
 	std::shared_ptr<tke::Image> image;
 
 	ImageEditor(const std::string &filename);
-	virtual void do_show() override;
+	virtual void on_show() override;
 };

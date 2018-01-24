@@ -8,10 +8,9 @@
 #include "../../model/model.h"
 #include "../../entity/camera.h"
 #include "../../entity/terrain.h"
+#include "../../ui/ui.h"
 
-#include "window.h"
-
-struct TerrainEditor : IWindow
+struct TerrainEditor : tke::ui::Window
 {
 	tke::Node *camera_node;
 	tke::CameraComponent *camera;
@@ -36,6 +35,6 @@ struct TerrainEditor : IWindow
 
 	TerrainEditor();
 	~TerrainEditor();
-	virtual void do_show() override;
+	virtual void on_show() override;
 	void create_vertex();
 };

@@ -6,8 +6,10 @@
 
 #include "model_editor.h"
 
-ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
-	:model(_model), layer(true)
+ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model) :
+	Window("Model - " + model->filename, true, false),
+	model(_model), 
+	layer(true)
 {
 	first_cx = 800;
 	first_cy = 600;
@@ -22,10 +24,8 @@ ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model)
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
-void ModelEditor::do_show()
+void ModelEditor::on_show()
 {
-	ImGui::Begin(("Model - " + model->filename).c_str(), &opened, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
-
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
@@ -105,8 +105,6 @@ void ModelEditor::do_show()
 
 	ImGui::EndChild();
 	ImGui::EndGroup();
-
-	ImGui::End();
 
 	renderer->render(layer.framebuffer.get(), true, &camera, &draw_data);
 	renderer->add_to_drawlist();

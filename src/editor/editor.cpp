@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 		static glm::vec4 bg_color;
 		if (show_preferences_Props)
 		{
-			bg_color = tke::get_ui_bg_color();
+			bg_color = tke::ui::get_bg_color();
 
 			ImGui::OpenPopup("Preferences");
 			ImGui::SetNextWindowSize(ImVec2(400, 300));
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
 
 			if (ImGui::Button("Ok"))
 			{
-				tke::set_ui_bg_color(bg_color);
+				tke::ui::set_bg_color(bg_color);
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
@@ -422,29 +422,11 @@ int main(int argc, char** argv)
 			ImGui::EndPopup();
 		}
 
-		{
-			std::vector<IWindow*> _w;
-			for (auto &w : windows)
-				_w.push_back(w.get());
-			for (auto &w : _w)
-				w->show();
-		}
-
-		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - ImGui::GetFrameHeightWithSpacing()));
-		ImGui::Begin("status", nullptr, ImVec2(0, 0), 0.3f, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", tke::FPS);
-		ImGui::End();
+		ImGui::EndStatusBar();
 
 		tke::end_frame();
-
-		for (auto it = windows.begin(); it != windows.end(); )
-		{
-			if (!(*it)->opened)
-				it = windows.erase(it);
-			else
-				it++;
-		}
 	});
 
 	return 0;

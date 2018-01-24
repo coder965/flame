@@ -1,11 +1,12 @@
 #pragma once
 
-#include "window.h"
+#include "../../ui/ui.h"
 
-struct HierarchyWindow : IWindow
+struct HierarchyWindow : tke::ui::Window
 {
+	HierarchyWindow();
 	~HierarchyWindow();
-	virtual void do_show() override;
+	virtual void on_show() override;
 };
 
 extern HierarchyWindow *hierarchy_window;
