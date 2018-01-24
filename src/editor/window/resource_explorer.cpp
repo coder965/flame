@@ -81,7 +81,7 @@ void ResourceExplorer::on_right_area_show()
 								{
 									s->name = "scene";
 									if (!scene_editor)
-										scene_editor = std::make_unique<SceneEditor>(s);
+										scene_editor = new SceneEditor(s);
 									else
 										scene_editor->scene = s;
 								}

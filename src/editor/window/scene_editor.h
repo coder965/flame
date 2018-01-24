@@ -5,8 +5,9 @@
 #include "../../graphics/display_layer.h"
 #include "../../graphics/renderer.h"
 #include "../tool/transformer_tool.h"
+#include "window.h"
 
-struct SceneEditor
+struct SceneEditor : IWindow
 {
 	tke::Node *camera_node;
 	tke::CameraComponent *camera;
@@ -32,10 +33,10 @@ struct SceneEditor
 	~SceneEditor();
 	void on_file_menu();
 	void on_menu_bar();
-	void do_show();
+	virtual void do_show() override;
 	void save(tke::XMLNode *);
 
 	void on_delete();
 };
 
-extern std::unique_ptr<SceneEditor> scene_editor;
+extern SceneEditor *scene_editor;

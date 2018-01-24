@@ -507,6 +507,9 @@ namespace tke
 				mouseDispX = mouseX - mousePrevX;
 				mouseDispY = mouseY - mousePrevY;
 
+				for (auto &m : resolution.deferred_messages)
+					resolution.broadcast(&resolution, m.first, m.second);
+				resolution.deferred_messages.clear();
 				root_node->update();
 				on_render();
 

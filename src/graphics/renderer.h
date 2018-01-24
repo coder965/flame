@@ -8,7 +8,7 @@
 #include "../object.h"
 #include "../resource/resource.h"
 #include "graphics.h"
-#include "renderer.h"
+#include "display_layer.h"
 
 namespace tke
 {
@@ -187,7 +187,7 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_esm;
 		std::unique_ptr<DescriptorSet> ds_esmAnim;
 
-		Image *dst;
+		DisplayLayer *dst;
 
 		Resource resource;
 
@@ -195,7 +195,7 @@ namespace tke
 
 		virtual bool on_message(Object *sender, Message msg) override;
 
-		DeferredRenderer(bool _enable_shadow, Image *_dst);
+		DeferredRenderer(bool _enable_shadow, DisplayLayer *_dst);
 		~DeferredRenderer();
 		void render(Scene *scene, CameraComponent *camera);
 		void add_to_drawlist();

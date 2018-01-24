@@ -46,7 +46,7 @@ tke::Node *Select::get_node()
 	if (type == SelectTypeNode)
 	{
 		if (followings.size() > 0)
-			return (tke::Node*)followings[0];
+			return (tke::Node*)followings.front();
 		type = SelectTypeNull;
 	}
 	return nullptr;

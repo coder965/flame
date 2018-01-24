@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <list>
 
 namespace tke
 {
@@ -21,8 +21,9 @@ namespace tke
 	struct Object
 	{
 		std::string name;
-		std::vector<Object*> followings;
-		std::vector<Object*> followers;
+		std::list<Object*> followings;
+		std::list<Object*> followers;
+		std::list<std::pair<Message, bool>> deferred_messages;
 
 		~Object();
 		void follow_to(Object *o);
@@ -30,6 +31,7 @@ namespace tke
 		void remove_follower(Object *o);
 		bool broadcast(Object *o, Message msg, bool once = true);
 		virtual bool on_message(Object *sender, Message msg) { return false; };
+		void add_deferred_message(Message msg, bool once = true);
 	};
 
 	void link(Object *host, Object *guest);

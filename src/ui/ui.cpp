@@ -22,17 +22,6 @@ static std::pair<std::shared_ptr<tke::Image>, tke::Op> _image_ops[ImageCount];
 
 namespace ImGui
 {
-	bool main_menu_alive = false;
-	bool last_frame_main_menu_alive = false;
-
-	bool BeginMenu_keepalive(const char* label, bool enabled)
-	{
-		auto open = BeginMenu(label, enabled);
-		if (!main_menu_alive && open)
-			main_menu_alive = true;
-		return open;
-	}
-
 	void TextVFilted(const char* fmt, const char* filter, va_list args)
 	{
 		ImGuiWindow* window = GetCurrentWindow();
@@ -259,8 +248,6 @@ namespace tke
 
 		ImGui::NewFrame();
 
-		ImGui::main_menu_alive = false;
-
 		_image_list.iterate([&](int index, void *p, bool &remove) {
 			_image_ops[index].second = OpNeedRemove;
 			return true;
@@ -288,8 +275,6 @@ namespace tke
 			});
 			updateDescriptorSets(writes.size(), writes.data());
 		}
-
-		ImGui::last_frame_main_menu_alive = ImGui::main_menu_alive;
 
 		ImGui::Render();
 

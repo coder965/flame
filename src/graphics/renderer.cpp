@@ -48,7 +48,7 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		broadcast(this, MessageResolutionChange, false);
+		add_deferred_message(MessageResolutionChange, false);
 	}
 
 	void Resolution::set_x(int x)
@@ -57,7 +57,7 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		broadcast(this, MessageResolutionChange, false);
+		add_deferred_message(MessageResolutionChange, false);
 	}
 
 	void Resolution::set_y(int y)
@@ -66,7 +66,7 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		broadcast(this, MessageResolutionChange, false);
+		add_deferred_message(MessageResolutionChange, false);
 	}
 
 	Resolution resolution;
@@ -632,7 +632,7 @@ namespace tke
 		return false;
 	}
 
-	DeferredRenderer::DeferredRenderer(bool _enable_shadow, Image *_dst) :
+	DeferredRenderer::DeferredRenderer(bool _enable_shadow, DisplayLayer *_dst) :
 		sky_dirty(true),
 		ambient_dirty(true),
 		light_count_dirty(true),
@@ -899,6 +899,9 @@ namespace tke
 
 	void DeferredRenderer::create_resolution_related()
 	{
+		if (mainImage && mainImage->levels[0].cx == resolution.x() && mainImage->levels[0].cy == resolution.y())
+			return;
+
 		mainImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		depthImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		albedoAlphaImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -926,7 +929,7 @@ namespace tke
 				albedoAlphaImage->getView(),
 				normalHeightImage->getView(),
 				specRoughnessImage->getView(),
-				dst->getView(),
+				dst->image->getView(),
 			};
 			framebuffer = getFramebuffer(resolution.x(), resolution.y(), defe_renderpass, ARRAYSIZE(views), views);
 		}

@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 					{
 						s->name = "scene";
 						if (!scene_editor)
-							scene_editor = std::make_unique<SceneEditor>(s);
+							scene_editor = new SceneEditor(s);
 					}
 				}
 			}
@@ -98,82 +98,79 @@ int main(int argc, char** argv)
 
 		bool show_device_Props = false;
 		bool show_preferences_Props = false;
-		if (ImGui::last_frame_main_menu_alive || tke::mouseY <= ImGui::GetFrameHeight())
+		ImGui::BeginMainMenuBar();
+		if (ImGui::BeginMenu("File"))
 		{
-			ImGui::BeginMainMenuBar();
-			if (ImGui::BeginMenu_keepalive("File"))
+			if (ImGui::BeginMenu("New"))
 			{
-				if (ImGui::BeginMenu("New"))
-				{
-					if (ImGui::MenuItem("Scene"))
-						;
-					if (ImGui::MenuItem("Image"))
-						new NewImageDialog;
-
-					ImGui::EndMenu();
-				}
-
-				if (scene_editor)
-					scene_editor->on_file_menu();
+				if (ImGui::MenuItem("Scene"))
+					;
+				if (ImGui::MenuItem("Image"))
+					new NewImageDialog;
 
 				ImGui::EndMenu();
 			}
+
 			if (scene_editor)
-				scene_editor->on_menu_bar();
-			if (ImGui::BeginMenu_keepalive("View"))
-			{
-				static bool fullscreen = false;
-				if (ImGui::MenuItem("Fullscreen", "", &fullscreen))
-				{
-					if (fullscreen)
-					{
-						tke::window_style |= tke::WindowStyleFullscreen;
-						tke::window_style &= (~tke::WindowStyleFrame);
-					}
-					else
-					{
-						tke::window_style |= tke::WindowStyleFrame;
-						tke::window_style &= (~tke::WindowStyleFullscreen);
-						tke::window_cx = tke::resolution.x();
-						tke::window_cy = tke::resolution.y();
-					}
-					auto wndProp = tke::getWin32WndProp();
-					SetWindowLong((HWND)tke::hWnd, GWL_STYLE, wndProp.second);
-					SetWindowPos((HWND)tke::hWnd, HWND_TOP, 0, 0, wndProp.first.x, wndProp.first.y, SWP_NOZORDER);
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem("Resource Explorer"))
-				{
-					if (!resourceExplorer)
-						resourceExplorer = new ResourceExplorer;
-					resourceExplorer->_need_focus = true;
-				}
-				if (ImGui::MenuItem("Hierarchy"))
-				{
-					if (!hierarchy_window)
-						hierarchy_window = new HierarchyWindow;
-					hierarchy_window->_need_focus = true;
-				}
-				if (ImGui::MenuItem("Inspector"))
-				{
-					if (!inspector_window)
-						inspector_window = new InspectorWindow;
-					inspector_window->_need_focus = true;
-				}
+				scene_editor->on_file_menu();
 
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu_keepalive("Help"))
-			{
-				if (ImGui::MenuItem("Preferences"))
-					show_preferences_Props = true;
-				if (ImGui::MenuItem("Device Properties"))
-					show_device_Props = true;
-
-				ImGui::EndMenu();
-			}
-			ImGui::EndMainMenuBar();
+			ImGui::EndMenu();
 		}
+		if (scene_editor)
+			scene_editor->on_menu_bar();
+		if (ImGui::BeginMenu("View"))
+		{
+			static bool fullscreen = false;
+			if (ImGui::MenuItem("Fullscreen", "", &fullscreen))
+			{
+				if (fullscreen)
+				{
+					tke::window_style |= tke::WindowStyleFullscreen;
+					tke::window_style &= (~tke::WindowStyleFrame);
+				}
+				else
+				{
+					tke::window_style |= tke::WindowStyleFrame;
+					tke::window_style &= (~tke::WindowStyleFullscreen);
+					tke::window_cx = tke::resolution.x();
+					tke::window_cy = tke::resolution.y();
+				}
+				auto wndProp = tke::getWin32WndProp();
+				SetWindowLong((HWND)tke::hWnd, GWL_STYLE, wndProp.second);
+				SetWindowPos((HWND)tke::hWnd, HWND_TOP, 0, 0, wndProp.first.x, wndProp.first.y, SWP_NOZORDER);
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Resource Explorer"))
+			{
+				if (!resourceExplorer)
+					resourceExplorer = new ResourceExplorer;
+				resourceExplorer->_need_focus = true;
+			}
+			if (ImGui::MenuItem("Hierarchy"))
+			{
+				if (!hierarchy_window)
+					hierarchy_window = new HierarchyWindow;
+				hierarchy_window->_need_focus = true;
+			}
+			if (ImGui::MenuItem("Inspector"))
+			{
+				if (!inspector_window)
+					inspector_window = new InspectorWindow;
+				inspector_window->_need_focus = true;
+			}
+
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Help"))
+		{
+			if (ImGui::MenuItem("Preferences"))
+				show_preferences_Props = true;
+			if (ImGui::MenuItem("Device Properties"))
+				show_device_Props = true;
+
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
 
 		static glm::vec4 bg_color;
 		if (show_preferences_Props)
@@ -423,22 +420,6 @@ int main(int argc, char** argv)
 				ImGui::CloseCurrentPopup();
 
 			ImGui::EndPopup();
-		}
-
-		if (scene_editor)
-		{
-			ImGui::SetNextWindowPos(ImVec2(0, 0));
-			ImGui::SetNextWindowSize(ImVec2(tke::window_cx, tke::window_cy));
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
-			if (ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing |
-				ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings))
-				scene_editor->do_show();
-			ImGui::End();
-			ImGui::PopStyleColor();
-			ImGui::PopStyleVar(2);
 		}
 
 		{

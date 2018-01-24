@@ -50,6 +50,11 @@ namespace tke
 		return false;
 	}
 
+	void Object::add_deferred_message(Message msg, bool once)
+	{
+		deferred_messages.emplace_back(msg, once);
+	}
+
 	void link(Object *host, Object *guest)
 	{
 		guest->follow_to(host);

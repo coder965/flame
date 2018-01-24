@@ -26,6 +26,9 @@ namespace tke
 
 	void DisplayLayer::create()
 	{
+		if (image && image->levels[0].cx == resolution.x() && image->levels[0].cy == resolution.y())
+			return;
+
 		image = std::make_shared<tke::Image>(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		if (enable_depth)
 		{

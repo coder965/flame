@@ -30,12 +30,13 @@ static void show_nodes(tke::Node *n)
 
 void HierarchyWindow::do_show()
 {
-	ImGui::Begin("Hierarchy", &opened);
-
-	if (scene_editor)
+	if (ImGui::Begin("Hierarchy", &opened))
 	{
-		auto scene = scene_editor->scene;
-		show_nodes(scene);
+		if (scene_editor)
+		{
+			auto scene = scene_editor->scene;
+			show_nodes(scene);
+		}
 	}
 
 	ImGui::End();
