@@ -189,6 +189,8 @@ void SceneEditor::on_menu_bar()
 void SceneEditor::on_show()
 {
 	auto size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
+	size.x = glm::max(size.x, 1.f);
+	size.y = glm::max(size.y, 1.f);
 	if (tke::resolution.x() != size.x || tke::resolution.y() != size.y)
 		tke::resolution.set(size.x, size.y);
 

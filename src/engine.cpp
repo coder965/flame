@@ -298,7 +298,6 @@ namespace tke
 					}
 					vkDestroySwapchainKHR(vk_device.v, swapchain, nullptr);
 					_create_swapchain();
-					resolution.set(cx, cy);
 					for (auto &e : resize_listeners)
 						e(cx, cy);
 				}

@@ -48,7 +48,8 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		add_deferred_message(MessageResolutionChange, false);
+		if(deferred_messages.size() == 0)
+			add_deferred_message(MessageResolutionChange, false);
 	}
 
 	void Resolution::set_x(int x)
@@ -57,7 +58,8 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		add_deferred_message(MessageResolutionChange, false);
+		if (deferred_messages.size() == 0)
+			add_deferred_message(MessageResolutionChange, false);
 	}
 
 	void Resolution::set_y(int y)
@@ -66,7 +68,8 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		add_deferred_message(MessageResolutionChange, false);
+		if (deferred_messages.size() == 0)
+			add_deferred_message(MessageResolutionChange, false);
 	}
 
 	Resolution resolution;

@@ -203,7 +203,7 @@ namespace tke
 				{
 					ImGui::Splitter(mode == ModeHorizontal, &size[0], &size[1], 50.f, 50.f);
 					ImGui::PushID(this);
-					ImGui::BeginChild("##part1", mode == ModeHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), true);
+					ImGui::BeginChild("##part1", mode == ModeHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), false);
 					if (children[0])
 						children[0]->show();
 					else
@@ -314,8 +314,8 @@ namespace tke
 										l->children[0] = std::move(children[0]);
 									else
 									{
-										l->windows[0] = windows[1];
-										windows[1]->layout = l;
+										l->windows[0] = windows[0];
+										windows[0]->layout = l;
 									}
 									children[0] = std::unique_ptr<Layout>(l);
 									windows[0] = nullptr;
