@@ -1,8 +1,7 @@
-<data>
-	<resource_explorer/>
-	<hierarchy_window/>
-  <scene_editor filename="D:\TK_Engine\bin\res\scene.tks"/>
+<ui>
   <inspector_window/>
-	<select/>
-</data>
-
+  <resource_explorer/>
+  <hierarchy_window/>
+  <scene_editor filename="D:\TK_Engine\bin\res\scene.tks"/>
+  <select/>
+</ui>

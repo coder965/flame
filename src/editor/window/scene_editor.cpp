@@ -16,6 +16,7 @@
 #include "../../engine.h"
 #include "../select.h"
 #include "resource_explorer.h"
+#include "hierarchy.h"
 #include "scene_editor.h"
 
 void SceneEditor::on_delete()
@@ -30,10 +31,8 @@ void SceneEditor::on_delete()
 SceneEditor *scene_editor = nullptr;
 
 SceneEditor::SceneEditor(tke::Scene *_scene) :
-	Window("scene")
+	Window("Scene")
 {
-	tke::ui::main_layout.add_window(this, 0, tke::ui::DockRight);
-
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
 	camera_node->add_component(camera);

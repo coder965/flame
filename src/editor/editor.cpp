@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	ShowWindow((HWND)tke::hWnd, SW_SHOWMAXIMIZED);
 
 	{
-		tke::XMLDoc doc("data", "ui.xml");
+		tke::XMLDoc doc("ui", "ui.xml");
 		if (doc.good)
 		{
 			for (auto &n : doc.children)
@@ -73,24 +73,24 @@ int main(int argc, char** argv)
 	}
 	
 	tke::add_destroy_listener([]() {
-		tke::XMLDoc at("data");
+		tke::XMLDoc doc("ui");
 		if (resourceExplorer)
-			at.add_node(new tke::XMLNode("resource_explorer"));
+			doc.add_node(new tke::XMLNode("resource_explorer"));
 		if (hierarchy_window)
-			at.add_node(new tke::XMLNode("hierarchy_window"));
+			doc.add_node(new tke::XMLNode("hierarchy_window"));
 		if (inspector_window)
-			at.add_node(new tke::XMLNode("inspector_window"));
+			doc.add_node(new tke::XMLNode("inspector_window"));
 		if (scene_editor)
 		{
 			auto n = new tke::XMLNode("scene_editor");
 			n->add_attribute(new tke::XMLAttribute("filename", scene_editor->scene->get_filename()));
-			at.add_node(n);
+			doc.add_node(n);
 
 			tke::save_scene(scene_editor->scene);
 		}
 		if (SelectObject)
-			at.add_node(new tke::XMLNode("select"));
-		at.save("ui.xml");
+			doc.add_node(new tke::XMLNode("select"));
+		doc.save("ui.xml");
 	});
 
 	tke::run([]() {

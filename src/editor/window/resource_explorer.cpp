@@ -6,6 +6,7 @@
 
 #include "../select.h"
 #include "resource_explorer.h"
+#include "inspector.h"
 #include "image_editor.h"
 #include "model_editor.h"
 #include "terrain_editor.h"
@@ -16,7 +17,6 @@ ResourceExplorer *resourceExplorer = nullptr;
 ResourceExplorer::ResourceExplorer()
 	:FileSelector("Resource Explorer", false, true, true, false, 0, 0, true)
 {
-	tke::ui::main_layout.add_window(this, 0, tke::ui::DockBottom);
 }
 
 ResourceExplorer::~ResourceExplorer()

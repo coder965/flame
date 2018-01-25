@@ -1,0 +1,10 @@
+<layout mode="horizontal">
+	<layout mode="vertical">
+		<layout mode="horizontal">
+			<window name="Hierarchy" />
+			<window name="Scene" />
+		</layout>
+		<window name="Resource Explorer" />
+	</layout>
+	<window name="Inspector" />
+</layout>

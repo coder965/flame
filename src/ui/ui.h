@@ -34,6 +34,24 @@ namespace tke
 		extern bool accepted_mouse;
 		extern bool accepted_key;
 
+		enum DockDirection
+		{
+			DockCenter,
+			DockLeft,
+			DockRight,
+			DockTop,
+			DockBottom
+		};
+
+
+		enum LayoutType
+		{
+			LayoutNull,
+			LayoutCenter,
+			LayoutHorizontal,
+			LayoutVertical
+		};
+
 		struct Layout;
 
 		struct Window
@@ -50,35 +68,28 @@ namespace tke
 			bool opened;
 
 			Layout *layout;
+			int idx;
 
 			Window(const std::string &_title, bool _enable_menu = false, bool _enable_saved_settings = true, bool _modal = false);
-			void show();
+			virtual ~Window() {}
 			virtual void on_show() = 0;
 			virtual void save(XMLNode *) {}
-			virtual ~Window() {}
+			void add_to_main_dock();
+			void add_dock_window(Window *w, DockDirection dir);
+			void show();
 		};
 
-		enum DockDirection 
-		{
-			DockCenter,
-			DockLeft,
-			DockRight,
-			DockTop,
-			DockBottom
-		};
+		float get_layout_padding(bool horizontal);
 
 		struct Layout
 		{
-			enum Mode
-			{
-				ModeNull,
-				ModeCenter,
-				ModeHorizontal,
-				ModeVertival
-			};
+			Layout *parent;
+			int idx;
 
-			Mode mode;
+			LayoutType mode;
 
+			float width;
+			float height;
 			float size[2];
 
 			std::unique_ptr<Layout> children[2];
@@ -86,8 +97,9 @@ namespace tke
 			Window *windows[2];
 
 			Layout();
+			float get_width(int lr);
+			float get_height(int tb);
 			void show();
-			void add_window(Window *w, int idx/*left or right, top or bottom*/, DockDirection dir);
 		};
 
 		extern Layout main_layout;

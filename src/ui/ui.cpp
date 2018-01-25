@@ -40,9 +40,9 @@ namespace ImGui
 	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size)
 	{
 		if (split_vertically)
-			*size2 = GetWindowWidth() - GetStyle().WindowPadding.x * 2.f - *size1 - SplitterThickness.x;
+			*size2 = GetWindowWidth() - GetStyle().WindowPadding.x * 2.f - SplitterThickness.x - *size1;
 		else
-			*size2 = GetWindowHeight() - GetStyle().WindowPadding.x * 2.f - *size1 - SplitterThickness.y;
+			*size2 = GetWindowHeight() - GetStyle().WindowPadding.y * 2.f - SplitterThickness.y - *size1;
 		ImGuiContext& g = *GImGui;
 		ImGuiWindow* window = g.CurrentWindow;
 		ImGuiID id = window->GetID("##Splitter");
@@ -125,6 +125,9 @@ namespace tke
 		bool accepted_mouse;
 		bool accepted_key;
 
+		static float menubar_height;
+		static glm::vec2 main_layout_size;
+
 		static std::list<std::unique_ptr<Window>> windows;
 
 		Window::Window(const std::string &_title, bool _enable_menu, bool _enable_saved_settings, bool _modal) :
@@ -137,9 +140,63 @@ namespace tke
 			modal(_modal),
 			opened(true),
 			_need_focus(false),
-			layout(nullptr)
+			layout(nullptr),
+			idx(-1)
 		{
 			windows.emplace_back(this);
+		}
+
+		void Window::add_to_main_dock()
+		{
+
+			if (main_layout.mode != LayoutNull)
+				return;
+			main_layout.mode = LayoutCenter;
+			main_layout.windows[0] = this;
+			layout = &main_layout;
+			idx = 0;
+		}
+
+		void Window::add_dock_window(Window *w, DockDirection dir)
+		{
+			assert(layout);
+
+			if (dir == DockCenter)
+				assert(0); // WIP
+			else
+			{
+				auto mode = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
+				auto dir_id = (dir == DockLeft || dir == DockTop) ? 0 : 1;
+				auto s = ((mode == LayoutHorizontal ? layout->get_width(dir_id) : layout->get_height(dir_id)) - 
+					get_layout_padding(mode == LayoutHorizontal)) / 2.f;
+				Layout *l = layout->mode == LayoutCenter ? layout : new Layout;
+				l->mode = mode;
+				l->size[0] = s;
+				l->size[1] = s;
+				if (mode == LayoutHorizontal)
+				{
+					l->width = s;
+					l->height = layout->height - get_layout_padding(false);
+				}
+				else
+				{
+					l->width = layout->width - get_layout_padding(true);
+					l->height = s;
+				}
+				l->windows[dir_id] = w;
+				w->layout = l;
+				w->idx = dir_id;
+				if (layout->mode != LayoutCenter)
+				{
+					l->parent = layout;
+					layout->children[idx] = std::unique_ptr<Layout>(l);
+					layout->windows[idx] = nullptr;
+					l->idx = idx;
+				}
+				idx = 1 - dir_id;
+				l->windows[idx] = this;
+				layout = l;
+			}
 		}
 
 		void Window::show()
@@ -184,32 +241,56 @@ namespace tke
 			first = false;
 		}
 
-		Layout::Layout() :
-			mode(ModeNull)
+		float get_layout_padding(bool horizontal)
 		{
-			size[0] = 100.f;
+			if (horizontal)
+				return ImGui::GetStyle().WindowPadding.x * 2.f - ImGui::SplitterThickness.x;
+			else
+				return ImGui::GetStyle().WindowPadding.y * 2.f - ImGui::SplitterThickness.y;
+		}
+
+		Layout::Layout() :
+			parent(nullptr),
+			idx(-1),
+			mode(LayoutNull)
+		{
+			size[0] = -1.f;
+			size[1] = -1.f;
 			windows[0] = nullptr;
 			windows[1] = nullptr;
+		}
+
+		float Layout::get_width(int lr)
+		{
+			if (mode == LayoutHorizontal)
+				return size[lr];
+			return width;
+		}
+
+		float Layout::get_height(int tb)
+		{
+			if (mode == LayoutVertical)
+				return size[tb];
+			return height;
 		}
 
 		void Layout::show()
 		{
 			switch (mode)
 			{
-				case ModeCenter:
+				case LayoutCenter:
 					windows[0]->show();
 					break;
-				case ModeHorizontal: case ModeVertival:
+				case LayoutHorizontal: case LayoutVertical:
 				{
-					ImGui::Splitter(mode == ModeHorizontal, &size[0], &size[1], 50.f, 50.f);
-					ImGui::PushID(this);
-					ImGui::BeginChild("##part1", mode == ModeHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), false);
+					ImGui::Splitter(mode == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f);
+					ImGui::BeginChild("##part1", mode == LayoutHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), false);
 					if (children[0])
 						children[0]->show();
 					else
 						windows[0]->show();
 					ImGui::EndChild();
-					if (mode == ModeHorizontal)
+					if (mode == LayoutHorizontal)
 						ImGui::SameLine();
 					ImGui::BeginChild("##part2", ImVec2(0, 0), true);
 					if (children[1])
@@ -217,125 +298,8 @@ namespace tke
 					else
 						windows[1]->show();
 					ImGui::EndChild();
-					ImGui::PopID();
 					break;
 				}
-			}
-		}
-
-		void Layout::add_window(Window *w, int idx/*left or right, top or bottom*/, DockDirection dir)
-		{
-			if (mode == ModeNull)
-			{
-				mode = ModeCenter;
-				windows[0] = w;
-				w->layout = this;
-				return;
-			}
-			if (mode == ModeCenter)
-			{
-				switch (dir)
-				{
-					case DockCenter:
-						assert(0); // WIP
-						break;
-					case DockLeft:
-						mode = ModeHorizontal;
-						windows[1] = windows[0];
-						windows[0] = w;
-						break;
-					case DockRight:
-						mode = ModeHorizontal;
-						windows[1] = w;
-						break;
-					case DockTop:
-						mode = ModeVertival;
-						windows[1] = windows[0];
-						windows[0] = w;
-						break;
-					case DockBottom:
-						mode = ModeVertival;
-						windows[1] = w;
-						break;
-				}
-				w->layout = this;
-				return;
-			}
-			switch (dir)
-			{
-				case DockCenter:
-					assert(0); // WIP
-					break;
-				case DockLeft:
-					assert(0); // WIP
-					break;
-				case DockRight:
-					switch (mode)
-					{
-						case ModeHorizontal:
-						{
-							switch (idx)
-							{
-								case 0:
-								{
-									assert(0); // WIP
-									break;
-								}
-								case 1:
-								{
-									auto l = new Layout;
-									l->mode = ModeHorizontal;
-									l->windows[1] = w;
-									w->layout = l;
-									if (children[0])
-										l->children[0] = std::move(children[1]);
-									else
-									{
-										l->windows[0] = windows[1];
-										windows[1]->layout = l;
-									}
-									children[1] = std::unique_ptr<Layout>(l);
-									windows[1] = nullptr;
-									break;
-								}
-							}
-							break;
-						}
-						case ModeVertival:
-							switch (idx)
-							{
-								case 0:
-								{
-									auto l = new Layout;
-									l->mode = ModeHorizontal;
-									l->windows[1] = w;
-									w->layout = l;
-									if (children[0])
-										l->children[0] = std::move(children[0]);
-									else
-									{
-										l->windows[0] = windows[0];
-										windows[0]->layout = l;
-									}
-									children[0] = std::unique_ptr<Layout>(l);
-									windows[0] = nullptr;
-									break;
-								}
-								case 1:
-								{
-									assert(0); // WIP
-									break;
-								}
-							}
-							break;
-					}
-					break;
-				case DockTop:
-					assert(0); // WIP
-					break;
-				case DockBottom:
-					assert(0); // WIP
-					break;
 			}
 		}
 
@@ -455,17 +419,19 @@ namespace tke
 					return s.c_str();
 				};
 
-				ImGuiStyle& style = ImGui::GetStyle();
-				style.Colors[ImGuiCol_Separator] = ImVec4(0.50f, 0.50f, 0.50f, 0.00f);
-				style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.60f, 0.60f, 0.70f, 0.50f);
-				style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.70f, 0.70f, 0.90f, 0.50f);
+				//auto text_height = ImGui::GetTextLineHeight();
+				//auto menubar_height = text_height + ImGui::GetStyle().FramePadding.y * 2.f;
+				//main_layout_y = menubar_height;
+				//main_layout_size.x = window_cx;
+				//main_layout_size.y = window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f;
 			}
 		}
 
 		void begin()
 		{
 			static int last_time = 0;
-			if (last_time == 0) last_time = nowTime;
+			if (last_time == 0) 
+				last_time = nowTime;
 
 			accepted_mouse = false;
 			accepted_key = false;
@@ -488,6 +454,93 @@ namespace tke
 
 			ImGui::NewFrame();
 
+			static bool first = true;
+			if (first)
+			{
+				auto text_height = ImGui::GetTextLineHeight();
+				menubar_height = text_height + ImGui::GetStyle().FramePadding.y * 2.f;
+				main_layout_size.x = window_cx;
+				main_layout_size.y = window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f;
+				main_layout.width = main_layout_size.x;
+				main_layout.height = main_layout_size.y;
+
+				XMLDoc doc("layout", "ui_layout.xml");
+				if (doc.good)
+				{
+					std::function<void(XMLNode *, Layout *)> fProcess;
+					fProcess = [&](XMLNode *n, Layout *layout) {
+						auto mode_name = n->first_attribute("mode")->get_string();
+						if (mode_name == "horizontal")
+							layout->mode = LayoutHorizontal;
+						else if (mode_name == "vertical")
+							layout->mode = LayoutVertical;
+						else
+							assert(0); // WIP
+
+						if (layout == &main_layout)
+						{
+							auto s = ((layout->mode == LayoutHorizontal ? main_layout_size.x : main_layout_size.y) -
+								get_layout_padding(layout->mode == LayoutHorizontal)) / 2.f;
+							layout->size[0] = s;
+							layout->size[1] = s;
+						}
+						else
+						{
+							auto p = layout->parent;
+							auto s0 = (layout->mode == LayoutHorizontal ? p->get_width(0) : p->get_height(0)) -
+								get_layout_padding(layout->mode == LayoutHorizontal);
+							auto s1 = (layout->mode == LayoutHorizontal ? p->get_width(1) : p->get_height(1)) -
+								get_layout_padding(layout->mode == LayoutHorizontal);
+							layout->size[0] = s0 / 2.f;
+							layout->size[1] = s1 / 2.f;
+							if (layout->mode == LayoutHorizontal)
+							{
+								layout->width = s;
+								layout->height = layout->height - get_layout_padding(false);
+							}
+							else
+							{
+								layout->width = layout->width - get_layout_padding(true);
+								layout->height = s;
+							}
+						}
+
+						for (int i = 0; i < 2; i++)
+						{
+							auto c = n->children[i].get();
+							if (c->name == "layout")
+							{
+								auto l = new Layout;
+								layout->children[i] = std::unique_ptr<Layout>(l);
+								l->parent = layout;
+								l->idx = i;
+								fProcess(c, l);
+							}
+							else if (c->name == "window")
+							{
+								auto window_name = c->first_attribute("name")->get_string();
+								for (auto &w : windows)
+								{
+									if (w->title == window_name)
+									{
+										layout->windows[i] = w.get();
+										w->layout = layout;
+										w->idx = i;
+										break;
+									}
+								}
+							}
+							else
+								assert(0); // vaild name required
+						}
+					};
+
+					fProcess(&doc, &main_layout);
+				}
+
+				first = false;
+			}
+
 			_image_list.iterate([&](int index, void *p, bool &remove) {
 				_image_ops[index].second = OpNeedRemove;
 				return true;
@@ -496,12 +549,10 @@ namespace tke
 
 		void end()
 		{
-			if (main_layout.mode != Layout::ModeNull)
+			if (main_layout.mode != LayoutNull)
 			{
-				auto text_height = ImGui::GetTextLineHeight();
-				auto menubar_height = text_height + ImGui::GetStyle().FramePadding.y * 2.f;
 				ImGui::SetNextWindowPos(ImVec2(0.f, menubar_height));
-				ImGui::SetNextWindowSize(ImVec2(window_cx, window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f));
+				ImGui::SetNextWindowSize(ImVec2(main_layout_size.x, main_layout_size.y));
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 				ImGui::Begin("##dock", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
 					ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);

@@ -15,7 +15,6 @@ InspectorWindow *inspector_window = nullptr;
 InspectorWindow::InspectorWindow() :
 	Window("Inspector")
 {
-	tke::ui::main_layout.add_window(this, 0, tke::ui::DockRight);
 }
 
 InspectorWindow::~InspectorWindow()
