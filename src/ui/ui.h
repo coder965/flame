@@ -86,7 +86,7 @@ namespace tke
 			Layout *parent;
 			int idx;
 
-			LayoutType mode;
+			LayoutType type;
 
 			float width;
 			float height;

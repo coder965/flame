@@ -126,7 +126,6 @@ namespace tke
 		bool accepted_key;
 
 		static float menubar_height;
-		static glm::vec2 main_layout_size;
 
 		static std::list<std::unique_ptr<Window>> windows;
 
@@ -149,9 +148,9 @@ namespace tke
 		void Window::add_to_main_dock()
 		{
 
-			if (main_layout.mode != LayoutNull)
+			if (main_layout.type != LayoutNull)
 				return;
-			main_layout.mode = LayoutCenter;
+			main_layout.type = LayoutCenter;
 			main_layout.windows[0] = this;
 			layout = &main_layout;
 			idx = 0;
@@ -165,15 +164,15 @@ namespace tke
 				assert(0); // WIP
 			else
 			{
-				auto mode = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
+				auto type = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
 				auto dir_id = (dir == DockLeft || dir == DockTop) ? 0 : 1;
-				auto s = ((mode == LayoutHorizontal ? layout->get_width(dir_id) : layout->get_height(dir_id)) - 
-					get_layout_padding(mode == LayoutHorizontal)) / 2.f;
-				Layout *l = layout->mode == LayoutCenter ? layout : new Layout;
-				l->mode = mode;
+				auto s = ((type == LayoutHorizontal ? layout->get_width(dir_id) : layout->get_height(dir_id)) -
+					get_layout_padding(type == LayoutHorizontal)) / 2.f;
+				Layout *l = layout->type == LayoutCenter ? layout : new Layout;
+				l->type = type;
 				l->size[0] = s;
 				l->size[1] = s;
-				if (mode == LayoutHorizontal)
+				if (type == LayoutHorizontal)
 				{
 					l->width = s;
 					l->height = layout->height - get_layout_padding(false);
@@ -186,7 +185,7 @@ namespace tke
 				l->windows[dir_id] = w;
 				w->layout = l;
 				w->idx = dir_id;
-				if (layout->mode != LayoutCenter)
+				if (layout->type != LayoutCenter)
 				{
 					l->parent = layout;
 					layout->children[idx] = std::unique_ptr<Layout>(l);
@@ -252,7 +251,7 @@ namespace tke
 		Layout::Layout() :
 			parent(nullptr),
 			idx(-1),
-			mode(LayoutNull)
+			type(LayoutNull)
 		{
 			size[0] = -1.f;
 			size[1] = -1.f;
@@ -262,35 +261,35 @@ namespace tke
 
 		float Layout::get_width(int lr)
 		{
-			if (mode == LayoutHorizontal)
+			if (type == LayoutHorizontal)
 				return size[lr];
 			return width;
 		}
 
 		float Layout::get_height(int tb)
 		{
-			if (mode == LayoutVertical)
+			if (type == LayoutVertical)
 				return size[tb];
 			return height;
 		}
 
 		void Layout::show()
 		{
-			switch (mode)
+			switch (type)
 			{
 				case LayoutCenter:
 					windows[0]->show();
 					break;
 				case LayoutHorizontal: case LayoutVertical:
 				{
-					ImGui::Splitter(mode == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f);
-					ImGui::BeginChild("##part1", mode == LayoutHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), false);
+					ImGui::Splitter(type == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f);
+					ImGui::BeginChild("##part1", type == LayoutHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), false);
 					if (children[0])
 						children[0]->show();
 					else
 						windows[0]->show();
 					ImGui::EndChild();
-					if (mode == LayoutHorizontal)
+					if (type == LayoutHorizontal)
 						ImGui::SameLine();
 					ImGui::BeginChild("##part2", ImVec2(0, 0), true);
 					if (children[1])
@@ -459,48 +458,45 @@ namespace tke
 			{
 				auto text_height = ImGui::GetTextLineHeight();
 				menubar_height = text_height + ImGui::GetStyle().FramePadding.y * 2.f;
-				main_layout_size.x = window_cx;
-				main_layout_size.y = window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f;
-				main_layout.width = main_layout_size.x;
-				main_layout.height = main_layout_size.y;
+				main_layout.width = window_cx;
+				main_layout.height = window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f;
 
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
 				{
 					std::function<void(XMLNode *, Layout *)> fProcess;
 					fProcess = [&](XMLNode *n, Layout *layout) {
-						auto mode_name = n->first_attribute("mode")->get_string();
-						if (mode_name == "horizontal")
-							layout->mode = LayoutHorizontal;
-						else if (mode_name == "vertical")
-							layout->mode = LayoutVertical;
+						auto type_name = n->first_attribute("mode")->get_string();
+						if (type_name == "horizontal")
+							layout->type = LayoutHorizontal;
+						else if (type_name == "vertical")
+							layout->type = LayoutVertical;
 						else
 							assert(0); // WIP
 
 						if (layout == &main_layout)
 						{
-							auto s = ((layout->mode == LayoutHorizontal ? main_layout_size.x : main_layout_size.y) -
-								get_layout_padding(layout->mode == LayoutHorizontal)) / 2.f;
+							auto s = ((layout->type == LayoutHorizontal ? main_layout.width : main_layout.height) -
+								get_layout_padding(layout->type == LayoutHorizontal)) / 2.f;
 							layout->size[0] = s;
 							layout->size[1] = s;
 						}
 						else
 						{
 							auto p = layout->parent;
-							auto s0 = (layout->mode == LayoutHorizontal ? p->get_width(0) : p->get_height(0)) -
-								get_layout_padding(layout->mode == LayoutHorizontal);
-							auto s1 = (layout->mode == LayoutHorizontal ? p->get_width(1) : p->get_height(1)) -
-								get_layout_padding(layout->mode == LayoutHorizontal);
-							layout->size[0] = s0 / 2.f;
-							layout->size[1] = s1 / 2.f;
-							if (layout->mode == LayoutHorizontal)
+							auto s = (layout->type == LayoutHorizontal ? p->get_width(0) : p->get_height(0)) -
+								get_layout_padding(layout->type == LayoutHorizontal);
+							s /= 2.f;
+							layout->size[0] = s;
+							layout->size[1] = s;
+							if (layout->type == LayoutHorizontal)
 							{
 								layout->width = s;
-								layout->height = layout->height - get_layout_padding(false);
+								layout->height = p->height - get_layout_padding(false);
 							}
 							else
 							{
-								layout->width = layout->width - get_layout_padding(true);
+								layout->width = p->width - get_layout_padding(true);
 								layout->height = s;
 							}
 						}
@@ -511,6 +507,7 @@ namespace tke
 							if (c->name == "layout")
 							{
 								auto l = new Layout;
+								
 								layout->children[i] = std::unique_ptr<Layout>(l);
 								l->parent = layout;
 								l->idx = i;
@@ -549,10 +546,10 @@ namespace tke
 
 		void end()
 		{
-			if (main_layout.mode != LayoutNull)
+			if (main_layout.type != LayoutNull)
 			{
 				ImGui::SetNextWindowPos(ImVec2(0.f, menubar_height));
-				ImGui::SetNextWindowSize(ImVec2(main_layout_size.x, main_layout_size.y));
+				ImGui::SetNextWindowSize(ImVec2(main_layout.width, main_layout.height));
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 				ImGui::Begin("##dock", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
 					ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
