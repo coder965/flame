@@ -17,10 +17,10 @@ namespace tke
 
 namespace ImGui
 {
-	extern ImVec2 SplitterThickness;
+	extern const float SplitterThickness;
 
 	void TextVFilted(const char* fmt, const char* filter, va_list args);
-	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.0f);
+	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.f, float offset = 0.f);
 	ImTextureID ImageID(std::shared_ptr<tke::Image> i);
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	bool BeginStatusBar();
@@ -79,6 +79,8 @@ namespace tke
 			void show();
 		};
 
+		const std::list<std::unique_ptr<Window>> &get_windows();
+
 		float get_layout_padding(bool horizontal);
 
 		struct Layout
@@ -97,7 +99,9 @@ namespace tke
 			Window *windows[2];
 
 			Layout();
+			bool is_empty();
 			void set_size();
+			void show_window(Window *w);
 			void show();
 		};
 

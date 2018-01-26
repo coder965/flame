@@ -22,7 +22,7 @@ static std::pair<std::shared_ptr<tke::Image>, tke::Op> _image_ops[ImageCount];
 
 namespace ImGui
 {
-	ImVec2 SplitterThickness = ImVec2(8.f, 4.f);
+	const float SplitterThickness = 4.f;
 
 	void TextVFilted(const char* fmt, const char* filter, va_list args)
 	{
@@ -37,19 +37,24 @@ namespace ImGui
 		TextUnformatted(g.TempBuffer, text_end);
 	}
 
-	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size)
+	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size, float offset)
 	{
 		if (split_vertically)
-			*size2 = GetWindowWidth() - GetStyle().WindowPadding.x * 2.f - SplitterThickness.x - *size1;
+			*size2 = GetWindowWidth() - GetStyle().WindowPadding.x * 2.f - SplitterThickness - *size1;
 		else
-			*size2 = GetWindowHeight() - GetStyle().WindowPadding.y * 2.f - SplitterThickness.y - *size1;
+			*size2 = GetWindowHeight() - GetStyle().WindowPadding.y * 2.f - SplitterThickness - *size1;
 		ImGuiContext& g = *GImGui;
 		ImGuiWindow* window = g.CurrentWindow;
 		ImGuiID id = window->GetID("##Splitter");
 		ImRect bb;
-		bb.Min = window->DC.CursorPos + (split_vertically ? ImVec2(*size1, 0.0f) : ImVec2(0.0f, *size1));
-		bb.Max = bb.Min + CalcItemSize(split_vertically ? ImVec2(SplitterThickness.x, splitter_long_axis_size) : ImVec2(splitter_long_axis_size, SplitterThickness.y), 0.0f, 0.0f);
-		return SplitterBehavior(id, bb, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1, min_size2, 0.0f);
+		bb.Min = window->DC.CursorPos + (split_vertically ? ImVec2(*size1 + offset, 0.0f) : ImVec2(0.0f, *size1 + offset));
+		bb.Max = bb.Min + CalcItemSize(split_vertically ? ImVec2(SplitterThickness, splitter_long_axis_size) : ImVec2(splitter_long_axis_size, SplitterThickness), 0.0f, 0.0f);
+		auto col = ImGui::GetStyleColorVec4(ImGuiCol_Separator);
+		col.w = 0.f;
+		ImGui::PushStyleColor(ImGuiCol_Separator, col);
+		auto ret = SplitterBehavior(id, bb, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1, min_size2, 0.0f);
+		ImGui::PopStyleColor();
+		return ret;
 	}
 
 	ImTextureID ImageID(std::shared_ptr<tke::Image> i)
@@ -194,52 +199,55 @@ namespace tke
 
 		void Window::show()
 		{
-			if (_need_focus)
+			if (!layout)
 			{
-				ImGui::SetNextWindowFocus();
-				_need_focus = false;
-			}
-			if (first)
-			{
-				if (first_cx != 0 && first_cy != 0)
-					ImGui::SetNextWindowSize(ImVec2(first_cx, first_cy));
-			}
-
-			ImGuiWindowFlags _flags;
-			if (enable_menu)
-				_flags |= ImGuiWindowFlags_MenuBar;
-			if (!enable_saved_settings)
-				_flags |= ImGuiWindowFlags_NoSavedSettings;
-			bool _open = true;
-			if (modal)
-			{
+				if (_need_focus)
+				{
+					ImGui::SetNextWindowFocus();
+					_need_focus = false;
+				}
 				if (first)
-					ImGui::OpenPopup(title.c_str());
-				_open = ImGui::BeginPopupModal(title.c_str(), &opened);
+				{
+					if (first_cx != 0 && first_cy != 0)
+						ImGui::SetNextWindowSize(ImVec2(first_cx, first_cy));
+				}
+
+				if (!modal)
+				{
+					if (ImGui::Begin(title.c_str(), &opened, (enable_menu ? ImGuiWindowFlags_MenuBar : 0) |
+						(!enable_saved_settings ? ImGuiWindowFlags_NoSavedSettings : 0)))
+						on_show();
+					ImGui::End();
+				}
+				else
+				{
+					if (first)
+						ImGui::OpenPopup(title.c_str());
+					auto _open = ImGui::BeginPopupModal(title.c_str(), &opened);
+					if (_open)
+					{
+						on_show();
+						ImGui::EndPopup();
+					}
+				}
+
+				first = false;
 			}
 			else
-			{
-				if (!layout)
-					_open = ImGui::Begin(title.c_str(), &opened);
-			}
-			if (_open)
-			{
 				on_show();
-				if (modal)
-					ImGui::EndPopup();
-			}
-			if (!modal && !layout)
-				ImGui::End();
+		}
 
-			first = false;
+		const std::list<std::unique_ptr<Window>> &get_windows()
+		{
+			return windows;
 		}
 
 		float get_layout_padding(bool horizontal)
 		{
 			if (horizontal)
-				return ImGui::GetStyle().WindowPadding.x * 2.f - ImGui::SplitterThickness.x;
+				return ImGui::GetStyle().ItemSpacing.x * 2.f - ImGui::SplitterThickness;
 			else
-				return ImGui::GetStyle().WindowPadding.y * 2.f - ImGui::SplitterThickness.y;
+				return ImGui::GetStyle().ItemSpacing.y * 2.f - ImGui::SplitterThickness;
 		}
 
 		Layout::Layout() :
@@ -251,6 +259,18 @@ namespace tke
 			size[1] = -1.f;
 			windows[0] = nullptr;
 			windows[1] = nullptr;
+		}
+
+		bool Layout::is_empty()
+		{
+			for (int i = 0; i < 2; i++)
+			{
+				if (children[i])
+					return false;
+				if (windows[i])
+					return false;
+			}
+			return true;
 		}
 
 		void Layout::set_size()
@@ -277,6 +297,37 @@ namespace tke
 			size[0] = size[1] = s;
 		}
 
+		void Layout::show_window(Window *w)
+		{
+			auto line_height = ImGui::GetTextLineHeightWithSpacing();
+
+			ImGui::BeginChild("##tabbar", ImVec2(0, line_height));
+
+			// special thianks to LumixEngine, https://github.com/nem0/LumixEngine
+			auto text_end = w->title.c_str() + w->title.size();
+			ImVec2 size(ImGui::CalcTextSize(w->title.c_str(), text_end).x, line_height);
+
+			ImVec2 pos = ImGui::GetItemRectMin() + ImVec2(15, 0);
+			auto draw_list = ImGui::GetWindowDrawList();
+			draw_list->PathClear();
+			draw_list->PathLineTo(pos + ImVec2(-15, size.y));
+			draw_list->PathBezierCurveTo(
+				pos + ImVec2(-10, size.y), pos + ImVec2(-5, 0), pos + ImVec2(0, 0), 10);
+			draw_list->PathLineTo(pos + ImVec2(size.x, 0));
+			draw_list->PathBezierCurveTo(pos + ImVec2(size.x + 5, 0),
+				pos + ImVec2(size.x + 10, size.y),
+				pos + ImVec2(size.x + 15, size.y),
+				10);
+			draw_list->PathFillConvex(IM_COL32(100, 125, 246, 255));
+			draw_list->AddText(pos, IM_COL32(255, 255, 255, 255), w->title.c_str(), text_end);
+
+			ImGui::EndChild();
+
+			ImGui::BeginChild("##content");
+			w->show();
+			ImGui::EndChild();
+		}
+
 		void Layout::show()
 		{
 			switch (type)
@@ -286,27 +337,39 @@ namespace tke
 					break;
 				case LayoutHorizontal: case LayoutVertical:
 				{
-					ImGui::Splitter(type == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f);
-					ImGui::BeginChild("##part1", type == LayoutHorizontal ? ImVec2(size[0], 0) : ImVec2(0, size[0]), false);
-					if (children[0])
-						children[0]->show();
-					else
-						windows[0]->show();
-					ImGui::EndChild();
-					if (type == LayoutHorizontal)
-						ImGui::SameLine();
-					ImGui::BeginChild("##part2", ImVec2(0, 0), true);
-					if (children[1])
-						children[1]->show();
-					else
-						windows[1]->show();
-					ImGui::EndChild();
+					ImGui::Splitter(type == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f, -1.f, ((type == LayoutHorizontal ? 
+						ImGui::GetStyle().ItemSpacing.x : ImGui::GetStyle().ItemSpacing.y) - ImGui::SplitterThickness) / 2.f);
+					for (int i = 0; i < 2; i++)
+					{
+						ImGui::PushID(i);
+						ImGui::BeginChild("##part", type == LayoutHorizontal ? ImVec2(size[i], 0) : ImVec2(0, size[i]), false);
+						if (children[i])
+							children[i]->show();
+						else
+							show_window(windows[i]);
+						ImGui::EndChild();
+						ImGui::PopID();
+						if (i == 0 && type == LayoutHorizontal)
+							ImGui::SameLine();
+					}
 					break;
 				}
 			}
 		}
 
 		Layout main_layout;
+
+		static void cleanup_layout()
+		{
+			auto clean = [](Layout *l) {
+				auto dirty = false;
+			};
+			auto continue_ = true;
+			while (continue_)
+			{
+				continue_ = false;
+			}
+		}
 
 		glm::vec4 bg_color = glm::vec4(0.35f, 0.57f, 0.1f, 1.f);
 

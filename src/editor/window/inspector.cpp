@@ -436,7 +436,6 @@ void InspectorWindow::on_show()
 								}
 							}
 						}
-
 						break;
 					}
 				}

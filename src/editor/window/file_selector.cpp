@@ -138,7 +138,7 @@ void FileSelector::on_show()
 
 	if (enable_right_region)
 	{
-		ImGui::Splitter(true, &left_region_width, &right_region_width, 50.f, 50.f);
+		ImGui::Splitter(true, &left_region_width, &right_region_width, 50.f, 50.f, -1, (ImGui::GetStyle().WindowPadding.x - ImGui::SplitterThickness) / 2.f);
 		ImGui::BeginChild("left", ImVec2(left_region_width, 0), true);
 	}
 

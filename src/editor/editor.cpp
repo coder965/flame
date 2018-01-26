@@ -96,8 +96,9 @@ int main(int argc, char** argv)
 	tke::run([]() {
 		tke::begin_frame();
 
-		bool show_device_Props = false;
-		bool show_preferences_Props = false;
+		bool open_windows_popup = false;
+		bool open_device_popup = false;
+		bool open_preferences_popup = false;
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("File"))
 		{
@@ -161,19 +162,64 @@ int main(int argc, char** argv)
 
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("Window"))
+		{
+			if (ImGui::MenuItem("Dock"))
+				;
+			if (ImGui::MenuItem("Float"))
+				;
+			ImGui::Separator();
+			if (ImGui::MenuItem("Close All Windows"))
+				;
+			ImGui::Separator();
+			if (ImGui::MenuItem("Windows"))
+				open_windows_popup = true;
+
+			ImGui::EndMenu();
+		}
 		if (ImGui::BeginMenu("Help"))
 		{
 			if (ImGui::MenuItem("Preferences"))
-				show_preferences_Props = true;
+				open_preferences_popup = true;
 			if (ImGui::MenuItem("Device Properties"))
-				show_device_Props = true;
+				open_device_popup = true;
 
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 
+		static bool windows_popup_opened;
+		static int windows_popup_index;
+		if (open_windows_popup)
+		{
+			ImGui::OpenPopup("Windows");
+			ImGui::SetNextWindowSize(ImVec2(400, 300));
+			windows_popup_opened = true;
+			windows_popup_index = -1;
+		}
+		if (ImGui::BeginPopupModal("Windows", &windows_popup_opened))
+		{
+			ImGui::BeginChild("##list", ImVec2(300, 0), true);
+			int i = 0;
+			for (auto &w : tke::ui::get_windows())
+			{
+				if (ImGui::Selectable(w->title.c_str(), i == windows_popup_index))
+					windows_popup_index = i;
+				i++;
+			}
+			ImGui::EndChild();
+			ImGui::SameLine();
+			ImGui::BeginGroup();
+			if (ImGui::Button("Active"))
+				;
+			if (ImGui::Button("Close"))
+				;
+			ImGui::EndGroup();
+			ImGui::EndPopup();
+		}
+
 		static glm::vec4 bg_color;
-		if (show_preferences_Props)
+		if (open_preferences_popup)
 		{
 			bg_color = tke::ui::get_bg_color();
 
@@ -182,7 +228,7 @@ int main(int argc, char** argv)
 		}
 		if (ImGui::BeginPopupModal("Preferences"))
 		{
-			ImGui::BeginChild("##items", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
+			ImGui::BeginChild("##content", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
 			ImGui::ColorEdit4("background color", &bg_color[0], ImGuiColorEditFlags_NoInputs);
 			ImGui::EndChild();
 
@@ -197,15 +243,16 @@ int main(int argc, char** argv)
 
 			ImGui::EndPopup();
 		}
-		if (show_device_Props)
+
+		static bool device_popup_opened;
+		if (open_device_popup)
 		{
 			ImGui::OpenPopup("Device Properties");
 			ImGui::SetNextWindowSize(ImVec2(400, 300));
+			device_popup_opened = true;
 		}
-		if (ImGui::BeginPopupModal("Device Properties"))
+		if (ImGui::BeginPopupModal("Device Properties", &device_popup_opened))
 		{
-			ImGui::BeginChild("##items", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
-
 			static char filter[260];
 			ImGui::InputText(ICON_FA_SEARCH, filter, 260);
 
@@ -414,10 +461,6 @@ int main(int argc, char** argv)
 
 				ImGui::TreePop();
 			}
-			ImGui::EndChild();
-
-			if (ImGui::Button("Ok"))
-				ImGui::CloseCurrentPopup();
 
 			ImGui::EndPopup();
 		}
