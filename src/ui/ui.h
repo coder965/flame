@@ -98,8 +98,6 @@ namespace tke
 
 			Layout();
 			void set_size();
-			float get_width(int lr);
-			float get_height(int tb);
 			void show();
 		};
 

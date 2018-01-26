@@ -322,17 +322,17 @@ void InspectorWindow::on_show()
 													draw_list->AddLine(
 														pos + ImVec2(p[0].x, p[0].y) * size,
 														pos + ImVec2(p[1].x, p[1].y) * size,
-														IM_COL32(255, 255, 255, 255)
+														IM_COL32(0, 0, 0, 255)
 													);
 													draw_list->AddLine(
 														pos + ImVec2(p[1].x, p[1].y) * size,
 														pos + ImVec2(p[2].x, p[2].y) * size,
-														IM_COL32(255, 255, 255, 255)
+														IM_COL32(0, 0, 0, 255)
 													);
 													draw_list->AddLine(
 														pos + ImVec2(p[2].x, p[2].y) * size,
 														pos + ImVec2(p[0].x, p[0].y) * size,
-														IM_COL32(255, 255, 255, 255)
+														IM_COL32(0, 0, 0, 255)
 													);
 												}
 											}
@@ -343,7 +343,7 @@ void InspectorWindow::on_show()
 													draw_list->AddLine(
 														pos + ImVec2(x, 0),
 														pos + ImVec2(x, 256),
-														IM_COL32(255, 255, 0, 128)
+														IM_COL32(120, 90, 0, 128)
 													);
 												}
 												for (int y = 0; y <= 256; y += m->bake_grid_pixel_size)
@@ -351,7 +351,7 @@ void InspectorWindow::on_show()
 													draw_list->AddLine(
 														pos + ImVec2(0, y),
 														pos + ImVec2(256, y),
-														IM_COL32(255, 255, 0, 128)
+														IM_COL32(120, 90, 0, 128)
 													);
 												}
 											}

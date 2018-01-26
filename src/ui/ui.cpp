@@ -166,22 +166,14 @@ namespace tke
 			{
 				auto type = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
 				auto dir_id = (dir == DockLeft || dir == DockTop) ? 0 : 1;
-				auto s = ((type == LayoutHorizontal ? layout->get_width(dir_id) : layout->get_height(dir_id)) -
-					get_layout_padding(type == LayoutHorizontal)) / 2.f;
-				Layout *l = layout->type == LayoutCenter ? layout : new Layout;
+				bool need_set_size = false;
+				auto l = layout;
+				if (layout->type == LayoutCenter)
+				{
+					l = new Layout;
+					need_set_size = true;
+				}
 				l->type = type;
-				l->size[0] = s;
-				l->size[1] = s;
-				if (type == LayoutHorizontal)
-				{
-					l->width = s;
-					l->height = layout->height - get_layout_padding(false);
-				}
-				else
-				{
-					l->width = layout->width - get_layout_padding(true);
-					l->height = s;
-				}
 				l->windows[dir_id] = w;
 				w->layout = l;
 				w->idx = dir_id;
@@ -195,6 +187,8 @@ namespace tke
 				idx = 1 - dir_id;
 				l->windows[idx] = this;
 				layout = l;
+				if (need_set_size)
+					l->set_size();
 			}
 		}
 
@@ -281,20 +275,6 @@ namespace tke
 				s = height - get_layout_padding(false);
 			s /= 2.f;
 			size[0] = size[1] = s;
-		}
-
-		float Layout::get_width(int lr)
-		{
-			if (type == LayoutHorizontal)
-				return size[lr];
-			return width;
-		}
-
-		float Layout::get_height(int tb)
-		{
-			if (type == LayoutVertical)
-				return size[tb];
-			return height;
 		}
 
 		void Layout::show()
