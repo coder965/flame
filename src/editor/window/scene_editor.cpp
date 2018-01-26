@@ -162,7 +162,23 @@ void SceneEditor::on_menu_bar()
 
 		ImGui::EndMenu();
 	}
-	if (ImGui::BeginMenu("Show"))
+}
+
+void SceneEditor::on_show()
+{
+	auto size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
+	size -= ImVec2(0, 20);
+	size.x = glm::max(size.x, 1.f);
+	size.y = glm::max(size.y, 1.f);
+	if (tke::resolution.x() != size.x || tke::resolution.y() != size.y)
+		tke::resolution.set(size.x, size.y);
+
+	auto pos = ImGui::GetCursorScreenPos();
+
+	ImGui::SetCursorScreenPos(pos);
+	if (ImGui::Button(ICON_FA_CHEVRON_DOWN))
+		ImGui::OpenPopup("ShowPopup");
+	if (ImGui::BeginPopup("ShowPopup"))
 	{
 		ImGui::MenuItem("Enable Render", "", &enableRender);
 		ImGui::MenuItem("Show Selected Wire Frame", "", &showSelectedWireframe);
@@ -180,20 +196,10 @@ void SceneEditor::on_menu_bar()
 			//else
 			//	scene->pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 0.f);
 		}
-
-		ImGui::EndMenu();
+		ImGui::EndPopup();
 	}
-}
+	pos += ImVec2(0, 20);
 
-void SceneEditor::on_show()
-{
-	auto size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
-	size.x = glm::max(size.x, 1.f);
-	size.y = glm::max(size.y, 1.f);
-	if (tke::resolution.x() != size.x || tke::resolution.y() != size.y)
-		tke::resolution.set(size.x, size.y);
-
-	auto pos = ImGui::GetCursorScreenPos();
 	ImGui::SetCursorScreenPos(pos);
 	ImGui::InvisibleButton("canvas", ImVec2(tke::resolution.x(), tke::resolution.y()));
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();

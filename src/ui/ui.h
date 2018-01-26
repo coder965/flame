@@ -97,6 +97,7 @@ namespace tke
 			Window *windows[2];
 
 			Layout();
+			void set_size();
 			float get_width(int lr);
 			float get_height(int tb);
 			void show();

@@ -106,7 +106,7 @@ namespace ImGui
 		auto height = ImGui::GetTextLineHeight() + ImGui::GetStyle().WindowPadding.y * 2.f;
 		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - height));
 		ImGui::SetNextWindowSize(ImVec2(tke::window_cx, height));
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.11f, 0.14f, 1.f));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		return ImGui::Begin("status", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 	}
 
@@ -257,6 +257,30 @@ namespace tke
 			size[1] = -1.f;
 			windows[0] = nullptr;
 			windows[1] = nullptr;
+		}
+
+		void Layout::set_size()
+		{
+			if (parent)
+			{
+				if (parent->type == LayoutHorizontal)
+				{
+					width = parent->size[idx];
+					height = parent->height - get_layout_padding(false);
+				}
+				else
+				{
+					width = parent->width - get_layout_padding(true);
+					height = parent->size[idx];
+				}
+			}
+			float s;
+			if (type == LayoutHorizontal)
+				s = width - get_layout_padding(true);
+			else
+				s = height - get_layout_padding(false);
+			s /= 2.f;
+			size[0] = size[1] = s;
 		}
 
 		float Layout::get_width(int lr)
@@ -418,11 +442,7 @@ namespace tke
 					return s.c_str();
 				};
 
-				//auto text_height = ImGui::GetTextLineHeight();
-				//auto menubar_height = text_height + ImGui::GetStyle().FramePadding.y * 2.f;
-				//main_layout_y = menubar_height;
-				//main_layout_size.x = window_cx;
-				//main_layout_size.y = window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f;
+				ImGui::StyleColorsLight(nullptr);
 			}
 		}
 
@@ -474,32 +494,7 @@ namespace tke
 						else
 							assert(0); // WIP
 
-						if (layout == &main_layout)
-						{
-							auto s = ((layout->type == LayoutHorizontal ? main_layout.width : main_layout.height) -
-								get_layout_padding(layout->type == LayoutHorizontal)) / 2.f;
-							layout->size[0] = s;
-							layout->size[1] = s;
-						}
-						else
-						{
-							auto p = layout->parent;
-							auto s = (layout->type == LayoutHorizontal ? p->get_width(0) : p->get_height(0)) -
-								get_layout_padding(layout->type == LayoutHorizontal);
-							s /= 2.f;
-							layout->size[0] = s;
-							layout->size[1] = s;
-							if (layout->type == LayoutHorizontal)
-							{
-								layout->width = s;
-								layout->height = p->height - get_layout_padding(false);
-							}
-							else
-							{
-								layout->width = p->width - get_layout_padding(true);
-								layout->height = s;
-							}
-						}
+						layout->set_size();
 
 						for (int i = 0; i < 2; i++)
 						{

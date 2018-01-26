@@ -119,7 +119,7 @@ void ResourceExplorer::on_right_area_show()
 				if (i)
 					draw_list->AddImage(ImGui::ImageID(i), pos, pos + img_size);
 			}
-			draw_list->AddText(pos + ImVec2(0, img_size.y), ImColor(255, 255, 255), d->value.c_str());
+			draw_list->AddText(pos + ImVec2(0, img_size.y), ImColor(0, 0, 0), d->value.c_str());
 			//draw_list->PopClipRect();
 			if (column_count > 1)
 				ImGui::NextColumn();
