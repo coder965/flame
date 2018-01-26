@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 	int current = -1;
 	std::string defineString, enumString, implString, currentStructName, currentEnumName;
 	std::vector<std::string> structNames;
-	auto structExist = [&](const std::string &name){
+	static const auto structExist = [&](const std::string &name){
 		for (auto n : structNames)
 		{
 			if (n == name)

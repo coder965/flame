@@ -359,16 +359,45 @@ namespace tke
 
 		Layout main_layout;
 
+		static bool _cleanup_layout(Layout *l)
+		{
+			auto dirty = false;
+			for (int i = 0; i < 2; i++)
+			{
+				if (l->children[i])
+				{
+					dirty |= _cleanup_layout(l->children[i].get());
+					if (l->children[i]->is_empty())
+					{
+						l->children[i].reset();
+						dirty = true;
+					}
+					else
+					{
+						if (!l->is_empty())
+						{
+							for (int j = 0; j < 2; j++)
+							{
+								if (!l->children[i]->children[j] && !l->children[i]->windows[j])
+								{
+									l->children[i].reset();
+									l->windows[i] = l->children[i]->windows[1 - j];
+									dirty = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			return dirty;
+		}
+
 		static void cleanup_layout()
 		{
-			auto clean = [](Layout *l) {
-				auto dirty = false;
-			};
 			auto continue_ = true;
 			while (continue_)
-			{
-				continue_ = false;
-			}
+				continue_ = _cleanup_layout(&main_layout);
 		}
 
 		glm::vec4 bg_color = glm::vec4(0.35f, 0.57f, 0.1f, 1.f);
@@ -489,6 +518,49 @@ namespace tke
 			}
 		}
 
+		static void _load_layout(XMLNode *n, Layout *layout)
+		{
+			auto type_name = n->first_attribute("mode")->get_string();
+			if (type_name == "horizontal")
+				layout->type = LayoutHorizontal;
+			else if (type_name == "vertical")
+				layout->type = LayoutVertical;
+			else
+				assert(0); // WIP
+
+			layout->set_size();
+
+			for (int i = 0; i < 2; i++)
+			{
+				auto c = n->children[i].get();
+				if (c->name == "layout")
+				{
+					auto l = new Layout;
+
+					layout->children[i] = std::unique_ptr<Layout>(l);
+					l->parent = layout;
+					l->idx = i;
+					_load_layout(c, l);
+				}
+				else if (c->name == "window")
+				{
+					auto window_name = c->first_attribute("name")->get_string();
+					for (auto &w : windows)
+					{
+						if (w->title == window_name)
+						{
+							layout->windows[i] = w.get();
+							w->layout = layout;
+							w->idx = i;
+							break;
+						}
+					}
+				}
+				else
+					assert(0); // vaild name required
+			}
+		}
+
 		void begin()
 		{
 			static int last_time = 0;
@@ -526,52 +598,8 @@ namespace tke
 
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
-				{
-					std::function<void(XMLNode *, Layout *)> fProcess;
-					fProcess = [&](XMLNode *n, Layout *layout) {
-						auto type_name = n->first_attribute("mode")->get_string();
-						if (type_name == "horizontal")
-							layout->type = LayoutHorizontal;
-						else if (type_name == "vertical")
-							layout->type = LayoutVertical;
-						else
-							assert(0); // WIP
-
-						layout->set_size();
-
-						for (int i = 0; i < 2; i++)
-						{
-							auto c = n->children[i].get();
-							if (c->name == "layout")
-							{
-								auto l = new Layout;
-								
-								layout->children[i] = std::unique_ptr<Layout>(l);
-								l->parent = layout;
-								l->idx = i;
-								fProcess(c, l);
-							}
-							else if (c->name == "window")
-							{
-								auto window_name = c->first_attribute("name")->get_string();
-								for (auto &w : windows)
-								{
-									if (w->title == window_name)
-									{
-										layout->windows[i] = w.get();
-										w->layout = layout;
-										w->idx = i;
-										break;
-									}
-								}
-							}
-							else
-								assert(0); // vaild name required
-						}
-					};
-
-					fProcess(&doc, &main_layout);
-				}
+					_load_layout(&doc, &main_layout);
+				cleanup_layout();
 
 				first = false;
 			}

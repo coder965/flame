@@ -156,7 +156,7 @@ void TerrainEditor::on_show()
 						auto fl_x = glm::floor(lx);
 						auto fl_y = glm::floor(lz);
 
-						auto fChangeHeight = [&](float x, float y, float px, float py) {
+						static const auto fChangeHeight = [&](float x, float y, float px, float py) {
 							auto dis = glm::distance(glm::vec2(x, y), glm::vec2(px, py));
 							vertexs[y * vxcount + x].position.y += dis * 
 								(tke::mouseLeft.justDown ? 1.f : -1.f);
@@ -167,7 +167,7 @@ void TerrainEditor::on_show()
 						fChangeHeight(fl_x + 1, fl_y + 1, lx, lz);
 						fChangeHeight(fl_x, fl_y + 1, lx, lz);
 
-						auto fGetHeight = [&](float x, float y) {
+						static const auto fGetHeight = [&](float x, float y) {
 							x = glm::clamp(x, 0.f, (float)block_count);
 							y = glm::clamp(y, 0.f, (float)block_count);
 							return vertexs[y * vxcount + x].position.y;

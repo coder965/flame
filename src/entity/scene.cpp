@@ -529,6 +529,45 @@ namespace tke
 		broadcast(this, MessageAmbientDirty);
 	}
 
+	static void _load_node(XMLNode *src, Node *dst)
+	{
+		for (auto &nn : src->children)
+		{
+			if (nn->name == "component")
+			{
+				auto type_name = nn->first_attribute("component_type")->get_string(); // required
+				Component *c = nullptr;
+				if (type_name == "controller")
+					c = new ControllerComponent;
+				else if (type_name == "camera")
+					c = new CameraComponent;
+				else if (type_name == "light")
+					c = new LightComponent;
+				else if (type_name == "model_instance")
+					c = new ModelInstanceComponent;
+				else if (type_name == "terrain")
+					c = new TerrainComponent;
+				else if (type_name == "water")
+					c = new WaterComponent;
+				assert(c);  // require a vaild type name
+				c->unserialize(nn.get());
+				dst->add_component(c);
+			}
+			else if (nn->name == "node")
+			{
+				auto n = new Node(NodeTypeNode);
+				n->name = nn->first_attribute("name")->get_string(); // required
+				n->set_coord(nn->first_attribute("coord")->get_float3()); // required
+				n->set_euler(nn->first_attribute("euler")->get_float3()); // required
+				n->set_scale(nn->first_attribute("scale")->get_float3()); // required
+				dst->add_child(n);
+				_load_node(nn.get(), n);
+			}
+			else
+				assert(0); // require a vaild type name
+		}
+	}
+
 	Scene*create_scene(const std::string &filename)
 	{
 		std::fs::path path(filename);
@@ -540,100 +579,59 @@ namespace tke
 
 		tke::XMLDoc at("scene", filename);
 
-		std::function<void(XMLNode *, Node *)> fLoadNode;
-
-		fLoadNode = [&](XMLNode *src, Node *dst) {
-			for (auto &nn : src->children)
-			{
-				if (nn->name == "component")
-				{
-					auto type_name = nn->first_attribute("component_type")->get_string(); // required
-					Component *c = nullptr;
-					if (type_name == "controller")
-						c = new ControllerComponent;
-					else if (type_name == "camera")
-						c = new CameraComponent;
-					else if (type_name == "light")
-						c = new LightComponent;
-					else if (type_name == "model_instance")
-						c = new ModelInstanceComponent;
-					else if (type_name == "terrain")
-						c = new TerrainComponent;
-					else if (type_name == "water")
-						c = new WaterComponent;
-					assert(c);  // require a vaild type name
-					c->unserialize(nn.get());
-					dst->add_component(c);
-				}
-				else if (nn->name == "node")
-				{
-					auto n = new Node(NodeTypeNode);
-					n->name = nn->first_attribute("name")->get_string(); // required
-					n->set_coord(nn->first_attribute("coord")->get_float3()); // required
-					n->set_euler(nn->first_attribute("euler")->get_float3()); // required
-					n->set_scale(nn->first_attribute("scale")->get_float3()); // required
-					dst->add_child(n);
-					fLoadNode(nn.get(), n);
-				}
-				else
-					assert(0); // require a vaild type name
-			}
-		};
-
-		fLoadNode(&at, s);
+		_load_node(&at, s);
 
 		return s;
+	}
+
+	static void _save_node(XMLNode *dst, Node *src)
+	{
+		for (auto &c : src->get_components())
+		{
+			auto nn = new XMLNode("component");
+			std::string type_name;
+			switch (c->get_type())
+			{
+				case ComponentTypeController:
+					type_name = "controller";
+					break;
+				case ComponentTypeCamera:
+					type_name = "camera";
+					break;
+				case ComponentTypeLight:
+					type_name = "light";
+					break;
+				case ComponentTypeModelInstance:
+					type_name = "model_instance";
+					break;
+				case ComponentTypeTerrain:
+					type_name = "terrain";
+					break;
+				case ComponentTypeWater:
+					type_name = "water";
+					break;
+			}
+			nn->add_attribute(new XMLAttribute("component_type", type_name));
+			c->serialize(nn);
+			dst->add_node(nn);
+		}
+		for (auto &c : src->get_children())
+		{
+			auto n = new XMLNode("node");
+			n->add_attribute(new XMLAttribute("name", c->name));
+			n->add_attribute(new XMLAttribute("coord", c->get_coord()));
+			n->add_attribute(new XMLAttribute("euler", c->get_euler()));
+			n->add_attribute(new XMLAttribute("scale", c->get_scale()));
+			dst->add_node(n);
+			_save_node(n, c.get());
+		}
 	}
 
 	void save_scene(Scene *src)
 	{
 		XMLDoc at("scene");
 
-		std::function<void(XMLNode *, Node *)> fSaveNode;
-
-		fSaveNode = [&](XMLNode *dst, Node *src) {
-			for (auto &c : src->get_components())
-			{
-				auto nn = new XMLNode("component");
-				std::string type_name;
-				switch (c->get_type())
-				{
-					case ComponentTypeController:
-						type_name = "controller";
-						break;
-					case ComponentTypeCamera:
-						type_name = "camera";
-						break;
-					case ComponentTypeLight:
-						type_name = "light";
-						break;
-					case ComponentTypeModelInstance:
-						type_name = "model_instance";
-						break;
-					case ComponentTypeTerrain:
-						type_name = "terrain";
-						break;
-					case ComponentTypeWater:
-						type_name = "water";
-						break;
-				}
-				nn->add_attribute(new XMLAttribute("component_type", type_name));
-				c->serialize(nn);
-				dst->add_node(nn);
-			}
-			for (auto &c : src->get_children())
-			{
-				auto n = new XMLNode("node");
-				n->add_attribute(new XMLAttribute("name", c->name));
-				n->add_attribute(new XMLAttribute("coord", c->get_coord()));
-				n->add_attribute(new XMLAttribute("euler", c->get_euler()));
-				n->add_attribute(new XMLAttribute("scale", c->get_scale()));
-				dst->add_node(n);
-				fSaveNode(n, c.get());
-			}
-		};
-
-		fSaveNode(&at, src);
+		_save_node(&at, src);
 
 		at.save(src->get_filename());
 	}

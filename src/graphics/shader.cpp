@@ -130,7 +130,7 @@ namespace tke
 
 			std::ofstream resFile(resFilename, std::ios::binary);
 
-			auto _process_descriptor_resource = [&](VkDescriptorType desc_type, spirv_cross::Resource &r){
+			static const auto _process_descriptor_resource = [&](VkDescriptorType desc_type, spirv_cross::Resource &r){
 				auto set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
 				if (set >= descriptors.size())
 					descriptors.resize(set + 1);

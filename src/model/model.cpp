@@ -260,7 +260,7 @@ namespace tke
 		uv->series.resize(1);
 		uv->series.back().first = 0;
 
-		static  const auto fUnfoldTri = [&](std::tuple<int, int, glm::vec4> &_d) {
+		static const auto fUnfoldTri = [&](std::tuple<int, int, glm::vec4> &_d) {
 			auto tri_idx = std::get<0>(_d); 
 			auto swizzle_base = std::get<1>(_d); 
 			auto base = std::get<2>(_d);
