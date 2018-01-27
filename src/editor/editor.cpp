@@ -164,11 +164,6 @@ int main(int argc, char** argv)
 		}
 		if (ImGui::BeginMenu("Window"))
 		{
-			if (ImGui::MenuItem("Dock"))
-				;
-			if (ImGui::MenuItem("Float"))
-				;
-			ImGui::Separator();
 			if (ImGui::MenuItem("Close All Windows"))
 				;
 			ImGui::Separator();
@@ -189,23 +184,21 @@ int main(int argc, char** argv)
 		ImGui::EndMainMenuBar();
 
 		static bool windows_popup_opened;
-		static int windows_popup_index;
+		static tke::ui::Window *windows_popup_w;
 		if (open_windows_popup)
 		{
 			ImGui::OpenPopup("Windows");
 			ImGui::SetNextWindowSize(ImVec2(400, 300));
 			windows_popup_opened = true;
-			windows_popup_index = -1;
+			windows_popup_w = nullptr;
 		}
 		if (ImGui::BeginPopupModal("Windows", &windows_popup_opened))
 		{
 			ImGui::BeginChild("##list", ImVec2(300, 0), true);
-			int i = 0;
 			for (auto &w : tke::ui::get_windows())
 			{
-				if (ImGui::Selectable(w->title.c_str(), i == windows_popup_index))
-					windows_popup_index = i;
-				i++;
+				if (ImGui::Selectable(w->title.c_str(), w.get() == windows_popup_w))
+					windows_popup_w = w.get();
 			}
 			ImGui::EndChild();
 			ImGui::SameLine();
@@ -214,6 +207,61 @@ int main(int argc, char** argv)
 				;
 			if (ImGui::Button("Close"))
 				;
+			ImGui::Separator();
+			if (windows_popup_w)
+			{
+				if (windows_popup_w->layout)
+				{
+					if (ImGui::Button("Undock"))
+						windows_popup_w->undock();
+				}
+				else
+				{
+					static std::vector<tke::ui::Window*> targets;
+					static std::vector<std::string> names;
+					static int w_index;
+					static int d_index;
+					const char *dir_names[] = {
+						"Center",
+						"Left",
+						"Right",
+						"Top",
+						"Bottom"
+					};
+					if (ImGui::Button("Dock To..."))
+					{
+						targets.emplace_back(nullptr);
+						names.emplace_back("Main Layout");
+						w_index = -1;
+						d_index = 0;
+						for (auto &w : tke::ui::get_windows())
+						{
+							if (w->layout)
+							{
+								targets.push_back(w.get());
+								names.push_back(w->title);
+							}
+						}
+						ImGui::OpenPopup("Dock To...");
+					}
+					if (ImGui::BeginPopupModal("Dock To...", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+					{
+						ImGui::Combo("window", &w_index, [](void *data, int idx, const char **out_text) {
+							*out_text = (*(std::vector<std::string>*)data)[idx].c_str();
+							return true;
+						}, &names, names.size());
+						ImGui::Combo("dir", &d_index, dir_names, TK_ARRAYSIZE(dir_names));
+						if (ImGui::Button("OK"))
+						{
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Cancel"))
+							ImGui::CloseCurrentPopup();
+						ImGui::EndPopup();
+					}
+				}
+			}
 			ImGui::EndGroup();
 			ImGui::EndPopup();
 		}

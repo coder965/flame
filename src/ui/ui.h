@@ -74,8 +74,8 @@ namespace tke
 			virtual ~Window() {}
 			virtual void on_show() = 0;
 			virtual void save(XMLNode *) {}
-			void add_to_main_dock();
-			void add_dock_window(Window *w, DockDirection dir);
+			void dock(Window *w = nullptr, DockDirection dir = DockCenter);
+			void undock();
 			void show();
 		};
 

@@ -134,6 +134,69 @@ namespace tke
 
 		static std::list<std::unique_ptr<Window>> windows;
 
+		Layout main_layout;
+
+		static bool _cleanup_layout(Layout *l)
+		{
+			auto dirty = false;
+			for (int i = 0; i < 2; i++)
+			{
+				if (!l->children[i] && !l->windows[i])
+				{
+					auto j = 1 - i;
+					if (l->children[j] == nullptr)
+					{
+						l->windows[0] = l->windows[j];
+						l->type = LayoutCenter;
+						return true;
+					}
+					else
+					{
+						l->type = l->children[j]->type;
+						l->windows[i] = l->children[j]->windows[i];
+						l->windows[j] = l->children[j]->windows[j];
+						l->children[i] = std::move(l->children[j]->children[i]);
+						l->children[j] = std::move(l->children[j]->children[j]);
+					}
+					break;
+				}
+			}
+			for (int i = 0; i < 2; i++)
+			{
+				if (l->children[i])
+				{
+					auto c = l->children[i].get();
+					dirty |= _cleanup_layout(c);
+					if (l->children[i]->is_empty())
+					{
+						l->children[i].reset();
+						dirty = true;
+					}
+					else
+					{
+						for (int j = 0; j < 2; j++)
+						{
+							if (!c->children[j] && !c->windows[j])
+							{
+								l->windows[i] = c->windows[1 - j];
+								l->children[i].reset();
+								dirty = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+			return dirty;
+		}
+
+		static void cleanup_layout()
+		{
+			auto continue_ = true;
+			while (continue_)
+				continue_ = _cleanup_layout(&main_layout);
+		}
+
 		Window::Window(const std::string &_title, bool _enable_menu, bool _enable_saved_settings, bool _modal) :
 			first(true),
 			first_cx(0),
@@ -150,19 +213,19 @@ namespace tke
 			windows.emplace_back(this);
 		}
 
-		void Window::add_to_main_dock()
+		void Window::dock(Window *w, DockDirection dir)
 		{
-
-			if (main_layout.type != LayoutNull)
+			if (w == nullptr)
+			{
+				if (main_layout.type != LayoutNull)
+					return;
+				main_layout.type = LayoutCenter;
+				main_layout.windows[0] = this;
+				layout = &main_layout;
+				idx = 0;
 				return;
-			main_layout.type = LayoutCenter;
-			main_layout.windows[0] = this;
-			layout = &main_layout;
-			idx = 0;
-		}
+			}
 
-		void Window::add_dock_window(Window *w, DockDirection dir)
-		{
 			assert(layout);
 
 			if (dir == DockCenter)
@@ -195,6 +258,16 @@ namespace tke
 				if (need_set_size)
 					l->set_size();
 			}
+		}
+
+		void Window::undock()
+		{
+			if (!layout)
+				return;
+
+			layout->windows[idx] = nullptr;
+			layout = nullptr;
+			cleanup_layout();
 		}
 
 		void Window::show()
@@ -355,49 +428,6 @@ namespace tke
 					break;
 				}
 			}
-		}
-
-		Layout main_layout;
-
-		static bool _cleanup_layout(Layout *l)
-		{
-			auto dirty = false;
-			for (int i = 0; i < 2; i++)
-			{
-				if (l->children[i])
-				{
-					dirty |= _cleanup_layout(l->children[i].get());
-					if (l->children[i]->is_empty())
-					{
-						l->children[i].reset();
-						dirty = true;
-					}
-					else
-					{
-						if (!l->is_empty())
-						{
-							for (int j = 0; j < 2; j++)
-							{
-								if (!l->children[i]->children[j] && !l->children[i]->windows[j])
-								{
-									l->children[i].reset();
-									l->windows[i] = l->children[i]->windows[1 - j];
-									dirty = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-			return dirty;
-		}
-
-		static void cleanup_layout()
-		{
-			auto continue_ = true;
-			while (continue_)
-				continue_ = _cleanup_layout(&main_layout);
 		}
 
 		glm::vec4 bg_color = glm::vec4(0.35f, 0.57f, 0.1f, 1.f);
