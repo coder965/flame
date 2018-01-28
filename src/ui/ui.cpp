@@ -133,6 +133,7 @@ namespace tke
 		static float menubar_height;
 
 		static std::list<std::unique_ptr<Window>> windows;
+		static Window *dragging_window;
 
 		Layout main_layout;
 
@@ -204,6 +205,23 @@ namespace tke
 				continue_ = _cleanup_layout(&main_layout);
 		}
 
+		static void _resize_layout(Layout *l)
+		{
+			l->set_size();
+			for (int i = 0; i < 2; i++)
+			{
+				if (l->children[i])
+					_resize_layout(l->children[i].get());
+			}
+		}
+
+		static void on_resize(int cx, int cy)
+		{
+			main_layout.width = cx;
+			main_layout.height = cy - menubar_height - ImGui::GetTextLineHeight() - ImGui::GetStyle().WindowPadding.y * 2.f;
+			_resize_layout(&main_layout);
+		}
+
 		Window::Window(const std::string &_title, bool _enable_menu, bool _enable_saved_settings, bool _modal) :
 			first(true),
 			first_cx(0),
@@ -271,6 +289,7 @@ namespace tke
 			layout->windows[idx] = nullptr;
 			layout = nullptr;
 			cleanup_layout();
+			on_resize(window_cx, window_cy);
 		}
 
 		void Window::show()
@@ -294,9 +313,7 @@ namespace tke
 						(!enable_saved_settings ? ImGuiWindowFlags_NoSavedSettings : 0)))
 					{
 						if (ImGui::IsItemActive() && ImGui::IsItemHovered())
-						{
-							;
-						}
+							dragging_window = this;
 
 						on_show();
 					}
@@ -470,7 +487,19 @@ namespace tke
 						if (children[i])
 							children[i]->show();
 						else
+						{
+							if (dragging_window)
+							{
+								auto min = ImGui::GetWindowPos();
+								auto max = ImGui::GetWindowSize() + min;
+								if (mouseX > min.x && mouseY > min.y &&
+									mouseX < max.x && mouseY < max.y)
+								{
+									ImGui::TextUnformatted("1");
+								}
+							}
 							show_window(windows[i]);
+						}
 						ImGui::EndChild();
 						ImGui::PopID();
 						if (i == 0 && type == LayoutHorizontal)
@@ -479,23 +508,6 @@ namespace tke
 					break;
 				}
 			}
-		}
-
-		static void _resize_layout(Layout *l)
-		{
-			l->set_size();
-			for (int i = 0; i < 2; i++)
-			{
-				if (l->children[i])
-					_resize_layout(l->children[i].get());
-			}
-		}
-
-		static void on_resize(int cx, int cy)
-		{
-			main_layout.width = cx;
-			main_layout.height = cy - menubar_height - ImGui::GetTextLineHeight() - ImGui::GetStyle().WindowPadding.y * 2.f;
-			_resize_layout(&main_layout);
 		}
 
 		glm::vec4 bg_color = glm::vec4(0.35f, 0.57f, 0.1f, 1.f);
@@ -686,13 +698,12 @@ namespace tke
 			{
 				menubar_height = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.y * 2.f;
 
-				on_resize(window_cx, window_cy);
-				add_resize_listener(on_resize);
-
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
 					_load_layout(&doc, &main_layout);
 				cleanup_layout();
+				on_resize(window_cx, window_cy);
+				add_resize_listener(on_resize);
 
 				first = false;
 			}
@@ -705,17 +716,7 @@ namespace tke
 
 		void end()
 		{
-			if (main_layout.type != LayoutNull)
-			{
-				ImGui::SetNextWindowPos(ImVec2(0.f, menubar_height));
-				ImGui::SetNextWindowSize(ImVec2(main_layout.width, main_layout.height));
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-				ImGui::Begin("##dock", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
-					ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
-				main_layout.show();
-				ImGui::End();
-				ImGui::PopStyleVar();
-			}
+			dragging_window = nullptr;
 
 			for (auto it = windows.begin(); it != windows.end(); )
 			{
@@ -729,6 +730,18 @@ namespace tke
 			{
 				if (!w->layout)
 					w->show();
+			}
+
+			if (main_layout.type != LayoutNull)
+			{
+				ImGui::SetNextWindowPos(ImVec2(0.f, menubar_height));
+				ImGui::SetNextWindowSize(ImVec2(main_layout.width, main_layout.height));
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+				ImGui::Begin("##dock", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+					ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
+				main_layout.show();
+				ImGui::End();
+				ImGui::PopStyleVar();
 			}
 
 			{
