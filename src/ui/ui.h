@@ -92,6 +92,7 @@ namespace tke
 
 			float width;
 			float height;
+			float size_radio;
 			float size[2];
 
 			std::unique_ptr<Layout> children[2];
@@ -99,8 +100,12 @@ namespace tke
 			Window *windows[2];
 
 			Layout();
-			bool is_empty();
+			bool is_empty(int idx) const;
+			bool is_empty() const;
 			void set_size();
+			void set_layout(int idx, Layout *l);
+			void set_layout(int idx, std::unique_ptr<Layout> &&l);
+			void set_window(int idx, Window *w);
 			void show_window(Window *w);
 			void show();
 		};

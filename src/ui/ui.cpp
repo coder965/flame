@@ -141,22 +141,29 @@ namespace tke
 			auto dirty = false;
 			for (int i = 0; i < 2; i++)
 			{
-				if (!l->children[i] && !l->windows[i])
+				if (l->is_empty(i))
 				{
 					auto j = 1 - i;
 					if (l->children[j] == nullptr)
 					{
 						l->windows[0] = l->windows[j];
+						l->windows[1] = nullptr;
 						l->type = LayoutCenter;
-						return true;
+						return false;
 					}
 					else
 					{
-						l->type = l->children[j]->type;
-						l->windows[i] = l->children[j]->windows[i];
-						l->windows[j] = l->children[j]->windows[j];
-						l->children[i] = std::move(l->children[j]->children[i]);
-						l->children[j] = std::move(l->children[j]->children[j]);
+						auto c = l->children[j].get();
+						l->type = c->type;
+						l->width = c->width;
+						l->height = c->height;
+						for (int k = 0; k < 2; k++)
+						{
+							l->size[k] = c->size[k];
+							l->set_window(k, c->windows[k]);
+						}
+						l->set_layout(i, std::move(c->children[i]));
+						l->set_layout(j, std::move(c->children[j]));
 					}
 					break;
 				}
@@ -178,7 +185,7 @@ namespace tke
 						{
 							if (!c->children[j] && !c->windows[j])
 							{
-								l->windows[i] = c->windows[1 - j];
+								l->set_window(i, c->windows[1 - j]);
 								l->children[i].reset();
 								dirty = true;
 								break;
@@ -326,7 +333,8 @@ namespace tke
 		Layout::Layout() :
 			parent(nullptr),
 			idx(-1),
-			type(LayoutNull)
+			type(LayoutNull),
+			size_radio(0.5f)
 		{
 			size[0] = -1.f;
 			size[1] = -1.f;
@@ -334,13 +342,20 @@ namespace tke
 			windows[1] = nullptr;
 		}
 
-		bool Layout::is_empty()
+		bool Layout::is_empty(int idx) const
+		{
+			if (children[idx])
+				return false;
+			if (windows[idx])
+				return false;
+			return true;
+		}
+
+		bool Layout::is_empty() const
 		{
 			for (int i = 0; i < 2; i++)
 			{
-				if (children[i])
-					return false;
-				if (windows[i])
+				if (!is_empty(i))
 					return false;
 			}
 			return true;
@@ -368,6 +383,30 @@ namespace tke
 				s = height - get_layout_padding(false);
 			s /= 2.f;
 			size[0] = size[1] = s;
+		}
+
+		void Layout::set_layout(int idx, Layout *l)
+		{
+			l->parent = this;
+			l->idx = idx;
+			children[idx] = std::unique_ptr<Layout>(l);
+		}
+
+		void Layout::set_layout(int idx, std::unique_ptr<Layout> &&l)
+		{
+			if (l)
+			{
+				l->parent = this;
+				l->idx = idx;
+			}
+			children[idx] = std::move(l);
+		}
+
+		void Layout::set_window(int idx, Window *w)
+		{
+			w->layout = this;
+			w->idx = idx;
+			windows[idx] = w;
 		}
 
 		void Layout::show_window(Window *w)
@@ -406,7 +445,7 @@ namespace tke
 			switch (type)
 			{
 				case LayoutCenter:
-					windows[0]->show();
+					show_window(windows[0]);
 					break;
 				case LayoutHorizontal: case LayoutVertical:
 				{
@@ -566,10 +605,7 @@ namespace tke
 				if (c->name == "layout")
 				{
 					auto l = new Layout;
-
-					layout->children[i] = std::unique_ptr<Layout>(l);
-					l->parent = layout;
-					l->idx = i;
+					layout->set_layout(i, l);
 					_load_layout(c, l);
 				}
 				else if (c->name == "window")
@@ -579,9 +615,7 @@ namespace tke
 					{
 						if (w->title == window_name)
 						{
-							layout->windows[i] = w.get();
-							w->layout = layout;
-							w->idx = i;
+							layout->set_window(i, w.get());
 							break;
 						}
 					}

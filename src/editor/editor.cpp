@@ -234,12 +234,14 @@ int main(int argc, char** argv)
 						names.emplace_back("Main Layout");
 						w_index = -1;
 						d_index = 0;
+						bool need_main_layout = true;
 						for (auto &w : tke::ui::get_windows())
 						{
 							if (w->layout)
 							{
 								targets.push_back(w.get());
 								names.push_back(w->title);
+								need_main_layout = false;
 							}
 						}
 						ImGui::OpenPopup("Dock To...");
