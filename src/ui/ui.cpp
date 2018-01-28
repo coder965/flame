@@ -292,7 +292,14 @@ namespace tke
 				{
 					if (ImGui::Begin(title.c_str(), &opened, (enable_menu ? ImGuiWindowFlags_MenuBar : 0) |
 						(!enable_saved_settings ? ImGuiWindowFlags_NoSavedSettings : 0)))
+					{
+						if (ImGui::IsItemActive() && ImGui::IsItemHovered())
+						{
+							;
+						}
+
 						on_show();
+					}
 					ImGui::End();
 				}
 				else
@@ -373,12 +380,19 @@ namespace tke
 				}
 			}
 			float s;
-			if (type == LayoutHorizontal)
-				s = width - get_layout_padding(true);
-			else
-				s = height - get_layout_padding(false);
-			s /= 2.f;
-			size[0] = size[1] = s;
+			switch (type)
+			{
+				case LayoutHorizontal:
+					s = width - get_layout_padding(true);
+					break;
+				case LayoutVertical:
+					s = height - get_layout_padding(false);
+					break;
+				default:
+					return;
+			}
+			size[0] = s * size_radio;
+			size[1] = s * (1.f - size_radio);
 		}
 
 		void Layout::set_layout(int idx, Layout *l)
@@ -413,7 +427,8 @@ namespace tke
 
 			// special thianks to LumixEngine, https://github.com/nem0/LumixEngine
 			auto text_end = w->title.c_str() + w->title.size();
-			ImVec2 size(ImGui::CalcTextSize(w->title.c_str(), text_end).x, line_height);
+			ImVec2 size(ImGui::CalcTextSize(w->title.c_str(), text_end).x, line_height); 
+			ImGui::InvisibleButton(w->title.c_str(), size);
 
 			ImVec2 pos = ImGui::GetItemRectMin() + ImVec2(15, 0);
 			auto draw_list = ImGui::GetWindowDrawList();
@@ -447,6 +462,7 @@ namespace tke
 				{
 					ImGui::Splitter(type == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f, -1.f, ((type == LayoutHorizontal ? 
 						ImGui::GetStyle().ItemSpacing.x : ImGui::GetStyle().ItemSpacing.y) - ImGui::SplitterThickness) / 2.f);
+					size_radio = size[0] / (size[0] + size[1]);
 					for (int i = 0; i < 2; i++)
 					{
 						ImGui::PushID(i);
@@ -463,6 +479,23 @@ namespace tke
 					break;
 				}
 			}
+		}
+
+		static void _resize_layout(Layout *l)
+		{
+			l->set_size();
+			for (int i = 0; i < 2; i++)
+			{
+				if (l->children[i])
+					_resize_layout(l->children[i].get());
+			}
+		}
+
+		static void on_resize(int cx, int cy)
+		{
+			main_layout.width = cx;
+			main_layout.height = cy - menubar_height - ImGui::GetTextLineHeight() - ImGui::GetStyle().WindowPadding.y * 2.f;
+			_resize_layout(&main_layout);
 		}
 
 		glm::vec4 bg_color = glm::vec4(0.35f, 0.57f, 0.1f, 1.f);
@@ -651,10 +684,10 @@ namespace tke
 			static bool first = true;
 			if (first)
 			{
-				auto text_height = ImGui::GetTextLineHeight();
-				menubar_height = text_height + ImGui::GetStyle().FramePadding.y * 2.f;
-				main_layout.width = window_cx;
-				main_layout.height = window_cy - menubar_height - text_height - ImGui::GetStyle().WindowPadding.y * 2.f;
+				menubar_height = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.y * 2.f;
+
+				on_resize(window_cx, window_cy);
+				add_resize_listener(on_resize);
 
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
