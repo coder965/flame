@@ -133,7 +133,18 @@ namespace tke
 		static float menubar_height;
 
 		static std::list<std::unique_ptr<Window>> windows;
+		static Window *last_dragging_window;
 		static Window *dragging_window;
+		static Window *dock_target;
+		static DockDirection dock_dir;
+		static void set_dragging_window(Window *w)
+		{
+			if (dragging_window == w)
+				return;
+			dragging_window = w;
+			dock_target = nullptr;
+			dock_dir = (DockDirection)-1;
+		}
 
 		Layout main_layout;
 
@@ -232,6 +243,7 @@ namespace tke
 			modal(_modal),
 			opened(true),
 			_need_focus(false),
+			_tag_drag(false),
 			layout(nullptr),
 			idx(-1)
 		{
@@ -313,9 +325,16 @@ namespace tke
 						(!enable_saved_settings ? ImGuiWindowFlags_NoSavedSettings : 0)))
 					{
 						if (ImGui::IsItemActive() && ImGui::IsItemHovered())
-							dragging_window = this;
+							set_dragging_window(this);
 
 						on_show();
+					}
+					if (_tag_drag)
+					{
+						auto g = ImGui::GetCurrentContext();
+						auto w = ImGui::GetCurrentWindow();
+						ImGui::SetActiveID(w->MoveId, w);
+						g->MovingWindow = w;
 					}
 					ImGui::End();
 				}
@@ -431,8 +450,11 @@ namespace tke
 
 		void Layout::set_window(int idx, Window *w)
 		{
-			w->layout = this;
-			w->idx = idx;
+			if (w)
+			{
+				w->layout = this;
+				w->idx = idx;
+			}
 			windows[idx] = w;
 		}
 
@@ -441,13 +463,18 @@ namespace tke
 			auto line_height = ImGui::GetTextLineHeightWithSpacing();
 
 			ImGui::BeginChild("##tabbar", ImVec2(0, line_height));
-
 			// special thianks to LumixEngine, https://github.com/nem0/LumixEngine
 			auto text_end = w->title.c_str() + w->title.size();
-			ImVec2 size(ImGui::CalcTextSize(w->title.c_str(), text_end).x, line_height); 
+			ImVec2 size(ImGui::CalcTextSize(w->title.c_str(), text_end).x, line_height);
+			ImVec2 pos = ImGui::GetCursorScreenPos() + ImVec2(15, 0);
+			ImGui::SetCursorScreenPos(pos);
 			ImGui::InvisibleButton(w->title.c_str(), size);
+			if (ImGui::IsItemActive() && ImGui::IsItemHovered())
+			{
+				if (ImGui::IsMouseDragging(0))
+					w->_tag_drag = true;
+			}
 
-			ImVec2 pos = ImGui::GetItemRectMin() + ImVec2(15, 0);
 			auto draw_list = ImGui::GetWindowDrawList();
 			draw_list->PathClear();
 			draw_list->PathLineTo(pos + ImVec2(-15, size.y));
@@ -488,17 +515,55 @@ namespace tke
 							children[i]->show();
 						else
 						{
+							show_window(windows[i]);
 							if (dragging_window)
 							{
-								auto min = ImGui::GetWindowPos();
-								auto max = ImGui::GetWindowSize() + min;
-								if (mouseX > min.x && mouseY > min.y &&
-									mouseX < max.x && mouseY < max.y)
+								auto pos = ImGui::GetWindowPos();
+								ImRect window_rect(pos, pos + ImGui::GetWindowSize());
+								if (window_rect.Contains(ImVec2(mouseX, mouseY)))
 								{
-									ImGui::TextUnformatted("1");
+									dock_target = windows[i];
+									auto draw_list = ImGui::GetOverlayDrawList();
+									auto center = window_rect.GetCenter();
+									auto middle_rect = ImRect(center + ImVec2(-32, -32), center + ImVec2(32, 32));
+									auto left_rect = ImRect(center + ImVec2(-96, -32), center + ImVec2(-64, 32));
+									auto right_rect = ImRect(center + ImVec2(64, -32), center + ImVec2(96, 32));
+									auto top_rect = ImRect(center + ImVec2(-32, -96), center + ImVec2(32, -64));
+									auto bottom_rect = ImRect(center + ImVec2(-32, 64), center + ImVec2(32, 96));
+									ImColor col0(0.7f, 0.1f, 1.f, 0.5f);
+									ImColor col1(0.3f, 0.2f, 0.5f, 0.5f);
+									draw_list->AddRectFilled(middle_rect.Min, middle_rect.Max, col0);
+									draw_list->AddRectFilled(left_rect.Min, left_rect.Max, col0);
+									draw_list->AddRectFilled(right_rect.Min, right_rect.Max, col0);
+									draw_list->AddRectFilled(top_rect.Min, top_rect.Max, col0);
+									draw_list->AddRectFilled(bottom_rect.Min, bottom_rect.Max, col0);
+									if (middle_rect.Contains(ImVec2(mouseX, mouseY)))
+									{
+										draw_list->AddRectFilled(window_rect.Min, window_rect.Max, col1);
+										dock_dir = DockCenter;
+									}
+									if (left_rect.Contains(ImVec2(mouseX, mouseY)))
+									{
+										draw_list->AddRectFilled(window_rect.Min, window_rect.Max - ImVec2(window_rect.GetWidth() / 2.f, 0), col1);
+										dock_dir = DockLeft;
+									}
+									if (right_rect.Contains(ImVec2(mouseX, mouseY)))
+									{
+										draw_list->AddRectFilled(window_rect.Min + ImVec2(window_rect.GetWidth() / 2.f, 0), window_rect.Max, col1);
+										dock_dir = DockRight;
+									}
+									if (top_rect.Contains(ImVec2(mouseX, mouseY)))
+									{
+										draw_list->AddRectFilled(window_rect.Min, window_rect.Max - ImVec2(0, window_rect.GetHeight() / 2.f), col1);
+										dock_dir = DockTop;
+									}
+									if (bottom_rect.Contains(ImVec2(mouseX, mouseY)))
+									{
+										draw_list->AddRectFilled(window_rect.Min + ImVec2(0, window_rect.GetHeight() / 2.f), window_rect.Max, col1);
+										dock_dir = DockBottom;
+									}
 								}
 							}
-							show_window(windows[i]);
 						}
 						ImGui::EndChild();
 						ImGui::PopID();
@@ -716,6 +781,7 @@ namespace tke
 
 		void end()
 		{
+			last_dragging_window = dragging_window;
 			dragging_window = nullptr;
 
 			for (auto it = windows.begin(); it != windows.end(); )
@@ -728,8 +794,11 @@ namespace tke
 
 			for (auto &w : windows)
 			{
+				if (w->_tag_drag)
+					w->undock();
 				if (!w->layout)
 					w->show();
+				w->_tag_drag = false;
 			}
 
 			if (main_layout.type != LayoutNull)
@@ -742,6 +811,12 @@ namespace tke
 				main_layout.show();
 				ImGui::End();
 				ImGui::PopStyleVar();
+			}
+
+			if (last_dragging_window != dragging_window)
+			{
+				if (last_dragging_window && dock_target && dock_dir != -1)
+					last_dragging_window->dock(dock_target, dock_dir);
 			}
 
 			{

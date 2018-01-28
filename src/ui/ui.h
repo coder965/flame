@@ -60,6 +60,7 @@ namespace tke
 			int first_cx;
 			int first_cy;
 			bool _need_focus;
+			bool _tag_drag;
 
 			std::string title;
 			bool enable_menu;
