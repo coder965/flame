@@ -194,6 +194,7 @@ int main(int argc, char** argv)
 		}
 		if (ImGui::BeginPopupModal("Windows", &windows_popup_opened))
 		{
+			bool need_exit_window_popup = false;
 			ImGui::BeginChild("##list", ImVec2(300, 0), true);
 			for (auto &w : tke::ui::get_windows())
 			{
@@ -213,7 +214,10 @@ int main(int argc, char** argv)
 				if (windows_popup_w->layout)
 				{
 					if (ImGui::Button("Undock"))
+					{
 						windows_popup_w->undock();
+						need_exit_window_popup = true;
+					}
 				}
 				else
 				{
@@ -230,11 +234,11 @@ int main(int argc, char** argv)
 					};
 					if (ImGui::Button("Dock To..."))
 					{
-						targets.emplace_back(nullptr);
-						names.emplace_back("Main Layout");
 						w_index = -1;
 						d_index = 0;
 						bool need_main_layout = true;
+						targets.clear();
+						names.clear();
 						for (auto &w : tke::ui::get_windows())
 						{
 							if (w->layout)
@@ -243,6 +247,11 @@ int main(int argc, char** argv)
 								names.push_back(w->title);
 								need_main_layout = false;
 							}
+						}
+						if (need_main_layout)
+						{
+							targets.insert(targets.begin(), nullptr);
+							names.insert(names.begin(), "Main Layout");
 						}
 						ImGui::OpenPopup("Dock To...");
 					}
@@ -255,6 +264,11 @@ int main(int argc, char** argv)
 						ImGui::Combo("dir", &d_index, dir_names, TK_ARRAYSIZE(dir_names));
 						if (ImGui::Button("OK"))
 						{
+							if (w_index >= 0)
+							{
+								windows_popup_w->dock(targets[w_index], (tke::ui::DockDirection)d_index);
+								need_exit_window_popup = true;
+							}
 							ImGui::CloseCurrentPopup();
 						}
 						ImGui::SameLine();
@@ -265,6 +279,8 @@ int main(int argc, char** argv)
 				}
 			}
 			ImGui::EndGroup();
+			if (need_exit_window_popup)
+				ImGui::CloseCurrentPopup();
 			ImGui::EndPopup();
 		}
 

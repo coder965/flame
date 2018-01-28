@@ -233,7 +233,9 @@ namespace tke
 				return;
 			}
 
-			assert(layout);
+			auto dst_layout = w->layout;
+			auto ori_idx = w->idx;
+			assert(dst_layout);
 
 			if (dir == DockCenter)
 				assert(0); // WIP
@@ -242,26 +244,20 @@ namespace tke
 				auto type = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
 				auto dir_id = (dir == DockLeft || dir == DockTop) ? 0 : 1;
 				bool need_set_size = false;
-				auto l = layout;
-				if (layout->type == LayoutCenter)
+				auto l = dst_layout;
+				if (dst_layout->type != LayoutCenter)
 				{
 					l = new Layout;
 					need_set_size = true;
 				}
 				l->type = type;
-				l->windows[dir_id] = w;
-				w->layout = l;
-				w->idx = dir_id;
-				if (layout->type != LayoutCenter)
+				l->set_window(dir_id, this);
+				l->set_window(1 - dir_id, dst_layout->windows[ori_idx]);
+				if (dst_layout->type != LayoutCenter)
 				{
-					l->parent = layout;
-					layout->children[idx] = std::unique_ptr<Layout>(l);
-					layout->windows[idx] = nullptr;
-					l->idx = idx;
+					dst_layout->set_layout(ori_idx, l);
+					dst_layout->windows[ori_idx] = nullptr;
 				}
-				idx = 1 - dir_id;
-				l->windows[idx] = this;
-				layout = l;
 				if (need_set_size)
 					l->set_size();
 			}
