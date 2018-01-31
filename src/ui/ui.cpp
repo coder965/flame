@@ -587,7 +587,7 @@ namespace tke
 					if (ImGui::IsMouseClicked(0) && dragging_tab[idx] != w)
 					{
 						dragging_tab[idx] = w;
-						dragging_tab_anchor[idx] = mouseX;
+						dragging_tab_offset[idx] = mouseX - w->tab_x;
 					}
 					if (ImGui::IsMouseClicked(0))
 						curr_tab[idx] = w;
@@ -617,42 +617,33 @@ namespace tke
 				auto tab = dragging_tab[idx];
 				if (mouseLeft.pressing)
 				{
-					ImGui::_statusbar_int_debug = dragging_tab_anchor[idx];
 					for (auto it = windows[idx].begin(); it != windows[idx].end(); it++)
 					{
 						if (*it == tab)
 						{
-							auto dist = mouseX - dragging_tab_anchor[idx];
-							if (it != windows[idx].begin())
+							auto it_ = it;
+							auto base = tab->tab_x + mouseX - tab->tab_x - dragging_tab_offset[idx];
+							if (tab != windows[idx].front())
 							{
-								it--;
-								auto left = *it;
-								if (tab->tab_x + dist < left->tab_x)
+								auto t = *(--it_);
+								if (base < t->tab_x)
 								{
-									dragging_tab_anchor[idx] -= tab->tab_x - left->tab_x;
-									std::swap(left->tab_x, dragging_tab[idx]->tab_x);
-									auto it0 = it;
-									it++;
-									std::swap(*it0, *it);
+									std::swap(t->tab_x, tab->tab_x);
+									std::swap(*it_, *it);
+									break;
 								}
-								break;
 							}
-							it++;
-							if (it != windows[idx].end())
+							if (tab != windows[idx].back())
 							{
-								auto right = *it;
-								if (tab->tab_x + tab->tab_width + dist > right->tab_x + right->tab_width)
+								it_ = it;
+								auto t = *(++it_);
+								if (base + tab->tab_width > t->tab_x + t->tab_width)
 								{
-									dragging_tab_anchor[idx] += right->tab_x - tab->tab_x;
-									std::swap(right->tab_x, dragging_tab[idx]->tab_x);
-									auto it0 = it;
-									it--;
-									std::swap(*it0, *it);
+									std::swap(t->tab_x, tab->tab_x);
+									std::swap(*it_, *it);
 								}
-								break;
 							}
-							else
-								break;
+							break;
 						}
 					}
 					if (mouseY < pos.y || mouseY > pos.y + line_height)

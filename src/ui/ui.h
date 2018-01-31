@@ -111,7 +111,7 @@ namespace tke
 			std::list<Window*> windows[2];
 			Window *curr_tab[2];
 			Window *dragging_tab[2];
-			int dragging_tab_anchor[2];
+			int dragging_tab_offset[2];
 
 			Layout();
 			bool is_empty(int idx) const;
