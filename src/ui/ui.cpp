@@ -158,8 +158,12 @@ namespace tke
 					auto j = 1 - i;
 					if (l->children[j] == nullptr)
 					{
-						l->windows[0] = l->windows[j];
-						l->windows[1] = nullptr;
+						if (j == 1)
+						{
+							for (auto w : l->window_lists[1])
+								l->add_window(0, w);
+						}
+						l->window_lists[1].clear();
 						l->type = LayoutCenter;
 						return false;
 					}
@@ -172,7 +176,9 @@ namespace tke
 						for (int k = 0; k < 2; k++)
 						{
 							l->size[k] = c->size[k];
-							l->set_window(k, c->windows[k]);
+							l->window_lists[k].clear();
+							for (auto w : c->window_lists[k])
+								l->add_window(k, w);
 						}
 						l->set_layout(i, std::move(c->children[i]));
 						l->set_layout(j, std::move(c->children[j]));
@@ -195,9 +201,12 @@ namespace tke
 					{
 						for (int j = 0; j < 2; j++)
 						{
-							if (!c->children[j] && !c->windows[j])
+							if (!c->children[j] && c->window_lists[j].size() == 0)
 							{
-								l->set_window(i, c->windows[1 - j]);
+								l->window_lists[i].clear();
+								auto k = 1 - j;
+								for (auto w : c->window_lists[k])
+									l->add_window(i, w);
 								l->children[i].reset();
 								dirty = true;
 								break;
@@ -257,13 +266,12 @@ namespace tke
 				if (main_layout.type != LayoutNull)
 					return;
 				main_layout.type = LayoutCenter;
-				main_layout.windows[0] = this;
-				layout = &main_layout;
-				idx = 0;
+				main_layout.add_window(0, this);
 				return;
 			}
 
 			auto dst_layout = w->layout;
+			auto ori_type = dst_layout->type;
 			auto ori_idx = w->idx;
 			assert(dst_layout);
 
@@ -273,23 +281,20 @@ namespace tke
 			{
 				auto type = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
 				auto dir_id = (dir == DockLeft || dir == DockTop) ? 0 : 1;
-				bool need_set_size = false;
 				auto l = dst_layout;
-				if (dst_layout->type != LayoutCenter)
-				{
+				if (ori_type != LayoutCenter)
 					l = new Layout;
-					need_set_size = true;
-				}
 				l->type = type;
-				l->set_window(dir_id, this);
-				l->set_window(1 - dir_id, dst_layout->windows[ori_idx]);
-				if (dst_layout->type != LayoutCenter)
+				for (auto w : dst_layout->window_lists[ori_idx])
+					l->add_window(1 - dir_id, w);
+				dst_layout->window_lists[ori_idx].clear();
+				l->add_window(dir_id, this);
+				if (ori_type != LayoutCenter)
 				{
 					dst_layout->set_layout(ori_idx, l);
-					dst_layout->windows[ori_idx] = nullptr;
+					dst_layout->window_lists[ori_idx].clear();
 				}
-				if (need_set_size)
-					l->set_size();
+				l->set_size();
 			}
 		}
 
@@ -298,7 +303,14 @@ namespace tke
 			if (!layout)
 				return;
 
-			layout->windows[idx] = nullptr;
+			for (auto it = layout->window_lists[idx].begin(); it != layout->window_lists[idx].end();)
+			{
+				if (*it == this)
+				{
+					layout->window_lists[idx].erase(it);
+					break;
+				}
+			}
 			layout = nullptr;
 			cleanup_layout();
 			on_resize(window_cx, window_cy);
@@ -377,15 +389,13 @@ namespace tke
 		{
 			size[0] = -1.f;
 			size[1] = -1.f;
-			windows[0] = nullptr;
-			windows[1] = nullptr;
 		}
 
 		bool Layout::is_empty(int idx) const
 		{
 			if (children[idx])
 				return false;
-			if (windows[idx])
+			if (window_lists[idx].size() > 0)
 				return false;
 			return true;
 		}
@@ -448,14 +458,14 @@ namespace tke
 			children[idx] = std::move(l);
 		}
 
-		void Layout::set_window(int idx, Window *w)
+		void Layout::add_window(int idx, Window *w)
 		{
 			if (w)
 			{
 				w->layout = this;
 				w->idx = idx;
 			}
-			windows[idx] = w;
+			window_lists[idx].push_back(w);
 		}
 
 		void Layout::show_window(Window *w)
@@ -469,10 +479,28 @@ namespace tke
 			ImVec2 pos = ImGui::GetCursorScreenPos() + ImVec2(15, 0);
 			ImGui::SetCursorScreenPos(pos);
 			ImGui::InvisibleButton(w->title.c_str(), size);
-			if (ImGui::IsItemActive() && ImGui::IsItemHovered())
+			static Window *draging_tab;
+			static ImVec2 anchor;
+			if (ImGui::IsItemHovered())
 			{
-				if (ImGui::IsMouseDragging(0))
-					w->_tag_drag = true;
+				if (ImGui::IsMouseClicked(0))
+				{
+					if (draging_tab != w)
+					{
+						draging_tab = w;
+						anchor = ImVec2(mouseX, mouseY);
+					}
+				}
+			}
+			if (draging_tab == w)
+			{
+				if (mouseLeft.pressing)
+				{
+					if (mouseY < pos.y || mouseY > pos.y + size.y)
+						w->_tag_drag = true;
+				}
+				else
+					draging_tab == nullptr;
 			}
 
 			auto draw_list = ImGui::GetWindowDrawList();
@@ -493,6 +521,55 @@ namespace tke
 			ImGui::BeginChild("##content");
 			w->show();
 			ImGui::EndChild();
+
+			if (dragging_window)
+			{
+				auto pos = ImGui::GetWindowPos();
+				ImRect window_rect(pos, pos + ImGui::GetWindowSize());
+				if (window_rect.Contains(ImVec2(mouseX, mouseY)))
+				{
+					dock_target = w;
+					auto draw_list = ImGui::GetOverlayDrawList();
+					auto center = window_rect.GetCenter();
+					auto middle_rect = ImRect(center + ImVec2(-32, -32), center + ImVec2(32, 32));
+					auto left_rect = ImRect(center + ImVec2(-96, -32), center + ImVec2(-64, 32));
+					auto right_rect = ImRect(center + ImVec2(64, -32), center + ImVec2(96, 32));
+					auto top_rect = ImRect(center + ImVec2(-32, -96), center + ImVec2(32, -64));
+					auto bottom_rect = ImRect(center + ImVec2(-32, 64), center + ImVec2(32, 96));
+					ImColor col0(0.7f, 0.1f, 1.f, 0.5f);
+					ImColor col1(0.3f, 0.2f, 0.5f, 0.5f);
+					draw_list->AddRectFilled(middle_rect.Min, middle_rect.Max, col0);
+					draw_list->AddRectFilled(left_rect.Min, left_rect.Max, col0);
+					draw_list->AddRectFilled(right_rect.Min, right_rect.Max, col0);
+					draw_list->AddRectFilled(top_rect.Min, top_rect.Max, col0);
+					draw_list->AddRectFilled(bottom_rect.Min, bottom_rect.Max, col0);
+					if (middle_rect.Contains(ImVec2(mouseX, mouseY)))
+					{
+						draw_list->AddRectFilled(window_rect.Min, window_rect.Max, col1);
+						dock_dir = DockCenter;
+					}
+					if (left_rect.Contains(ImVec2(mouseX, mouseY)))
+					{
+						draw_list->AddRectFilled(window_rect.Min, window_rect.Max - ImVec2(window_rect.GetWidth() / 2.f, 0), col1);
+						dock_dir = DockLeft;
+					}
+					if (right_rect.Contains(ImVec2(mouseX, mouseY)))
+					{
+						draw_list->AddRectFilled(window_rect.Min + ImVec2(window_rect.GetWidth() / 2.f, 0), window_rect.Max, col1);
+						dock_dir = DockRight;
+					}
+					if (top_rect.Contains(ImVec2(mouseX, mouseY)))
+					{
+						draw_list->AddRectFilled(window_rect.Min, window_rect.Max - ImVec2(0, window_rect.GetHeight() / 2.f), col1);
+						dock_dir = DockTop;
+					}
+					if (bottom_rect.Contains(ImVec2(mouseX, mouseY)))
+					{
+						draw_list->AddRectFilled(window_rect.Min + ImVec2(0, window_rect.GetHeight() / 2.f), window_rect.Max, col1);
+						dock_dir = DockBottom;
+					}
+				}
+			}
 		}
 
 		void Layout::show()
@@ -500,7 +577,7 @@ namespace tke
 			switch (type)
 			{
 				case LayoutCenter:
-					show_window(windows[0]);
+					show_window(window_lists[0].front());
 					break;
 				case LayoutHorizontal: case LayoutVertical:
 				{
@@ -514,57 +591,7 @@ namespace tke
 						if (children[i])
 							children[i]->show();
 						else
-						{
-							show_window(windows[i]);
-							if (dragging_window)
-							{
-								auto pos = ImGui::GetWindowPos();
-								ImRect window_rect(pos, pos + ImGui::GetWindowSize());
-								if (window_rect.Contains(ImVec2(mouseX, mouseY)))
-								{
-									dock_target = windows[i];
-									auto draw_list = ImGui::GetOverlayDrawList();
-									auto center = window_rect.GetCenter();
-									auto middle_rect = ImRect(center + ImVec2(-32, -32), center + ImVec2(32, 32));
-									auto left_rect = ImRect(center + ImVec2(-96, -32), center + ImVec2(-64, 32));
-									auto right_rect = ImRect(center + ImVec2(64, -32), center + ImVec2(96, 32));
-									auto top_rect = ImRect(center + ImVec2(-32, -96), center + ImVec2(32, -64));
-									auto bottom_rect = ImRect(center + ImVec2(-32, 64), center + ImVec2(32, 96));
-									ImColor col0(0.7f, 0.1f, 1.f, 0.5f);
-									ImColor col1(0.3f, 0.2f, 0.5f, 0.5f);
-									draw_list->AddRectFilled(middle_rect.Min, middle_rect.Max, col0);
-									draw_list->AddRectFilled(left_rect.Min, left_rect.Max, col0);
-									draw_list->AddRectFilled(right_rect.Min, right_rect.Max, col0);
-									draw_list->AddRectFilled(top_rect.Min, top_rect.Max, col0);
-									draw_list->AddRectFilled(bottom_rect.Min, bottom_rect.Max, col0);
-									if (middle_rect.Contains(ImVec2(mouseX, mouseY)))
-									{
-										draw_list->AddRectFilled(window_rect.Min, window_rect.Max, col1);
-										dock_dir = DockCenter;
-									}
-									if (left_rect.Contains(ImVec2(mouseX, mouseY)))
-									{
-										draw_list->AddRectFilled(window_rect.Min, window_rect.Max - ImVec2(window_rect.GetWidth() / 2.f, 0), col1);
-										dock_dir = DockLeft;
-									}
-									if (right_rect.Contains(ImVec2(mouseX, mouseY)))
-									{
-										draw_list->AddRectFilled(window_rect.Min + ImVec2(window_rect.GetWidth() / 2.f, 0), window_rect.Max, col1);
-										dock_dir = DockRight;
-									}
-									if (top_rect.Contains(ImVec2(mouseX, mouseY)))
-									{
-										draw_list->AddRectFilled(window_rect.Min, window_rect.Max - ImVec2(0, window_rect.GetHeight() / 2.f), col1);
-										dock_dir = DockTop;
-									}
-									if (bottom_rect.Contains(ImVec2(mouseX, mouseY)))
-									{
-										draw_list->AddRectFilled(window_rect.Min + ImVec2(0, window_rect.GetHeight() / 2.f), window_rect.Max, col1);
-										dock_dir = DockBottom;
-									}
-								}
-							}
-						}
+							show_window(window_lists[i].front());
 						ImGui::EndChild();
 						ImGui::PopID();
 						if (i == 0 && type == LayoutHorizontal)
@@ -721,7 +748,7 @@ namespace tke
 					{
 						if (w->title == window_name)
 						{
-							layout->set_window(i, w.get());
+							layout->add_window(i, w.get());
 							break;
 						}
 					}

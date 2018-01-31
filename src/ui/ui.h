@@ -98,7 +98,7 @@ namespace tke
 
 			std::unique_ptr<Layout> children[2];
 
-			Window *windows[2];
+			std::list<Window*> window_lists[2];
 
 			Layout();
 			bool is_empty(int idx) const;
@@ -106,7 +106,7 @@ namespace tke
 			void set_size();
 			void set_layout(int idx, Layout *l);
 			void set_layout(int idx, std::unique_ptr<Layout> &&l);
-			void set_window(int idx, Window *w);
+			void add_window(int idx, Window *w);
 			void show_window(Window *w);
 			void show();
 		};

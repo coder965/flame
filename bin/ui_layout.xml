@@ -2,7 +2,7 @@
 	<layout mode="vertical">
 		<layout mode="horizontal">
 			<window name="Hierarchy" />
-			<window name="Scene1" />
+			<window name="Scene" />
 		</layout>
 		<window name="Resource Explorer" />
 	</layout>
