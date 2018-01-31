@@ -36,11 +36,12 @@ namespace tke
 
 		enum DockDirection
 		{
-			DockCenter,
-			DockLeft,
-			DockRight,
-			DockTop,
-			DockBottom
+			DockCenter = 1 << 0,
+			DockLeft = 1 << 1,
+			DockRight = 1 << 2,
+			DockTop = 1 << 3,
+			DockBottom = 1 << 4,
+			DockAll = DockCenter | DockLeft | DockRight | DockTop | DockBottom
 		};
 
 
@@ -54,13 +55,20 @@ namespace tke
 
 		struct Layout;
 
+		enum WindowTag
+		{
+			WindowTagNull,
+			WindowTagUndock,
+			WindowTagClose
+		};
+
 		struct Window
 		{
 			bool first;
 			int first_cx;
 			int first_cy;
 			bool _need_focus;
-			bool _tag_drag;
+			WindowTag _tag;
 
 			std::string title;
 			bool enable_menu;
@@ -70,6 +78,8 @@ namespace tke
 
 			Layout *layout;
 			int idx;
+			int tab_x;
+			int tab_width;
 
 			Window(const std::string &_title, bool _enable_menu = false, bool _enable_saved_settings = true, bool _modal = false);
 			virtual ~Window() {}
@@ -98,7 +108,9 @@ namespace tke
 
 			std::unique_ptr<Layout> children[2];
 
-			std::list<Window*> window_lists[2];
+			std::list<Window*> windows[2];
+			Window *curr_tab[2];
+			Window *dragging_tab[2];
 
 			Layout();
 			bool is_empty(int idx) const;
@@ -107,7 +119,8 @@ namespace tke
 			void set_layout(int idx, Layout *l);
 			void set_layout(int idx, std::unique_ptr<Layout> &&l);
 			void add_window(int idx, Window *w);
-			void show_window(Window *w);
+			void clear_window(int idx);
+			void show_window(int idx);
 			void show();
 		};
 
