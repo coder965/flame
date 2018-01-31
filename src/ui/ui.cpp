@@ -51,9 +51,9 @@ namespace ImGui
 		bb.Max = bb.Min + CalcItemSize(split_vertically ? ImVec2(SplitterThickness, splitter_long_axis_size) : ImVec2(splitter_long_axis_size, SplitterThickness), 0.0f, 0.0f);
 		auto col = ImGui::GetStyleColorVec4(ImGuiCol_Separator);
 		col.w = 0.f;
-		ImGui::PushStyleColor(ImGuiCol_Separator, col);
+		PushStyleColor(ImGuiCol_Separator, col);
 		auto ret = SplitterBehavior(id, bb, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1, min_size2, 0.0f);
-		ImGui::PopStyleColor();
+		PopStyleColor();
 		return ret;
 	}
 
@@ -105,21 +105,26 @@ namespace ImGui
 		}
 	}
 
+	static int _statusbar_int_debug;
+
 	bool BeginStatusBar()
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		auto height = ImGui::GetTextLineHeight() + ImGui::GetStyle().WindowPadding.y * 2.f;
-		ImGui::SetNextWindowPos(ImVec2(0, tke::window_cy - height));
-		ImGui::SetNextWindowSize(ImVec2(tke::window_cx, height));
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
-		return ImGui::Begin("status", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+		SetNextWindowPos(ImVec2(0, tke::window_cy - height));
+		SetNextWindowSize(ImVec2(tke::window_cx, height));
+		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
+		auto open = ImGui::Begin("status", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+		Text("%d", _statusbar_int_debug);
+		SameLine();
+		return open;
 	}
 
 	void EndStatusBar()
 	{
-		ImGui::End();
-		ImGui::PopStyleColor(1);
-		ImGui::PopStyleVar(1);
+		End();
+		PopStyleColor(1);
+		PopStyleVar(1);
 	}
 }
 
@@ -579,8 +584,11 @@ namespace tke
 				if (ImGui::IsItemHovered())
 				{
 					hovered = true;
-					if (ImGui::IsMouseClicked(0))
+					if (ImGui::IsMouseClicked(0) && dragging_tab[idx] != w)
+					{
 						dragging_tab[idx] = w;
+						dragging_tab_anchor[idx] = mouseX;
+					}
 					if (ImGui::IsMouseClicked(0))
 						curr_tab[idx] = w;
 				}
@@ -609,16 +617,20 @@ namespace tke
 				auto tab = dragging_tab[idx];
 				if (mouseLeft.pressing)
 				{
+					ImGui::_statusbar_int_debug = dragging_tab_anchor[idx];
 					for (auto it = windows[idx].begin(); it != windows[idx].end(); it++)
 					{
 						if (*it == tab)
 						{
+							auto dist = mouseX - dragging_tab_anchor[idx];
 							if (it != windows[idx].begin())
 							{
 								it--;
 								auto left = *it;
-								if (mouseX > left->tab_x && mouseX < left->tab_x + tab->tab_width)
+								if (tab->tab_x + dist < left->tab_x)
 								{
+									dragging_tab_anchor[idx] -= tab->tab_x - left->tab_x;
+									std::swap(left->tab_x, dragging_tab[idx]->tab_x);
 									auto it0 = it;
 									it++;
 									std::swap(*it0, *it);
@@ -629,9 +641,10 @@ namespace tke
 							if (it != windows[idx].end())
 							{
 								auto right = *it;
-								auto r = right->tab_x + right->tab_width;
-								if (mouseX < r && mouseX > r - tab->tab_width)
+								if (tab->tab_x + tab->tab_width + dist > right->tab_x + right->tab_width)
 								{
+									dragging_tab_anchor[idx] += right->tab_x - tab->tab_x;
+									std::swap(right->tab_x, dragging_tab[idx]->tab_x);
 									auto it0 = it;
 									it--;
 									std::swap(*it0, *it);
