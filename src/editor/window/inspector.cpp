@@ -107,15 +107,21 @@ void InspectorWindow::on_show()
 						if (ImGui::ColorEdit3("fog color", &fog_color[0], ImGuiColorEditFlags_NoInputs))
 							scene->set_fog_color(fog_color);
 
-						int sky_type = scene->get_sky_type();
-						const char *sky_type_names[] = {
-							"null",
-							"debug",
-							"atmosphere scattering",
-							"panorama"
-						};
-						if (ImGui::Combo("sky type", &sky_type, sky_type_names, TK_ARRAYSIZE(sky_type_names)))
-							scene->set_sky_type((tke::SkyType)sky_type);
+						tke::SkyType sky_type = scene->get_sky_type();
+						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+						if (ImGui::BeginCombo("sky type", tke::get_sky_type_name(sky_type)))
+						{
+							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypeNull), sky_type == tke::SkyTypeNull))
+								scene->set_sky_type(tke::SkyTypeNull);
+							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypeDebug), sky_type == tke::SkyTypeDebug))
+								scene->set_sky_type(tke::SkyTypeDebug);
+							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypeAtmosphereScattering), sky_type == tke::SkyTypeAtmosphereScattering))
+								scene->set_sky_type(tke::SkyTypeAtmosphereScattering);
+							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypePanorama), sky_type == tke::SkyTypePanorama))
+								scene->set_sky_type(tke::SkyTypePanorama);
+							ImGui::EndCombo();
+						}
+						ImGui::PopStyleVar();
 
 						switch (scene->get_sky_type())
 						{
@@ -231,62 +237,48 @@ void InspectorWindow::on_show()
 										ImGui::Text("model:%s", m->filename.c_str());
 										if (ImGui::TreeNode("UV"))
 										{
-											static int uv_index = 0;
 											tke::Model::UV *uv = nullptr;
-											ImGui::Combo("uv", &uv_index, [](void *data, int idx, const char **out_text) {
-												auto m = (tke::Model*)data;
-												*out_text = m->uvs[idx]->name.c_str();
-												return true;
-											}, m, m->uvs.size());
-											if (uv_index < m->uvs.size())
-												uv = m->uvs[uv_index].get();
-											int use_index = -1;
-											if (uv)
+											ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+											if (ImGui::BeginCombo("uv", uv ? uv->name.c_str() : ""))
 											{
-												if (m->geometry_uv == uv && m->bake_uv == uv)
-													use_index = 3;
-												else if (m->geometry_uv == uv)
-													use_index = 1;
-												else if (m->bake_uv == uv)
-													use_index = 2;
-												else
-													use_index = 0;
-											}
-											static const char *use_names[] = {
-												"null",
-												"geometry",
-												"bake",
-												"geometry and bake"
-											};
-											if (ImGui::Combo("use as", &use_index, use_names, TK_ARRAYSIZE(use_names)))
-											{
-												if (uv)
+												for (auto &_uv : m->uvs)
 												{
-													switch (use_index)
-													{
-														case 0:
-															if (m->geometry_uv == uv)
-																m->assign_uv_to_geometry(nullptr);
-															if (m->bake_uv == uv)
-																m->assign_uv_to_bake(nullptr);
-															break;
-														case 1:
-															m->assign_uv_to_geometry(uv);
-															if (m->bake_uv == uv)
-																m->assign_uv_to_bake(nullptr);
-															break;
-														case 2:
-															if (m->geometry_uv == uv)
-																m->assign_uv_to_geometry(nullptr);
-															m->assign_uv_to_bake(uv);
-															break;
-														case 3:
-															m->assign_uv_to_geometry(uv);
-															m->assign_uv_to_bake(uv);
-															break;
-													}
+													if (ImGui::Selectable(_uv->name.c_str(), uv == _uv.get()))
+														uv = _uv.get();
 												}
+												ImGui::EndCombo();
 											}
+											ImGui::PopStyleVar();
+											ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+											if (ImGui::BeginCombo("use as", uv ? m->get_uv_use_name(uv) : ""))
+											{
+												if (ImGui::Selectable("null", uv && m->geometry_uv != uv && m->bake_uv != uv))
+												{
+													if (m->geometry_uv == uv)
+														m->assign_uv_to_geometry(nullptr);
+													if (m->bake_uv == uv)
+														m->assign_uv_to_bake(nullptr);
+												}
+												if (ImGui::Selectable("geometry", uv && m->geometry_uv == uv && m->bake_uv != uv))
+												{
+													m->assign_uv_to_geometry(uv);
+													if (m->bake_uv == uv)
+														m->assign_uv_to_bake(nullptr);
+												}
+												if (ImGui::Selectable("bake", uv && m->geometry_uv != uv && m->bake_uv == uv))
+												{
+													if (m->geometry_uv == uv)
+														m->assign_uv_to_geometry(nullptr);
+													m->assign_uv_to_bake(uv);
+												}
+												if (ImGui::Selectable("geometry and bake", uv && m->geometry_uv == uv && m->bake_uv == uv))
+												{
+													m->assign_uv_to_geometry(uv);
+													m->assign_uv_to_bake(uv);
+												}
+												ImGui::EndCombo();
+											}
+											ImGui::PopStyleVar();
 
 											if (ImGui::Button("Create"))
 												m->create_uv();
@@ -367,15 +359,20 @@ void InspectorWindow::on_show()
 										}
 										if (ImGui::TreeNode("Geometries"))
 										{
-											static int geo_index = 0;
-											ImGui::Combo("##geometry", &geo_index, [](void *data, int idx, const char **out_text) {
-												auto m = (tke::Model*)data;
-												*out_text = m->geometries[idx]->name.c_str();
-												return true;
-											}, m, m->geometries.size());
-											if (geo_index >= 0 && geo_index < m->geometries.size())
+											static tke::Geometry *g;
+											ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+											if (ImGui::BeginCombo("##geometry", g ? g->name.c_str() : ""))
 											{
-												auto g = m->geometries[geo_index].get();
+												for (auto &_g : m->geometries)
+												{
+													if (ImGui::Selectable(_g->name.c_str(), g == _g.get()))
+														g = _g.get();
+												}
+												ImGui::EndCombo();
+											}
+											ImGui::PopStyleVar();
+											if (g)
+											{
 												ImGui::Text("Indice Base:%d", g->indiceBase);
 												ImGui::Text("Indice Count:%d", g->indiceCount);
 												ImGui::Separator();

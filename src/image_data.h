@@ -21,22 +21,24 @@ namespace tke
 
 	struct ImageDataLevel
 	{
-		size_t cx = 0;
-		size_t cy = 0;
-		size_t pitch = 0;
-		size_t size = 0;
+		size_t cx;
+		size_t cy;
+		size_t pitch;
+		size_t size;
 		std::unique_ptr<unsigned char[]> v;
+
+		ImageDataLevel();
 	};
 
 	struct ImageData
 	{
-		ImageFileType file_type = ImageFileTypeNull;
-		size_t bpp = 0;
-		size_t channel = 0;
+		ImageFileType file_type;
+		size_t bpp;
+		size_t channel;
 		std::vector<ImageDataLevel> levels;
-		int layer = 1;
-		size_t total_size = 0;
-		bool sRGB = false;
+		int layer;
+		size_t total_size;
+		bool sRGB;
 
 		ImageData();
 	};

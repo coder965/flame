@@ -15,6 +15,8 @@ namespace tke
 		SkyTypePanorama
 	};
 
+	const char *get_sky_type_name(SkyType type);
+
 	struct Sky
 	{
 		SkyType type;

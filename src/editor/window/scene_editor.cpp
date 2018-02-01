@@ -164,6 +164,21 @@ void SceneEditor::on_menu_bar()
 	}
 }
 
+void SceneEditor::on_toolbar()
+{
+	if (ImGui::ImageButton_f("Select.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeNull))
+		transformerTool->mode = TransformerTool::ModeNull;
+	ImGui::SameLine();
+	if (ImGui::ImageButton_f("Move.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeMove))
+		transformerTool->mode = TransformerTool::ModeMove;
+	ImGui::SameLine();
+	if (ImGui::ImageButton_f("Rotate.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeRotate))
+		transformerTool->mode = TransformerTool::ModeRotate;
+	ImGui::SameLine();
+	if (ImGui::ImageButton_f("Scale.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeScale))
+		transformerTool->mode = TransformerTool::ModeScale;
+}
+
 void SceneEditor::on_show()
 {
 	auto size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
@@ -176,7 +191,7 @@ void SceneEditor::on_show()
 	auto pos = ImGui::GetCursorScreenPos();
 
 	ImGui::SetCursorScreenPos(pos);
-	if (ImGui::Button(ICON_FA_CHEVRON_DOWN))
+	if (ImGui::IconButton(ICON_FA_CHEVRON_DOWN))
 		ImGui::OpenPopup("ShowPopup");
 	if (ImGui::BeginPopup("ShowPopup"))
 	{
@@ -284,26 +299,6 @@ void SceneEditor::on_show()
 
 		if (ImGui::IsKeyDown(VK_DELETE))
 			on_delete();
-	}
-
-	{
-		//char *names[] = {
-		//	ICON_FA_MOUSE_POINTER, "M", "R", "S"
-		//};
-		for (int i = 0; i < 4; i++)
-		{
-			auto needPop = false;
-			if (transformerTool->mode == TransformerTool::Mode(i))
-			{
-				ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(0.f, 0.6f, 0.6f).Value);
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(0.f, 0.7f, 0.7f).Value);
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(0.f, 0.8f, 0.8f).Value);
-				needPop = true;
-			}
-			//if (ImGui::Button(names[i])) transformerTool->mode = TransformerTool::Mode(i);
-			if (needPop) ImGui::PopStyleColor(3);
-			if (i < 3) ImGui::SameLine();
-		}
 	}
 
 	//{

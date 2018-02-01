@@ -7,7 +7,21 @@
 
 namespace tke
 {
-	ImageData::ImageData()
+	ImageDataLevel::ImageDataLevel() :
+		cx(0),
+		cy(0),
+		pitch(0),
+		size(0)
+	{
+	}
+
+	ImageData::ImageData() :
+		file_type(ImageFileTypeNull),
+		bpp(0),
+		channel(0),
+		layer(1),
+		total_size(0),
+		sRGB(false)
 	{
 		levels.resize(1);
 	}

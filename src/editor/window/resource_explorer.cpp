@@ -27,7 +27,9 @@ ResourceExplorer::~ResourceExplorer()
 void ResourceExplorer::on_right_area_show()
 {
 	static char filter[260];
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 	ImGui::InputText(ICON_FA_SEARCH, filter, TK_ARRAYSIZE(filter));
+	ImGui::PopStyleVar();
 	if (select_dir)
 	{
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();

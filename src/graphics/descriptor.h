@@ -45,6 +45,7 @@ namespace tke
 		VkWriteDescriptorSet imageWrite(int binding, int index, Image *image, VkSampler sampler, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
+	void updateDescriptorSets(VkWriteDescriptorSet *writes);
 	void updateDescriptorSets(int count, VkWriteDescriptorSet *writes);
 
 	struct DescriptorPool

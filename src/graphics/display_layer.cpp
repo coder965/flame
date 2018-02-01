@@ -18,7 +18,7 @@ namespace tke
 	}
 
 	DisplayLayer::DisplayLayer(bool _enable_depth) :
-		enable_depth(enable_depth)
+		enable_depth(_enable_depth)
 	{
 		follow_to(&resolution);
 		create();
@@ -29,7 +29,7 @@ namespace tke
 		if (image && image->levels[0].cx == resolution.x() && image->levels[0].cy == resolution.y())
 			return;
 
-		image = std::make_shared<tke::Image>(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		image = std::make_shared<Image>(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		if (enable_depth)
 		{
 			depth_image = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

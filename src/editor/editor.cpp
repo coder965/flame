@@ -28,6 +28,7 @@ struct NewImageDialog : FileSelector
 
 	virtual void on_right_area_show() override
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 		ImGui::PushItemWidth(200);
 		ImGui::DragInt("cx", &cx);
 		ImGui::DragInt("cy", &cy);
@@ -37,6 +38,7 @@ struct NewImageDialog : FileSelector
 		static int type = 0;
 		ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
 		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
 	}
 };
 
@@ -99,7 +101,7 @@ int main(int argc, char** argv)
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
 		bool open_preferences_popup = false;
-		ImGui::BeginMainMenuBar();
+		ImGui::BeginMainMenuBar_l();
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::BeginMenu("New"))
@@ -221,52 +223,55 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-					static std::vector<tke::ui::Window*> targets;
-					static std::vector<std::string> names;
-					static int w_index;
-					static int d_index;
-					const char *dir_names[] = {
-						"Center",
-						"Left",
-						"Right",
-						"Top",
-						"Bottom"
-					};
+					static tke::ui::Window* target;
 					if (ImGui::Button("Dock To..."))
 					{
-						w_index = -1;
-						d_index = 0;
-						bool need_main_layout = true;
-						targets.clear();
-						names.clear();
-						for (auto &w : tke::ui::get_windows())
-						{
-							if (w->layout)
-							{
-								targets.push_back(w.get());
-								names.push_back(w->title);
-								need_main_layout = false;
-							}
-						}
-						if (need_main_layout)
-						{
-							targets.insert(targets.begin(), nullptr);
-							names.insert(names.begin(), "Main Layout");
-						}
+						target = nullptr;
 						ImGui::OpenPopup("Dock To...");
 					}
 					if (ImGui::BeginPopupModal("Dock To...", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 					{
-						ImGui::Combo("window", &w_index, [](void *data, int idx, const char **out_text) {
-							*out_text = (*(std::vector<std::string>*)data)[idx].c_str();
-							return true;
-						}, &names, names.size());
-						ImGui::Combo("dir", &d_index, dir_names, TK_ARRAYSIZE(dir_names));
+						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+						if (ImGui::BeginCombo("window", target ? target->title.c_str() : ""))
+						{
+							if (tke::ui::main_layout.type == tke::ui::LayoutNull)
+							{
+								if (ImGui::Selectable("Main Layout", target == nullptr))
+									target = nullptr;
+							}
+							for (auto &w : tke::ui::get_windows())
+							{
+								if (w->layout)
+								{
+									if (ImGui::Selectable(w->title.c_str(), target == w.get()))
+										target = w.get();
+								}
+							}
+							ImGui::EndCombo();
+						}
+						ImGui::PopStyleVar();
+						static tke::ui::DockDirection dir = tke::ui::DockCenter;
+						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+						if (ImGui::BeginCombo("dir", tke::ui::get_dock_dir_name(dir)))
+						{
+							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockCenter), dir == tke::ui::DockCenter))
+								dir = tke::ui::DockCenter;
+							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockLeft), dir == tke::ui::DockLeft))
+								dir = tke::ui::DockLeft;
+							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockRight), dir == tke::ui::DockRight))
+								dir = tke::ui::DockRight;
+							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockTop), dir == tke::ui::DockTop))
+								dir = tke::ui::DockTop;
+							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockBottom), dir == tke::ui::DockBottom))
+								dir = tke::ui::DockBottom;
+							ImGui::EndCombo();
+						}
+						ImGui::PopStyleVar();
 						if (ImGui::Button("OK"))
 						{
-							if (w_index >= 0)
+							if (target || tke::ui::main_layout.type == tke::ui::LayoutNull)
 							{
-								windows_popup_w->dock(targets[w_index], (tke::ui::DockDirection)d_index);
+								windows_popup_w->dock(target, dir);
 								need_exit_window_popup = true;
 							}
 							ImGui::CloseCurrentPopup();
@@ -320,7 +325,9 @@ int main(int argc, char** argv)
 		if (ImGui::BeginPopupModal("Device Properties", &device_popup_opened))
 		{
 			static char filter[260];
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 			ImGui::InputText(ICON_FA_SEARCH, filter, 260);
+			ImGui::PopStyleVar();
 
 			auto fText = [](const char* fmt, ...) {
 				va_list args;
@@ -530,6 +537,10 @@ int main(int argc, char** argv)
 
 			ImGui::EndPopup();
 		}
+		ImGui::BeginToolBar();
+		if (scene_editor)
+			scene_editor->on_toolbar();
+		ImGui::EndToolBar();
 
 		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", tke::FPS);

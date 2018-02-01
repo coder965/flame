@@ -31,15 +31,14 @@ namespace tke
 			eDepth,
 			eDepthStencil
 		};
-		Type type = eColor;
-		inline bool isColorType() { return type == eColor || type == eSwapchain; }
-		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 
-		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-		VkImage v = 0;
-		VkDeviceMemory memory = 0;
-		VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
+		Type type;
+
+		VkFormat format;
+		VkImage v;
+		VkDeviceMemory memory;
+		VkImageLayout layout;
+		VkImageViewType viewType;
 
 		std::vector<std::unique_ptr<ImageView>> views;
 
@@ -47,10 +46,10 @@ namespace tke
 
 		std::string filename;
 
-		bool sRGB = false;
+		bool sRGB;
 
-		int material_index = -1;
-		int ui_index = -1;
+		int material_index;
+		int ui_index;
 
 		// must call in main thread
 		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);
@@ -58,6 +57,8 @@ namespace tke
 		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
 		// must call in main thread
 		~Image();
+		inline bool isColorType() { return type == eColor || type == eSwapchain; }
+		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 		void clear(const glm::vec4 &color);
 		unsigned char getR(float x, float y);
 		unsigned char getA(float x, float y);

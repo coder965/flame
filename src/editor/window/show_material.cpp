@@ -5,7 +5,7 @@
 static void show_map(std::function<std::string()> getter, const char *tooltip, std::function<void(const std::string &)> setter)
 {
 	auto image_name = getter();
-	ImGui::Image_f(image_name.c_str(), ImVec2(16, 16), ImVec4(0, 0, 0, 1));
+	ImGui::Image_f(image_name.c_str(), ImVec2(16, 16), ImGui::ColorConvertU32ToFloat4(ImGui::GetColorU32(ImGuiCol_Border)));
 	if (ImGui::IsItemHovered())
 	{
 		std::string str = tooltip;

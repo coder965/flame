@@ -33,6 +33,7 @@ struct SceneEditor : tke::ui::Window
 	~SceneEditor();
 	void on_file_menu();
 	void on_menu_bar();
+	void on_toolbar();
 	virtual void on_show() override;
 	void save(tke::XMLNode *);
 

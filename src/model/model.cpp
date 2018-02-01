@@ -162,6 +162,18 @@ namespace tke
 		vertexes.push_back(vertex);
 	}
 
+	const char *Model::get_uv_use_name(UV *uv) const
+	{
+		if (geometry_uv == uv && bake_uv == uv)
+			return "geometry and bake";
+		else if (geometry_uv == uv)
+			return "geometry";
+		else if (bake_uv == uv)
+			return "bake";
+		else
+			return "null";
+	}
+
 	void Model::create_geometry_aux()
 	{
 		if (geometry_aux)

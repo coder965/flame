@@ -153,6 +153,7 @@ void FileSelector::on_show()
 			drivers[TK_ARRAYSIZE(drivers) - 1] = user_define_extra_path.c_str();
 			driver_count++;
 		}
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 		if (ImGui::Combo("##driver", &driver_index, drivers, driver_count))
 		{
 			auto d = std::string(drivers[driver_index]);
@@ -161,6 +162,7 @@ void FileSelector::on_show()
 			curr_dir.filename = d;
 			need_refresh = true;
 		}
+		ImGui::PopStyleVar();
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		ImGui::Text(curr_dir.filename.c_str());
@@ -309,9 +311,12 @@ void FileSelector::on_bottom_area_show()
 
 	const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
 
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 	ImGui::PushItemWidth(ImGui::GetWindowWidth() - okButtonWidth - cancelButtonWidth - itemSpacing * 4);
 	ImGui::InputText("##filename", filename, TK_ARRAYSIZE(filename));
 	ImGui::PopItemWidth();
+	ImGui::PopStyleVar();
+
 	float pos = okButtonWidth + itemSpacing;
 	ImGui::SameLine(ImGui::GetWindowWidth() - pos);
 	if (ImGui::Button("  Ok  "))

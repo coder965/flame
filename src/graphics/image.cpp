@@ -10,13 +10,18 @@
 
 namespace tke
 {
-	ImageView::ImageView(Image *_image)
-		:image(_image)
+	ImageView::ImageView(Image *_image) :
+		image(_image)
 	{
 	}
 
-	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool needGeneralLayout)
-		: format(_format)
+	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool needGeneralLayout) :
+		format(_format),
+		layout(VK_IMAGE_LAYOUT_UNDEFINED),
+		viewType(VK_IMAGE_VIEW_TYPE_2D),
+		sRGB(false),
+		material_index(-1),
+		ui_index(-1)
 	{
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
 			type = eDepth;
@@ -82,7 +87,15 @@ namespace tke
 		}
 	}
 
-	Image::Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format)
+	Image::Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format) :
+		type(_type),
+		v(_image),
+		format(_format),
+		layout(VK_IMAGE_LAYOUT_UNDEFINED),
+		viewType(VK_IMAGE_VIEW_TYPE_2D),
+		sRGB(false),
+		material_index(-1),
+		ui_index(-1)
 	{
 		type = _type;
 		v = _image;

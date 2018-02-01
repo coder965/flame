@@ -80,41 +80,76 @@ namespace ImGui
 
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col)
 	{
-		ImGuiWindow* window = GetCurrentWindow();
-		if (window->SkipItems)
-			return;
+		auto i = tke::get_image(filename);
+		if (!i)
+			i = tke::get_image("empty.png");
+		assert(i);
 
-		ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
-		if (border_col.w > 0.0f)
-			bb.Max += ImVec2(2, 2);
-		ItemSize(bb);
-		if (!ItemAdd(bb, 0))
-			return;
+		Image(ImageID(i), size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), border_col);
+	}
 
-		if (border_col.w > 0.0f)
-		{
-			window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(border_col), 0.0f);
-			bb.Expand(-1);
-		}
+	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active)
+	{
+		auto i = tke::get_image(filename);
+		if (!i)
+			i = tke::get_image("empty.png");
+		assert(i);
 
-		if (filename != "")
-		{
-			auto i = tke::get_image(filename);
-			if (i)
-				window->DrawList->AddImage(ImageID(i), bb.Min, bb.Max, ImVec2(0, 0), ImVec2(1, 1), GetColorU32(ImVec4(1, 1, 1, 1)));
-		}
+		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		if (active)
+			PushStyleColor(ImGuiCol_Button, GetColorU32(ImGuiCol_ButtonActive));
+		auto pressed = ImageButton(ImageID(i), size, ImVec2(0, 0), ImVec2(1, 1), 0, ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, 1));
+		if (active)
+			PopStyleColor();
+		PopStyleColor();
+		return pressed;
+	}
+
+	bool IconButton(const char *label)
+	{
+		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		auto pressed = Button(label);
+		PopStyleColor();
+		return pressed;
+	}
+
+	static float menubar_height;
+	bool BeginMainMenuBar_l()
+	{
+		auto open = BeginMainMenuBar();
+		menubar_height = GetCurrentWindowRead()->Size.y;
+		return open;
+	}
+
+	static float toolbar_height;
+	bool BeginToolBar()
+	{
+		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+		toolbar_height = 16.f + ImGui::GetStyle().WindowPadding.y * 2.f;
+		SetNextWindowPos(ImVec2(0, ImGui::menubar_height));
+		SetNextWindowSize(ImVec2(tke::window_cx, toolbar_height));
+		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
+		return ImGui::Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+	}
+
+	void EndToolBar()
+	{
+		End();
+		PopStyleColor();
+		PopStyleVar();
 	}
 
 	static int _statusbar_int_debug;
 
+	static float statusbar_height;
 	bool BeginStatusBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		auto height = ImGui::GetTextLineHeight() + ImGui::GetStyle().WindowPadding.y * 2.f;
-		SetNextWindowPos(ImVec2(0, tke::window_cy - height));
-		SetNextWindowSize(ImVec2(tke::window_cx, height));
+		statusbar_height = ImGui::GetTextLineHeight() + ImGui::GetStyle().WindowPadding.y * 2.f;
+		SetNextWindowPos(ImVec2(0, tke::window_cy - statusbar_height));
+		SetNextWindowSize(ImVec2(tke::window_cx, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
-		auto open = ImGui::Begin("status", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 		Text("%d", _statusbar_int_debug);
 		SameLine();
 		return open;
@@ -123,8 +158,8 @@ namespace ImGui
 	void EndStatusBar()
 	{
 		End();
-		PopStyleColor(1);
-		PopStyleVar(1);
+		PopStyleColor();
+		PopStyleVar();
 	}
 }
 
@@ -135,7 +170,23 @@ namespace tke
 		bool accepted_mouse;
 		bool accepted_key;
 
-		static float menubar_height;
+		const char *get_dock_dir_name(DockDirection dir)
+		{
+			switch (dir)
+			{
+				case DockCenter:
+					return "center";
+				case DockLeft:
+					return "left";
+				case DockRight:
+					return "right";
+				case DockTop:
+					return "top";
+				case DockBottom:
+					return "bottom";
+			}
+			return "null";
+		}
 
 		static std::list<std::unique_ptr<Window>> windows;
 		static Window *last_dragging_window;
@@ -250,7 +301,7 @@ namespace tke
 		static void on_resize(int cx, int cy)
 		{
 			main_layout.width = cx;
-			main_layout.height = cy - menubar_height - ImGui::GetTextLineHeight() - ImGui::GetStyle().WindowPadding.y * 2.f;
+			main_layout.height = cy - ImGui::menubar_height - ImGui::toolbar_height - ImGui::statusbar_height;
 			_resize_layout(&main_layout);
 		}
 
@@ -597,7 +648,7 @@ namespace tke
 				draw_list->PathClear();
 
 				draw_list->PathArcTo(pos + ImVec2(0, line_height_hf), line_height_hf, glm::radians(90.f), glm::radians(270.f));
-				draw_list->PathArcTo(pos + ImVec2(size.x + line_height + 9, line_height_hf), line_height_hf, glm::radians(270.f), glm::radians(90.f));
+				draw_list->PathArcTo(pos + ImVec2(size.x + 9, line_height_hf), line_height_hf, glm::radians(-90.f), glm::radians(90.f));
 
 				draw_list->PathFillConvex(hovered ? color_hovered : (w == curr_tab[idx] ? color_active : color));
 				draw_list->AddText(pos, text_color, w->title.c_str(), text_end);
@@ -774,7 +825,7 @@ namespace tke
 					font_image->fillData(0, pixels, width * height * 4);
 					io.Fonts->TexID = (void*)0; // image index
 
-					updateDescriptorSets(1, &pipeline_ui->descriptorSet->imageWrite(0, 0, font_image, colorSampler));
+					updateDescriptorSets(&pipeline_ui->descriptorSet->imageWrite(0, 0, font_image, colorSampler));
 				}
 
 				cb_ui = new CommandBuffer;
@@ -881,8 +932,6 @@ namespace tke
 			static bool first = true;
 			if (first)
 			{
-				menubar_height = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.y * 2.f;
-
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
 					_load_layout(&doc, &main_layout);
@@ -932,7 +981,7 @@ namespace tke
 
 			if (main_layout.type != LayoutNull)
 			{
-				ImGui::SetNextWindowPos(ImVec2(0.f, menubar_height));
+				ImGui::SetNextWindowPos(ImVec2(0.f, ImGui::menubar_height + ImGui::toolbar_height));
 				ImGui::SetNextWindowSize(ImVec2(main_layout.width, main_layout.height));
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 				ImGui::Begin("##dock", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
@@ -944,7 +993,7 @@ namespace tke
 			else
 			{
 				if (dragging_window)
-					_draw_drag_overlay(ImRect(0.f, menubar_height, main_layout.width, menubar_height + main_layout.height), &main_layout, -1, DockCenter);
+					_draw_drag_overlay(ImRect(0.f, ImGui::menubar_height, main_layout.width, ImGui::menubar_height + ImGui::toolbar_height + main_layout.height), &main_layout, -1, DockCenter);
 			}
 
 			if (last_dragging_window != dragging_window)

@@ -23,6 +23,11 @@ namespace ImGui
 	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.f, float offset = 0.f);
 	ImTextureID ImageID(std::shared_ptr<tke::Image> i);
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active = false);
+	bool IconButton(const char *label);
+	bool BeginMainMenuBar_l();
+	bool BeginToolBar();
+	void EndToolBar();
 	bool BeginStatusBar();
 	void EndStatusBar();
 }
@@ -44,6 +49,7 @@ namespace tke
 			DockAll = DockCenter | DockLeft | DockRight | DockTop | DockBottom
 		};
 
+		const char *get_dock_dir_name(DockDirection dir);
 
 		enum LayoutType
 		{

@@ -110,6 +110,11 @@ namespace tke
 		return write;
 	}
 
+	void updateDescriptorSets(VkWriteDescriptorSet *writes)
+	{
+		updateDescriptorSets(1, writes);
+	}
+
 	void updateDescriptorSets(int count, VkWriteDescriptorSet *writes)
 	{
 		if (count <= 0)

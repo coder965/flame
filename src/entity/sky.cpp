@@ -5,6 +5,21 @@
 
 namespace tke
 {
+	const char *get_sky_type_name(SkyType type)
+	{
+		switch (type)
+		{
+			case SkyTypeNull:
+				return "null";
+			case SkyTypeDebug:
+				return "debug";
+			case SkyTypeAtmosphereScattering:
+				return "atmosphere scattering";
+			case SkyTypePanorama:
+				return "panorama";
+		}
+	}
+
 	Sky::Sky(SkyType _type)
 		:type(_type)
 	{

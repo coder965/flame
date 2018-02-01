@@ -153,6 +153,7 @@ namespace tke
 
 		void add_vertex_position_normal(const glm::vec3 &position, const glm::vec3 &normal);
 
+		const char *get_uv_use_name(UV *uv) const;
 		void create_geometry_aux();
 		void create_uv();
 		void remove_uv(UV *uv);
