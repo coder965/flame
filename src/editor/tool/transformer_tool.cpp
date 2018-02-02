@@ -1,11 +1,12 @@
 #include "../../global.h"
+#include "../../graphics/command_buffer.h"
 #include "../../entity/node.h"
 #include "../../model/model.h"
 #include "../../pick_up/pick_up.h"
 #include "transformer_tool.h"
 
-TransformerTool::TransformerTool(tke::Image *dst)
-	:Tool(dst)
+TransformerTool::TransformerTool(tke::DisplayLayer *_layer) :
+	layer(_layer)
 {
 	renderer = std::make_unique<tke::PlainRenderer>();
 }
@@ -108,7 +109,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 	if (!draw_data.obj_data.empty())
 	{
 		draw_data.mode = tke::PlainRenderer::mode_color_and_front_light;
-		renderer->render(fb.get(), false, camera, &draw_data);
+		renderer->render(layer->framebuffer.get(), false, camera, &draw_data);
 		renderer->add_to_drawlist();
 	}
 }

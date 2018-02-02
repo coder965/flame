@@ -3,6 +3,7 @@
 #include "../../file_utils.h"
 #include "../../graphics/buffer.h"
 #include "../../graphics/descriptor.h"
+#include "../../graphics/command_buffer.h"
 #include "../../model/model.h"
 #include "../../model/animation.h"
 #include "../../entity/light.h"
@@ -31,7 +32,8 @@ void SceneEditor::on_delete()
 SceneEditor *scene_editor = nullptr;
 
 SceneEditor::SceneEditor(tke::Scene *_scene) :
-	Window("Scene")
+	Window("Scene"),
+	layer(true)
 {
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
@@ -47,7 +49,7 @@ SceneEditor::SceneEditor(tke::Scene *_scene) :
 	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
 
-	transformerTool = std::make_unique<TransformerTool>(layer.image.get());
+	transformerTool = std::make_unique<TransformerTool>(&layer);
 }
 
 SceneEditor::~SceneEditor()
