@@ -38,6 +38,7 @@ SceneEditor::SceneEditor(tke::Scene *_scene) :
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
 	camera_node->add_component(camera);
+	camera->set_length(2.f);
 	tke::root_node->add_child(camera_node);
 
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
@@ -407,7 +408,7 @@ void SceneEditor::on_show()
 		//}
 	}
 
-	transformerTool->node = selected.get_node();
+	transformerTool->target = selected.get_node();
 	transformerTool->show(camera);
 }
 

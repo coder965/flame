@@ -15,6 +15,18 @@ namespace tke
 		return 1.0 / (a * z + b);
 	}
 
+	glm::vec3 transform(const glm::vec3 &v, const glm::mat4 &mat)
+	{
+		auto v_ = mat * glm::vec4(v, 1.f);
+		v_ /= v_.w;
+		return v_;
+	}
+
+	glm::vec4 plane(const glm::vec3 &p, const glm::vec3 &normal)
+	{
+		return glm::vec4(normal, glm::dot(normal, p));
+	}
+
 	glm::mat3 quaternion_to_mat3(glm::vec4 &q)
 	{
 		float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;

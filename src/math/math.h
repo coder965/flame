@@ -93,6 +93,9 @@ namespace tke
 			std::abs(a.w - b.w) <= TK_EPS;
 	}
 
+	glm::vec3 transform(const glm::vec3 &v, const glm::mat4 &mat);
+	glm::vec4 plane(const glm::vec3 &p, const glm::vec3 &normal);
+
 	glm::mat3 quaternion_to_mat3(glm::vec4 &q);
 	glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
 	glm::vec3 quaternion_to_euler(glm::vec4 &q);

@@ -1,8 +1,8 @@
 <scene>
-	<node name="Object" coord="-2./0./0." euler="0./0./0." scale="1./1./1.">
+	<node name="Object" coord="0./0./0." euler="0./0./0." scale="1./1./1.">
 		<component component_type="model_instance" model="Cube"/>
 	</node>
-	<node name="Light" coord="0./0./0." euler="0./0./0." scale="1./1./1.">
+	<node name="Light" coord="0./1./0." euler="0./0./0." scale="1./1./1.">
 		<component component_type="light" type="point" color="0.5/0.5/0.5" range="0." enable_shadow="false"/>
 	</node>
 </scene>

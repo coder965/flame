@@ -17,12 +17,12 @@ namespace tke
 
 	void CameraComponent::on_update()
 	{
-		if (aux_matrix_updated_frame < get_parent()->get_transform_dirty_frame())
+		if (aux_updated_frame < get_parent()->get_transform_dirty_frame())
 		{
 			view_matrix = glm::inverse(get_parent()->get_matrix());
 			update_frustum();
 
-			aux_matrix_updated_frame = total_frame_count;
+			aux_updated_frame = total_frame_count;
 		}
 	}
 
@@ -31,7 +31,7 @@ namespace tke
 		proj_type(ProjectionTypePerspective),
 		target(0.f),
 		length(0.f),
-		aux_matrix_updated_frame(-1)
+		aux_updated_frame(-1)
 	{
 		follow_to(&resolution);
 		update_proj();
