@@ -27,6 +27,7 @@ struct SceneEditor : tke::ui::Window
 
 	bool showSelectedWireframe = true;
 
+	Tool *curr_tool;
 	std::unique_ptr<TransformerTool> transformerTool;
 
 	SceneEditor(tke::Scene *_scene);

@@ -27,6 +27,29 @@ namespace tke
 		return glm::vec4(normal, glm::dot(normal, p));
 	}
 
+	void ortho_normalize(glm::mat3 &mat)
+	{
+		for (auto i = 0; i < 3; i++)
+			mat[i] = glm::normalize(mat[i]);
+	}
+
+	void ortho_normalize(glm::mat4 &mat)
+	{
+		for (auto i = 0; i < 3; i++)
+			mat[i] = glm::vec4(glm::normalize(glm::vec3(mat[i])), 0.f);
+	}
+
+	float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane)
+	{
+		auto numer = glm::dot(glm::vec3(plane), origin) - plane.w;
+		auto denom = glm::dot(glm::vec3(plane), vector);
+
+		if (glm::abs(denom) < FLT_EPSILON)
+			return -1.0f;
+
+		return -(numer / denom);
+	}
+
 	glm::mat3 quaternion_to_mat3(glm::vec4 &q)
 	{
 		float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;

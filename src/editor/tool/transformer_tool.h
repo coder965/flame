@@ -9,12 +9,17 @@ struct TransformerTool : Tool
 {
 	tke::DisplayLayer *layer;
 
+	enum Operation
+	{
+		TRANSLATE,
+		ROTATE,
+		SCALE
+	};
+
 	enum Mode
 	{
-		ModeNull,
-		ModeMove,
-		ModeRotate,
-		ModeScale
+		LOCAL,
+		WORLD
 	};
 
 	enum TransType
@@ -37,21 +42,26 @@ struct TransformerTool : Tool
 		SCALE_XYZ
 	};
 
+	Operation operation;
 	Mode mode;
 	TransType type;
-	tke::Node::Axis selected_axis;
+	bool enable_snap;
+	glm::vec3 snap;
 
 	ImVec2 window_pos;
 	ImVec2 window_size;
 
 	tke::Node *target;
 
-	glm::mat4 target_matrix;
-	glm::vec3 target_position;
+	glm::mat4 model_matrix;
+	glm::mat4 model_matrix_inverse;
+	glm::mat4 model_source;
+	glm::vec3 model_position;
 	glm::mat4 proj_view;
 	glm::mat4 mvp;
 
 	glm::vec3 camera_position;
+	glm::vec3 camera_dir;
 	glm::vec3 ray_origin;
 	glm::vec3 ray_vector;
 
@@ -61,8 +71,22 @@ struct TransformerTool : Tool
 	ImVec2 screen_square_max;
 
 	float screen_factor;
+	glm::vec3 relative_origin;
 
+	bool enable;
 	bool using_;
+
+	glm::vec4 translation_plane;
+	glm::vec3 translation_plane_origin;
+	glm::vec3 matrix_origin;
+
+	glm::vec3 scale;
+	glm::vec3 scale_value_origin;
+	float save_mouse_pos_x;
+
+	glm::vec3 rotation_vector_source;
+	float rotation_angle;
+	float rotation_angle_origin;
 
 	bool below_axis_limit[3];
 	bool below_plane_limit[3];
@@ -73,8 +97,15 @@ struct TransformerTool : Tool
 	std::unique_ptr<tke::PlainRenderer> renderer;
 
 	TransformerTool(tke::DisplayLayer *_layer);
-	virtual bool TransformerTool::leftDown(int x, int y) override;
-	virtual void TransformerTool::mouseMove(int xDisp, int yDisp) override;
 	virtual void show(tke::CameraComponent *camera) override;
-	tke::PlainRenderer::DrawData getDrawData(int draw_mode);
+	bool is_over();
+private:
+	ImVec2 world_to_screen(const glm::vec3 &coord, const glm::mat4 &mat);
+	void compute_tripod_axis_and_visibility(int axis_index, glm::vec3 &dir_plane_x, glm::vec3 &dir_plane_y, bool &below_axis_limit, bool &below_plane_limit);
+	float compute_angle_on_plan();
+	void compute_colors(ImU32 *colors, int type);
+	int get_move_type(glm::vec3 *hit_proportion);
+	int get_rotate_type();
+	int get_scale_type();
+	void draw_hatched_axis(const glm::vec3 &axis);
 };

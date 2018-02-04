@@ -33,7 +33,8 @@ SceneEditor *scene_editor = nullptr;
 
 SceneEditor::SceneEditor(tke::Scene *_scene) :
 	Window("Scene"),
-	layer(true)
+	layer(true),
+	curr_tool(nullptr)
 {
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
@@ -169,17 +170,26 @@ void SceneEditor::on_menu_bar()
 
 void SceneEditor::on_toolbar()
 {
-	if (ImGui::ImageButton_f("Select.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeNull))
-		transformerTool->mode = TransformerTool::ModeNull;
+	if (ImGui::ImageButton_f("Select.png", ImVec2(16, 16), curr_tool == nullptr))
+		curr_tool = nullptr;;
 	ImGui::SameLine();
-	if (ImGui::ImageButton_f("Move.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeMove))
-		transformerTool->mode = TransformerTool::ModeMove;
+	if (ImGui::ImageButton_f("Move.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::TRANSLATE))
+	{
+		curr_tool = transformerTool.get();
+		transformerTool->operation = TransformerTool::TRANSLATE;
+	}
 	ImGui::SameLine();
-	if (ImGui::ImageButton_f("Rotate.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeRotate))
-		transformerTool->mode = TransformerTool::ModeRotate;
+	if (ImGui::ImageButton_f("Rotate.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::ROTATE))
+	{
+		curr_tool = transformerTool.get();
+		transformerTool->operation = TransformerTool::ROTATE;
+	}
 	ImGui::SameLine();
-	if (ImGui::ImageButton_f("Scale.png", ImVec2(16, 16), transformerTool->mode == TransformerTool::ModeScale))
-		transformerTool->mode = TransformerTool::ModeScale;
+	if (ImGui::ImageButton_f("Scale.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::SCALE))
+	{
+		curr_tool = transformerTool.get();
+		transformerTool->operation = TransformerTool::SCALE;
+	}
 }
 
 void SceneEditor::on_show()
@@ -247,22 +257,27 @@ void SceneEditor::on_show()
 		}
 		ImGui::EndDragDropTarget();
 	}
+
+	if (curr_tool == transformerTool.get())
+	{
+		transformerTool->target = selected.get_node();
+		transformerTool->show(camera);
+	}
+
 	if (ImGui::IsItemHovered())
 	{
 		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
-			auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
-			if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
-				camera->move_by_cursor(distX, distY);
-			else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
-				camera->scroll(distX);
-			else if (tke::mouseMiddle.pressing)
-				camera->rotate_by_cursor(distX, distY);
-			else if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
+			if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 			{
-				if (tke::mouseLeft.pressing)
-					transformerTool->mouseMove(tke::mouseDispX, tke::mouseDispY);
+				auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
+				auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
+				if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
+					camera->move_by_cursor(distX, distY);
+				else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
+					camera->scroll(distX);
+				else if (tke::mouseMiddle.pressing)
+					camera->rotate_by_cursor(distX, distY);
 			}
 		}
 		if (tke::mouseScroll != 0)
@@ -273,7 +288,7 @@ void SceneEditor::on_show()
 			{
 				auto x = (tke::mouseX - 0) / tke::resolution.x();
 				auto y = (tke::mouseY - 0) / tke::resolution.y();
-				if (!transformerTool->leftDown(x, y))
+				if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 				{
 					//tke::PlainRenderer::DrawData draw_data;
 					//draw_data.mode = tke::PlainRenderer::mode_just_color;
@@ -407,9 +422,6 @@ void SceneEditor::on_show()
 		//	plain_renderer->add_to_drawlist();
 		//}
 	}
-
-	transformerTool->target = selected.get_node();
-	transformerTool->show(camera);
 }
 
 void SceneEditor::save(tke::XMLNode *n)

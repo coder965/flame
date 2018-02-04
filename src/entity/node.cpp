@@ -290,6 +290,12 @@ namespace tke
 		mark_quat_setted();
 	}
 
+	void Node::set_axis(const glm::mat3 &_axis)
+	{
+		axis = _axis;
+		mark_axis_setted();
+	}
+
 	void Node::left_rotate(const glm::mat3 &left)
 	{
 		axis = left * axis;

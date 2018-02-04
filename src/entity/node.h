@@ -92,6 +92,7 @@ namespace tke
 		void add_euler_z(float v);
 		void set_quat(const glm::vec4 &_quat);
 		void set_quat(float x, float y, float z, float w);
+		void set_axis(const glm::mat3 &_axis);
 		void left_rotate(const glm::mat3 &left);
 		void right_rotate(const glm::mat3 &right);
 		void axis_rotate(Axis which, float angle);
