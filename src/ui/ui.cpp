@@ -822,7 +822,7 @@ namespace tke
 					io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 					font_image = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
 						VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-					font_image->fillData(0, pixels, width * height * 4);
+					font_image->fill_data(0, pixels, width * height * 4);
 					io.Fonts->TexID = (void*)0; // image index
 
 					updateDescriptorSets(&pipeline_ui->descriptorSet->imageWrite(0, 0, font_image, colorSampler));

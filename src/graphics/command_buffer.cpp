@@ -61,10 +61,7 @@ namespace tke
 		barrier.oldLayout = oldLayout;
 		barrier.newLayout = newLayout;
 		barrier.image = image->v;
-		if (image->type == Image::eColor || image->type == Image::eSwapchain)
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		else
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		barrier.subresourceRange.aspectMask = image->aspect;
 		barrier.subresourceRange.baseMipLevel = baseLevel;
 		barrier.subresourceRange.levelCount = levelCount;
 		barrier.subresourceRange.baseArrayLayer = baseLayer;

@@ -10,25 +10,29 @@
 
 namespace tke
 {
-	ImageView::ImageView(Image *_image) :
-		image(_image)
-	{
-	}
-
-	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool needGeneralLayout) :
+	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
 		layout(VK_IMAGE_LAYOUT_UNDEFINED),
-		viewType(VK_IMAGE_VIEW_TYPE_2D),
+		view_type(VK_IMAGE_VIEW_TYPE_2D),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
 		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
-			type = eDepth;
+		{
+			type = TypeDepth;
+			aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
 		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-			type = eDepthStencil;
+		{
+			type = TypeDepthStencil;
+			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
 		else
-			type = eColor;
+		{
+			type = TypeColor;
+			aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+		}
 
 		assert(_level >= 1);
 		assert(_layer >= 1);
@@ -80,153 +84,38 @@ namespace tke
 
 		total_size = memRequirements.size;
 
-		if (needGeneralLayout)
+		if (need_general_layout)
 		{
 			for (int i = 0; i < levels.size(); i++)
-				transitionLayout(i, VK_IMAGE_LAYOUT_GENERAL);
+				transition_layout(i, VK_IMAGE_LAYOUT_GENERAL);
 		}
 	}
 
 	Image::Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format) :
 		type(_type),
 		v(_image),
+		memory(0),
 		format(_format),
 		layout(VK_IMAGE_LAYOUT_UNDEFINED),
-		viewType(VK_IMAGE_VIEW_TYPE_2D),
+		view_type(VK_IMAGE_VIEW_TYPE_2D),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
-		type = _type;
-		v = _image;
+		aspect = type == TypeColor ? VK_IMAGE_ASPECT_COLOR_BIT : (type == TypeDepth ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 		levels[0].cx = _cx;
 		levels[0].cy = _cy;
-		format = _format;
 	}
 
 	Image::~Image()
 	{
 		for (auto &v : views)
 			vkDestroyImageView(vk_device.v, v->v, nullptr);
-		if (type != Type::eSwapchain)
+		if (memory)
 		{
 			vkFreeMemory(vk_device.v, memory, nullptr);
 			vkDestroyImage(vk_device.v, v, nullptr);
 		}
-	}
-
-	static VkImageAspectFlags _getImageAspect(Image *i)
-	{
-		if (i->isColorType())
-			return VK_IMAGE_ASPECT_COLOR_BIT;
-		if (i->type == Image::eDepth)
-			return VK_IMAGE_ASPECT_DEPTH_BIT;
-		return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-	}
-
-	void Image::transitionLayout(int _level, VkImageLayout _layout)
-	{
-		auto cb = begineOnceCommandBuffer();
-
-		VkImageMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = layout;
-		barrier.newLayout = _layout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = v;
-		barrier.subresourceRange.aspectMask = _getImageAspect(this);
-		barrier.subresourceRange.baseMipLevel = _level;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-		endOnceCommandBuffer(cb);
-
-		layout = _layout;
-	}
-
-	void Image::fillData(int _level, unsigned char *src, size_t _size)
-	{
-		transitionLayout(_level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		StagingBuffer stagingBuffer(_size);
-
-		void* map = stagingBuffer.map(0, _size);
-		memcpy(map, src, _size);
-		stagingBuffer.unmap();
-
-		levels[_level].size = _size;
-
-		VkBufferImageCopy region = {};
-		region.imageSubresource.aspectMask = _getImageAspect(this);
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = levels[_level].cx;
-		region.imageExtent.height = levels[_level].cy;
-		region.imageExtent.depth = 1;
-		region.bufferOffset = 0;
-
-		auto cb = begineOnceCommandBuffer();
-		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		endOnceCommandBuffer(cb);
-
-		transitionLayout(_level, VK_IMAGE_LAYOUT_GENERAL);
-	}
-
-	VkImageView Image::getView(int baseLevel, int levelCount, int baseLayer, int layerCount)
-	{
-		auto aspect = _getImageAspect(this);
-
-		for (auto &view : views)
-		{
-			if (view->aspect == aspect && view->baseLevel == baseLevel && view->levelCount == levelCount &&
-				view->baseLayer == baseLayer && view->layerCount == layerCount)
-				return view->v;
-		}
-
-		auto view = new ImageView(this);
-		view->aspect = aspect;
-		view->baseLevel = baseLevel;
-		view->levelCount = levelCount;
-		view->baseLayer = baseLayer;
-		view->layerCount = layerCount;
-
-		VkImageViewCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		info.image = v;
-		info.viewType = viewType;
-		info.format = format;
-		info.subresourceRange.aspectMask = aspect;
-		info.subresourceRange.baseMipLevel = baseLevel;
-		info.subresourceRange.levelCount = levelCount;
-		info.subresourceRange.baseArrayLayer = baseLayer;
-		info.subresourceRange.layerCount = layerCount;
-
-		auto res = vkCreateImageView(vk_device.v, &info, nullptr, &view->v);
-		assert(res == VK_SUCCESS);
-
-		views.emplace_back(view);
-		return view->v;
-	}
-
-	VkDescriptorImageInfo *Image::getInfo(VkImageView view, VkSampler sampler)
-	{
-		for (auto &i : infos)
-		{
-			if (i->imageView == view && i->sampler == sampler)
-				return i.get();
-		}
-		auto i = new VkDescriptorImageInfo;
-		i->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		i->imageView = view;
-		i->sampler = sampler;
-		infos.emplace_back(i);
-		return i;
 	}
 
 	void Image::clear(const glm::vec4 &color)
@@ -242,7 +131,7 @@ namespace tke
 		endOnceCommandBuffer(cb);
 	}
 
-	unsigned char Image::getR(float _x, float _y)
+	unsigned char Image::get_r(float _x, float _y)
 	{
 		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
 			return 0;
@@ -258,7 +147,7 @@ namespace tke
 #undef gd
 	}
 
-	unsigned char Image::getA(float _x, float _y)
+	unsigned char Image::get_a(float _x, float _y)
 	{
 		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
 			return 0;
@@ -272,6 +161,168 @@ namespace tke
 #define gd(a, b) (float)levels[0].v[(a) * pixel_size + 3 + (b) * levels[0].pitch]
 		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
 #undef gd
+	}
+
+	void Image::transition_layout(int _level, VkImageLayout _layout)
+	{
+		auto cb = begineOnceCommandBuffer();
+
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = layout;
+		barrier.newLayout = _layout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = v;
+		barrier.subresourceRange.aspectMask = aspect;
+		barrier.subresourceRange.baseMipLevel = _level;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		switch (layout)
+		{
+			case VK_IMAGE_LAYOUT_UNDEFINED:
+				//barrier.srcAccessMask |= VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_GENERAL:
+				break;
+			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+				barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+				break;
+			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+				barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+				barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+				break;
+			case VK_IMAGE_LAYOUT_PREINITIALIZED:
+				break;
+			case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+				barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				break;
+		}
+
+		switch (_layout)
+		{
+			case VK_IMAGE_LAYOUT_UNDEFINED:
+				break;
+			case VK_IMAGE_LAYOUT_GENERAL:
+				break;
+			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+				break;
+			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				break;
+			case VK_IMAGE_LAYOUT_PREINITIALIZED:
+				break;
+			case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+				barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				break;
+		}
+
+		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		endOnceCommandBuffer(cb);
+
+		layout = _layout;
+	}
+
+	void Image::fill_data(int _level, unsigned char *src, size_t _size)
+	{
+		transition_layout(_level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		StagingBuffer stagingBuffer(_size);
+
+		void* map = stagingBuffer.map(0, _size);
+		memcpy(map, src, _size);
+		stagingBuffer.unmap();
+
+		levels[_level].size = _size;
+
+		VkBufferImageCopy region = {};
+		region.imageSubresource.aspectMask = aspect;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageExtent.width = levels[_level].cx;
+		region.imageExtent.height = levels[_level].cy;
+		region.imageExtent.depth = 1;
+		region.bufferOffset = 0;
+
+		auto cb = begineOnceCommandBuffer();
+		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		endOnceCommandBuffer(cb);
+
+		transition_layout(_level, VK_IMAGE_LAYOUT_GENERAL);
+	}
+
+	VkImageView Image::get_view(int baseLevel, int levelCount, int baseLayer, int layerCount)
+	{
+		for (auto &view : views)
+		{
+			if (view->baseLevel == baseLevel && view->levelCount == levelCount &&
+				view->baseLayer == baseLayer && view->layerCount == layerCount)
+				return view->v;
+		}
+
+		auto view = new ImageView;
+		view->baseLevel = baseLevel;
+		view->levelCount = levelCount;
+		view->baseLayer = baseLayer;
+		view->layerCount = layerCount;
+
+		VkImageViewCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		info.image = v;
+		info.viewType = view_type;
+		info.format = format;
+		info.subresourceRange.aspectMask = aspect;
+		info.subresourceRange.baseMipLevel = baseLevel;
+		info.subresourceRange.levelCount = levelCount;
+		info.subresourceRange.baseArrayLayer = baseLayer;
+		info.subresourceRange.layerCount = layerCount;
+
+		auto res = vkCreateImageView(vk_device.v, &info, nullptr, &view->v);
+		assert(res == VK_SUCCESS);
+
+		views.emplace_back(view);
+		return view->v;
+	}
+
+	VkDescriptorImageInfo *Image::get_info(VkImageView view, VkSampler sampler)
+	{
+		for (auto &i : infos)
+		{
+			if (i->imageView == view && i->sampler == sampler)
+				return i.get();
+		}
+		auto i = new VkDescriptorImageInfo;
+		i->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		i->imageView = view;
+		i->sampler = sampler;
+		infos.emplace_back(i);
+		return i;
 	}
 
 	Image *load_image(const std::string &filename)
@@ -327,7 +378,7 @@ namespace tke
 			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_data->levels.size(), 1, false);
 		for (int l = 0; l < image_data->levels.size(); l++)
 		{
-			i->fillData(l, image_data->levels[l].v.get(), image_data->levels[l].size);
+			i->fill_data(l, image_data->levels[l].v.get(), image_data->levels[l].size);
 			i->levels[l].pitch = image_data->levels[l].pitch;
 		}
 		i->filename = filename;

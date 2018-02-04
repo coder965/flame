@@ -34,8 +34,8 @@ namespace tke
 		{
 			depth_image = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			VkImageView views[] = {
-				image->getView(),
-				depth_image->getView()
+				image->get_view(),
+				depth_image->get_view()
 			};
 			framebuffer = getFramebuffer(resolution.x(), resolution.y(), renderPass_depthC_image8, TK_ARRAYSIZE(views), views);
 		}

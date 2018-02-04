@@ -869,8 +869,8 @@ namespace tke
 			for (int i = 0; i < MaxShadowCount * 6; i++)
 			{
 				VkImageView views[] = {
-					esmImage->getView(0, 1, i),
-					esmDepthImage->getView()
+					esmImage->get_view(0, 1, i),
+					esmDepthImage->get_view()
 				};
 				fb_esm[i] = getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depthC_image32fC, TK_ARRAYSIZE(views), views);
 			}
@@ -927,12 +927,12 @@ namespace tke
 
 		{
 			VkImageView views[] = {
-				mainImage->getView(),
-				depthImage->getView(),
-				albedoAlphaImage->getView(),
-				normalHeightImage->getView(),
-				specRoughnessImage->getView(),
-				dst->image->getView(),
+				mainImage->get_view(),
+				depthImage->get_view(),
+				albedoAlphaImage->get_view(),
+				normalHeightImage->get_view(),
+				specRoughnessImage->get_view(),
+				dst->image->get_view(),
 			};
 			framebuffer = getFramebuffer(resolution.x(), resolution.y(), defe_renderpass, ARRAYSIZE(views), views);
 		}

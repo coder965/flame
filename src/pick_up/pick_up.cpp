@@ -53,8 +53,8 @@ namespace tke
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		VkImageView views[] = {
-			pick_up_image->getView(),
-			pick_up_depth_image->getView()
+			pick_up_image->get_view(),
+			pick_up_depth_image->get_view()
 		};
 		pick_up_fb = getFramebuffer(resolution.x(), resolution.y(), renderPass_depthC_image8C, TK_ARRAYSIZE(views), views);
 	}

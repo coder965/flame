@@ -8,37 +8,32 @@
 
 namespace tke
 {
-	struct Image;
 	struct ImageView
 	{
-		Image *image;
-		VkImageAspectFlags aspect;
 		int baseLevel;
 		int levelCount;
 		int baseLayer;
 		int layerCount;
 		VkImageView v;
-
-		ImageView(Image *_image);
 	};
 
 	struct Image : ImageData
 	{
 		enum Type
 		{
-			eColor,
-			eSwapchain,
-			eDepth,
-			eDepthStencil
+			TypeColor,
+			TypeDepth,
+			TypeDepthStencil
 		};
 
 		Type type;
+		VkImageAspectFlags aspect;
 
 		VkFormat format;
 		VkImage v;
 		VkDeviceMemory memory;
 		VkImageLayout layout;
-		VkImageViewType viewType;
+		VkImageViewType view_type;
 
 		std::vector<std::unique_ptr<ImageView>> views;
 
@@ -52,20 +47,18 @@ namespace tke
 		int ui_index;
 
 		// must call in main thread
-		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool needGeneralLayout = true);
+		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool need_general_layout = true);
 		// must call in main thread
 		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
 		// must call in main thread
 		~Image();
-		inline bool isColorType() { return type == eColor || type == eSwapchain; }
-		inline bool isDepthStencilType() { return type == eDepth || type == eDepthStencil; }
 		void clear(const glm::vec4 &color);
-		unsigned char getR(float x, float y);
-		unsigned char getA(float x, float y);
-		void transitionLayout(int _level, VkImageLayout _layout);
-		void fillData(int _level, unsigned char *src, size_t _size);
-		VkImageView getView(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
-		VkDescriptorImageInfo *getInfo(VkImageView view, VkSampler sampler);
+		unsigned char get_r(float x, float y);
+		unsigned char get_a(float x, float y);
+		void transition_layout(int _level, VkImageLayout _layout);
+		void fill_data(int _level, unsigned char *src, size_t _size);
+		VkImageView get_view(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkDescriptorImageInfo *get_info(VkImageView view, VkSampler sampler);
 	};
 
 	Image *load_image(const std::string &filename);
