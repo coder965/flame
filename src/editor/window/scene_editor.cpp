@@ -51,7 +51,7 @@ SceneEditor::SceneEditor(tke::Scene *_scene) :
 	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
 
-	transformerTool = std::make_unique<TransformerTool>(&layer);
+	transformerTool = std::make_unique<TransformerTool>();
 }
 
 SceneEditor::~SceneEditor()

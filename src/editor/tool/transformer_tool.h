@@ -1,14 +1,10 @@
 #pragma once
 
 #include "../../ui/ui.h"
-#include "../../graphics/renderer.h"
-#include "../../graphics/display_layer.h"
 #include "tool.h"
 
 struct TransformerTool : Tool
 {
-	tke::DisplayLayer *layer;
-
 	enum Operation
 	{
 		TRANSLATE,
@@ -94,9 +90,7 @@ struct TransformerTool : Tool
 
 	ImDrawList *draw_list;
 
-	std::unique_ptr<tke::PlainRenderer> renderer;
-
-	TransformerTool(tke::DisplayLayer *_layer);
+	TransformerTool();
 	virtual void show(tke::CameraComponent *camera) override;
 	bool is_over();
 private:

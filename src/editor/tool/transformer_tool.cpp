@@ -1,8 +1,5 @@
 #include "../../global.h"
-#include "../../graphics/command_buffer.h"
 #include "../../entity/node.h"
-#include "../../model/model.h"
-#include "../../pick_up/pick_up.h"
 #include "transformer_tool.h"
 
 const float screen_rotate_size = 0.06f;
@@ -51,8 +48,7 @@ bool can_activate()
 	return ImGui::IsItemHovered() && ImGui::IsMouseClicked(0);
 }
 
-TransformerTool::TransformerTool(tke::DisplayLayer *_layer) :
-	layer(_layer),
+TransformerTool::TransformerTool() :
 	operation(TRANSLATE),
 	mode(LOCAL),
 	type(NONE),
@@ -62,7 +58,6 @@ TransformerTool::TransformerTool(tke::DisplayLayer *_layer) :
 	target(nullptr),
 	enable(true)
 {
-	renderer = std::make_unique<tke::PlainRenderer>();
 }
 
 bool TransformerTool::is_over()
@@ -153,7 +148,7 @@ void TransformerTool::compute_colors(ImU32 *colors, int type)
 
 int TransformerTool::get_move_type( glm::vec3 *hit_proportion)
 {
-	ImGuiIO& io = ImGui::GetIO();
+	auto &io = ImGui::GetIO();
 	int type = TransformerTool::NONE;
 
 	if (io.MousePos.x >= screen_square_min.x && io.MousePos.x <= screen_square_max.x &&
@@ -192,7 +187,7 @@ int TransformerTool::get_move_type( glm::vec3 *hit_proportion)
 
 int TransformerTool::get_rotate_type()
 {
-	ImGuiIO& io = ImGui::GetIO();
+	auto &io = ImGui::GetIO();
 	int type = NONE;
 
 	glm::vec3 delta_screen(io.MousePos.x - screen_square_center.x, io.MousePos.y - screen_square_center.y, 0.f);
@@ -222,7 +217,7 @@ int TransformerTool::get_rotate_type()
 
 int TransformerTool::get_scale_type()
 {
-	ImGuiIO& io = ImGui::GetIO();
+	auto &io = ImGui::GetIO();
 	int type = NONE;
 
 	if (io.MousePos.x >= screen_square_min.x && io.MousePos.x <= screen_square_max.x &&
@@ -272,7 +267,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 	if (!draw_list)
 		return;
 
-	ImGuiIO& io = ImGui::GetIO();
+	auto &io = ImGui::GetIO();
 
 	window_pos = ImGui::GetWindowPos();
 	window_size = ImGui::GetWindowSize();
