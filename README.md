@@ -18,6 +18,8 @@ spirv-cross https://github.com/KhronosGroup/SPIRV-Cross
 
 imgui https://github.com/ocornut/imgui
 
+ImGuizmo https://github.com/CedricGuillemet/ImGuizmo
+
 FontAwesome https://github.com/juliettef/IconFontCppHeaders
 
 PhysX https://github.com/NVIDIAGameWorks/PhysX-3.3
