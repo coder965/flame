@@ -13,4 +13,9 @@ ShaderEditor::~ShaderEditor()
 	shader_editor = nullptr;
 }
 
+void ShaderEditor::on_bottom_area_show()
+{
+
+}
+
 ShaderEditor *shader_editor = nullptr;

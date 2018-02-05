@@ -14,6 +14,7 @@ struct ShaderEditor : FileSelector
 
 	ShaderEditor();
 	~ShaderEditor();
+	virtual void on_bottom_area_show();
 };
 
 extern ShaderEditor *shader_editor;

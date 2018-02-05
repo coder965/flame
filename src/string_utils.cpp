@@ -17,6 +17,13 @@ namespace tke
 		return lineNumber;
 	}
 
+	std::string string_cut(const std::string &str, int length)
+	{
+		if (length < 0)
+			length = str.size() + length;
+		return std::string(str.begin(), str.begin() + length);
+	}
+
 	std::string translate(int srcCP, int dstCP, const std::string &src)
 	{
 		auto wbuf = new wchar_t[src.size() + 1];
