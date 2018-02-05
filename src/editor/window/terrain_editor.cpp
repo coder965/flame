@@ -12,16 +12,16 @@
 #include "file_selector.h"
 
 TerrainEditor::TerrainEditor() :
-	Window("Terrain -", true, false),
+	Window("Terrain -", tke::ui::WindowHasMenu | tke::ui::WindowNoSavedSettings),
 	layer(true)
 {
+	first_cx = 800;
+	first_cy = 600;
+
 	camera_node = new tke::Node(tke::NodeTypeNode);
 	camera = new tke::CameraComponent;
 	camera_node->add_component(camera);
 	tke::root_node->add_child(camera_node);
-
-	first_cx = 800;
-	first_cy = 600;
 
 	create_vertex();
 
@@ -35,11 +35,12 @@ TerrainEditor::~TerrainEditor()
 
 struct SaveModelDialog : FileSelector
 {
-	bool first = true;
-
 	SaveModelDialog() :
-		FileSelector("Save Model", true, true, false, true, 800, 600)
+		FileSelector("Save Model", FileSelectorSave, tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoRightArea)
 	{
+		first_cx = 800;
+		first_cy = 600;
+
 		set_current_path("d:\\Tk_Engine\\editor\\");
 	}
 };
@@ -119,7 +120,7 @@ void TerrainEditor::on_show()
 	}
 
 	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
+	ImVec2 image_size = ImVec2(layer.image->get_cx(), layer.image->get_cy());
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 	draw_list->AddImage(ImGui::ImageID(layer.image), image_pos, image_pos + image_size);
@@ -156,7 +157,7 @@ void TerrainEditor::on_show()
 						auto fl_x = glm::floor(lx);
 						auto fl_y = glm::floor(lz);
 
-						static const auto fChangeHeight = [&](float x, float y, float px, float py) {
+						auto fChangeHeight = [&](float x, float y, float px, float py) {
 							auto dis = glm::distance(glm::vec2(x, y), glm::vec2(px, py));
 							vertexs[y * vxcount + x].position.y += dis * 
 								(tke::mouseLeft.justDown ? 1.f : -1.f);
@@ -167,7 +168,7 @@ void TerrainEditor::on_show()
 						fChangeHeight(fl_x + 1, fl_y + 1, lx, lz);
 						fChangeHeight(fl_x, fl_y + 1, lx, lz);
 
-						static const auto fGetHeight = [&](float x, float y) {
+						auto fGetHeight = [&](float x, float y) {
 							x = glm::clamp(x, 0.f, (float)block_count);
 							y = glm::clamp(y, 0.f, (float)block_count);
 							return vertexs[y * vxcount + x].position.y;

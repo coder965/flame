@@ -15,7 +15,53 @@ namespace tke
 	{
 	}
 
-	ImageData::ImageData() :
+	void ImageDataLevel::calc_pitch(int bpp)
+	{
+		pitch = PITCH(cx * (bpp / 8));
+	}
+
+	void ImageDataLevel::calc_size()
+	{
+		size = pitch * cy;
+	}
+
+	void ImageDataLevel::set_data(unsigned char *_data)
+	{
+		data = std::make_unique<unsigned char[]>(size);
+		memcpy(data.get(), _data, size);
+	}
+
+	unsigned char ImageDataLevel::get_r(float _x, float _y, int bpp)
+	{
+		if (!data || _x < 0.f || _y < 0.f || _x >= cx || _y >= cy)
+			return 0;
+
+		auto x = glm::fract(_x);
+		int X = glm::floor(_x);
+		auto y = glm::fract(_y);
+		int Y = glm::floor(_y);
+
+#define gd(a, b) (float)data[(a) * (bpp / 8) + (b) * pitch]
+		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
+#undef gd
+	}
+
+	unsigned char ImageDataLevel::get_a(float _x, float _y, int bpp)
+	{
+		if (!data || _x < 0.f || _y < 0.f || _x >= cx || _y >= cy)
+			return 0;
+
+		auto x = glm::fract(_x);
+		int X = glm::floor(_x);
+		auto y = glm::fract(_y);
+		int Y = glm::floor(_y);
+
+#define gd(a, b) (float)data[(a) * (bpp / 8) + 3 + (b) * pitch]
+		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
+#undef gd
+	}
+
+	ImageData::ImageData(int _level) :
 		file_type(ImageFileTypeNull),
 		bpp(0),
 		channel(0),
@@ -23,10 +69,28 @@ namespace tke
 		total_size(0),
 		sRGB(false)
 	{
-		levels.resize(1);
+		assert(_level >= 1);
+		levels.resize(_level);
+		for (int i = 0; i < _level; i++)
+			levels[i] = std::make_unique<ImageDataLevel>();
 	}
 
-	std::unique_ptr<ImageData> createImageData(const std::string &filename)
+	int ImageData::get_cx(int _level) const
+	{
+		return levels[_level]->cx;
+	}
+
+	int ImageData::get_cy(int _level) const
+	{
+		return levels[_level]->cy;
+	}
+
+	unsigned char *ImageData::get_data(int _level) const
+	{
+		return levels[_level]->data.get();
+	}
+
+	std::unique_ptr<ImageData> create_image_data(const std::string &filename)
 	{
 		std::fs::path path(filename);
 		if (!std::fs::exists(path))
@@ -45,7 +109,7 @@ namespace tke
 			assert(!gli::is_compressed(Texture.format()) && Target == gli::TARGET_2D);
 			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
 
-			auto data = std::make_unique<ImageData>();
+			auto data = std::make_unique<ImageData>(Texture.levels());
 			data->file_type = ext == ".ktx" ? ImageFileTypeKTX : ImageFileTypeDDS;
 			switch (Format.External)
 			{
@@ -196,18 +260,14 @@ namespace tke
 					// not supported yet
 					return nullptr;
 			}
-			data->levels.resize(Texture.levels());
-
-			auto pixel_size = data->bpp / 8;
 			for (int l = 0; l < Texture.levels(); l++)
 			{
 				glm::tvec3<size_t> Extent(Texture.extent(l));
-				data->levels[l].cx = Extent.x;
-				data->levels[l].cy = Extent.y;
-				data->levels[l].pitch = PITCH(data->levels[l].cx * pixel_size);
-				data->levels[l].size = data->levels[l].pitch * data->levels[l].cy;
-				data->levels[l].v = std::make_unique<unsigned char[]>(data->levels[l].size);
-				memcpy(data->levels[l].v.get(), Texture.data(0, 0, l), data->levels[l].size);
+				data->levels[l]->cx = Extent.x;
+				data->levels[l]->cy = Extent.y;
+				data->levels[l]->calc_pitch(data->bpp);
+				data->levels[l]->calc_size();
+				data->levels[l]->set_data((unsigned char *)Texture.data(0, 0, l));
 			}
 
 			return data;
@@ -264,18 +324,17 @@ namespace tke
 		}
 		data->bpp = FreeImage_GetBPP(dib);
 
-		data->levels[0].cx = FreeImage_GetWidth(dib);
-		data->levels[0].cy = FreeImage_GetHeight(dib);
-		data->levels[0].pitch = FreeImage_GetPitch(dib);
-		data->levels[0].size = data->levels[0].pitch * data->levels[0].cy;
-		data->levels[0].v = std::make_unique<unsigned char[]>(data->levels[0].size);
-		memcpy(data->levels[0].v.get(), FreeImage_GetBits(dib), data->levels[0].size);
+		data->levels[0]->cx = FreeImage_GetWidth(dib);
+		data->levels[0]->cy = FreeImage_GetHeight(dib);
+		data->levels[0]->pitch = FreeImage_GetPitch(dib);
+		data->levels[0]->calc_size();
+		data->levels[0]->set_data(FreeImage_GetBits(dib));
 		FreeImage_Unload(dib);
 
 		return data;
 	}
 
-	void newImageFile(const std::string &filename, int cx, int cy, int bpp)
+	void new_image_file(const std::string &filename, int cx, int cy, int bpp)
 	{
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
 		auto dib = FreeImage_Allocate(cx, cy, bpp);
@@ -283,32 +342,16 @@ namespace tke
 		FreeImage_Unload(dib);
 	}
 
-	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp)
+	void save_image_file(const std::string &filename, unsigned char *data, int cx, int cy, int bpp)
 	{
 		std::experimental::filesystem::path path(filename);
 		auto ext = path.extension().string();
 		if (ext == ".ktx")
-		{
-
-		}
+			assert(0); // WIP
 
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		auto dib = FreeImage_ConvertFromRawBits(data.v.get(), data.cx, data.cy, data.pitch, bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
+		auto dib = FreeImage_ConvertFromRawBits(data, cx, cy, PITCH(cx * (bpp / 8)), bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
 		FreeImage_Save(fif, dib, filename.c_str());
-		FreeImage_Unload(dib);
-	}
-
-	void saveBitmap24(const std::string &filename, int width, int height, void *data)
-	{
-		auto dib = FreeImage_Allocate(width, height, 24);
-		FreeImage_Save(FIF_BMP, dib, filename.c_str());
-		FreeImage_Unload(dib);
-	}
-
-	void saveBitmap32(const std::string &filename, int width, int height, void *data)
-	{
-		auto dib = FreeImage_Allocate(width, height, 32);
-		FreeImage_Save(FIF_BMP, dib, filename.c_str());
 		FreeImage_Unload(dib);
 	}
 }

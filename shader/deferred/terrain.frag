@@ -2,8 +2,6 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#include "..\debug.h"
-
 layout(binding = 1) uniform ubo_matrix_
 {
 	mat4 proj;

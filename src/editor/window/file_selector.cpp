@@ -3,16 +3,16 @@
 #include "../../ui/ui.h"
 #include "file_selector.h"
 
-FileSelector::FileSelector(const std::string &_title, bool _modal, bool _enable_file, 
-	bool _enable_right_region, bool _save_mode, int _cx, int _cy, bool _tree_mode) :
-	Window(_title, false, true, _modal),
-	enable_file(_enable_file), 
-	enable_right_region(_enable_right_region), 
-	save_mode(_save_mode), 
-	tree_mode(_tree_mode)
+FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, unsigned int window_flags, unsigned int 
+	flags) :
+	Window(_title, window_flags),
+	io_mode(io),
+	enable_file(!(flags & FileSelectorNoFiles)),
+	enable_right_area(!(flags & FileSelectorNoRightArea)), 
+	tree_mode(flags & FileSelectorTreeMode),
+	splitter(true)
 {
-	first_cx = _cx;
-	first_cy = _cy;
+	splitter.size[0] = 300;
 	filename[0] = 0;
 	set_current_path(tke::get_exe_path());
 }
@@ -25,24 +25,34 @@ const char *drivers[] = {
 	""
 };
 
-void FileSelector::set_current_path(const std::string &s)
+void FileSelector::set_current_path(const std::string &s, bool need_choose_driver)
 {
 	curr_dir.filename = s;
-	std::fs::path path(s);
+	need_refresh = true;
+	if (!tree_mode)
 	{
+
+	}
+	else
+	{
+		std::fs::path path(s);
 		auto str = path.filename().string();
 		curr_dir.value = str;
 		curr_dir.name = ICON_FA_FOLDER_O" " + str;
 	}
-	driver_index = 0;
-	auto root_name = path.root_name().string();
-	std::transform(root_name.begin(), root_name.end(), root_name.begin(), tolower);
-	for (int i = 0; i < TK_ARRAYSIZE(drivers); i++)
+	if (need_choose_driver)
 	{
-		if (root_name == drivers[i])
+		driver_index = 0;
+		std::fs::path path(s);
+		auto root_name = path.root_name().string();
+		std::transform(root_name.begin(), root_name.end(), root_name.begin(), tolower);
+		for (int i = 0; i < TK_ARRAYSIZE(drivers); i++)
 		{
-			driver_index = i;
-			break;
+			if (root_name == drivers[i])
+			{
+				driver_index = i;
+				break;
+			}
 		}
 	}
 }
@@ -136,62 +146,67 @@ void FileSelector::on_show()
 
 	const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
 
-	if (enable_right_region)
+	if (enable_right_area)
 	{
-		ImGui::Splitter(true, &left_region_width, &right_region_width, 50.f, 50.f, -1, (ImGui::GetStyle().WindowPadding.x - ImGui::SplitterThickness) / 2.f);
-		ImGui::BeginChild("left", ImVec2(left_region_width, 0), true);
+		splitter.set_size_greedily();
+		splitter.do_split();
+		ImGui::BeginChild("left", ImVec2(splitter.size[0], 0), true);
 	}
 
 	if (!tree_mode)
 	{
 		on_top_area_show();
 
-		ImGui::PushItemWidth(100);
 		auto driver_count = TK_ARRAYSIZE(drivers) - 1;
 		if (user_define_extra_path.size() != 0)
 		{
 			drivers[TK_ARRAYSIZE(drivers) - 1] = user_define_extra_path.c_str();
 			driver_count++;
 		}
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
-		if (ImGui::Combo("##driver", &driver_index, drivers, driver_count))
+		if (ImGui::IconButton(ICON_FA_CHEVRON_RIGHT))
+			ImGui::OpenPopup("DriverPopup");
+		if (ImGui::BeginPopup("DriverPopup"))
 		{
-			auto d = std::string(drivers[driver_index]);
-			if (d != user_define_extra_path)
-				d += "\\";
-			curr_dir.filename = d;
-			need_refresh = true;
+			for (int i = 0; i < driver_count; i++)
+			{
+				if (ImGui::Selectable(drivers[i], driver_index == i))
+				{
+					driver_index = i;
+					auto d = std::string(drivers[driver_index]);
+					if (d != user_define_extra_path)
+						d += "\\";
+					set_current_path(d);
+				}
+			}
+			ImGui::EndPopup();
 		}
-		ImGui::PopStyleVar();
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		ImGui::Text(curr_dir.filename.c_str());
 		ImGui::SameLine();
 		{
-			static float buttonWidth = 100.f;
-			ImGui::SameLine(ImGui::GetWindowWidth() - buttonWidth - itemSpacing);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			if (ImGui::Button(ICON_FA_CHEVRON_UP))
+			auto offset = 5.f;
+			auto pos = ImGui::GetCursorPosY();
+			ImGui::SetCursorPosY(pos - offset);
+			ImGui::Text(curr_dir.filename.c_str());
+			pos = ImGui::GetCursorPosY();
+			ImGui::SetCursorPosY(pos + offset);
+		}
+		ImGui::Separator();
+
+		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
+		auto index = 0;
+		if (ImGui::Selectable(ICON_FA_FOLDER_O" ..", select_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
+		{
+			select_index = index;
+			if (ImGui::IsMouseDoubleClicked(0))
 			{
 				if (curr_dir.filename != user_define_extra_path && on_parent_path())
 				{
 					std::fs::path path(curr_dir.filename);
 					if (path.root_path() != path)
-					{
-						curr_dir.filename = path.parent_path().string();
-						need_refresh = true;
-					}
+						set_current_path(path.parent_path().string());
 				}
 			}
-			buttonWidth = ImGui::GetItemRectSize().x;
 		}
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Parent Path");
-		ImGui::PopStyleColor();
-		ImGui::Separator();
-
-		ImGui::BeginChild("list", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
-		auto index = 0;
+		index++;
 		for (auto &i : curr_dir.dir_list)
 		{
 			if (ImGui::Selectable(i->name.c_str(), select_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
@@ -200,10 +215,7 @@ void FileSelector::on_show()
 				on_dir_item_selected(i.get());
 				select_index = index;
 				if (ImGui::IsMouseDoubleClicked(0))
-				{
-					curr_dir.filename = (std::fs::path(curr_dir.filename) / i->value).string();
-					need_refresh = true;
-				}
+					set_current_path((std::fs::path(curr_dir.filename) / i->value).string());
 			}
 			index++;
 		}
@@ -259,7 +271,7 @@ void FileSelector::on_show()
 		fShowDir(&curr_dir);
 	}
 
-	if (enable_right_region)
+	if (enable_right_area)
 	{
 		ImGui::EndChild();
 		ImGui::SameLine();
@@ -322,7 +334,7 @@ void FileSelector::on_bottom_area_show()
 	if (ImGui::Button("  Ok  "))
 	{
 		auto path = std::fs::path(curr_dir.filename) / filename;
-		if (save_mode == 1 || std::fs::exists(path))
+		if (io_mode == FileSelectorSave || std::fs::exists(path))
 		{
 			if (callback(path.string()))
 			{
@@ -347,9 +359,11 @@ void FileSelector::on_right_area_show()
 {
 }
 
-DirSelectorDialog::DirSelectorDialog()
-	:FileSelector("Dir Selector", true, false, false, false, 800, 600)
+DirSelectorDialog::DirSelectorDialog() :
+	FileSelector("Dir Selector", FileSelectorOpen, tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoFiles | FileSelectorNoRightArea)
 {
+	first_cx = 800;
+	first_cy = 600;
 }
 
 void DirSelectorDialog::open(const std::string &default_dir, const std::function<bool(std::string)> &_callback)

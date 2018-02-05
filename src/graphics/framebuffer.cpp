@@ -16,7 +16,7 @@ namespace tke
 	std::shared_ptr<Framebuffer> getFramebuffer(Image *i, RenderPass *renderPass, int level)
 	{
 		auto view = i->get_view(level);
-		return getFramebuffer(i->levels[level].cx, i->levels[level].cy, renderPass, 1, &view);
+		return getFramebuffer(i->levels[level]->cx, i->levels[level]->cy, renderPass, 1, &view);
 	}
 
 	std::shared_ptr<Framebuffer> getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)

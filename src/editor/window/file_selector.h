@@ -6,14 +6,28 @@
 #include "../../file_utils.h"
 #include "../../ui/ui.h"
 
+enum FileSelectorIo
+{
+	FileSelectorOpen,
+	FileSelectorSave
+};
+
+enum FileSelectorCreateFlag
+{
+	FileSelectorCreateFlagNull,
+	FileSelectorNoFiles = 1 << 0,
+	FileSelectorNoRightArea = 1 << 1,
+	FileSelectorTreeMode = 1 << 2
+};
+
 struct FileSelector : tke::ui::Window
 {
+	bool io_mode;
 	bool enable_file;
-	bool enable_right_region = false;
-	float left_region_width = 300.f;
-	float right_region_width;
-	bool save_mode;
+	bool enable_right_area = false;
 	bool tree_mode;
+
+	ImGui::Splitter splitter;
 
 	struct ItemData
 	{
@@ -48,9 +62,9 @@ struct FileSelector : tke::ui::Window
 	std::function<bool(std::string)> callback;
 	std::string user_define_extra_path;
 
-	// mode: 0 - for open, 1 - for save
-	FileSelector(const std::string &_title, bool _modal, bool _enable_file, bool _enable_right_region, bool _save_mode, int _cx = 0, int _cy = 0, bool _tree_mode = false);
-	void set_current_path(const std::string &s);
+	FileSelector(const std::string &_title, FileSelectorIo io, unsigned int window_flags = 
+		tke::ui::WindowCreateFlagNull, unsigned int flags = FileSelectorCreateFlagNull);
+	void set_current_path(const std::string &s, bool need_choose_driver = true);
 	void refresh();
 	virtual void on_show() override;
 	virtual bool on_refresh();

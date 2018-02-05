@@ -12,42 +12,31 @@ namespace tke
 {
 	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
-		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
+		bpp(0),
+		layer(1),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
-		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
-		{
-			type = TypeDepth;
-			aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
-		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-		{
-			type = TypeDepthStencil;
-			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-		else
-		{
-			type = TypeColor;
-			aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-		}
+		set_type_and_aspect_from_format();
 
 		assert(_level >= 1);
 		assert(_layer >= 1);
 
-		if (_level > 1)
-			levels.resize(_level);
-
 		auto cx = _cx;
 		auto cy = _cy;
+		levels.resize(_level);
 		for (int i = 0; i < _level; i++)
 		{
-			levels[i].cx = cx;
-			levels[i].cy = cy;
-			cx >>= 1; cx = glm::max(cx, 1);
-			cy >>= 1; cy = glm::max(cy, 1);
+			levels[i] = std::make_unique<ImageLevel>();
+			levels[i]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
+			levels[i]->cx = cx;
+			levels[i]->cy = cy;
+			cx >>= 1;
+			cy >>= 1;
+			cx = glm::max(cx, 1);
+			cy = glm::max(cy, 1);
 		}
 
 		VkImageCreateInfo imageInfo = {};
@@ -60,7 +49,7 @@ namespace tke
 		imageInfo.arrayLayers = _layer;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = layout;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = usage;
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -82,7 +71,7 @@ namespace tke
 		res = vkBindImageMemory(vk_device.v, v, memory, 0);
 		assert(res == VK_SUCCESS);
 
-		total_size = memRequirements.size;
+		//total_size = memRequirements.size;
 
 		if (need_general_layout)
 		{
@@ -91,20 +80,24 @@ namespace tke
 		}
 	}
 
-	Image::Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format) :
-		type(_type),
+	Image::Image(VkImage _image, int _cx, int _cy, VkFormat _format) :
 		v(_image),
 		memory(0),
 		format(_format),
-		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
+		bpp(0),
+		layer(1),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
-		aspect = type == TypeColor ? VK_IMAGE_ASPECT_COLOR_BIT : (type == TypeDepth ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-		levels[0].cx = _cx;
-		levels[0].cy = _cy;
+		set_type_and_aspect_from_format();
+
+		levels.resize(1);
+		levels[0] = std::make_unique<ImageLevel>();
+		levels[0]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		levels[0]->cx = _cx;
+		levels[0]->cy = _cy;
 	}
 
 	Image::~Image()
@@ -118,8 +111,22 @@ namespace tke
 		}
 	}
 
+	int Image::get_cx(int _level) const
+	{
+		return levels[_level]->cx;
+	}
+
+	int Image::get_cy(int _level) const
+	{
+		return levels[_level]->cy;
+	}
+
 	void Image::clear(const glm::vec4 &color)
 	{
+		std::vector<VkImageLayout> last_layouts(levels.size());
+		for (int i = 0; i < levels.size(); i++)
+			last_layouts[i] = levels[i]->layout;
+		transition_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		auto cb = begineOnceCommandBuffer();
 		VkClearColorValue clear_value = { color.x, color.y, color.z, color.a };
 		VkImageSubresourceRange range = {
@@ -127,40 +134,10 @@ namespace tke
 			0, levels.size(),
 			0, 1
 		};
-		vkCmdClearColorImage(cb->v, v, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &range);
+		vkCmdClearColorImage(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
 		endOnceCommandBuffer(cb);
-	}
-
-	unsigned char Image::get_r(float _x, float _y)
-	{
-		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
-			return 0;
-
-		auto x = glm::fract(_x);
-		int X = glm::floor(_x);
-		auto y = glm::fract(_y);
-		int Y = glm::floor(_y);
-
-		auto pixel_size = bpp / 8;
-#define gd(a, b) (float)levels[0].v[(a) * pixel_size + (b) * levels[0].pitch]
-		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
-#undef gd
-	}
-
-	unsigned char Image::get_a(float _x, float _y)
-	{
-		if (!levels[0].v || _x < 0.f || _y < 0.f || _x >= levels[0].cx || _y >= levels[0].cy)
-			return 0;
-
-		auto x = glm::fract(_x);
-		int X = glm::floor(_x);
-		auto y = glm::fract(_y);
-		int Y = glm::floor(_y);
-
-		auto pixel_size = bpp / 8;
-#define gd(a, b) (float)levels[0].v[(a) * pixel_size + 3 + (b) * levels[0].pitch]
-		return glm::mix(glm::mix(gd(X, Y), gd(X + 1, Y), x), glm::mix(gd(X, Y + 1), gd(X + 1, Y + 1), x), y);
-#undef gd
+		for (int i = 0; i < levels.size(); i++)
+			transition_layout(i, last_layouts[i]);
 	}
 
 	void Image::transition_layout(int _level, VkImageLayout _layout)
@@ -169,7 +146,7 @@ namespace tke
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = layout;
+		barrier.oldLayout = levels[_level]->layout;
 		barrier.newLayout = _layout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -180,7 +157,7 @@ namespace tke
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
 
-		switch (layout)
+		switch (barrier.oldLayout)
 		{
 			case VK_IMAGE_LAYOUT_UNDEFINED:
 				//barrier.srcAccessMask |= VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -245,7 +222,13 @@ namespace tke
 
 		endOnceCommandBuffer(cb);
 
-		layout = _layout;
+		levels[_level]->layout = _layout;
+	}
+
+	void Image::transition_layout(VkImageLayout _layout)
+	{
+		for (auto i = 0; i < levels.size(); i++)
+			transition_layout(i, _layout);
 	}
 
 	void Image::fill_data(int _level, unsigned char *src, size_t _size)
@@ -258,15 +241,15 @@ namespace tke
 		memcpy(map, src, _size);
 		stagingBuffer.unmap();
 
-		levels[_level].size = _size;
+		//levels[_level].size = _size;
 
 		VkBufferImageCopy region = {};
 		region.imageSubresource.aspectMask = aspect;
 		region.imageSubresource.mipLevel = 0;
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = levels[_level].cx;
-		region.imageExtent.height = levels[_level].cy;
+		region.imageExtent.width = levels[_level]->cx;
+		region.imageExtent.height = levels[_level]->cy;
 		region.imageExtent.depth = 1;
 		region.bufferOffset = 0;
 
@@ -310,6 +293,25 @@ namespace tke
 		return view->v;
 	}
 
+	void Image::set_type_and_aspect_from_format()
+	{
+		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
+		{
+			type = TypeDepth;
+			aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
+		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
+		{
+			type = TypeDepthStencil;
+			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+		else
+		{
+			type = TypeColor;
+			aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+		}
+	}
+
 	VkDescriptorImageInfo *Image::get_info(VkImageView view, VkSampler sampler)
 	{
 		for (auto &i : infos)
@@ -327,7 +329,7 @@ namespace tke
 
 	Image *load_image(const std::string &filename)
 	{
-		auto image_data = createImageData(filename);
+		auto image_data = create_image_data(filename);
 		if (!image_data)
 			return nullptr;
 
@@ -374,16 +376,16 @@ namespace tke
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
-		auto i = new Image(image_data->levels[0].cx, image_data->levels[0].cy,
+		auto i = new Image(image_data->levels[0]->cx, image_data->levels[0]->cy,
 			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_data->levels.size(), 1, false);
 		for (int l = 0; l < image_data->levels.size(); l++)
 		{
-			i->fill_data(l, image_data->levels[l].v.get(), image_data->levels[l].size);
-			i->levels[l].pitch = image_data->levels[l].pitch;
+			i->fill_data(l, image_data->levels[l]->data.get(), image_data->levels[l]->size);
+			i->levels[l]->pitch = image_data->levels[l]->pitch;
 		}
-		i->filename = filename;
 		i->bpp = image_data->bpp;
 		i->sRGB = sRGB;
+		i->filename = filename;
 
 		return i;
 	}
@@ -415,13 +417,13 @@ namespace tke
 
 	void init_image()
 	{
-		default_color_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_color_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		default_color_image->filename = "[default_color_image]";
 		default_color_image->clear(glm::vec4(0.f));
-		default_normal_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_normal_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		default_normal_image->filename = "[default_normal_image]";
 		default_normal_image->clear(glm::vec4(0.f, 0.f, 1.f, 0.f));
-		default_blend_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		default_blend_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		default_blend_image->filename = "[default_blend_image]";
 		default_blend_image->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
 	}

@@ -174,8 +174,10 @@
     </ClCompile>
     <ClCompile Include="..\src\editor\window\resource_explorer.cpp" />
     <ClCompile Include="..\src\editor\window\scene_editor.cpp" />
+    <ClCompile Include="..\src\editor\window\shader_editor.cpp" />
     <ClCompile Include="..\src\editor\window\show_material.cpp" />
     <ClCompile Include="..\src\editor\window\terrain_editor.cpp" />
+    <ClCompile Include="..\src\editor\window\text_editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\editor\select.h" />
@@ -188,8 +190,10 @@
     <ClInclude Include="..\src\editor\window\model_editor.h" />
     <ClInclude Include="..\src\editor\window\resource_explorer.h" />
     <ClInclude Include="..\src\editor\window\scene_editor.h" />
+    <ClInclude Include="..\src\editor\window\shader_editor.h" />
     <ClInclude Include="..\src\editor\window\show_material.h" />
     <ClInclude Include="..\src\editor\window\terrain_editor.h" />
+    <ClInclude Include="..\src\editor\window\text_editor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

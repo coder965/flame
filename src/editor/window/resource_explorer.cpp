@@ -14,8 +14,8 @@
 
 ResourceExplorer *resourceExplorer = nullptr;
 
-ResourceExplorer::ResourceExplorer()
-	:FileSelector("Resource Explorer", false, true, true, false, 0, 0, true)
+ResourceExplorer::ResourceExplorer() :
+	FileSelector("Resource Explorer", FileSelectorOpen, 0, FileSelectorTreeMode)
 {
 }
 
@@ -36,9 +36,9 @@ void ResourceExplorer::on_right_area_show()
 		const ImVec2 img_size(64.f, 64.f);
 		const ImVec2 widget_size = img_size + ImVec2(0.f, 20.f);
 		auto &style = ImGui::GetStyle();
-		int column_count = (right_region_width - style.WindowPadding.x * 2.f) / (widget_size.x + style.FramePadding.x + style.ItemSpacing.x);
+		int column_count = (splitter.size[1] - style.WindowPadding.x * 2.f) / (widget_size.x + style.FramePadding.x + style.ItemSpacing.x);
 		ImGui::Columns(column_count < 1 ? 1 : column_count, nullptr, false);
-		static const auto fShow = [&](ItemData *d, bool is_folder) {
+		auto fShow = [&](ItemData *d, bool is_folder) {
 			auto pos = ImGui::GetCursorScreenPos();
 
 			//draw_list->PushClipRect(pos, pos + widget_size, true);

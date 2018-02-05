@@ -668,14 +668,14 @@ namespace tke
 				colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // spec roughness
 				colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE)		 // dst
 			};
-			VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 			VkAttachmentReference mrt_col_ref[] = {
-				{2, VK_IMAGE_LAYOUT_GENERAL},
-				{3, VK_IMAGE_LAYOUT_GENERAL},
-				{4, VK_IMAGE_LAYOUT_GENERAL}
+				{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+				{3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+				{4, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }
 			};
-			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+			VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 			VkSubpassDescription subpasses[] = {
 				subpassDesc(ARRAYSIZE(mrt_col_ref), mrt_col_ref, &dep_ref), // mrt
 				subpassDesc(1, &main_col_ref),                              // deferred
@@ -902,7 +902,7 @@ namespace tke
 
 	void DeferredRenderer::create_resolution_related()
 	{
-		if (mainImage && mainImage->levels[0].cx == resolution.x() && mainImage->levels[0].cy == resolution.y())
+		if (mainImage && mainImage->get_cx() == resolution.x() && mainImage->get_cy() == resolution.y())
 			return;
 
 		mainImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -971,7 +971,7 @@ namespace tke
 
 		if (sky_dirty)
 		{
-			static const auto funUpdateIBL = [&]() {
+			auto funUpdateIBL = [&]() {
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
 				{
 					auto cb = begineOnceCommandBuffer();
@@ -1089,7 +1089,7 @@ namespace tke
 
 			ambient_dirty = false;
 		}
-		static const auto fUpdateModelInstanceMatrixBuffer = [&](SpareList &list, Buffer *buffer) {
+		auto fUpdateModelInstanceMatrixBuffer = [&](SpareList &list, Buffer *buffer) {
 			if (list.get_size() > 0)
 			{
 				std::vector<VkBufferCopy> ranges;
@@ -1209,7 +1209,7 @@ namespace tke
 			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
-		static const auto fUpdateIndirect = [](SpareList &list, Buffer *buffer, int &out_count) {
+		auto fUpdateIndirect = [](SpareList &list, Buffer *buffer, int &out_count) {
 			if (list.get_size() > 0)
 			{
 				std::vector<VkDrawIndexedIndirectCommand> commands;
@@ -1382,7 +1382,7 @@ namespace tke
 				cb_shad->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
 				cb_shad->bindIndexBuffer(index_buffer.get());
 
-				static const auto fDrawDepth = [&](SpareList &list) {
+				auto fDrawDepth = [&](SpareList &list) {
 					list.iterate([&](int index, void *p, bool &remove) {
 						auto i = (ModelInstanceComponent*)p;
 						auto m = i->get_model();

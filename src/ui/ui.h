@@ -19,8 +19,21 @@ namespace ImGui
 {
 	extern const float SplitterThickness;
 
+	struct Splitter
+	{
+		bool vertically;
+		float size[2];
+		float min_size[2];
+		float draw_offset;
+
+		Splitter(bool _vertically, float _min_size1 = 50.f, float _min_size2 = 50.f);
+		void set_size_greedily();
+		void set_general_draw_offset();
+		void set_vertically(bool _vertically);
+		bool do_split();
+	};
+
 	void TextVFilted(const char* fmt, const char* filter, va_list args);
-	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size = -1.f, float offset = 0.f);
 	ImTextureID ImageID(std::shared_ptr<tke::Image> i);
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active = false);
@@ -53,19 +66,27 @@ namespace tke
 
 		enum LayoutType
 		{
-			LayoutNull,
 			LayoutCenter,
 			LayoutHorizontal,
 			LayoutVertical
 		};
-
-		struct Layout;
 
 		enum WindowTag
 		{
 			WindowTagNull,
 			WindowTagUndock,
 			WindowTagClose
+		};
+
+		struct Layout;
+
+		enum WindowCreateFlag
+		{
+			WindowCreateFlagNull,
+			WindowHasMenu = 1 << 0,
+			WindowNoSavedSettings = 1 << 1,
+			WindowModal = 1 << 2,
+			WindowBanDock = 1 << 3
 		};
 
 		struct Window
@@ -80,6 +101,7 @@ namespace tke
 			bool enable_menu;
 			bool enable_saved_settings;
 			bool modal;
+			bool enable_dock;
 			bool opened;
 
 			Layout *layout;
@@ -87,7 +109,7 @@ namespace tke
 			int tab_x;
 			int tab_width;
 
-			Window(const std::string &_title, bool _enable_menu = false, bool _enable_saved_settings = true, bool _modal = false);
+			Window(const std::string &_title, unsigned int flags = WindowCreateFlagNull);
 			virtual ~Window() {}
 			virtual void on_show() = 0;
 			virtual void save(XMLNode *) {}
@@ -110,7 +132,7 @@ namespace tke
 			float width;
 			float height;
 			float size_radio;
-			float size[2];
+			ImGui::Splitter splitter;
 
 			std::unique_ptr<Layout> children[2];
 

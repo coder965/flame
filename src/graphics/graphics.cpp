@@ -94,8 +94,8 @@ namespace tke
 		const char* pMessage,
 		void* pUserData)
 	{
-		//if (messageCode == 3)
-		//	int cut = 1;
+		if (messageCode == 6)
+			int cut = 1;
 
 		auto pr = _vulkan_errors.insert({objectType, object, location, messageCode});
 		if (pr.second)

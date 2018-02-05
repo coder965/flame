@@ -7,7 +7,7 @@
 #include "model_editor.h"
 
 ModelEditor::ModelEditor(std::shared_ptr<tke::Model> _model) :
-	Window("Model - " + model->filename, true, false),
+	Window(model->filename, tke::ui::WindowHasMenu | tke::ui::WindowNoSavedSettings),
 	model(_model), 
 	layer(true)
 {
@@ -37,7 +37,7 @@ void ModelEditor::on_show()
 	ImGui::EndMenuBar();
 
 	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(layer.image->levels[0].cx, layer.image->levels[0].cy);
+	ImVec2 image_size = ImVec2(layer.image->get_cx(), layer.image->get_cy());
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 	draw_list->AddImage(ImGui::ImageID(layer.image), image_pos, image_pos + image_size);

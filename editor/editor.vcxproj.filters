@@ -51,6 +51,12 @@
     <ClCompile Include="..\src\editor\select.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\editor\window\shader_editor.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\editor\window\text_editor.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\editor\tool\tool.h">
@@ -88,6 +94,12 @@
     </ClInclude>
     <ClInclude Include="..\src\editor\select.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\shader_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\text_editor.h">
+      <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

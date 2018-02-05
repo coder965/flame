@@ -16,7 +16,7 @@ namespace tke
 
 	unsigned int pick_up(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback)
 	{
-		if (x < 0 || y < 0 || x > pick_up_image->levels[0].cx || y > pick_up_image->levels[0].cy)
+		if (x < 0 || y < 0 || x > pick_up_image->get_cx() || y > pick_up_image->get_cy())
 			return 0;
 
 		auto cb = begineOnceCommandBuffer();

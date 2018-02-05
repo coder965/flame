@@ -201,7 +201,7 @@ namespace tke
 
 		for (int i = 0; i < 2; i++)
 		{
-			window_images[i] = new Image(Image::eSwapchain, vkImages[i], window_cx, window_cy, swapchain_format);
+			window_images[i] = new Image(vkImages[i], window_cx, window_cy, swapchain_format);
 			window_framebuffers[i] = getFramebuffer(window_images[i], renderPass_window);
 		}
 	}
@@ -347,15 +347,15 @@ namespace tke
 		window_cy = _window_cy;
 
 		{
-			auto iconData = createImageData("ico.png");
+			auto icon_data = create_image_data("ico.png");
 
 			WNDCLASSEXA wcex = {};
 			wcex.cbSize = sizeof(WNDCLASSEXA);
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.hInstance = (HINSTANCE)get_hinst();
-			wcex.hIcon = CreateIcon(wcex.hInstance, iconData->levels[0].cx,
-				iconData->levels[0].cy, 1, 32, nullptr, iconData->levels[0].v.get());
+			wcex.hIcon = CreateIcon(wcex.hInstance, icon_data->get_cx(),
+				icon_data->get_cy(), 1, icon_data->bpp, nullptr, icon_data->get_data());
 			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcex.lpszClassName = "tke_wnd";
 			RegisterClassExA(&wcex);

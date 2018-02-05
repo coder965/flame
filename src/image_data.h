@@ -21,31 +21,37 @@ namespace tke
 
 	struct ImageDataLevel
 	{
-		size_t cx;
-		size_t cy;
-		size_t pitch;
-		size_t size;
-		std::unique_ptr<unsigned char[]> v;
+		unsigned int cx;
+		unsigned int cy;
+		unsigned int pitch;
+		unsigned int size;
+		std::unique_ptr<unsigned char[]> data;
 
 		ImageDataLevel();
+		void calc_pitch(int bpp);
+		void calc_size();
+		void set_data(unsigned char *_data);
+		unsigned char get_r(float x, float y, int bpp);
+		unsigned char get_a(float x, float y, int bpp);
 	};
 
 	struct ImageData
 	{
 		ImageFileType file_type;
-		size_t bpp;
-		size_t channel;
-		std::vector<ImageDataLevel> levels;
-		int layer;
-		size_t total_size;
+		unsigned int bpp;
+		unsigned int channel;
+		std::vector<std::unique_ptr<ImageDataLevel>> levels;
+		unsigned int layer;
+		unsigned int total_size;
 		bool sRGB;
 
-		ImageData();
+		ImageData(int _level = 1);
+		int get_cx(int _level = 0) const;
+		int get_cy(int _level = 0) const;
+		unsigned char *get_data(int _level = 0) const;
 	};
 
-	std::unique_ptr<ImageData> createImageData(const std::string &filename);
-	void newImageFile(const std::string &filename, int cx, int cy, int bpp);
-	void saveImageFile(const std::string &filename, const ImageDataLevel &data, int bpp);
-	void saveBitmap24(const std::string &filename, int cx, int cy, void *data);
-	void saveBitmap32(const std::string &filename, int cx, int cy, void *data);
+	std::unique_ptr<ImageData> create_image_data(const std::string &filename);
+	void new_image_file(const std::string &filename, int cx, int cy, int bpp);
+	void save_image_file(const std::string &filename, unsigned char *data, int cx, int cy, int bpp);
 }

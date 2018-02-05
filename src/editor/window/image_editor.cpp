@@ -7,11 +7,12 @@
 #include "image_editor.h"
 
 ImageEditor::ImageEditor(const std::string &filename) :
-	Window("Image - " + image->filename, true, false)
+	Window(filename, tke::ui::WindowHasMenu | tke::ui::WindowNoSavedSettings)
 {
-	image = tke::get_image(filename);
 	first_cx = 800;
 	first_cy = 600;
+
+	image = tke::get_image(filename);
 }
 
 void ImageEditor::on_show()
@@ -20,7 +21,8 @@ void ImageEditor::on_show()
 	if (ImGui::BeginMenu("File"))
 	{
 		if (ImGui::MenuItem("Save"))
-			tke::saveImageFile(image->filename, image->levels[0], image->bpp);
+			/*tke::save_image_file(image->filename, image->levels[0], image->bpp)*/;
+		ImGui::EndMenu();
 	}
 	ImGui::EndMenuBar();
 
@@ -54,7 +56,7 @@ void ImageEditor::on_show()
 	}
 
 	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(image->levels[0].cx, image->levels[0].cy);
+	ImVec2 image_size = ImVec2(image->get_cx(), image->get_cy());
 	ImGui::InvisibleButton("canvas", image_size);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 	draw_list->AddImage(ImGui::ImageID(image), image_pos, image_pos + image_size);

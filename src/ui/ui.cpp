@@ -24,6 +24,49 @@ namespace ImGui
 {
 	const float SplitterThickness = 4.f;
 
+	Splitter::Splitter(bool _vertically, float _min_size1, float _min_size2) :
+		vertically(_vertically)
+	{
+		min_size[0] = size[0] = _min_size1;
+		min_size[1] = size[1] = _min_size2;
+		set_general_draw_offset();
+	}
+
+	void Splitter::set_size_greedily()
+	{
+		if (vertically)
+			size[1] = GetWindowWidth() - GetStyle().ItemSpacing.x - size[0];
+		else
+			size[1] = GetWindowHeight() - GetStyle().ItemSpacing.y - size[0];
+	}
+
+	void Splitter::set_general_draw_offset()
+	{
+		draw_offset = ((vertically ? ImGui::GetStyle().ItemSpacing.x : ImGui::GetStyle().ItemSpacing.y) - ImGui::SplitterThickness) / 2.f;
+	}
+
+	void Splitter::set_vertically(bool _vertically)
+	{
+		vertically = _vertically;
+		set_general_draw_offset();
+	}
+
+	bool Splitter::do_split()
+	{
+		ImGuiContext& g = *GImGui;
+		ImGuiWindow* window = g.CurrentWindow;
+		ImGuiID id = window->GetID("##Splitter");
+		ImRect bb;
+		bb.Min = window->DC.CursorPos + (vertically ? ImVec2(size[0] + draw_offset, 0.0f) : ImVec2(0.0f, size[0] + draw_offset));
+		bb.Max = bb.Min + CalcItemSize(vertically ? ImVec2(SplitterThickness, -1) : ImVec2(-1, SplitterThickness), 0.0f, 0.0f);
+		auto col = ImGui::GetStyleColorVec4(ImGuiCol_Separator);
+		col.w = 0.f;
+		PushStyleColor(ImGuiCol_Separator, col);
+		auto ret = SplitterBehavior(id, bb, vertically ? ImGuiAxis_X : ImGuiAxis_Y, &size[0], &size[1], min_size[0], min_size[1], 0.0f);
+		PopStyleColor();
+		return ret;
+	}
+
 	void TextVFilted(const char* fmt, const char* filter, va_list args)
 	{
 		ImGuiWindow* window = GetCurrentWindow();
@@ -35,26 +78,6 @@ namespace ImGui
 		if (filter[0] && !strstr(g.TempBuffer, filter))
 			return;
 		TextUnformatted(g.TempBuffer, text_end);
-	}
-
-	bool Splitter(bool split_vertically, float* size1, float* size2, float min_size1, float min_size2, float splitter_long_axis_size, float offset)
-	{
-		if (split_vertically)
-			*size2 = GetWindowWidth() - GetStyle().WindowPadding.x * 2.f - SplitterThickness - *size1;
-		else
-			*size2 = GetWindowHeight() - GetStyle().WindowPadding.y * 2.f - SplitterThickness - *size1;
-		ImGuiContext& g = *GImGui;
-		ImGuiWindow* window = g.CurrentWindow;
-		ImGuiID id = window->GetID("##Splitter");
-		ImRect bb;
-		bb.Min = window->DC.CursorPos + (split_vertically ? ImVec2(*size1 + offset, 0.0f) : ImVec2(0.0f, *size1 + offset));
-		bb.Max = bb.Min + CalcItemSize(split_vertically ? ImVec2(SplitterThickness, splitter_long_axis_size) : ImVec2(splitter_long_axis_size, SplitterThickness), 0.0f, 0.0f);
-		auto col = ImGui::GetStyleColorVec4(ImGuiCol_Separator);
-		col.w = 0.f;
-		PushStyleColor(ImGuiCol_Separator, col);
-		auto ret = SplitterBehavior(id, bb, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1, min_size2, 0.0f);
-		PopStyleColor();
-		return ret;
 	}
 
 	ImTextureID ImageID(std::shared_ptr<tke::Image> i)
@@ -107,9 +130,11 @@ namespace ImGui
 
 	bool IconButton(const char *label)
 	{
+		SetWindowFontScale(0.5f);
 		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 		auto pressed = Button(label);
 		PopStyleColor();
+		SetWindowFontScale(1.f);
 		return pressed;
 	}
 
@@ -125,11 +150,11 @@ namespace ImGui
 	bool BeginToolBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		toolbar_height = 16.f + ImGui::GetStyle().WindowPadding.y * 2.f;
-		SetNextWindowPos(ImVec2(0, ImGui::menubar_height));
+		toolbar_height = 16.f + GetStyle().WindowPadding.y * 2.f;
+		SetNextWindowPos(ImVec2(0, menubar_height));
 		SetNextWindowSize(ImVec2(tke::window_cx, toolbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
-		return ImGui::Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+		return Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 	}
 
 	void EndToolBar()
@@ -211,7 +236,7 @@ namespace tke
 			auto dirty = false;
 			if (l->is_empty())
 			{
-				l->type = LayoutNull;
+				l->type = LayoutCenter;
 				return false;
 			}
 			for (int i = 0; i < 2; i++)
@@ -238,7 +263,7 @@ namespace tke
 						l->height = c->height;
 						for (int k = 0; k < 2; k++)
 						{
-							l->size[k] = c->size[k];
+							l->splitter.size[k] = c->splitter.size[k];
 							l->windows[k].clear();
 							for (auto w : c->windows[k])
 								l->add_window(k, w);
@@ -305,14 +330,15 @@ namespace tke
 			_resize_layout(&main_layout);
 		}
 
-		Window::Window(const std::string &_title, bool _enable_menu, bool _enable_saved_settings, bool _modal) :
+		Window::Window(const std::string &_title, unsigned int flags) :
 			first(true),
 			first_cx(0),
 			first_cy(0),
 			title(_title),
-			enable_menu(_enable_menu),
-			enable_saved_settings(_enable_saved_settings),
-			modal(_modal),
+			enable_menu(flags & enable_menu),
+			enable_saved_settings(!(flags & WindowNoSavedSettings)),
+			modal(flags & WindowModal),
+			enable_dock(!(flags & WindowBanDock)),
 			opened(true),
 			_need_focus(false),
 			_tag(WindowTagNull),
@@ -326,9 +352,8 @@ namespace tke
 		{
 			if (w == nullptr)
 			{
-				if (main_layout.type != LayoutNull)
+				if (main_layout.type != LayoutCenter)
 					return;
-				main_layout.type = LayoutCenter;
 				main_layout.add_window(0, this);
 				return;
 			}
@@ -347,6 +372,7 @@ namespace tke
 				if (ori_type != LayoutCenter)
 					l = new Layout;
 				l->type = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
+				l->splitter.set_vertically(l->type == LayoutHorizontal);
 				if (ori_type != LayoutCenter || ori_idx != 1 - dir)
 				{
 					for (auto w : ori_layout->windows[ori_idx])
@@ -448,18 +474,19 @@ namespace tke
 		float get_layout_padding(bool horizontal)
 		{
 			if (horizontal)
-				return ImGui::GetStyle().ItemSpacing.x * 2.f - ImGui::SplitterThickness;
+				return ImGui::GetStyle().WindowPadding.x * 2.f - ImGui::GetStyle().ItemSpacing.x;
 			else
-				return ImGui::GetStyle().ItemSpacing.y * 2.f - ImGui::SplitterThickness;
+				return ImGui::GetStyle().WindowPadding.y * 2.f - ImGui::GetStyle().ItemSpacing.y;
 		}
 
 		Layout::Layout() :
 			parent(nullptr),
 			idx(-1),
-			type(LayoutNull),
-			size_radio(0.5f)
+			type(LayoutCenter),
+			size_radio(0.5f),
+			splitter(true)
 		{
-			size[0] = size[1] = -1.f;
+			splitter.size[0] = splitter.size[1] = -1.f;
 			curr_tab[0] = curr_tab[1] = nullptr;
 			dragging_tab[0] = dragging_tab[1] = nullptr;
 		}
@@ -489,13 +516,13 @@ namespace tke
 			{
 				if (parent->type == LayoutHorizontal)
 				{
-					width = parent->size[idx];
+					width = parent->splitter.size[idx];
 					height = parent->height - get_layout_padding(false);
 				}
 				else
 				{
 					width = parent->width - get_layout_padding(true);
-					height = parent->size[idx];
+					height = parent->splitter.size[idx];
 				}
 			}
 			float s;
@@ -510,8 +537,8 @@ namespace tke
 				default:
 					return;
 			}
-			size[0] = s * size_radio;
-			size[1] = s * (1.f - size_radio);
+			splitter.size[0] = s * size_radio;
+			splitter.size[1] = s * (1.f - size_radio);
 		}
 
 		void Layout::set_layout(int idx, Layout *l)
@@ -665,40 +692,40 @@ namespace tke
 			ImGui::EndChild();
 			if (dragging_tab[idx])
 			{
-				auto tab = dragging_tab[idx];
+				auto w = dragging_tab[idx];
 				if (mouseLeft.pressing)
 				{
 					for (auto it = windows[idx].begin(); it != windows[idx].end(); it++)
 					{
-						if (*it == tab)
+						if (*it == w)
 						{
 							auto it_ = it;
-							auto base = tab->tab_x + mouseX - tab->tab_x - dragging_tab_offset[idx];
-							if (tab != windows[idx].front())
+							auto base = w->tab_x + mouseX - w->tab_x - dragging_tab_offset[idx];
+							if (w != windows[idx].front())
 							{
 								auto t = *(--it_);
 								if (base < t->tab_x)
 								{
-									std::swap(t->tab_x, tab->tab_x);
+									std::swap(t->tab_x, w->tab_x);
 									std::swap(*it_, *it);
 									break;
 								}
 							}
-							if (tab != windows[idx].back())
+							if (w != windows[idx].back())
 							{
 								it_ = it;
 								auto t = *(++it_);
-								if (base + tab->tab_width > t->tab_x + t->tab_width)
+								if (base + w->tab_width > t->tab_x + t->tab_width)
 								{
-									std::swap(t->tab_x, tab->tab_x);
+									std::swap(t->tab_x, w->tab_x);
 									std::swap(*it_, *it);
 								}
 							}
 							break;
 						}
 					}
-					if (mouseY < pos.y || mouseY > pos.y + line_height)
-						tab->_tag = WindowTagUndock;
+					if (w->enable_dock && (mouseY < pos.y || mouseY > pos.y + line_height))
+						w->_tag = WindowTagUndock;
 				}
 				else
 					dragging_tab[idx] = nullptr;
@@ -725,13 +752,13 @@ namespace tke
 					break;
 				case LayoutHorizontal: case LayoutVertical:
 				{
-					ImGui::Splitter(type == LayoutHorizontal, &size[0], &size[1], 50.f, 50.f, -1.f, ((type == LayoutHorizontal ? 
-						ImGui::GetStyle().ItemSpacing.x : ImGui::GetStyle().ItemSpacing.y) - ImGui::SplitterThickness) / 2.f);
-					size_radio = size[0] / (size[0] + size[1]);
+					splitter.do_split();
+					splitter.set_size_greedily();
+					size_radio = splitter.size[0] / (splitter.size[0] + splitter.size[1]);
 					for (int i = 0; i < 2; i++)
 					{
 						ImGui::PushID(i);
-						ImGui::BeginChild("##part", type == LayoutHorizontal ? ImVec2(size[i], 0) : ImVec2(0, size[i]), false);
+						ImGui::BeginChild("##part", type == LayoutHorizontal ? ImVec2(splitter.size[i], 0) : ImVec2(0, splitter.size[i]), false);
 						if (children[i])
 							children[i]->show();
 						else
@@ -874,6 +901,7 @@ namespace tke
 			else
 				assert(0); // WIP
 
+			layout->splitter.set_vertically(layout->type == LayoutHorizontal);
 			layout->set_size();
 
 			for (int i = 0; i < 2; i++)
@@ -932,11 +960,11 @@ namespace tke
 			static bool first = true;
 			if (first)
 			{
+				on_resize(window_cx, window_cy);
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
 					_load_layout(&doc, &main_layout);
 				cleanup_layout();
-				on_resize(window_cx, window_cy);
 				add_resize_listener(on_resize);
 
 				first = false;
@@ -979,7 +1007,7 @@ namespace tke
 				w->_tag = WindowTagNull;
 			}
 
-			if (main_layout.type != LayoutNull)
+			if (!main_layout.is_empty(0))
 			{
 				ImGui::SetNextWindowPos(ImVec2(0.f, ImGui::menubar_height + ImGui::toolbar_height));
 				ImGui::SetNextWindowSize(ImVec2(main_layout.width, main_layout.height));

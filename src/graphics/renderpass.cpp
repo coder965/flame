@@ -129,9 +129,9 @@ namespace tke
 			auto att5 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
 			auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_GENERAL };
-			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_GENERAL };
+			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
 			VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
 			VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);

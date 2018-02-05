@@ -7,6 +7,7 @@
 #include "window/hierarchy.h"
 #include "window/inspector.h"
 #include "window/scene_editor.h"
+#include "window/shader_editor.h"
 #include "window/image_editor.h"
 
 struct NewImageDialog : FileSelector
@@ -16,12 +17,15 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog() :
-		FileSelector("New Image", true, true, true, true, 800, 600)
+		FileSelector("New Image", FileSelectorSave, tke::ui::WindowModal | tke::ui::WindowNoSavedSettings)
 	{
+		first_cx = 800;
+		first_cy = 600;
+
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
 				return false;
-			tke::newImageFile(s, cx, cy, 32);
+			tke::new_image_file(s, cx, cy, 32);
 			return true;
 		};
 	}
@@ -161,6 +165,12 @@ int main(int argc, char** argv)
 					inspector_window = new InspectorWindow;
 				inspector_window->_need_focus = true;
 			}
+			if (ImGui::MenuItem("Shader Editor"))
+			{
+				if (!shader_editor)
+					shader_editor = new ShaderEditor;
+				shader_editor->_need_focus = true;
+			}
 
 			ImGui::EndMenu();
 		}
@@ -234,7 +244,7 @@ int main(int argc, char** argv)
 						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 						if (ImGui::BeginCombo("window", target ? target->title.c_str() : ""))
 						{
-							if (tke::ui::main_layout.type == tke::ui::LayoutNull)
+							if (tke::ui::main_layout.is_empty(0))
 							{
 								if (ImGui::Selectable("Main Layout", target == nullptr))
 									target = nullptr;
@@ -269,7 +279,7 @@ int main(int argc, char** argv)
 						ImGui::PopStyleVar();
 						if (ImGui::Button("OK"))
 						{
-							if (target || tke::ui::main_layout.type == tke::ui::LayoutNull)
+							if (target || tke::ui::main_layout.is_empty(0))
 							{
 								windows_popup_w->dock(target, dir);
 								need_exit_window_popup = true;

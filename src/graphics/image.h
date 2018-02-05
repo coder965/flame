@@ -3,11 +3,19 @@
 #include <memory>
 
 #include "../math/math.h"
-#include "graphics.h"
 #include "../image_data.h"
+#include "graphics.h"
 
 namespace tke
 {
+	struct ImageLevel
+	{
+		unsigned int cx;
+		unsigned int cy;
+		unsigned int pitch;
+		VkImageLayout layout;
+	};
+
 	struct ImageView
 	{
 		int baseLevel;
@@ -17,7 +25,7 @@ namespace tke
 		VkImageView v;
 	};
 
-	struct Image : ImageData
+	struct Image
 	{
 		enum Type
 		{
@@ -32,8 +40,12 @@ namespace tke
 		VkFormat format;
 		VkImage v;
 		VkDeviceMemory memory;
-		VkImageLayout layout;
 		VkImageViewType view_type;
+
+		unsigned int bpp;
+		std::vector<std::unique_ptr<ImageLevel>> levels;
+		unsigned int layer;
+		bool sRGB;
 
 		std::vector<std::unique_ptr<ImageView>> views;
 
@@ -41,24 +53,25 @@ namespace tke
 
 		std::string filename;
 
-		bool sRGB;
-
 		int material_index;
 		int ui_index;
 
 		// must call in main thread
 		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool need_general_layout = true);
 		// must call in main thread
-		Image(Type _type, VkImage _image, int _cx, int _cy, VkFormat _format);
+		Image(VkImage _image, int _cx, int _cy, VkFormat _format);
 		// must call in main thread
 		~Image();
+		int get_cx(int _level = 0) const;
+		int get_cy(int _level = 0) const;
 		void clear(const glm::vec4 &color);
-		unsigned char get_r(float x, float y);
-		unsigned char get_a(float x, float y);
 		void transition_layout(int _level, VkImageLayout _layout);
+		void transition_layout(VkImageLayout _layout);
 		void fill_data(int _level, unsigned char *src, size_t _size);
 		VkImageView get_view(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		VkDescriptorImageInfo *get_info(VkImageView view, VkSampler sampler);
+	private:
+		void set_type_and_aspect_from_format();
 	};
 
 	Image *load_image(const std::string &filename);

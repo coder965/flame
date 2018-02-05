@@ -62,8 +62,8 @@ void InspectorWindow::on_show()
 							auto i = tke::get_image(filename);
 							if (i)
 							{
-								image_file_resolution.x = i->levels[0].cx;
-								image_file_resolution.y = i->levels[0].cy;
+								image_file_resolution.x = i->get_cx();
+								image_file_resolution.y = i->get_cy();
 							}
 							break;
 						}
