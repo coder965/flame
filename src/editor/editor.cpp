@@ -17,7 +17,7 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog() :
-		FileSelector("New Image", FileSelectorSave, tke::ui::WindowModal | tke::ui::WindowNoSavedSettings)
+		FileSelector("New Image", FileSelectorSave, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings)
 	{
 		first_cx = 800;
 		first_cy = 600;

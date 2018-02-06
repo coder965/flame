@@ -54,7 +54,9 @@ TransformerTool::TransformerTool() :
 	type(NONE),
 	enable_snap(false),
 	using_(false),
-	snap(1.f, 1.f, 1.f),
+	translate_snap(1.f),
+	rotate_snap(45.f),
+	scale_snap(0.5f),
 	target(nullptr),
 	enable(true)
 {
@@ -334,11 +336,11 @@ void TransformerTool::show(tke::CameraComponent *camera)
 							tke::ortho_normalize(model_source_normalized);
 							auto model_source_normalized_inverse = glm::inverse(model_source_normalized);
 							cumulative_delta = tke::transform(cumulative_delta, model_source_normalized_inverse);
-							compute_snap(cumulative_delta, snap);
+							compute_snap(cumulative_delta, translate_snap);
 							cumulative_delta = tke::transform(cumulative_delta, model_source_normalized);
 						}
 						else
-							compute_snap(cumulative_delta, snap);
+							compute_snap(cumulative_delta, translate_snap);
 						delta = matrix_origin + cumulative_delta - model_position;
 					}
 
@@ -405,7 +407,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 					rotation_angle = compute_angle_on_plan();
 					if (enable_snap)
 					{
-						auto snap_in_radian = glm::radians(snap[0]);
+						auto snap_in_radian = glm::radians(rotate_snap);
 						compute_snap(&rotation_angle, snap_in_radian);
 					}
 
@@ -477,7 +479,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 
 					if (enable_snap)
 					{
-						glm::vec3 scale_snap(snap[0]);
+						glm::vec3 scale_snap(scale_snap);
 						compute_snap(scale, scale_snap);
 					}
 

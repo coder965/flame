@@ -42,7 +42,9 @@ struct TransformerTool : Tool
 	Mode mode;
 	TransType type;
 	bool enable_snap;
-	glm::vec3 snap;
+	glm::vec3 translate_snap;
+	float rotate_snap;
+	float scale_snap;
 
 	ImVec2 window_pos;
 	ImVec2 window_size;

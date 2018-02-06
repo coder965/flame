@@ -4,8 +4,8 @@
 #include "../../ui/ui.h"
 #include "file_selector.h"
 
-FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, unsigned int window_flags, unsigned int 
-	flags) :
+FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, const std::string &_default_dir, 
+	unsigned int window_flags, unsigned int flags) :
 	Window(_title, window_flags),
 	io_mode(io),
 	enable_file(!(flags & FileSelectorNoFiles)),
@@ -15,7 +15,13 @@ FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, unsigne
 {
 	splitter.size[0] = 300;
 	filename[0] = 0;
-	set_current_path(tke::get_exe_path());
+	if (_default_dir != "")
+	{
+		default_dir = _default_dir;
+		set_current_path(default_dir);
+	}
+	else
+		set_current_path(tke::get_exe_path());
 }
 
 const char *drivers[] = {
@@ -27,20 +33,36 @@ const char *drivers[] = {
 
 void FileSelector::set_current_path(const std::string &s)
 {
+	if (s == curr_dir.filename)
+		return;
+
 	curr_dir.filename = s;
 	need_refresh = true;
 	if (!tree_mode)
 	{
 		curr_dir_hierarchy.clear();
-		std::fs::path path(curr_dir.filename);
-		auto root_path = path.root_path();
-		while (path != root_path)
+		if (default_dir == "")
 		{
-			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
-			path = path.parent_path();
+			std::fs::path path(curr_dir.filename);
+			auto root_path = path.root_path();
+			while (path != root_path)
+			{
+				curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
+				path = path.parent_path();
+			}
+			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), tke::string_cut(root_path.string(), -1));
+			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), "");
 		}
-		curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), tke::string_cut(root_path.string(), -1));
-		curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), "");
+		else
+		{
+			std::fs::path path(curr_dir.filename);
+			while (path != default_dir)
+			{
+				curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
+				path = path.parent_path();
+			}
+			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), default_dir);
+		}
 	}
 	else
 	{
@@ -154,16 +176,17 @@ void FileSelector::on_show()
 				if (ImGui::Button(i.c_str()))
 				{
 					auto it = curr_dir_hierarchy.begin();
-					it++;
+					if (default_dir == "")
+						it++;
 					for (; ; it++)
 					{
 						jump_dir += *it;
 						if (&i == &(*it))
 							break;
-						jump_dir += "\\";
+						jump_dir += "/";
 					}
-					if (h_index == 1)
-						jump_dir += "\\";
+					if (default_dir == "" && h_index == 1)
+						jump_dir += "/";
 				}
 				ImGui::SameLine();
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset);
@@ -173,7 +196,7 @@ void FileSelector::on_show()
 			{
 				popup_index = -1;
 				popup_list.clear();
-				if (h_index == 0)
+				if (default_dir == "" && h_index == 0)
 				{
 					std::fs::path path(curr_dir.filename);
 					auto root_name = path.root_name().string();
@@ -190,7 +213,8 @@ void FileSelector::on_show()
 					std::string parent_path;
 					std::string next_path;
 					auto it = curr_dir_hierarchy.begin();
-					it++;
+					if (default_dir == "")
+						it++;
 					for (; ; it++)
 					{
 						parent_path += *it;
@@ -201,7 +225,7 @@ void FileSelector::on_show()
 								next_path = *it;
 							break;
 						}
-						parent_path += "\\";
+						parent_path += "/";
 					}
 					std::fs::directory_iterator end_it;
 					int index = 0;
@@ -227,20 +251,21 @@ void FileSelector::on_show()
 				{
 					if (ImGui::Selectable(s.c_str(), popup_index == index))
 					{
-						if (h_index == 0)
-							jump_dir = s + "\\";
+						if (default_dir == "" && h_index == 0)
+							jump_dir = s + "/";
 						else
 						{
 							auto it = curr_dir_hierarchy.begin();
-							it++;
+							if (default_dir == "")
+								it++;
 							for (; ; it++)
 							{
 								jump_dir += *it;
 								if (&i == &(*it))
 									break;
-								jump_dir += "\\";
+								jump_dir += "/";
 							}
-							jump_dir += "\\" + s;
+							jump_dir += "/" + s;
 						}
 					}
 					index++;
@@ -278,12 +303,9 @@ void FileSelector::on_show()
 			select_index = index;
 			if (ImGui::IsMouseDoubleClicked(0))
 			{
-				if (on_parent_path())
-				{
-					std::fs::path path(curr_dir.filename);
-					if (path.root_path() != path)
-						set_current_path(path.parent_path().string());
-				}
+				std::fs::path path(curr_dir.filename);
+				if (curr_dir.filename != default_dir && path.root_path() != path)
+					set_current_path(path.parent_path().string());
 			}
 		}
 		index++;
@@ -366,11 +388,6 @@ bool FileSelector::on_refresh()
 	return true; 
 }
 
-bool FileSelector::on_parent_path() 
-{
-	return true; 
-}
-
 FileSelector::FileItem *FileSelector::on_new_file_item() 
 {
 	return new FileItem; 
@@ -436,7 +453,7 @@ void FileSelector::on_right_area_show()
 }
 
 DirSelectorDialog::DirSelectorDialog() :
-	FileSelector("Dir Selector", FileSelectorOpen, tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoFiles | FileSelectorNoRightArea)
+	FileSelector("Dir Selector", FileSelectorOpen, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoFiles | FileSelectorNoRightArea)
 {
 	first_cx = 800;
 	first_cy = 600;

@@ -36,7 +36,7 @@ TerrainEditor::~TerrainEditor()
 struct SaveModelDialog : FileSelector
 {
 	SaveModelDialog() :
-		FileSelector("Save Model", FileSelectorSave, tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoRightArea)
+		FileSelector("Save Model", FileSelectorSave, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoRightArea)
 	{
 		first_cx = 800;
 		first_cy = 600;

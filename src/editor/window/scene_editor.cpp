@@ -171,7 +171,7 @@ void SceneEditor::on_menu_bar()
 void SceneEditor::on_toolbar()
 {
 	if (ImGui::ImageButton_f("Select.png", ImVec2(16, 16), curr_tool == nullptr))
-		curr_tool = nullptr;;
+		curr_tool = nullptr;
 	ImGui::SameLine();
 	if (ImGui::ImageButton_f("Move.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::TRANSLATE))
 	{
@@ -189,6 +189,29 @@ void SceneEditor::on_toolbar()
 	{
 		curr_tool = transformerTool.get();
 		transformerTool->operation = TransformerTool::SCALE;
+	}
+	ImGui::SameLine();
+	if (curr_tool == transformerTool.get())
+	{
+		ImGui::Checkbox("snap", &transformerTool->enable_snap);
+		ImGui::SameLine();
+		if (transformerTool->enable_snap)
+		{
+			ImGui::PushItemWidth(100.f);
+			switch (transformerTool->operation)
+			{
+				case TransformerTool::TRANSLATE:
+					ImGui::DragFloat3("##snap_value", &transformerTool->translate_snap[0], 0.1f, 0.f, 10000.f);
+					break;
+				case TransformerTool::ROTATE:
+					ImGui::DragFloat("##snap_value", &transformerTool->rotate_snap, 0.1f, 0.f, 10000.f);
+					break;
+				case TransformerTool::SCALE:
+					ImGui::DragFloat("##snap_value", &transformerTool->scale_snap, 0.1f, 0.f, 10000.f);
+					break;
+			}
+			ImGui::PopItemWidth();
+		}
 	}
 }
 
@@ -261,6 +284,8 @@ void SceneEditor::on_show()
 	if (curr_tool == transformerTool.get())
 	{
 		transformerTool->target = selected.get_node();
+		if (transformerTool->target == scene)
+			transformerTool->target = nullptr;
 		transformerTool->show(camera);
 	}
 

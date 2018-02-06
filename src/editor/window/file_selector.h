@@ -54,6 +54,7 @@ struct FileSelector : tke::ui::Window
 
 	char filename[260];
 	DirItem curr_dir;
+	std::string default_dir;
 	std::list<std::string> curr_dir_hierarchy;
 	int select_index = -1;
 	DirItem *select_dir = nullptr;
@@ -61,13 +62,12 @@ struct FileSelector : tke::ui::Window
 
 	std::function<bool(std::string)> callback;
 
-	FileSelector(const std::string &_title, FileSelectorIo io, unsigned int window_flags = 
-		tke::ui::WindowCreateFlagNull, unsigned int flags = FileSelectorCreateFlagNull);
+	FileSelector(const std::string &_title, FileSelectorIo io, const std::string &_default_dir = "", 
+		unsigned int window_flags = tke::ui::WindowCreateFlagNull, unsigned int flags = FileSelectorCreateFlagNull);
 	void set_current_path(const std::string &s);
 	void refresh();
 	virtual void on_show() override;
 	virtual bool on_refresh();
-	virtual bool on_parent_path();
 	virtual FileItem *on_new_file_item();
 	virtual void on_add_file_item(FileItem *i);
 	virtual void on_dir_item_selected(DirItem *i);
