@@ -45,7 +45,7 @@ namespace tke
 	void remove_resize_listener(const std::function<void(int, int)> &e);
 	void remove_destroy_listener(const std::function<void()> &e);
 
-	long long get_now_time_ms();
+	long long get_now_time_ns();
 
 	extern Node *root_node;
 

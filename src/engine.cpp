@@ -153,9 +153,11 @@ namespace tke
 
 	std::uint32_t window_style;
 
-	long long get_now_time_ms()
+	long long get_now_time_ns()
 	{
-		return std::chrono::system_clock::now().time_since_epoch().count() / 10000;
+		return std::chrono::time_point_cast<std::chrono::nanoseconds>(
+			std::chrono::system_clock::now()
+			).time_since_epoch().count();
 	}
 
 	Node *root_node;
@@ -521,7 +523,7 @@ namespace tke
 				mousePrevX = mouseX;
 				mousePrevY = mouseY;
 				mouseScroll = 0;
-				for (int i = 0; i < ARRAYSIZE(keyStates); i++)
+				for (int i = 0; i < TK_ARRAYSIZE(keyStates); i++)
 				{
 					keyStates[i].justDown = false;
 					keyStates[i].justUp = false;
