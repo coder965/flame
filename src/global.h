@@ -48,6 +48,7 @@ namespace tke
 	extern float fovy;
 
 	extern long long now_ns;
+	extern double elapsed_time;
 
 	extern std::string engine_path;
 

@@ -338,23 +338,21 @@ namespace tke
 
 	void init_material()
 	{
-		VkDescriptorSetLayoutBinding bindings[] = {
+		std::vector<DescriptorSetLayoutBinding> bindings = {
 			{
-				MaterialBufferDescriptorBinding,
 				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				MaterialBufferDescriptorBinding,
 				1,
-				VK_SHADER_STAGE_FRAGMENT_BIT,
-				nullptr
+				VK_SHADER_STAGE_FRAGMENT_BIT
 			},
-				{
-					MaterialImagesDescriptorBinding,
-					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					MaxMaterialCount,
-					VK_SHADER_STAGE_FRAGMENT_BIT,
-					nullptr
-				}
+			{
+				VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				MaterialImagesDescriptorBinding,
+				MaxMaterialCount,
+				VK_SHADER_STAGE_FRAGMENT_BIT
+			}
 		};
-		_material_layout = getDescriptorSetLayout(TK_ARRAYSIZE(bindings), bindings);
+		_material_layout = get_or_create_descriptor_set_layout(bindings);
 
 		ds_material = new DescriptorSet(_material_layout.get());
 

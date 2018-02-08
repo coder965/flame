@@ -294,7 +294,6 @@ namespace tke
 		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
 		curr_anim = animation;
 		curr_frame = 0;
-		last_time = nowTime;
 		curr_frame_index.resize(animation->tracks.size());
 		for (auto &i : curr_frame_index)
 			i = 0;
@@ -302,7 +301,7 @@ namespace tke
 
 	void AnimationRunner::update()
 	{
-		const float dist = 1000.f / 60.f;
+		const float dist = 1.f / 60.f;
 
 		if (curr_anim)
 		{
@@ -333,7 +332,7 @@ namespace tke
 			}
 
 			bool wrap = false;
-			curr_frame += (nowTime - last_time) / dist;
+			curr_frame += elapsed_time / dist;
 			if (curr_anim->total_frame > 0)
 			{
 				if (curr_frame >= curr_anim->total_frame)
@@ -342,7 +341,6 @@ namespace tke
 					wrap = true;
 				}
 			}
-			last_time = nowTime;
 
 			auto dst = curr_frame;
 			if (wrap)

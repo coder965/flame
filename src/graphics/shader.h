@@ -4,12 +4,6 @@
 
 namespace tke
 {
-	struct PushConstantRange
-	{
-		int offset = 0;
-		int size = 0;
-	};
-
 	struct Descriptor;
 
 	struct Shader
@@ -19,8 +13,8 @@ namespace tke
 		std::vector<std::string> defines;
 		VkShaderModule vkModule;
 
-		std::vector<std::vector<std::unique_ptr<Descriptor>>> descriptors;
-		std::vector<PushConstantRange> pushConstantRanges;
+		std::vector<std::vector<std::unique_ptr<Descriptor>>> descriptor_sets;
+		int push_constant_size;
 
 		// must call in main thread
 		Shader(const std::string &_filename, const std::vector<std::string> &_defines);
@@ -28,5 +22,5 @@ namespace tke
 		~Shader();
 	};
 
-	extern std::vector<std::weak_ptr<Shader>> loaded_shaders;
+	std::shared_ptr<Shader> get_or_create_shader(const std::string &filename, const std::vector<std::string> &defines);
 }

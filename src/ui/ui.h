@@ -53,30 +53,25 @@ namespace tke
 		extern bool accepted_mouse;
 		extern bool accepted_key;
 
-		enum DockDirection
-		{
-			DockCenter = 1 << 0,
-			DockLeft = 1 << 1,
-			DockRight = 1 << 2,
-			DockTop = 1 << 3,
-			DockBottom = 1 << 4,
-			DockAll = DockCenter | DockLeft | DockRight | DockTop | DockBottom
-		};
-
-		const char *get_dock_dir_name(DockDirection dir);
-
-		enum LayoutType
-		{
-			LayoutCenter,
-			LayoutHorizontal,
-			LayoutVertical
-		};
-
 		enum WindowTag
 		{
 			WindowTagNull,
 			WindowTagUndock,
 			WindowTagClose
+		};
+
+		struct Tab
+		{
+			std::string title;
+			bool enable_dock;
+			bool enable_close_tab;
+
+			int tab_x;
+			int tab_width;
+
+			WindowTag _tag;
+
+			Tab();
 		};
 
 		struct Layout;
@@ -90,25 +85,32 @@ namespace tke
 			WindowBanDock = 1 << 3
 		};
 
-		struct Window
+		enum DockDirection
+		{
+			DockCenter = 1 << 0,
+			DockLeft = 1 << 1,
+			DockRight = 1 << 2,
+			DockTop = 1 << 3,
+			DockBottom = 1 << 4,
+			DockAll = DockCenter | DockLeft | DockRight | DockTop | DockBottom
+		};
+
+		const char *get_dock_dir_name(DockDirection dir);
+
+		struct Window : Tab
 		{
 			bool first;
 			int first_cx;
 			int first_cy;
 			bool _need_focus;
-			WindowTag _tag;
 
-			std::string title;
 			bool enable_menu;
 			bool enable_saved_settings;
 			bool modal;
-			bool enable_dock;
 			bool opened;
 
 			Layout *layout;
 			int idx;
-			int tab_x;
-			int tab_width;
 
 			Window(const std::string &_title, unsigned int flags = WindowCreateFlagNull);
 			virtual ~Window() {}
@@ -119,9 +121,32 @@ namespace tke
 			void show();
 		};
 
+		struct Tabbar
+		{
+			std::list<Tab*> tabs;
+			Tab *curr_tab;
+			Tab *dragging_tab;
+			int dragging_tab_offset;
+			bool _dragging_tab_out_of_bar;
+
+			Tabbar();
+			bool is_empty() const;
+			void clear();
+			void add_tab(Tab *t);
+			void remove_tab(Tab *t);
+			void show();
+		};
+
 		const std::list<std::unique_ptr<Window>> &get_windows();
 
 		float get_layout_padding(bool horizontal);
+
+		enum LayoutType
+		{
+			LayoutCenter,
+			LayoutHorizontal,
+			LayoutVertical
+		};
 
 		struct Layout
 		{
@@ -136,11 +161,7 @@ namespace tke
 			ImGui::Splitter splitter;
 
 			std::unique_ptr<Layout> children[2];
-
-			std::list<Window*> windows[2];
-			Window *curr_tab[2];
-			Window *dragging_tab[2];
-			int dragging_tab_offset[2];
+			Tabbar tabbar[2];
 
 			Layout();
 			bool is_empty(int idx) const;

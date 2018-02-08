@@ -175,12 +175,12 @@ namespace tke
 
 	void CommandBuffer::bindDescriptorSet()
 	{
-		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, 0, 1, &currentPipeline->descriptorSet->v, 0, nullptr);
+		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipeline_layout->v, 0, 1, &currentPipeline->descriptor_set->v, 0, nullptr);
 	}
 
 	void CommandBuffer::bindDescriptorSet(VkDescriptorSet *sets, int index, int count)
 	{
-		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipelineLayout->v, index, count, sets, 0, nullptr);
+		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipeline_layout->v, index, count, sets, 0, nullptr);
 	}
 
 	void CommandBuffer::execSecondaryCmd(VkCommandBuffer cmd)
@@ -190,7 +190,7 @@ namespace tke
 
 	void CommandBuffer::pushConstant(VkShaderStageFlags stage, int offset, int size, void *src)
 	{
-		vkCmdPushConstants(v, currentPipeline->pipelineLayout->v, stage, offset, size, src);
+		vkCmdPushConstants(v, currentPipeline->pipeline_layout->v, stage, offset, size, src);
 	}
 
 	void CommandBuffer::draw(int vertexCount, int firstVertex, int instanceCount, int firstInstance)

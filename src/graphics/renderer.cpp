@@ -118,52 +118,52 @@ namespace tke
 	{
 		if (first)
 		{
-			pipeline_plain = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0}, { TokenF32V2, 0}, { TokenF32V3, 0}, { TokenF32V3, 0} })
-				.depth_test(true)
-				.depth_write(true)
+			pipeline_plain = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0}, { TokenF32V2, 0}, { TokenF32V3, 0}, { TokenF32V3, 0} })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", {})
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", {}),
 				renderPass_depthC_image8, 0);
-			pipeline_plain_anim = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
-				.depth_test(true)
-				.depth_write(true)
+			pipeline_plain_anim = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", { "ANIM" })
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "ANIM" }),
 				renderPass_depthC_image8, 0, true);
-			pipeline_frontlight = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
-				.depth_test(true)
-				.depth_write(true)
+			pipeline_frontlight = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", { "USE_NORMAL" })
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "USE_NORMAL" }),
 				renderPass_depthC_image8, 0);
-			pipeline_material = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
-				.depth_test(true)
-				.depth_write(true)
+			pipeline_material = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", { "USE_MATERIAL" })
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "USE_MATERIAL" }),
 				renderPass_depthC_image8, 0);
-			pipeline_material_anim = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
-				.depth_test(true)
-				.depth_write(true)
+			pipeline_material_anim = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", { "ANIM", "USE_MATERIAL" })
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "ANIM", "USE_MATERIAL" }),
 				renderPass_depthC_image8, 0, true);
-			pipeline_wireframe = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
-				.polygon_mode(VK_POLYGON_MODE_LINE)
-				.cull_mode(VK_CULL_MODE_NONE)
+			pipeline_wireframe = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_polygon_mode(VK_POLYGON_MODE_LINE)
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", {})
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", {}),
 				renderPass_image8, 0);
-			pipeline_wireframe_anim = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
-				.polygon_mode(VK_POLYGON_MODE_LINE)
-				.cull_mode(VK_CULL_MODE_NONE)
+			pipeline_wireframe_anim = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_polygon_mode(VK_POLYGON_MODE_LINE)
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/plain3d/plain3d.vert", { "ANIM" })
 				.add_shader(engine_path + "shader/plain3d/plain3d.frag", { "ANIM" }),
 				renderPass_image8, 0, true);
@@ -239,7 +239,7 @@ namespace tke
 						cb->bindPipeline(pipeline_plain_anim);
 						if (last_bone_buffer_mode0 != d.bone_buffer)
 						{
-							updateDescriptorSets(1, &pipeline_plain_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+							updateDescriptorSets(1, &pipeline_plain_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
 							last_bone_buffer_mode0 = d.bone_buffer;
 						}
 						cb->bindDescriptorSet();
@@ -260,11 +260,11 @@ namespace tke
 						cb->bindPipeline(pipeline_material_anim);
 						if (last_bone_buffer_mode2 != d.bone_buffer)
 						{
-							updateDescriptorSets(1, &pipeline_material_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+							updateDescriptorSets(1, &pipeline_material_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
 							last_bone_buffer_mode2 = d.bone_buffer;
 						}
 						VkDescriptorSet sets[] = {
-							pipeline_material->descriptorSet->v,
+							pipeline_material->descriptor_set->v,
 							ds_material->v
 						};
 						cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
@@ -279,7 +279,7 @@ namespace tke
 						cb->bindPipeline(pipeline_wireframe_anim);
 						if (last_bone_buffer_mode3 != d.bone_buffer)
 						{
-							updateDescriptorSets(1, &pipeline_wireframe_anim->descriptorSet->bufferWrite(0, 0, d.bone_buffer));
+							updateDescriptorSets(1, &pipeline_wireframe_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
 							last_bone_buffer_mode3 = d.bone_buffer;
 						}
 						cb->bindDescriptorSet();
@@ -306,11 +306,11 @@ namespace tke
 	{
 		if (first)
 		{
-			pipeline_lines = new Pipeline(PipelineCreateInfo()
-					.vertex_input_state({ { TokenF32V3, 0}, { TokenF32V3, 0} })
-					.primitive_topology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
-					.polygon_mode(VK_POLYGON_MODE_LINE)
-					.cull_mode(VK_CULL_MODE_NONE)
+			pipeline_lines = new Pipeline(PipelineInfo()
+					.set_vertex_input_state({ { TokenF32V3, 0}, { TokenF32V3, 0} })
+					.set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+					.set_polygon_mode(VK_POLYGON_MODE_LINE)
+					.set_cull_mode(VK_CULL_MODE_NONE)
 					.add_shader(engine_path + "shader/plain3d/plain3d_line.vert", {})
 					.add_shader(engine_path + "shader/plain3d/plain3d_line.frag", {}),
 					renderPass_image8, 0);
@@ -689,37 +689,37 @@ namespace tke
 
 			defe_renderpass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
 
-			scattering_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(512).cy(256)
-				.cull_mode(VK_CULL_MODE_NONE)
+			scattering_pipeline = new Pipeline(PipelineInfo()
+				.set_cx(512).set_cy(256)
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/scattering.frag", {}),
 				renderPass_image16, 0);
-			output_debug_panorama_pipeline = new Pipeline(PipelineCreateInfo()
-				.cx(512).cy(256)
-				.cull_mode(VK_CULL_MODE_NONE)
+			output_debug_panorama_pipeline = new Pipeline(PipelineInfo()
+				.set_cx(512).set_cy(256)
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/output_debug_panorama.frag", {}),
 				renderPass_image8, 0);
-			downsample_pipeline = new Pipeline(PipelineCreateInfo()
-				.cull_mode(VK_CULL_MODE_NONE)
+			downsample_pipeline = new Pipeline(PipelineInfo()
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/downsample.frag", {})
 				, renderPass_image16, 0, true);
-			convolve_pipeline = new Pipeline(PipelineCreateInfo()
-				.cull_mode(VK_CULL_MODE_NONE)
+			convolve_pipeline = new Pipeline(PipelineInfo()
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/sky/convolve.frag", {}),
 				renderPass_image16, 0, true);
-			copy_pipeline = new Pipeline(PipelineCreateInfo()
-				.cull_mode(VK_CULL_MODE_NONE)
+			copy_pipeline = new Pipeline(PipelineInfo()
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_UV" })
 				.add_shader(engine_path + "shader/copy.frag", {}),
 				renderPass_image16, 0, true);
-			mrt_pipeline = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
-				.depth_test(true)
-				.depth_write(true)
+			mrt_pipeline = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
@@ -728,10 +728,10 @@ namespace tke
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
 				defe_renderpass, 0);
-			mrt_anim_pipeline = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
-				.depth_test(true)
-				.depth_write(true)
+			mrt_anim_pipeline = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_depth_test(true)
+				.set_depth_write(true)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
@@ -740,12 +740,12 @@ namespace tke
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
 				defe_renderpass, 0);
-			terrain_pipeline = new Pipeline(PipelineCreateInfo()
-				.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 } })
-				.patch_control_points(4)
-				.depth_test(true)
-				.depth_write(true)
-				.primitive_topology(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
+			terrain_pipeline = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 } })
+				.set_patch_control_points(4)
+				.set_depth_test(true)
+				.set_depth_write(true)
+				.set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
@@ -756,11 +756,11 @@ namespace tke
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_terrain_", "Terrain.UniformBuffer"),
 				defe_renderpass, 0);
-			water_pipeline = new Pipeline(PipelineCreateInfo()
-				.patch_control_points(4)
-				.depth_test(true)
-				.depth_write(true)
-				.primitive_topology(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
+			water_pipeline = new Pipeline(PipelineInfo()
+				.set_patch_control_points(4)
+				.set_depth_test(true)
+				.set_depth_write(true)
+				.set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
 				.add_blend_attachment_state(false)
@@ -771,8 +771,8 @@ namespace tke
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_water_", "Water.UniformBuffer"),
 				defe_renderpass, 0);
-			deferred_pipeline = new Pipeline(PipelineCreateInfo()
-				.cull_mode(VK_CULL_MODE_NONE)
+			deferred_pipeline = new Pipeline(PipelineInfo()
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", { "USE_VIEW" })
 				.add_shader(engine_path + "shader/deferred/deferred.frag", { "USE_PBR" })
 				.add_link("ubo_constant_", "Constant.UniformBuffer")
@@ -783,12 +783,12 @@ namespace tke
 				.add_link("img_spec_roughness", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
 				.add_link("ubo_light_", "Light.UniformBuffer")
 				.add_link("img_envr", "Envr.Image", 0, colorSampler)
-				.add_link("ubo_ambient_", "Ambient.UniformBuffer")
-				.add_link("img_shadow", "Shadow.Image")
-				.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
+				.add_link("ubo_ambient_", "Ambient.UniformBuffer"),
+				//.add_link("img_shadow", "Shadow.Image")
+				//.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
 				defe_renderpass, 1);
-			compose_pipeline = new Pipeline(PipelineCreateInfo()
-				.cull_mode(VK_CULL_MODE_NONE)
+			compose_pipeline = new Pipeline(PipelineInfo()
+				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader(engine_path + "shader/fullscreen.vert", {})
 				.add_shader(engine_path + "shader/compose/compose.frag", {})
 				.add_link("img_source", "Main.Image", 0, plainUnnormalizedSampler),
@@ -831,22 +831,22 @@ namespace tke
 		{
 			if (!shad_inited)
 			{
-				esm_pipeline = new Pipeline(PipelineCreateInfo()
-					.cx(2048).cy(2048)
-					.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
-					.depth_test(true)
-					.depth_write(true)
+				esm_pipeline = new Pipeline(PipelineInfo()
+					.set_cx(2048).set_cy(2048)
+					.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+					.set_depth_test(true)
+					.set_depth_write(true)
 					.add_shader(engine_path + "shader/esm/esm.vert", {})
 					.add_shader(engine_path + "shader/esm/esm.frag", {})
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
 					.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
 					renderPass_depthC_image8C, 0);
-				esm_anim_pipeline = new Pipeline(PipelineCreateInfo()
-					.cx(2048).cy(2048)
-					.vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
-					.depth_test(true)
-					.depth_write(true)
+				esm_anim_pipeline = new Pipeline(PipelineInfo()
+					.set_cx(2048).set_cy(2048)
+					.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+					.set_depth_test(true)
+					.set_depth_write(true)
 					.add_shader(engine_path + "shader/esm/esm.vert", { "ANIM" })
 					.add_shader(engine_path + "shader/esm/esm.frag", { "ANIM" })
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
@@ -880,8 +880,8 @@ namespace tke
 
 			resource.setBuffer(shadowBuffer.get(), "Shadow.UniformBuffer");
 
-			esm_pipeline->linkDescriptors(ds_esm.get(), &resource);
-			esm_anim_pipeline->linkDescriptors(ds_esmAnim.get(), &resource);
+			esm_pipeline->link_descriptors(ds_esm.get(), &resource);
+			esm_anim_pipeline->link_descriptors(ds_esmAnim.get(), &resource);
 		}
 
 		ds_mrt = std::make_unique<DescriptorSet>(mrt_pipeline);
@@ -918,12 +918,12 @@ namespace tke
 		resource.setImage(normalHeightImage.get(), "NormalHeight.Image");
 		resource.setImage(specRoughnessImage.get(), "SpecRoughness.Image");
 
-		mrt_pipeline->linkDescriptors(ds_mrt.get(), &resource);
-		mrt_anim_pipeline->linkDescriptors(ds_mrtAnim.get(), &resource);
-		terrain_pipeline->linkDescriptors(ds_terrain.get(), &resource);
-		water_pipeline->linkDescriptors(ds_water.get(), &resource);
-		deferred_pipeline->linkDescriptors(ds_defe.get(), &resource);
-		compose_pipeline->linkDescriptors(ds_comp.get(), &resource);
+		mrt_pipeline->link_descriptors(ds_mrt.get(), &resource);
+		mrt_anim_pipeline->link_descriptors(ds_mrtAnim.get(), &resource);
+		terrain_pipeline->link_descriptors(ds_terrain.get(), &resource);
+		water_pipeline->link_descriptors(ds_water.get(), &resource);
+		deferred_pipeline->link_descriptors(ds_defe.get(), &resource);
+		compose_pipeline->link_descriptors(ds_comp.get(), &resource);
 
 		{
 			VkImageView views[] = {
@@ -982,7 +982,7 @@ namespace tke
 					cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-					updateDescriptorSets(1, &downsample_pipeline->descriptorSet->imageWrite(0, 0, i == 0 ? envrImage.get() : envr_image_downsample[i - 1], plainSampler));
+					updateDescriptorSets(1, &downsample_pipeline->descriptor_set->imageWrite(0, 0, i == 0 ? envrImage.get() : envr_image_downsample[i - 1], plainSampler));
 					cb->bindDescriptorSet();
 					cb->draw(3);
 					cb->endRenderPass();
@@ -1000,7 +1000,7 @@ namespace tke
 					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 					cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
-					updateDescriptorSets(1, &convolve_pipeline->descriptorSet->imageWrite(0, 0, envr_image_downsample[i - 1], plainSampler));
+					updateDescriptorSets(1, &convolve_pipeline->descriptor_set->imageWrite(0, 0, envr_image_downsample[i - 1], plainSampler));
 					cb->bindDescriptorSet();
 					cb->draw(3);
 					cb->endRenderPass();
@@ -1062,7 +1062,7 @@ namespace tke
 						cb->beginRenderPass(renderPass_image16, fb.get());
 						cb->bindPipeline(copy_pipeline);
 						cb->setViewportAndScissor(EnvrSizeCx, EnvrSizeCy);
-						updateDescriptorSets(1, &copy_pipeline->descriptorSet->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
+						updateDescriptorSets(1, &copy_pipeline->descriptor_set->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
 						cb->bindDescriptorSet();
 						cb->draw(3);
 						cb->endRenderPass();

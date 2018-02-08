@@ -79,7 +79,6 @@ namespace tke
 	void ControllerComponent::reset()
 	{
 		state = State::StateStand;
-		last_time = nowTime;
 	}
 
 	void ControllerComponent::on_update()
@@ -87,18 +86,15 @@ namespace tke
 		auto coord = get_parent()->get_coord();
 		auto yaw = get_parent()->get_euler().x;
 
-		float dist = (nowTime - last_time) / 1000.f;
-		last_time = nowTime;
-
 		if (state == StateStand)
 			return;
 
 		if (turn_speed > 0.f)
 		{
 			if ((state & StateTurnLeft) && !(state & StateTurnRight))
-				yaw += turn_speed * dist;
+				yaw += turn_speed * elapsed_time;
 			if ((state & StateTurnRight) && !(state & StateTurnLeft))
-				yaw -= turn_speed * dist;
+				yaw -= turn_speed * elapsed_time;
 		}
 
 		auto rad = glm::radians(yaw + ang_offset);
@@ -107,28 +103,28 @@ namespace tke
 		{
 			if ((state & StateForward) && !(state & StateBackward))
 			{
-				coord.x -= sin(rad) * speed * dist;
-				coord.z -= cos(rad) * speed * dist;
+				coord.x -= sin(rad) * speed * elapsed_time;
+				coord.z -= cos(rad) * speed * elapsed_time;
 			}
 			if ((state & StateBackward) && !(state & StateForward))
 			{
-				coord.x += sin(rad) * speed * dist;
-				coord.z += cos(rad) * speed * dist;
+				coord.x += sin(rad) * speed * elapsed_time;
+				coord.z += cos(rad) * speed * elapsed_time;
 			}
 			if ((state & StateLeft) && !(state & StateRight))
 			{
-				coord.x -= cos(rad) * speed * dist;
-				coord.z += sin(rad) * speed * dist;
+				coord.x -= cos(rad) * speed * elapsed_time;
+				coord.z += sin(rad) * speed * elapsed_time;
 			}
 			if ((state & StateRight) && !(state & StateLeft))
 			{
-				coord.x += cos(rad) * speed * dist;
-				coord.z -= sin(rad) * speed * dist;
+				coord.x += cos(rad) * speed * elapsed_time;
+				coord.z -= sin(rad) * speed * elapsed_time;
 			}
 			if ((state & StateUp) && !(state & StateDown))
-				coord.y += speed * dist;
+				coord.y += speed * elapsed_time;
 			if ((state & StateDown) && !(state & StateUp))
-				coord.y -= speed * dist;
+				coord.y -= speed * elapsed_time;
 		}
 
 		get_parent()->set_coord(coord);

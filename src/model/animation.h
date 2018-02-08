@@ -62,7 +62,6 @@ namespace tke
 
 		AnimationBinding *curr_anim = nullptr;
 		float curr_frame = 0.f;
-		int last_time = 0.f;
 		std::vector<int> curr_frame_index;
 		bool enable_IK;
 

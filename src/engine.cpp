@@ -160,6 +160,8 @@ namespace tke
 			).time_since_epoch().count();
 	}
 
+	static long long last_time_ns;
+
 	Node *root_node;
 
 	static void _create_swapchain()
@@ -472,11 +474,14 @@ namespace tke
 		_cbs.clear();
 	}
 
-	static unsigned int _lastTime = 0;
+	static long long _last_sec_time;
 
 	void run(PF_EVENT0 on_render)
 	{
 		assert(on_render);
+
+		now_ns = get_now_time_ns();
+		_last_sec_time = now_ns;
 
 		for (;;)
 		{
@@ -494,15 +499,18 @@ namespace tke
 			}
 			else
 			{
-				nowTime = GetTickCount();
-				static unsigned int frameCount = 0;
-				frameCount++;
+				last_time_ns = now_ns;
+				now_ns = get_now_time_ns();
+				elapsed_time = (now_ns - last_time_ns) / 1000000000.0;
+
+				static unsigned int frame_count = 0;
+				frame_count++;
 				total_frame_count++;
-				if (nowTime - _lastTime >= 1000)
+				if (now_ns - _last_sec_time >= 1000000000)
 				{
-					FPS = std::max(frameCount, 1U);
-					_lastTime = nowTime;
-					frameCount = 0;
+					FPS = std::max(frame_count, 1U);
+					_last_sec_time = now_ns;
+					frame_count = 0;
 				}
 
 				mouseDispX = mouseX - mousePrevX;

@@ -31,7 +31,8 @@ namespace tke
 	float far_plane = 1000.f;
 	float fovy = 60.f;
 
-	extern long long now_ns;
+	long long now_ns;
+	double elapsed_time;
 
 	std::string engine_path;
 

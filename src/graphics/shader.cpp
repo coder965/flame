@@ -85,38 +85,31 @@ namespace tke
 			for (int i = 0; i < uboCount; i++)
 			{
 				auto set = read_int(resFile);
-				if (set >= descriptors.size())
-					descriptors.resize(set + 1);
+				if (set >= descriptor_sets.size())
+					descriptor_sets.resize(set + 1);
 
 				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				d->name = read_string(resFile);
 				d->binding = read_int(resFile);
 				d->count = read_int(resFile);
-				descriptors[set].emplace_back(d);
+				descriptor_sets[set].emplace_back(d);
 			}
 			auto imageCount = read_int(resFile);
 			for (int i = 0; i < imageCount; i++)
 			{
 				auto set = read_int(resFile);
-				if (set >= descriptors.size())
-					descriptors.resize(set + 1);
+				if (set >= descriptor_sets.size())
+					descriptor_sets.resize(set + 1);
 
 				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				d->name = read_string(resFile);
 				d->binding = read_int(resFile);
 				d->count = read_int(resFile);
-				descriptors[set].emplace_back(d);
+				descriptor_sets[set].emplace_back(d);
 			}
-			auto pcSize = read_int(resFile);
-			if (pcSize > 0)
-			{
-				PushConstantRange p;
-				p.offset = 0; // 0 always
-				p.size = pcSize;
-				pushConstantRanges.push_back(p);
-			}
+			push_constant_size = read_int(resFile);
 		}
 		else
 		{
@@ -132,8 +125,8 @@ namespace tke
 
 			auto _process_descriptor_resource = [&](VkDescriptorType desc_type, spirv_cross::Resource &r){
 				auto set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
-				if (set >= descriptors.size())
-					descriptors.resize(set + 1);
+				if (set >= descriptor_sets.size())
+					descriptor_sets.resize(set + 1);
 				write_int(resFile, set);
 
 				auto d = new Descriptor;
@@ -142,7 +135,7 @@ namespace tke
 				d->binding = glsl.get_decoration(r.id, spv::DecorationBinding);
 				auto type = glsl.get_type(r.type_id);
 				d->count = type.array.size() > 0 ? type.array[0] : 1;
-				descriptors[set].emplace_back(d);
+				descriptor_sets[set].emplace_back(d);
 
 				write_string(resFile, d->name);
 				write_int(resFile, d->binding);
@@ -156,17 +149,9 @@ namespace tke
 			for (auto &r : resources.sampled_images)
 				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, r);
 
-			int pcSize = 0;
 			for (auto &r : resources.push_constant_buffers)
-			{
-				PushConstantRange p;
-				p.offset = 0; // 0 always
-				p.size = glsl.get_declared_struct_size(glsl.get_type(r.type_id));
-				pushConstantRanges.push_back(p);
-
-				pcSize = p.size;
-			}
-			write_int(resFile, pcSize);
+				push_constant_size = glsl.get_declared_struct_size(glsl.get_type(r.type_id));
+			write_int(resFile, push_constant_size);
 		}
 	}
 
@@ -175,5 +160,24 @@ namespace tke
 		vkDestroyShaderModule(vk_device.v, vkModule, nullptr);
 	}
 
-	std::vector<std::weak_ptr<Shader>> loaded_shaders;
+	static std::vector<std::weak_ptr<Shader>> _shaders;
+
+	std::shared_ptr<Shader> get_or_create_shader(const std::string &filename, const std::vector<std::string> &defines)
+	{
+		for (auto it = _shaders.begin(); it != _shaders.end(); )
+		{
+			auto s = it->lock();
+			if (s)
+			{
+				if (s->filename == filename && s->defines == defines)
+					return s;
+				it++;
+			}
+			else
+				it = _shaders.erase(it);
+		}
+		auto s = std::make_shared<Shader>(filename, defines);
+		_shaders.push_back(s);
+		return s;
+	}
 }

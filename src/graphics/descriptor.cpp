@@ -7,56 +7,83 @@
 
 namespace tke
 {
+	bool operator==(const DescriptorSetLayoutBinding &lhs, const DescriptorSetLayoutBinding &rhs)
+	{
+		return lhs.type == rhs.type && lhs.binding == rhs.binding && lhs.count == rhs.count && lhs.stage == rhs.stage;
+	}
+
+	Descriptor::Descriptor() :
+		type(VK_DESCRIPTOR_TYPE_MAX_ENUM),
+		binding(0),
+		count(0)
+	{
+	}
+
+	DescriptorSetLayoutBinding Descriptor::get_layout_binding(VkShaderStageFlags stage) const
+	{
+		DescriptorSetLayoutBinding b;
+		b.type = type;
+		b.binding = binding;
+		b.count = count;
+		b.stage = stage;
+		return b;
+	}
+
+	DescriptorSetLayout::DescriptorSetLayout(const std::vector<DescriptorSetLayoutBinding> &_bindings) :
+		bindings(_bindings)
+	{
+		std::vector<VkDescriptorSetLayoutBinding> vk_bindings(bindings.size());
+		for (auto i = 0; i < bindings.size(); i++)
+		{
+			vk_bindings[i].pImmutableSamplers = nullptr;
+			vk_bindings[i].descriptorType = bindings[i].type;
+			vk_bindings[i].binding = bindings[i].binding;
+			vk_bindings[i].descriptorCount = bindings[i].count;
+			vk_bindings[i].stageFlags = bindings[i].stage;
+		}
+
+		VkDescriptorSetLayoutCreateInfo info;
+		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		info.flags = 0;
+		info.pNext = nullptr;
+		info.bindingCount = bindings.size();
+		info.pBindings = vk_bindings.data();
+
+		auto res = vkCreateDescriptorSetLayout(vk_device.v, &info, nullptr, &v);
+		assert(res == VK_SUCCESS);
+	}
+
 	DescriptorSetLayout::~DescriptorSetLayout()
 	{
 		vkDestroyDescriptorSetLayout(vk_device.v, v, nullptr);
 	}
 
-	static std::vector<std::weak_ptr<DescriptorSetLayout>> _descriptorSetLayouts;
-
-	std::shared_ptr<DescriptorSetLayout> getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings)
+	bool operator==(const DescriptorSetLayout &lhs, const DescriptorSetLayout &rhs)
 	{
-		for (auto it = _descriptorSetLayouts.begin(); it != _descriptorSetLayouts.end(); )
+		return lhs.bindings == rhs.bindings && lhs.v == rhs.v;
+	}
+
+	static std::vector<std::weak_ptr<DescriptorSetLayout>> _descriptor_set_layouts;
+
+	std::shared_ptr<DescriptorSetLayout> get_or_create_descriptor_set_layout(const std::vector<DescriptorSetLayoutBinding> &_bindings)
+	{
+		for (auto it = _descriptor_set_layouts.begin(); it != _descriptor_set_layouts.end(); )
 		{
 			auto l = it->lock();
 
 			if (l)
 			{
-				if (l->bindings.size() == bindingCount)
-				{
-					bool same = true;
-					for (auto i = 0; i < bindingCount; i++)
-					{
-						if (l->bindings[i].binding != bindings[i].binding || l->bindings[i].descriptorCount != bindings[i].descriptorCount ||
-							l->bindings[i].descriptorType != bindings[i].descriptorType || l->bindings[i].stageFlags != bindings[i].stageFlags)
-						{
-							same = false;
-							break;
-						}
-					}
-					if (same)
-						return l;
-				}
+				if (l->bindings == _bindings)
+					return l;
 
 				it++;
 			}
 			else
-				it = _descriptorSetLayouts.erase(it);
+				it = _descriptor_set_layouts.erase(it);
 		}
 
-		auto l = std::make_shared<DescriptorSetLayout>();
-		for (int i = 0; i < bindingCount; i++)
-			l->bindings.push_back(bindings[i]);
-
-		VkDescriptorSetLayoutCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		info.bindingCount = bindingCount;
-		info.pBindings = l->bindings.data();
-
-		auto res = vkCreateDescriptorSetLayout(vk_device.v, &info, nullptr, &l->v);
-		assert(res == VK_SUCCESS);
-
-		_descriptorSetLayouts.push_back(l);
+		auto l = std::make_shared<DescriptorSetLayout>(_bindings);
+		_descriptor_set_layouts.push_back(l);
 		return l;
 	}
 
@@ -73,8 +100,8 @@ namespace tke
 		assert(res == VK_SUCCESS);
 	}
 
-	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index)
-		:DescriptorSet(pipeline->descriptorSetLayouts[index].get())
+	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index) :
+		DescriptorSet(pipeline->pipeline_layout->descriptor_set_layouts[index].get())
 	{
 	}
 

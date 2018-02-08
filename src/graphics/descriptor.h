@@ -7,25 +7,42 @@
 
 namespace tke
 {
+	struct DescriptorSetLayoutBinding
+	{
+		VkDescriptorType type;
+		int binding;
+		int count;
+		VkShaderStageFlags stage;
+	};
+
+	bool operator==(const DescriptorSetLayoutBinding &lhs, const DescriptorSetLayoutBinding &rhs);
+
 	struct Descriptor
 	{
-		VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-		int binding = 0;
-		int count = 0;
+		VkDescriptorType type;
+		int binding;
+		int count;
 		std::string name;
+
+		Descriptor();
+		DescriptorSetLayoutBinding get_layout_binding(VkShaderStageFlags stage) const;
 	};
 
 	struct DescriptorSetLayout
 	{
-		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		std::vector<DescriptorSetLayoutBinding> bindings;
 		VkDescriptorSetLayout v;
 
+		// must call in main thread
+		DescriptorSetLayout(const std::vector<DescriptorSetLayoutBinding> &_bindings);
 		// must call in main thread
 		~DescriptorSetLayout();
 	};
 
+	bool operator==(const DescriptorSetLayout &lhs, const DescriptorSetLayout &rhs);
+
 	// must call in main thread
-	std::shared_ptr<DescriptorSetLayout> getDescriptorSetLayout(int bindingCount, VkDescriptorSetLayoutBinding *bindings);
+	std::shared_ptr<DescriptorSetLayout> get_or_create_descriptor_set_layout(const std::vector<DescriptorSetLayoutBinding> &_bindings);
 
 	struct Pipeline;
 	struct Buffer;

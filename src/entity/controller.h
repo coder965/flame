@@ -25,7 +25,6 @@ namespace tke
 		float ang_offset = 0.f;
 		float speed = 1.f;
 		float turn_speed = 75.f;
-		int last_time = 0;
 	public:
 		ControllerComponent();
 		
