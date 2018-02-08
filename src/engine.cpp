@@ -50,13 +50,15 @@ namespace tke
 	std::shared_ptr<Framebuffer> window_framebuffers[2];
 	VkSemaphore window_imageAvailable;
 	uint32_t window_imageIndex;
-	VkFence frameDone;
+	VkFence frame_done;
 
 	static std::list<std::function<void(int)>> keydown_listeners;
 	static std::list<std::function<void(int)>> keyup_listeners;
 	static std::list<std::function<void(int)>> char_listeners;
 	static std::list<std::function<void(int, int)>> resize_listeners;
 	static std::list<std::function<void()>> destroy_listeners;
+
+	static std::list<std::function<void()>> _after_frame_events;
 
 	void add_keydown_listener(const std::function<void(int)> &e)
 	{
@@ -149,6 +151,11 @@ namespace tke
 				return;
 			}
 		}
+	}
+
+	void add_after_frame_event(const std::function<void()> &e)
+	{
+		_after_frame_events.push_back(e);
 	}
 
 	std::uint32_t window_style;
@@ -395,7 +402,7 @@ namespace tke
 		_create_swapchain();
 
 		window_imageAvailable = createSemaphore();
-		frameDone = createFence();
+		frame_done = createFence();
 
 		printf("\n=====INFO=====\nengine init finished - %d ms\n==============\n", GetTickCount() - init_start_time);
 
@@ -456,12 +463,16 @@ namespace tke
 
 		if (_cbs.size())
 		{
-			tke::vk_graphics_queue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frameDone);
-			waitFence(frameDone);
+			tke::vk_graphics_queue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frame_done);
+			wait_fence(frame_done);
 		}
 
-		VkPresentInfoKHR info = {};
+		VkPresentInfoKHR info;
 		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		info.pNext = nullptr;
+		info.pResults = nullptr;
+		info.waitSemaphoreCount = 0;
+		info.pWaitSemaphores = nullptr;
 		info.swapchainCount = 1;
 		info.pSwapchains = &swapchain;
 		info.pImageIndices = &window_imageIndex;
@@ -519,6 +530,7 @@ namespace tke
 				for (auto &m : resolution.deferred_messages)
 					resolution.broadcast(&resolution, m.first, m.second);
 				resolution.deferred_messages.clear();
+
 				root_node->update();
 				on_render();
 
@@ -536,6 +548,10 @@ namespace tke
 					keyStates[i].justDown = false;
 					keyStates[i].justUp = false;
 				}
+
+				for (auto &e : _after_frame_events)
+					e();
+				_after_frame_events.clear();
 			}
 		}
 	}

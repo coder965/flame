@@ -55,7 +55,7 @@ namespace tke
 		vkDestroySemaphore(vk_device.v, semaphore, nullptr);
 	}
 
-	void waitFence(VkFence fence)
+	void wait_fence(VkFence fence)
 	{
 		auto res = vkWaitForFences(vk_device.v, 1, &fence, true, UINT64_MAX);
 		assert(res == VK_SUCCESS);

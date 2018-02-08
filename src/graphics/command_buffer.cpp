@@ -170,7 +170,7 @@ namespace tke
 		if (currentPipeline == p)
 			return;
 		currentPipeline = p;
-		vkCmdBindPipeline(v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->pipeline);
+		vkCmdBindPipeline(v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->v);
 	}
 
 	void CommandBuffer::bindDescriptorSet()

@@ -20,5 +20,5 @@ namespace tke
 	void destroySemaphore(VkSemaphore semaphore);
 
 	// must call in main thread
-	void waitFence(VkFence);
+	void wait_fence(VkFence);
 }

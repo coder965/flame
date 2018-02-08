@@ -30,7 +30,6 @@ namespace tke
 	extern std::shared_ptr<Framebuffer> window_framebuffers[2];
 	extern VkSemaphore window_imageAvailable;
 	extern uint32_t window_imageIndex;
-	extern VkFence frameDone;
 	extern std::uint32_t window_style;
 
 	void add_keydown_listener(const std::function<void(int)> &e);
@@ -44,6 +43,8 @@ namespace tke
 	void remove_char_listener(const std::function<void(int)> &e);
 	void remove_resize_listener(const std::function<void(int, int)> &e);
 	void remove_destroy_listener(const std::function<void()> &e);
+
+	void add_after_frame_event(const std::function<void()> &e);
 
 	long long get_now_time_ns();
 

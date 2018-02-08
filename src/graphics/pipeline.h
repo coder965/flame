@@ -106,15 +106,16 @@ namespace tke
 		RenderPass *render_pass;
 		int subpass_index;
 
-		VkPipeline pipeline;
+		VkPipeline v;
 
-		DescriptorSet *descriptor_set; // set: 0
+		std::unique_ptr<DescriptorSet> descriptor_set; // set: 0
 
 		// must call in main thread
 		Pipeline(const PipelineInfo &_info, RenderPass *_render_pass, int _subpass_index,
 			bool need_default_ds = false);
 		// must call in main thread
 		~Pipeline();
+		void create();
 		void link_descriptors(DescriptorSet *set, Resource *resource);
 		int descriptor_position(const std::string &name);
 	};
