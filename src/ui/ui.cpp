@@ -976,7 +976,7 @@ namespace tke
 			io.DisplaySize = ImVec2((float)window_cx, (float)window_cy);
 			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
-			io.DeltaTime = (float)((nowTime - last_time) / 1000.f);
+			io.DeltaTime = (nowTime - last_time) / 1000.f;
 			last_time = nowTime;
 
 			io.MousePos = ImVec2((float)mouseX, (float)mouseY);

@@ -47,7 +47,7 @@ namespace tke
 	extern float far_plane;
 	extern float fovy;
 
-	extern int nowTime;
+	extern long long now_ns;
 
 	extern std::string engine_path;
 
