@@ -30,7 +30,7 @@ namespace tke
 				stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		}
 
-		auto shaderFileLastWriteTime = std::fs::last_write_time(path);
+		auto shader_file_timestamp = std::fs::last_write_time(path);
 
 		auto spvFilename = filename;
 		for (auto &d : defines)
@@ -40,7 +40,7 @@ namespace tke
 		bool spvUpToDate = false;
 		if (std::fs::exists(spvFilename))
 		{
-			if (std::fs::last_write_time(spvFilename) > shaderFileLastWriteTime)
+			if (std::fs::last_write_time(spvFilename) > shader_file_timestamp)
 				spvUpToDate = true;
 			else
 				std::fs::remove(spvFilename);

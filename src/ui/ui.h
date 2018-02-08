@@ -37,7 +37,8 @@ namespace ImGui
 	ImTextureID ImageID(std::shared_ptr<tke::Image> i);
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active = false);
-	bool IconButton(const char *label);
+	bool IconButton(const char *label, float font_scale = 1.f);
+	bool Checkbox_2in1(const char *label, bool *v);
 	bool BeginMainMenuBar_l();
 	bool BeginToolBar();
 	void EndToolBar();

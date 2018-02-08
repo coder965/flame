@@ -128,13 +128,45 @@ namespace ImGui
 		return pressed;
 	}
 
-	bool IconButton(const char *label)
+	bool IconButton(const char *label, float font_scale)
 	{
-		SetWindowFontScale(0.5f);
+		if (font_scale != 1.f)
+			SetWindowFontScale(font_scale);
 		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 		auto pressed = Button(label);
 		PopStyleColor();
-		SetWindowFontScale(1.f);
+		if (font_scale != 1.f)
+			SetWindowFontScale(1.f);
+		return pressed;
+	}
+
+	bool Checkbox_2in1(const char *label, bool *v)
+	{
+		ImGuiWindow* window = GetCurrentWindow();
+		if (window->SkipItems)
+			return false;
+
+		ImVec2 pos = GetCursorScreenPos();
+		ImDrawList* draw_list = GetWindowDrawList();
+
+		ImVec2 label_size = CalcTextSize(label, NULL, true);
+		label_size.x += 8;
+
+		auto pressed = InvisibleButton(label, label_size);
+		if (pressed)
+			*v = !*v;
+
+		float t = *v ? 1.0f : 0.0f;
+
+		ImU32 col_bg;
+		if (ImGui::IsItemHovered())
+			col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.78f, 0.78f, 0.78f, 1.0f), ImVec4(0.64f, 0.83f, 0.34f, 1.0f), t));
+		else
+			col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.85f, 0.85f, 0.85f, 1.0f), ImVec4(0.56f, 0.83f, 0.26f, 1.0f), t));
+
+		draw_list->AddRectFilled(pos, pos + label_size, col_bg, 4);
+		RenderText(pos + ImVec2(4, 0), label);
+
 		return pressed;
 	}
 

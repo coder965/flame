@@ -8,11 +8,11 @@
 #include "window/inspector.h"
 #include "window/scene_editor.h"
 #include "window/shader_editor.h"
+#include "window/log_dog.h"
 #include "window/image_editor.h"
 
 struct NewImageDialog : FileSelector
 {
-	bool first = true;
 	int cx = 512;
 	int cy = 512;
 
@@ -170,6 +170,12 @@ int main(int argc, char** argv)
 				if (!shader_editor)
 					shader_editor = new ShaderEditor;
 				shader_editor->_need_focus = true;
+			}
+			if (ImGui::MenuItem("Log Dog"))
+			{
+				if (!log_dog)
+					log_dog = new LogDog;
+				log_dog->_need_focus = true;
 			}
 
 			ImGui::EndMenu();

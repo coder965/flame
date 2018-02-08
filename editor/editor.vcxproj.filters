@@ -57,6 +57,9 @@
     <ClCompile Include="..\src\editor\window\text_editor.cpp">
       <Filter>src\window</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\editor\window\log_dog.cpp">
+      <Filter>src\window</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\editor\tool\tool.h">
@@ -99,6 +102,9 @@
       <Filter>src\window</Filter>
     </ClInclude>
     <ClInclude Include="..\src\editor\window\text_editor.h">
+      <Filter>src\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\editor\window\log_dog.h">
       <Filter>src\window</Filter>
     </ClInclude>
   </ItemGroup>
