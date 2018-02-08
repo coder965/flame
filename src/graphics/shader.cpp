@@ -15,6 +15,18 @@ namespace tke
 		defines(_defines),
 		v(0)
 	{
+		auto ext = std::fs::path(filename).extension().string();
+		if (ext == ".vert")
+			stage = VK_SHADER_STAGE_VERTEX_BIT;
+		else if (ext == ".tesc")
+			stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+		else if (ext == ".tese")
+			stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+		else if (ext == ".geom")
+			stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+		else if (ext == ".frag")
+			stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+
 		create();
 	}
 
@@ -26,20 +38,6 @@ namespace tke
 	void Shader::create()
 	{
 		std::fs::path path(filename);
-
-		{
-			auto ext = path.extension().string();
-			if (ext == ".vert")
-				stage = VK_SHADER_STAGE_VERTEX_BIT;
-			else if (ext == ".tesc")
-				stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			else if (ext == ".tese")
-				stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			else if (ext == ".geom")
-				stage = VK_SHADER_STAGE_GEOMETRY_BIT;
-			else if (ext == ".frag")
-				stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		}
 
 		auto shader_file_timestamp = std::fs::last_write_time(path);
 

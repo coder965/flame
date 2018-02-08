@@ -1,4 +1,4 @@
-#include "text_editor.h"
+#include "blueprint_editor.h"
 
 BlueprintEditor::BlueprintEditor() :
 	Window("")
