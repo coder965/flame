@@ -1,17 +1,17 @@
 #include "text_editor.h"
 
-BlueprintEditor::BlueprintEditor() :
+TextEditor::TextEditor() :
 	Window("")
 {
 }
 
-BlueprintEditor::~BlueprintEditor()
+TextEditor::~TextEditor()
 {
-	blueprint_editor = nullptr;
+	text_editor = nullptr;
 }
 
-void BlueprintEditor::on_show()
+void TextEditor::on_show()
 {
 }
 
-BlueprintEditor *blueprint_editor = nullptr;
+TextEditor *text_editor = nullptr;

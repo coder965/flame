@@ -9,6 +9,7 @@
 #include "window/scene_editor.h"
 #include "window/shader_editor.h"
 #include "window/log_dog.h"
+#include "window/blueprint_editor.h"
 #include "window/image_editor.h"
 
 struct NewImageDialog : FileSelector
@@ -177,6 +178,12 @@ int main(int argc, char** argv)
 					log_dog = new LogDog;
 				log_dog->_need_focus = true;
 			}
+			if (ImGui::MenuItem("Blueprint Editor"))
+			{
+				if (!blueprint_editor)
+					blueprint_editor = new BlueprintEditor;
+				blueprint_editor->_need_focus = true;
+			}
 
 			ImGui::EndMenu();
 		}
@@ -250,7 +257,7 @@ int main(int argc, char** argv)
 						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 						if (ImGui::BeginCombo("window", target ? target->title.c_str() : ""))
 						{
-							if (tke::ui::main_layout.is_empty(0))
+							if (tke::ui::main_layout->is_empty(0))
 							{
 								if (ImGui::Selectable("Main Layout", target == nullptr))
 									target = nullptr;
@@ -285,7 +292,7 @@ int main(int argc, char** argv)
 						ImGui::PopStyleVar();
 						if (ImGui::Button("OK"))
 						{
-							if (target || tke::ui::main_layout.is_empty(0))
+							if (target || tke::ui::main_layout->is_empty(0))
 							{
 								windows_popup_w->dock(target, dir);
 								need_exit_window_popup = true;

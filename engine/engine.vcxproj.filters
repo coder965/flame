@@ -72,9 +72,6 @@
     <ClCompile Include="..\src\physics\physics.cpp">
       <Filter>src\physics</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\image_data.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\imgui\imgui.cpp">
       <Filter>src\ui</Filter>
     </ClCompile>
@@ -162,6 +159,12 @@
     <ClCompile Include="..\src\object.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\imgui\imgui_tabs.cpp">
+      <Filter>src\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\image_utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\entity\camera.h">
@@ -202,9 +205,6 @@
     </ClInclude>
     <ClInclude Include="..\src\physics\physics.h">
       <Filter>src\physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\image_data.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\imgui\imgui.h">
       <Filter>src\ui</Filter>
@@ -288,6 +288,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\object.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\image_utils.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,11 +3,13 @@
 #include <memory>
 
 #include "../math/math.h"
-#include "../image_data.h"
+#include "../image_utils.h"
 #include "graphics.h"
 
 namespace tke
 {
+	struct Buffer;
+
 	struct ImageLevel
 	{
 		unsigned int cx;
@@ -35,7 +37,6 @@ namespace tke
 		};
 
 		Type type;
-		VkImageAspectFlags aspect;
 
 		VkFormat format;
 		VkImage v;
@@ -62,16 +63,21 @@ namespace tke
 		Image(VkImage _image, int _cx, int _cy, VkFormat _format);
 		// must call in main thread
 		~Image();
-		int get_cx(int _level = 0) const;
-		int get_cy(int _level = 0) const;
-		void clear(const glm::vec4 &color);
-		void transition_layout(int _level, VkImageLayout _layout);
-		void transition_layout(VkImageLayout _layout);
-		void fill_data(int _level, unsigned char *src, size_t _size);
+		VkImageAspectFlags get_aspect() const;
+		int get_cx(int level = 0) const;
+		int get_cy(int level = 0) const;
+		int get_size(int level = 0) const;
+		int get_linear_offset(int x, int y, int level = 0) const;
 		VkImageView get_view(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		VkDescriptorImageInfo *get_info(VkImageView view, VkSampler sampler);
+		void transition_layout(int _level, VkImageLayout _layout);
+		void transition_layout(VkImageLayout _layout);
+		void clear(const glm::vec4 &color);
+		void fill_data(int level, unsigned char *src);
+		void copy_to_buffer(Buffer *dst, int level = 0, int x = 0, int y = 0, int width = 0, int height = 0, int buffer_offset = 0);
+		void copy_from_buffer(Buffer *src, int level = 0, int x = 0, int y = 0, int width = 0, int height = 0, int buffer_offset = 0);
 	private:
-		void set_type_and_aspect_from_format();
+		void set_data_from_format();
 	};
 
 	Image *load_image(const std::string &filename);

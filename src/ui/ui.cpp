@@ -142,7 +142,7 @@ namespace ImGui
 
 	bool Checkbox_2in1(const char *label, bool *v)
 	{
-		ImGuiWindow* window = GetCurrentWindow();
+		auto window = GetCurrentWindow();
 		if (window->SkipItems)
 			return false;
 
@@ -160,9 +160,9 @@ namespace ImGui
 
 		ImU32 col_bg;
 		if (ImGui::IsItemHovered())
-			col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.78f, 0.78f, 0.78f, 1.0f), ImVec4(0.64f, 0.83f, 0.34f, 1.0f), t));
+			col_bg = ImGui::GetColorU32(*v ? ImVec4(0.64f, 0.83f, 0.34f, 1.0f) : ImVec4(0.78f, 0.78f, 0.78f, 1.0f));
 		else
-			col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.85f, 0.85f, 0.85f, 1.0f), ImVec4(0.56f, 0.83f, 0.26f, 1.0f), t));
+			col_bg = ImGui::GetColorU32(*v ? ImVec4(0.56f, 0.83f, 0.26f, 1.0f) : ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
 
 		draw_list->AddRectFilled(pos, pos + label_size, col_bg, 4);
 		RenderText(pos + ImVec2(4, 0), label);
@@ -227,12 +227,6 @@ namespace tke
 		bool accepted_mouse;
 		bool accepted_key;
 
-
-		Tab::Tab() :
-			_tag(WindowTagNull)
-		{
-		}
-
 		const char *get_dock_dir_name(DockDirection dir)
 		{
 			switch (dir)
@@ -267,7 +261,7 @@ namespace tke
 			dock_dir = (DockDirection)-1;
 		}
 
-		Layout main_layout;
+		Layout *main_layout;
 
 		static bool _cleanup_layout(Layout *l)
 		{
@@ -286,8 +280,8 @@ namespace tke
 					{
 						if (j == 1)
 						{
-							for (auto w : l->tabbar[1].tabs)
-								l->add_window(0, (Window*)w);
+							for (auto w : l->windows[1])
+								l->add_window(0, w);
 						}
 						l->clear_window(1);
 						l->type = LayoutCenter;
@@ -302,9 +296,9 @@ namespace tke
 						for (int k = 0; k < 2; k++)
 						{
 							l->splitter.size[k] = c->splitter.size[k];
-							l->tabbar[k].tabs.clear();
-							for (auto w : c->tabbar[k].tabs)
-								l->add_window(k, (Window*)w);
+							l->windows[k].clear();
+							for (auto w : c->windows[k])
+								l->add_window(k, w);
 						}
 						l->set_layout(i, std::move(c->children[i]));
 						l->set_layout(j, std::move(c->children[j]));
@@ -327,12 +321,12 @@ namespace tke
 					{
 						for (int j = 0; j < 2; j++)
 						{
-							if (!c->children[j] && c->tabbar[j].tabs.size() == 0)
+							if (!c->children[j] && c->windows[j].size() == 0)
 							{
 								l->clear_window(i);
 								auto k = 1 - j;
-								for (auto w : c->tabbar[k].tabs)
-									l->add_window(i, (Window*)w);
+								for (auto w : c->windows[k])
+									l->add_window(i, w);
 								l->children[i].reset();
 								dirty = true;
 								break;
@@ -348,7 +342,7 @@ namespace tke
 		{
 			auto continue_ = true;
 			while (continue_)
-				continue_ = _cleanup_layout(&main_layout);
+				continue_ = _cleanup_layout(main_layout);
 		}
 
 		static void _resize_layout(Layout *l)
@@ -363,26 +357,26 @@ namespace tke
 
 		static void on_resize(int cx, int cy)
 		{
-			main_layout.width = cx;
-			main_layout.height = cy - ImGui::menubar_height - ImGui::toolbar_height - ImGui::statusbar_height;
-			_resize_layout(&main_layout);
+			main_layout->width = cx;
+			main_layout->height = cy - ImGui::menubar_height - ImGui::toolbar_height - ImGui::statusbar_height;
+			_resize_layout(main_layout);
 		}
 
 		Window::Window(const std::string &_title, unsigned int flags) :
 			first(true),
 			first_cx(0),
 			first_cy(0),
+			_need_focus(false),
+			_tag(WindowTagNull),
 			enable_menu(flags & enable_menu),
 			enable_saved_settings(!(flags & WindowNoSavedSettings)),
 			modal(flags & WindowModal),
 			opened(true),
-			_need_focus(false),
 			layout(nullptr),
 			idx(-1)
 		{
 			title = _title;
 			enable_dock = !(flags & WindowBanDock);
-			enable_close_tab = true;
 			windows.emplace_back(this);
 		}
 
@@ -390,9 +384,9 @@ namespace tke
 		{
 			if (w == nullptr)
 			{
-				if (main_layout.type != LayoutCenter)
+				if (main_layout->type != LayoutCenter)
 					return;
-				main_layout.add_window(0, this);
+				main_layout->add_window(0, this);
 				return;
 			}
 
@@ -413,8 +407,8 @@ namespace tke
 				l->splitter.set_vertically(l->type == LayoutHorizontal);
 				if (ori_type != LayoutCenter || ori_idx != 1 - dir)
 				{
-					for (auto w : ori_layout->tabbar[ori_idx].tabs)
-						l->add_window(1 - dir_id, (Window*)w);
+					for (auto w : ori_layout->windows[ori_idx])
+						l->add_window(1 - dir_id, w);
 				}
 				l->add_window(dir_id, this);
 				if (ori_type != LayoutCenter)
@@ -429,7 +423,7 @@ namespace tke
 			if (!layout)
 				return;
 
-			layout->tabbar[idx].remove_tab(this);
+			layout->remove_window(idx, this);
 			layout = nullptr;
 			cleanup_layout();
 			on_resize(window_cx, window_cy);
@@ -487,142 +481,6 @@ namespace tke
 				on_show();
 		}
 
-		Tabbar::Tabbar() :
-			curr_tab(nullptr),
-			dragging_tab(nullptr),
-			_dragging_tab_out_of_bar(false)
-		{
-		}
-
-		bool Tabbar::is_empty() const
-		{
-			return tabs.size() == 0;
-		}
-
-		void Tabbar::clear()
-		{
-			tabs.clear();
-			curr_tab = nullptr;
-		}
-
-		void Tabbar::add_tab(Tab *t)
-		{
-			tabs.push_back(t);
-			curr_tab = t;
-		}
-
-		void Tabbar::remove_tab(Tab *t)
-		{
-			for (auto it = tabs.begin(); it != tabs.end(); it++)
-			{
-				if (*it == t)
-				{
-					auto this_is_curr = false;
-					if (curr_tab == t)
-						this_is_curr = true;
-					tabs.erase(it);
-					if (this_is_curr)
-					{
-						curr_tab = tabs.size() > 0 ?
-							tabs.back() : nullptr;
-					}
-					return;
-				}
-			}
-		}
-
-		void Tabbar::show()
-		{
-			auto line_height = ImGui::GetTextLineHeightWithSpacing();
-			auto line_height_hf = line_height / 2.f;
-
-			ImU32 color = ImGui::GetColorU32(ImGuiCol_FrameBg);
-			ImU32 color_active = ImGui::GetColorU32(ImGuiCol_FrameBgActive);
-			ImU32 color_hovered = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);
-			ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
-			auto index = 0;
-			ImVec2 pos = ImGui::GetCursorScreenPos() + ImVec2(line_height_hf, 0);
-			for (auto t : tabs)
-			{
-				auto text_end = t->title.c_str() + t->title.size();
-				ImVec2 size(ImGui::CalcTextSize(t->title.c_str(), text_end).x, line_height);
-				t->tab_x = pos.x;
-				t->tab_width = size.x;
-				ImGui::SetCursorScreenPos(pos);
-				ImGui::InvisibleButton(t->title.c_str(), size);
-				auto hovered = false;
-				if (ImGui::IsItemHovered())
-				{
-					hovered = true;
-					if (ImGui::IsMouseClicked(0) && dragging_tab != t)
-					{
-						dragging_tab = t;
-						dragging_tab_offset = mouseX - t->tab_x;
-					}
-					if (ImGui::IsMouseClicked(0))
-						curr_tab = t;
-				}
-
-				auto draw_list = ImGui::GetWindowDrawList();
-				draw_list->PathClear();
-
-				draw_list->PathArcTo(pos + ImVec2(0, line_height_hf), line_height_hf, glm::radians(90.f), glm::radians(270.f));
-				draw_list->PathArcTo(pos + ImVec2(size.x + 9, line_height_hf), line_height_hf, glm::radians(-90.f), glm::radians(90.f));
-
-				draw_list->PathFillConvex(hovered ? color_hovered : (t == curr_tab ? color_active : color));
-				draw_list->AddText(pos, text_color, t->title.c_str(), text_end);
-
-				if (ImGui::CloseButton(ImGui::GetCurrentWindowRead()->GetID((t->title + "#CLOSE").c_str()), pos + ImVec2(size.x + 8, line_height_hf), 5.5f))
-					t->_tag = WindowTagClose;
-
-				index++;
-				pos.x += size.x + line_height + 9;
-
-				if (index < tabs.size())
-					ImGui::SameLine();
-			}
-			if (dragging_tab)
-			{
-				auto t = dragging_tab;
-				if (mouseLeft.pressing)
-				{
-					for (auto it = tabs.begin(); it != tabs.end(); it++)
-					{
-						if (*it == t)
-						{
-							auto it_ = it;
-							auto base = t->tab_x + mouseX - t->tab_x - dragging_tab_offset;
-							if (t != tabs.front())
-							{
-								auto _t = *(--it_);
-								if (base < _t->tab_x)
-								{
-									std::swap(_t->tab_x, t->tab_x);
-									std::swap(*it_, *it);
-									break;
-								}
-							}
-							if (t != tabs.back())
-							{
-								it_ = it;
-								auto _t = *(++it_);
-								if (base + t->tab_width > _t->tab_x + _t->tab_width)
-								{
-									std::swap(_t->tab_x, t->tab_x);
-									std::swap(*it_, *it);
-								}
-							}
-							break;
-						}
-					}
-					if (t->enable_dock && (mouseY < pos.y || mouseY > pos.y + line_height))
-						t->_tag = WindowTagUndock;
-				}
-				else
-					dragging_tab = nullptr;
-			}
-		}
-
 		const std::list<std::unique_ptr<Window>> &get_windows()
 		{
 			return windows;
@@ -650,7 +508,7 @@ namespace tke
 		{
 			if (children[idx])
 				return false;
-			if (tabbar[idx].tabs.size() > 0)
+			if (windows[idx].size() > 0)
 				return false;
 			return true;
 		}
@@ -720,12 +578,24 @@ namespace tke
 				w->layout = this;
 				w->idx = idx;
 			}
-			tabbar[idx].add_tab(w);
+			windows[idx].push_back(w);
+		}
+
+		void Layout::remove_window(int idx, Window *w)
+		{
+			for (auto it = windows[idx].begin(); it != windows[idx].end(); it++)
+			{
+				if (*it == w)
+				{
+					windows[idx].erase(it);
+					return;
+				}
+			}
 		}
 
 		void Layout::clear_window(int idx)
 		{
-			tabbar[idx].clear();
+			windows[idx].clear();
 		}
 
 		static void _draw_drag_overlay(ImRect rect, Layout *layout, int idx, DockDirection dir)
@@ -793,13 +663,26 @@ namespace tke
 
 		void Layout::show_window(int idx)
 		{
-			ImGui::BeginChild("##tabbar", ImVec2(0, ImGui::GetTextLineHeightWithSpacing()));
-			tabbar[idx].show();
-			ImGui::EndChild();
-
-			ImGui::BeginChild("##content");
-			((Window*)tabbar[idx].curr_tab)->show();
-			ImGui::EndChild();
+			ImGui::BeginTabBar("tabbar");
+			for (auto &w : windows[idx])
+			{
+				auto open = true;
+				auto curr = ImGui::TabItem(w->title.c_str(), &open);
+				if (ImGui::IsItemActive())
+				{
+					auto mouseY = ImGui::GetMousePos().y;
+					if (mouseY < ImGui::GetItemRectMin().y || mouseY > ImGui::GetItemRectMax().y)
+						w->_tag = WindowTagUndock;
+				}
+				if (curr)
+				{
+					curr_tab[idx] = w;
+					w->show();
+				}
+				if (!open)
+					w->_tag = WindowTagClose;
+			}
+			ImGui::EndTabBar();
 
 			if (dragging_window)
 			{
@@ -897,64 +780,64 @@ namespace tke
 				.add_shader(engine_path + "shader/ui.frag", {}),
 				renderPass_window, 0, true);
 
-			{
-				ImGuiIO& io = ImGui::GetIO();
-				{
-					//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
-					io.Fonts->AddFontDefault();
-					static const ImWchar icons_ranges[] = {
-						ICON_MIN_FA,
-						ICON_MAX_FA,
-						0
-					};
-					ImFontConfig icons_config;
-					icons_config.MergeMode = true;
-					icons_config.PixelSnapH = true;
-					io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
-					unsigned char* pixels; int width, height;
-					io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-					font_image = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
-						VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-					font_image->fill_data(0, pixels, width * height * 4);
-					io.Fonts->TexID = (void*)0; // image index
+			ImGui::CreateContext();
+			ImGuiIO& io = ImGui::GetIO();
 
-					updateDescriptorSets(&pipeline_ui->descriptor_set->imageWrite(0, 0, font_image, colorSampler));
-				}
+			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
+			io.Fonts->AddFontDefault();
+			static const ImWchar icons_ranges[] = {
+				ICON_MIN_FA,
+				ICON_MAX_FA,
+				0
+			};
+			ImFontConfig icons_config;
+			icons_config.MergeMode = true;
+			icons_config.PixelSnapH = true;
+			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
+			unsigned char* pixels; int width, height;
+			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+			font_image = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
+			font_image->fill_data(0, pixels);
+			io.Fonts->TexID = (void*)0; // image index
 
-				cb_ui = new CommandBuffer;
-				cb_ui->begin();
-				cb_ui->end();
+			updateDescriptorSets(&pipeline_ui->descriptor_set->imageWrite(0, 0, font_image, colorSampler));
 
-				io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-				io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-				io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-				io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-				io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-				io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-				io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-				io.KeyMap[ImGuiKey_Home] = VK_HOME;
-				io.KeyMap[ImGuiKey_End] = VK_END;
-				io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-				io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-				io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-				io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-				io.KeyMap[ImGuiKey_A] = 'A';
-				io.KeyMap[ImGuiKey_C] = 'C';
-				io.KeyMap[ImGuiKey_V] = 'V';
-				io.KeyMap[ImGuiKey_X] = 'X';
-				io.KeyMap[ImGuiKey_Y] = 'Y';
-				io.KeyMap[ImGuiKey_Z] = 'Z';
-				io.SetClipboardTextFn = [](void *user_data, const char *s) {
-					set_clipBoard(s);
-				};
-				io.GetClipboardTextFn = [](void *user_data) {
-					static std::string s;
-					s = get_clipBoard();
-					return s.c_str();
-				};
+			cb_ui = new CommandBuffer;
+			cb_ui->begin();
+			cb_ui->end();
 
-				ImGui::StyleColorsLight(nullptr);
-			}
+			io.KeyMap[ImGuiKey_Tab] = VK_TAB;
+			io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
+			io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
+			io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
+			io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
+			io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
+			io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
+			io.KeyMap[ImGuiKey_Home] = VK_HOME;
+			io.KeyMap[ImGuiKey_End] = VK_END;
+			io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
+			io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
+			io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
+			io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
+			io.KeyMap[ImGuiKey_A] = 'A';
+			io.KeyMap[ImGuiKey_C] = 'C';
+			io.KeyMap[ImGuiKey_V] = 'V';
+			io.KeyMap[ImGuiKey_X] = 'X';
+			io.KeyMap[ImGuiKey_Y] = 'Y';
+			io.KeyMap[ImGuiKey_Z] = 'Z';
+			io.SetClipboardTextFn = [](void *user_data, const char *s) {
+				set_clipBoard(s);
+			};
+			io.GetClipboardTextFn = [](void *user_data) {
+				static std::string s;
+				s = get_clipBoard();
+				return s.c_str();
+			};
+
+			ImGui::StyleColorsLight(nullptr);
+
+			main_layout = new Layout;
 		}
 
 		static void _load_layout(XMLNode *n, Layout *layout)
@@ -1024,7 +907,7 @@ namespace tke
 				on_resize(window_cx, window_cy);
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
-					_load_layout(&doc, &main_layout);
+					_load_layout(&doc, main_layout);
 				cleanup_layout();
 				add_resize_listener(on_resize);
 
@@ -1068,27 +951,27 @@ namespace tke
 				w->_tag = WindowTagNull;
 			}
 
-			if (!main_layout.is_empty(0))
+			if (!main_layout->is_empty(0))
 			{
 				ImGui::SetNextWindowPos(ImVec2(0.f, ImGui::menubar_height + ImGui::toolbar_height));
-				ImGui::SetNextWindowSize(ImVec2(main_layout.width, main_layout.height));
+				ImGui::SetNextWindowSize(ImVec2(main_layout->width, main_layout->height));
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 				ImGui::Begin("##dock", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
 					ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
-				main_layout.show();
+				main_layout->show();
 				ImGui::End();
 				ImGui::PopStyleVar();
 			}
 			else
 			{
 				if (dragging_window)
-					_draw_drag_overlay(ImRect(0.f, ImGui::menubar_height, main_layout.width, ImGui::menubar_height + ImGui::toolbar_height + main_layout.height), &main_layout, -1, DockCenter);
+					_draw_drag_overlay(ImRect(0.f, ImGui::menubar_height, main_layout->width, ImGui::menubar_height + ImGui::toolbar_height + main_layout->height), main_layout, -1, DockCenter);
 			}
 
 			if (last_dragging_window != dragging_window)
 			{
 				if (last_dragging_window && dock_target_layout && dock_dir != -1)
-					last_dragging_window->dock((Window*)dock_target_layout->tabbar[dock_target_idx].curr_tab, dock_dir);
+					last_dragging_window->dock(dock_target_layout->curr_tab[dock_target_idx], dock_dir);
 			}
 
 			{

@@ -5,6 +5,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "../../imgui/imgui.h"
 #include "../../imgui/imgui_internal.h"
+#include "../../imgui/imgui_tabs.h"
 #include "../../IconFontCppHeaders/IconsFontAwesome.h"
 
 #include "../file_utils.h"
@@ -60,20 +61,6 @@ namespace tke
 			WindowTagClose
 		};
 
-		struct Tab
-		{
-			std::string title;
-			bool enable_dock;
-			bool enable_close_tab;
-
-			int tab_x;
-			int tab_width;
-
-			WindowTag _tag;
-
-			Tab();
-		};
-
 		struct Layout;
 
 		enum WindowCreateFlag
@@ -97,15 +84,18 @@ namespace tke
 
 		const char *get_dock_dir_name(DockDirection dir);
 
-		struct Window : Tab
+		struct Window
 		{
+			std::string title;
 			bool first;
 			int first_cx;
 			int first_cy;
 			bool _need_focus;
+			WindowTag _tag;
 
 			bool enable_menu;
 			bool enable_saved_settings;
+			bool enable_dock;
 			bool modal;
 			bool opened;
 
@@ -118,22 +108,6 @@ namespace tke
 			virtual void save(XMLNode *) {}
 			void dock(Window *w = nullptr, DockDirection dir = DockCenter);
 			void undock();
-			void show();
-		};
-
-		struct Tabbar
-		{
-			std::list<Tab*> tabs;
-			Tab *curr_tab;
-			Tab *dragging_tab;
-			int dragging_tab_offset;
-			bool _dragging_tab_out_of_bar;
-
-			Tabbar();
-			bool is_empty() const;
-			void clear();
-			void add_tab(Tab *t);
-			void remove_tab(Tab *t);
 			void show();
 		};
 
@@ -161,7 +135,8 @@ namespace tke
 			ImGui::Splitter splitter;
 
 			std::unique_ptr<Layout> children[2];
-			Tabbar tabbar[2];
+			std::list<Window*> windows[2];
+			Window *curr_tab[2];
 
 			Layout();
 			bool is_empty(int idx) const;
@@ -170,12 +145,13 @@ namespace tke
 			void set_layout(int idx, Layout *l);
 			void set_layout(int idx, std::unique_ptr<Layout> &&l);
 			void add_window(int idx, Window *w);
+			void remove_window(int idx, Window *w);
 			void clear_window(int idx);
 			void show_window(int idx);
 			void show();
 		};
 
-		extern Layout main_layout;
+		extern Layout *main_layout;
 
 		glm::vec4 get_bg_color();
 		void set_bg_color(const glm::vec4 &v);

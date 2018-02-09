@@ -1,6 +1,5 @@
 #include "../../global.h"
 #include "../../input.h"
-#include "../../graphics/buffer.h"
 #include "../../graphics/command_buffer.h"
 #include "../../ui/ui.h"
 
@@ -13,6 +12,8 @@ ImageEditor::ImageEditor(const std::string &filename) :
 	first_cy = 600;
 
 	image = tke::get_image(filename);
+	staging_buffer = std::make_unique<tke::StagingBuffer>(image->get_size());
+	image->copy_to_buffer(staging_buffer.get());
 }
 
 void ImageEditor::on_show()
@@ -22,6 +23,17 @@ void ImageEditor::on_show()
 	{
 		if (ImGui::MenuItem("Save"))
 			/*tke::save_image_file(image->filename, image->levels[0], image->bpp)*/;
+		ImGui::EndMenu();
+	}
+	if (ImGui::BeginMenu("Filter"))
+	{
+		if (ImGui::MenuItem("Distance Field"))
+		{
+			auto pixel = (unsigned char*)staging_buffer->map(0, image->get_size());
+			tke::filter_image_rgba32_to_sdf(pixel, image->get_cy(), image->get_cx());
+			staging_buffer->unmap();
+		}
+
 		ImGui::EndMenu();
 	}
 	ImGui::EndMenuBar();
@@ -67,27 +79,25 @@ void ImageEditor::on_show()
 			auto x = tke::mouseX - image_pos.x;
 			auto y = tke::mouseY - image_pos.y;
 
-			auto pixel = (unsigned char*)tke::defalut_staging_buffer->map(0, 4);
-			memset(pixel, 0, 4);
-			if (penId < 3)
+			auto pixel = (unsigned char*)staging_buffer->map(image->get_linear_offset(x, y), image->bpp / 8);
+			switch (penId)
 			{
-				pixel[penId] = 255;
-				pixel[3] = 255;
+				case 0:
+					pixel[0] = 0; pixel[1] = 0; pixel[2] = 255; pixel[3] = 255;
+					break;
+				case 1:
+					pixel[0] = 0; pixel[1] = 255; pixel[2] = 0; pixel[3] = 255;
+					break;
+				case 2:
+					pixel[0] = 255; pixel[1] = 0; pixel[2] = 0; pixel[3] = 255;
+					break;
+				case 3:
+					pixel[0] = 0; pixel[1] = 0; pixel[2] = 0; pixel[3] = 255;
+					break;
 			}
-			pixel[3] = 255;
-			tke::defalut_staging_buffer->unmap();
+			staging_buffer->unmap();
 
-			auto cb = tke::begineOnceCommandBuffer();
-			VkBufferImageCopy range = {};
-			range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			range.imageSubresource.layerCount = 1;
-			range.imageOffset.x = x;
-			range.imageOffset.y = y;
-			range.imageExtent.width = 1;
-			range.imageExtent.height = 1;
-			range.imageExtent.depth = 1;
-			vkCmdCopyBufferToImage(cb->v, tke::defalut_staging_buffer->v, image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &range);
-			tke::endOnceCommandBuffer(cb);
+			image->copy_from_buffer(staging_buffer.get(), 0, x, y, 1, 1, -1);
 		}
 	}
 }

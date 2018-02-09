@@ -87,17 +87,25 @@ void LogDog::set_log_filename(const std::string &filename)
 
 void LogDog::on_show()
 {
-	if (ImGui::TreeNode("File"))
+	ImGui::BeginTabBar("tabbar"/*, ImGuiTabBarFlags_NoReorder*/);
+	if (ImGui::TabItem("File"))
 	{
 		ImGui::TextUnformatted(log_filename.c_str());
 		ImGui::SameLine();
 		if (ImGui::IconButton(ICON_FA_ELLIPSIS_H))
 			new SelectFileDialog(this);
-
-		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("Columns"))
+	if (ImGui::TabItem("Columns"))
 	{
+		if (ImGui::IsItemActive())
+		{
+			auto mouseY = ImGui::GetMousePos().y;
+			if (mouseY < ImGui::GetItemRectMin().y || mouseY > ImGui::GetItemRectMax().y)
+			{
+				int cut = 1;
+			}
+		}
+
 		if (ImGui::InputText("Match Regex", match_regex, TK_ARRAYSIZE(match_regex)))
 		{
 
@@ -161,10 +169,8 @@ void LogDog::on_show()
 			strcpy(col->name, "NewColumn");
 			columns.emplace_back(new Column);
 		}
-
-		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("Log"))
+	if (ImGui::TabItem("Log"))
 	{
 		static bool show_error;
 		ImGui::Checkbox_2in1("Error", &show_error);
@@ -172,7 +178,7 @@ void LogDog::on_show()
 		ImGui::Separator();
 		for (auto &c : columns)
 		{
-			ImGui::Text(c->name); 
+			ImGui::Text(c->name);
 			ImGui::NextColumn();
 		}
 		ImGui::Separator();
@@ -186,7 +192,7 @@ void LogDog::on_show()
 			auto &l = logs[index];
 			for (auto j = 0; j < columns.size(); j++)
 			{
-				ImGui::Text(l[j].c_str()); 
+				ImGui::Text(l[j].c_str());
 				ImGui::NextColumn();
 			}
 		}
@@ -205,9 +211,8 @@ void LogDog::on_show()
 			if (curr_page < total_page - 1)
 				curr_page++;
 		}
-
-		ImGui::TreePop();
 	}
+	ImGui::EndTabBar();
 }
 
 LogDog *log_dog = nullptr;

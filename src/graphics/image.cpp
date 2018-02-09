@@ -13,13 +13,12 @@ namespace tke
 	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
-		bpp(0),
 		layer(1),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
-		set_type_and_aspect_from_format();
+		set_data_from_format();
 
 		assert(_level >= 1);
 		assert(_layer >= 1);
@@ -33,6 +32,7 @@ namespace tke
 			levels[i]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 			levels[i]->cx = cx;
 			levels[i]->cy = cy;
+			levels[i]->pitch = PITCH(cx * (bpp / 8));
 			cx >>= 1;
 			cy >>= 1;
 			cx = glm::max(cx, 1);
@@ -85,19 +85,19 @@ namespace tke
 		memory(0),
 		format(_format),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
-		bpp(0),
 		layer(1),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
-		set_type_and_aspect_from_format();
+		set_data_from_format();
 
 		levels.resize(1);
 		levels[0] = std::make_unique<ImageLevel>();
 		levels[0]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		levels[0]->cx = _cx;
 		levels[0]->cy = _cy;
+		levels[0]->pitch = PITCH(_cx * (bpp / 8));
 	}
 
 	Image::~Image()
@@ -111,14 +111,40 @@ namespace tke
 		}
 	}
 
-	int Image::get_cx(int _level) const
+	VkImageAspectFlags Image::get_aspect() const
 	{
-		return levels[_level]->cx;
+		switch (type)
+		{
+			case TypeColor:
+				return VK_IMAGE_ASPECT_COLOR_BIT;
+			case TypeDepth:
+				return VK_IMAGE_ASPECT_DEPTH_BIT;
+			case TypeDepthStencil:
+				return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+		return 0;
 	}
 
-	int Image::get_cy(int _level) const
+	int Image::get_cx(int level) const
 	{
-		return levels[_level]->cy;
+		return levels[level]->cx;
+	}
+
+	int Image::get_cy(int level) const
+	{
+		return levels[level]->cy;
+	}
+
+	int Image::get_size(int level) const
+	{
+		auto l = levels[level].get();
+		return l->pitch * l->cy;
+	}
+
+	int Image::get_linear_offset(int x, int y, int level) const
+	{
+		auto l = levels[level].get();
+		return l->pitch * y + x * (bpp / 8);
 	}
 
 	void Image::clear(const glm::vec4 &color)
@@ -151,7 +177,7 @@ namespace tke
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = v;
-		barrier.subresourceRange.aspectMask = aspect;
+		barrier.subresourceRange.aspectMask = get_aspect();
 		barrier.subresourceRange.baseMipLevel = _level;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -231,33 +257,83 @@ namespace tke
 			transition_layout(i, _layout);
 	}
 
-	void Image::fill_data(int _level, unsigned char *src, size_t _size)
+	void Image::fill_data(int level, unsigned char *src)
 	{
-		transition_layout(_level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		auto size = get_size(level);
 
-		StagingBuffer stagingBuffer(_size);
+		StagingBuffer stagingBuffer(size);
 
-		void* map = stagingBuffer.map(0, _size);
-		memcpy(map, src, _size);
+		void* map = stagingBuffer.map(0, size);
+		memcpy(map, src, size);
 		stagingBuffer.unmap();
 
-		//levels[_level].size = _size;
+		copy_from_buffer(&stagingBuffer, level);
+	}
 
-		VkBufferImageCopy region = {};
-		region.imageSubresource.aspectMask = aspect;
-		region.imageSubresource.mipLevel = 0;
+	void Image::copy_to_buffer(Buffer *dst, int level, int x, int y, int width, int height, int buffer_offset)
+	{
+		if (width == 0)
+			width = get_cx(level);
+		if (height == 0)
+			height = get_cy(level);
+		if (buffer_offset < 0)
+			buffer_offset = get_linear_offset(x, y, level);
+
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = get_aspect();
+		region.imageSubresource.mipLevel = level;
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = 1;
-		region.imageExtent.width = levels[_level]->cx;
-		region.imageExtent.height = levels[_level]->cy;
+		region.imageOffset.x = x;
+		region.imageOffset.y = y;
+		region.imageOffset.z = 0;
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
 		region.imageExtent.depth = 1;
-		region.bufferOffset = 0;
+		region.bufferOffset = buffer_offset;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
 		auto cb = begineOnceCommandBuffer();
-		vkCmdCopyBufferToImage(cb->v, stagingBuffer.v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyImageToBuffer(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst->v, 1, &region);
 		endOnceCommandBuffer(cb);
 
-		transition_layout(_level, VK_IMAGE_LAYOUT_GENERAL);
+		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
+	}
+
+	void Image::copy_from_buffer(Buffer *src, int level, int x, int y, int width, int height, int buffer_offset)
+	{
+		if (width == 0)
+			width = get_cx(level);
+		if (height == 0)
+			height = get_cy(level);
+		if (buffer_offset < 0)
+			buffer_offset = get_linear_offset(x, y, level);
+
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = get_aspect();
+		region.imageSubresource.mipLevel = level;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageOffset.x = x;
+		region.imageOffset.y = y;
+		region.imageOffset.z = 0;
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = 1;
+		region.bufferOffset = buffer_offset;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		auto cb = begineOnceCommandBuffer();
+		vkCmdCopyBufferToImage(cb->v, src->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		endOnceCommandBuffer(cb);
+
+		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
 	VkImageView Image::get_view(int baseLevel, int levelCount, int baseLayer, int layerCount)
@@ -280,7 +356,7 @@ namespace tke
 		info.image = v;
 		info.viewType = view_type;
 		info.format = format;
-		info.subresourceRange.aspectMask = aspect;
+		info.subresourceRange.aspectMask = get_aspect();
 		info.subresourceRange.baseMipLevel = baseLevel;
 		info.subresourceRange.levelCount = levelCount;
 		info.subresourceRange.baseArrayLayer = baseLayer;
@@ -293,22 +369,62 @@ namespace tke
 		return view->v;
 	}
 
-	void Image::set_type_and_aspect_from_format()
+	void Image::set_data_from_format()
 	{
-		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
+		switch (format)
 		{
-			type = TypeDepth;
-			aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
-		else if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-		{
-			type = TypeDepthStencil;
-			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-		else
-		{
-			type = TypeColor;
-			aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+			case VK_FORMAT_R8_UNORM:
+				type = TypeColor;
+				bpp = 8;
+				break;
+			case VK_FORMAT_R16_UNORM:
+				type = TypeColor;
+				bpp = 16;
+				break;
+			case VK_FORMAT_R8G8B8A8_UNORM:
+				type = TypeColor;
+				bpp = 32;
+				break;
+			case VK_FORMAT_R8G8B8A8_SRGB:
+				type = TypeColor;
+				bpp = 32;
+				break;
+			case VK_FORMAT_B8G8R8A8_UNORM:
+				type = TypeColor;
+				bpp = 32;
+				break;
+			case VK_FORMAT_B8G8R8A8_SRGB:
+				type = TypeColor;
+				bpp = 32;
+				break;
+			case VK_FORMAT_R16G16B16A16_SFLOAT:
+				type = TypeColor;
+				bpp = 64;
+				break;
+			case VK_FORMAT_R16G16B16A16_UNORM:
+				type = TypeColor;
+				bpp = 64;
+				break;
+			case VK_FORMAT_D16_UNORM:
+				type = TypeDepth;
+				bpp = 16;
+				break;
+			case VK_FORMAT_D32_SFLOAT:
+				type = TypeDepth;
+				bpp = 32;
+				break;
+			case VK_FORMAT_D16_UNORM_S8_UINT:
+				type = TypeDepthStencil;
+				bpp = 24;
+				break;
+			case VK_FORMAT_D24_UNORM_S8_UINT:
+				type = TypeDepthStencil;
+				bpp = 32;
+				break;
+			case VK_FORMAT_D32_SFLOAT_S8_UINT:
+				type = TypeDepthStencil;
+				bpp = 40;
+				break;
 		}
 	}
 
@@ -329,20 +445,20 @@ namespace tke
 
 	Image *load_image(const std::string &filename)
 	{
-		auto image_data = create_image_data(filename);
-		if (!image_data)
+		auto image_file = create_image_file(filename);
+		if (!image_file)
 			return nullptr;
 
 		bool sRGB = false;
 		if (std::fs::exists(filename + ".srgb"))
 			sRGB = true;
-		sRGB = sRGB || image_data->sRGB;
+		sRGB = sRGB || image_file->sRGB;
 
 		VkFormat _format = VK_FORMAT_UNDEFINED;
-		switch (image_data->channel)
+		switch (image_file->channel)
 		{
 			case 0:
-				switch (image_data->bpp)
+				switch (image_file->bpp)
 				{
 					case 8:
 						_format = VK_FORMAT_R8_UNORM;
@@ -350,7 +466,7 @@ namespace tke
 				}
 				break;
 			case 1:
-				switch (image_data->bpp)
+				switch (image_file->bpp)
 				{
 					case 8:
 						_format = VK_FORMAT_R8_UNORM;
@@ -364,7 +480,7 @@ namespace tke
 				// vk do not support 3 channels
 				break;
 			case 4:
-				switch (image_data->bpp)
+				switch (image_file->bpp)
 				{
 					case 32:
 						if (sRGB)
@@ -376,14 +492,14 @@ namespace tke
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
-		auto i = new Image(image_data->levels[0]->cx, image_data->levels[0]->cy,
-			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_data->levels.size(), 1, false);
-		for (int l = 0; l < image_data->levels.size(); l++)
+		auto i = new Image(image_file->levels[0]->cx, image_file->levels[0]->cy,
+			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_file->levels.size(), 1, false);
+		for (int l = 0; l < image_file->levels.size(); l++)
 		{
-			i->fill_data(l, image_data->levels[l]->data.get(), image_data->levels[l]->size);
-			i->levels[l]->pitch = image_data->levels[l]->pitch;
+			i->fill_data(l, image_file->levels[l]->data.get());
+			i->levels[l]->pitch = image_file->levels[l]->pitch;
 		}
-		i->bpp = image_data->bpp;
+		i->bpp = image_file->bpp;
 		i->sRGB = sRGB;
 		i->filename = filename;
 

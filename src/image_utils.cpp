@@ -3,7 +3,7 @@
 #include "../../gli/gli/gli.hpp"
 #include "file_utils.h"
 
-#include "image_data.h"
+#include "image_utils.h"
 
 namespace tke
 {
@@ -61,7 +61,7 @@ namespace tke
 #undef gd
 	}
 
-	ImageData::ImageData(int _level) :
+	ImageFile::ImageFile(int _level) :
 		file_type(ImageFileTypeNull),
 		bpp(0),
 		channel(0),
@@ -75,22 +75,22 @@ namespace tke
 			levels[i] = std::make_unique<ImageDataLevel>();
 	}
 
-	int ImageData::get_cx(int _level) const
+	int ImageFile::get_cx(int _level) const
 	{
 		return levels[_level]->cx;
 	}
 
-	int ImageData::get_cy(int _level) const
+	int ImageFile::get_cy(int _level) const
 	{
 		return levels[_level]->cy;
 	}
 
-	unsigned char *ImageData::get_data(int _level) const
+	unsigned char *ImageFile::get_data(int _level) const
 	{
 		return levels[_level]->data.get();
 	}
 
-	std::unique_ptr<ImageData> create_image_data(const std::string &filename)
+	std::unique_ptr<ImageFile> create_image_file(const std::string &filename)
 	{
 		std::fs::path path(filename);
 		if (!std::fs::exists(path))
@@ -109,7 +109,7 @@ namespace tke
 			assert(!gli::is_compressed(Texture.format()) && Target == gli::TARGET_2D);
 			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
 
-			auto data = std::make_unique<ImageData>(Texture.levels());
+			auto data = std::make_unique<ImageFile>(Texture.levels());
 			data->file_type = ext == ".ktx" ? ImageFileTypeKTX : ImageFileTypeDDS;
 			switch (Format.External)
 			{
@@ -288,7 +288,7 @@ namespace tke
 		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG)
 			FreeImage_FlipVertical(dib);
 
-		auto data = std::make_unique<ImageData>();
+		auto data = std::make_unique<ImageFile>();
 		auto colorType = FreeImage_GetColorType(dib);
 		switch (fif)
 		{
@@ -353,5 +353,38 @@ namespace tke
 		auto dib = FreeImage_ConvertFromRawBits(data, cx, cy, PITCH(cx * (bpp / 8)), bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
 		FreeImage_Save(fif, dib, filename.c_str());
 		FreeImage_Unload(dib);
+	}
+
+	static bool _find_nearest_white_pixel(unsigned char *data, int cx, int cy, int x, int y, int &distance)
+	{
+		const auto offset = 4 * cx * y + 4 * x;
+		if (data[offset + 0] == 255 && data[offset + 1] == 255 &&
+			data[offset + 2] == 255 && data[offset + 3] == 255)
+			return true;
+		distance++;
+		if (x != cx)
+			if (_find_nearest_white_pixel(data, cx, cy, x + 1, y, distance))
+				return true;
+		//if (y < cy - 1)
+		//	if (_find_nearest_white_pixel(data, cx, cy, x, y + 1, distance))
+		//		return true;
+		return false;
+
+	}
+
+	void filter_image_rgba32_to_sdf(unsigned char *data, int cx, int cy)
+	{
+		auto scale = 1.f / (cx > cy ? cx : cy);
+		for (auto y = 0; y < cy; y++)
+		{
+			for (auto x = 0; x < cx; x++)
+			{
+				const auto offset = 4 * cx * y + 4 * x;
+				int distance = 0;
+				_find_nearest_white_pixel(data, cx, cy, x, y, distance);
+				data[offset + 0] = data[offset + 1] = data[offset + 2] = (scale * distance) * 255.f;
+				data[offset + 3] = 255;
+			}
+		}
 	}
 }

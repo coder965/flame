@@ -61,7 +61,7 @@ namespace tke
 		barrier.oldLayout = oldLayout;
 		barrier.newLayout = newLayout;
 		barrier.image = image->v;
-		barrier.subresourceRange.aspectMask = image->aspect;
+		barrier.subresourceRange.aspectMask = image->get_aspect();
 		barrier.subresourceRange.baseMipLevel = baseLevel;
 		barrier.subresourceRange.levelCount = levelCount;
 		barrier.subresourceRange.baseArrayLayer = baseLayer;

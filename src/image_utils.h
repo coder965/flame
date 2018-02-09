@@ -35,7 +35,7 @@ namespace tke
 		unsigned char get_a(float x, float y, int bpp);
 	};
 
-	struct ImageData
+	struct ImageFile
 	{
 		ImageFileType file_type;
 		unsigned int bpp;
@@ -45,13 +45,14 @@ namespace tke
 		unsigned int total_size;
 		bool sRGB;
 
-		ImageData(int _level = 1);
+		ImageFile(int _level = 1);
 		int get_cx(int _level = 0) const;
 		int get_cy(int _level = 0) const;
 		unsigned char *get_data(int _level = 0) const;
 	};
 
-	std::unique_ptr<ImageData> create_image_data(const std::string &filename);
+	std::unique_ptr<ImageFile> create_image_file(const std::string &filename);
 	void new_image_file(const std::string &filename, int cx, int cy, int bpp);
 	void save_image_file(const std::string &filename, unsigned char *data, int cx, int cy, int bpp);
+	void filter_image_rgba32_to_sdf(unsigned char *data, int cx, int cy);
 }

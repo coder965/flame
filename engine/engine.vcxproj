@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\imgui\imgui.cpp" />
     <ClCompile Include="..\..\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\imgui\imgui_tabs.cpp" />
     <ClCompile Include="..\src\engine.cpp" />
     <ClCompile Include="..\src\entity\camera.cpp" />
     <ClCompile Include="..\src\entity\component.cpp" />
@@ -48,7 +49,7 @@
     <ClCompile Include="..\src\graphics\sampler.cpp" />
     <ClCompile Include="..\src\graphics\shader.cpp" />
     <ClCompile Include="..\src\graphics\synchronization.cpp" />
-    <ClCompile Include="..\src\image_data.cpp" />
+    <ClCompile Include="..\src\image_utils.cpp" />
     <ClCompile Include="..\src\input.cpp" />
     <ClCompile Include="..\src\math\math.cpp" />
     <ClCompile Include="..\src\model\animation.cpp" />
@@ -92,7 +93,7 @@
     <ClInclude Include="..\src\graphics\sampler.h" />
     <ClInclude Include="..\src\graphics\shader.h" />
     <ClInclude Include="..\src\graphics\synchronization.h" />
-    <ClInclude Include="..\src\image_data.h" />
+    <ClInclude Include="..\src\image_utils.h" />
     <ClInclude Include="..\src\input.h" />
     <ClInclude Include="..\src\math\math.h" />
     <ClInclude Include="..\src\model\animation.h" />

@@ -2,11 +2,11 @@
 
 #include "../../ui/ui.h"
 
-struct BlueprintEditor : tke::ui::Window
+struct TextEditor : tke::ui::Window
 {
-	BlueprintEditor();
-	~BlueprintEditor();
+	TextEditor();
+	~TextEditor();
 	virtual void on_show() override;
 };
 
-extern BlueprintEditor *blueprint_editor;
+extern TextEditor *text_editor;
