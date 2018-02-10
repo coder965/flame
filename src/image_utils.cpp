@@ -62,7 +62,7 @@ namespace tke
 	}
 
 	ImageFile::ImageFile(int _level) :
-		file_type(ImageFileTypeNull),
+		type(ImageFileTypeNull),
 		bpp(0),
 		channel(0),
 		layer(1),
@@ -110,7 +110,7 @@ namespace tke
 			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
 
 			auto data = std::make_unique<ImageFile>(Texture.levels());
-			data->file_type = ext == ".ktx" ? ImageFileTypeKTX : ImageFileTypeDDS;
+			data->type = ext == ".ktx" ? ImageFileTypeKTX : ImageFileTypeDDS;
 			switch (Format.External)
 			{
 				case gli::gl::EXTERNAL_RED:
@@ -293,16 +293,16 @@ namespace tke
 		switch (fif)
 		{
 			case FREE_IMAGE_FORMAT::FIF_BMP:
-				data->file_type = ImageFileTypeBMP;
+				data->type = ImageFileTypeBMP;
 				break;
 			case FREE_IMAGE_FORMAT::FIF_JPEG:
-				data->file_type = ImageFileTypeJPEG;
+				data->type = ImageFileTypeJPEG;
 				break;
 			case FREE_IMAGE_FORMAT::FIF_PNG:
-				data->file_type = ImageFileTypePNG;
+				data->type = ImageFileTypePNG;
 				break;
 			case FREE_IMAGE_FORMAT::FIF_TARGA:
-				data->file_type = ImageFileTypeTARGA;
+				data->type = ImageFileTypeTARGA;
 				break;
 		}
 		switch (colorType)
@@ -355,36 +355,64 @@ namespace tke
 		FreeImage_Unload(dib);
 	}
 
-	static bool _find_nearest_white_pixel(unsigned char *data, int cx, int cy, int x, int y, int &distance)
+	void create_and_save_image_distance_transform(unsigned char *data, int cx, int cy, int offset, int stride, const std::string &filename)
 	{
-		const auto offset = 4 * cx * y + 4 * x;
-		if (data[offset + 0] == 255 && data[offset + 1] == 255 &&
-			data[offset + 2] == 255 && data[offset + 3] == 255)
-			return true;
-		distance++;
-		if (x != cx)
-			if (_find_nearest_white_pixel(data, cx, cy, x + 1, y, distance))
-				return true;
-		//if (y < cy - 1)
-		//	if (_find_nearest_white_pixel(data, cx, cy, x, y + 1, distance))
-		//		return true;
-		return false;
+		auto bound = std::numeric_limits<float>::min();
 
-	}
-
-	void filter_image_rgba32_to_sdf(unsigned char *data, int cx, int cy)
-	{
-		auto scale = 1.f / (cx > cy ? cx : cy);
+		auto pitch = PITCH(cx * stride);
+		auto temp = std::make_unique<float[]>(cx * cy);
 		for (auto y = 0; y < cy; y++)
 		{
-			for (auto x = 0; x < cx; x++)
+			auto line = data + y * pitch;
+			auto temp_line = temp.get() + y * cx;
+			temp_line[0] = 0;
+			auto i = 0;
+			for (auto x = 1; x < cx - 1; x++)
 			{
-				const auto offset = 4 * cx * y + 4 * x;
-				int distance = 0;
-				_find_nearest_white_pixel(data, cx, cy, x, y, distance);
-				data[offset + 0] = data[offset + 1] = data[offset + 2] = (scale * distance) * 255.f;
-				data[offset + 3] = 255;
+				i++;
+				if (line[x * stride + offset] == 0)
+				{
+					temp[y * cx + x] = 0;
+					i = 0;
+				}
+				else
+					temp[y * cx + x] = i * i;
+			}
+			temp_line[cx - 1] = 0;
+			i = 0;
+			for (auto x = cx - 2; x > 0; x--)
+			{
+				i++;
+				if (line[x * stride + offset] == 0)
+				{
+					temp[y * cx + x] = 0;
+					i = 0;
+				}
+				else
+					temp[y * cx + x] = i * i;
 			}
 		}
+		for (auto x = 1; x < cx - 1; x++)
+		{
+			for (auto y = 0; y < cy; y++)
+			{
+				auto d = temp[y * cx + x];
+				for (auto yy = 0; yy < cy; yy++)
+				{
+					if (yy == y)
+						continue;
+					auto dd = glm::pow(glm::abs(yy - y), 2) + temp[yy * cx + x];
+					if (dd < d)
+						d = dd;
+				}
+				temp[y * cx + x] = d;
+				bound = glm::max(bound, d);
+			}
+		}
+		auto alpha = std::make_unique<unsigned char[]>(cx * cy);
+		auto total_size = cx * cy;
+		for (auto i = 0; i < total_size; i++)
+			alpha[i] = (temp[i] / bound) * 255.f;
+		save_image_file(filename, alpha.get(), cx, cy, 8);
 	}
 }

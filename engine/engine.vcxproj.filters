@@ -293,5 +293,8 @@
     <ClInclude Include="..\src\image_utils.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\imgui\imgui_tabs.h">
+      <Filter>src\ui</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

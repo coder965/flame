@@ -27,10 +27,10 @@ void ImageEditor::on_show()
 	}
 	if (ImGui::BeginMenu("Filter"))
 	{
-		if (ImGui::MenuItem("Distance Field"))
+		if (ImGui::MenuItem("Signed Distance Field"))
 		{
 			auto pixel = (unsigned char*)staging_buffer->map(0, image->get_size());
-			tke::filter_image_rgba32_to_sdf(pixel, image->get_cy(), image->get_cx());
+			tke::create_and_save_image_distance_transform(pixel, image->get_cy(), image->get_cx(), 0, image->bpp / 8, "sdf.png");
 			staging_buffer->unmap();
 		}
 

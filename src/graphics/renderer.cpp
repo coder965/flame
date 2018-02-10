@@ -48,28 +48,19 @@ namespace tke
 		_aspect = (float)_x / _y;
 
 		_dirty_frame = total_frame_count;
-		if(deferred_messages.size() == 0)
-			add_deferred_message(MessageResolutionChange, false);
+		add_after_frame_event([this]() {
+			broadcast(this, MessageResolutionChange, false);
+		});
 	}
 
 	void Resolution::set_x(int x)
 	{
-		_x = x;
-		_aspect = (float)_x / _y;
-
-		_dirty_frame = total_frame_count;
-		if (deferred_messages.size() == 0)
-			add_deferred_message(MessageResolutionChange, false);
+		set(x, _y);
 	}
 
 	void Resolution::set_y(int y)
 	{
-		_y = y;
-		_aspect = (float)_x / _y;
-
-		_dirty_frame = total_frame_count;
-		if (deferred_messages.size() == 0)
-			add_deferred_message(MessageResolutionChange, false);
+		set(_x, y);
 	}
 
 	Resolution resolution;

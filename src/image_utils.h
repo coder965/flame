@@ -37,9 +37,9 @@ namespace tke
 
 	struct ImageFile
 	{
-		ImageFileType file_type;
-		unsigned int bpp;
+		ImageFileType type;
 		unsigned int channel;
+		unsigned int bpp;
 		std::vector<std::unique_ptr<ImageDataLevel>> levels;
 		unsigned int layer;
 		unsigned int total_size;
@@ -54,5 +54,5 @@ namespace tke
 	std::unique_ptr<ImageFile> create_image_file(const std::string &filename);
 	void new_image_file(const std::string &filename, int cx, int cy, int bpp);
 	void save_image_file(const std::string &filename, unsigned char *data, int cx, int cy, int bpp);
-	void filter_image_rgba32_to_sdf(unsigned char *data, int cx, int cy);
+	void create_and_save_image_distance_transform(unsigned char *data, int cx, int cy, int offset, int stride, const std::string &filename);
 }

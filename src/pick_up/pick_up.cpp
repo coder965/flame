@@ -25,17 +25,7 @@ namespace tke
 		cb->endRenderPass();
 		endOnceCommandBuffer(cb);
 
-		cb = begineOnceCommandBuffer();
-		VkBufferImageCopy range = {};
-		range.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.imageSubresource.layerCount = 1;
-		range.imageOffset.x = x;
-		range.imageOffset.y = y;
-		range.imageExtent.width = 1;
-		range.imageExtent.height = 1;
-		range.imageExtent.depth = 1;
-		vkCmdCopyImageToBuffer(cb->v, pick_up_image->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, defalut_staging_buffer->v, 1, &range);
-		endOnceCommandBuffer(cb);
+		pick_up_image->copy_to_buffer(defalut_staging_buffer, 0, x, y, 1, 1);
 
 		auto pixel = (unsigned char*)defalut_staging_buffer->map(0, 4);
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
