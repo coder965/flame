@@ -2,7 +2,7 @@
 
 #include "command_buffer.h"
 #include "buffer.h"
-#include "image.h"
+#include "texture.h"
 #include "renderpass.h"
 #include "framebuffer.h"
 #include "descriptor.h"
@@ -51,7 +51,7 @@ namespace tke
 		assert(res == VK_SUCCESS);
 	}
 
-	void CommandBuffer::imageBarrier(VkPipelineStageFlags srcStageFlags, VkPipelineStageFlags dstStageFlags, VkAccessFlags srcAccessFlags, VkAccessFlags dstAccessFlags, VkImageLayout oldLayout, VkImageLayout newLayout, Image *image, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	void CommandBuffer::imageBarrier(VkPipelineStageFlags srcStageFlags, VkPipelineStageFlags dstStageFlags, VkAccessFlags srcAccessFlags, VkAccessFlags dstAccessFlags, VkImageLayout oldLayout, VkImageLayout newLayout, Texture *texture, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		VkImageMemoryBarrier barrier;
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -60,8 +60,8 @@ namespace tke
 		barrier.dstAccessMask = dstAccessFlags;
 		barrier.oldLayout = oldLayout;
 		barrier.newLayout = newLayout;
-		barrier.image = image->v;
-		barrier.subresourceRange.aspectMask = image->get_aspect();
+		barrier.image = texture->v;
+		barrier.subresourceRange.aspectMask = texture->get_aspect();
 		barrier.subresourceRange.baseMipLevel = baseLevel;
 		barrier.subresourceRange.levelCount = levelCount;
 		barrier.subresourceRange.baseArrayLayer = baseLayer;
@@ -251,14 +251,14 @@ namespace tke
 		vkDestroyCommandPool(vk_device.v, v, nullptr);
 	}
 
-	CommandBuffer *begineOnceCommandBuffer()
+	CommandBuffer *begin_once_command_buffer()
 	{
 		auto cb = new CommandBuffer;
 		cb->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		return cb;
 	}
 
-	void endOnceCommandBuffer(CommandBuffer *cb)
+	void end_once_command_buffer(CommandBuffer *cb)
 	{
 		cb->end();
 
@@ -270,7 +270,7 @@ namespace tke
 
 	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height)
 	{
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 		VkImageCopy region = {};
 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.layerCount = 1;
@@ -280,7 +280,7 @@ namespace tke
 		region.extent.height = height;
 		region.extent.depth = 1;
 		vkCmdCopyImage(cb->v, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 	}
 
 	CommandPool *commandPool = nullptr;

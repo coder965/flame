@@ -117,9 +117,9 @@ void ResourceExplorer::on_right_area_show()
 					img_name = "file.png";
 			}
 			{
-				auto i = tke::get_image(img_name);
-				if (i)
-					draw_list->AddImage(ImGui::ImageID(i), pos, pos + img_size);
+				auto t = tke::get_or_create_texture(img_name);
+				if (t)
+					draw_list->AddImage(ImGui::ImageID(t), pos, pos + img_size);
 			}
 			draw_list->AddText(pos + ImVec2(0, img_size.y), ImColor(0, 0, 0), d->value.c_str());
 			//draw_list->PopClipRect();

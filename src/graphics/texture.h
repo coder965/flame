@@ -10,7 +10,7 @@ namespace tke
 {
 	struct Buffer;
 
-	struct ImageLevel
+	struct TextureLevel
 	{
 		unsigned int cx;
 		unsigned int cy;
@@ -18,7 +18,7 @@ namespace tke
 		VkImageLayout layout;
 	};
 
-	struct ImageView
+	struct TextureView
 	{
 		int baseLevel;
 		int levelCount;
@@ -27,7 +27,7 @@ namespace tke
 		VkImageView v;
 	};
 
-	struct Image
+	struct Texture
 	{
 		enum Type
 		{
@@ -44,11 +44,11 @@ namespace tke
 		VkImageViewType view_type;
 
 		unsigned int bpp;
-		std::vector<std::unique_ptr<ImageLevel>> levels;
+		std::vector<std::unique_ptr<TextureLevel>> levels;
 		unsigned int layer;
 		bool sRGB;
 
-		std::vector<std::unique_ptr<ImageView>> views;
+		std::vector<std::unique_ptr<TextureView>> views;
 
 		std::vector<std::unique_ptr<VkDescriptorImageInfo>> infos;
 
@@ -58,11 +58,11 @@ namespace tke
 		int ui_index;
 
 		// must call in main thread
-		Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool need_general_layout = true);
+		Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool need_general_layout = true);
 		// must call in main thread
-		Image(VkImage _image, int _cx, int _cy, VkFormat _format);
+		Texture(VkImage _image, int _cx, int _cy, VkFormat _format);
 		// must call in main thread
-		~Image();
+		~Texture();
 		VkImageAspectFlags get_aspect() const;
 		int get_cx(int level = 0) const;
 		int get_cy(int level = 0) const;
@@ -80,12 +80,11 @@ namespace tke
 		void set_data_from_format();
 	};
 
-	Image *load_image(const std::string &filename);
-	std::shared_ptr<Image> get_image(const std::string &filename);
+	std::shared_ptr<Texture> get_or_create_texture(const std::string &filename);
 
-	extern std::shared_ptr<Image> default_color_image; // R:0 G:0 B:0 A:0
-	extern std::shared_ptr<Image> default_normal_image; // X:0 Y:0 Z:1
-	extern std::shared_ptr<Image> default_blend_image; // R:1 G:0 B:0 A:0
+	extern std::shared_ptr<Texture> default_color_texture; // R:0 G:0 B:0 A:0
+	extern std::shared_ptr<Texture> default_normal_texture; // X:0 Y:0 Z:1
+	extern std::shared_ptr<Texture> default_blend_texture; // R:1 G:0 B:0 A:0
 
-	void init_image();
+	void init_texture();
 }

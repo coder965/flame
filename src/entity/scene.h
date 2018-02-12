@@ -56,7 +56,7 @@ namespace tke
 
 		void set_filename(const std::string &_filename);
 		void set_sky_type(SkyType skyType);
-		void set_pano_sky_image(std::shared_ptr<Image> i);
+		void set_pano_sky_image(std::shared_ptr<Texture> i);
 		//int getCollisionGroupID(int ID, unsigned int mask);
 		void setSunDir(const glm::vec2 &);
 		void set_bg_color(const glm::vec3 &);

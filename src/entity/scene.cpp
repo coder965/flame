@@ -220,7 +220,7 @@ namespace tke
 		broadcast(this, MessageAmbientDirty);
 	}
 
-	void Scene::set_pano_sky_image(std::shared_ptr<Image> i)
+	void Scene::set_pano_sky_image(std::shared_ptr<Texture> i)
 	{
 		if (!sky || sky->type != SkyTypePanorama)
 			return;

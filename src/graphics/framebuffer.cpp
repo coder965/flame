@@ -1,7 +1,7 @@
 #include <assert.h>
 
 #include "framebuffer.h"
-#include "image.h"
+#include "texture.h"
 #include "renderpass.h"
 
 namespace tke
@@ -13,7 +13,7 @@ namespace tke
 
 	static std::vector<std::weak_ptr<Framebuffer>> _framebuffers;
 
-	std::shared_ptr<Framebuffer> getFramebuffer(Image *i, RenderPass *renderPass, int level)
+	std::shared_ptr<Framebuffer> getFramebuffer(Texture *i, RenderPass *renderPass, int level)
 	{
 		auto view = i->get_view(level);
 		return getFramebuffer(i->levels[level]->cx, i->levels[level]->cy, renderPass, 1, &view);

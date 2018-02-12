@@ -1,5 +1,5 @@
 #include "../global.h"
-#include "image.h"
+#include "texture.h"
 #include "renderpass.h"
 #include "framebuffer.h"
 #include "renderer.h"
@@ -29,10 +29,10 @@ namespace tke
 		if (image && image->get_cx() == resolution.x() && image->get_cy() == resolution.y())
 			return;
 
-		image = std::make_shared<Image>(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		image = std::make_shared<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		if (enable_depth)
 		{
-			depth_image = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			depth_image = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			VkImageView views[] = {
 				image->get_view(),
 				depth_image->get_view()

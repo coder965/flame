@@ -165,12 +165,12 @@ namespace tke
 		std::unique_ptr<UniformBuffer> ambientBuffer;
 		std::unique_ptr<IndirectIndexBuffer> staticObjectIndirectBuffer;
 		std::unique_ptr<IndirectIndexBuffer> animatedObjectIndirectBuffer;
-		std::unique_ptr<Image> envrImage;
-		std::unique_ptr<Image> mainImage;
-		std::unique_ptr<Image> depthImage;
-		std::unique_ptr<Image> albedoAlphaImage;
-		std::unique_ptr<Image> normalHeightImage;
-		std::unique_ptr<Image> specRoughnessImage;
+		std::unique_ptr<Texture> envrImage;
+		std::unique_ptr<Texture> mainImage;
+		std::unique_ptr<Texture> depthImage;
+		std::unique_ptr<Texture> albedoAlphaImage;
+		std::unique_ptr<Texture> normalHeightImage;
+		std::unique_ptr<Texture> specRoughnessImage;
 		std::unique_ptr<DescriptorSet> ds_mrt;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim;
 		std::unique_ptr<DescriptorSet> ds_mrtAnim_bone;
@@ -181,8 +181,8 @@ namespace tke
 
 		bool enable_shadow;
 		std::unique_ptr<UniformBuffer> shadowBuffer;
-		std::unique_ptr<Image> esmImage;
-		std::unique_ptr<Image> esmDepthImage;
+		std::unique_ptr<Texture> esmImage;
+		std::unique_ptr<Texture> esmDepthImage;
 		std::shared_ptr<Framebuffer> fb_esm[MaxShadowCount * 6];
 		std::unique_ptr<DescriptorSet> ds_esm;
 		std::unique_ptr<DescriptorSet> ds_esmAnim;

@@ -4,6 +4,14 @@
 
 namespace tke
 {
+	enum BufferType
+	{
+		BufferTypeStaging,
+		BufferTypeUniform,
+		BufferTypeVertex,
+		BufferTypeIndex
+	};
+
 	struct Buffer
 	{
 		size_t size = 0;

@@ -1,5 +1,5 @@
 #include "../global.h"
-#include "image.h"
+#include "texture.h"
 #include "descriptor.h"
 #include "renderpass.h"
 #include "renderer.h"

@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-#include "../../graphics/image.h"
+#include "../../graphics/texture.h"
 
 #include "file_selector.h"
 

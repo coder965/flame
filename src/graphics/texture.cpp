@@ -5,12 +5,12 @@
 #include "../string_utils.h"
 #include "../file_utils.h"
 #include "buffer.h"
-#include "image.h"
+#include "texture.h"
 #include "command_buffer.h"
 
 namespace tke
 {
-	Image::Image(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
+	Texture::Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
 		layer(1),
@@ -28,7 +28,7 @@ namespace tke
 		levels.resize(_level);
 		for (int i = 0; i < _level; i++)
 		{
-			levels[i] = std::make_unique<ImageLevel>();
+			levels[i] = std::make_unique<TextureLevel>();
 			levels[i]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 			levels[i]->cx = cx;
 			levels[i]->cy = cy;
@@ -80,7 +80,7 @@ namespace tke
 		}
 	}
 
-	Image::Image(VkImage _image, int _cx, int _cy, VkFormat _format) :
+	Texture::Texture(VkImage _image, int _cx, int _cy, VkFormat _format) :
 		v(_image),
 		memory(0),
 		format(_format),
@@ -93,14 +93,14 @@ namespace tke
 		set_data_from_format();
 
 		levels.resize(1);
-		levels[0] = std::make_unique<ImageLevel>();
+		levels[0] = std::make_unique<TextureLevel>();
 		levels[0]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		levels[0]->cx = _cx;
 		levels[0]->cy = _cy;
 		levels[0]->pitch = PITCH(_cx * (bpp / 8));
 	}
 
-	Image::~Image()
+	Texture::~Texture()
 	{
 		for (auto &v : views)
 			vkDestroyImageView(vk_device.v, v->v, nullptr);
@@ -111,7 +111,7 @@ namespace tke
 		}
 	}
 
-	VkImageAspectFlags Image::get_aspect() const
+	VkImageAspectFlags Texture::get_aspect() const
 	{
 		switch (type)
 		{
@@ -125,35 +125,35 @@ namespace tke
 		return 0;
 	}
 
-	int Image::get_cx(int level) const
+	int Texture::get_cx(int level) const
 	{
 		return levels[level]->cx;
 	}
 
-	int Image::get_cy(int level) const
+	int Texture::get_cy(int level) const
 	{
 		return levels[level]->cy;
 	}
 
-	int Image::get_size(int level) const
+	int Texture::get_size(int level) const
 	{
 		auto l = levels[level].get();
 		return l->pitch * l->cy;
 	}
 
-	int Image::get_linear_offset(int x, int y, int level) const
+	int Texture::get_linear_offset(int x, int y, int level) const
 	{
 		auto l = levels[level].get();
 		return l->pitch * y + x * (bpp / 8);
 	}
 
-	void Image::clear(const glm::vec4 &color)
+	void Texture::clear(const glm::vec4 &color)
 	{
 		std::vector<VkImageLayout> last_layouts(levels.size());
 		for (int i = 0; i < levels.size(); i++)
 			last_layouts[i] = levels[i]->layout;
 		transition_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 		VkClearColorValue clear_value = { color.x, color.y, color.z, color.a };
 		VkImageSubresourceRange range = {
 			VK_IMAGE_ASPECT_COLOR_BIT,
@@ -161,14 +161,14 @@ namespace tke
 			0, 1
 		};
 		vkCmdClearColorImage(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 		for (int i = 0; i < levels.size(); i++)
 			transition_layout(i, last_layouts[i]);
 	}
 
-	void Image::transition_layout(int _level, VkImageLayout _layout)
+	void Texture::transition_layout(int _level, VkImageLayout _layout)
 	{
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -246,18 +246,18 @@ namespace tke
 		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 
 		levels[_level]->layout = _layout;
 	}
 
-	void Image::transition_layout(VkImageLayout _layout)
+	void Texture::transition_layout(VkImageLayout _layout)
 	{
 		for (auto i = 0; i < levels.size(); i++)
 			transition_layout(i, _layout);
 	}
 
-	void Image::fill_data(int level, unsigned char *src)
+	void Texture::fill_data(int level, unsigned char *src)
 	{
 		auto size = get_size(level);
 
@@ -270,7 +270,7 @@ namespace tke
 		copy_from_buffer(&stagingBuffer, level);
 	}
 
-	void Image::copy_to_buffer(Buffer *dst, int level, int x, int y, int width, int height, int buffer_offset)
+	void Texture::copy_to_buffer(Buffer *dst, int level, int x, int y, int width, int height, int buffer_offset)
 	{
 		if (width == 0)
 			width = get_cx(level);
@@ -296,14 +296,14 @@ namespace tke
 
 		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 		vkCmdCopyImageToBuffer(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst->v, 1, &region);
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 
 		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	void Image::copy_from_buffer(Buffer *src, int level, int x, int y, int width, int height, int buffer_offset)
+	void Texture::copy_from_buffer(Buffer *src, int level, int x, int y, int width, int height, int buffer_offset)
 	{
 		if (width == 0)
 			width = get_cx(level);
@@ -329,14 +329,14 @@ namespace tke
 
 		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 		vkCmdCopyBufferToImage(cb->v, src->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 
 		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	VkImageView Image::get_view(int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkImageView Texture::get_view(int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		for (auto &view : views)
 		{
@@ -345,7 +345,7 @@ namespace tke
 				return view->v;
 		}
 
-		auto view = new ImageView;
+		auto view = new TextureView;
 		view->baseLevel = baseLevel;
 		view->levelCount = levelCount;
 		view->baseLayer = baseLayer;
@@ -369,7 +369,7 @@ namespace tke
 		return view->v;
 	}
 
-	void Image::set_data_from_format()
+	void Texture::set_data_from_format()
 	{
 		switch (format)
 		{
@@ -428,7 +428,7 @@ namespace tke
 		}
 	}
 
-	VkDescriptorImageInfo *Image::get_info(VkImageView view, VkSampler sampler)
+	VkDescriptorImageInfo *Texture::get_info(VkImageView view, VkSampler sampler)
 	{
 		for (auto &i : infos)
 		{
@@ -443,22 +443,31 @@ namespace tke
 		return i;
 	}
 
-	Image *load_image(const std::string &filename)
+	static std::map<unsigned int, std::weak_ptr<Texture>> _images;
+
+	std::shared_ptr<Texture> get_or_create_texture(const std::string &filename)
 	{
-		auto image_file = create_image_file(filename);
-		if (!image_file)
+		auto hash = HASH(filename.c_str());
+		auto it = _images.find(hash);
+		if (it != _images.end())
+		{
+			auto s = it->second.lock();
+			if (s)
+				return s;
+		}
+
+		if (!std::fs::exists(filename))
 			return nullptr;
 
-		bool sRGB = false;
-		if (std::fs::exists(filename + ".srgb"))
-			sRGB = true;
-		sRGB = sRGB || image_file->sRGB;
+		auto image = std::make_unique<Image>(filename);
+
+		auto sRGB = std::fs::exists(filename + ".srgb") || image->sRGB;
 
 		VkFormat _format = VK_FORMAT_UNDEFINED;
-		switch (image_file->channel)
+		switch (image->channel)
 		{
 			case 0:
-				switch (image_file->bpp)
+				switch (image->bpp)
 				{
 					case 8:
 						_format = VK_FORMAT_R8_UNORM;
@@ -466,7 +475,7 @@ namespace tke
 				}
 				break;
 			case 1:
-				switch (image_file->bpp)
+				switch (image->bpp)
 				{
 					case 8:
 						_format = VK_FORMAT_R8_UNORM;
@@ -480,7 +489,7 @@ namespace tke
 				// vk do not support 3 channels
 				break;
 			case 4:
-				switch (image_file->bpp)
+				switch (image->bpp)
 				{
 					case 32:
 						if (sRGB)
@@ -492,55 +501,35 @@ namespace tke
 		}
 		assert(_format != VK_FORMAT_UNDEFINED);
 
-		auto i = new Image(image_file->levels[0]->cx, image_file->levels[0]->cy,
-			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image_file->levels.size(), 1, false);
-		for (int l = 0; l < image_file->levels.size(); l++)
+		auto i = std::make_shared<Texture>(image->levels[0]->cx, image->levels[0]->cy,
+			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image->levels.size(), 1, false);
+		for (int l = 0; l < image->levels.size(); l++)
 		{
-			i->fill_data(l, image_file->levels[l]->data.get());
-			i->levels[l]->pitch = image_file->levels[l]->pitch;
+			i->fill_data(l, image->levels[l]->data.get());
+			i->levels[l]->pitch = image->levels[l]->pitch;
 		}
-		i->bpp = image_file->bpp;
+		i->bpp = image->bpp;
 		i->sRGB = sRGB;
 		i->filename = filename;
-
-		return i;
-	}
-
-	static std::map<unsigned int, std::weak_ptr<Image>> _images;
-
-	std::shared_ptr<Image> get_image(const std::string &filename)
-	{
-		auto hash = HASH(filename.c_str());
-		auto it = _images.find(hash);
-		if (it != _images.end())
-		{
-			auto s = it->second.lock();
-			if (s)
-				return s;
-		}
-
-		auto i = std::shared_ptr<Image>(load_image(filename));
-		if (!i)
-			return nullptr;
 
 		_images[hash] = i;
 		return i;
 	}
 
-	std::shared_ptr<Image> default_color_image;
-	std::shared_ptr<Image> default_normal_image;
-	std::shared_ptr<Image> default_blend_image;
+	std::shared_ptr<Texture> default_color_texture;
+	std::shared_ptr<Texture> default_normal_texture;
+	std::shared_ptr<Texture> default_blend_texture;
 
-	void init_image()
+	void init_texture()
 	{
-		default_color_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-		default_color_image->filename = "[default_color_image]";
-		default_color_image->clear(glm::vec4(0.f));
-		default_normal_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-		default_normal_image->filename = "[default_normal_image]";
-		default_normal_image->clear(glm::vec4(0.f, 0.f, 1.f, 0.f));
-		default_blend_image = std::make_shared<Image>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-		default_blend_image->filename = "[default_blend_image]";
-		default_blend_image->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
+		default_color_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		default_color_texture->filename = "[default_color_texture]";
+		default_color_texture->clear(glm::vec4(0.f));
+		default_normal_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		default_normal_texture->filename = "[default_normal_texture]";
+		default_normal_texture->clear(glm::vec4(0.f, 0.f, 1.f, 0.f));
+		default_blend_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		default_blend_texture->filename = "[default_blend_texture]";
+		default_blend_texture->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
 	}
 }

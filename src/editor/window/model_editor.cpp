@@ -1,6 +1,6 @@
 #include "../../input.h"
 #include "../../global.h"
-#include "../../graphics/image.h"
+#include "../../graphics/texture.h"
 #include "../../graphics/command_buffer.h"
 #include "../../ui/ui.h"
 

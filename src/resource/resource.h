@@ -5,20 +5,20 @@
 namespace tke
 {
 	struct Buffer;
-	struct Image;
+	struct Texture;
 
 	struct Resource
 	{
 		Resource *parent;
 
 		std::map<std::string, Buffer*> bufferResources;
-		std::map<std::string, Image*> imageResources;
+		std::map<std::string, Texture*> imageResources;
 
 		void setBuffer(Buffer *p, const std::string &str);
-		void setImage(Image *p, const std::string &str);
+		void setImage(Texture *p, const std::string &str);
 
 		Buffer *getBuffer(const std::string &str);
-		Image *getImage(const std::string &str);
+		Texture *getImage(const std::string &str);
 
 		Resource(Resource *_parent);
 	};

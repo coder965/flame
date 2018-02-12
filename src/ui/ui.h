@@ -13,7 +13,7 @@
 
 namespace tke
 {
-	struct Image;
+	struct Texture;
 }
 
 namespace ImGui
@@ -35,7 +35,7 @@ namespace ImGui
 	};
 
 	void TextVFilted(const char* fmt, const char* filter, va_list args);
-	ImTextureID ImageID(std::shared_ptr<tke::Image> i);
+	ImTextureID ImageID(std::shared_ptr<tke::Texture> i);
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active = false);
 	bool IconButton(const char *label, float font_scale = 1.f);

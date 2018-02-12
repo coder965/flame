@@ -9,7 +9,7 @@
 #include "../string_utils.h"
 #include "../resource/resource.h"
 #include "../graphics/buffer.h"
-#include "../graphics/image.h"
+#include "../graphics/texture.h"
 #include "../graphics/sampler.h"
 #include "../graphics/pipeline.h"
 #include "../graphics/material.h"

@@ -12,7 +12,7 @@ namespace tke
 	struct ImmediateVertexBuffer;
 	struct IndexBuffer;
 	struct ImmediateIndexBuffer;
-	struct Image;
+	struct Texture;
 	struct Model;
 	struct IndirectVertexBuffer;
 	struct IndirectIndexBuffer;
@@ -30,7 +30,7 @@ namespace tke
 		void reset();
 		void begin(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
 		void end();
-		void imageBarrier(VkPipelineStageFlags srcStageFlags, VkPipelineStageFlags dstStageFlags, VkAccessFlags srcAccessFlags, VkAccessFlags dstAccessFlags, VkImageLayout oldLayout, VkImageLayout newLayout, Image *image, int baseLevel, int levelCount, int baseLayer, int layerCount);
+		void imageBarrier(VkPipelineStageFlags srcStageFlags, VkPipelineStageFlags dstStageFlags, VkAccessFlags srcAccessFlags, VkAccessFlags dstAccessFlags, VkImageLayout oldLayout, VkImageLayout newLayout, Texture *texture, int baseLevel, int levelCount, int baseLayer, int layerCount);
 		void beginRenderPass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue = nullptr);
 		void nextSubpass(VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 		void endRenderPass();
@@ -67,8 +67,8 @@ namespace tke
 		~CommandPool();
 	};
 
-	CommandBuffer *begineOnceCommandBuffer();
-	void endOnceCommandBuffer(CommandBuffer *cb);
+	CommandBuffer *begin_once_command_buffer();
+	void end_once_command_buffer(CommandBuffer *cb);
 	void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 
 	extern CommandPool *commandPool;

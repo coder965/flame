@@ -5,7 +5,7 @@ namespace tke
 	struct Scene;
 	struct Node;
 	struct LightComponent;
-	struct Image;
+	struct Texture;
 
 	enum SkyType
 	{
@@ -45,7 +45,7 @@ namespace tke
 
 	struct SkyPanorama : Sky
 	{
-		std::shared_ptr<Image> panoImage;
+		std::shared_ptr<Texture> panoImage;
 
 		SkyPanorama();
 	};

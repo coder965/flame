@@ -13,7 +13,7 @@ namespace tke
 		glm::vec3 tangent;
 	};
 
-	struct Image;
+	struct Texture;
 	struct Material;
 	struct VertexBuffer;
 
@@ -28,7 +28,7 @@ namespace tke
 		float tessellation_factor;
 		float tiling_scale;
 
-		std::shared_ptr<Image> blend_image;
+		std::shared_ptr<Texture> blend_image;
 
 		int material_count;
 		std::shared_ptr<Material> materials[4];
@@ -54,7 +54,7 @@ namespace tke
 		float get_displacement_height() const;
 		float get_tessellation_factor() const;
 		float get_tiling_scale() const;
-		Image *get_blend_image() const;
+		Texture *get_blend_image() const;
 		int get_material_count() const;
 		Material *get_material(int index) const;
 		int get_terrain_index() const;
@@ -66,7 +66,7 @@ namespace tke
 		void set_displacement_height(float v);
 		void set_tessellation_factor(float v);
 		void set_tiling_scale(float v);
-		void set_blend_image(std::shared_ptr<Image> i);
+		void set_blend_image(std::shared_ptr<Texture> i);
 		void add_material(std::shared_ptr<Material> m);
 		void remove_material(int index);
 		void set_terrain_index(int v);

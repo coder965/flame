@@ -5,7 +5,7 @@
 #include "../spare_list.h"
 #include "../input.h"
 #include "../graphics/buffer.h"
-#include "../graphics/image.h"
+#include "../graphics/texture.h"
 #include "../graphics/renderpass.h"
 #include "../graphics/descriptor.h"
 #include "../graphics/pipeline.h"
@@ -18,7 +18,7 @@
 const unsigned int ImageCount = 127;
 
 static tke::SpareList _image_list(ImageCount);
-static std::pair<std::shared_ptr<tke::Image>, tke::Op> _image_ops[ImageCount];
+static std::pair<std::shared_ptr<tke::Texture>, tke::Op> _image_ops[ImageCount];
 
 namespace ImGui
 {
@@ -80,7 +80,7 @@ namespace ImGui
 		TextUnformatted(g.TempBuffer, text_end);
 	}
 
-	ImTextureID ImageID(std::shared_ptr<tke::Image> i)
+	ImTextureID ImageID(std::shared_ptr<tke::Texture> i)
 	{
 		auto index = _image_list.add(i.get());
 		if (index == -2)
@@ -103,9 +103,9 @@ namespace ImGui
 
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col)
 	{
-		auto i = tke::get_image(filename);
+		auto i = tke::get_or_create_texture(filename);
 		if (!i)
-			i = tke::get_image("empty.png");
+			i = tke::get_or_create_texture("empty.png");
 		assert(i);
 
 		Image(ImageID(i), size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), border_col);
@@ -113,9 +113,9 @@ namespace ImGui
 
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active)
 	{
-		auto i = tke::get_image(filename);
+		auto i = tke::get_or_create_texture(filename);
 		if (!i)
-			i = tke::get_image("empty.png");
+			i = tke::get_or_create_texture("empty.png");
 		assert(i);
 
 		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -739,7 +739,7 @@ namespace tke
 		static std::unique_ptr<ImmediateVertexBuffer> vertexBuffer_ui;
 		static std::unique_ptr<ImmediateIndexBuffer> indexBuffer_ui;
 
-		static Image *font_image;
+		static Texture *font_image;
 		void init()
 		{
 			add_keydown_listener([](int k) {
@@ -796,7 +796,7 @@ namespace tke
 			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
 			unsigned char* pixels; int width, height;
 			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			font_image = new Image(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+			font_image = new Texture(width, height, VK_FORMAT_R8G8B8A8_UNORM,
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 			font_image->fill_data(0, pixels);
 			io.Fonts->TexID = (void*)0; // image index
@@ -986,7 +986,7 @@ namespace tke
 					}
 					else if (op == OpNeedUpdate)
 					{
-						auto image = (Image*)p;
+						auto image = (Texture*)p;
 						writes.push_back(pipeline_ui->descriptor_set->imageWrite(0, index + 1, image, colorSampler));
 					}
 					return true;

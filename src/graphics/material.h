@@ -12,7 +12,7 @@ namespace tke
 	enum { MaxMaterialImageCount = 256 };
 
 	struct UniformBuffer;
-	struct Image;
+	struct Texture;
 	struct DescriptorSet;
 
 	class Material
@@ -23,9 +23,9 @@ namespace tke
 		glm::vec4 albedo_alpha;
 		glm::vec2 spec_roughness;
 
-		std::shared_ptr<Image> albedo_alpha_map;
-		std::shared_ptr<Image> spec_roughness_map;
-		std::shared_ptr<Image> normal_height_map;
+		std::shared_ptr<Texture> albedo_alpha_map;
+		std::shared_ptr<Texture> spec_roughness_map;
+		std::shared_ptr<Texture> normal_height_map;
 
 		int index = -1;
 	public:
@@ -35,9 +35,9 @@ namespace tke
 		glm::vec4 get_albedo_alpha() const;
 		float get_spec() const;
 		float get_roughness() const;
-		Image *get_albedo_alpha_map() const;
-		Image *get_spec_roughness_map() const;
-		Image *get_normal_height_map() const;
+		Texture *get_albedo_alpha_map() const;
+		Texture *get_spec_roughness_map() const;
+		Texture *get_normal_height_map() const;
 		std::string get_albedo_alpha_map_name() const;
 		std::string get_spec_roughness_map_name() const;
 		std::string get_normal_height_map_name() const;
@@ -60,7 +60,7 @@ namespace tke
 		const std::string &normal_height_map_filename);
 	std::shared_ptr<Material> getMaterial(const std::string name);
 
-	std::shared_ptr<Image> getMaterialImage(const std::string &filename);
+	std::shared_ptr<Texture> getMaterialImage(const std::string &filename);
 
 	extern DescriptorSet *ds_material;
 

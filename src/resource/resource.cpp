@@ -12,7 +12,7 @@ namespace tke
 		bufferResources[str] = p;
 	}
 
-	void Resource::setImage(Image *p, const std::string &str)
+	void Resource::setImage(Texture *p, const std::string &str)
 	{
 		imageResources[str] = p;
 	}
@@ -30,7 +30,7 @@ namespace tke
 		return it->second;
 	}
 
-	Image *Resource::getImage(const std::string &str)
+	Texture *Resource::getImage(const std::string &str)
 	{
 		auto it = imageResources.find(str);
 		if (it == imageResources.end())

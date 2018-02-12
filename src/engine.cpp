@@ -9,7 +9,7 @@
 #include "global.h"
 #include "engine.h"
 #include "graphics/buffer.h"
-#include "graphics/image.h"
+#include "graphics/texture.h"
 #include "graphics/renderpass.h"
 #include "graphics/renderer.h"
 #include "graphics/framebuffer.h"
@@ -46,7 +46,7 @@ namespace tke
 	int window_cy;
 	VkSurfaceKHR window_surface;
 	VkSwapchainKHR swapchain;
-	Image *window_images[2];
+	Texture *window_images[2];
 	std::shared_ptr<Framebuffer> window_framebuffers[2];
 	VkSemaphore window_imageAvailable;
 	uint32_t window_imageIndex;
@@ -212,7 +212,7 @@ namespace tke
 
 		for (int i = 0; i < 2; i++)
 		{
-			window_images[i] = new Image(vkImages[i], window_cx, window_cy, swapchain_format);
+			window_images[i] = new Texture(vkImages[i], window_cx, window_cy, swapchain_format);
 			window_framebuffers[i] = getFramebuffer(window_images[i], renderPass_window);
 		}
 	}
@@ -357,20 +357,27 @@ namespace tke
 		window_cx = _window_cx;
 		window_cy = _window_cy;
 
+		WNDCLASSEXA wcex;
+		wcex.cbSize = sizeof(WNDCLASSEXA);
+		wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wcex.lpfnWndProc = _wnd_proc;
+		wcex.cbClsExtra = 0;
+		wcex.cbWndExtra = 0;
+		wcex.hInstance = (HINSTANCE)get_hinst();
+		if (std::fs::exists("ico.png"))
 		{
-			auto icon_data = create_image_file("ico.png");
-
-			WNDCLASSEXA wcex = {};
-			wcex.cbSize = sizeof(WNDCLASSEXA);
-			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-			wcex.lpfnWndProc = _wnd_proc;
-			wcex.hInstance = (HINSTANCE)get_hinst();
-			wcex.hIcon = CreateIcon(wcex.hInstance, icon_data->get_cx(),
-				icon_data->get_cy(), 1, icon_data->bpp, nullptr, icon_data->get_data());
-			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wcex.lpszClassName = "tke_wnd";
-			RegisterClassExA(&wcex);
+			auto icon = std::make_unique<Image>("ico.png");
+			wcex.hIcon = CreateIcon(wcex.hInstance, icon->get_cx(), icon->get_cy(), 1,
+				icon->bpp, nullptr, icon->get_data());
 		}
+		else
+			wcex.hIcon = 0;
+		wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcex.hbrBackground = 0;
+		wcex.lpszMenuName = 0;
+		wcex.lpszClassName = "tke_wnd";
+		wcex.hIconSm = wcex.hIcon;
+		RegisterClassExA(&wcex);
 
 		window_style = _window_style;
 		{

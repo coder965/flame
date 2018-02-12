@@ -5,12 +5,12 @@
 
 namespace tke
 {
-	struct Image;
+	struct Texture;
 	struct Framebuffer;
 	struct CommandBuffer;
 
-	extern Image *pick_up_image;
-	extern Image *pick_up_depth_image;
+	extern Texture *pick_up_image;
+	extern Texture *pick_up_depth_image;
 	extern std::shared_ptr<Framebuffer> pick_up_fb;
 
 	unsigned int pick_up(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback);

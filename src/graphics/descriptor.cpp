@@ -3,7 +3,7 @@
 #include "descriptor.h"
 #include "pipeline.h"
 #include "buffer.h"
-#include "image.h"
+#include "texture.h"
 
 namespace tke
 {
@@ -124,7 +124,7 @@ namespace tke
 		return write;
 	}
 
-	VkWriteDescriptorSet DescriptorSet::imageWrite(int binding, int index, Image *image, VkSampler sampler, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkWriteDescriptorSet DescriptorSet::imageWrite(int binding, int index, Texture *image, VkSampler sampler, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

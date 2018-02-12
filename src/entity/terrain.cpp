@@ -1,6 +1,6 @@
 #include "../global.h"
 #include "../graphics/buffer.h"
-#include "../graphics/image.h"
+#include "../graphics/texture.h"
 #include "../graphics/material.h"
 #include "../graphics/pipeline.h"
 #include "terrain.h"
@@ -16,7 +16,7 @@ namespace tke
 		displacement_height(1.f),
 		tessellation_factor(0.75f),
 		tiling_scale(8.f),
-		blend_image(default_blend_image),
+		blend_image(default_blend_texture),
 		material_count(0),
 		enable_physics(false),
 		actor(nullptr),
@@ -62,7 +62,7 @@ namespace tke
 		return tiling_scale;
 	}
 
-	Image *TerrainComponent::get_blend_image() const
+	Texture *TerrainComponent::get_blend_image() const
 	{
 		return blend_image.get();
 	}
@@ -126,7 +126,7 @@ namespace tke
 		attribute_dirty_frame = total_frame_count;
 	}
 
-	void TerrainComponent::set_blend_image(std::shared_ptr<Image> i)
+	void TerrainComponent::set_blend_image(std::shared_ptr<Texture> i)
 	{
 		blend_image = i;
 		blend_image_dirty_frame = total_frame_count;

@@ -41,7 +41,7 @@
     <ClCompile Include="..\src\graphics\display_layer.cpp" />
     <ClCompile Include="..\src\graphics\framebuffer.cpp" />
     <ClCompile Include="..\src\graphics\graphics.cpp" />
-    <ClCompile Include="..\src\graphics\image.cpp" />
+    <ClCompile Include="..\src\graphics\texture.cpp" />
     <ClCompile Include="..\src\graphics\material.cpp" />
     <ClCompile Include="..\src\graphics\pipeline.cpp" />
     <ClCompile Include="..\src\graphics\renderer.cpp" />
@@ -86,7 +86,7 @@
     <ClInclude Include="..\src\graphics\display_layer.h" />
     <ClInclude Include="..\src\graphics\framebuffer.h" />
     <ClInclude Include="..\src\graphics\graphics.h" />
-    <ClInclude Include="..\src\graphics\image.h" />
+    <ClInclude Include="..\src\graphics\texture.h" />
     <ClInclude Include="..\src\graphics\material.h" />
     <ClInclude Include="..\src\graphics\pipeline.h" />
     <ClInclude Include="..\src\graphics\renderer.h" />

@@ -1,7 +1,7 @@
 #include "../../global.h"
 #include "../../string_utils.h"
 #include "../../ui/ui.h"
-#include "../../graphics/image.h"
+#include "../../graphics/texture.h"
 #include "../../model/model.h"
 #include "../../entity/scene.h"
 #include "../../entity/model_instance.h"
@@ -59,7 +59,7 @@ void InspectorWindow::on_show()
 					{
 						case tke::FileTypeImage:
 						{
-							auto i = tke::get_image(filename);
+							auto i = tke::get_or_create_texture(filename);
 							if (i)
 							{
 								image_file_resolution.x = i->get_cx();
@@ -173,7 +173,7 @@ void InspectorWindow::on_show()
 											std::experimental::filesystem::path path(filename);
 											auto ext = path.extension();
 											if (tke::is_image_file(ext.string()))
-												scene->set_pano_sky_image(tke::get_image(filename));
+												scene->set_pano_sky_image(tke::get_or_create_texture(filename));
 										}
 									}
 									ImGui::EndDragDropTarget();

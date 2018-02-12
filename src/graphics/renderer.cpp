@@ -2,7 +2,7 @@
 #include "../entity/scene.h"
 #include "synchronization.h"
 #include "buffer.h"
-#include "image.h"
+#include "texture.h"
 #include "material.h"
 #include "renderpass.h"
 #include "framebuffer.h"
@@ -446,7 +446,7 @@ namespace tke
 	static Pipeline *esm_pipeline;
 	static Pipeline *esm_anim_pipeline;
 	static RenderPass *defe_renderpass;
-	static Image *envr_image_downsample[3] = {};
+	static Texture *envr_image_downsample[3] = {};
 	bool DeferredRenderer::defe_inited = false;
 	bool DeferredRenderer::shad_inited = false;
 
@@ -801,10 +801,10 @@ namespace tke
 		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxStaticModelInstanceCount);
 		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxAnimatedModelInstanceCount);
 
-		envrImage = std::make_unique<Image>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+		envrImage = std::make_unique<Texture>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
 		for (int i = 0; i < 3; i++)
-			envr_image_downsample[i] = new Image(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
+			envr_image_downsample[i] = new Texture(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
 				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		resource.setBuffer(constantBuffer.get(), "Constant.UniformBuffer");
@@ -852,8 +852,8 @@ namespace tke
 
 			shadowBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxShadowCount);
 
-			esmImage = std::make_unique<Image>(ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, MaxShadowCount * 6);
-			esmDepthImage = std::make_unique<Image>(ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			esmImage = std::make_unique<Texture>(ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, MaxShadowCount * 6);
+			esmDepthImage = std::make_unique<Texture>(ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
 			resource.setImage(esmImage.get(), "Shadow.Image");
 
@@ -896,11 +896,11 @@ namespace tke
 		if (mainImage && mainImage->get_cx() == resolution.x() && mainImage->get_cy() == resolution.y())
 			return;
 
-		mainImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		depthImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = std::make_unique<Image>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		mainImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		depthImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		normalHeightImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		specRoughnessImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		resource.setImage(envrImage.get(), "Envr.Image");
 		resource.setImage(mainImage.get(), "Main.Image");
@@ -965,7 +965,7 @@ namespace tke
 			auto funUpdateIBL = [&]() {
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
 				{
-					auto cb = begineOnceCommandBuffer();
+					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envr_image_downsample[i], renderPass_image16);
 
 					cb->beginRenderPass(renderPass_image16, fb.get());
@@ -978,12 +978,12 @@ namespace tke
 					cb->draw(3);
 					cb->endRenderPass();
 
-					endOnceCommandBuffer(cb);
+					end_once_command_buffer(cb);
 				}
 
 				for (int i = 1; i < envrImage->levels.size(); i++)
 				{
-					auto cb = begineOnceCommandBuffer();
+					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
 
 					cb->beginRenderPass(renderPass_image16, fb.get());
@@ -996,7 +996,7 @@ namespace tke
 					cb->draw(3);
 					cb->endRenderPass();
 
-					endOnceCommandBuffer(cb);
+					end_once_command_buffer(cb);
 				}
 			};
 
@@ -1007,7 +1007,7 @@ namespace tke
 					break;
 				case SkyTypeDebug:
 				{
-					auto cb = begineOnceCommandBuffer();
+					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image8);
 
 					cb->beginRenderPass(renderPass_image8, fb.get());
@@ -1015,7 +1015,7 @@ namespace tke
 					cb->draw(3);
 					cb->endRenderPass();
 
-					endOnceCommandBuffer(cb);
+					end_once_command_buffer(cb);
 
 					funUpdateIBL();
 
@@ -1025,7 +1025,7 @@ namespace tke
 				{
 					auto as = (SkyAtmosphereScattering*)scene->get_sky();
 
-					auto cb = begineOnceCommandBuffer();
+					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 					cb->beginRenderPass(renderPass_image16, fb.get());
@@ -1035,7 +1035,7 @@ namespace tke
 					cb->draw(3);
 					cb->endRenderPass();
 
-					endOnceCommandBuffer(cb);
+					end_once_command_buffer(cb);
 
 					funUpdateIBL();
 
@@ -1047,7 +1047,7 @@ namespace tke
 
 					if (pa->panoImage)
 					{
-						auto cb = begineOnceCommandBuffer();
+						auto cb = begin_once_command_buffer();
 						auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
 						cb->beginRenderPass(renderPass_image16, fb.get());
@@ -1058,7 +1058,7 @@ namespace tke
 						cb->draw(3);
 						cb->endRenderPass();
 
-						endOnceCommandBuffer(cb);
+						end_once_command_buffer(cb);
 
 						funUpdateIBL();
 					}

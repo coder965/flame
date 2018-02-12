@@ -81,19 +81,19 @@ namespace tke
 
 	void Buffer::copyTo(Buffer *dst, VkDeviceSize size, size_t srcOffset, size_t dstOffset)
 	{
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 		VkBufferCopy region = {srcOffset, dstOffset, size};
 		vkCmdCopyBuffer(cb->v, v, dst->v, 1, &region);
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 	}
 
 	void Buffer::copyTo(Buffer *dst, size_t count, VkBufferCopy *ranges)
 	{
 		if (count <= 0)
 			return;
-		auto cb = begineOnceCommandBuffer();
+		auto cb = begin_once_command_buffer();
 		vkCmdCopyBuffer(cb->v, v, dst->v, count, ranges);
-		endOnceCommandBuffer(cb);
+		end_once_command_buffer(cb);
 	}
 
 	void Buffer::update(void *data, Buffer *stagingBuffer, size_t _size)

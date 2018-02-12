@@ -46,7 +46,7 @@ namespace tke
 
 	struct Pipeline;
 	struct Buffer;
-	struct Image;
+	struct Texture;
 	struct DescriptorSet
 	{
 		DescriptorSetLayout *layout;
@@ -59,7 +59,7 @@ namespace tke
 		// must call in main thread
 		~DescriptorSet();
 		VkWriteDescriptorSet bufferWrite(int binding, int index, Buffer *buffer);
-		VkWriteDescriptorSet imageWrite(int binding, int index, Image *image, VkSampler sampler, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkWriteDescriptorSet imageWrite(int binding, int index, Texture *image, VkSampler sampler, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 	};
 
 	void updateDescriptorSets(VkWriteDescriptorSet *writes);

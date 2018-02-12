@@ -10,7 +10,7 @@
 namespace tke
 {
 	struct UniformBuffer;
-	struct Image;
+	struct Texture;
 	struct RenderPass;
 	struct Framebuffer;
 	struct CommandBuffer;

@@ -2,7 +2,7 @@
 
 #include "../../graphics/display_layer.h"
 #include "../../graphics/buffer.h"
-#include "../../graphics/image.h"
+#include "../../graphics/texture.h"
 #include "../../graphics/framebuffer.h"
 #include "../../graphics/renderer.h"
 #include "../../model/model.h"

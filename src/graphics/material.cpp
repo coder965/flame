@@ -1,7 +1,7 @@
 #include "../global.h"
 #include "../resource/resource.h"
 #include "../graphics/buffer.h"
-#include "../graphics/image.h"
+#include "../graphics/texture.h"
 #include "../graphics/descriptor.h"
 #include "../graphics/sampler.h"
 #include "material.h"
@@ -104,17 +104,17 @@ namespace tke
 		return spec_roughness.y;
 	}
 
-	Image *Material::get_albedo_alpha_map() const
+	Texture *Material::get_albedo_alpha_map() const
 	{
 		return albedo_alpha_map.get();
 	}
 
-	Image *Material::get_spec_roughness_map() const
+	Texture *Material::get_spec_roughness_map() const
 	{
 		return spec_roughness_map.get();
 	}
 
-	Image *Material::get_normal_height_map() const
+	Texture *Material::get_normal_height_map() const
 	{
 		return normal_height_map.get();
 	}
@@ -290,14 +290,14 @@ namespace tke
 	}
 
 	static SpareList _material_image_list(MaxMaterialImageCount);
-	static std::weak_ptr<Image> _material_images[MaxMaterialImageCount];
+	static std::weak_ptr<Texture> _material_images[MaxMaterialImageCount];
 
-	std::shared_ptr<Image> getMaterialImage(const std::string &_filename)
+	std::shared_ptr<Texture> getMaterialImage(const std::string &_filename)
 	{
 		if (_filename == "")
 			return nullptr;
 
-		std::shared_ptr<Image> i;
+		std::shared_ptr<Texture> i;
 		_material_image_list.iterate([&](int index, void *p, bool &remove) {
 			auto _i = _material_images[index].lock();
 			if (_i)
@@ -318,7 +318,7 @@ namespace tke
 
 		if (!i)
 		{
-			i = get_image(_filename);
+			i = get_or_create_texture(_filename);
 			if (!i)
 				return nullptr;
 

@@ -1,5 +1,5 @@
 #include "../../file_utils.h"
-#include "../../graphics/image.h"
+#include "../../graphics/texture.h"
 #include "show_material.h"
 
 static void show_map(std::function<std::string()> getter, const char *tooltip, std::function<void(const std::string &)> setter)

@@ -5,7 +5,7 @@
 #include "graphics.h"
 #include "command_buffer.h"
 #include "buffer.h"
-#include "image.h"
+#include "texture.h"
 #include "material.h"
 #include "descriptor.h"
 #include "renderpass.h"
@@ -226,7 +226,7 @@ namespace tke
 		descriptorPool = new DescriptorPool;
 
 		init_buffer();
-		init_image();
+		init_texture();
 		init_material();
 		init_renderpass();
 		initSampler();
