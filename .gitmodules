@@ -1,0 +1,15 @@
+[submodule "ext/glm"]
+	path = ext/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "ext/imgui"]
+	path = ext/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "ext/gli"]
+	path = ext/gli
+	url = https://github.com/g-truc/gli.git
+[submodule "ext/IconFontCppHeaders"]
+	path = ext/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "ext/SPIRV-Cross"]
+	path = ext/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
