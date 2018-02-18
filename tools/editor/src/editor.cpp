@@ -26,6 +26,7 @@ struct NewImageDialog : FileSelector
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
 				return false;
+
 			auto i = new tke::Image(cx, cy, 4, 32);
 			i->save(s);
 			return true;
@@ -45,6 +46,25 @@ struct NewImageDialog : FileSelector
 		ImGui::Combo("type", &type, typeNames, TK_ARRAYSIZE(typeNames));
 		ImGui::PopItemWidth();
 		ImGui::PopStyleVar();
+	}
+};
+
+struct NewSceneDialog : FileSelector
+{
+	NewSceneDialog() :
+		FileSelector("New Scene", FileSelectorSave, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings)
+	{
+		first_cx = 800;
+		first_cy = 600;
+
+		callback = [this](std::string s) {
+			if (std::experimental::filesystem::exists(s))
+				return false;
+			
+			tke::XMLDoc doc("scene");
+			doc.save(s);
+			return true;
+		};
 	}
 };
 
