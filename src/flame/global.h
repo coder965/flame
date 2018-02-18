@@ -51,6 +51,7 @@ namespace tke
 	extern double elapsed_time;
 
 	extern std::string engine_path;
+	extern std::string shader_path;
 
 	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;

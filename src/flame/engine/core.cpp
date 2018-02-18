@@ -319,6 +319,7 @@ namespace tke
 #endif
 
 		engine_path = path;
+		shader_path = "src/shader/";
 		resolution.set(rcx, rcy);
 
 		initVulkan(vulkan_debug);

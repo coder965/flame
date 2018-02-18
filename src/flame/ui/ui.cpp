@@ -775,8 +775,8 @@ namespace tke
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
 				.add_dynamic_state(VK_DYNAMIC_STATE_SCISSOR)
-				.add_shader(engine_path + "shader/ui.vert", {})
-				.add_shader(engine_path + "shader/ui.frag", {}),
+				.add_shader("ui.vert", {})
+				.add_shader("ui.frag", {}),
 				renderPass_window, 0, true);
 
 			ImGui::CreateContext();

@@ -11,7 +11,7 @@
 namespace tke
 {
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines) :
-		filename(_filename),
+		filename(engine_path + shader_path + _filename),
 		defines(_defines),
 		v(0)
 	{
