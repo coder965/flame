@@ -1,9 +1,9 @@
-#include "../global.h"
-#include "texture.h"
-#include "renderpass.h"
-#include "framebuffer.h"
-#include "renderer.h"
-#include "display_layer.h"
+#include <flame/global.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/framebuffer.h>
+#include <flame/graphics/renderer.h>
+#include <flame/graphics/display_layer.h>
 
 namespace tke
 {

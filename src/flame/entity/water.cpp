@@ -1,5 +1,5 @@
-#include "../global.h"
-#include "water.h"
+#include <flame/global.h>
+#include <flame/entity/water.h>
 
 namespace tke
 {

@@ -4,7 +4,7 @@
 //#include <al.h>  
 //#include <alc.h>
 
-#include "../math/math.h"
+#include <flame/math/math.h>
 
 //extern ALCdevice *alcDevice;
 //extern ALCcontext *alcContext;

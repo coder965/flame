@@ -1,12 +1,12 @@
-#include "../global.h"
-#include "texture.h"
-#include "descriptor.h"
-#include "renderpass.h"
-#include "renderer.h"
-#include "shader.h"
-#include "sampler.h"
-#include "../resource/resource.h"
-#include "pipeline.h"
+#include <flame/global.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/renderer.h>
+#include <flame/graphics/shader.h>
+#include <flame/graphics/sampler.h>
+#include <flame/resource/resource.h>
+#include <flame/graphics/pipeline.h>
 
 namespace tke
 {

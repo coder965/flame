@@ -1,8 +1,7 @@
 #include <filesystem>
 
-#include "../../global.h"
-#include "../../ui/ui.h"
-#include "../../graphics/descriptor.h"
+#include <flame/global.h>
+#include <flame/graphics/descriptor.h>
 
 #include "../select.h"
 #include "resource_explorer.h"

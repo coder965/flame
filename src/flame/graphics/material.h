@@ -3,15 +3,15 @@
 #include <string>
 #include <memory>
 
-#include "../math/math.h"
-#include "../spare_list.h"
+#include <flame/math/math.h>
+#include <flame/container/spare_list.h>
 
 namespace tke
 {
 	enum { MaxMaterialCount = 256 };
 	enum { MaxMaterialImageCount = 256 };
 
-	struct UniformBuffer;
+	struct Buffer;
 	struct Texture;
 	struct DescriptorSet;
 
@@ -54,7 +54,7 @@ namespace tke
 	};
 
 	extern std::shared_ptr<Material> default_material;
-	extern UniformBuffer *materialBuffer;
+	extern Buffer *materialBuffer;
 	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
 		const std::string &albedo_alpha_map_filename, const std::string &spec_roughness_map_filename,
 		const std::string &normal_height_map_filename);

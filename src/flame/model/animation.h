@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-#include "../math/math.h"
+#include <flame/math/math.h>
 
 namespace tke
 {
@@ -43,7 +43,7 @@ namespace tke
 	};
 
 	struct Model;
-	struct UniformBuffer;
+	struct Buffer;
 
 	std::shared_ptr<AnimationBinding> get_animation_binding(Model *m, std::shared_ptr<Animation> anim);
 
@@ -58,7 +58,7 @@ namespace tke
 		Model *model;
 		std::unique_ptr<BoneData[]> bone_data;
 		std::unique_ptr<glm::mat4[]> bone_matrix;
-		std::unique_ptr<UniformBuffer> bone_buffer;
+		std::unique_ptr<Buffer> bone_buffer;
 
 		AnimationBinding *curr_anim = nullptr;
 		float curr_frame = 0.f;

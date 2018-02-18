@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-#include "graphics.h"
+#include <flame/graphics/graphics.h>
 
 namespace tke
 {

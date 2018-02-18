@@ -1,0 +1,19 @@
+PROJECT(imgui)
+
+FILE(GLOB HEADER_LIST imgui/*.h*)
+FILE(GLOB SOURCE_LIST imgui/*.c*)
+
+SOURCE_GROUP("Head" FILES ${HEADER_LIST})
+SOURCE_GROUP("Source" FILES ${SOURCE_LIST})
+
+add_library(imgui ${HEADER_LIST} ${SOURCE_LIST})
+target_include_directories(imgui PUBLIC "imgui")
+set_target_properties(imgui PROPERTIES FOLDER "ext") 
+
+ADD_SUBDIRECTORY(SPIRV-Cross)
+set_target_properties(spirv-cross PROPERTIES FOLDER "ext/spirv_cross") 
+set_target_properties(spirv-cross-core PROPERTIES FOLDER "ext/spirv_cross") 
+set_target_properties(spirv-cross-cpp PROPERTIES FOLDER "ext/spirv_cross") 
+set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ext/spirv_cross") 
+set_target_properties(spirv-cross-hlsl PROPERTIES FOLDER "ext/spirv_cross") 
+set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ext/spirv_cross") 

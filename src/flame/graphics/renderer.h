@@ -2,23 +2,19 @@
 
 #include <memory>
 
-#include "../global.h"
-#include "../spare_list.h"
-#include "../math/math.h"
-#include "../object.h"
-#include "../resource/resource.h"
-#include "graphics.h"
-#include "display_layer.h"
+#include <flame/global.h>
+#include <flame/container/spare_list.h>
+#include <flame/math/math.h>
+#include <flame/engine/object.h>
+#include <flame/resource/resource.h>
+#include <flame/graphics/graphics.h>
+#include <flame/graphics/display_layer.h>
 
 namespace tke
 {
 	struct CameraComponent;
 	struct Model;
-	struct UniformBuffer;
-	struct ImmediateVertexBuffer;
-	struct IndirectIndexBuffer;
-	struct VertexBuffer;
-	struct IndexBuffer;
+	struct Buffer;
 	struct DescriptorSet;
 	struct Framebuffer;
 	struct CommandBuffer;
@@ -54,9 +50,9 @@ namespace tke
 
 		std::unique_ptr<CommandBuffer> cb;
 
-		static UniformBuffer *last_bone_buffer_mode0;
-		static UniformBuffer *last_bone_buffer_mode2;
-		static UniformBuffer *last_bone_buffer_mode3;
+		static Buffer *last_bone_buffer_mode0;
+		static Buffer *last_bone_buffer_mode2;
+		static Buffer *last_bone_buffer_mode3;
 
 		enum Mode
 		{
@@ -69,9 +65,9 @@ namespace tke
 		struct DrawData
 		{
 			Mode mode;
-			VertexBuffer *vbuffer0 = nullptr;
-			VertexBuffer *vbuffer1 = nullptr;
-			IndexBuffer *ibuffer = nullptr;
+			Buffer *vbuffer0 = nullptr;
+			Buffer *vbuffer1 = nullptr;
+			Buffer *ibuffer = nullptr;
 
 			struct ObjData
 			{
@@ -85,7 +81,7 @@ namespace tke
 					int first_instance = 0;
 				};
 				std::vector<GeoData> geo_data;
-				UniformBuffer *bone_buffer = nullptr;
+				Buffer *bone_buffer = nullptr;
 				glm::vec4 color;
 
 				void fill_with_model(Model *m);
@@ -115,7 +111,7 @@ namespace tke
 
 		struct DrawData
 		{
-			ImmediateVertexBuffer *vertex_buffer;
+			Buffer *vertex_buffer;
 			int vertex_count;
 		};
 
@@ -155,16 +151,16 @@ namespace tke
 		std::unique_ptr<CommandBuffer> cb_defe;
 		std::unique_ptr<CommandBuffer> cb_shad;
 
-		std::unique_ptr<UniformBuffer> constantBuffer;
-		std::unique_ptr<UniformBuffer> matrixBuffer;
-		std::unique_ptr<UniformBuffer> staticModelInstanceMatrixBuffer;
-		std::unique_ptr<UniformBuffer> animatedModelInstanceMatrixBuffer;
-		std::unique_ptr<UniformBuffer> terrainBuffer;
-		std::unique_ptr<UniformBuffer> waterBuffer;
-		std::unique_ptr<UniformBuffer> lightBuffer;
-		std::unique_ptr<UniformBuffer> ambientBuffer;
-		std::unique_ptr<IndirectIndexBuffer> staticObjectIndirectBuffer;
-		std::unique_ptr<IndirectIndexBuffer> animatedObjectIndirectBuffer;
+		std::unique_ptr<Buffer> constantBuffer;
+		std::unique_ptr<Buffer> matrixBuffer;
+		std::unique_ptr<Buffer> staticModelInstanceMatrixBuffer;
+		std::unique_ptr<Buffer> animatedModelInstanceMatrixBuffer;
+		std::unique_ptr<Buffer> terrainBuffer;
+		std::unique_ptr<Buffer> waterBuffer;
+		std::unique_ptr<Buffer> lightBuffer;
+		std::unique_ptr<Buffer> ambientBuffer;
+		std::unique_ptr<Buffer> staticObjectIndirectBuffer;
+		std::unique_ptr<Buffer> animatedObjectIndirectBuffer;
 		std::unique_ptr<Texture> envrImage;
 		std::unique_ptr<Texture> mainImage;
 		std::unique_ptr<Texture> depthImage;
@@ -180,7 +176,7 @@ namespace tke
 		std::unique_ptr<DescriptorSet> ds_comp;
 
 		bool enable_shadow;
-		std::unique_ptr<UniformBuffer> shadowBuffer;
+		std::unique_ptr<Buffer> shadowBuffer;
 		std::unique_ptr<Texture> esmImage;
 		std::unique_ptr<Texture> esmDepthImage;
 		std::shared_ptr<Framebuffer> fb_esm[MaxShadowCount * 6];

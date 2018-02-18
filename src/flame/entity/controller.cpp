@@ -1,6 +1,6 @@
-#include "../global.h"
-#include "node.h"
-#include "controller.h"
+#include <flame/global.h>
+#include <flame/entity/node.h>
+#include <flame/entity/controller.h>
 
 namespace tke
 {

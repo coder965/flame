@@ -1,10 +1,10 @@
-#include "../global.h"
-#include "../resource/resource.h"
-#include "../graphics/buffer.h"
-#include "../graphics/texture.h"
-#include "../graphics/descriptor.h"
-#include "../graphics/sampler.h"
-#include "material.h"
+#include <flame/global.h>
+#include <flame/resource/resource.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/sampler.h>
+#include <flame/graphics/material.h>
 
 namespace tke
 {
@@ -74,7 +74,7 @@ namespace tke
 		range.dstOffset = sizeof(MaterialShaderStruct) * m->get_index();
 		range.size = sizeof(MaterialShaderStruct);
 
-		defalut_staging_buffer->copyTo(materialBuffer, 1, &range);
+		defalut_staging_buffer->copy_to(materialBuffer, 1, &range);
 	}
 
 	Material::Material() :
@@ -217,7 +217,7 @@ namespace tke
 	static SpareList _material_list(MaxMaterialCount);
 	static std::weak_ptr<Material> _materials[MaxMaterialCount];
 	std::shared_ptr<Material> default_material;
-	UniformBuffer *materialBuffer = nullptr;
+	Buffer *materialBuffer = nullptr;
 
 	std::shared_ptr<Material> getMaterial(const glm::vec4 &albedo_alpha, float spec, float roughness,
 		const std::string &albedo_alpha_map_filename, const std::string &spec_roughness_map_filename,
@@ -356,7 +356,7 @@ namespace tke
 
 		ds_material = new DescriptorSet(_material_layout.get());
 
-		materialBuffer = new UniformBuffer(sizeof(MaterialShaderStruct) * MaxMaterialCount);
+		materialBuffer = new Buffer(BufferTypeUniform, sizeof(MaterialShaderStruct) * MaxMaterialCount);
 
 		default_material = std::make_shared<Material>();
 		default_material->set_name("[default_material]");

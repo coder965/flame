@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../global.h"
-#include "component.h"
-#include "controller.h"
+#include <flame/global.h>
+#include <flame/entity/component.h>
+#include <flame/entity/controller.h>
 
 namespace tke
 {

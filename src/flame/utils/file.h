@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <memory>
 
-#include "math/math.h" // opt: should we not include this?
+#include <flame/math/math.h> // opt: should we not include this?
 
 namespace std
 {

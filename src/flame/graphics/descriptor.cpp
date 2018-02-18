@@ -1,9 +1,9 @@
 #include <assert.h>
 
-#include "descriptor.h"
-#include "pipeline.h"
-#include "buffer.h"
-#include "texture.h"
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
 
 namespace tke
 {

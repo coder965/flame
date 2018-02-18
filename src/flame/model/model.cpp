@@ -5,17 +5,17 @@
 #include <map>
 #include <deque>
 #include <tuple>
-#include "../file_utils.h"
-#include "../string_utils.h"
-#include "../resource/resource.h"
-#include "../graphics/buffer.h"
-#include "../graphics/texture.h"
-#include "../graphics/sampler.h"
-#include "../graphics/pipeline.h"
-#include "../graphics/material.h"
-#include "model.h"
-#include "animation.h"
-#include "../physics/physics.h"
+#include <flame/utils/file.h>
+#include <flame/utils/string.h>
+#include <flame/resource/resource.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/sampler.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/graphics/material.h>
+#include <flame/model/model.h>
+#include <flame/model/animation.h>
+#include <flame/physics/physics.h>
 
 namespace tke
 {
@@ -56,12 +56,12 @@ namespace tke
 		auto vas = vertex_anim_count > 0 ? sizeof(ModelVertexSkeleton) * vertex_anim_count : 1;
 		auto is = indice_count > 0 ? sizeof(int) * indice_count : 1;
 
-		vertex_static_buffer = std::make_unique<VertexBuffer>(vss);
-		vertex_skeleton_Buffer = std::make_unique<VertexBuffer>(vas);
-		index_buffer = std::make_unique<IndexBuffer>(is);
+		vertex_static_buffer = std::make_unique<Buffer>(BufferTypeVertex, vss);
+		vertex_skeleton_Buffer = std::make_unique<Buffer>(BufferTypeVertex, vas);
+		index_buffer = std::make_unique<Buffer>(BufferTypeIndex, is);
 
 		auto total_size = vss + vas + is;
-		StagingBuffer stagingBuffer(total_size);
+		Buffer stagingBuffer(BufferTypeStaging, total_size);
 
 		auto vso = 0;
 		auto vao = vso + vss;
@@ -113,7 +113,7 @@ namespace tke
 			range.srcOffset = vso;
 			range.dstOffset = 0;
 			range.size = sizeof(ModelVertex) * vertex_stat_count;
-			stagingBuffer.copyTo(vertex_static_buffer.get(), 1, &range);
+			stagingBuffer.copy_to(vertex_static_buffer.get(), 1, &range);
 		}
 		if (vertex_anim_count > 0)
 		{
@@ -121,7 +121,7 @@ namespace tke
 			range.srcOffset = vao;
 			range.dstOffset = 0;
 			range.size = sizeof(ModelVertexSkeleton) * vertex_anim_count;
-			stagingBuffer.copyTo(vertex_skeleton_Buffer.get(), 1, &range);
+			stagingBuffer.copy_to(vertex_skeleton_Buffer.get(), 1, &range);
 		}
 		if (indice_count > 0)
 		{
@@ -129,7 +129,7 @@ namespace tke
 			range.srcOffset = io;
 			range.dstOffset = 0;
 			range.size = sizeof(int) * indice_count;
-			stagingBuffer.copyTo(index_buffer.get(), 1, &range);
+			stagingBuffer.copy_to(index_buffer.get(), 1, &range);
 		}
 	}
 
@@ -564,9 +564,9 @@ namespace tke
 		}
 	}
 
-	std::unique_ptr<VertexBuffer> vertex_static_buffer;
-	std::unique_ptr<VertexBuffer> vertex_skeleton_Buffer;
-	std::unique_ptr<IndexBuffer> index_buffer;
+	std::unique_ptr<Buffer> vertex_static_buffer;
+	std::unique_ptr<Buffer> vertex_skeleton_Buffer;
+	std::unique_ptr<Buffer> index_buffer;
 
 	void add_triangle_vertex(Model *m, glm::mat3 rotation, glm::vec3 center)
 	{

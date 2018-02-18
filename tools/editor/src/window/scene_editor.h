@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../file_utils.h"
-#include "../../entity/scene.h"
-#include "../../graphics/display_layer.h"
-#include "../../graphics/renderer.h"
-#include "../../ui/ui.h"
+#include <flame/utils/file.h>
+#include <flame/entity/scene.h>
+#include <flame/graphics/display_layer.h>
+#include <flame/graphics/renderer.h>
+#include <flame/ui/ui.h>
 #include "../tool/transformer_tool.h"
 
 struct SceneEditor : tke::ui::Window
@@ -22,7 +22,7 @@ struct SceneEditor : tke::ui::Window
 	std::unique_ptr<tke::DeferredRenderer> defe_renderer;
 
 	bool viewPhysx = false;
-	std::unique_ptr<tke::ImmediateVertexBuffer> physx_vertex_buffer;
+	std::unique_ptr<tke::Buffer> physx_vertex_buffer;
 	std::unique_ptr<tke::LinesRenderer> lines_renderer;
 
 	bool showSelectedWireframe = true;

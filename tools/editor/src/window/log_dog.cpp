@@ -1,6 +1,6 @@
 #include <regex>
 
-#include "../../global.h"
+#include <flame/global.h>
 #include "file_selector.h"
 #include "log_dog.h"
 

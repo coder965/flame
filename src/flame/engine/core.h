@@ -2,20 +2,15 @@
 
 #include <functional>
 
-#include "global.h"
-#include "math/math.h"
-#include "graphics/graphics.h"
-#include "entity/node.h"
+#include <flame/global.h>
+#include <flame/math/math.h>
+#include <flame/graphics/graphics.h>
+#include <flame/entity/node.h>
 
 namespace tke
 {
-	struct UniformBuffer;
-	struct Texture;
-	struct RenderPass;
 	struct Framebuffer;
 	struct CommandBuffer;
-
-	void processCmdLine(const std::string &str, bool record = true);
 
 	enum WindowStyle
 	{

@@ -1,12 +1,11 @@
-#include "../global.h"
-#include "../graphics/buffer.h"
-#include "../graphics/texture.h"
-#include "../graphics/command_buffer.h"
-#include "../graphics/framebuffer.h"
-#include "../graphics/renderpass.h"
-#include "../graphics/renderer.h"
-
-#include "pick_up.h"
+#include <flame/global.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/command_buffer.h>
+#include <flame/graphics/framebuffer.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/renderer.h>
+#include <flame/pick_up/pick_up.h>
 
 namespace tke
 {
@@ -20,9 +19,9 @@ namespace tke
 			return 0;
 
 		auto cb = begin_once_command_buffer();
-		cb->beginRenderPass(renderPass_depthC_image8C, pick_up_fb.get());
+		cb->begin_renderpass(renderPass_depthC_image8C, pick_up_fb.get());
 		drawCallback(cb);
-		cb->endRenderPass();
+		cb->end_renderpass();
 		end_once_command_buffer(cb);
 
 		pick_up_image->copy_to_buffer(defalut_staging_buffer, 0, x, y, 1, 1);

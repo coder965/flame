@@ -1,8 +1,8 @@
 #include <assert.h>
 
-#include "framebuffer.h"
-#include "texture.h"
-#include "renderpass.h"
+#include <flame/graphics/framebuffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/renderpass.h>
 
 namespace tke
 {

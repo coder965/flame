@@ -1,4 +1,4 @@
-#include "global.h"
+#include <flame/global.h>
 
 namespace tke
 {

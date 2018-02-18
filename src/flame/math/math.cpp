@@ -1,4 +1,4 @@
-#include "math.h"
+#include <flame/math/math.h>
 
 namespace tke
 {

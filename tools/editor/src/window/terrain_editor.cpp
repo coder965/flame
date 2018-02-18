@@ -1,12 +1,11 @@
-#include "../../input.h"
-#include "../../global.h"
-#include "../../graphics/pipeline.h"
-#include "../../graphics/material.h"
-#include "../../graphics/command_buffer.h"
-#include "../../ui/ui.h"
-#include "../../model/animation.h"
-#include "../../physics/physics.h"
-#include "../../engine.h"
+#include <flame/global.h>
+#include <flame/engine/input.h>
+#include <flame/engine/core.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/graphics/material.h>
+#include <flame/graphics/command_buffer.h>
+#include <flame/model/animation.h>
+#include <flame/physics/physics.h>
 
 #include "terrain_editor.h"
 #include "file_selector.h"
@@ -202,7 +201,7 @@ void TerrainEditor::on_show()
 						auto bottom = glm::min((float)block_count, fl_y + 2);
 						auto xlength = (int)(right - left);
 						auto ylength = (int)(bottom - top);
-						tke::StagingBuffer stagingBuffer(xlength * ylength * sizeof(tke::ModelVertex));
+						tke::Buffer stagingBuffer(tke::BufferTypeStaging, xlength * ylength * sizeof(tke::ModelVertex));
 						auto map = (tke::ModelVertex*)stagingBuffer.map(0, stagingBuffer.size);
 						std::vector<VkBufferCopy> ranges(ylength);
 						for (int i = 0; i < ranges.size(); i++)
@@ -213,7 +212,7 @@ void TerrainEditor::on_show()
 							ranges[i].srcOffset = (i * xlength) * sizeof(tke::ModelVertex);
 						}
 						stagingBuffer.unmap();
-						stagingBuffer.copyTo(vertex_buffer.get(), ranges.size(), ranges.data());
+						stagingBuffer.copy_to(vertex_buffer.get(), ranges.size(), ranges.data());
 					}
 				}
 			}
@@ -277,6 +276,8 @@ void TerrainEditor::create_vertex()
 		}
 	}
 
-	vertex_buffer = std::make_unique<tke::VertexBuffer>(sizeof(tke::ModelVertex) * vertexs.size(), vertexs.data());
-	index_buffer = std::make_unique<tke::IndexBuffer>(sizeof(int) * indices.size(), indices.data());
+	vertex_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeVertex, sizeof(tke::ModelVertex) * vertexs.size());
+	vertex_buffer->update(vertexs.data());
+	index_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeIndex, sizeof(int) * indices.size());
+	vertex_buffer->update(indices.data());
 }

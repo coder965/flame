@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../ui/ui.h"
+#include <flame/ui/ui.h>
 
 struct HierarchyWindow : tke::ui::Window
 {

@@ -1,7 +1,7 @@
 #define NOMINMAX
 #include <Windows.h>
 
-#include "string_utils.h"
+#include <flame/utils/string.h>
 
 namespace tke
 {

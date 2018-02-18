@@ -1,16 +1,17 @@
 #include <assert.h>
 #include <set>
 
-#include "../global.h"
-#include "graphics.h"
-#include "command_buffer.h"
-#include "buffer.h"
-#include "texture.h"
-#include "material.h"
-#include "descriptor.h"
-#include "renderpass.h"
-#include "pipeline.h"
-#include "sampler.h"
+#include <flame/global.h>
+#include <flame/graphics/graphics.h>
+#include <flame/graphics/command_buffer.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/material.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/graphics/sampler.h>
+#include <flame/graphics/command_buffer.h>
 
 namespace tke
 {
@@ -222,7 +223,7 @@ namespace tke
 
 		vkGetDeviceQueue(vk_device.v, 0, 0, &vk_graphics_queue.v);
 
-		commandPool = new CommandPool;
+		command_pool = new CommandPool;
 		descriptorPool = new DescriptorPool;
 
 		init_buffer();

@@ -3,13 +3,13 @@
 #include <memory>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "../../imgui/imgui.h"
-#include "../../imgui/imgui_internal.h"
-#include "../../imgui/imgui_tabs.h"
-#include "../../IconFontCppHeaders/IconsFontAwesome.h"
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <imgui_tabs.h>
+#include <IconsFontAwesome.h>
 
-#include "../file_utils.h"
-#include "../math/math.h"
+#include <flame/utils/file.h>
+#include <flame/math/math.h>
 
 namespace tke
 {

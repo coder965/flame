@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "../object.h"
-#include "../entity/node.h"
+#include <flame/engine/object.h>
+#include <flame/entity/node.h>
 
 enum SelectType
 {

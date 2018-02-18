@@ -1,5 +1,5 @@
-#include "../global.h"
-#include "node.h"
+#include <flame/global.h>
+#include <flame/entity/node.h>
 
 namespace tke
 {

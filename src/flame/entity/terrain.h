@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../graphics/graphics.h"
-#include "component.h"
+#include <flame/graphics/graphics.h>
+#include <flame/entity/component.h>
 
 namespace physx { struct PxRigidActor; }
 
@@ -15,7 +15,7 @@ namespace tke
 
 	struct Texture;
 	struct Material;
-	struct VertexBuffer;
+	struct Buffer;
 
 	class TerrainComponent : public Component
 	{
@@ -36,7 +36,7 @@ namespace tke
 		bool enable_physics;
 
 		std::unique_ptr<TerrainVertex[]> vertex;
-		std::unique_ptr<VertexBuffer> vertex_buffer;
+		std::unique_ptr<Buffer> vertex_buffer;
 
 		physx::PxRigidActor *actor;
 

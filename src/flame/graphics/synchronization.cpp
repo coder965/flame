@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include "synchronization.h"
+#include <flame/graphics/synchronization.h>
 
 namespace tke
 {

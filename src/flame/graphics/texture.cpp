@@ -2,17 +2,19 @@
 #include <filesystem>
 #include <map>
 
-#include "../string_utils.h"
-#include "../file_utils.h"
-#include "buffer.h"
-#include "texture.h"
-#include "command_buffer.h"
+#include <gli/gli.hpp>
+#include <flame/utils/string.h>
+#include <flame/utils/file.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/command_buffer.h>
 
 namespace tke
 {
 	Texture::Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
+		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		layer(1),
 		sRGB(false),
 		material_index(-1),
@@ -29,10 +31,9 @@ namespace tke
 		for (int i = 0; i < _level; i++)
 		{
 			levels[i] = std::make_unique<TextureLevel>();
-			levels[i]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 			levels[i]->cx = cx;
 			levels[i]->cy = cy;
-			levels[i]->pitch = PITCH(cx * (bpp / 8));
+			levels[i]->pitch = calc_pitch(cx * (bpp / 8));
 			cx >>= 1;
 			cy >>= 1;
 			cx = glm::max(cx, 1);
@@ -74,10 +75,7 @@ namespace tke
 		//total_size = memRequirements.size;
 
 		if (need_general_layout)
-		{
-			for (int i = 0; i < levels.size(); i++)
-				transition_layout(i, VK_IMAGE_LAYOUT_GENERAL);
-		}
+			transition_layout(VK_IMAGE_LAYOUT_GENERAL);
 	}
 
 	Texture::Texture(VkImage _image, int _cx, int _cy, VkFormat _format) :
@@ -85,6 +83,7 @@ namespace tke
 		memory(0),
 		format(_format),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
+		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		layer(1),
 		sRGB(false),
 		material_index(-1),
@@ -94,10 +93,9 @@ namespace tke
 
 		levels.resize(1);
 		levels[0] = std::make_unique<TextureLevel>();
-		levels[0]->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		levels[0]->cx = _cx;
 		levels[0]->cy = _cy;
-		levels[0]->pitch = PITCH(_cx * (bpp / 8));
+		levels[0]->pitch = calc_pitch(_cx * (bpp / 8));
 	}
 
 	Texture::~Texture()
@@ -149,9 +147,7 @@ namespace tke
 
 	void Texture::clear(const glm::vec4 &color)
 	{
-		std::vector<VkImageLayout> last_layouts(levels.size());
-		for (int i = 0; i < levels.size(); i++)
-			last_layouts[i] = levels[i]->layout;
+		auto last_layout = layout;
 		transition_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		auto cb = begin_once_command_buffer();
 		VkClearColorValue clear_value = { color.x, color.y, color.z, color.a };
@@ -162,8 +158,7 @@ namespace tke
 		};
 		vkCmdClearColorImage(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
 		end_once_command_buffer(cb);
-		for (int i = 0; i < levels.size(); i++)
-			transition_layout(i, last_layouts[i]);
+		transition_layout(last_layout);
 	}
 
 	void Texture::transition_layout(int _level, VkImageLayout _layout)
@@ -172,7 +167,7 @@ namespace tke
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = levels[_level]->layout;
+		barrier.oldLayout = layout;
 		barrier.newLayout = _layout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -248,26 +243,26 @@ namespace tke
 
 		end_once_command_buffer(cb);
 
-		levels[_level]->layout = _layout;
 	}
 
 	void Texture::transition_layout(VkImageLayout _layout)
 	{
 		for (auto i = 0; i < levels.size(); i++)
 			transition_layout(i, _layout);
+		layout = _layout;
 	}
 
 	void Texture::fill_data(int level, unsigned char *src)
 	{
 		auto size = get_size(level);
 
-		StagingBuffer stagingBuffer(size);
+		Buffer staging_buffer(BufferTypeStaging, size);
 
-		void* map = stagingBuffer.map(0, size);
+		void* map = staging_buffer.map(0, size);
 		memcpy(map, src, size);
-		stagingBuffer.unmap();
+		staging_buffer.unmap();
 
-		copy_from_buffer(&stagingBuffer, level);
+		copy_from_buffer(&staging_buffer, level);
 	}
 
 	void Texture::copy_to_buffer(Buffer *dst, int level, int x, int y, int width, int height, int buffer_offset)
@@ -294,13 +289,16 @@ namespace tke
 		region.bufferRowLength = 0;
 		region.bufferImageHeight = 0;
 
+		auto last_layout = layout;
 		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
 		auto cb = begin_once_command_buffer();
 		vkCmdCopyImageToBuffer(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst->v, 1, &region);
 		end_once_command_buffer(cb);
 
-		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
+		transition_layout(level, last_layout);
+		layout = last_layout;
 	}
 
 	void Texture::copy_from_buffer(Buffer *src, int level, int x, int y, int width, int height, int buffer_offset)
@@ -443,6 +441,42 @@ namespace tke
 		return i;
 	}
 
+	static VkFormat _get_texture_format(int bpp, int channel, bool sRGB)
+	{
+		switch (channel)
+		{
+			case 0:
+				switch (bpp)
+				{
+					case 8:
+						return VK_FORMAT_R8_UNORM;
+				}
+				break;
+			case 1:
+				switch (bpp)
+				{
+					case 8:
+						return VK_FORMAT_R8_UNORM;
+					case 16:
+						return VK_FORMAT_R16_UNORM;
+				}
+				break;
+			case 3:
+				// vk do not support 3 channels
+				break;
+			case 4:
+				switch (bpp)
+				{
+					case 32:
+						if (sRGB)
+							return VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
+						else
+							return VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
+				}
+		}
+		return VK_FORMAT_UNDEFINED;
+	}
+
 	static std::map<unsigned int, std::weak_ptr<Texture>> _images;
 
 	std::shared_ptr<Texture> get_or_create_texture(const std::string &filename)
@@ -456,64 +490,191 @@ namespace tke
 				return s;
 		}
 
-		if (!std::fs::exists(filename))
+		std::fs::path path(filename);
+		if (!std::fs::exists(path))
 			return nullptr;
 
-		auto image = std::make_unique<Image>(filename);
+		std::shared_ptr<Texture> t;
 
-		auto sRGB = std::fs::exists(filename + ".srgb") || image->sRGB;
-
-		VkFormat _format = VK_FORMAT_UNDEFINED;
-		switch (image->channel)
+		auto ext = path.extension().string();
+		if (ext == ".ktx" || ext == ".dds")
 		{
-			case 0:
-				switch (image->bpp)
-				{
-					case 8:
-						_format = VK_FORMAT_R8_UNORM;
-						break;
-				}
-				break;
-			case 1:
-				switch (image->bpp)
-				{
-					case 8:
-						_format = VK_FORMAT_R8_UNORM;
-						break;
-					case 16:
-						_format = VK_FORMAT_R16_UNORM;
-						break;
-				}
-				break;
-			case 3:
-				// vk do not support 3 channels
-				break;
-			case 4:
-				switch (image->bpp)
-				{
-					case 32:
-						if (sRGB)
-							_format = VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
-						else
-							_format = VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
-						break;
-				}
-		}
-		assert(_format != VK_FORMAT_UNDEFINED);
+			gli::texture _Texture = gli::load(filename);
+			if (_Texture.empty())
+				assert(0);
 
-		auto i = std::make_shared<Texture>(image->levels[0]->cx, image->levels[0]->cy,
-			_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, image->levels.size(), 1, false);
-		for (int l = 0; l < image->levels.size(); l++)
+			gli::gl GL(gli::gl::PROFILE_GL33);
+			auto const Format = GL.translate(_Texture.format(), _Texture.swizzles());
+			auto Target = GL.translate(_Texture.target());
+			assert(!gli::is_compressed(_Texture.format()) && Target == gli::TARGET_2D);
+			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
+
+			auto channel = 0;
+			auto sRGB = false;
+			switch (Format.External)
+			{
+				case gli::gl::EXTERNAL_RED:
+					channel = 1;
+					break;
+				case gli::gl::EXTERNAL_RG:
+					channel = 2;
+					break;
+				case gli::gl::EXTERNAL_RGB:
+					channel = 3;
+					break;
+				case gli::gl::EXTERNAL_BGR:
+					channel = 3;
+					break;
+				case gli::gl::EXTERNAL_RGBA:
+					channel = 4;
+					break;
+				case gli::gl::EXTERNAL_BGRA:
+					channel = 4;
+					break;
+				case gli::gl::EXTERNAL_RED_INTEGER:
+					channel = 1;
+					break;
+				case gli::gl::EXTERNAL_RG_INTEGER:
+					channel = 2;
+					break;
+				case gli::gl::EXTERNAL_RGB_INTEGER:
+					channel = 3;
+					break;
+				case gli::gl::EXTERNAL_BGR_INTEGER:
+					channel = 3;
+					break;
+				case gli::gl::EXTERNAL_RGBA_INTEGER:
+					channel = 4;
+					break;
+				case gli::gl::EXTERNAL_BGRA_INTEGER:
+					channel = 4;
+					break;
+				case gli::gl::EXTERNAL_DEPTH:
+					assert(0); // WIP
+				case gli::gl::EXTERNAL_DEPTH_STENCIL:
+					assert(0); // WIP
+				case gli::gl::EXTERNAL_STENCIL:
+					assert(0); // WIP
+				case gli::gl::EXTERNAL_LUMINANCE:
+					assert(0); // WIP
+				case gli::gl::EXTERNAL_ALPHA:
+					channel = 1;
+					break;
+				case gli::gl::EXTERNAL_LUMINANCE_ALPHA:
+					assert(0); // WIP
+				case gli::gl::EXTERNAL_SRGB_EXT:
+					channel = 3;
+					sRGB = true;
+					break;
+				case gli::gl::EXTERNAL_SRGB_ALPHA_EXT:
+					channel = 4;
+					sRGB = true;
+					break;
+			}
+			auto bpp = 0;
+			switch (Format.Type)
+			{
+				case gli::gl::TYPE_I8:
+					bpp = 8;
+					break;
+				case gli::gl::TYPE_U8:
+					bpp = 8;
+					break;
+				case gli::gl::TYPE_I16:
+					bpp = 16;
+					break;
+				case gli::gl::TYPE_U16:
+					bpp = 16;
+					break;
+				case gli::gl::TYPE_I32:
+					bpp = 32;
+					break;
+				case gli::gl::TYPE_U32:
+					bpp = 32;
+					break;
+				case gli::gl::TYPE_I64:
+					bpp = 64;
+					break;
+				case gli::gl::TYPE_F16:
+					bpp = 16;
+					break;
+				case gli::gl::TYPE_F16_OES:
+					assert(0); // WIP
+				case gli::gl::TYPE_F32:
+					bpp = 32;
+					break;
+				case gli::gl::TYPE_F64:
+					bpp = 64;
+					break;
+				case gli::gl::TYPE_UINT32_RGB9_E5_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT32_RG11B10F_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT8_RG3B2:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT8_RG3B2_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_RGB5A1:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_RGB5A1_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_R5G6B5:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_R5G6B5_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_RGBA4:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_RGBA4_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT32_RGBA8:
+					bpp = 8;
+					break;
+				case gli::gl::TYPE_UINT32_RGBA8_REV:
+					bpp = 8;
+					break;
+				case gli::gl::TYPE_UINT32_RGB10A2:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT32_RGB10A2_REV:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT8_RG4_REV_GTC:
+					assert(0); // WIP
+				case gli::gl::TYPE_UINT16_A1RGB5_GTC:
+					assert(0); // WIP
+			}
+			auto _format = _get_texture_format(bpp, channel, sRGB);
+			assert(_format != VK_FORMAT_UNDEFINED);
+
+			t = std::make_shared<Texture>(_Texture.extent().x, _Texture.extent().y,
+				_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, _Texture.levels(), 1, false);
+			for (auto i = 0; i < _Texture.levels(); i++)
+			{
+				t->fill_data(i, (unsigned char*)_Texture.data(0, 0, i));
+				t->levels[i]->pitch = calc_pitch(_Texture.extent(i).x, bpp);
+			}
+			t->bpp = bpp;
+			t->sRGB = sRGB;
+		}
+		else
 		{
-			i->fill_data(l, image->levels[l]->data.get());
-			i->levels[l]->pitch = image->levels[l]->pitch;
-		}
-		i->bpp = image->bpp;
-		i->sRGB = sRGB;
-		i->filename = filename;
+			auto image = std::make_unique<Image>(filename);
 
-		_images[hash] = i;
-		return i;
+			auto sRGB = std::fs::exists(filename + ".srgb") || image->sRGB;
+
+			auto _format = _get_texture_format(image->bpp, image->channel, sRGB);
+			assert(_format != VK_FORMAT_UNDEFINED);
+
+			t = std::make_shared<Texture>(image->cx, image->cy,
+				_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
+			t->fill_data(0, image->data.get());
+			t->levels[0]->pitch = calc_pitch(image->cx, image->bpp);
+			t->bpp = image->bpp;
+			t->sRGB = sRGB;
+		}
+
+		t->filename = filename;
+
+		_images[hash] = t;
+		return t;
 	}
 
 	std::shared_ptr<Texture> default_color_texture;

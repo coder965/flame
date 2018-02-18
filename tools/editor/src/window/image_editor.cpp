@@ -1,7 +1,6 @@
-#include "../../global.h"
-#include "../../input.h"
-#include "../../graphics/command_buffer.h"
-#include "../../ui/ui.h"
+#include <flame/global.h>
+#include <flame/engine/input.h>
+#include <flame/graphics/command_buffer.h>
 
 #include "image_editor.h"
 
@@ -12,7 +11,7 @@ ImageEditor::ImageEditor(const std::string &filename) :
 	first_cy = 600;
 
 	texture = tke::get_or_create_texture(filename);
-	staging_buffer = std::make_unique<tke::StagingBuffer>(texture->get_size());
+	staging_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeStaging, texture->get_size());
 	texture->copy_to_buffer(staging_buffer.get());
 }
 
@@ -30,7 +29,7 @@ void ImageEditor::on_show()
 		if (ImGui::MenuItem("Signed Distance Field"))
 		{
 			auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
-			tke::create_and_save_image_distance_transform(pixel, texture->get_cy(), texture->get_cx(), 0, texture->bpp / 8, "sdf.png");
+			//tke::create_and_save_image_distance_transform(pixel, texture->get_cy(), texture->get_cx(), 0, texture->bpp / 8, "sdf.png");
 			staging_buffer->unmap();
 		}
 

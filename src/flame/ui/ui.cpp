@@ -1,19 +1,18 @@
 #include <process.h>
 #include <map>
 
-#include "../global.h"
-#include "../spare_list.h"
-#include "../input.h"
-#include "../graphics/buffer.h"
-#include "../graphics/texture.h"
-#include "../graphics/renderpass.h"
-#include "../graphics/descriptor.h"
-#include "../graphics/pipeline.h"
-#include "../graphics/sampler.h"
-#include "../graphics/command_buffer.h"
-#include "../engine.h"
-
-#include "ui.h"
+#include <flame/global.h>
+#include <flame/container/spare_list.h>
+#include <flame/engine/input.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/graphics/sampler.h>
+#include <flame/graphics/command_buffer.h>
+#include <flame/engine/core.h>
+#include <flame/ui/ui.h>
 
 const unsigned int ImageCount = 127;
 
@@ -736,8 +735,8 @@ namespace tke
 
 		static Pipeline *pipeline_ui;
 		static CommandBuffer *cb_ui;
-		static std::unique_ptr<ImmediateVertexBuffer> vertexBuffer_ui;
-		static std::unique_ptr<ImmediateIndexBuffer> indexBuffer_ui;
+		static std::unique_ptr<Buffer> vertexBuffer_ui;
+		static std::unique_ptr<Buffer> indexBuffer_ui;
 
 		static Texture *font_image;
 		void init()
@@ -1006,11 +1005,11 @@ namespace tke
 
 					size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 					if (!vertexBuffer_ui || vertexBuffer_ui->size < vertex_size)
-						vertexBuffer_ui = std::make_unique<ImmediateVertexBuffer>(vertex_size);
+						vertexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateVertex, vertex_size);
 
 					size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 					if (!indexBuffer_ui || indexBuffer_ui->size < index_size)
-						indexBuffer_ui = std::make_unique<ImmediateIndexBuffer>(index_size);
+						indexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateIndex, index_size);
 
 					auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->map(0, vertex_size);
 					auto idx_dst = (ImDrawIdx*)indexBuffer_ui->map(0, index_size);
@@ -1033,23 +1032,23 @@ namespace tke
 				if (bg_color.a > 0.f)
 				{
 					VkClearValue clear_value = { bg_color.r, bg_color.g, bg_color.b, 1.f };
-					cb_ui->beginRenderPass(renderPass_windowC, window_framebuffers[window_imageIndex].get(), &clear_value);
+					cb_ui->begin_renderpass(renderPass_windowC, window_framebuffers[window_imageIndex].get(), &clear_value);
 				}
 				else
-					cb_ui->beginRenderPass(renderPass_window,
+					cb_ui->begin_renderpass(renderPass_window,
 						window_framebuffers[window_imageIndex].get());
 
 				if (draw_data->CmdListsCount > 0)
 				{
-					cb_ui->setViewportAndScissor(window_cx, window_cy);
+					cb_ui->set_viewport_and_scissor(window_cx, window_cy);
 
-					cb_ui->bindVertexBuffer(vertexBuffer_ui.get());
-					cb_ui->bindIndexBuffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
+					cb_ui->bind_vertex_buffer(vertexBuffer_ui.get());
+					cb_ui->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
 
-					cb_ui->bindPipeline(pipeline_ui);
-					cb_ui->bindDescriptorSet();
+					cb_ui->bind_pipeline(pipeline_ui);
+					cb_ui->bind_descriptor_set();
 
-					cb_ui->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+					cb_ui->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 					int vtx_offset = 0;
 					int idx_offset = 0;
@@ -1066,11 +1065,11 @@ namespace tke
 							}
 							else
 							{
-								cb_ui->setScissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
+								cb_ui->set_scissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
 									ImMax((int32_t)(pcmd->ClipRect.y), 0),
 									ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 									ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
-								cb_ui->drawIndex(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+								cb_ui->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 							}
 							idx_offset += pcmd->ElemCount;
 						}
@@ -1078,7 +1077,7 @@ namespace tke
 					}
 				}
 
-				cb_ui->endRenderPass();
+				cb_ui->end_renderpass();
 
 				cb_ui->end();
 

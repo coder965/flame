@@ -3,44 +3,25 @@
 #include <chrono>
 #include <list>
 
-#include "global.h"
-#include "system.h"
-#include "input.h"
-#include "global.h"
-#include "engine.h"
-#include "graphics/buffer.h"
-#include "graphics/texture.h"
-#include "graphics/renderpass.h"
-#include "graphics/renderer.h"
-#include "graphics/framebuffer.h"
-#include "graphics/synchronization.h"
-#include "entity/scene.h"
-#include "ui/ui.h"
-#include "physics/physics.h"
-#include "sound/sound.h"
-#include "model/model.h"
-#include "entity/terrain.h"
-#include "pick_up/pick_up.h"
-#include "engine.h"
+#include <flame/global.h>
+#include <flame/engine/system.h>
+#include <flame/engine/input.h>
+#include <flame/engine/core.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/renderer.h>
+#include <flame/graphics/framebuffer.h>
+#include <flame/graphics/synchronization.h>
+#include <flame/entity/scene.h>
+#include <flame/ui/ui.h>
+#include <flame/physics/physics.h>
+#include <flame/sound/sound.h>
+#include <flame/model/model.h>
+#include <flame/pick_up/pick_up.h>
 
 namespace tke
 {
-	void processCmdLine(const std::string &str, bool record)
-	{
-		static std::string last_cmd;
-
-		std::string string(str);
-
-		std::regex pat(R"([\w\.]+)");
-		std::smatch sm;
-
-		if (std::regex_search(string, sm, pat))
-		{
-			if (sm[0].str() == "r")
-				processCmdLine(last_cmd.c_str(), false);
-		}
-	}
-
 	void *hWnd;
 	int window_cx;
 	int window_cy;
@@ -367,8 +348,8 @@ namespace tke
 		if (std::fs::exists("ico.png"))
 		{
 			auto icon = std::make_unique<Image>("ico.png");
-			wcex.hIcon = CreateIcon(wcex.hInstance, icon->get_cx(), icon->get_cy(), 1,
-				icon->bpp, nullptr, icon->get_data());
+			wcex.hIcon = CreateIcon(wcex.hInstance, icon->cx, icon->cy, 1,
+				icon->bpp, nullptr, icon->data.get());
 		}
 		else
 			wcex.hIcon = 0;

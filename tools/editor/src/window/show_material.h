@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../graphics/material.h"
-#include "../../ui/ui.h"
+#include <flame/graphics/material.h>
+#include <flame/ui/ui.h>
 
 void show_material(tke::Material *m);

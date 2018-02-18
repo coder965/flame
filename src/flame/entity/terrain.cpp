@@ -1,9 +1,9 @@
-#include "../global.h"
-#include "../graphics/buffer.h"
-#include "../graphics/texture.h"
-#include "../graphics/material.h"
-#include "../graphics/pipeline.h"
-#include "terrain.h"
+#include <flame/global.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/material.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/entity/terrain.h>
 
 namespace tke
 {

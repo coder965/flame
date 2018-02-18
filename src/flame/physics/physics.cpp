@@ -1,4 +1,4 @@
-#include "physics.h"
+#include <flame/physics/physics.h>
 
 namespace tke
 {

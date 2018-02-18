@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include "sampler.h"
+#include <flame/graphics/sampler.h>
 
 namespace tke
 {

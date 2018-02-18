@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../../graphics/display_layer.h"
-#include "../../graphics/buffer.h"
-#include "../../graphics/texture.h"
-#include "../../graphics/framebuffer.h"
-#include "../../graphics/renderer.h"
-#include "../../model/model.h"
-#include "../../entity/camera.h"
-#include "../../entity/terrain.h"
-#include "../../ui/ui.h"
+#include <flame/graphics/display_layer.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/framebuffer.h>
+#include <flame/graphics/renderer.h>
+#include <flame/model/model.h>
+#include <flame/entity/camera.h>
+#include <flame/entity/terrain.h>
+#include <flame/ui/ui.h>
 
 struct TerrainEditor : tke::ui::Window
 {
@@ -21,13 +21,13 @@ struct TerrainEditor : tke::ui::Window
 	tke::DisplayLayer layer;
 
 	std::unique_ptr<float[]> height_array;
-	std::unique_ptr<tke::UniformBuffer> height_array_buffer;
+	std::unique_ptr<tke::Buffer> height_array_buffer;
 
 	std::vector<tke::ModelVertex> vertexs;
 	std::vector<int> indices;
 
-	std::unique_ptr<tke::VertexBuffer> vertex_buffer;
-	std::unique_ptr<tke::IndexBuffer> index_buffer;
+	std::unique_ptr<tke::Buffer> vertex_buffer;
+	std::unique_ptr<tke::Buffer> index_buffer;
 
 	std::unique_ptr<tke::PlainRenderer> renderer;
 

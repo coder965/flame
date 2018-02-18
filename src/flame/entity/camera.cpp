@@ -1,6 +1,6 @@
-#include "../graphics/renderer.h"
-#include "node.h"
-#include "camera.h"
+#include <flame/graphics/renderer.h>
+#include <flame/entity/node.h>
+#include <flame/entity/camera.h>
 
 namespace tke
 {

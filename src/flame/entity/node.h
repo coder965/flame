@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 
-#include "../math/math.h"
-#include "../object.h"
-#include "component.h"
+#include <flame/math/math.h>
+#include <flame/engine/object.h>
+#include <flame/entity/component.h>
 
 namespace tke
 {

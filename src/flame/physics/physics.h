@@ -3,9 +3,9 @@
 #include <memory>
 #include <vector>
 
-#include "../../PhysX-3.3/PhysXSDK/Include/PxPhysicsAPI.h"
+#include <PxPhysicsAPI.h>
 
-#include "../math/math.h"
+#include <flame/math/math.h>
 
 namespace tke
 {

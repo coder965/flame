@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "../object.h"
+#include <flame/engine/object.h>
 
 namespace tke
 {

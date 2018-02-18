@@ -1,6 +1,6 @@
-#include "../global.h"
-#include "../file_utils.h"
-#include "light.h"
+#include <flame/global.h>
+#include <flame/utils/file.h>
+#include <flame/entity/light.h>
 
 namespace tke
 {

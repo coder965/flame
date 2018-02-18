@@ -1,22 +1,16 @@
 #include <map>
 
-#include "../math/math.h"
-#include "../string_utils.h"
-#include "../file_utils.h"
-#include "../global.h"
-#include "../graphics/buffer.h"
-#include "../graphics/renderpass.h"
-#include "../graphics/synchronization.h"
-#include "../physics/physics.h"
-#include "../model/model.h"
-#include "../model/animation.h"
-#include "controller.h"
-#include "camera.h"
-#include "light.h"
-#include "model_instance.h"
-#include "terrain.h"
-#include "water.h"
-#include "scene.h"
+#include <flame/global.h>
+#include <flame/math/math.h>
+#include <flame/utils/string.h>
+#include <flame/utils/file.h>
+#include <flame/physics/physics.h>
+#include <flame/entity/camera.h>
+#include <flame/entity/light.h>
+#include <flame/entity/model_instance.h>
+#include <flame/entity/terrain.h>
+#include <flame/entity/water.h>
+#include <flame/entity/scene.h>
 
 namespace tke
 {

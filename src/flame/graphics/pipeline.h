@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../math/math.h"
-#include "graphics.h"
+#include <flame/math/math.h>
+#include <flame/graphics/graphics.h>
 
 namespace tke
 {

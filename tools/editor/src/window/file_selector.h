@@ -3,8 +3,8 @@
 #include <vector>
 #include <functional>
 
-#include "../../file_utils.h"
-#include "../../ui/ui.h"
+#include <flame/utils/file.h>
+#include <flame/ui/ui.h>
 
 enum FileSelectorIo
 {

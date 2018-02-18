@@ -1,8 +1,7 @@
-#include "../../input.h"
-#include "../../global.h"
-#include "../../graphics/texture.h"
-#include "../../graphics/command_buffer.h"
-#include "../../ui/ui.h"
+#include <flame/engine/input.h>
+#include <flame/global.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/command_buffer.h>
 
 #include "model_editor.h"
 

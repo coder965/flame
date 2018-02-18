@@ -1,7 +1,7 @@
-#include "../ui/ui.h"
-#include "../input.h"
-#include "../global.h"
-#include "../engine.h"
+#include <flame/ui/ui.h>
+#include <flame/engine/input.h>
+#include <flame/global.h>
+#include <flame/engine/core.h>
 #include "window/file_selector.h"
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
@@ -26,7 +26,8 @@ struct NewImageDialog : FileSelector
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
 				return false;
-			tke::new_image_file(s, cx, cy, 32);
+			auto i = new tke::Image(cx, cy, 4, 32);
+			i->save(s);
 			return true;
 		};
 	}

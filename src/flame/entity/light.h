@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../math/math.h"
-#include "component.h"
+#include <flame/math/math.h>
+#include <flame/entity/component.h>
 
 namespace tke
 {

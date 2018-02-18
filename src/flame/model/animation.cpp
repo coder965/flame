@@ -1,12 +1,12 @@
 #include <iostream>
 #include <map>
 
-#include "../string_utils.h"
-#include "../file_utils.h"
-#include "../global.h"
-#include "../graphics/buffer.h"
-#include "animation.h"
-#include "model.h"
+#include <flame/global.h>
+#include <flame/utils/string.h>
+#include <flame/utils/file.h>
+#include <flame/graphics/buffer.h>
+#include <flame/model/model.h>
+#include <flame/model/animation.h>
 
 namespace tke
 {
@@ -247,8 +247,8 @@ namespace tke
 		bone_matrix = std::make_unique<glm::mat4[]>(model->bones.size());
 		for (int i = 0; i < model->bones.size(); i++)
 			bone_matrix[i] = glm::mat4(1.f);
-		bone_buffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * model->bones.size());
-		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
+		bone_buffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(glm::mat4) * model->bones.size());
+		bone_buffer->update(bone_matrix.get(), sizeof(glm::mat4) * model->bones.size());
 	}
 
 	void AnimationRunner::reset_bones()
@@ -291,7 +291,7 @@ namespace tke
 			return;
 
 		reset_bones();
-		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
+		bone_buffer->update(bone_matrix.get(), sizeof(glm::mat4) * model->bones.size());
 		curr_anim = animation;
 		curr_frame = 0;
 		curr_frame_index.resize(animation->tracks.size());
@@ -430,6 +430,6 @@ namespace tke
 		for (int i = 0; i < model->bones.size(); i++)
 			bone_matrix[i] *= glm::translate(-model->bones[i]->rootCoord);
 
-		bone_buffer->update(bone_matrix.get(), defalut_staging_buffer, sizeof(glm::mat4) * model->bones.size());
+		bone_buffer->update(bone_matrix.get(), sizeof(glm::mat4) * model->bones.size());
 	}
 }

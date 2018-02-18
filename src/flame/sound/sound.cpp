@@ -1,4 +1,4 @@
-#include "sound.h"
+#include <flame/sound/sound.h>
 
 //ALCdevice *alcDevice = nullptr;
 //ALCcontext *alcContext = nullptr;

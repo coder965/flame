@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "../math/math.h"
-#include "../image_utils.h"
-#include "graphics.h"
+#include <flame/math/math.h>
+#include <flame/utils/image.h>
+#include <flame/graphics/graphics.h>
 
 namespace tke
 {
@@ -12,10 +12,9 @@ namespace tke
 
 	struct TextureLevel
 	{
-		unsigned int cx;
-		unsigned int cy;
-		unsigned int pitch;
-		VkImageLayout layout;
+		int cx;
+		int cy;
+		int pitch;
 	};
 
 	struct TextureView
@@ -42,10 +41,11 @@ namespace tke
 		VkImage v;
 		VkDeviceMemory memory;
 		VkImageViewType view_type;
+		VkImageLayout layout;
 
-		unsigned int bpp;
+		int bpp;
 		std::vector<std::unique_ptr<TextureLevel>> levels;
-		unsigned int layer;
+		int layer;
 		bool sRGB;
 
 		std::vector<std::unique_ptr<TextureView>> views;

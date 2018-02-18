@@ -1,20 +1,18 @@
-#include "../../global.h"
-#include "../../ui/ui.h"
-#include "../../file_utils.h"
-#include "../../graphics/buffer.h"
-#include "../../graphics/descriptor.h"
-#include "../../graphics/command_buffer.h"
-#include "../../model/model.h"
-#include "../../model/animation.h"
-#include "../../entity/light.h"
-#include "../../entity/model_instance.h"
-#include "../../entity/terrain.h"
-#include "../../entity/water.h"
-#include "../../physics/physics.h"
-#include "../../pick_up/pick_up.h"
-#include "../../input.h"
-#include "../../global.h"
-#include "../../engine.h"
+#include <flame/global.h>
+#include <flame/engine/core.h>
+#include <flame/engine/input.h>
+#include <flame/utils/file.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/command_buffer.h>
+#include <flame/model/model.h>
+#include <flame/model/animation.h>
+#include <flame/entity/light.h>
+#include <flame/entity/model_instance.h>
+#include <flame/entity/terrain.h>
+#include <flame/entity/water.h>
+#include <flame/pick_up/pick_up.h>
+#include <flame/physics/physics.h>
 #include "../select.h"
 #include "resource_explorer.h"
 #include "hierarchy.h"
@@ -48,7 +46,7 @@ SceneEditor::SceneEditor(tke::Scene *_scene) :
 	scene = _scene;
 	tke::root_node->add_child(scene);
 
-	physx_vertex_buffer = std::make_unique<tke::ImmediateVertexBuffer>();
+	physx_vertex_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeImmediateVertex, 16);
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
 
 	transformerTool = std::make_unique<TransformerTool>();

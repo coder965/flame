@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 
-#include "../math/math.h"
-#include "../graphics/graphics.h"
+#include <flame/math/math.h>
+#include <flame/graphics/graphics.h>
 
 namespace tke
 {
@@ -41,8 +41,7 @@ namespace tke
 	};
 
 	struct Material;
-	struct VertexBuffer;
-	struct IndexBuffer;
+	struct Buffer;
 	struct Animation;
 	struct AnimationBinding;
 	struct Rigidbody;
@@ -175,9 +174,9 @@ namespace tke
 		void remove_joint(Joint *j);
 	};
 
-	extern std::unique_ptr<VertexBuffer> vertex_static_buffer;
-	extern std::unique_ptr<VertexBuffer> vertex_skeleton_Buffer;
-	extern std::unique_ptr<IndexBuffer> index_buffer;
+	extern std::unique_ptr<Buffer> vertex_static_buffer;
+	extern std::unique_ptr<Buffer> vertex_skeleton_Buffer;
+	extern std::unique_ptr<Buffer> index_buffer;
 
 	void add_triangle_vertex(Model *m, glm::mat3 rotation, glm::vec3 center);
 	void add_cube_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float length);

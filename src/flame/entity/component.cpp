@@ -1,5 +1,5 @@
-#include "node.h"
-#include "component.h"
+#include <flame/entity/node.h>
+#include <flame/entity/component.h>
 
 namespace tke
 {

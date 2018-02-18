@@ -1,7 +1,7 @@
 #define NOMINMAX
 #include <Windows.h>
 
-#include "input.h"
+#include <flame/engine/input.h>
 
 namespace tke
 {

@@ -1,7 +1,7 @@
-#include "node.h"
-#include "scene.h"
-#include "light.h"
-#include "sky.h"
+#include <flame/entity/node.h>
+#include <flame/entity/scene.h>
+#include <flame/entity/light.h>
+#include <flame/entity/sky.h>
 
 namespace tke
 {

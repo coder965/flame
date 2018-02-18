@@ -2,11 +2,11 @@
 #include <stack>
 #include <regex>
 
-#include "../../SPIRV-Cross/spirv_glsl.hpp"
-#include "../file_utils.h"
-#include "../global.h"
-#include "../graphics/descriptor.h"
-#include "shader.h"
+#include <spirv_glsl.hpp>
+#include <flame/utils/file.h>
+#include <flame/global.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/shader.h>
 
 namespace tke
 {
@@ -62,7 +62,7 @@ namespace tke
 			for (auto &d : defines)
 				cmd_str += "-D" + d + " ";
 			cmd_str += " -flimit-file ";
-			cmd_str += engine_path + "shader/my_config.conf";
+			cmd_str += engine_path + "src/shader/shader_compile_config.conf";
 			cmd_str += " -o " + spv_filename;
 			system(cmd_str.c_str());
 			if (!std::experimental::filesystem::exists(spv_filename))

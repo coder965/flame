@@ -1,4 +1,4 @@
-#include "resource.h"
+#include <flame/resource/resource.h>
 
 namespace tke
 {

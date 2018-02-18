@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../math/math.h"
-#include "node.h"
-#include "camera.h"
-#include "light.h"
-#include "sky.h"
+#include <flame/math/math.h>
+#include <flame/entity/node.h>
+#include <flame/entity/camera.h>
+#include <flame/entity/light.h>
+#include <flame/entity/sky.h>
 
 namespace physx
 {

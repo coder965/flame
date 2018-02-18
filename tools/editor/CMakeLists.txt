@@ -1,1 +1,13 @@
 PROJECT(editor)
+
+FILE(GLOB_RECURSE EDITOR_HEADER_LIST "src/*.h*")
+FILE(GLOB_RECURSE EDITOR_SOURCE_LIST "src/*.c*")
+
+GROUP_SRC("${EDITOR_HEADER_LIST}" "src" "Header")
+GROUP_SRC("${EDITOR_SOURCE_LIST}" "src" "Source")
+
+ADD_EXECUTABLE(editor ${EDITOR_HEADER_LIST} ${EDITOR_SOURCE_LIST})
+
+TARGET_LINK_LIBRARIES(editor flame)
+
+set_target_properties(editor PROPERTIES FOLDER "tools") 

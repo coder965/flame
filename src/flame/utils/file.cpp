@@ -1,9 +1,8 @@
-#include "../../../rapidxml-1.13\rapidxml.hpp"
-#include "../../../rapidxml-1.13\rapidxml_utils.hpp"
-#include "../../../rapidxml-1.13\rapidxml_print.hpp"
+#include <rapidxml.hpp>
+#include <rapidxml_utils.hpp>
+#include <rapidxml_print.hpp>
 
-#include "math/math.h"
-#include "file_utils.h"
+#include <flame/utils/file.h>
 
 namespace tke
 {

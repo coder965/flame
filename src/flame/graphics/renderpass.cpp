@@ -1,7 +1,7 @@
 #include <assert.h>
 
-#include "../global.h"
-#include "renderpass.h"
+#include <flame/global.h>
+#include <flame/graphics/renderpass.h>
 
 namespace tke
 {

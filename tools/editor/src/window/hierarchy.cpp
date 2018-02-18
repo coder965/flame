@@ -1,4 +1,3 @@
-#include "../../ui/ui.h"
 #include "../select.h"
 #include "scene_editor.h"
 #include "hierarchy.h"

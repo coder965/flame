@@ -1,7 +1,6 @@
-#include "../../global.h"
-#include "../../string_utils.h"
-#include "../../system.h"
-#include "../../ui/ui.h"
+#include <flame/global.h>
+#include <flame/utils/string.h>
+#include <flame/engine/system.h>
 #include "file_selector.h"
 
 FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, const std::string &_default_dir, 

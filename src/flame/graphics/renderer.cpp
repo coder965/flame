@@ -1,23 +1,23 @@
-#include "../model/model.h"
-#include "../entity/scene.h"
-#include "synchronization.h"
-#include "buffer.h"
-#include "texture.h"
-#include "material.h"
-#include "renderpass.h"
-#include "framebuffer.h"
-#include "descriptor.h"
-#include "pipeline.h"
-#include "sampler.h"
-#include "command_buffer.h"
-#include "renderer.h"
-#include "../model/animation.h"
-#include "../entity/camera.h"
-#include "../entity/light.h"
-#include "../entity/model_instance.h"
-#include "../entity/terrain.h"
-#include "../entity/water.h"
-#include "../engine.h"
+#include <flame/model/model.h>
+#include <flame/entity/scene.h>
+#include <flame/graphics/synchronization.h>
+#include <flame/graphics/buffer.h>
+#include <flame/graphics/texture.h>
+#include <flame/graphics/material.h>
+#include <flame/graphics/renderpass.h>
+#include <flame/graphics/framebuffer.h>
+#include <flame/graphics/descriptor.h>
+#include <flame/graphics/pipeline.h>
+#include <flame/graphics/sampler.h>
+#include <flame/graphics/command_buffer.h>
+#include <flame/graphics/renderer.h>
+#include <flame/model/animation.h>
+#include <flame/entity/camera.h>
+#include <flame/entity/light.h>
+#include <flame/entity/model_instance.h>
+#include <flame/entity/terrain.h>
+#include <flame/entity/water.h>
+#include <flame/engine/core.h>
 
 namespace tke
 {
@@ -102,9 +102,9 @@ namespace tke
 	static Pipeline *pipeline_wireframe;
 	static Pipeline *pipeline_wireframe_anim;
 	bool PlainRenderer::first = true;
-	UniformBuffer *PlainRenderer::last_bone_buffer_mode0;
-	UniformBuffer *PlainRenderer::last_bone_buffer_mode2;
-	UniformBuffer *PlainRenderer::last_bone_buffer_mode3;
+	Buffer *PlainRenderer::last_bone_buffer_mode0;
+	Buffer *PlainRenderer::last_bone_buffer_mode2;
+	Buffer *PlainRenderer::last_bone_buffer_mode3;
 	PlainRenderer::PlainRenderer()
 	{
 		if (first)
@@ -184,28 +184,28 @@ namespace tke
 			else
 				rp = renderPass_depthC_image8;
 		}
-		cb->beginRenderPass(rp, framebuffer);
+		cb->begin_renderpass(rp, framebuffer);
 		do_render(cb.get(), camera, data);
-		cb->endRenderPass();
+		cb->end_renderpass();
 		cb->end();
 	}
 
 	void PlainRenderer::do_render(CommandBuffer *cb, CameraComponent *camera, DrawData *data)
 	{
-		cb->setViewportAndScissor(resolution.x(), resolution.y());
+		cb->set_viewport_and_scissor(resolution.x(), resolution.y());
 
 		if (data->vbuffer0)
 		{
 			if (data->vbuffer1)
-				cb->bindVertexBuffer2(data->vbuffer0, data->vbuffer1);
+				cb->bind_vertex_buffer2(data->vbuffer0, data->vbuffer1);
 			else
-				cb->bindVertexBuffer(data->vbuffer0);
-			cb->bindIndexBuffer(data->ibuffer);
+				cb->bind_vertex_buffer(data->vbuffer0);
+			cb->bind_index_buffer(data->ibuffer);
 		}
 		else
 		{
-			cb->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
-			cb->bindIndexBuffer(index_buffer.get());
+			cb->bind_vertex_buffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
+			cb->bind_index_buffer(index_buffer.get());
 		}
 
 		struct
@@ -224,31 +224,31 @@ namespace tke
 			{
 				case mode_just_color:
 					if (!d.bone_buffer)
-						cb->bindPipeline(pipeline_plain);
+						cb->bind_pipeline(pipeline_plain);
 					else
 					{
-						cb->bindPipeline(pipeline_plain_anim);
+						cb->bind_pipeline(pipeline_plain_anim);
 						if (last_bone_buffer_mode0 != d.bone_buffer)
 						{
 							updateDescriptorSets(1, &pipeline_plain_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
 							last_bone_buffer_mode0 = d.bone_buffer;
 						}
-						cb->bindDescriptorSet();
+						cb->bind_descriptor_set();
 					}
 					break;
 				case mode_color_and_front_light:
-					cb->bindPipeline(pipeline_frontlight);
+					cb->bind_pipeline(pipeline_frontlight);
 					break;
 				case mode_just_texture:
 				{
 					if (!d.bone_buffer)
 					{
-						cb->bindPipeline(pipeline_material);
-						cb->bindDescriptorSet(&ds_material->v, 1, 1);
+						cb->bind_pipeline(pipeline_material);
+						cb->bind_descriptor_set(&ds_material->v, 1, 1);
 					}
 					else
 					{
-						cb->bindPipeline(pipeline_material_anim);
+						cb->bind_pipeline(pipeline_material_anim);
 						if (last_bone_buffer_mode2 != d.bone_buffer)
 						{
 							updateDescriptorSets(1, &pipeline_material_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
@@ -258,31 +258,31 @@ namespace tke
 							pipeline_material->descriptor_set->v,
 							ds_material->v
 						};
-						cb->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+						cb->bind_descriptor_set(sets, 0, TK_ARRAYSIZE(sets));
 					}
 					break;
 				}
 				case mode_wireframe:
 					if (!d.bone_buffer)
-						cb->bindPipeline(pipeline_wireframe);
+						cb->bind_pipeline(pipeline_wireframe);
 					else
 					{
-						cb->bindPipeline(pipeline_wireframe_anim);
+						cb->bind_pipeline(pipeline_wireframe_anim);
 						if (last_bone_buffer_mode3 != d.bone_buffer)
 						{
 							updateDescriptorSets(1, &pipeline_wireframe_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
 							last_bone_buffer_mode3 = d.bone_buffer;
 						}
-						cb->bindDescriptorSet();
+						cb->bind_descriptor_set();
 					}
 					break;
 			}
 
 			pc.modelview = camera->get_view_matrix() * d.mat;
 			pc.color = d.color;
-			cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+			cb->push_constant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 			for (auto &d : d.geo_data)
-				cb->drawIndex(d.index_count, d.first_index, d.vertex_offset, d.instance_count, d.first_instance);
+				cb->draw_index(d.index_count, d.first_index, d.vertex_offset, d.instance_count, d.first_instance);
 		}
 	}
 
@@ -317,18 +317,18 @@ namespace tke
 		cb->reset();
 		cb->begin();
 
-		cb->beginRenderPass(renderPass_image8, framebuffer);
+		cb->begin_renderpass(renderPass_image8, framebuffer);
 
-		cb->setViewportAndScissor(resolution.x(), resolution.y());
+		cb->set_viewport_and_scissor(resolution.x(), resolution.y());
 
-		cb->bindVertexBuffer(data->vertex_buffer);
-		cb->bindPipeline(pipeline_lines);
+		cb->bind_vertex_buffer(data->vertex_buffer);
+		cb->bind_pipeline(pipeline_lines);
 
 		glm::mat4 mvp = camera->get_proj_matrix() * camera->get_view_matrix();
-		cb->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
+		cb->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mvp);
 		cb->draw(data->vertex_count);
 
-		cb->endRenderPass();
+		cb->end_renderpass();
 
 		cb->end();
 	}
@@ -790,16 +790,16 @@ namespace tke
 
 		cb_defe = std::make_unique<CommandBuffer>();
 
-		constantBuffer = std::make_unique<UniformBuffer>(sizeof ConstantBufferStruct);
-		matrixBuffer = std::make_unique<UniformBuffer>(sizeof MatrixBufferShaderStruct);
-		staticModelInstanceMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxStaticModelInstanceCount);
-		animatedModelInstanceMatrixBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxAnimatedModelInstanceCount);
-		terrainBuffer = std::make_unique<UniformBuffer>(sizeof(TerrainShaderStruct) * MaxTerrainCount);
-		waterBuffer = std::make_unique<UniformBuffer>(sizeof(WaterShaderStruct) * MaxWaterCount);
-		lightBuffer = std::make_unique<UniformBuffer>(sizeof(LightBufferShaderStruct));
-		ambientBuffer = std::make_unique<UniformBuffer>(sizeof AmbientBufferShaderStruct);
-		staticObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxStaticModelInstanceCount);
-		animatedObjectIndirectBuffer = std::make_unique<IndirectIndexBuffer>(sizeof(VkDrawIndexedIndirectCommand) * MaxAnimatedModelInstanceCount);
+		constantBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof ConstantBufferStruct);
+		matrixBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof MatrixBufferShaderStruct);
+		staticModelInstanceMatrixBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(glm::mat4) * MaxStaticModelInstanceCount);
+		animatedModelInstanceMatrixBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(glm::mat4) * MaxAnimatedModelInstanceCount);
+		terrainBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(TerrainShaderStruct) * MaxTerrainCount);
+		waterBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(WaterShaderStruct) * MaxWaterCount);
+		lightBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(LightBufferShaderStruct));
+		ambientBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof AmbientBufferShaderStruct);
+		staticObjectIndirectBuffer = std::make_unique<Buffer>(BufferTypeIndirectIndex, sizeof(VkDrawIndexedIndirectCommand) * MaxStaticModelInstanceCount);
+		animatedObjectIndirectBuffer = std::make_unique<Buffer>(BufferTypeIndirectIndex, sizeof(VkDrawIndexedIndirectCommand) * MaxAnimatedModelInstanceCount);
 
 		envrImage = std::make_unique<Texture>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
@@ -850,7 +850,7 @@ namespace tke
 
 			cb_shad = std::make_unique<CommandBuffer>();
 
-			shadowBuffer = std::make_unique<UniformBuffer>(sizeof(glm::mat4) * MaxShadowCount);
+			shadowBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(glm::mat4) * MaxShadowCount);
 
 			esmImage = std::make_unique<Texture>(ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, MaxShadowCount * 6);
 			esmDepthImage = std::make_unique<Texture>(ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
@@ -943,7 +943,7 @@ namespace tke
 			stru.tanHfFovy = std::tan(glm::radians(fovy * 0.5f));
 			stru.envrCx = EnvrSizeCx;
 			stru.envrCy = EnvrSizeCy;
-			constantBuffer->update(&stru, defalut_staging_buffer);
+			constantBuffer->update(&stru);
 
 			constant_buffer_updated_frame = total_frame_count;
 		}
@@ -957,7 +957,7 @@ namespace tke
 			stru.projViewRotate = stru.proj * glm::mat4(glm::mat3(stru.view));
 			memcpy(stru.frustumPlanes, camera->get_frustum_planes(), sizeof(MatrixBufferShaderStruct::frustumPlanes));
 			stru.viewportDim = glm::vec2(resolution.x(), resolution.y());
-			matrixBuffer->update(&stru, defalut_staging_buffer);
+			matrixBuffer->update(&stru);
 		}
 
 		if (sky_dirty)
@@ -968,15 +968,15 @@ namespace tke
 					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envr_image_downsample[i], renderPass_image16);
 
-					cb->beginRenderPass(renderPass_image16, fb.get());
-					cb->bindPipeline(downsample_pipeline);
-					cb->setViewportAndScissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
+					cb->begin_renderpass(renderPass_image16, fb.get());
+					cb->bind_pipeline(downsample_pipeline);
+					cb->set_viewport_and_scissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
-					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
+					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
 					updateDescriptorSets(1, &downsample_pipeline->descriptor_set->imageWrite(0, 0, i == 0 ? envrImage.get() : envr_image_downsample[i - 1], plainSampler));
-					cb->bindDescriptorSet();
+					cb->bind_descriptor_set();
 					cb->draw(3);
-					cb->endRenderPass();
+					cb->end_renderpass();
 
 					end_once_command_buffer(cb);
 				}
@@ -986,15 +986,15 @@ namespace tke
 					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
 
-					cb->beginRenderPass(renderPass_image16, fb.get());
-					cb->bindPipeline(convolve_pipeline);
+					cb->begin_renderpass(renderPass_image16, fb.get());
+					cb->bind_pipeline(convolve_pipeline);
 					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
-					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
-					cb->setViewportAndScissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
+					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
+					cb->set_viewport_and_scissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
 					updateDescriptorSets(1, &convolve_pipeline->descriptor_set->imageWrite(0, 0, envr_image_downsample[i - 1], plainSampler));
-					cb->bindDescriptorSet();
+					cb->bind_descriptor_set();
 					cb->draw(3);
-					cb->endRenderPass();
+					cb->end_renderpass();
 
 					end_once_command_buffer(cb);
 				}
@@ -1010,10 +1010,10 @@ namespace tke
 					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image8);
 
-					cb->beginRenderPass(renderPass_image8, fb.get());
-					cb->bindPipeline(output_debug_panorama_pipeline);
+					cb->begin_renderpass(renderPass_image8, fb.get());
+					cb->bind_pipeline(output_debug_panorama_pipeline);
 					cb->draw(3);
-					cb->endRenderPass();
+					cb->end_renderpass();
 
 					end_once_command_buffer(cb);
 
@@ -1028,12 +1028,12 @@ namespace tke
 					auto cb = begin_once_command_buffer();
 					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
-					cb->beginRenderPass(renderPass_image16, fb.get());
-					cb->bindPipeline(scattering_pipeline);
+					cb->begin_renderpass(renderPass_image16, fb.get());
+					cb->bind_pipeline(scattering_pipeline);
 					auto dir = -as->sun_light->get_parent()->get_axis()[2];
-					cb->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
+					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
 					cb->draw(3);
-					cb->endRenderPass();
+					cb->end_renderpass();
 
 					end_once_command_buffer(cb);
 
@@ -1050,13 +1050,13 @@ namespace tke
 						auto cb = begin_once_command_buffer();
 						auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
 
-						cb->beginRenderPass(renderPass_image16, fb.get());
-						cb->bindPipeline(copy_pipeline);
-						cb->setViewportAndScissor(EnvrSizeCx, EnvrSizeCy);
+						cb->begin_renderpass(renderPass_image16, fb.get());
+						cb->bind_pipeline(copy_pipeline);
+						cb->set_viewport_and_scissor(EnvrSizeCx, EnvrSizeCy);
 						updateDescriptorSets(1, &copy_pipeline->descriptor_set->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
-						cb->bindDescriptorSet();
+						cb->bind_descriptor_set();
 						cb->draw(3);
-						cb->endRenderPass();
+						cb->end_renderpass();
 
 						end_once_command_buffer(cb);
 
@@ -1076,7 +1076,7 @@ namespace tke
 			stru.color = scene->get_ambient_color();
 			stru.envr_max_mipmap = envrImage->levels.size() - 1;
 			stru.fogcolor = glm::vec4(scene->get_fog_color(), 1.f); // TODO : FIX FOG COLOR ACCORDING TO SKY
-			ambientBuffer->update(&stru, defalut_staging_buffer);
+			ambientBuffer->update(&stru);
 
 			ambient_dirty = false;
 		}
@@ -1107,7 +1107,7 @@ namespace tke
 					return true;
 				});
 				defalut_staging_buffer->unmap();
-				defalut_staging_buffer->copyTo(buffer, ranges.size(), ranges.data());
+				defalut_staging_buffer->copy_to(buffer, ranges.size(), ranges.data());
 			}
 		};
 		fUpdateModelInstanceMatrixBuffer(static_model_instances, staticModelInstanceMatrixBuffer.get());
@@ -1162,7 +1162,7 @@ namespace tke
 			});
 
 			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(terrainBuffer.get(), ranges.size(), ranges.data());
+			defalut_staging_buffer->copy_to(terrainBuffer.get(), ranges.size(), ranges.data());
 		}
 		if (waters.get_size() > 0)
 		{
@@ -1197,7 +1197,7 @@ namespace tke
 				return true;
 			});
 			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(waterBuffer.get(), ranges.size(), ranges.data());
+			defalut_staging_buffer->copy_to(waterBuffer.get(), ranges.size(), ranges.data());
 		}
 
 		auto fUpdateIndirect = [](SpareList &list, Buffer *buffer, int &out_count) {
@@ -1219,7 +1219,7 @@ namespace tke
 					}
 					return true;
 				});
-				buffer->update(commands.data(), defalut_staging_buffer, sizeof(VkDrawIndexedIndirectCommand) * commands.size());
+				buffer->update(commands.data(), sizeof(VkDrawIndexedIndirectCommand) * commands.size());
 				out_count = commands.size();
 			}
 		};
@@ -1238,7 +1238,7 @@ namespace tke
 		if (light_count_dirty)
 		{
 			unsigned int count = lights.get_size();
-			lightBuffer->update(&count, defalut_staging_buffer, sizeof(int));
+			lightBuffer->update(&count, sizeof(int));
 
 			light_count_dirty = false;
 		}
@@ -1274,7 +1274,7 @@ namespace tke
 				return true;
 			});
 			defalut_staging_buffer->unmap();
-			defalut_staging_buffer->copyTo(lightBuffer.get(), ranges.size(), ranges.data());
+			defalut_staging_buffer->copy_to(lightBuffer.get(), ranges.size(), ranges.data());
 		}
 		if (enable_shadow)
 		{
@@ -1348,7 +1348,7 @@ namespace tke
 						}
 					}
 					defalut_staging_buffer->unmap();
-					defalut_staging_buffer->copyTo(shadowBuffer.get(), ranges.size(), ranges.data());
+					defalut_staging_buffer->copy_to(shadowBuffer.get(), ranges.size(), ranges.data());
 					return true;
 				});
 			}
@@ -1368,43 +1368,43 @@ namespace tke
 					{ 1.f, 0 },
 					{ 1.f, 1.f, 1.f, 1.f }
 				};
-				cb_shad->beginRenderPass(renderPass_depthC_image32fC, fb_esm[index].get(), clearValues);
+				cb_shad->begin_renderpass(renderPass_depthC_image32fC, fb_esm[index].get(), clearValues);
 
-				cb_shad->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
-				cb_shad->bindIndexBuffer(index_buffer.get());
+				cb_shad->bind_vertex_buffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
+				cb_shad->bind_index_buffer(index_buffer.get());
 
 				auto fDrawDepth = [&](SpareList &list) {
 					list.iterate([&](int index, void *p, bool &remove) {
 						auto i = (ModelInstanceComponent*)p;
 						auto m = i->get_model();
 						for (int gId = 0; gId < m->geometries.size(); gId++)
-							cb_shad->drawModel(m, gId, 1, ((l->get_shadow_index() * 6) << 28) + (index << 8) + gId);
+							cb_shad->draw_model(m, gId, 1, ((l->get_shadow_index() * 6) << 28) + (index << 8) + gId);
 						return true;
 					});
 				};
 				if (static_model_instances.get_size() > 0)
 				{
-					cb_shad->bindPipeline(esm_pipeline);
+					cb_shad->bind_pipeline(esm_pipeline);
 					VkDescriptorSet sets[] = {
 						ds_esm->v,
 						ds_material->v
 					};
-					cb_shad->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+					cb_shad->bind_descriptor_set(sets, 0, TK_ARRAYSIZE(sets));
 					fDrawDepth(static_model_instances);
 				}
 
 				if (animated_model_instances.get_size() > 0)
 				{
-					cb_shad->bindPipeline(esm_anim_pipeline);
+					cb_shad->bind_pipeline(esm_anim_pipeline);
 					VkDescriptorSet sets[] = {
 						ds_esmAnim->v,
 						ds_material->v,
 						ds_mrtAnim_bone->v
 					};
-					cb_shad->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+					cb_shad->bind_descriptor_set(sets, 0, TK_ARRAYSIZE(sets));
 					fDrawDepth(animated_model_instances);
 				}
-				cb_shad->endRenderPass();
+				cb_shad->end_renderpass();
 				return true;
 			});
 
@@ -1414,45 +1414,45 @@ namespace tke
 		cb_defe->reset();
 		cb_defe->begin();
 
-		cb_defe->beginRenderPass(defe_renderpass, framebuffer.get());
-		cb_defe->setViewportAndScissor(resolution.x(), resolution.y());
+		cb_defe->begin_renderpass(defe_renderpass, framebuffer.get());
+		cb_defe->set_viewport_and_scissor(resolution.x(), resolution.y());
 
-		cb_defe->bindVertexBuffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
-		cb_defe->bindIndexBuffer(index_buffer.get());
+		cb_defe->bind_vertex_buffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
+		cb_defe->bind_index_buffer(index_buffer.get());
 
 		// mrt
 		// static
 		if (static_model_instances.get_size() > 0)
 		{
-			cb_defe->bindPipeline(mrt_pipeline);
+			cb_defe->bind_pipeline(mrt_pipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrt->v,
 				ds_material->v
 			};
-			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb_defe->drawIndirectIndex(staticObjectIndirectBuffer.get(), static_indirect_count);
+			cb_defe->bind_descriptor_set(sets, 0, TK_ARRAYSIZE(sets));
+			cb_defe->draw_indirect_index(staticObjectIndirectBuffer.get(), static_indirect_count);
 		}
 		// animated
 		if (animated_model_instances.get_size())
 		{
-			cb_defe->bindPipeline(mrt_anim_pipeline);
+			cb_defe->bind_pipeline(mrt_anim_pipeline);
 			VkDescriptorSet sets[] = {
 				ds_mrtAnim->v,
 				ds_material->v,
 				ds_mrtAnim_bone->v
 			};
-			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
-			cb_defe->drawIndirectIndex(animatedObjectIndirectBuffer.get(), animated_indirect_count);
+			cb_defe->bind_descriptor_set(sets, 0, TK_ARRAYSIZE(sets));
+			cb_defe->draw_indirect_index(animatedObjectIndirectBuffer.get(), animated_indirect_count);
 		}
 		// terrain
 		if (terrains.get_size() > 0)
 		{
-			cb_defe->bindPipeline(terrain_pipeline);
+			cb_defe->bind_pipeline(terrain_pipeline);
 			VkDescriptorSet sets[] = {
 				ds_terrain->v,
 				ds_material->v
 			};
-			cb_defe->bindDescriptorSet(sets, 0, TK_ARRAYSIZE(sets));
+			cb_defe->bind_descriptor_set(sets, 0, TK_ARRAYSIZE(sets));
 			terrains.iterate([&](int index, void *p, bool &remove) {
 				auto t = (TerrainComponent*)p;
 				cb_defe->draw(4, 0, (index << 16) + t->get_block_cx() * t->get_block_cx());
@@ -1462,8 +1462,8 @@ namespace tke
 		// water
 		if (waters.get_size() > 0)
 		{
-			cb_defe->bindPipeline(water_pipeline);
-			cb_defe->bindDescriptorSet(&ds_water->v);
+			cb_defe->bind_pipeline(water_pipeline);
+			cb_defe->bind_descriptor_set(&ds_water->v);
 			waters.iterate([&](int index, void *p, bool &remove) {
 				auto w = (WaterComponent*)p;
 				cb_defe->draw(4, 0, (index << 16) + w->get_block_cx() * w->get_block_cx());
@@ -1477,18 +1477,18 @@ namespace tke
 		//	esmImage.get(), 0, 1, 0, TKE_MAX_SHADOW_COUNT * 8);
 
 		// deferred
-		cb_defe->nextSubpass();
-		cb_defe->bindPipeline(deferred_pipeline);
-		cb_defe->bindDescriptorSet(&ds_defe->v);
+		cb_defe->next_subpass();
+		cb_defe->bind_pipeline(deferred_pipeline);
+		cb_defe->bind_descriptor_set(&ds_defe->v);
 		cb_defe->draw(3);
 
 		// compose
-		cb_defe->nextSubpass();
-		cb_defe->bindPipeline(compose_pipeline);
-		cb_defe->bindDescriptorSet(&ds_comp->v);
+		cb_defe->next_subpass();
+		cb_defe->bind_pipeline(compose_pipeline);
+		cb_defe->bind_descriptor_set(&ds_comp->v);
 		cb_defe->draw(3);
 
-		cb_defe->endRenderPass();
+		cb_defe->end_renderpass();
 
 		cb_defe->end();
 	}

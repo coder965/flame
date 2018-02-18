@@ -1,13 +1,10 @@
 #pragma once
 
-#include "../../graphics/display_layer.h"
-#include "../../graphics/framebuffer.h"
-#include "../../graphics/renderer.h"
-#include "../../model/model.h"
-#include "../../entity/terrain.h"
-#include "../../entity/camera.h"
-
-#include "../../ui/ui.h"
+#include <flame/graphics/display_layer.h>
+#include <flame/graphics/renderer.h>
+#include <flame/model/model.h>
+#include <flame/entity/camera.h>
+#include <flame/ui/ui.h>
 
 struct ModelEditor : tke::ui::Window
 {
