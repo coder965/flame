@@ -119,6 +119,8 @@ int main(int argc, char** argv)
 		if (SelectObject)
 			doc.add_node(new tke::XMLNode("select"));
 		doc.save("ui.xml");
+
+		tke::ui::save_layout();
 	});
 
 	tke::run([]() {
@@ -127,7 +129,7 @@ int main(int argc, char** argv)
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
 		bool open_preferences_popup = false;
-		ImGui::BeginMainMenuBar_l();
+		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::BeginMenu("New"))
@@ -218,15 +220,20 @@ int main(int argc, char** argv)
 
 			ImGui::EndMenu();
 		}
+		static bool ui_demo_opened = false;
 		if (ImGui::BeginMenu("Help"))
 		{
 			if (ImGui::MenuItem("Preferences"))
 				open_preferences_popup = true;
 			if (ImGui::MenuItem("Device Properties"))
 				open_device_popup = true;
+			if (ImGui::MenuItem("UI Demo"))
+				ui_demo_opened = true;
 
 			ImGui::EndMenu();
 		}
+		if (ui_demo_opened)
+			ImGui::ShowDemoWindow(&ui_demo_opened);
 		ImGui::EndMainMenuBar();
 
 		static bool windows_popup_opened;

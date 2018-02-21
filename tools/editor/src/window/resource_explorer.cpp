@@ -8,7 +8,6 @@
 #include "inspector.h"
 #include "image_editor.h"
 #include "model_editor.h"
-#include "terrain_editor.h"
 #include "scene_editor.h"
 
 ResourceExplorer *resourceExplorer = nullptr;
@@ -69,11 +68,6 @@ void ResourceExplorer::on_right_area_show()
 								auto m = tke::getModel(f->filename);
 								if (m)
 									new ModelEditor(m);
-								break;
-							}
-							case tke::FileTypeTerrain:
-							{
-								new TerrainEditor;
 								break;
 							}
 							case tke::FileTypeScene:

@@ -70,6 +70,8 @@ void FileSelector::set_current_path(const std::string &s)
 		curr_dir.value = str;
 		curr_dir.name = ICON_FA_FOLDER_O" " + str;
 	}
+
+	file_watcher = tke::add_file_watcher(s);
 }
 
 void FileSelector::refresh()
@@ -147,6 +149,11 @@ void FileSelector::refresh()
 
 void FileSelector::on_show()
 {
+	if (file_watcher->ptr->dirty)
+	{
+		file_watcher->ptr->dirty = false;
+		need_refresh = true;
+	}
 	if (need_refresh)
 	{
 		refresh();
@@ -348,7 +355,7 @@ void FileSelector::on_show()
 		std::function<void(DirItem *)> fShowDir;
 		fShowDir = [this, &fShowDir](DirItem *src) {
 			auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-			node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
+			//node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
 			if (src->dir_list.size() > 0)
 			{
 				auto node_open = ImGui::TreeNodeEx(src, node_flags, src->name.c_str());

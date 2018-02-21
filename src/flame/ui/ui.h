@@ -40,7 +40,6 @@ namespace ImGui
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active = false);
 	bool IconButton(const char *label, float font_scale = 1.f);
 	bool Checkbox_2in1(const char *label, bool *v);
-	bool BeginMainMenuBar_l();
 	bool BeginToolBar();
 	void EndToolBar();
 	bool BeginStatusBar();
@@ -159,5 +158,6 @@ namespace tke
 		void init();
 		void begin();
 		void end();
+		void save_layout();
 	}
 }

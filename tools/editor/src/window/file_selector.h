@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <flame/utils/file.h>
+#include <flame/engine/system.h>
 #include <flame/ui/ui.h>
 
 enum FileSelectorIo
@@ -61,6 +62,8 @@ struct FileSelector : tke::ui::Window
 	bool need_refresh = true;
 
 	std::function<bool(std::string)> callback;
+
+	std::unique_ptr<tke::FileWatcherHandler> file_watcher;
 
 	FileSelector(const std::string &_title, FileSelectorIo io, const std::string &_default_dir = "", 
 		unsigned int window_flags = tke::ui::WindowCreateFlagNull, unsigned int flags = FileSelectorCreateFlagNull);

@@ -1,10 +1,19 @@
-<layout mode="horizontal">
-	<layout mode="vertical">
-		<layout mode="horizontal">
-			<window name="Hierarchy" />
-			<window name="Scene" />
-		</layout>
-		<window name="Resource Explorer" />
-	</layout>
-	<window name="Inspector" />
+<layout mode="horizontal" size_radio="0.728033">
+	<node type="layout" mode="vertical" size_radio="0.68202">
+		<node type="layout" mode="horizontal" size_radio="0.160405">
+			<node type="windows">
+				<window name="Hierarchy"/>
+			</node>
+			<node type="windows">
+				<window name="Scene"/>
+			</node>
+		</node>
+		<node type="windows">
+			<window name="Resource Explorer"/>
+		</node>
+	</node>
+	<node type="windows">
+		<window name="Inspector"/>
+	</node>
 </layout>
+

@@ -311,6 +311,11 @@ namespace tke
 		set(v);
 	}
 
+	XMLAttribute::XMLAttribute(const std::string &_name, const char *v) :
+		name(_name), value(v)
+	{
+	}
+
 	XMLAttribute::XMLAttribute(const std::string &_name, const std::string &v) :
 		name(_name), value(v)
 	{
@@ -397,7 +402,7 @@ namespace tke
 		return v;
 	}
 
-	int XMLAttribute::get_float() const
+	float XMLAttribute::get_float() const
 	{
 		return std::stof(value);
 	}

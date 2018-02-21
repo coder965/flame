@@ -2,7 +2,7 @@
 	<resource_explorer/>
 	<hierarchy_window/>
 	<inspector_window/>
-	<scene_editor filename="bin\res\scene.tks"/>
+	<scene_editor filename="res\scene.tks"/>
 	<select/>
 </ui>
 

@@ -170,18 +170,11 @@ namespace ImGui
 	}
 
 	static float menubar_height;
-	bool BeginMainMenuBar_l()
-	{
-		auto open = BeginMainMenuBar();
-		menubar_height = GetCurrentWindowRead()->Size.y;
-		return open;
-	}
 
 	static float toolbar_height;
 	bool BeginToolBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		toolbar_height = 16.f + GetStyle().WindowPadding.y * 2.f;
 		SetNextWindowPos(ImVec2(0, menubar_height));
 		SetNextWindowSize(ImVec2(tke::window_cx, toolbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
@@ -201,7 +194,6 @@ namespace ImGui
 	bool BeginStatusBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		statusbar_height = ImGui::GetTextLineHeight() + ImGui::GetStyle().WindowPadding.y * 2.f;
 		SetNextWindowPos(ImVec2(0, tke::window_cy - statusbar_height));
 		SetNextWindowSize(ImVec2(tke::window_cx, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
@@ -404,15 +396,15 @@ namespace tke
 					l = new Layout;
 				l->type = (dir == DockLeft || dir == DockRight) ? LayoutHorizontal : LayoutVertical;
 				l->splitter.set_vertically(l->type == LayoutHorizontal);
-				if (ori_type != LayoutCenter || ori_idx != 1 - dir)
+				if (ori_type != LayoutCenter || ori_idx != 1 - dir_id)
 				{
 					for (auto w : ori_layout->windows[ori_idx])
 						l->add_window(1 - dir_id, w);
+					ori_layout->clear_window(ori_idx);
 				}
 				l->add_window(dir_id, this);
 				if (ori_type != LayoutCenter)
 					ori_layout->set_layout(ori_idx, l);
-				ori_layout->clear_window(ori_idx);
 				l->set_size();
 			}
 		}
@@ -501,6 +493,7 @@ namespace tke
 			splitter(true)
 		{
 			splitter.size[0] = splitter.size[1] = -1.f;
+			curr_tab[0] = curr_tab[1] = nullptr;
 		}
 
 		bool Layout::is_empty(int idx) const
@@ -841,37 +834,52 @@ namespace tke
 
 		static void _load_layout(XMLNode *n, Layout *layout)
 		{
-			auto type_name = n->first_attribute("mode")->get_string();
-			if (type_name == "horizontal")
+			auto mode_name = n->first_attribute("mode")->get_string();
+			if (mode_name == "horizontal")
 				layout->type = LayoutHorizontal;
-			else if (type_name == "vertical")
+			else if (mode_name == "vertical")
 				layout->type = LayoutVertical;
+			else if (mode_name == "center")
+				layout->type = LayoutCenter;
 			else
-				assert(0); // WIP
+				assert(0); // vaild name required
 
+			layout->size_radio = n->first_attribute("size_radio")->get_float();
 			layout->splitter.set_vertically(layout->type == LayoutHorizontal);
 			layout->set_size();
 
 			for (int i = 0; i < 2; i++)
 			{
 				auto c = n->children[i].get();
-				if (c->name == "layout")
+				if (c->name == "node")
 				{
-					auto l = new Layout;
-					layout->set_layout(i, l);
-					_load_layout(c, l);
-				}
-				else if (c->name == "window")
-				{
-					auto window_name = c->first_attribute("name")->get_string();
-					for (auto &w : windows)
+					auto type_name = c->first_attribute("type")->get_string();
+					if (type_name == "layout")
 					{
-						if (w->title == window_name)
+						auto l = new Layout;
+						layout->set_layout(i, l);
+						_load_layout(c, l);
+					}
+					else if (type_name == "windows")
+					{
+						for (auto &cc : c->children)
 						{
-							layout->add_window(i, w.get());
-							break;
+							if (cc->name == "window")
+							{
+								auto window_name = cc->first_attribute("name")->get_string();
+								for (auto &w : windows)
+								{
+									if (w->title == window_name)
+									{
+										layout->add_window(i, w.get());
+										break;
+									}
+								}
+							}
 						}
 					}
+					else
+						assert(0); // vaild name required
 				}
 				else
 					assert(0); // vaild name required
@@ -903,6 +911,11 @@ namespace tke
 			static bool first = true;
 			if (first)
 			{
+				ImGuiContext& g = *GImGui;
+				ImGui::menubar_height = g.FontBaseSize + g.Style.FramePadding.y * 2.0f;
+				ImGui::toolbar_height = 16.f + g.Style.WindowPadding.y * 2.f;
+				ImGui::statusbar_height = ImGui::GetTextLineHeight() + g.Style.WindowPadding.y * 2.f;
+
 				on_resize(window_cx, window_cy);
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
@@ -1086,6 +1099,54 @@ namespace tke
 
 			accepted_mouse = ImGui::IsMouseHoveringAnyWindow();
 			accepted_key = ImGui::IsAnyItemActive();
+		}
+
+		static void _save_layout(XMLNode *n, Layout *layout)
+		{
+			std::string mode_name;
+			switch (layout->type)
+			{
+				case LayoutHorizontal:
+					mode_name = "horizontal";
+					break;
+				case LayoutVertical:
+					mode_name = "vertical";
+					break;
+				case LayoutCenter:
+					mode_name = "center";
+					break;
+			}
+			n->add_attribute(new XMLAttribute("mode", mode_name));
+
+			n->add_attribute(new XMLAttribute("size_radio", layout->size_radio));
+
+			for (int i = 0; i < 2; i++)
+			{
+				auto c = new XMLNode("node");
+				n->add_node(c);
+				if (layout->children[i])
+				{
+					c->add_attribute(new XMLAttribute("type", "layout"));
+					_save_layout(c, layout->children[i].get());
+				}
+				else
+				{
+					c->add_attribute(new XMLAttribute("type", "windows"));
+					for (auto w : layout->windows[i])
+					{
+						auto window_node = new XMLNode("window");
+						window_node->add_attribute(new XMLAttribute("name", w->title));
+						c->add_node(window_node);
+					}
+				}
+			}
+		}
+
+		void save_layout()
+		{
+			XMLDoc doc("layout");
+			_save_layout(&doc, main_layout);
+			doc.save("ui_layout.xml");
 		}
 	}
 }

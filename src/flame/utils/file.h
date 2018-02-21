@@ -78,6 +78,7 @@ namespace tke
 		XMLAttribute(const std::string &_name, const glm::vec2 &v);
 		XMLAttribute(const std::string &_name, const glm::vec3 &v);
 		XMLAttribute(const std::string &_name, const glm::vec4 &v);
+		XMLAttribute(const std::string &_name, const char *v);
 		XMLAttribute(const std::string &_name, const std::string &v);
 
 		void set(bool v);
@@ -96,7 +97,7 @@ namespace tke
 		glm::ivec2 get_int2() const;
 		glm::ivec3 get_int3() const;
 		glm::ivec4 get_int4() const;
-		int get_float() const;
+		float get_float() const;
 		glm::vec2 get_float2() const;
 		glm::vec3 get_float3() const;
 		glm::vec4 get_float4() const;

@@ -296,7 +296,7 @@ namespace tke
 				break;
 			}
 			case WM_DESTROY:
-				//PostQuitMessage(0);
+				PostQuitMessage(0);
 				break;
 		}
 
