@@ -76,6 +76,10 @@ void FileSelector::set_current_path(const std::string &s)
 
 void FileSelector::refresh()
 {
+	std::string select_dir_filename;
+	if (select_dir)
+		select_dir_filename = select_dir->filename;
+
 	curr_dir.dir_list.clear();
 	curr_dir.file_list.clear();
 	select_index = -1;
@@ -85,7 +89,10 @@ void FileSelector::refresh()
 		return;
 
 	std::function<void(DirItem *, const std::fs::path &)> fIterDir;
-	fIterDir = [this, &fIterDir](DirItem *dst, const std::fs::path &src) {
+	fIterDir = [&](DirItem *dst, const std::fs::path &src) {
+		if (src.string() == select_dir_filename)
+			select_dir = dst;
+
 		std::fs::directory_iterator end_it;
 		for (std::fs::directory_iterator it(src); it != end_it; it++)
 		{
@@ -352,28 +359,28 @@ void FileSelector::on_show()
 	}
 	else
 	{
+		auto need_open = select_dir != nullptr;
 		std::function<void(DirItem *)> fShowDir;
-		fShowDir = [this, &fShowDir](DirItem *src) {
+		fShowDir = [&](DirItem *src) {
 			auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-			//node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
-			if (src->dir_list.size() > 0)
-			{
-				auto node_open = ImGui::TreeNodeEx(src, node_flags, src->name.c_str());
-				if (ImGui::IsItemClicked())
-					select_dir = src;
-				if (node_open)
-				{
-					for (auto &d : src->dir_list)
-						fShowDir(d.get());
-					ImGui::TreePop();
-				}
-			}
+			node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
+			if (src->dir_list.empty())
+				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 			else
 			{
-				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-				ImGui::TreeNodeEx(src, node_flags, src->name.c_str());
-				if (ImGui::IsItemClicked())
-					select_dir = src;
+				if (select_dir == src)
+					need_open = false;
+				if (need_open)
+					ImGui::SetNextTreeNodeOpen(true);
+			}
+			auto node_open = ImGui::TreeNodeEx(src->name.c_str(), node_flags);
+			if (ImGui::IsItemClicked())
+				select_dir = src;
+			if (node_open && !(node_flags & ImGuiTreeNodeFlags_Leaf))
+			{
+				for (auto &d : src->dir_list)
+					fShowDir(d.get());
+				ImGui::TreePop();
 			}
 		};
 		fShowDir(&curr_dir);

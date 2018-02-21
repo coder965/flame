@@ -37,6 +37,8 @@ namespace tke
 
 	void Shader::create()
 	{
+		std::fs::remove("temp.spv"); // glslc cannot write to an existed file
+
 		std::fs::path path(filename);
 
 		auto shader_file_timestamp = std::fs::last_write_time(path);
@@ -51,8 +53,6 @@ namespace tke
 		{
 			if (std::fs::last_write_time(spv_filename) > shader_file_timestamp)
 				spv_up_to_date = true;
-			else
-				std::fs::remove(spv_filename); // glslc cannot write to an existed file
 		}
 
 		if (!spv_up_to_date)
@@ -63,16 +63,19 @@ namespace tke
 				cmd_str += "-D" + d + " ";
 			cmd_str += " -flimit-file ";
 			cmd_str += engine_path + "src/shader/shader_compile_config.conf";
-			cmd_str += " -o " + spv_filename;
+			cmd_str += " -o temp.spv";
 			system(cmd_str.c_str());
-			if (!std::experimental::filesystem::exists(spv_filename))
+			if (!std::fs::exists("temp.spv"))
 			{
-				assert(0); // shader compile error
-				return;
+				// shader compile error, try to use previous spv file
 			}
+			else
+				std::fs::copy("temp.spv", spv_filename, std::fs::copy_options::overwrite_existing);
 		}
 
 		auto spv_file = get_file_content(spv_filename);
+		if (!spv_file.first)
+			assert(0); // missing spv file!
 
 		{
 			VkShaderModuleCreateInfo info;

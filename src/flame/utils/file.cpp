@@ -239,6 +239,7 @@ namespace tke
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.good())
 			return std::make_pair(nullptr, 0);
+
 		auto length = get_file_length(file);
 		auto data = new char[length + 1];
 		file.read(data, length);

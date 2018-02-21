@@ -30,6 +30,7 @@ void ResourceExplorer::on_right_area_show()
 	ImGui::PopStyleVar();
 	if (select_dir)
 	{
+		ImGui::BeginChild("listview", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1));
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 		const ImVec2 img_size(64.f, 64.f);
 		const ImVec2 widget_size = img_size + ImVec2(0.f, 20.f);
@@ -124,5 +125,6 @@ void ResourceExplorer::on_right_area_show()
 		for (auto &f : select_dir->file_list)
 			fShow(f.get(), false);
 		ImGui::Columns(1);
+		ImGui::EndChild();
 	}
 }

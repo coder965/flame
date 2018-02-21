@@ -22,7 +22,7 @@
 
 namespace tke
 {
-	void *hWnd;
+	void *hWnd = nullptr;
 	int window_cx;
 	int window_cy;
 	VkSurfaceKHR window_surface;
@@ -413,7 +413,7 @@ namespace tke
 
 			result.second |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
-			if (window_style & WindowStyleResize)
+			if (window_style & WindowStyleResizable)
 				result.second |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
 		else

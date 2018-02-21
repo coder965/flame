@@ -15,8 +15,9 @@ namespace tke
 	enum WindowStyle
 	{
 		WindowStyleFrame = 1 << 0,
-		WindowStyleResize = 1 << 1,
-		WindowStyleFullscreen = 1 << 2
+		WindowStyleResizable = 1 << 1,
+		WindowStyleMaximized = 1 << 2,
+		WindowStyleFullscreen = 1 << 3
 	};
 
 	extern void *hWnd;
@@ -45,9 +46,22 @@ namespace tke
 
 	extern Node *root_node;
 
+	struct EngineInitInfo
+	{
+		std::string engine_path;
+		int resolution_x;
+		int resolution_y;
+		int window_cx;
+		int window_cy;
+		int window_style;
+		std::string window_title;
+		int debug_level;
+	};
+
 	// must call in main thread
 	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool _only_2d = false);
 
+	void set_window_size();
 	std::pair<glm::ivec2, unsigned int> getWin32WndProp();
 
 	// must call in main thread
