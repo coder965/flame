@@ -70,9 +70,14 @@ struct NewSceneDialog : FileSelector
 
 int main(int argc, char** argv)
 {
-	tke::init(true, "../", 400, 300, 1280, 720, "TK Engine Editor", tke::WindowStyleFrame | tke::WindowStyleResize, false);
+	tke::EngineInitInfo engine_info;
+	engine_info.engine_path = "../";
+	engine_info.window_title = "TK Engine Editor";
+	engine_info.window_style |= tke::WindowStyleResizable;
+	engine_info.debug_level = 1;
+	tke::init(engine_info, false);
 
-	ShowWindow((HWND)tke::hWnd, SW_SHOWMAXIMIZED);
+	tke::set_window_maximized(true);
 
 	{
 		tke::XMLDoc doc("ui", "ui.xml");
@@ -124,8 +129,6 @@ int main(int argc, char** argv)
 	});
 
 	tke::run([]() {
-		tke::begin_frame();
-
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
 		bool open_preferences_popup = false;
@@ -152,23 +155,18 @@ int main(int argc, char** argv)
 		if (ImGui::BeginMenu("View"))
 		{
 			static bool fullscreen = false;
+			static int cx;
+			static int cy;
 			if (ImGui::MenuItem("Fullscreen", "", &fullscreen))
 			{
 				if (fullscreen)
 				{
-					tke::window_style |= tke::WindowStyleFullscreen;
-					tke::window_style &= (~tke::WindowStyleFrame);
+					cx = tke::window_cx;
+					cy = tke::window_cy;
+					tke::set_window_size(0, 0, tke::window_style | tke::WindowStyleFullscreen);
 				}
 				else
-				{
-					tke::window_style |= tke::WindowStyleFrame;
-					tke::window_style &= (~tke::WindowStyleFullscreen);
-					tke::window_cx = tke::resolution.x();
-					tke::window_cy = tke::resolution.y();
-				}
-				auto wndProp = tke::getWin32WndProp();
-				SetWindowLong((HWND)tke::hWnd, GWL_STYLE, wndProp.second);
-				SetWindowPos((HWND)tke::hWnd, HWND_TOP, 0, 0, wndProp.first.x, wndProp.first.y, SWP_NOZORDER);
+					tke::set_window_size(cx, cy, tke::window_style & (~tke::WindowStyleFullscreen));
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Resource Explorer"))
@@ -596,8 +594,6 @@ int main(int argc, char** argv)
 		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", tke::FPS);
 		ImGui::EndStatusBar();
-
-		tke::end_frame();
 	});
 
 	return 0;

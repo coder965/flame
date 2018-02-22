@@ -50,6 +50,8 @@ namespace tke
 	extern long long now_ns;
 	extern double elapsed_time;
 
+	long long get_now_time_ns();
+
 	extern std::string engine_path;
 	extern std::string shader_path;
 

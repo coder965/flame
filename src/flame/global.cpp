@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include <flame/global.h>
 
 namespace tke
@@ -33,6 +35,13 @@ namespace tke
 
 	long long now_ns;
 	double elapsed_time;
+
+	long long get_now_time_ns()
+	{
+		return std::chrono::time_point_cast<std::chrono::nanoseconds>(
+			std::chrono::system_clock::now()
+			).time_since_epoch().count();
+	}
 
 	std::string engine_path;
 	std::string shader_path;

@@ -52,7 +52,7 @@ namespace tke
 
 		bool broadcast(Object *src, Message msg);
 
-		Node(NodeType _type);
+		Node(NodeType _type = NodeTypeNode);
 		virtual ~Node();
 
 		glm::vec3 get_coord() const;

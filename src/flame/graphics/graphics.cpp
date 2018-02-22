@@ -48,6 +48,11 @@ namespace tke
 		vk_graphics_queue.mtx.unlock();
 	}
 
+	void chk_vk_res(VkResult res)
+	{
+		assert(res == VK_SUCCESS);
+	}
+
 	const char *vk_device_type_names[] = {
 		"other",
 		"integrated gpu",

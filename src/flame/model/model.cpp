@@ -40,97 +40,66 @@ namespace tke
 		auto vertex_anim_count = 0;
 		auto indice_count = 0;
 
-		for (auto &m : _models)
+		for (auto it = _models.begin(); it != _models.end();)
 		{
-			auto s = m.second.lock();
+			auto s = it->second.lock();
 			if (s)
 			{
 				vertex_stat_count += s->vertexes.size();
-				if (s->vertexes_skeleton.size() > 0)
-					vertex_anim_count += s->vertexes.size();
+				vertex_anim_count += s->vertexes_skeleton.size();
 				indice_count += s->indices.size();
+				it++;
 			}
+			else
+				it = _models.erase(it);
 		}
 
-		auto vss = vertex_stat_count > 0 ? sizeof(ModelVertex) * vertex_stat_count : 1;
-		auto vas = vertex_anim_count > 0 ? sizeof(ModelVertexSkeleton) * vertex_anim_count : 1;
-		auto is = indice_count > 0 ? sizeof(int) * indice_count : 1;
+		vertex_static_buffer = std::make_unique<Buffer>(BufferTypeVertex, sizeof(ModelVertex) * vertex_stat_count);
+		vertex_skeleton_Buffer = std::make_unique<Buffer>(BufferTypeVertex, sizeof(ModelVertexSkeleton) * vertex_anim_count);
+		index_buffer = std::make_unique<Buffer>(BufferTypeIndex, sizeof(int) * indice_count);
 
-		vertex_static_buffer = std::make_unique<Buffer>(BufferTypeVertex, vss);
-		vertex_skeleton_Buffer = std::make_unique<Buffer>(BufferTypeVertex, vas);
-		index_buffer = std::make_unique<Buffer>(BufferTypeIndex, is);
+		Buffer stagingBuffer(BufferTypeStaging, vertex_static_buffer->size + vertex_skeleton_Buffer->size + index_buffer->size);
 
-		auto total_size = vss + vas + is;
-		Buffer stagingBuffer(BufferTypeStaging, total_size);
-
-		auto vso = 0;
-		auto vao = vso + vss;
-		auto io = vao + vas;
-		unsigned char *map = (unsigned char*)stagingBuffer.map(0, total_size);
-		auto vs_map = map + vso;
-		auto va_map = map + vao;
-		auto i_map = map + io;
+		unsigned char *vs_map = (unsigned char*)stagingBuffer.map(0, stagingBuffer.size);
+		auto va_map = vs_map + vertex_static_buffer->size;
+		auto i_map = va_map + vertex_skeleton_Buffer->size;
 		auto vertex_offset = 0;
 		auto indice_offset = 0;
 		for (auto &m : _models)
 		{
 			auto s = m.second.lock();
-			if (s)
+			if (s && !s->vertexes_skeleton.empty())
 			{
-				if (s->vertexes_skeleton.size() > 0)
-				{
-					s->vertex_base = vertex_offset;
-					s->indice_base = indice_offset;
-					memcpy(vs_map + vertex_offset * sizeof(ModelVertex), s->vertexes.data(), sizeof(ModelVertex) * s->vertexes.size());
-					memcpy(va_map + vertex_offset * sizeof(ModelVertexSkeleton), s->vertexes_skeleton.data(), sizeof(ModelVertexSkeleton) * s->vertexes.size());
-					memcpy(i_map + indice_offset * sizeof(int), s->indices.data(), sizeof(int) * s->indices.size());
-					vertex_offset += s->vertexes.size();
-					indice_offset += s->indices.size();
-				}
+				s->vertex_base = vertex_offset;
+				s->indice_base = indice_offset;
+				memcpy(vs_map + vertex_offset * sizeof(ModelVertex), s->vertexes.data(), sizeof(ModelVertex) * s->vertexes.size());
+				memcpy(va_map + vertex_offset * sizeof(ModelVertexSkeleton), s->vertexes_skeleton.data(), sizeof(ModelVertexSkeleton) * s->vertexes.size());
+				memcpy(i_map + indice_offset * sizeof(int), s->indices.data(), sizeof(int) * s->indices.size());
+				vertex_offset += s->vertexes.size();
+				indice_offset += s->indices.size();
 			}
 		}
 		for (auto &m : _models)
 		{
 			auto s = m.second.lock();
-			if (s)
+			if (s && s->vertexes_skeleton.empty())
 			{
-				if (!s->vertexes_skeleton.size() > 0)
-				{
-					s->vertex_base = vertex_offset;
-					s->indice_base = indice_offset;
-					memcpy(vs_map + vertex_offset * sizeof(ModelVertex), s->vertexes.data(), sizeof(ModelVertex) * s->vertexes.size());
-					memcpy(i_map + indice_offset * sizeof(int), s->indices.data(), sizeof(int) * s->indices.size());
-					vertex_offset += s->vertexes.size();
-					indice_offset += s->indices.size();
-				}
+				s->vertex_base = vertex_offset;
+				s->indice_base = indice_offset;
+				memcpy(vs_map + vertex_offset * sizeof(ModelVertex), s->vertexes.data(), sizeof(ModelVertex) * s->vertexes.size());
+				memcpy(i_map + indice_offset * sizeof(int), s->indices.data(), sizeof(int) * s->indices.size());
+				vertex_offset += s->vertexes.size();
+				indice_offset += s->indices.size();
 			}
 		}
 		stagingBuffer.unmap();
 
 		if (vertex_stat_count > 0)
-		{
-			VkBufferCopy range = {};
-			range.srcOffset = vso;
-			range.dstOffset = 0;
-			range.size = sizeof(ModelVertex) * vertex_stat_count;
-			stagingBuffer.copy_to(vertex_static_buffer.get(), 1, &range);
-		}
+			stagingBuffer.copy_to(vertex_static_buffer.get(), vertex_static_buffer->size);
 		if (vertex_anim_count > 0)
-		{
-			VkBufferCopy range = {};
-			range.srcOffset = vao;
-			range.dstOffset = 0;
-			range.size = sizeof(ModelVertexSkeleton) * vertex_anim_count;
-			stagingBuffer.copy_to(vertex_skeleton_Buffer.get(), 1, &range);
-		}
+			stagingBuffer.copy_to(vertex_skeleton_Buffer.get(), vertex_skeleton_Buffer->size, va_map - vs_map);
 		if (indice_count > 0)
-		{
-			VkBufferCopy range = {};
-			range.srcOffset = io;
-			range.dstOffset = 0;
-			range.size = sizeof(int) * indice_count;
-			stagingBuffer.copy_to(index_buffer.get(), 1, &range);
-		}
+			stagingBuffer.copy_to(index_buffer.get(), index_buffer->size, i_map - vs_map);
 	}
 
 	void Model::UV::add(const glm::vec2 &v)
@@ -1917,6 +1886,13 @@ namespace tke
 
 			write_float3(file, m->eye_position);
 		}
+	}
+
+	void add_model(std::shared_ptr<Model> m)
+	{
+		auto hash = HASH(m->filename.c_str());
+		_models[hash] = m;
+		_create_vertex_and_index_buffer();
 	}
 
 	std::shared_ptr<Model> getModel(const std::string &filename)

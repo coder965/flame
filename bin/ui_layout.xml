@@ -1,6 +1,6 @@
 <layout mode="horizontal" size_radio="0.728033">
-	<node type="layout" mode="vertical" size_radio="0.68202">
-		<node type="layout" mode="horizontal" size_radio="0.160405">
+	<node type="layout" mode="vertical" size_radio="0.678992">
+		<node type="layout" mode="horizontal" size_radio="0.159593">
 			<node type="windows">
 				<window name="Hierarchy"/>
 			</node>

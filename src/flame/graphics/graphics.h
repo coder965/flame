@@ -27,6 +27,8 @@ namespace tke
 		void submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
 	};
 
+	void chk_vk_res(VkResult res);
+
 	extern const char *vk_device_type_names[];
 
 	extern VkInstance vk_instance;

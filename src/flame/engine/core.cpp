@@ -1,6 +1,5 @@
 #include <map>
 #include <regex>
-#include <chrono>
 #include <list>
 
 #include <flame/global.h>
@@ -22,17 +21,6 @@
 
 namespace tke
 {
-	void *hWnd = nullptr;
-	int window_cx;
-	int window_cy;
-	VkSurfaceKHR window_surface;
-	VkSwapchainKHR swapchain;
-	Texture *window_images[2];
-	std::shared_ptr<Framebuffer> window_framebuffers[2];
-	VkSemaphore window_imageAvailable;
-	uint32_t window_imageIndex;
-	VkFence frame_done;
-
 	static std::list<std::function<void(int)>> keydown_listeners;
 	static std::list<std::function<void(int)>> keyup_listeners;
 	static std::list<std::function<void(int)>> char_listeners;
@@ -139,17 +127,6 @@ namespace tke
 		_after_frame_events.push_back(e);
 	}
 
-	std::uint32_t window_style;
-
-	long long get_now_time_ns()
-	{
-		return std::chrono::time_point_cast<std::chrono::nanoseconds>(
-			std::chrono::system_clock::now()
-			).time_since_epoch().count();
-	}
-
-	static long long last_time_ns;
-
 	Node *root_node;
 
 	static void _create_swapchain()
@@ -168,22 +145,22 @@ namespace tke
 			first = false;
 		}
 
-		VkSwapchainCreateInfoKHR swapchainInfo = {};
-		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapchainInfo.surface = window_surface;
-		swapchainInfo.minImageCount = 2;
-		swapchainInfo.imageFormat = swapchain_format;
-		swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		swapchainInfo.imageExtent.width = window_cx;
-		swapchainInfo.imageExtent.height = window_cy;
-		swapchainInfo.imageArrayLayers = 1;
-		swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-		swapchainInfo.clipped = true;
-		auto res = vkCreateSwapchainKHR(vk_device.v, &swapchainInfo, nullptr, &swapchain);
+		VkSwapchainCreateInfoKHR swapchain_info = {};
+		swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchain_info.surface = window_surface;
+		swapchain_info.minImageCount = 2;
+		swapchain_info.imageFormat = swapchain_format;
+		swapchain_info.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+		swapchain_info.imageExtent.width = window_cx;
+		swapchain_info.imageExtent.height = window_cy;
+		swapchain_info.imageArrayLayers = 1;
+		swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchain_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapchain_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		swapchain_info.clipped = true;
+		auto res = vkCreateSwapchainKHR(vk_device.v, &swapchain_info, nullptr, &swapchain);
 		assert(res == VK_SUCCESS);
 
 		VkImage vkImages[2];
@@ -303,26 +280,34 @@ namespace tke
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	int init(bool vulkan_debug, const std::string &path, int rcx, int rcy, int _window_cx, int _window_cy, const std::string &title, unsigned int _window_style, bool _only_2d)
+	EngineInitInfo::EngineInitInfo() :
+		resolution_x(1280),
+		resolution_y(720),
+		window_cx(1280),
+		window_cy(720),
+		window_style(WindowStyleFrame),
+		debug_level(0)
+	{
+	}
+
+	int init(const std::string &_engine_path, int _resolution_x, int _resolution_y, int debug_level, bool _only_2d)
 	{
 		auto init_start_time = GetTickCount();
 
-		root_node = new Node(NodeTypeNode);
+		root_node = new Node;
 		root_node->name = "root";
 
 		only_2d = _only_2d;
-
-		SetCurrentDirectory(get_exe_path().c_str());
 
 #ifdef _MSVC_LANG
 		SetProcessDPIAware();
 #endif
 
-		engine_path = path;
+		engine_path = _engine_path;
 		shader_path = "src/shader/";
-		resolution.set(rcx, rcy);
+		resolution.set(_resolution_x, _resolution_y);
 
-		initVulkan(vulkan_debug);
+		initVulkan(debug_level > 0);
 
 		ui::init();
 
@@ -335,9 +320,6 @@ namespace tke
 		}
 
 		//initSound();
-
-		window_cx = _window_cx;
-		window_cy = _window_cy;
 
 		WNDCLASSEXA wcex;
 		wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -361,21 +343,17 @@ namespace tke
 		wcex.hIconSm = wcex.hIcon;
 		RegisterClassExA(&wcex);
 
-		window_style = _window_style;
-		{
-			auto wndProp = getWin32WndProp();
-			hWnd = CreateWindowA("tke_wnd", title.c_str(), wndProp.second,
-				(get_screen_cx() - wndProp.first.x) / 2,
-				(get_screen_cy() - wndProp.first.y) / 2, wndProp.first.x,
-				wndProp.first.y, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
-		}
+		window_title = info.window_title;
+		set_window_size(info.window_cx, info.window_cy, info.window_style);
 
 		{
-			VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
-			surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			surfaceInfo.hinstance = (HINSTANCE)get_hinst();
-			surfaceInfo.hwnd = (HWND)hWnd;
-			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surfaceInfo, nullptr,
+			VkWin32SurfaceCreateInfoKHR surface_info;
+			surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surface_info.flags = 0;
+			surface_info.pNext = nullptr;
+			surface_info.hinstance = (HINSTANCE)get_hinst();
+			surface_info.hwnd = (HWND)hWnd;
+			auto res = vkCreateWin32SurfaceKHR(vk_instance, &surface_info, nullptr,
 				&window_surface);
 			assert(res == VK_SUCCESS);
 
@@ -390,53 +368,59 @@ namespace tke
 
 		_create_swapchain();
 
-		window_imageAvailable = createSemaphore();
-		frame_done = createFence();
-
 		printf("\n=====INFO=====\nengine init finished - %d ms\n==============\n", GetTickCount() - init_start_time);
 
 		return NoErr;
 	}
 
-	std::pair<glm::ivec2, unsigned int> getWin32WndProp()
+	void set_window_size(int cx, int cy, int style)
 	{
-		std::pair<glm::ivec2, unsigned int> result;
+		if (cx > 0)
+			window_cx = cx;
+		if (cy > 0)
+			window_cy = cy;
+		window_style = style;
 
-		result.second = WS_VISIBLE;
-
-		if (window_style & WindowStyleFrame)
+		auto win32_style = WS_VISIBLE;
+		if ((window_style & WindowStyleFrame) && !(window_style & WindowStyleFullscreen))
 		{
 			RECT rect = { 0, 0, window_cx, window_cy };
 			AdjustWindowRect(&rect, WS_CAPTION, false);
-			result.first.x = rect.right - rect.left;
-			result.first.y = rect.bottom - rect.top;
+			cx = rect.right - rect.left;
+			cy = rect.bottom - rect.top;
 
-			result.second |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+			win32_style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
 			if (window_style & WindowStyleResizable)
-				result.second |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+				win32_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
 		else
 		{
-			result.second |= WS_BORDER;
+			win32_style |= WS_BORDER;
 			if (window_style & WindowStyleFullscreen)
 			{
-				result.first.x = get_screen_cx();
-				result.first.y = get_screen_cy();
-				window_cx = get_screen_cx();
-				window_cy = get_screen_cy();
+				cx = get_screen_cx();
+				cy = get_screen_cy();
 			}
 		}
 
-		return result;
+		auto x = (get_screen_cx() - cx) / 2;
+		auto y = (get_screen_cy() - cy) / 2;
+		if (hWnd)
+		{
+			SetWindowLong((HWND)tke::hWnd, GWL_STYLE, win32_style);
+			SetWindowPos((HWND)tke::hWnd, HWND_TOP, x, y, cx, cy, SWP_NOZORDER);
+		}
+		else
+		{
+			hWnd = CreateWindowA("tke_wnd", window_title.c_str(), win32_style,
+				x, y, cx, cy, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
+		}
 	}
 
-	void begin_frame()
+	void set_window_maximized(bool v)
 	{
-		auto res = vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, window_imageAvailable, VK_NULL_HANDLE, &window_imageIndex);
-		assert(res == VK_SUCCESS);
-
-		ui::begin();
+		ShowWindow((HWND)tke::hWnd, v ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
 	}
 
 	static std::vector<VkCommandBuffer> _cbs;
@@ -444,34 +428,6 @@ namespace tke
 	void add_to_drawlist(VkCommandBuffer cb)
 	{
 		_cbs.push_back(cb);
-	}
-
-	void end_frame()
-	{
-		ui::end();
-
-		if (_cbs.size())
-		{
-			tke::vk_graphics_queue.submit(_cbs.size(), _cbs.data(), window_imageAvailable, 0, frame_done);
-			wait_fence(frame_done);
-		}
-
-		VkPresentInfoKHR info;
-		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		info.pNext = nullptr;
-		info.pResults = nullptr;
-		info.waitSemaphoreCount = 0;
-		info.pWaitSemaphores = nullptr;
-		info.swapchainCount = 1;
-		info.pSwapchains = &swapchain;
-		info.pImageIndices = &window_imageIndex;
-
-		vk_graphics_queue.mtx.lock();
-		auto res = vkQueuePresentKHR(vk_graphics_queue.v, &info);
-		assert(res == VK_SUCCESS);
-		vk_graphics_queue.mtx.unlock();
-
-		_cbs.clear();
 	}
 
 	static long long _last_sec_time;
@@ -482,6 +438,11 @@ namespace tke
 
 		now_ns = get_now_time_ns();
 		_last_sec_time = now_ns;
+
+		auto image_available = createSemaphore();
+		auto frame_finished = createFence();
+
+		static long long last_time_ns;
 
 		for (;;)
 		{
@@ -517,7 +478,37 @@ namespace tke
 				mouseDispY = mouseY - mousePrevY;
 
 				root_node->update();
+
+				uint image_index;
+				chk_vk_res(vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, image_available, VK_NULL_HANDLE, &image_index));
+
+				ui::begin();
+
 				on_render();
+
+				ui::end();
+
+				if (_cbs.size())
+				{
+					tke::vk_graphics_queue.submit(_cbs.size(), _cbs.data(), image_available, 0, frame_finished);
+					wait_fence(frame_finished);
+				}
+
+				VkPresentInfoKHR present_info;
+				present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+				present_info.pNext = nullptr;
+				present_info.pResults = nullptr;
+				present_info.waitSemaphoreCount = 0;
+				present_info.pWaitSemaphores = nullptr;
+				present_info.swapchainCount = 1;
+				present_info.pSwapchains = &swapchain;
+				present_info.pImageIndices = &image_index;
+
+				vk_graphics_queue.mtx.lock();
+				chk_vk_res(vkQueuePresentKHR(vk_graphics_queue.v, &present_info));
+				vk_graphics_queue.mtx.unlock();
+
+				_cbs.clear();
 
 				mouseLeft.justDown = false;
 				mouseLeft.justUp = false;

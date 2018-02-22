@@ -24,19 +24,21 @@ void calc(const fs::path &path)
 	{
 		if (fs::is_directory(it->status()))
 		{
-			if (it->path().string()[0] != '.')
-				calc(it->path());
+			auto p = it->path();
+			auto s = p.string();
+			if (s != "." && s != "..")
+				calc(p);
 		}
 		else
 		{
-			auto ext = it->path().extension().string();
+			auto p = it->path();
+			auto ext = p.extension().string();
 			if (ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp")
 			{
-				std::ifstream f(it->path().string());
+				std::ifstream f(p.string());
 				f.unsetf(std::ios_base::skipws);
 				SLOC += std::count(std::istream_iterator<char>(f), std::istream_iterator<char>(), '\n');
 			}
-
 		}
 	}
 }

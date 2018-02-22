@@ -9,6 +9,9 @@ namespace tke
 		type(_type),
 		size(_size)
 	{
+		if (size < 1)
+			size = 1;
+
 		switch (type)
 		{
 			case BufferTypeStaging:

@@ -197,6 +197,7 @@ namespace tke
 	extern std::shared_ptr<Model> torusModel;
 	extern std::shared_ptr<Model> hamerModel;
 
+	void add_model(std::shared_ptr<Model> m);
 	std::shared_ptr<Model> getModel(const std::string &filename);
 	void saveModel(Model *m, const std::string &filename);
 
