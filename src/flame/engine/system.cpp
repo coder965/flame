@@ -123,11 +123,8 @@ namespace tke
 		ptr->expired = true;
 	}
 
-	std::string create_process_and_get_output(const std::string &filename) 
+	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line)
 	{
-		auto s = getenv("VK_SDK_PATH");
-		assert(s[0]);
-
 		HANDLE g_hChildStd_OUT_Rd = NULL;
 		HANDLE g_hChildStd_OUT_Wr = NULL; 
 
@@ -146,7 +143,7 @@ namespace tke
 		start_info.hStdOutput = g_hChildStd_OUT_Wr;
 		start_info.dwFlags |= STARTF_USESTDHANDLES;
 		PROCESS_INFORMATION proc_info = {};
-		auto success = CreateProcess((std::string(s) + "/Bin/glslc.exe").c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info);
+		auto success = CreateProcess(filename.c_str(), (char*)command_line.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info);
 
 		WaitForSingleObject(proc_info.hProcess, INFINITE);
 

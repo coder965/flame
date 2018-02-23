@@ -59,18 +59,18 @@ namespace tke
 				spv_up_to_date = true;
 		}
 
-		create_process_and_get_output("");
-
 		if (!spv_up_to_date)
 		{
-			std::string cmd_str("glslc ");
-			cmd_str += filename + " ";
+			auto vk_sdk_dir = getenv("VK_SDK_PATH");
+			assert(vk_sdk_dir[0]);
+
+			std::string command_line(filename + " ");
 			for (auto &d : defines)
-				cmd_str += "-D" + d + " ";
-			cmd_str += " -flimit-file ";
-			cmd_str += engine_path + "src/shader/shader_compile_config.conf";
-			cmd_str += " -o temp.spv";
-			system(cmd_str.c_str());
+				command_line += "-D" + d + " ";
+			command_line += " -flimit-file ";
+			command_line += engine_path + "src/shader/shader_compile_config.conf";
+			command_line += " -o temp.spv";
+			auto output = create_process_and_get_output(std::string(vk_sdk_dir) + "/Bin/glslc.exe", command_line);
 			if (!std::fs::exists("temp.spv"))
 			{
 				// shader compile error, try to use previous spv file

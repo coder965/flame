@@ -32,5 +32,5 @@ namespace tke
 
 	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath);
 
-	std::string create_process_and_get_output(const std::string &filename);
+	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line);
 }
