@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 #if defined(_WIN64)
 typedef __int64 TK_LONG_PTR;
@@ -21,6 +22,14 @@ template<size_t s> struct Sizer {};
 typedef void(*PF_EVENT0)();
 typedef void(*PF_EVENT1)(int);
 typedef void(*PF_EVENT2)(int, int);
+
+template<typename T, typename... U>
+size_t TK_GET_ADDRESS(std::function<T(U...)> f)
+{
+	typedef T(fnType)(U...);
+	fnType ** fnPointer = f.template target<fnType*>();
+	return (size_t)*fnPointer;
+}
 
 namespace tke
 {

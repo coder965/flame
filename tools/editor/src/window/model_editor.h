@@ -2,7 +2,7 @@
 
 #include <flame/graphics/display_layer.h>
 #include <flame/graphics/renderer.h>
-#include <flame/model/model.h>
+#include <flame/entity/model.h>
 #include <flame/entity/camera.h>
 #include <flame/ui/ui.h>
 

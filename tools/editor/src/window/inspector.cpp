@@ -1,7 +1,7 @@
 #include <flame/global.h>
 #include <flame/utils/string.h>
 #include <flame/graphics/texture.h>
-#include <flame/model/model.h>
+#include <flame/entity/model.h>
 #include <flame/entity/scene.h>
 #include <flame/entity/model_instance.h>
 #include <flame/entity/terrain.h>

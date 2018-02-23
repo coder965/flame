@@ -57,6 +57,27 @@ namespace tke
 		WaitForSingleObject(info.hProcess, INFINITE);
 	}
 
+	std::string get_clipBoard()
+	{
+		OpenClipboard(NULL);
+		auto hMemory = ::GetClipboardData(CF_TEXT);
+		std::string str((char*)GlobalLock(hMemory));
+		GlobalUnlock(hMemory);
+		CloseClipboard();
+		return str;
+	}
+
+	void set_clipBoard(const std::string &s)
+	{
+		auto hGlobalMemory = GlobalAlloc(GHND, s.size() + 1);
+		strcpy((char*)GlobalLock(hGlobalMemory), s.c_str());
+		GlobalUnlock(hGlobalMemory);
+		OpenClipboard(NULL);
+		EmptyClipboard();
+		SetClipboardData(CF_TEXT, hGlobalMemory);
+		CloseClipboard();
+	}
+
 	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath)
 	{
 		auto w = new FileWatcher;
@@ -100,5 +121,44 @@ namespace tke
 	FileWatcherHandler::~FileWatcherHandler()
 	{
 		ptr->expired = true;
+	}
+
+	std::string create_process_and_get_output(const std::string &filename) 
+	{
+		auto s = getenv("VK_SDK_PATH");
+		assert(s[0]);
+
+		HANDLE g_hChildStd_OUT_Rd = NULL;
+		HANDLE g_hChildStd_OUT_Wr = NULL; 
+
+		SECURITY_ATTRIBUTES saAttr;
+		saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+		saAttr.bInheritHandle = TRUE;
+		saAttr.lpSecurityDescriptor = NULL; 
+
+		assert(CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0));
+
+		assert(SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0));
+
+		STARTUPINFO start_info = {}; 
+		start_info.cb = sizeof(STARTUPINFO);
+		start_info.hStdError = g_hChildStd_OUT_Wr;
+		start_info.hStdOutput = g_hChildStd_OUT_Wr;
+		start_info.dwFlags |= STARTF_USESTDHANDLES;
+		PROCESS_INFORMATION proc_info = {};
+		auto success = CreateProcess((std::string(s) + "/Bin/glslc.exe").c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info);
+
+		WaitForSingleObject(proc_info.hProcess, INFINITE);
+
+		CloseHandle(proc_info.hProcess);
+		CloseHandle(proc_info.hThread);
+
+		DWORD size;
+		PeekNamedPipe(g_hChildStd_OUT_Rd, NULL, NULL, NULL, &size, NULL);
+		std::string str;
+		str.resize(size);
+		PeekNamedPipe(g_hChildStd_OUT_Rd, (void*)str.data(), size, NULL, NULL, NULL);
+
+		return str;
 	}
 }

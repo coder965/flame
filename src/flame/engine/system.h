@@ -11,6 +11,9 @@ namespace tke
 	std::string get_exe_path();
 	void exec(const std::string &filename, const std::string &parameters);
 
+	std::string get_clipBoard();
+	void set_clipBoard(const std::string &);
+
 	struct FileWatcher
 	{
 		bool dirty;
@@ -28,4 +31,6 @@ namespace tke
 	};
 
 	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath);
+
+	std::string create_process_and_get_output(const std::string &filename);
 }

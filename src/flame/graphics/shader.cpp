@@ -3,8 +3,9 @@
 #include <regex>
 
 #include <spirv_glsl.hpp>
-#include <flame/utils/file.h>
 #include <flame/global.h>
+#include <flame/utils/file.h>
+#include <flame/engine/system.h>
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/shader.h>
 
@@ -41,6 +42,9 @@ namespace tke
 
 		std::fs::path path(filename);
 
+		char curr_path[260];
+		GetCurrentDirectory(260, curr_path);
+
 		auto shader_file_timestamp = std::fs::last_write_time(path);
 
 		auto spv_filename = filename;
@@ -54,6 +58,8 @@ namespace tke
 			if (std::fs::last_write_time(spv_filename) > shader_file_timestamp)
 				spv_up_to_date = true;
 		}
+
+		create_process_and_get_output("");
 
 		if (!spv_up_to_date)
 		{

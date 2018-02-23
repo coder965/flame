@@ -1,7 +1,7 @@
 #include <flame/ui/ui.h>
-#include <flame/engine/input.h>
 #include <flame/global.h>
 #include <flame/engine/core.h>
+#include <flame/engine/application.h>
 #include "window/file_selector.h"
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
@@ -60,7 +60,7 @@ struct NewSceneDialog : FileSelector
 		callback = [this](std::string s) {
 			if (std::experimental::filesystem::exists(s))
 				return false;
-			
+
 			tke::XMLDoc doc("scene");
 			doc.save(s);
 			return true;
@@ -68,17 +68,10 @@ struct NewSceneDialog : FileSelector
 	}
 };
 
-int main(int argc, char** argv)
+struct App : tke::Application
 {
-	tke::EngineInitInfo engine_info;
-	engine_info.engine_path = "../";
-	engine_info.window_title = "TK Engine Editor";
-	engine_info.window_style |= tke::WindowStyleResizable;
-	engine_info.debug_level = 1;
-	tke::init(engine_info, false);
-
-	tke::set_window_maximized(true);
-
+	App() :
+		Application(1280, 720, tke::WindowStyleFrame | tke::WindowStyleResizable, "TK Engine Editor")
 	{
 		tke::XMLDoc doc("ui", "ui.xml");
 		if (doc.good)
@@ -104,8 +97,9 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	
-	tke::add_destroy_listener([]() {
+
+	~App()
+	{
 		tke::XMLDoc doc("ui");
 		if (resourceExplorer)
 			doc.add_node(new tke::XMLNode("resource_explorer"));
@@ -126,9 +120,10 @@ int main(int argc, char** argv)
 		doc.save("ui.xml");
 
 		tke::ui::save_layout();
-	});
+	}
 
-	tke::run([]() {
+	virtual void on_render() override
+	{
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
 		bool open_preferences_popup = false;
@@ -161,12 +156,12 @@ int main(int argc, char** argv)
 			{
 				if (fullscreen)
 				{
-					cx = tke::window_cx;
-					cy = tke::window_cy;
-					tke::set_window_size(0, 0, tke::window_style | tke::WindowStyleFullscreen);
+					cx = window_cx;
+					cy = window_cy;
+					set_window_size(0, 0, window_style | tke::WindowStyleFullscreen);
 				}
 				else
-					tke::set_window_size(cx, cy, tke::window_style & (~tke::WindowStyleFullscreen));
+					set_window_size(cx, cy, window_style & (~tke::WindowStyleFullscreen));
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Resource Explorer"))
@@ -594,7 +589,15 @@ int main(int argc, char** argv)
 		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", tke::FPS);
 		ImGui::EndStatusBar();
-	});
+	}
+};
+
+int main(int argc, char** argv)
+{
+	tke::init("../", 1280, 720, 1);
+	new App;
+	tke::app->set_window_maximized(true);
+	tke::run();
 
 	return 0;
 }

@@ -1,5 +1,5 @@
-#include <flame/engine/input.h>
 #include <flame/global.h>
+#include <flame/engine/application.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/command_buffer.h>
 
@@ -42,15 +42,15 @@ void ModelEditor::on_show()
 	draw_list->AddImage(ImGui::ImageID(layer.image), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
-		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
+		if (tke::app->mouseDispX != 0 || tke::app->mouseDispY != 0)
 		{
-			auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
-			auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
-			if (tke::mouseMiddle.pressing)
+			auto distX = (float)tke::app->mouseDispX / (float)tke::resolution.x();
+			auto distY = (float)tke::app->mouseDispY / (float)tke::resolution.y();
+			if (tke::app->mouse_button[2].pressing)
 				camera.rotate_by_cursor(distX, distY);
 		}
-		if (tke::mouseScroll != 0)
-			camera.scroll(tke::mouseScroll);
+		if (tke::app->mouseScroll != 0)
+			camera.scroll(tke::app->mouseScroll);
 	}
 
 	ImGui::SameLine();

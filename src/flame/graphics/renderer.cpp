@@ -1,5 +1,3 @@
-#include <flame/model/model.h>
-#include <flame/entity/scene.h>
 #include <flame/graphics/synchronization.h>
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
@@ -11,13 +9,15 @@
 #include <flame/graphics/sampler.h>
 #include <flame/graphics/command_buffer.h>
 #include <flame/graphics/renderer.h>
-#include <flame/model/animation.h>
 #include <flame/entity/camera.h>
 #include <flame/entity/light.h>
 #include <flame/entity/model_instance.h>
 #include <flame/entity/terrain.h>
 #include <flame/entity/water.h>
-#include <flame/engine/core.h>
+#include <flame/entity/model.h>
+#include <flame/entity/animation.h>
+#include <flame/entity/scene.h>
+#include <flame/engine/application.h>
 
 namespace tke
 {
@@ -288,7 +288,7 @@ namespace tke
 
 	void PlainRenderer::add_to_drawlist()
 	{
-		tke::add_to_drawlist(cb->v);
+		app->add_cb(cb->v);
 	}
 
 	static Pipeline *pipeline_lines;
@@ -335,7 +335,7 @@ namespace tke
 
 	void LinesRenderer::add_to_drawlist()
 	{
-		tke::add_to_drawlist(cb->v);
+		app->add_cb(cb->v);
 	}
 
 	struct ConstantBufferStruct
@@ -646,7 +646,7 @@ namespace tke
 		waters(MaxWaterCount),
 		shadow_lights(MaxShadowCount)
 	{
-		follow_to(root_node);
+		follow_to(app->root_node);
 		follow_to(&resolution);
 
 		if (!defe_inited)
@@ -888,7 +888,7 @@ namespace tke
 
 	DeferredRenderer::~DeferredRenderer()
 	{
-		break_link(root_node, this);
+		break_link(app->root_node, this);
 	}
 
 	void DeferredRenderer::create_resolution_related()
@@ -1496,7 +1496,7 @@ namespace tke
 	void DeferredRenderer::add_to_drawlist()
 	{
 		if (enable_shadow)
-			tke::add_to_drawlist(cb_shad->v);
-		tke::add_to_drawlist(cb_defe->v);
+			app->add_cb(cb_shad->v);
+		app->add_cb(cb_defe->v);
 	}
 }

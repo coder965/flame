@@ -13,8 +13,8 @@
 #include <flame/graphics/sampler.h>
 #include <flame/graphics/pipeline.h>
 #include <flame/graphics/material.h>
-#include <flame/model/model.h>
-#include <flame/model/animation.h>
+#include <flame/entity/model.h>
+#include <flame/entity/animation.h>
 #include <flame/physics/physics.h>
 
 namespace tke

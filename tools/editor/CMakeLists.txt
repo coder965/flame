@@ -11,3 +11,4 @@ ADD_EXECUTABLE(editor ${EDITOR_HEADER_LIST} ${EDITOR_SOURCE_LIST})
 TARGET_LINK_LIBRARIES(editor flame)
 
 set_target_properties(editor PROPERTIES FOLDER "tools") 
+set_target_properties(editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

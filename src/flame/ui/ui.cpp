@@ -3,7 +3,6 @@
 
 #include <flame/global.h>
 #include <flame/container/spare_list.h>
-#include <flame/engine/input.h>
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/renderpass.h>
@@ -11,7 +10,8 @@
 #include <flame/graphics/pipeline.h>
 #include <flame/graphics/sampler.h>
 #include <flame/graphics/command_buffer.h>
-#include <flame/engine/core.h>
+#include <flame/engine/system.h>
+#include <flame/engine/application.h>
 #include <flame/ui/ui.h>
 
 const unsigned int ImageCount = 127;
@@ -176,7 +176,7 @@ namespace ImGui
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		SetNextWindowPos(ImVec2(0, menubar_height));
-		SetNextWindowSize(ImVec2(tke::window_cx, toolbar_height));
+		SetNextWindowSize(ImVec2(tke::app->window_cx, toolbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		return Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 	}
@@ -194,8 +194,8 @@ namespace ImGui
 	bool BeginStatusBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		SetNextWindowPos(ImVec2(0, tke::window_cy - statusbar_height));
-		SetNextWindowSize(ImVec2(tke::window_cx, statusbar_height));
+		SetNextWindowPos(ImVec2(0, tke::app->window_cy - statusbar_height));
+		SetNextWindowSize(ImVec2(tke::app->window_cx, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 		Text("%d", _statusbar_int_debug);
@@ -417,7 +417,7 @@ namespace tke
 			layout->remove_window(idx, this);
 			layout = nullptr;
 			cleanup_layout();
-			on_resize(window_cx, window_cy);
+			on_resize(app->window_cx, app->window_cy);
 		}
 
 		void Window::show()
@@ -592,7 +592,7 @@ namespace tke
 
 		static void _draw_drag_overlay(ImRect rect, Layout *layout, int idx, DockDirection dir)
 		{
-			if (rect.Contains(ImVec2(mouseX, mouseY)))
+			if (rect.Contains(ImVec2(app->mouseX, app->mouseY)))
 			{
 				dock_target_layout = layout;
 				dock_target_idx = idx;
@@ -604,7 +604,7 @@ namespace tke
 				{
 					auto _rect = ImRect(center + ImVec2(-32, -32), center + ImVec2(32, 32));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(mouseX, mouseY)))
+					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
 					{
 						draw_list->AddRectFilled(rect.Min, rect.Max, col1);
 						dock_dir = DockCenter;
@@ -614,7 +614,7 @@ namespace tke
 				{
 					auto _rect = ImRect(center + ImVec2(-96, -32), center + ImVec2(-64, 32));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(mouseX, mouseY)))
+					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
 					{
 						draw_list->AddRectFilled(rect.Min, rect.Max - ImVec2(rect.GetWidth() / 2.f, 0), col1);
 						dock_dir = DockLeft;
@@ -624,7 +624,7 @@ namespace tke
 				{
 					auto _rect = ImRect(center + ImVec2(64, -32), center + ImVec2(96, 32));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(mouseX, mouseY)))
+					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
 					{
 						draw_list->AddRectFilled(rect.Min + ImVec2(rect.GetWidth() / 2.f, 0), rect.Max, col1);
 						dock_dir = DockRight;
@@ -634,7 +634,7 @@ namespace tke
 				{
 					auto _rect = ImRect(center + ImVec2(-32, -96), center + ImVec2(32, -64));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(mouseX, mouseY)))
+					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
 					{
 						draw_list->AddRectFilled(rect.Min, rect.Max - ImVec2(0, rect.GetHeight() / 2.f), col1);
 						dock_dir = DockTop;
@@ -644,7 +644,7 @@ namespace tke
 				{
 					auto _rect = ImRect(center + ImVec2(-32, 64), center + ImVec2(32, 96));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(mouseX, mouseY)))
+					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
 					{
 						draw_list->AddRectFilled(rect.Min + ImVec2(0, rect.GetHeight() / 2.f), rect.Max, col1);
 						dock_dir = DockBottom;
@@ -893,18 +893,17 @@ namespace tke
 
 			ImGuiIO& io = ImGui::GetIO();
 
-			io.DisplaySize = ImVec2((float)window_cx, (float)window_cy);
+			io.DisplaySize = ImVec2((float)app->window_cx, (float)app->window_cy);
 			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
 			io.DeltaTime = elapsed_time;
 
-			io.MousePos = ImVec2((float)mouseX, (float)mouseY);
+			io.MousePos = ImVec2((float)app->mouseX, (float)app->mouseY);
 
-			io.MouseDown[0] = mouseLeft.pressing;
-			io.MouseDown[1] = mouseRight.pressing;
-			io.MouseDown[2] = mouseMiddle.pressing;
+			for (auto i = 0; i < 3; i++)
+				io.MouseDown[i] = app->mouse_button[i].pressing;
 
-			io.MouseWheel = mouseScroll / 120;
+			io.MouseWheel = app->mouseScroll / 120;
 
 			ImGui::NewFrame();
 
@@ -916,7 +915,7 @@ namespace tke
 				ImGui::toolbar_height = 16.f + g.Style.WindowPadding.y * 2.f;
 				ImGui::statusbar_height = ImGui::GetTextLineHeight() + g.Style.WindowPadding.y * 2.f;
 
-				on_resize(window_cx, window_cy);
+				on_resize(app->window_cx, app->window_cy);
 				XMLDoc doc("layout", "ui_layout.xml");
 				if (doc.good)
 					_load_layout(&doc, main_layout);
@@ -1045,15 +1044,15 @@ namespace tke
 				if (bg_color.a > 0.f)
 				{
 					VkClearValue clear_value = { bg_color.r, bg_color.g, bg_color.b, 1.f };
-					cb_ui->begin_renderpass(renderPass_windowC, window_framebuffers[window_imageIndex].get(), &clear_value);
+					cb_ui->begin_renderpass(renderPass_windowC, app->get_curr_framebuffer(), &clear_value);
 				}
 				else
 					cb_ui->begin_renderpass(renderPass_window,
-						window_framebuffers[window_imageIndex].get());
+						app->get_curr_framebuffer());
 
 				if (draw_data->CmdListsCount > 0)
 				{
-					cb_ui->set_viewport_and_scissor(window_cx, window_cy);
+					cb_ui->set_viewport_and_scissor(app->window_cx, app->window_cy);
 
 					cb_ui->bind_vertex_buffer(vertexBuffer_ui.get());
 					cb_ui->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
@@ -1094,7 +1093,7 @@ namespace tke
 
 				cb_ui->end();
 
-				add_to_drawlist(cb_ui->v);
+				app->add_cb(cb_ui->v);
 			}
 
 			accepted_mouse = ImGui::IsMouseHoveringAnyWindow();

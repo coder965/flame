@@ -5,8 +5,8 @@
 #include <flame/utils/string.h>
 #include <flame/utils/file.h>
 #include <flame/graphics/buffer.h>
-#include <flame/model/model.h>
-#include <flame/model/animation.h>
+#include <flame/entity/model.h>
+#include <flame/entity/animation.h>
 
 namespace tke
 {

@@ -1,5 +1,5 @@
 #include <flame/global.h>
-#include <flame/engine/input.h>
+#include <flame/engine/application.h>
 #include <flame/graphics/command_buffer.h>
 
 #include "image_editor.h"
@@ -73,10 +73,10 @@ void ImageEditor::on_show()
 	draw_list->AddImage(ImGui::ImageID(texture), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
-		if (tke::mouseLeft.pressing && penId != -1)
+		if (tke::app->mouse_button[0].pressing && penId != -1)
 		{
-			auto x = tke::mouseX - image_pos.x;
-			auto y = tke::mouseY - image_pos.y;
+			auto x = tke::app->mouseX - image_pos.x;
+			auto y = tke::app->mouseY - image_pos.y;
 
 			auto pixel = (unsigned char*)staging_buffer->map(texture->get_linear_offset(x, y), texture->bpp / 8);
 			switch (penId)

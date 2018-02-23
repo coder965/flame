@@ -1,17 +1,16 @@
 #include <flame/global.h>
-#include <flame/engine/core.h>
-#include <flame/engine/input.h>
+#include <flame/engine/application.h>
 #include <flame/utils/file.h>
+#include <flame/utils/pick_up.h>
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/command_buffer.h>
-#include <flame/model/model.h>
-#include <flame/model/animation.h>
+#include <flame/entity/model.h>
+#include <flame/entity/animation.h>
 #include <flame/entity/light.h>
 #include <flame/entity/model_instance.h>
 #include <flame/entity/terrain.h>
 #include <flame/entity/water.h>
-#include <flame/pick_up/pick_up.h>
 #include <flame/physics/physics.h>
 #include "../select.h"
 #include "resource_explorer.h"
@@ -38,13 +37,13 @@ SceneEditor::SceneEditor(tke::Scene *_scene) :
 	camera = new tke::CameraComponent;
 	camera_node->add_component(camera);
 	camera->set_length(2.f);
-	tke::root_node->add_child(camera_node);
+	tke::app->root_node->add_child(camera_node);
 
 	plain_renderer = std::make_unique<tke::PlainRenderer>();
 	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, &layer);
 
 	scene = _scene;
-	tke::root_node->add_child(scene);
+	tke::app->root_node->add_child(scene);
 
 	physx_vertex_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeImmediateVertex, 16);
 	lines_renderer = std::make_unique<tke::LinesRenderer>();
@@ -54,8 +53,8 @@ SceneEditor::SceneEditor(tke::Scene *_scene) :
 
 SceneEditor::~SceneEditor()
 {
-	tke::root_node->remove_child(camera_node);
-	tke::root_node->remove_child(scene);
+	tke::app->root_node->remove_child(camera_node);
+	tke::app->root_node->remove_child(scene);
 	scene_editor = nullptr;
 }
 
@@ -289,28 +288,28 @@ void SceneEditor::on_show()
 
 	if (ImGui::IsItemHovered())
 	{
-		if (tke::mouseDispX != 0 || tke::mouseDispY != 0)
+		if (tke::app->mouseDispX != 0 || tke::app->mouseDispY != 0)
 		{
 			if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 			{
-				auto distX = (float)tke::mouseDispX / (float)tke::resolution.x();
-				auto distY = (float)tke::mouseDispY / (float)tke::resolution.y();
-				if (tke::keyStates[VK_SHIFT].pressing && tke::mouseMiddle.pressing)
+				auto distX = (float)tke::app->mouseDispX / (float)tke::resolution.x();
+				auto distY = (float)tke::app->mouseDispY / (float)tke::resolution.y();
+				if (tke::app->key_states[VK_SHIFT].pressing && tke::app->mouse_button[2].pressing)
 					camera->move_by_cursor(distX, distY);
-				else if (tke::keyStates[VK_CONTROL].pressing && tke::mouseMiddle.pressing)
+				else if (tke::app->key_states[VK_CONTROL].pressing && tke::app->mouse_button[2].pressing)
 					camera->scroll(distX);
-				else if (tke::mouseMiddle.pressing)
+				else if (tke::app->mouse_button[2].pressing)
 					camera->rotate_by_cursor(distX, distY);
 			}
 		}
-		if (tke::mouseScroll != 0)
-			camera->scroll(tke::mouseScroll);
-		if (tke::mouseLeft.justDown)
+		if (tke::app->mouseScroll != 0)
+			camera->scroll(tke::app->mouseScroll);
+		if (tke::app->mouse_button[0].just_down)
 		{
-			if (!tke::keyStates[VK_SHIFT].pressing && !tke::keyStates[VK_CONTROL].pressing)
+			if (!tke::app->key_states[VK_SHIFT].pressing && !tke::app->key_states[VK_CONTROL].pressing)
 			{
-				auto x = (tke::mouseX - 0) / tke::resolution.x();
-				auto y = (tke::mouseY - 0) / tke::resolution.y();
+				auto x = (tke::app->mouseX - 0) / tke::resolution.x();
+				auto y = (tke::app->mouseY - 0) / tke::resolution.y();
 				if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 				{
 					//tke::PlainRenderer::DrawData draw_data;

@@ -1,7 +1,7 @@
 //#include "../graphics/buffer.h"
 //#include "../model/animation.h"
 //#include "../physics/physics.h"
-#include <flame/model/model.h>
+#include <flame/entity/model.h>
 #include <flame/utils/file.h>
 #include "model_instance.h"
 

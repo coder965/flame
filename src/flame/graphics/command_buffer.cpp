@@ -6,7 +6,7 @@
 #include <flame/graphics/framebuffer.h>
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/pipeline.h>
-#include <flame/model/model.h>
+#include <flame/entity/model.h>
 #include <flame/graphics/command_buffer.h>
 
 namespace tke
