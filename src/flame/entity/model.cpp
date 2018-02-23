@@ -5,7 +5,7 @@
 #include <map>
 #include <deque>
 #include <tuple>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/utils/string.h>
 #include <flame/resource/resource.h>
 #include <flame/graphics/buffer.h>
@@ -1948,7 +1948,7 @@ namespace tke
 		save_func(m, filename);
 	}
 
-	void initModel()
+	void init_model()
 	{
 		{
 			auto m = std::make_shared<Model>();

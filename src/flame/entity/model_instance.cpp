@@ -2,7 +2,7 @@
 //#include "../model/animation.h"
 //#include "../physics/physics.h"
 #include <flame/entity/model.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include "model_instance.h"
 
 namespace tke

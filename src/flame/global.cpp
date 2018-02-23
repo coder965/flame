@@ -44,7 +44,6 @@ namespace tke
 	}
 
 	std::string engine_path;
-	std::string shader_path;
 
 	unsigned long long total_frame_count = 0;
 	uint32_t FPS;

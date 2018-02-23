@@ -201,5 +201,5 @@ namespace tke
 	std::shared_ptr<Model> getModel(const std::string &filename);
 	void saveModel(Model *m, const std::string &filename);
 
-	void initModel();
+	void init_model();
 }

@@ -164,7 +164,7 @@ namespace tke
 	//	pxScene->release();
 	//}
 
-	void initPhysics()
+	void init_physics()
 	{
 		//static auto allocator = physx::PxDefaultAllocator();
 		//static auto errorCallBack = physx::PxDefaultErrorCallback();

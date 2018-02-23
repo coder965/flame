@@ -36,12 +36,12 @@ void InspectorWindow::on_show()
 			if (selected.get_filename() != filename)
 			{
 				filename = selected.get_filename();
-				std::fs::path path(filename);
-				is_folder = std::fs::is_directory(path);
+				std::filesystem::path path(filename);
+				is_folder = std::filesystem::is_directory(path);
 				if (!is_folder)
 				{
 					std::error_code e;
-					file_size = std::fs::file_size(path, e);
+					file_size = std::filesystem::file_size(path, e);
 					if (file_size < 1024)
 						file_size_text = "size: " + std::to_string(file_size) + " Byte";
 					else if (file_size < 1024 * 1024)

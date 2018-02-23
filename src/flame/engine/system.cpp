@@ -4,7 +4,7 @@
 
 #include <flame/global.h>
 #include <flame/engine/system.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 
 namespace tke
 {
@@ -39,7 +39,7 @@ namespace tke
 		{
 			char buf[260];
 			GetModuleFileName(nullptr, buf, 260);
-			std::fs::path _p(buf);
+			std::filesystem::path _p(buf);
 			path = _p.parent_path().string();
 		}
 		return path;
@@ -78,7 +78,7 @@ namespace tke
 		CloseClipboard();
 	}
 
-	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath)
+	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath, std::function<void()> callback)
 	{
 		auto w = new FileWatcher;
 		w->handle = FindFirstChangeNotification(filepath.c_str(), true,
@@ -86,6 +86,7 @@ namespace tke
 			FILE_NOTIFY_CHANGE_DIR_NAME |
 			FILE_NOTIFY_CHANGE_LAST_WRITE);
 		assert(w->handle != INVALID_HANDLE_VALUE);
+		w->callback = callback;
 
 		std::thread t([&]() {
 			auto ww = w;
@@ -100,7 +101,11 @@ namespace tke
 
 				auto r = WaitForSingleObject(ww->handle, 2000);
 				if (r != WAIT_TIMEOUT)
+				{
 					ww->dirty = true;
+					if (ww->callback)
+						ww->callback();
+				}
 				FindNextChangeNotification(ww->handle);
 			}
 		});

@@ -1,6 +1,6 @@
 #define NOMINMAX
 #include <FreeImage.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/utils/image.h>
 
 namespace tke

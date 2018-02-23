@@ -4,19 +4,23 @@
 
 #include <spirv_glsl.hpp>
 #include <flame/global.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/engine/system.h>
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/shader.h>
 
 namespace tke
 {
+	static std::string shader_path;
+	static std::string vk_sdk_path;
+	static bool watch_shader_file;
+
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines) :
 		filename(engine_path + shader_path + _filename),
 		defines(_defines),
 		v(0)
 	{
-		auto ext = std::fs::path(filename).extension().string();
+		auto ext = std::filesystem::path(filename).extension().string();
 		if (ext == ".vert")
 			stage = VK_SHADER_STAGE_VERTEX_BIT;
 		else if (ext == ".tesc")
@@ -29,6 +33,9 @@ namespace tke
 			stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		create();
+
+		if (watch_shader_file)
+			file_watcher = add_file_watcher(filename);
 	}
 
 	Shader::~Shader()
@@ -38,14 +45,20 @@ namespace tke
 
 	void Shader::create()
 	{
-		std::fs::remove("temp.spv"); // glslc cannot write to an existed file
+		std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file
 
-		std::fs::path path(filename);
+		std::filesystem::path path(filename);
+
+
+
+
+
+
 
 		char curr_path[260];
 		GetCurrentDirectory(260, curr_path);
 
-		auto shader_file_timestamp = std::fs::last_write_time(path);
+		auto shader_file_timestamp = std::filesystem::last_write_time(path);
 
 		auto spv_filename = filename;
 		for (auto &d : defines)
@@ -53,35 +66,36 @@ namespace tke
 		spv_filename += ".spv";
 
 		bool spv_up_to_date = false;
-		if (std::fs::exists(spv_filename))
+		if (std::filesystem::exists(spv_filename))
 		{
-			if (std::fs::last_write_time(spv_filename) > shader_file_timestamp)
+			if (std::filesystem::last_write_time(spv_filename) > shader_file_timestamp)
 				spv_up_to_date = true;
 		}
 
 		if (!spv_up_to_date)
 		{
-			auto vk_sdk_dir = getenv("VK_SDK_PATH");
-			assert(vk_sdk_dir[0]);
-
 			std::string command_line(filename + " ");
 			for (auto &d : defines)
 				command_line += "-D" + d + " ";
 			command_line += " -flimit-file ";
 			command_line += engine_path + "src/shader/shader_compile_config.conf";
 			command_line += " -o temp.spv";
-			auto output = create_process_and_get_output(std::string(vk_sdk_dir) + "/Bin/glslc.exe", command_line);
-			if (!std::fs::exists("temp.spv"))
+			auto output = create_process_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
+			if (!std::filesystem::exists("temp.spv"))
 			{
 				// shader compile error, try to use previous spv file
 			}
 			else
-				std::fs::copy("temp.spv", spv_filename, std::fs::copy_options::overwrite_existing);
+				std::filesystem::copy("temp.spv", spv_filename, std::filesystem::copy_options::overwrite_existing);
 		}
 
 		auto spv_file = get_file_content(spv_filename);
-		if (!spv_file.first)
-			assert(0); // missing spv file!
+		if (!spv_file.first)  // missing spv file!
+		{
+			if (!v)
+				assert(0);
+			return;
+		}
 
 		{
 			VkShaderModuleCreateInfo info;
@@ -98,13 +112,13 @@ namespace tke
 		}
 
 		auto res_filename = spv_filename + ".res";
-		if (std::fs::exists(res_filename) &&
-			std::fs::last_write_time(res_filename) > std::fs::last_write_time(spv_filename))
+		if (std::filesystem::exists(res_filename) &&
+			std::filesystem::last_write_time(res_filename) > std::filesystem::last_write_time(spv_filename))
 		{
 			std::ifstream resFile(res_filename, std::ios::binary);
 
 			auto ubo_count = read_int(resFile);
-			for (int i = 0; i < ubo_count; i++)
+			for (auto i = 0; i < ubo_count; i++)
 			{
 				auto set = read_int(resFile);
 				if (set >= descriptor_sets.size())
@@ -202,5 +216,13 @@ namespace tke
 			s->pipelines_use_this.push_back(pipeline);
 		_shaders.push_back(s);
 		return s;
+	}
+
+	void init_shader(bool _watch_shader_file)
+	{
+		shader_path = "src/shader/";
+		vk_sdk_path = getenv("VK_SDK_PATH");
+		assert(vk_sdk_path != "");
+		watch_shader_file = _watch_shader_file;
 	}
 }

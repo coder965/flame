@@ -6,42 +6,34 @@
 #include <flame/engine/core.h>
 #include <flame/engine/system.h>
 #include <flame/engine/application.h>
-#include <flame/graphics/renderer.h>
 #include <flame/ui/ui.h>
 #include <flame/physics/physics.h>
 #include <flame/sound/sound.h>
-#include <flame/entity/model.h>
-#include <flame/utils/pick_up.h>
+#include <flame/entity/entity.h>
+#include <flame/utils/utils.h>
 
 namespace tke
 {
-	int init(const std::string &_engine_path, int _resolution_x, int _resolution_y, int debug_level, bool _only_2d)
+	int init(const std::string &_engine_path, int _resolution_x, int _resolution_y, int debug_level, bool watch_shader_file, bool _only_2d)
 	{
 		auto init_start_time = GetTickCount();
 
 		only_2d = _only_2d;
-
 #ifdef _MSVC_LANG
 		SetProcessDPIAware();
 #endif
-
 		engine_path = _engine_path;
-		shader_path = "src/shader/";
-		resolution.set(_resolution_x, _resolution_y);
 
-		initVulkan(debug_level > 0);
-
+		init_graphics(debug_level > 0, _resolution_x, _resolution_y, watch_shader_file);
 		ui::init();
-
+		init_sound();
 		if (!only_2d)
 		{
-			initModel();
-			init_pick_up();
-
-			initPhysics();
+			init_physics();
+			init_entity();
+			init_utils();
 		}
 
-		//initSound();
 		printf("\n=====INFO=====\nengine init finished - %d ms\n==============\n", GetTickCount() - init_start_time);
 
 		return NoErr;

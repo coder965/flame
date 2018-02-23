@@ -99,5 +99,5 @@ namespace tke
 	physx::PxRigidActor *createStaticRigidActor(physx::PxTransform &trans);
 	physx::PxRigidActor *createDynamicRigidActor(physx::PxTransform &trans, bool kinematic, float density);
 
-	void initPhysics();
+	void init_physics();
 }

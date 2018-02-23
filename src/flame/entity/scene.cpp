@@ -3,7 +3,7 @@
 #include <flame/global.h>
 #include <flame/math/math.h>
 #include <flame/utils/string.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/physics/physics.h>
 #include <flame/entity/camera.h>
 #include <flame/entity/light.h>
@@ -564,8 +564,8 @@ namespace tke
 
 	Scene*create_scene(const std::string &filename)
 	{
-		std::fs::path path(filename);
-		if (!std::fs::exists(filename))
+		std::filesystem::path path(filename);
+		if (!std::filesystem::exists(filename))
 			return nullptr;
 
 		auto s = new Scene;

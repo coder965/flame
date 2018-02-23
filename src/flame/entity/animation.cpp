@@ -3,7 +3,7 @@
 
 #include <flame/global.h>
 #include <flame/utils/string.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/graphics/buffer.h>
 #include <flame/entity/model.h>
 #include <flame/entity/animation.h>

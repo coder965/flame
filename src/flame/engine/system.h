@@ -19,6 +19,7 @@ namespace tke
 		bool dirty;
 		void *handle;
 		bool expired;
+		std::function<void()> callback;
 
 		FileWatcher();
 	};
@@ -30,7 +31,7 @@ namespace tke
 		~FileWatcherHandler();
 	};
 
-	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath);
+	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath, std::function<void()> callback = nullptr);
 
 	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line);
 }

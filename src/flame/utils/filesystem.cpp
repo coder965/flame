@@ -2,7 +2,7 @@
 #include <rapidxml_utils.hpp>
 #include <rapidxml_print.hpp>
 
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 
 namespace tke
 {

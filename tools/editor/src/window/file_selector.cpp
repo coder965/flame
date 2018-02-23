@@ -42,7 +42,7 @@ void FileSelector::set_current_path(const std::string &s)
 		curr_dir_hierarchy.clear();
 		if (default_dir == "")
 		{
-			std::fs::path path(curr_dir.filename);
+			std::filesystem::path path(curr_dir.filename);
 			auto root_path = path.root_path();
 			while (path != root_path)
 			{
@@ -54,7 +54,7 @@ void FileSelector::set_current_path(const std::string &s)
 		}
 		else
 		{
-			std::fs::path path(curr_dir.filename);
+			std::filesystem::path path(curr_dir.filename);
 			while (path != default_dir)
 			{
 				curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
@@ -65,7 +65,7 @@ void FileSelector::set_current_path(const std::string &s)
 	}
 	else
 	{
-		std::fs::path path(s);
+		std::filesystem::path path(s);
 		auto str = path.filename().string();
 		curr_dir.value = str;
 		curr_dir.name = ICON_FA_FOLDER_O" " + str;
@@ -88,16 +88,16 @@ void FileSelector::refresh()
 	if (!on_refresh())
 		return;
 
-	std::function<void(DirItem *, const std::fs::path &)> fIterDir;
-	fIterDir = [&](DirItem *dst, const std::fs::path &src) {
+	std::function<void(DirItem *, const std::filesystem::path &)> fIterDir;
+	fIterDir = [&](DirItem *dst, const std::filesystem::path &src) {
 		if (src.string() == select_dir_filename)
 			select_dir = dst;
 
-		std::fs::directory_iterator end_it;
-		for (std::fs::directory_iterator it(src); it != end_it; it++)
+		std::filesystem::directory_iterator end_it;
+		for (std::filesystem::directory_iterator it(src); it != end_it; it++)
 		{
 			auto str = it->path().filename().string();
-			if (std::fs::is_directory(it->status()))
+			if (std::filesystem::is_directory(it->status()))
 			{
 				auto i = new DirItem;
 				i->value = str;
@@ -211,7 +211,7 @@ void FileSelector::on_show()
 				popup_list.clear();
 				if (default_dir == "" && h_index == 0)
 				{
-					std::fs::path path(curr_dir.filename);
+					std::filesystem::path path(curr_dir.filename);
 					auto root_name = path.root_name().string();
 					std::transform(root_name.begin(), root_name.end(), root_name.begin(), tolower);
 					for (int i = 0; i < TK_ARRAYSIZE(drivers); i++)
@@ -240,11 +240,11 @@ void FileSelector::on_show()
 						}
 						parent_path += "/";
 					}
-					std::fs::directory_iterator end_it;
+					std::filesystem::directory_iterator end_it;
 					int index = 0;
-					for (std::fs::directory_iterator it(parent_path); it != end_it; it++)
+					for (std::filesystem::directory_iterator it(parent_path); it != end_it; it++)
 					{
-						if (std::fs::is_directory(it->status()))
+						if (std::filesystem::is_directory(it->status()))
 						{
 							auto str = it->path().filename().string();
 							popup_list.push_back(str);
@@ -316,7 +316,7 @@ void FileSelector::on_show()
 			select_index = index;
 			if (ImGui::IsMouseDoubleClicked(0))
 			{
-				std::fs::path path(curr_dir.filename);
+				std::filesystem::path path(curr_dir.filename);
 				if (curr_dir.filename != default_dir && path.root_path() != path)
 					set_current_path(path.parent_path().string());
 			}
@@ -330,7 +330,7 @@ void FileSelector::on_show()
 				on_dir_item_selected(i.get());
 				select_index = index;
 				if (ImGui::IsMouseDoubleClicked(0))
-					set_current_path((std::fs::path(curr_dir.filename) / i->value).string());
+					set_current_path((std::filesystem::path(curr_dir.filename) / i->value).string());
 			}
 			index++;
 		}
@@ -439,8 +439,8 @@ void FileSelector::on_bottom_area_show()
 	ImGui::SameLine(ImGui::GetWindowWidth() - pos);
 	if (ImGui::Button("  Ok  "))
 	{
-		auto path = std::fs::path(curr_dir.filename) / filename;
-		if (io_mode == FileSelectorSave || std::fs::exists(path))
+		auto path = std::filesystem::path(curr_dir.filename) / filename;
+		if (io_mode == FileSelectorSave || std::filesystem::exists(path))
 		{
 			if (callback(path.string()))
 			{

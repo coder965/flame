@@ -1,7 +1,7 @@
 #include <vector>
 
 #include <flame/global.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/engine/system.h>
 #include <flame/engine/application.h>
 #include <flame/graphics/texture.h>
@@ -106,9 +106,13 @@ namespace tke
 		}
 	}
 
+	static std::mutex _after_frame_event_mtx;
+
 	void add_after_frame_event(const std::function<void()> &e)
 	{
+		_after_frame_event_mtx.lock();
 		_after_frame_events.push_back(e);
+		_after_frame_event_mtx.unlock();
 	}
 
 	Application *app = nullptr;
@@ -209,7 +213,7 @@ namespace tke
 		wcex.cbClsExtra = 0;
 		wcex.cbWndExtra = 0;
 		wcex.hInstance = (HINSTANCE)get_hinst();
-		if (std::fs::exists("ico.png"))
+		if (std::filesystem::exists("ico.png"))
 		{
 			auto icon = std::make_unique<Image>("ico.png");
 			wcex.hIcon = CreateIcon(wcex.hInstance, icon->cx, icon->cy, 1,
@@ -391,9 +395,11 @@ namespace tke
 		for (int i = 0; i < TK_ARRAYSIZE(key_states); i++)
 			key_states[i].reset();
 
+		_after_frame_event_mtx.lock();
 		for (auto &e : _after_frame_events)
 			e();
 		_after_frame_events.clear();
+		_after_frame_event_mtx.unlock();
 	}
 
 	Framebuffer *Application::get_curr_framebuffer() const

@@ -62,7 +62,6 @@ namespace tke
 	long long get_now_time_ns();
 
 	extern std::string engine_path;
-	extern std::string shader_path;
 
 	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;

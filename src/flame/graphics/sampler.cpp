@@ -10,7 +10,7 @@ namespace tke
 	VkSampler colorBorderSampler;
 	VkSampler colorWrapSampler;
 
-	void initSampler()
+	void init_sampler()
 	{
 		// sampler must be created correctly
 

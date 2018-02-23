@@ -10,8 +10,9 @@
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/renderpass.h>
 #include <flame/graphics/pipeline.h>
+#include <flame/graphics/shader.h>
 #include <flame/graphics/sampler.h>
-#include <flame/graphics/command_buffer.h>
+#include <flame/graphics/renderer.h>
 
 namespace tke
 {
@@ -138,25 +139,27 @@ namespace tke
 		return VK_FALSE;
 	}
 
-	int initVulkan(bool debug)
+	void init_graphics(bool debug, int _resolution_x, int _resolution_y, bool watch_shader_file)
 	{
-		VkResult res;
+		resolution.set(_resolution_x, _resolution_y);
 
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "TK Engine";
+		appInfo.pApplicationName = "";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.pEngineName = "TK Engine";
+		appInfo.pEngineName = "Flame Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
 		std::vector<const char*> instLayers;
-		if (debug) instLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+		if (debug) 
+			instLayers.push_back("VK_LAYER_LUNARG_standard_validation");
 
 		std::vector<const char*> instExtensions;
 		instExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 		instExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-		if (debug) instExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		if (debug) 
+			instExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		VkInstanceCreateInfo instInfo = {};
 		instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		instInfo.pApplicationInfo = &appInfo;
@@ -164,9 +167,7 @@ namespace tke
 		instInfo.ppEnabledExtensionNames = instExtensions.data();
 		instInfo.enabledLayerCount = instLayers.size();
 		instInfo.ppEnabledLayerNames = instLayers.data();
-		res = vkCreateInstance(&instInfo, nullptr, &vk_instance);
-		if (res != VkResult::VK_SUCCESS)
-			return ErrContextLost;
+		chk_vk_res(vkCreateInstance(&instInfo, nullptr, &vk_instance));
 
 		if (debug)
 		{
@@ -180,14 +181,11 @@ namespace tke
 			callbackCreateInfo.pUserData = nullptr;
 
 			VkDebugReportCallbackEXT callback;
-			res = _vkCreateDebugReportCallbackEXT(vk_instance, &callbackCreateInfo, nullptr, &callback);
-			assert(res == VK_SUCCESS);
+			chk_vk_res(_vkCreateDebugReportCallbackEXT(vk_instance, &callbackCreateInfo, nullptr, &callback));
 		}
 
 		uint32_t gpuCount = 1;
-		res = vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &vk_physical_device);
-		if (res != VkResult::VK_SUCCESS)
-			return ErrContextLost;
+		chk_vk_res(vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &vk_physical_device));
 
 		VkPhysicalDeviceFeatures features;
 
@@ -210,7 +208,6 @@ namespace tke
 
 		unsigned int extensionCount;
 
-
 		vkGetPhysicalDeviceFeatures(vk_physical_device, &vk_physical_device_features);
 
 		vkGetPhysicalDeviceMemoryProperties(vk_physical_device, &memProperties);
@@ -223,8 +220,7 @@ namespace tke
 		deviceInfo.enabledExtensionCount = deviceExtensions.size();
 		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		deviceInfo.pEnabledFeatures = &vk_physical_device_features;
-		res = vkCreateDevice(vk_physical_device, &deviceInfo, nullptr, &vk_device.v);
-		assert(res == VK_SUCCESS);
+		chk_vk_res(vkCreateDevice(vk_physical_device, &deviceInfo, nullptr, &vk_device.v));
 
 		vkGetDeviceQueue(vk_device.v, 0, 0, &vk_graphics_queue.v);
 
@@ -235,8 +231,7 @@ namespace tke
 		init_texture();
 		init_material();
 		init_renderpass();
-		initSampler();
-
-		return NoErr;
+		init_shader(watch_shader_file);
+		init_sampler();
 	}
 }

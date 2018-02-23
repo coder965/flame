@@ -20,5 +20,5 @@ namespace tke
 	extern VkSampler colorBorderSampler;
 	extern VkSampler colorWrapSampler;
 
-	void initSampler();
+	void init_sampler();
 }

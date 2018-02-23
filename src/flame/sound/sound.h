@@ -26,5 +26,5 @@
 //		void setCoord(const glm::vec3 &p);
 //	};
 //
-//	void initSound();
+	void init_sound();
 //}

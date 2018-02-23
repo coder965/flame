@@ -5,7 +5,7 @@
 #include <flame/graphics/framebuffer.h>
 #include <flame/graphics/renderpass.h>
 #include <flame/graphics/renderer.h>
-#include <flame/pick_up/pick_up.h>
+#include <flame/utils/pick_up.h>
 
 namespace tke
 {

@@ -40,19 +40,19 @@
 //		alSourcefv(obj, AL_POSITION, &p[0]);
 //	}
 //
-//	void initSound()
-//	{
-//		alcDevice = alcOpenDevice(nullptr);
-//		alcContext = alcCreateContext(alcDevice, nullptr);
-//		alcMakeContextCurrent(alcContext);
-//
-//		unsigned char buf[512];
-//		for (int i = 0; i < 512; i++)
-//			buf[i] = (glm::sin((i / 128.f) * M_PI) + 1.f) * 0.5f * 255;
-//
-//		ALuint buffer;
-//		alGenBuffers(1, &buffer);
-//		alBufferData(buffer, AL_FORMAT_STEREO8, buf, 512, 16000);
-//		soundBuffers.push_back(buffer);
-//	}
+	void init_sound()
+	{
+		//alcDevice = alcOpenDevice(nullptr);
+		//alcContext = alcCreateContext(alcDevice, nullptr);
+		//alcMakeContextCurrent(alcContext);
+
+		//unsigned char buf[512];
+		//for (int i = 0; i < 512; i++)
+		//	buf[i] = (glm::sin((i / 128.f) * M_PI) + 1.f) * 0.5f * 255;
+
+		//ALuint buffer;
+		//alGenBuffers(1, &buffer);
+		//alBufferData(buffer, AL_FORMAT_STEREO8, buf, 512, 16000);
+		//soundBuffers.push_back(buffer);
+	}
 //}

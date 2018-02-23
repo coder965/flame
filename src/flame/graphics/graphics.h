@@ -40,5 +40,5 @@ namespace tke
 
 	int find_vk_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	int initVulkan(bool debug);
+	void init_graphics(bool debug, int _resolution_x, int _resolution_y, bool watch_shader_file);
 }

@@ -8,7 +8,7 @@
 
 namespace std
 {
-	namespace fs = experimental::filesystem;
+	namespace filesystem = experimental::filesystem;
 }
 
 namespace tke

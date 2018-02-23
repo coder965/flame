@@ -1,5 +1,6 @@
 #pragma once
 
+#include <flame/engine/system.h>
 #include <flame/graphics/graphics.h>
 
 namespace tke
@@ -19,6 +20,8 @@ namespace tke
 
 		std::vector<Pipeline*> pipelines_use_this;
 
+		std::unique_ptr<FileWatcherHandler> file_watcher;
+
 		// must call in main thread
 		Shader(const std::string &_filename, const std::vector<std::string> &_defines);
 		// must call in main thread
@@ -27,4 +30,6 @@ namespace tke
 	};
 
 	std::shared_ptr<Shader> get_or_create_shader(const std::string &filename, const std::vector<std::string> &defines, Pipeline *pipeline = nullptr);
+
+	void init_shader(bool watch_shader_file);
 }
