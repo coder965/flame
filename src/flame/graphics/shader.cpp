@@ -210,11 +210,20 @@ namespace tke
 		return s;
 	}
 
+	std::unique_ptr<FileWatcherHandler> shader_change_watcher;
+
 	void init_shader(bool _watch_shader_file)
 	{
 		shader_path = "src/shader/";
 		vk_sdk_path = getenv("VK_SDK_PATH");
 		assert(vk_sdk_path != "");
 		watch_shader_file = _watch_shader_file;
+
+		if (_watch_shader_file)
+		{
+			shader_change_watcher = add_file_watcher(FileWatcherModeContent, engine_path + shader_path + "src/", [](const std::vector<FileChangeInfo> &infos) {
+				int cut = 1;
+			});
+		}
 	}
 }

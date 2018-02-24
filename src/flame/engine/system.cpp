@@ -82,7 +82,7 @@ namespace tke
 		auto w = new FileWatcher;
 
 		std::thread new_thread([=]() {
-			auto dir_handle = CreateFile(filepath.c_str(), GENERIC_READ | GENERIC_WRITE |
+			auto dir_handle = CreateFileA(filepath.c_str(), GENERIC_READ | GENERIC_WRITE |
 				FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
 				OPEN_EXISTING,
 				FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS,
@@ -90,7 +90,6 @@ namespace tke
 			assert(dir_handle != INVALID_HANDLE_VALUE);
 
 			BYTE notify_buf[1024];
-			DWORD notify_buf_length;
 
 			OVERLAPPED overlapped = {};
 			overlapped.hEvent = CreateEvent(NULL, false, false, NULL);
@@ -108,9 +107,10 @@ namespace tke
 						break;
 					case FileWatcherModeContent:
 						flags = FILE_NOTIFY_CHANGE_LAST_WRITE;
+						break;
 				}
 				assert(ReadDirectoryChangesW(dir_handle, notify_buf, sizeof(notify_buf), true, flags,
-					&notify_buf_length, &overlapped, NULL));
+					NULL, &overlapped, NULL));
 
 				HANDLE events[] = {
 					overlapped.hEvent,
@@ -124,6 +124,9 @@ namespace tke
 					break;
 				}
 
+				DWORD ret_bytes;
+				assert(GetOverlappedResult(dir_handle, &overlapped, &ret_bytes, false) == 1);
+
 				w->dirty = true;
 				if (callback)
 				{
@@ -132,8 +135,14 @@ namespace tke
 					while (true)
 					{
 						FileChangeInfo info;
-						info.filename.resize(p->FileNameLength);
-						WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength, (char*)info.filename.data(), p->FileNameLength, NULL, NULL);
+						auto str_size = WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), NULL, 0, NULL, NULL);
+						info.filename.resize(str_size);
+						WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), (char*)info.filename.data(), str_size, NULL, NULL);
+						char buf[260];
+						auto pppp = /*get_exe_path() + filepath + */info.filename;
+						pppp.resize(pppp.size() - 1);
+						auto emm = GetLongPathName(pppp.c_str(), buf, 260);
+						auto err = GetLastError();
 						switch (p->Action)
 						{
 							case 0x1:
