@@ -2,6 +2,7 @@
 
 #include <string>
 #include <mutex>
+#include <vector>
 
 namespace tke
 {
@@ -17,9 +18,7 @@ namespace tke
 	struct FileWatcher
 	{
 		bool dirty;
-		void *handle;
-		bool expired;
-		std::function<void()> callback;
+		void *hEventExpired;
 
 		FileWatcher();
 	};
@@ -31,7 +30,27 @@ namespace tke
 		~FileWatcherHandler();
 	};
 
-	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath, std::function<void()> callback = nullptr);
+	enum FileWatcherMode
+	{
+		FileWatcherModeAll,
+		FileWatcherModeContent
+	};
+
+	enum FileChangeType
+	{
+		FileChangeAdded,
+		FileChangeRemoved,
+		FileChangeModified,
+		FileChangeRename
+	};
+
+	struct FileChangeInfo
+	{
+		FileChangeType type;
+		std::string filename;
+	};
+
+	std::unique_ptr<FileWatcherHandler> add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback = nullptr);
 
 	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line);
 }

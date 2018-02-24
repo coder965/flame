@@ -1,4 +1,4 @@
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/graphics/texture.h>
 #include "show_material.h"
 
@@ -21,7 +21,7 @@ static void show_map(std::function<std::string()> getter, const char *tooltip, s
 		{
 			static char filename[260];
 			strcpy(filename, (char*)payload->Data);
-			std::fs::path path(filename);
+			std::filesystem::path path(filename);
 			auto ext = path.extension();
 			if (tke::is_image_file(ext.string()))
 				setter(filename);

@@ -388,7 +388,10 @@ namespace tke
 		vk_graphics_queue.mtx.unlock();
 
 		for (auto i = 0; i < 3; i++)
-			mouse_button[i].reset();
+		{
+			mouse_button[i].just_down = false;
+			mouse_button[i].just_up = false;
+		}
 		mousePrevX = mouseX;
 		mousePrevY = mouseY;
 		mouseScroll = 0;

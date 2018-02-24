@@ -16,7 +16,7 @@ namespace tke
 	static bool watch_shader_file;
 
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines) :
-		filename(engine_path + shader_path + _filename),
+		filename(_filename),
 		defines(_defines),
 		v(0)
 	{
@@ -33,9 +33,6 @@ namespace tke
 			stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		create();
-
-		if (watch_shader_file)
-			file_watcher = add_file_watcher(filename);
 	}
 
 	Shader::~Shader()
@@ -47,23 +44,15 @@ namespace tke
 	{
 		std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file
 
-		std::filesystem::path path(filename);
-
-
-
-
-
-
-
-		char curr_path[260];
-		GetCurrentDirectory(260, curr_path);
-
+		auto _filename = engine_path + shader_path + "src/" + filename;
+		std::filesystem::path path(_filename);
 		auto shader_file_timestamp = std::filesystem::last_write_time(path);
 
 		auto spv_filename = filename;
 		for (auto &d : defines)
 			spv_filename += "." + d;
 		spv_filename += ".spv";
+		spv_filename = engine_path + shader_path + "bin/" + spv_filename;
 
 		bool spv_up_to_date = false;
 		if (std::filesystem::exists(spv_filename))
@@ -74,42 +63,45 @@ namespace tke
 
 		if (!spv_up_to_date)
 		{
-			std::string command_line(filename + " ");
+			std::string command_line(" " + _filename + " ");
 			for (auto &d : defines)
 				command_line += "-D" + d + " ";
 			command_line += " -flimit-file ";
-			command_line += engine_path + "src/shader/shader_compile_config.conf";
+			command_line += engine_path + "src/shader/src/shader_compile_config.conf";
 			command_line += " -o temp.spv";
 			auto output = create_process_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
 			if (!std::filesystem::exists("temp.spv"))
 			{
 				// shader compile error, try to use previous spv file
+				printf("\n=====Shader Compile Error=====\n%s\n=============================\n",output.c_str());
 			}
 			else
-				std::filesystem::copy("temp.spv", spv_filename, std::filesystem::copy_options::overwrite_existing);
+			{
+				std::filesystem::path spv_dir = std::filesystem::path(spv_filename).parent_path();
+				if (!std::filesystem::exists(spv_dir))
+					std::filesystem::create_directories(spv_dir);
+				std::filesystem::copy_file("temp.spv", spv_filename, std::filesystem::copy_options::overwrite_existing);
+			}
 		}
 
 		auto spv_file = get_file_content(spv_filename);
 		if (!spv_file.first)  // missing spv file!
 		{
-			if (!v)
+			if (!v) // if we are running first time
 				assert(0);
 			return;
 		}
 
-		{
-			VkShaderModuleCreateInfo info;
-			info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			info.flags = 0;
-			info.pNext = nullptr;
-			info.codeSize = spv_file.second;
-			info.pCode = (uint32_t*)spv_file.first.get();
+		VkShaderModuleCreateInfo shader_info;
+		shader_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shader_info.flags = 0;
+		shader_info.pNext = nullptr;
+		shader_info.codeSize = spv_file.second;
+		shader_info.pCode = (uint32_t*)spv_file.first.get();
 
-			if (v)
-				vkDestroyShaderModule(vk_device.v, v, nullptr);
-			auto res = vkCreateShaderModule(vk_device.v, &info, nullptr, &v);
-			assert(res == VK_SUCCESS);
-		}
+		if (v)
+			vkDestroyShaderModule(vk_device.v, v, nullptr);
+		chk_vk_res(vkCreateShaderModule(vk_device.v, &shader_info, nullptr, &v));
 
 		auto res_filename = spv_filename + ".res";
 		if (std::filesystem::exists(res_filename) &&
@@ -203,7 +195,7 @@ namespace tke
 				if (s->filename == filename && s->defines == defines)
 				{
 					if (pipeline)
-						s->pipelines_use_this.push_back(pipeline);
+						s->referencing_pipelines.push_back(pipeline);
 					return s;
 				}
 				it++;
@@ -213,7 +205,7 @@ namespace tke
 		}
 		auto s = std::make_shared<Shader>(filename, defines);
 		if (pipeline)
-			s->pipelines_use_this.push_back(pipeline);
+			s->referencing_pipelines.push_back(pipeline);
 		_shaders.push_back(s);
 		return s;
 	}

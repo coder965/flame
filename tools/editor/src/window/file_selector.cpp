@@ -71,7 +71,7 @@ void FileSelector::set_current_path(const std::string &s)
 		curr_dir.name = ICON_FA_FOLDER_O" " + str;
 	}
 
-	file_watcher = tke::add_file_watcher(s);
+	file_watcher = tke::add_file_watcher(tke::FileWatcherModeAll, s);
 }
 
 void FileSelector::refresh()

@@ -39,8 +39,7 @@ namespace tke
 		{
 			char buf[260];
 			GetModuleFileName(nullptr, buf, 260);
-			std::filesystem::path _p(buf);
-			path = _p.parent_path().string();
+			path = std::filesystem::path(buf).parent_path().string();
 		}
 		return path;
 	}
@@ -78,39 +77,91 @@ namespace tke
 		CloseClipboard();
 	}
 
-	std::unique_ptr<FileWatcherHandler> add_file_watcher(const std::string &filepath, std::function<void()> callback)
+	std::unique_ptr<FileWatcherHandler> add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback)
 	{
 		auto w = new FileWatcher;
-		w->handle = FindFirstChangeNotification(filepath.c_str(), true,
-			FILE_NOTIFY_CHANGE_FILE_NAME |
-			FILE_NOTIFY_CHANGE_DIR_NAME |
-			FILE_NOTIFY_CHANGE_LAST_WRITE);
-		assert(w->handle != INVALID_HANDLE_VALUE);
-		w->callback = callback;
 
-		std::thread t([&]() {
-			auto ww = w;
+		std::thread new_thread([=]() {
+			auto dir_handle = CreateFile(filepath.c_str(), GENERIC_READ | GENERIC_WRITE |
+				FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+				OPEN_EXISTING,
+				FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS,
+				NULL);
+			assert(dir_handle != INVALID_HANDLE_VALUE);
+
+			BYTE notify_buf[1024];
+			DWORD notify_buf_length;
+
+			OVERLAPPED overlapped = {};
+			overlapped.hEvent = CreateEvent(NULL, false, false, NULL);
+
 			while (true)
 			{
-				if (ww->expired)
+				DWORD flags = 0;
+				switch (mode)
 				{
-					FindCloseChangeNotification(ww->handle);
-					delete ww;
+					case FileWatcherModeAll:
+						flags = FILE_NOTIFY_CHANGE_FILE_NAME |
+							FILE_NOTIFY_CHANGE_DIR_NAME |
+							FILE_NOTIFY_CHANGE_CREATION |
+							FILE_NOTIFY_CHANGE_LAST_WRITE;
+						break;
+					case FileWatcherModeContent:
+						flags = FILE_NOTIFY_CHANGE_LAST_WRITE;
+				}
+				assert(ReadDirectoryChangesW(dir_handle, notify_buf, sizeof(notify_buf), true, flags,
+					&notify_buf_length, &overlapped, NULL));
+
+				HANDLE events[] = {
+					overlapped.hEvent,
+					w->hEventExpired
+				};
+				
+				if (WaitForMultipleObjects(2, events, false, INFINITE) - WAIT_OBJECT_0 == 1)
+				{
+					CloseHandle(dir_handle);
+					delete w;
 					break;
 				}
 
-				auto r = WaitForSingleObject(ww->handle, 2000);
-				if (r != WAIT_TIMEOUT)
+				w->dirty = true;
+				if (callback)
 				{
-					ww->dirty = true;
-					if (ww->callback)
-						ww->callback();
+					std::vector<FileChangeInfo> infos;
+					auto p = (FILE_NOTIFY_INFORMATION*)notify_buf;
+					while (true)
+					{
+						FileChangeInfo info;
+						info.filename.resize(p->FileNameLength);
+						WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength, (char*)info.filename.data(), p->FileNameLength, NULL, NULL);
+						switch (p->Action)
+						{
+							case 0x1:
+								info.type = FileChangeAdded;
+								break;
+							case 0x2:
+								info.type = FileChangeRemoved;
+								break;
+							case 0x3:
+								info.type = FileChangeModified;
+								break;
+							case 0x4:
+								info.type = FileChangeRename;
+								break;
+							case 0x5:
+								info.type = FileChangeRename;
+								break;
+						}
+						infos.push_back(info);
+						if (p->NextEntryOffset <= 0)
+							break;
+						p = (FILE_NOTIFY_INFORMATION*)(notify_buf + p->NextEntryOffset);
+					}
+					callback(infos);
 				}
-				FindNextChangeNotification(ww->handle);
 			}
 		});
-
-		t.detach();
+		new_thread.detach();
 
 		auto h = std::make_unique<FileWatcherHandler>();
 		h->ptr = w;
@@ -118,14 +169,14 @@ namespace tke
 	}
 
 	FileWatcher::FileWatcher() :
-		dirty(false),
-		expired(false)
+		dirty(false)
 	{
+		hEventExpired = CreateEvent(NULL, false, false, NULL);
 	}
 
 	FileWatcherHandler::~FileWatcherHandler()
 	{
-		ptr->expired = true;
+		SetEvent(ptr->hEventExpired);
 	}
 
 	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line)

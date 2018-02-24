@@ -18,9 +18,7 @@ namespace tke
 		std::vector<std::vector<std::unique_ptr<Descriptor>>> descriptor_sets;
 		int push_constant_size;
 
-		std::vector<Pipeline*> pipelines_use_this;
-
-		std::unique_ptr<FileWatcherHandler> file_watcher;
+		std::vector<Pipeline*> referencing_pipelines;
 
 		// must call in main thread
 		Shader(const std::string &_filename, const std::vector<std::string> &_defines);

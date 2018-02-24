@@ -594,7 +594,7 @@ struct App : tke::Application
 
 int main(int argc, char** argv)
 {
-	tke::init("../", 1280, 720, 1, true, false);
+	tke::init("../", 1280, 720, 1, false, false);
 	new App;
 	tke::app->set_window_maximized(true);
 	tke::run();

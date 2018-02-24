@@ -4,7 +4,7 @@
 
 #include <gli/gli.hpp>
 #include <flame/utils/string.h>
-#include <flame/utils/file.h>
+#include <flame/utils/filesystem.h>
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/command_buffer.h>
@@ -490,8 +490,8 @@ namespace tke
 				return s;
 		}
 
-		std::fs::path path(filename);
-		if (!std::fs::exists(path))
+		std::filesystem::path path(filename);
+		if (!std::filesystem::exists(path))
 			return nullptr;
 
 		std::shared_ptr<Texture> t;
@@ -658,7 +658,7 @@ namespace tke
 		{
 			auto image = std::make_unique<Image>(filename);
 
-			auto sRGB = std::fs::exists(filename + ".srgb") || image->sRGB;
+			auto sRGB = std::filesystem::exists(filename + ".srgb") || image->sRGB;
 
 			auto _format = _get_texture_format(image->bpp, image->channel, sRGB);
 			assert(_format != VK_FORMAT_UNDEFINED);
