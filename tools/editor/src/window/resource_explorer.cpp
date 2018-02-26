@@ -61,7 +61,7 @@ void ResourceExplorer::on_right_area_show()
 						{
 							case tke::FileTypeImage:
 							{
-								new ImageEditor(f->filename);
+								new ImageEditor(tke::get_or_create_texture(f->filename));
 								break;
 							}
 							case tke::FileTypeModel:

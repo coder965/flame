@@ -4,13 +4,15 @@
 
 #include "image_editor.h"
 
-ImageEditor::ImageEditor(const std::string &filename) :
-	Window(filename, tke::ui::WindowHasMenu | tke::ui::WindowNoSavedSettings)
+static int _magic_number = 0;
+
+ImageEditor::ImageEditor(std::shared_ptr<tke::Texture> _texture) :
+	Window(_texture->filename != "" ? _texture->filename : "Image - " + std::to_string(_magic_number++), tke::ui::WindowHasMenu | tke::ui::WindowNoSavedSettings)
 {
 	first_cx = 800;
 	first_cy = 600;
 
-	texture = tke::get_or_create_texture(filename);
+	texture = _texture;
 	staging_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeStaging, texture->get_size());
 	texture->copy_to_buffer(staging_buffer.get());
 }

@@ -9,6 +9,6 @@ struct ImageEditor : tke::ui::Window
 	std::shared_ptr<tke::Texture> texture;
 	std::shared_ptr<tke::Buffer> staging_buffer;
 
-	ImageEditor(const std::string &filename);
+	ImageEditor(std::shared_ptr<tke::Texture> _texture);
 	virtual void on_show() override;
 };

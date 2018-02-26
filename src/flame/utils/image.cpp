@@ -104,58 +104,52 @@ namespace tke
 		FreeImage_Unload(dib);
 	}
 
-	Image * Image::create_distance_transform(int offset)
+	Image* Image::create_distance_transform(int offset)
 	{
-		auto bound = std::numeric_limits<float>::min();	
+		auto bound = 0U;	
 		const auto stride = bpp / 8;
 		auto pitch = calc_pitch(cx * stride);
-		auto temp = std::make_unique<float[]>(cx * cy);
+		auto temp = std::make_unique<unsigned int[]>(cx * cy);
 		for (auto y = 0; y < cy; y++)
 		{
 			auto line = data.get() + y * pitch;
-			auto temp_line = temp.get() + y * cx;
-			temp_line[0] = 0;
-			auto i = 0;
-			for (auto x = 1; x < cx - 1; x++)
+
+			for (auto i = 0; i < cx; i++)
 			{
-				i++;
-				if (line[x * stride + offset] == 0)
+				auto _m = 2 * 10000 * 10000;
+				for (auto ii = 0; ii < cx; ii++)
 				{
-					temp[y * cx + x] = 0;
-					i = 0;
+					if (line[ii * stride + offset] == 255)
+					{
+						auto dist = glm::abs(ii - i);
+						dist *= dist;
+						if (dist < _m)
+						{
+							_m = dist;
+							temp[y * cx + i] = dist;
+						}
+					}
 				}
-				else
-					temp[y * cx + x] = i * i;
-			}
-			temp_line[cx - 1] = 0;
-			i = 0;
-			for (auto x = cx - 2; x > 0; x--)
-			{
-				i++;
-				if (line[x * stride + offset] == 0)
-				{
-					temp[y * cx + x] = 0;
-					i = 0;
-				}
-				else
-					temp[y * cx + x] = i * i;
 			}
 		}
-		for (auto x = 1; x < cx - 1; x++)
+		for (auto x = 0; x < cx; x++)
 		{
-			for (auto y = 0; y < cy; y++)
+			for (auto i = 0; i < cy; i++)
 			{
-				auto d = temp[y * cx + x];
-				for (auto yy = 0; yy < cy; yy++)
+				auto _m = 2 * 10000 * 10000;
+				for (auto ii = 0; ii < cy; ii++)
 				{
-					if (yy == y)
-						continue;
-					auto dd = glm::pow(glm::abs(yy - y), 2) + temp[yy * cx + x];
-					if (dd < d)
-						d = dd;
+					auto dist = glm::abs(ii - i);
+					dist *= dist;
+					dist += temp[i * cx + x];
+					if (dist < _m)
+					{
+						_m = dist;
+						temp[i * cx + x] = dist;
+						if (dist > bound)
+							bound = dist;
+					}
 				}
-				temp[y * cx + x] = d;
-				bound = glm::max(bound, d);
 			}
 		}
 		auto i = new Image(cx, cy, 1, 8);
