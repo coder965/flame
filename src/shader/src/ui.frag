@@ -9,8 +9,9 @@ layout(location = 1) in vec2 inUV;
 layout(location = 2) in flat uint inID;
 
 layout(location = 0) out vec4 fColor;
-
+ 
 void main()
 {
 	fColor = inColor * texture(images[inID], inUV);
+	//fColor = vec4(1.0);
 }

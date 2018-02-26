@@ -109,11 +109,6 @@ namespace tke
 				});
 			vertex_input_state_bindings[buf_index].stride += get_size(t.first);
 		}
-
-		vertex_input_state.vertexBindingDescriptionCount = vertex_input_state_bindings.size();
-		vertex_input_state.pVertexBindingDescriptions = vertex_input_state_bindings.data();
-		vertex_input_state.vertexAttributeDescriptionCount = vertex_input_state_attributes.size();
-		vertex_input_state.pVertexAttributeDescriptions = vertex_input_state_attributes.data();
 		return *this;
 	}
 
@@ -467,6 +462,11 @@ namespace tke
 		dynamic_state.pNext = nullptr;
 		dynamic_state.dynamicStateCount = info.dynamic_states.size();
 		dynamic_state.pDynamicStates = info.dynamic_states.data();
+
+		info.vertex_input_state.vertexBindingDescriptionCount = info.vertex_input_state_bindings.size();
+		info.vertex_input_state.pVertexBindingDescriptions = info.vertex_input_state_bindings.data();
+		info.vertex_input_state.vertexAttributeDescriptionCount = info.vertex_input_state_attributes.size();
+		info.vertex_input_state.pVertexAttributeDescriptions = info.vertex_input_state_attributes.data();
 
 		VkGraphicsPipelineCreateInfo pipeline_info;
 		pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

@@ -24,6 +24,16 @@ namespace tke
 		return std::string(str.begin(), str.begin() + length);
 	}
 
+	bool string_contain(const std::string &str, char v)
+	{
+		for (auto &c : str)
+		{
+			if (c == v)
+				return true;
+		}
+		return false;
+	}
+
 	std::string translate(int srcCP, int dstCP, const std::string &src)
 	{
 		auto wbuf = new wchar_t[src.size() + 1];

@@ -6,8 +6,10 @@
 #include <flame/global.h>
 #include <flame/utils/filesystem.h>
 #include <flame/engine/system.h>
+#include <flame/engine/application.h>
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/shader.h>
+#include <flame/graphics/pipeline.h>
 
 namespace tke
 {
@@ -181,6 +183,9 @@ namespace tke
 				push_constant_size = glsl.get_declared_struct_size(glsl.get_type(r.type_id));
 			write_int(res_file, push_constant_size);
 		}
+
+		for (auto p : referencing_pipelines)
+			p->create();
 	}
 
 	static std::vector<std::weak_ptr<Shader>> _shaders;
@@ -222,7 +227,37 @@ namespace tke
 		if (_watch_shader_file)
 		{
 			shader_change_watcher = add_file_watcher(FileWatcherModeContent, engine_path + shader_path + "src/", [](const std::vector<FileChangeInfo> &infos) {
-				int cut = 1;
+				std::vector<Shader*> changed_shaders;
+				for (auto &i : infos)
+				{
+					Shader *shader = nullptr;
+					for (auto &t : _shaders)
+					{
+						auto s = t.lock();
+						if (s && s->filename == i.filename)
+						{
+							shader = s.get();
+							break;
+						}
+					}
+					if (!shader)
+						continue;
+					auto exist = false;
+					for (auto &t : changed_shaders)
+					{
+						if (t == shader)
+						{
+							exist = true;
+							break;
+						}
+					}
+					if (!exist)
+						changed_shaders.push_back(shader);
+				}
+				add_after_frame_event([=]() {
+					for (auto s : changed_shaders)
+						s->create();
+				});
 			});
 		}
 	}

@@ -3,8 +3,9 @@
 #include <thread>
 
 #include <flame/global.h>
-#include <flame/engine/system.h>
 #include <flame/utils/filesystem.h>
+#include <flame/utils/string.h>
+#include <flame/engine/system.h>
 
 namespace tke
 {
@@ -92,23 +93,18 @@ namespace tke
 			BYTE notify_buf[1024];
 
 			OVERLAPPED overlapped = {};
-			overlapped.hEvent = CreateEvent(NULL, false, false, NULL);
+			auto hEvent = CreateEvent(NULL, false, false, NULL);
+
+			auto flags = FILE_NOTIFY_CHANGE_FILE_NAME |
+				FILE_NOTIFY_CHANGE_DIR_NAME |
+				FILE_NOTIFY_CHANGE_CREATION |
+				FILE_NOTIFY_CHANGE_LAST_WRITE;
 
 			while (true)
 			{
-				DWORD flags = 0;
-				switch (mode)
-				{
-					case FileWatcherModeAll:
-						flags = FILE_NOTIFY_CHANGE_FILE_NAME |
-							FILE_NOTIFY_CHANGE_DIR_NAME |
-							FILE_NOTIFY_CHANGE_CREATION |
-							FILE_NOTIFY_CHANGE_LAST_WRITE;
-						break;
-					case FileWatcherModeContent:
-						flags = FILE_NOTIFY_CHANGE_LAST_WRITE;
-						break;
-				}
+				ZeroMemory(&overlapped, sizeof(OVERLAPPED));
+				overlapped.hEvent = hEvent;
+
 				assert(ReadDirectoryChangesW(dir_handle, notify_buf, sizeof(notify_buf), true, flags,
 					NULL, &overlapped, NULL));
 
@@ -131,40 +127,42 @@ namespace tke
 				if (callback)
 				{
 					std::vector<FileChangeInfo> infos;
+					auto base = 0;
 					auto p = (FILE_NOTIFY_INFORMATION*)notify_buf;
 					while (true)
 					{
-						FileChangeInfo info;
+						std::string filename;
 						auto str_size = WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), NULL, 0, NULL, NULL);
-						info.filename.resize(str_size);
-						WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), (char*)info.filename.data(), str_size, NULL, NULL);
-						char buf[260];
-						auto pppp = /*get_exe_path() + filepath + */info.filename;
-						pppp.resize(pppp.size() - 1);
-						auto emm = GetLongPathName(pppp.c_str(), buf, 260);
-						auto err = GetLastError();
-						switch (p->Action)
+						filename.resize(str_size);
+						WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), (char*)filename.data(), str_size, NULL, NULL);
+						if (!string_contain(filename, '~'))
 						{
-							case 0x1:
-								info.type = FileChangeAdded;
-								break;
-							case 0x2:
-								info.type = FileChangeRemoved;
-								break;
-							case 0x3:
-								info.type = FileChangeModified;
-								break;
-							case 0x4:
-								info.type = FileChangeRename;
-								break;
-							case 0x5:
-								info.type = FileChangeRename;
-								break;
+							FileChangeType type;
+							switch (p->Action)
+							{
+								case 0x1:
+									type = FileChangeAdded;
+									break;
+								case 0x2:
+									type = FileChangeRemoved;
+									break;
+								case 0x3:
+									type = FileChangeModified;
+									break;
+								case 0x4:
+									type = FileChangeRename;
+									break;
+								case 0x5:
+									type = FileChangeRename;
+									break;
+							}
+							infos.push_back({type, filename});
 						}
-						infos.push_back(info);
+
 						if (p->NextEntryOffset <= 0)
 							break;
-						p = (FILE_NOTIFY_INFORMATION*)(notify_buf + p->NextEntryOffset);
+						base += p->NextEntryOffset;
+						p = (FILE_NOTIFY_INFORMATION*)(notify_buf + base);
 					}
 					callback(infos);
 				}

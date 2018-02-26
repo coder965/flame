@@ -22,6 +22,7 @@ namespace tke
 	int get_str_line_number(const char *str);
 
 	std::string string_cut(const std::string &str, int length);
+	bool string_contain(const std::string &str, char v);
 
 	std::string translate(int srcCP, int dstCP, const std::string &src);
 	std::string japanese_to_chinese(const std::string &src);

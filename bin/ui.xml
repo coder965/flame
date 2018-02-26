@@ -1,5 +1,5 @@
 <ui>
-	<resource_explorer1/>
+	<resource_explorer/>
 	<hierarchy_window/>
 	<inspector_window/>
 	<scene_editor filename="res\scene.tks"/>
