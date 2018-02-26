@@ -597,6 +597,9 @@ int main(int argc, char** argv)
 	tke::init("../", 1280, 720, 1, true, false);
 	new App;
 	tke::app->set_window_maximized(true);
+
+	auto i = new tke::Image(5, 3, 1, 8);
+
 	tke::run();
 
 	return 0;

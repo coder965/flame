@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="tke::Image">
+    <DisplayString>{cx}x{cy}</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Rank>2</Rank>
+        <Size>($i == 0 ? cy : cx)</Size>
+        <ValuePointer>data._Mypair._Myval2</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>s

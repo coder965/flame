@@ -64,7 +64,8 @@ namespace tke
 		cx(_cx),
 		cy(_cy),
 		channel(_channel),
-		bpp(_bpp)
+		bpp(_bpp),
+		sRGB(false)
 	{
 		const auto stride = bpp / 8;
 		auto size = calc_pitch(cx * stride) * cy;
