@@ -1,2 +1,2 @@
-ADD_SUBDIRECTORY(SLOC)
-ADD_SUBDIRECTORY(editor)
+add_subdirectory(SLOC)
+add_subdirectory(editor)

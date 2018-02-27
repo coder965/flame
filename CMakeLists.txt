@@ -27,18 +27,18 @@ file(GLOB_RECURSE FLAME_SOURCE_LIST "src/flame/*.c*")
 GROUP_SRC("${FLAME_HEADER_LIST}" "src/flame" "Header")
 GROUP_SRC("${FLAME_SOURCE_LIST}" "src/flame" "Source")
 
-ADD_LIBRARY(flame  ${FLAME_HEADER_LIST} ${FLAME_SOURCE_LIST})
+add_library(flame  ${FLAME_HEADER_LIST} ${FLAME_SOURCE_LIST})
 
 target_include_directories(flame PUBLIC "src")
 
-ADD_SUBDIRECTORY(ext)
-ADD_SUBDIRECTORY(tools)
+add_subdirectory(ext)
+add_subdirectory(tools)
 
-IF(CMAKE_CL_64)
-SET(FLAME_EXT_BIN_DIR "ext/bin/x64")
-ELSE()
-SET(FLAME_EXT_BIN_DIR "ext/bin/x86")
-ENDIF()
+if(CMAKE_CL_64)
+set(FLAME_EXT_BIN_DIR "ext/bin/x64")
+else()
+set(FLAME_EXT_BIN_DIR "ext/bin/x86")
+endif()
 
 target_include_directories(flame PUBLIC "ext/vulkan")
 target_link_libraries(flame ${CMAKE_CURRENT_SOURCE_DIR}/${FLAME_EXT_BIN_DIR}/vulkan-1)
