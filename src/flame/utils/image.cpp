@@ -53,10 +53,10 @@ namespace tke
 				break;
 		}
 		bpp = FreeImage_GetBPP(dib);
-		auto s = FreeImage_GetDIBSize(dib);
-		s = calc_pitch(cx, bpp) * cy;
-		data = std::make_unique<unsigned char[]>(s);
-		memcpy(data.get(), FreeImage_GetBits(dib), s);
+		auto size = FreeImage_GetDIBSize(dib);
+		size = calc_pitch(cx, bpp) * cy;
+		data = std::make_unique<unsigned char[]>(size);
+		memcpy(data.get(), FreeImage_GetBits(dib), size);
 		FreeImage_Unload(dib);
 	}
 
