@@ -2,7 +2,7 @@
 
 #include <flame/engine/object.h>
 
-namespace tke
+namespace flame
 {
 	enum ComponentType
 	{

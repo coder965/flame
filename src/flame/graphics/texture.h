@@ -6,7 +6,7 @@
 #include <flame/utils/image.h>
 #include <flame/graphics/graphics.h>
 
-namespace tke
+namespace flame
 {
 	struct Buffer;
 

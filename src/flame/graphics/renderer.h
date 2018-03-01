@@ -10,7 +10,7 @@
 #include <flame/graphics/graphics.h>
 #include <flame/graphics/display_layer.h>
 
-namespace tke
+namespace flame
 {
 	struct CameraComponent;
 	struct Model;

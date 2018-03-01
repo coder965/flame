@@ -11,7 +11,7 @@
 #include <flame/utils/filesystem.h>
 #include <flame/math/math.h>
 
-namespace tke
+namespace flame
 {
 	struct Texture;
 }
@@ -35,7 +35,7 @@ namespace ImGui
 	};
 
 	void TextVFilted(const char* fmt, const char* filter, va_list args);
-	ImTextureID ImageID(std::shared_ptr<tke::Texture> i);
+	ImTextureID ImageID(std::shared_ptr<flame::Texture> i);
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active = false);
 	bool IconButton(const char *label, float font_scale = 1.f);
@@ -46,7 +46,7 @@ namespace ImGui
 	void EndStatusBar();
 }
 
-namespace tke
+namespace flame
 {
 	namespace ui
 	{

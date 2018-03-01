@@ -3,7 +3,7 @@
 #include <flame/engine/system.h>
 #include <flame/graphics/graphics.h>
 
-namespace tke
+namespace flame
 {
 	struct Descriptor;
 	struct Pipeline;

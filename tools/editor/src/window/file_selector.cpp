@@ -20,7 +20,7 @@ FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, const s
 		set_current_path(default_dir);
 	}
 	else
-		set_current_path(tke::get_exe_path());
+		set_current_path(flame::get_exe_path());
 }
 
 const char *drivers[] = {
@@ -49,7 +49,7 @@ void FileSelector::set_current_path(const std::string &s)
 				curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
 				path = path.parent_path();
 			}
-			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), tke::string_cut(root_path.string(), -1));
+			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), flame::string_cut(root_path.string(), -1));
 			curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), "");
 		}
 		else
@@ -71,7 +71,7 @@ void FileSelector::set_current_path(const std::string &s)
 		curr_dir.name = ICON_FA_FOLDER_O" " + str;
 	}
 
-	file_watcher = tke::add_file_watcher(tke::FileWatcherModeAll, s);
+	file_watcher = flame::add_file_watcher(flame::FileWatcherModeAll, s);
 }
 
 void FileSelector::refresh()
@@ -113,29 +113,29 @@ void FileSelector::refresh()
 
 				auto ext = it->path().extension().string();
 				const char *prefix;
-				if (tke::is_text_file(ext))
+				if (flame::is_text_file(ext))
 				{
-					i->file_type = tke::FileTypeText;
+					i->file_type = flame::FileTypeText;
 					prefix = ICON_FA_FILE_TEXT_O" ";
 				}
-				else if (tke::is_image_file(ext))
+				else if (flame::is_image_file(ext))
 				{
-					i->file_type = tke::FileTypeImage;
+					i->file_type = flame::FileTypeImage;
 					prefix = ICON_FA_FILE_IMAGE_O" ";
 				}
-				else if (tke::is_model_file(ext))
+				else if (flame::is_model_file(ext))
 				{
-					i->file_type = tke::FileTypeModel;
+					i->file_type = flame::FileTypeModel;
 					prefix = ICON_FA_FILE_O" ";
 				}
-				else if (tke::is_terrain_file(ext))
+				else if (flame::is_terrain_file(ext))
 				{
-					i->file_type = tke::FileTypeTerrain;
+					i->file_type = flame::FileTypeTerrain;
 					prefix = ICON_FA_FILE_O" ";
 				}
-				else if (tke::is_scene_file(ext))
+				else if (flame::is_scene_file(ext))
 				{
-					i->file_type = tke::FileTypeScene;
+					i->file_type = flame::FileTypeScene;
 					prefix = ICON_FA_FILE_O" ";
 				}
 				else
@@ -466,7 +466,7 @@ void FileSelector::on_right_area_show()
 }
 
 DirSelectorDialog::DirSelectorDialog() :
-	FileSelector("Dir Selector", FileSelectorOpen, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, FileSelectorNoFiles | FileSelectorNoRightArea)
+	FileSelector("Dir Selector", FileSelectorOpen, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings, FileSelectorNoFiles | FileSelectorNoRightArea)
 {
 	first_cx = 800;
 	first_cy = 600;

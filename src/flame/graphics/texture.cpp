@@ -9,7 +9,7 @@
 #include <flame/graphics/texture.h>
 #include <flame/graphics/command_buffer.h>
 
-namespace tke
+namespace flame
 {
 	Texture::Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),

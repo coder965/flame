@@ -4,7 +4,7 @@
 
 #include <flame/engine/object.h>
 
-namespace tke
+namespace flame
 {
 	struct Texture;
 	struct Framebuffer;

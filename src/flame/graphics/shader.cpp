@@ -11,7 +11,7 @@
 #include <flame/graphics/shader.h>
 #include <flame/graphics/pipeline.h>
 
-namespace tke
+namespace flame
 {
 	static std::string shader_path;
 	static std::string vk_sdk_path;

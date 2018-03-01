@@ -6,16 +6,16 @@
 #include <flame/entity/camera.h>
 #include <flame/ui/ui.h>
 
-struct ModelEditor : tke::ui::Window
+struct ModelEditor : flame::ui::Window
 {
-	std::shared_ptr<tke::Model> model;
-	tke::PlainRenderer::DrawData draw_data;
+	std::shared_ptr<flame::Model> model;
+	flame::PlainRenderer::DrawData draw_data;
 
-	tke::DisplayLayer layer;
+	flame::DisplayLayer layer;
 
-	tke::CameraComponent camera;
-	std::unique_ptr<tke::PlainRenderer> renderer;
+	flame::CameraComponent camera;
+	std::unique_ptr<flame::PlainRenderer> renderer;
 
-	ModelEditor(std::shared_ptr<tke::Model> _model);
+	ModelEditor(std::shared_ptr<flame::Model> _model);
 	virtual void on_show() override;
 };

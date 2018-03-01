@@ -9,7 +9,7 @@
 #include <flame/entity/model.h>
 #include <flame/graphics/command_buffer.h>
 
-namespace tke
+namespace flame
 {
 	CommandBuffer::CommandBuffer(VkCommandBufferLevel level)
 	{

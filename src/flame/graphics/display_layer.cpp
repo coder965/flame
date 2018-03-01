@@ -5,7 +5,7 @@
 #include <flame/graphics/renderer.h>
 #include <flame/graphics/display_layer.h>
 
-namespace tke
+namespace flame
 {
 	bool DisplayLayer::on_message(Object *sender, Message msg)
 	{

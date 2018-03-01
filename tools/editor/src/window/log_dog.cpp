@@ -42,7 +42,7 @@ struct SelectFileDialog : FileSelector
 	LogDog *dst;
 
 	SelectFileDialog(LogDog *_dst) :
-		FileSelector("Select File", FileSelectorSave, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings, 
+		FileSelector("Select File", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings, 
 			FileSelectorNoRightArea),
 		dst(_dst)
 	{

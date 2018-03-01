@@ -3,7 +3,7 @@
 #include <flame/entity/light.h>
 #include <flame/entity/sky.h>
 
-namespace tke
+namespace flame
 {
 	const char *get_sky_type_name(SkyType type)
 	{

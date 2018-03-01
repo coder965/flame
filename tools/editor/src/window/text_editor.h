@@ -2,7 +2,7 @@
 
 #include <flame/ui/ui.h>
 
-struct TextEditor : tke::ui::Window
+struct TextEditor : flame::ui::Window
 {
 	TextEditor();
 	~TextEditor();

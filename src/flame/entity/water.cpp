@@ -1,7 +1,7 @@
 #include <flame/global.h>
 #include <flame/entity/water.h>
 
-namespace tke
+namespace flame
 {
 	WaterComponent::WaterComponent() :
 		Component(ComponentTypeWater),

@@ -2,7 +2,7 @@
 
 #include <flame/global.h>
 
-namespace tke
+namespace flame
 {
 	bool only_2d = false;
 

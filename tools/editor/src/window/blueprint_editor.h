@@ -2,7 +2,7 @@
 
 #include <flame/ui/ui.h>
 
-struct BlueprintEditor : tke::ui::Window
+struct BlueprintEditor : flame::ui::Window
 {
 	struct Node
 	{

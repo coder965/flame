@@ -18,7 +18,7 @@ struct NewImageDialog : FileSelector
 	int cy = 512;
 
 	NewImageDialog() :
-		FileSelector("New Image", FileSelectorSave, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings)
+		FileSelector("New Image", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings)
 	{
 		first_cx = 800;
 		first_cy = 600;
@@ -27,7 +27,7 @@ struct NewImageDialog : FileSelector
 			if (std::experimental::filesystem::exists(s))
 				return false;
 
-			auto i = new tke::Image(cx, cy, 4, 32);
+			auto i = new flame::Image(cx, cy, 4, 32);
 			i->save(s);
 			return true;
 		};
@@ -52,7 +52,7 @@ struct NewImageDialog : FileSelector
 struct NewSceneDialog : FileSelector
 {
 	NewSceneDialog() :
-		FileSelector("New Scene", FileSelectorSave, "", tke::ui::WindowModal | tke::ui::WindowNoSavedSettings)
+		FileSelector("New Scene", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings)
 	{
 		first_cx = 800;
 		first_cy = 600;
@@ -61,19 +61,19 @@ struct NewSceneDialog : FileSelector
 			if (std::experimental::filesystem::exists(s))
 				return false;
 
-			tke::XMLDoc doc("scene");
+			flame::XMLDoc doc("scene");
 			doc.save(s);
 			return true;
 		};
 	}
 };
 
-struct App : tke::Application
+struct App : flame::Application
 {
 	App() :
-		Application(1280, 720, tke::WindowStyleFrame | tke::WindowStyleResizable, "TK Engine Editor")
+		Application(1280, 720, flame::WindowStyleFrame | flame::WindowStyleResizable, "TK Engine Editor")
 	{
-		tke::XMLDoc doc("ui", "ui.xml");
+		flame::XMLDoc doc("ui", "ui.xml");
 		if (doc.good)
 		{
 			for (auto &n : doc.children)
@@ -86,7 +86,7 @@ struct App : tke::Application
 					inspector_window = new InspectorWindow;
 				else if (n->name == "scene_editor")
 				{
-					auto s = tke::create_scene(n->first_attribute("filename")->value);
+					auto s = flame::create_scene(n->first_attribute("filename")->value);
 					if (s)
 					{
 						s->name = "scene";
@@ -100,26 +100,26 @@ struct App : tke::Application
 
 	~App()
 	{
-		tke::XMLDoc doc("ui");
+		flame::XMLDoc doc("ui");
 		if (resourceExplorer)
-			doc.add_node(new tke::XMLNode("resource_explorer"));
+			doc.add_node(new flame::XMLNode("resource_explorer"));
 		if (hierarchy_window)
-			doc.add_node(new tke::XMLNode("hierarchy_window"));
+			doc.add_node(new flame::XMLNode("hierarchy_window"));
 		if (inspector_window)
-			doc.add_node(new tke::XMLNode("inspector_window"));
+			doc.add_node(new flame::XMLNode("inspector_window"));
 		if (scene_editor)
 		{
-			auto n = new tke::XMLNode("scene_editor");
-			n->add_attribute(new tke::XMLAttribute("filename", scene_editor->scene->get_filename()));
+			auto n = new flame::XMLNode("scene_editor");
+			n->add_attribute(new flame::XMLAttribute("filename", scene_editor->scene->get_filename()));
 			doc.add_node(n);
 
-			tke::save_scene(scene_editor->scene);
+			flame::save_scene(scene_editor->scene);
 		}
 		if (SelectObject)
-			doc.add_node(new tke::XMLNode("select"));
+			doc.add_node(new flame::XMLNode("select"));
 		doc.save("ui.xml");
 
-		tke::ui::save_layout();
+		flame::ui::save_layout();
 	}
 
 	virtual void on_render() override
@@ -158,10 +158,10 @@ struct App : tke::Application
 				{
 					cx = window_cx;
 					cy = window_cy;
-					set_window_size(0, 0, window_style | tke::WindowStyleFullscreen);
+					set_window_size(0, 0, window_style | flame::WindowStyleFullscreen);
 				}
 				else
-					set_window_size(cx, cy, window_style & (~tke::WindowStyleFullscreen));
+					set_window_size(cx, cy, window_style & (~flame::WindowStyleFullscreen));
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Resource Explorer"))
@@ -230,7 +230,7 @@ struct App : tke::Application
 		ImGui::EndMainMenuBar();
 
 		static bool windows_popup_opened;
-		static tke::ui::Window *windows_popup_w;
+		static flame::ui::Window *windows_popup_w;
 		if (open_windows_popup)
 		{
 			ImGui::OpenPopup("Windows");
@@ -242,7 +242,7 @@ struct App : tke::Application
 		{
 			bool need_exit_window_popup = false;
 			ImGui::BeginChild("##list", ImVec2(300, 0), true);
-			for (auto &w : tke::ui::get_windows())
+			for (auto &w : flame::ui::get_windows())
 			{
 				if (ImGui::Selectable(w->title.c_str(), w.get() == windows_popup_w))
 					windows_popup_w = w.get();
@@ -267,7 +267,7 @@ struct App : tke::Application
 				}
 				else
 				{
-					static tke::ui::Window* target;
+					static flame::ui::Window* target;
 					if (ImGui::Button("Dock To..."))
 					{
 						target = nullptr;
@@ -278,12 +278,12 @@ struct App : tke::Application
 						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 						if (ImGui::BeginCombo("window", target ? target->title.c_str() : ""))
 						{
-							if (tke::ui::main_layout->is_empty(0))
+							if (flame::ui::main_layout->is_empty(0))
 							{
 								if (ImGui::Selectable("Main Layout", target == nullptr))
 									target = nullptr;
 							}
-							for (auto &w : tke::ui::get_windows())
+							for (auto &w : flame::ui::get_windows())
 							{
 								if (w->layout)
 								{
@@ -294,26 +294,26 @@ struct App : tke::Application
 							ImGui::EndCombo();
 						}
 						ImGui::PopStyleVar();
-						static tke::ui::DockDirection dir = tke::ui::DockCenter;
+						static flame::ui::DockDirection dir = flame::ui::DockCenter;
 						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
-						if (ImGui::BeginCombo("dir", tke::ui::get_dock_dir_name(dir)))
+						if (ImGui::BeginCombo("dir", flame::ui::get_dock_dir_name(dir)))
 						{
-							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockCenter), dir == tke::ui::DockCenter))
-								dir = tke::ui::DockCenter;
-							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockLeft), dir == tke::ui::DockLeft))
-								dir = tke::ui::DockLeft;
-							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockRight), dir == tke::ui::DockRight))
-								dir = tke::ui::DockRight;
-							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockTop), dir == tke::ui::DockTop))
-								dir = tke::ui::DockTop;
-							if (ImGui::Selectable(tke::ui::get_dock_dir_name(tke::ui::DockBottom), dir == tke::ui::DockBottom))
-								dir = tke::ui::DockBottom;
+							if (ImGui::Selectable(flame::ui::get_dock_dir_name(flame::ui::DockCenter), dir == flame::ui::DockCenter))
+								dir = flame::ui::DockCenter;
+							if (ImGui::Selectable(flame::ui::get_dock_dir_name(flame::ui::DockLeft), dir == flame::ui::DockLeft))
+								dir = flame::ui::DockLeft;
+							if (ImGui::Selectable(flame::ui::get_dock_dir_name(flame::ui::DockRight), dir == flame::ui::DockRight))
+								dir = flame::ui::DockRight;
+							if (ImGui::Selectable(flame::ui::get_dock_dir_name(flame::ui::DockTop), dir == flame::ui::DockTop))
+								dir = flame::ui::DockTop;
+							if (ImGui::Selectable(flame::ui::get_dock_dir_name(flame::ui::DockBottom), dir == flame::ui::DockBottom))
+								dir = flame::ui::DockBottom;
 							ImGui::EndCombo();
 						}
 						ImGui::PopStyleVar();
 						if (ImGui::Button("OK"))
 						{
-							if (target || tke::ui::main_layout->is_empty(0))
+							if (target || flame::ui::main_layout->is_empty(0))
 							{
 								windows_popup_w->dock(target, dir);
 								need_exit_window_popup = true;
@@ -336,7 +336,7 @@ struct App : tke::Application
 		static glm::vec4 bg_color;
 		if (open_preferences_popup)
 		{
-			bg_color = tke::ui::get_bg_color();
+			bg_color = flame::ui::get_bg_color();
 
 			ImGui::OpenPopup("Preferences");
 			ImGui::SetNextWindowSize(ImVec2(400, 300));
@@ -349,7 +349,7 @@ struct App : tke::Application
 
 			if (ImGui::Button("Ok"))
 			{
-				tke::ui::set_bg_color(bg_color);
+				flame::ui::set_bg_color(bg_color);
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
@@ -382,12 +382,12 @@ struct App : tke::Application
 
 			if (ImGui::TreeNode("Physical Device Properties"))
 			{
-				auto &p = tke::vk_physical_device_properties;
+				auto &p = flame::vk_physical_device_properties;
 				fText("api version: %d", p.apiVersion);
 				fText("driver version: %d", p.driverVersion);
 				fText("vendor ID: %d", p.vendorID);
 				fText("device ID: %d", p.deviceID);
-				fText("device type: %s", tke::vk_device_type_names[p.deviceType]);
+				fText("device type: %s", flame::vk_device_type_names[p.deviceType]);
 				fText("device name: %s", p.deviceName);
 
 				if (ImGui::TreeNode("Limits"))
@@ -519,7 +519,7 @@ struct App : tke::Application
 			}
 			if (ImGui::TreeNode("Physical Device Features"))
 			{
-				auto &f = tke::vk_physical_device_features;
+				auto &f = flame::vk_physical_device_features;
 				fText("robust buffer access: %s", f.robustBufferAccess ? "true" : "false");
 				fText("full draw index uint32: %s", f.fullDrawIndexUint32 ? "true" : "false");
 				fText("image cube array: %s", f.imageCubeArray ? "true" : "false");
@@ -587,20 +587,20 @@ struct App : tke::Application
 		ImGui::EndToolBar();
 
 		ImGui::BeginStatusBar();
-		ImGui::Text("FPS:%d", tke::FPS);
+		ImGui::Text("FPS:%d", flame::FPS);
 		ImGui::EndStatusBar();
 	}
 };
 
 int main(int argc, char** argv)
 {
-	tke::init("../", 1280, 720, 1, true, false);
+	flame::init("../", 1280, 720, 1, true, false);
 	new App;
-	tke::app->set_window_maximized(true);
+	flame::app->set_window_maximized(true);
 
-	auto i = new tke::Image(5, 3, 1, 8);
+	auto i = new flame::Image(5, 3, 1, 8);
 
-	tke::run();
+	flame::run();
 
 	return 0;
 }

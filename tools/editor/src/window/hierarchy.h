@@ -2,7 +2,7 @@
 
 #include <flame/ui/ui.h>
 
-struct HierarchyWindow : tke::ui::Window
+struct HierarchyWindow : flame::ui::Window
 {
 	HierarchyWindow();
 	~HierarchyWindow();

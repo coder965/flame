@@ -5,7 +5,7 @@
 #include <list>
 #include <functional>
 
-namespace tke
+namespace flame
 {
 	class SpareList
 	{

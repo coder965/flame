@@ -7,7 +7,7 @@
 #include <flame/graphics/renderer.h>
 #include <flame/utils/pick_up.h>
 
-namespace tke
+namespace flame
 {
 	Texture *pick_up_image = nullptr;
 	Texture *pick_up_depth_image = nullptr;

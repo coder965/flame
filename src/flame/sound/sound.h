@@ -11,7 +11,7 @@
 //
 //extern std::vector<ALuint> soundBuffers;
 //
-//namespace tke
+//namespace flame
 //{
 //	void setSoundListenerPos(const glm::vec3 &p);
 //

@@ -6,7 +6,7 @@
 
 #include <flame/math/math.h>
 
-namespace tke
+namespace flame
 {
 	int calc_pitch(int cx);
 	int calc_pitch(int cx, int bpp);

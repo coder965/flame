@@ -5,7 +5,7 @@
 #include <flame/utils/filesystem.h>
 #include "model_instance.h"
 
-namespace tke
+namespace flame
 {
 	void ModelInstanceComponent::serialize(XMLNode *dst)
 	{

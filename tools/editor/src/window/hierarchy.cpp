@@ -15,7 +15,7 @@ HierarchyWindow::~HierarchyWindow()
 	hierarchy_window = nullptr;
 }
 
-static void show_nodes(tke::Node *n)
+static void show_nodes(flame::Node *n)
 {
 	auto node_style = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 	if (n == selected.get_node())

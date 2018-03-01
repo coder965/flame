@@ -7,7 +7,7 @@
 
 #include <flame/math/math.h>
 
-namespace tke
+namespace flame
 {
 	glm::vec3 physx_u32_to_vec3(const physx::PxU32 &src);
 	glm::vec3 physx_vec3_to_vec3(const physx::PxVec3 &src);

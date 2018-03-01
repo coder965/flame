@@ -6,7 +6,7 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
-namespace tke
+namespace flame
 {
 	const VkFormat swapchain_format = VK_FORMAT_B8G8R8A8_UNORM;
 

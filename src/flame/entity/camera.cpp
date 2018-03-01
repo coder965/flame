@@ -2,7 +2,7 @@
 #include <flame/entity/node.h>
 #include <flame/entity/camera.h>
 
-namespace tke
+namespace flame
 {
 	bool CameraComponent::on_message(Object *sender, Message msg)
 	{

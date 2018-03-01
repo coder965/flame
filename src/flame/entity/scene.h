@@ -12,7 +12,7 @@ namespace physx
 	struct PxControllerManager;
 }
 
-namespace tke
+namespace flame
 {
 	struct CollisionGroup;
 

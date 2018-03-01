@@ -8,7 +8,7 @@
 //	struct PxController;
 //}
 
-namespace tke
+namespace flame
 {
 	struct Model;
 

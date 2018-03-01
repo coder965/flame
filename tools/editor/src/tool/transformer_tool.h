@@ -49,7 +49,7 @@ struct TransformerTool : Tool
 	ImVec2 window_pos;
 	ImVec2 window_size;
 
-	tke::Node *target;
+	flame::Node *target;
 
 	glm::mat4 model_matrix;
 	glm::mat4 model_matrix_inverse;
@@ -93,7 +93,7 @@ struct TransformerTool : Tool
 	ImDrawList *draw_list;
 
 	TransformerTool();
-	virtual void show(tke::CameraComponent *camera) override;
+	virtual void show(flame::CameraComponent *camera) override;
 	bool is_over();
 private:
 	ImVec2 world_to_screen(const glm::vec3 &coord, const glm::mat4 &mat);

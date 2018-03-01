@@ -4,7 +4,7 @@
 #include <flame/entity/component.h>
 #include <flame/entity/controller.h>
 
-namespace tke
+namespace flame
 {
 	enum ProjectionType
 	{

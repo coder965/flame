@@ -1,6 +1,6 @@
 #pragma once
 
-namespace tke
+namespace flame
 {
 	struct Scene;
 	struct Node;

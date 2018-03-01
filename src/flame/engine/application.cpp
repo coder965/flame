@@ -11,7 +11,7 @@
 #include <flame/ui/ui.h>
 #include <flame/entity/node.h>
 
-namespace tke
+namespace flame
 {
 	static std::list<std::function<void(int)>> _keydown_listeners;
 	static std::list<std::function<void(int)>> _keyup_listeners;

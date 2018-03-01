@@ -5,7 +5,7 @@
 #include <flame/math/math.h>
 #include <flame/graphics/graphics.h>
 
-namespace tke
+namespace flame
 {
 	struct DescriptorSetLayout;
 	struct DescriptorSet;

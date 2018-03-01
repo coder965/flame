@@ -3,7 +3,7 @@
 #include <flame/math/math.h>
 #include <flame/entity/component.h>
 
-namespace tke
+namespace flame
 {
 	enum LightType
 	{

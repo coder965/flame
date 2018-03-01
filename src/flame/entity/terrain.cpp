@@ -5,7 +5,7 @@
 #include <flame/graphics/pipeline.h>
 #include <flame/entity/terrain.h>
 
-namespace tke
+namespace flame
 {
 	TerrainComponent::TerrainComponent() :
 		Component(ComponentTypeTerrain),

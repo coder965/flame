@@ -1,6 +1,6 @@
 #include <flame/physics/physics.h>
 
-namespace tke
+namespace flame
 {
 	glm::vec3 physx_u32_to_vec3(const physx::PxU32 &src)
 	{

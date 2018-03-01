@@ -2,7 +2,7 @@
 
 #include <map>
 
-namespace tke
+namespace flame
 {
 	struct Buffer;
 	struct Texture;

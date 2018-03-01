@@ -4,7 +4,7 @@
 #include <mutex>
 #include <vector>
 
-namespace tke
+namespace flame
 {
 	void *get_hinst();
 	int get_screen_cx();

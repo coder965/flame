@@ -31,7 +31,7 @@ void InspectorWindow::on_show()
 			static bool is_folder;
 			static long long file_size;
 			static std::string file_size_text;
-			static tke::FileType file_type;
+			static flame::FileType file_type;
 			static glm::ivec2 image_file_resolution;
 			if (selected.get_filename() != filename)
 			{
@@ -52,13 +52,13 @@ void InspectorWindow::on_show()
 						file_size_text = "size: " + std::_Floating_to_string("%.2f", float(file_size) / 1024.f / 1024.f / 1024.f) + " GB";
 
 					auto ext = path.extension().string();
-					file_type = tke::get_file_type(ext);
+					file_type = flame::get_file_type(ext);
 
 					switch (file_type)
 					{
-						case tke::FileTypeImage:
+						case flame::FileTypeImage:
 						{
-							auto i = tke::get_or_create_texture(filename);
+							auto i = flame::get_or_create_texture(filename);
 							if (i)
 							{
 								image_file_resolution.x = i->get_cx();
@@ -76,7 +76,7 @@ void InspectorWindow::on_show()
 
 				switch (file_type)
 				{
-					case tke::FileTypeImage:
+					case flame::FileTypeImage:
 					{
 						ImGui::Text("resolution: %d x %d", image_file_resolution.x, image_file_resolution.y);
 						break;
@@ -92,9 +92,9 @@ void InspectorWindow::on_show()
 			{
 				switch (n->get_type())
 				{
-					case tke::NodeTypeScene:
+					case flame::NodeTypeScene:
 					{
-						auto scene = (tke::Scene*)n;
+						auto scene = (flame::Scene*)n;
 
 						auto bg_color = scene->get_bg_color();
 						if (ImGui::ColorEdit3("background color", &bg_color[0], ImGuiColorEditFlags_NoInputs))
@@ -106,28 +106,28 @@ void InspectorWindow::on_show()
 						if (ImGui::ColorEdit3("fog color", &fog_color[0], ImGuiColorEditFlags_NoInputs))
 							scene->set_fog_color(fog_color);
 
-						tke::SkyType sky_type = scene->get_sky_type();
+						flame::SkyType sky_type = scene->get_sky_type();
 						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
-						if (ImGui::BeginCombo("sky type", tke::get_sky_type_name(sky_type)))
+						if (ImGui::BeginCombo("sky type", flame::get_sky_type_name(sky_type)))
 						{
-							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypeNull), sky_type == tke::SkyTypeNull))
-								scene->set_sky_type(tke::SkyTypeNull);
-							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypeDebug), sky_type == tke::SkyTypeDebug))
-								scene->set_sky_type(tke::SkyTypeDebug);
-							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypeAtmosphereScattering), sky_type == tke::SkyTypeAtmosphereScattering))
-								scene->set_sky_type(tke::SkyTypeAtmosphereScattering);
-							if (ImGui::Selectable(tke::get_sky_type_name(tke::SkyTypePanorama), sky_type == tke::SkyTypePanorama))
-								scene->set_sky_type(tke::SkyTypePanorama);
+							if (ImGui::Selectable(flame::get_sky_type_name(flame::SkyTypeNull), sky_type == flame::SkyTypeNull))
+								scene->set_sky_type(flame::SkyTypeNull);
+							if (ImGui::Selectable(flame::get_sky_type_name(flame::SkyTypeDebug), sky_type == flame::SkyTypeDebug))
+								scene->set_sky_type(flame::SkyTypeDebug);
+							if (ImGui::Selectable(flame::get_sky_type_name(flame::SkyTypeAtmosphereScattering), sky_type == flame::SkyTypeAtmosphereScattering))
+								scene->set_sky_type(flame::SkyTypeAtmosphereScattering);
+							if (ImGui::Selectable(flame::get_sky_type_name(flame::SkyTypePanorama), sky_type == flame::SkyTypePanorama))
+								scene->set_sky_type(flame::SkyTypePanorama);
 							ImGui::EndCombo();
 						}
 						ImGui::PopStyleVar();
 
 						switch (scene->get_sky_type())
 						{
-							case tke::SkyTypeAtmosphereScattering:
+							case flame::SkyTypeAtmosphereScattering:
 							{
 								static glm::vec2 sun_dir;
-								auto as = (tke::SkyAtmosphereScattering*)scene->get_sky();
+								auto as = (flame::SkyAtmosphereScattering*)scene->get_sky();
 								if (ImGui::Button("change sun dir"))
 								{
 									ImGui::OpenPopup("Sun Dir");
@@ -157,9 +157,9 @@ void InspectorWindow::on_show()
 								}
 								break;
 							}
-							case tke::SkyTypePanorama:
+							case flame::SkyTypePanorama:
 							{
-								auto pa = (tke::SkyPanorama*)scene->get_sky();
+								auto pa = (flame::SkyPanorama*)scene->get_sky();
 								ImGui::Text("Image:%s", pa->panoImage ? pa->panoImage->filename.c_str() : "Null");
 								if (ImGui::BeginDragDropTarget())
 								{
@@ -171,8 +171,8 @@ void InspectorWindow::on_show()
 										{
 											std::experimental::filesystem::path path(filename);
 											auto ext = path.extension();
-											if (tke::is_image_file(ext.string()))
-												scene->set_pano_sky_image(tke::get_or_create_texture(filename));
+											if (flame::is_image_file(ext.string()))
+												scene->set_pano_sky_image(flame::get_or_create_texture(filename));
 										}
 									}
 									ImGui::EndDragDropTarget();
@@ -183,7 +183,7 @@ void InspectorWindow::on_show()
 
 						break;
 					}
-					case tke::NodeTypeNode:
+					case flame::NodeTypeNode:
 					{
 						auto coord = n->get_coord();
 						if (ImGui::DragFloat3("coord", &coord[0], 0.05f))
@@ -199,7 +199,7 @@ void InspectorWindow::on_show()
 						{
 							switch (c->get_type())
 							{
-								case tke::ComponentTypeController:
+								case flame::ComponentTypeController:
 								{
 									if (ImGui::TreeNode("Controller"))
 									{
@@ -211,7 +211,7 @@ void InspectorWindow::on_show()
 									}
 									break;
 								}
-								case tke::ComponentTypeCamera:
+								case flame::ComponentTypeCamera:
 								{
 									if (ImGui::TreeNode("Camera"))
 									{
@@ -219,7 +219,7 @@ void InspectorWindow::on_show()
 									}
 									break;
 								}
-								case tke::ComponentTypeLight:
+								case flame::ComponentTypeLight:
 								{
 									if (ImGui::TreeNode("Light"))
 									{
@@ -227,16 +227,16 @@ void InspectorWindow::on_show()
 									}
 									break;
 								}
-								case tke::ComponentTypeModelInstance:
+								case flame::ComponentTypeModelInstance:
 								{
 									if (ImGui::TreeNode("Model Instance"))
 									{
-										auto i = (tke::ModelInstanceComponent*)c.get();
+										auto i = (flame::ModelInstanceComponent*)c.get();
 										auto m = i->get_model();
 										ImGui::Text("model:%s", m->filename.c_str());
 										if (ImGui::TreeNode("UV"))
 										{
-											tke::Model::UV *uv = nullptr;
+											flame::Model::UV *uv = nullptr;
 											ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 											if (ImGui::BeginCombo("uv", uv ? uv->name.c_str() : ""))
 											{
@@ -358,7 +358,7 @@ void InspectorWindow::on_show()
 										}
 										if (ImGui::TreeNode("Geometries"))
 										{
-											static tke::Geometry *g;
+											static flame::Geometry *g;
 											ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 											if (ImGui::BeginCombo("##geometry", g ? g->name.c_str() : ""))
 											{
@@ -391,7 +391,7 @@ void InspectorWindow::on_show()
 										//		{
 										//			for (int i = 0; i < o->model->bones.size(); i++)
 										//			{
-										//				auto str = tke::translate(936, CP_UTF8, o->model->bones[i]->name);
+										//				auto str = flame::translate(936, CP_UTF8, o->model->bones[i]->name);
 										//				if (ImGui::Selectable(str.c_str(), i == boneID))
 										//					boneID = i;
 										//			}
@@ -404,11 +404,11 @@ void InspectorWindow::on_show()
 									}
 									break;
 								}
-								case tke::ComponentTypeTerrain:
+								case flame::ComponentTypeTerrain:
 								{
 									if (ImGui::TreeNode("Terrain"))
 									{
-										auto t = (tke::TerrainComponent*)c.get();
+										auto t = (flame::TerrainComponent*)c.get();
 
 										//	ImGui::Text("Blend Map:%s", t->blend_image ? t->blend_image->filename.c_str() : "Null");
 										//	show_material(t->materials[0].get());
@@ -422,7 +422,7 @@ void InspectorWindow::on_show()
 									}
 									break;
 								}
-								case tke::ComponentTypeWater:
+								case flame::ComponentTypeWater:
 								{
 									if (ImGui::TreeNode("Water"))
 									{

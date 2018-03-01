@@ -16,8 +16,8 @@
 
 const unsigned int ImageCount = 127;
 
-static tke::SpareList _image_list(ImageCount);
-static std::pair<std::shared_ptr<tke::Texture>, tke::Op> _image_ops[ImageCount];
+static flame::SpareList _image_list(ImageCount);
+static std::pair<std::shared_ptr<flame::Texture>, flame::Op> _image_ops[ImageCount];
 
 namespace ImGui
 {
@@ -79,14 +79,14 @@ namespace ImGui
 		TextUnformatted(g.TempBuffer, text_end);
 	}
 
-	ImTextureID ImageID(std::shared_ptr<tke::Texture> i)
+	ImTextureID ImageID(std::shared_ptr<flame::Texture> i)
 	{
 		auto index = _image_list.add(i.get());
 		if (index == -2)
 		{
 			index = i->ui_index;
-			if (_image_ops[index].second == tke::OpNeedRemove)
-				_image_ops[index].second = tke::OpKeep;
+			if (_image_ops[index].second == flame::OpNeedRemove)
+				_image_ops[index].second = flame::OpKeep;
 			return ImTextureID(index + 1);
 		}
 		else if (index == -1)
@@ -96,15 +96,15 @@ namespace ImGui
 		}
 		i->ui_index = index;
 		_image_ops[index].first = i;
-		_image_ops[index].second = tke::OpNeedUpdate;
+		_image_ops[index].second = flame::OpNeedUpdate;
 		return ImTextureID(index + 1);
 	}
 
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col)
 	{
-		auto i = tke::get_or_create_texture(filename);
+		auto i = flame::get_or_create_texture(filename);
 		if (!i)
-			i = tke::get_or_create_texture("empty.png");
+			i = flame::get_or_create_texture("empty.png");
 		assert(i);
 
 		Image(ImageID(i), size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), border_col);
@@ -112,9 +112,9 @@ namespace ImGui
 
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active)
 	{
-		auto i = tke::get_or_create_texture(filename);
+		auto i = flame::get_or_create_texture(filename);
 		if (!i)
-			i = tke::get_or_create_texture("empty.png");
+			i = flame::get_or_create_texture("empty.png");
 		assert(i);
 
 		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -176,7 +176,7 @@ namespace ImGui
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		SetNextWindowPos(ImVec2(0, menubar_height));
-		SetNextWindowSize(ImVec2(tke::app->window_cx, toolbar_height));
+		SetNextWindowSize(ImVec2(flame::app->window_cx, toolbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		return Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 	}
@@ -194,8 +194,8 @@ namespace ImGui
 	bool BeginStatusBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		SetNextWindowPos(ImVec2(0, tke::app->window_cy - statusbar_height));
-		SetNextWindowSize(ImVec2(tke::app->window_cx, statusbar_height));
+		SetNextWindowPos(ImVec2(0, flame::app->window_cy - statusbar_height));
+		SetNextWindowSize(ImVec2(flame::app->window_cx, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 		Text("%d", _statusbar_int_debug);
@@ -211,7 +211,7 @@ namespace ImGui
 	}
 }
 
-namespace tke
+namespace flame
 {
 	namespace ui
 	{

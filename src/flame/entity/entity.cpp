@@ -1,7 +1,7 @@
 #include <flame/entity/entity.h>
 #include <flame/entity/model.h>
 
-namespace tke
+namespace flame
 {
 	void init_entity()
 	{

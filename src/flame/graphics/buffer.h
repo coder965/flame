@@ -2,7 +2,7 @@
 
 #include <flame/graphics/graphics.h>
 
-namespace tke
+namespace flame
 {
 	enum BufferType
 	{

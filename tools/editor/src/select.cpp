@@ -16,7 +16,7 @@ void Select::reset()
 	select_filename.clear();
 }
 
-void Select::operator=(tke::Node *n)
+void Select::operator=(flame::Node *n)
 {
 	if (type == SelectTypeNode)
 	{
@@ -41,12 +41,12 @@ void Select::operator=(const std::string &s)
 	select_filename = s;
 }
 
-tke::Node *Select::get_node()
+flame::Node *Select::get_node()
 {
 	if (type == SelectTypeNode)
 	{
 		if (followings.size() > 0)
-			return (tke::Node*)followings.front();
+			return (flame::Node*)followings.front();
 		type = SelectTypeNull;
 	}
 	return nullptr;

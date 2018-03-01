@@ -1,7 +1,7 @@
 #include <flame/global.h>
 #include <flame/entity/node.h>
 
-namespace tke
+namespace flame
 {
 	bool Node::broadcast(Object *src, Message msg)
 	{

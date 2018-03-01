@@ -1,7 +1,7 @@
 #include <flame/entity/node.h>
 #include <flame/entity/component.h>
 
-namespace tke
+namespace flame
 {
 	Component::Component(ComponentType _type) :
 		type(_type)

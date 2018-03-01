@@ -1,6 +1,6 @@
 #include <flame/engine/object.h>
 
-namespace tke
+namespace flame
 {
 	Object::~Object()
 	{

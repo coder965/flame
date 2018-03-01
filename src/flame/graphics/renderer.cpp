@@ -19,7 +19,7 @@
 #include <flame/entity/scene.h>
 #include <flame/engine/application.h>
 
-namespace tke
+namespace flame
 {
 	int Resolution::x() const
 	{

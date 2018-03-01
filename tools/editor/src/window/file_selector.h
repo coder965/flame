@@ -21,7 +21,7 @@ enum FileSelectorCreateFlag
 	FileSelectorTreeMode = 1 << 2
 };
 
-struct FileSelector : tke::ui::Window
+struct FileSelector : flame::ui::Window
 {
 	bool io_mode;
 	bool enable_file;
@@ -48,7 +48,7 @@ struct FileSelector : tke::ui::Window
 
 	struct FileItem : ItemData
 	{
-		tke::FileType file_type = tke::FileTypeUnknown;
+		flame::FileType file_type = flame::FileTypeUnknown;
 
 		virtual ~FileItem() {}
 	};
@@ -63,10 +63,10 @@ struct FileSelector : tke::ui::Window
 
 	std::function<bool(std::string)> callback;
 
-	std::unique_ptr<tke::FileWatcherHandler> file_watcher;
+	std::unique_ptr<flame::FileWatcherHandler> file_watcher;
 
 	FileSelector(const std::string &_title, FileSelectorIo io, const std::string &_default_dir = "", 
-		unsigned int window_flags = tke::ui::WindowCreateFlagNull, unsigned int flags = FileSelectorCreateFlagNull);
+		unsigned int window_flags = flame::ui::WindowCreateFlagNull, unsigned int flags = FileSelectorCreateFlagNull);
 	void set_current_path(const std::string &s);
 	void refresh();
 	virtual void on_show() override;
