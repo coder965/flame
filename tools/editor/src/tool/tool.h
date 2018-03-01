@@ -5,6 +5,6 @@
 struct Tool
 {
 	Tool();
-	virtual void show(tke::CameraComponent *camera) = 0;
+	virtual void show(flame::CameraComponent *camera) = 0;
 	virtual ~Tool() {};
 };

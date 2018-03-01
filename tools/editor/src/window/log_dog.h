@@ -2,7 +2,7 @@
 
 #include <flame/ui/ui.h>
 
-struct LogDog : tke::ui::Window
+struct LogDog : flame::ui::Window
 {
 	struct Column
 	{

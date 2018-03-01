@@ -11,7 +11,7 @@ namespace std
 	namespace filesystem = experimental::filesystem;
 }
 
-namespace tke
+namespace flame
 {
 	void skip(std::ifstream &file, int byte_count);
 

@@ -3,7 +3,7 @@
 #include <flame/utils/filesystem.h>
 #include <flame/utils/image.h>
 
-namespace tke
+namespace flame
 {
 	int calc_pitch(int cx)
 	{

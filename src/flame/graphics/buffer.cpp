@@ -3,7 +3,7 @@
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/command_buffer.h>
 
-namespace tke
+namespace flame
 {
 	Buffer::Buffer(BufferType _type, int _size) :
 		type(_type),

@@ -1,6 +1,6 @@
 #include <flame/math/math.h>
 
-namespace tke
+namespace flame
 {
 	float linear_depth_ortho(float z, float depth_near, float depth_far)
 	{

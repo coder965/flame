@@ -8,7 +8,7 @@
 
 #include <flame/graphics/graphics.h>
 
-namespace tke
+namespace flame
 {
 	void add_keydown_listener(const std::function<void(int)> &e);
 	void add_keyup_listener(const std::function<void(int)> &e);

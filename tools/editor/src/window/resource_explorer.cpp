@@ -59,21 +59,21 @@ void ResourceExplorer::on_right_area_show()
 						auto f = (FileItem*)d;
 						switch (f->file_type)
 						{
-							case tke::FileTypeImage:
+							case flame::FileTypeImage:
 							{
-								new ImageEditor(tke::get_or_create_texture(f->filename));
+								new ImageEditor(flame::get_or_create_texture(f->filename));
 								break;
 							}
-							case tke::FileTypeModel:
+							case flame::FileTypeModel:
 							{
-								auto m = tke::getModel(f->filename);
+								auto m = flame::getModel(f->filename);
 								if (m)
 									new ModelEditor(m);
 								break;
 							}
-							case tke::FileTypeScene:
+							case flame::FileTypeScene:
 							{
-								auto s = tke::create_scene(f->filename);
+								auto s = flame::create_scene(f->filename);
 								if (s)
 								{
 									s->name = "scene";
@@ -105,13 +105,13 @@ void ResourceExplorer::on_right_area_show()
 			else
 			{
 				auto f = (FileItem*)d;
-				if (f->file_type == tke::FileTypeImage)
+				if (f->file_type == flame::FileTypeImage)
 					img_name = f->filename;
 				else
 					img_name = "file.png";
 			}
 			{
-				auto t = tke::get_or_create_texture(img_name);
+				auto t = flame::get_or_create_texture(img_name);
 				if (t)
 					draw_list->AddImage(ImGui::ImageID(t), pos, pos + img_size);
 			}

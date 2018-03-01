@@ -1,6 +1,6 @@
 #include <flame/resource/resource.h>
 
-namespace tke
+namespace flame
 {
 	Resource::Resource(Resource *_parent)
 	{

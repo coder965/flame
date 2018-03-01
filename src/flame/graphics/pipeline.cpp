@@ -8,7 +8,7 @@
 #include <flame/resource/resource.h>
 #include <flame/graphics/pipeline.h>
 
-namespace tke
+namespace flame
 {
 	bool operator==(const PushConstantRange &lhs, const PushConstantRange &rhs)
 	{

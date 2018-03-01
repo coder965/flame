@@ -1,6 +1,6 @@
 #include <flame/container/spare_list.h>
 
-namespace tke
+namespace flame
 {
 	SpareList::SpareList(unsigned int _capacity) :
 		capacity(_capacity)

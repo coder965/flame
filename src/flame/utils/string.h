@@ -17,7 +17,7 @@ struct EnsureConst
 
 #include <string>
 
-namespace tke
+namespace flame
 {
 	int get_str_line_number(const char *str);
 

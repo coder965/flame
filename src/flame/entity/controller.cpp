@@ -2,7 +2,7 @@
 #include <flame/entity/node.h>
 #include <flame/entity/controller.h>
 
-namespace tke
+namespace flame
 {
 	ControllerComponent::ControllerComponent() :
 		Component(ComponentTypeController)

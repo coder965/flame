@@ -7,7 +7,7 @@
 #include <flame/engine/object.h>
 #include <flame/entity/component.h>
 
-namespace tke
+namespace flame
 {
 	enum NodeType
 	{

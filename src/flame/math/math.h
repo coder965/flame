@@ -62,7 +62,7 @@ bool inline operator >= (glm::vec3 a, float b)
 
 #define TK_EPS (0.000001f)
 
-namespace tke
+namespace flame
 {
 	inline bool is_same(const float a, const float b)
 	{

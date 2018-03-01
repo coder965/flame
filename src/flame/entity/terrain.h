@@ -5,7 +5,7 @@
 
 namespace physx { struct PxRigidActor; }
 
-namespace tke
+namespace flame
 {
 	struct TerrainVertex
 	{

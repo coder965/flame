@@ -4,7 +4,7 @@
 #include <flame/graphics/texture.h>
 #include <flame/graphics/renderpass.h>
 
-namespace tke
+namespace flame
 {
 	Framebuffer::~Framebuffer()
 	{

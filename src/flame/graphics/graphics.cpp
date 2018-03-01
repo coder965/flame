@@ -14,7 +14,7 @@
 #include <flame/graphics/sampler.h>
 #include <flame/graphics/renderer.h>
 
-namespace tke
+namespace flame
 {
 	void Device::waitIdle()
 	{

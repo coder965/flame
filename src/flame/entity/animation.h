@@ -5,7 +5,7 @@
 
 #include <flame/math/math.h>
 
-namespace tke
+namespace flame
 {
 	struct KeyFrame
 	{

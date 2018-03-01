@@ -3,7 +3,7 @@
 #include <string>
 #include <list>
 
-namespace tke
+namespace flame
 {
 	enum Message
 	{

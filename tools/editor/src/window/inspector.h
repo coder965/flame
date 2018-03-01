@@ -2,7 +2,7 @@
 
 #include <flame/ui/ui.h>
 
-struct InspectorWindow : tke::ui::Window
+struct InspectorWindow : flame::ui::Window
 {
 	InspectorWindow();
 	~InspectorWindow();

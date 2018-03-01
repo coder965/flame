@@ -28,40 +28,40 @@ void SceneEditor::on_delete()
 
 SceneEditor *scene_editor = nullptr;
 
-SceneEditor::SceneEditor(tke::Scene *_scene) :
+SceneEditor::SceneEditor(flame::Scene *_scene) :
 	Window("Scene"),
 	layer(true),
 	curr_tool(nullptr)
 {
-	camera_node = new tke::Node(tke::NodeTypeNode);
-	camera = new tke::CameraComponent;
+	camera_node = new flame::Node(flame::NodeTypeNode);
+	camera = new flame::CameraComponent;
 	camera_node->add_component(camera);
 	camera->set_length(2.f);
-	tke::app->root_node->add_child(camera_node);
+	flame::app->root_node->add_child(camera_node);
 
-	plain_renderer = std::make_unique<tke::PlainRenderer>();
-	defe_renderer = std::make_unique<tke::DeferredRenderer>(false, &layer);
+	plain_renderer = std::make_unique<flame::PlainRenderer>();
+	defe_renderer = std::make_unique<flame::DeferredRenderer>(false, &layer);
 
 	scene = _scene;
-	tke::app->root_node->add_child(scene);
+	flame::app->root_node->add_child(scene);
 
-	physx_vertex_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeImmediateVertex, 16);
-	lines_renderer = std::make_unique<tke::LinesRenderer>();
+	physx_vertex_buffer = std::make_unique<flame::Buffer>(flame::BufferTypeImmediateVertex, 16);
+	lines_renderer = std::make_unique<flame::LinesRenderer>();
 
 	transformerTool = std::make_unique<TransformerTool>();
 }
 
 SceneEditor::~SceneEditor()
 {
-	tke::app->root_node->remove_child(camera_node);
-	tke::app->root_node->remove_child(scene);
+	flame::app->root_node->remove_child(camera_node);
+	flame::app->root_node->remove_child(scene);
 	scene_editor = nullptr;
 }
 
 void SceneEditor::on_file_menu()
 {
 	if (ImGui::MenuItem("Save", "Ctrl+S"))
-		tke::save_scene(scene);
+		flame::save_scene(scene);
 }
 
 void SceneEditor::on_menu_bar()
@@ -74,19 +74,19 @@ void SceneEditor::on_menu_bar()
 			;
 		if (ImGui::BeginMenu("Light"))
 		{
-			tke::LightType light_type = tke::LightType(-1);
+			flame::LightType light_type = flame::LightType(-1);
 			if (ImGui::MenuItem("Parallax"))
-				light_type = tke::LightTypeParallax;
+				light_type = flame::LightTypeParallax;
 			if (ImGui::MenuItem("Point"))
-				light_type = tke::LightTypePoint;
+				light_type = flame::LightTypePoint;
 			if (ImGui::MenuItem("Spot"))
-				light_type = tke::LightTypeSpot;
+				light_type = flame::LightTypeSpot;
 			if (light_type != -1)
 			{
-				auto n = new tke::Node(tke::NodeTypeNode);
+				auto n = new flame::Node(flame::NodeTypeNode);
 				n->name = "Light";
 				n->set_coord(camera->get_target());
-				auto i = new tke::LightComponent;
+				auto i = new flame::LightComponent;
 				i->set_type(light_type);
 				n->add_component(i);
 				scene->add_child(n);
@@ -110,13 +110,13 @@ void SceneEditor::on_menu_bar()
 			{
 				if (ImGui::MenuItem(basic_model_names[i]))
 				{
-					auto m = tke::getModel(basic_model_names[i]);
+					auto m = flame::getModel(basic_model_names[i]);
 					if (m)
 					{
-						auto n = new tke::Node(tke::NodeTypeNode);
+						auto n = new flame::Node(flame::NodeTypeNode);
 						n->name = "Object";
 						n->set_coord(camera->get_target());
-						auto i = new tke::ModelInstanceComponent;
+						auto i = new flame::ModelInstanceComponent;
 						i->set_model(m);
 						n->add_component(i);
 						scene->add_child(n);
@@ -126,17 +126,17 @@ void SceneEditor::on_menu_bar()
 			ImGui::Separator();
 			if (ImGui::MenuItem("Terrain"))
 			{
-				auto n = new tke::Node(tke::NodeTypeNode);
+				auto n = new flame::Node(flame::NodeTypeNode);
 				n->set_coord(camera->get_target());
-				auto t = new tke::TerrainComponent;
+				auto t = new flame::TerrainComponent;
 				n->add_component(t);
 				scene->add_child(n);
 			}
 			if (ImGui::MenuItem("Water"))
 			{
-				auto n = new tke::Node(tke::NodeTypeNode);
+				auto n = new flame::Node(flame::NodeTypeNode);
 				n->set_coord(camera->get_target());
-				auto w = new tke::WaterComponent;
+				auto w = new flame::WaterComponent;
 				n->add_component(w);
 				scene->add_child(n);
 			}
@@ -218,8 +218,8 @@ void SceneEditor::on_show()
 	size.y -= ImGui::GetFrameHeightWithSpacing() + ImGui::GetItemRectSize().y + 1;
 	size.x = glm::max(size.x, 1.f);
 	size.y = glm::max(size.y, 1.f);
-	if (tke::resolution.x() != size.x || tke::resolution.y() != size.y)
-		tke::resolution.set(size.x, size.y);
+	if (flame::resolution.x() != size.x || flame::resolution.y() != size.y)
+		flame::resolution.set(size.x, size.y);
 
 	auto pos = ImGui::GetCursorScreenPos();
 
@@ -249,9 +249,9 @@ void SceneEditor::on_show()
 	pos += ImVec2(0, 20);
 
 	ImGui::SetCursorScreenPos(pos);
-	ImGui::InvisibleButton("canvas", ImVec2(tke::resolution.x(), tke::resolution.y()));
+	ImGui::InvisibleButton("canvas", ImVec2(flame::resolution.x(), flame::resolution.y()));
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImGui::ImageID(layer.image), pos, pos + ImVec2(tke::resolution.x(), tke::resolution.y()));
+	draw_list->AddImage(ImGui::ImageID(layer.image), pos, pos + ImVec2(flame::resolution.x(), flame::resolution.y()));
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
@@ -260,15 +260,15 @@ void SceneEditor::on_show()
 			strcpy(filename, (char*)payload->Data);
 			std::experimental::filesystem::path path(filename);
 			auto ext = path.extension();
-			if (tke::is_model_file(ext.string()))
+			if (flame::is_model_file(ext.string()))
 			{
-				auto m = tke::getModel(filename);
+				auto m = flame::getModel(filename);
 				if (m)
 				{
-					auto n = new tke::Node(tke::NodeTypeNode);
+					auto n = new flame::Node(flame::NodeTypeNode);
 					n->name = "Object";
 					n->set_coord(camera->get_target());
-					auto i = new tke::ModelInstanceComponent;
+					auto i = new flame::ModelInstanceComponent;
 					i->set_model(m);
 					n->add_component(i);
 					scene->add_child(n);
@@ -288,37 +288,37 @@ void SceneEditor::on_show()
 
 	if (ImGui::IsItemHovered())
 	{
-		if (tke::app->mouseDispX != 0 || tke::app->mouseDispY != 0)
+		if (flame::app->mouseDispX != 0 || flame::app->mouseDispY != 0)
 		{
 			if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 			{
-				auto distX = (float)tke::app->mouseDispX / (float)tke::resolution.x();
-				auto distY = (float)tke::app->mouseDispY / (float)tke::resolution.y();
-				if (tke::app->key_states[VK_SHIFT].pressing && tke::app->mouse_button[2].pressing)
+				auto distX = (float)flame::app->mouseDispX / (float)flame::resolution.x();
+				auto distY = (float)flame::app->mouseDispY / (float)flame::resolution.y();
+				if (flame::app->key_states[VK_SHIFT].pressing && flame::app->mouse_button[2].pressing)
 					camera->move_by_cursor(distX, distY);
-				else if (tke::app->key_states[VK_CONTROL].pressing && tke::app->mouse_button[2].pressing)
+				else if (flame::app->key_states[VK_CONTROL].pressing && flame::app->mouse_button[2].pressing)
 					camera->scroll(distX);
-				else if (tke::app->mouse_button[2].pressing)
+				else if (flame::app->mouse_button[2].pressing)
 					camera->rotate_by_cursor(distX, distY);
 			}
 		}
-		if (tke::app->mouseScroll != 0)
-			camera->scroll(tke::app->mouseScroll);
-		if (tke::app->mouse_button[0].just_down)
+		if (flame::app->mouseScroll != 0)
+			camera->scroll(flame::app->mouseScroll);
+		if (flame::app->mouse_button[0].just_down)
 		{
-			if (!tke::app->key_states[VK_SHIFT].pressing && !tke::app->key_states[VK_CONTROL].pressing)
+			if (!flame::app->key_states[VK_SHIFT].pressing && !flame::app->key_states[VK_CONTROL].pressing)
 			{
-				auto x = (tke::app->mouseX - 0) / tke::resolution.x();
-				auto y = (tke::app->mouseY - 0) / tke::resolution.y();
+				auto x = (flame::app->mouseX - 0) / flame::resolution.x();
+				auto y = (flame::app->mouseY - 0) / flame::resolution.y();
 				if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 				{
-					//tke::PlainRenderer::DrawData draw_data;
-					//draw_data.mode = tke::PlainRenderer::mode_just_color;
+					//flame::PlainRenderer::DrawData draw_data;
+					//draw_data.mode = flame::PlainRenderer::mode_just_color;
 					//for (int i = 0; i < scene->objects.size(); i++)
 					//{
 					//	auto object = scene->objects[i].get();
 
-					//	tke::PlainRenderer::DrawData::ObjData obj_data;
+					//	flame::PlainRenderer::DrawData::ObjData obj_data;
 					//	obj_data.mat = object->get_matrix();
 					//	obj_data.color = glm::vec4((i + 1) / 255.f, 0.f, 0.f, 0.f);
 					//	obj_data.fill_with_model(object->model.get());
@@ -326,8 +326,8 @@ void SceneEditor::on_show()
 					//		obj_data.bone_buffer = object->animationComponent->bone_buffer.get();
 					//	draw_data.obj_data.push_back(obj_data);
 					//}
-					//auto index = tke::pick_up(x, y, std::bind(
-					//	&tke::PlainRenderer::do_render,
+					//auto index = flame::pick_up(x, y, std::bind(
+					//	&flame::PlainRenderer::do_render,
 					//	plain_renderer.get(), std::placeholders::_1, camera, &draw_data));
 					//if (index == 0)
 					//	selected.reset();
@@ -343,13 +343,13 @@ void SceneEditor::on_show()
 
 	//{
 	//	auto n = selected.get_node();
-	//	if (n && n->get_type() == tke::NodeTypeObject)
+	//	if (n && n->get_type() == flame::NodeTypeObject)
 	//	{
-	//		auto obj = (tke::Object*)n;
-	//		obj->setState(tke::Controller::State::forward, tke::keyStates[VK_UP].pressing);
-	//		obj->setState(tke::Controller::State::backward, tke::keyStates[VK_DOWN].pressing);
-	//		obj->setState(tke::Controller::State::left, tke::keyStates[VK_LEFT].pressing);
-	//		obj->setState(tke::Controller::State::right, tke::keyStates[VK_RIGHT].pressing);
+	//		auto obj = (flame::Object*)n;
+	//		obj->setState(flame::Controller::State::forward, flame::keyStates[VK_UP].pressing);
+	//		obj->setState(flame::Controller::State::backward, flame::keyStates[VK_DOWN].pressing);
+	//		obj->setState(flame::Controller::State::left, flame::keyStates[VK_LEFT].pressing);
+	//		obj->setState(flame::Controller::State::right, flame::keyStates[VK_RIGHT].pressing);
 	//	}
 	//}
 
@@ -405,19 +405,19 @@ void SceneEditor::on_show()
 		//if (lineCount > 0)
 		//{
 		//	auto vertex_count = lineCount * 2;
-		//	auto size = vertex_count * sizeof(tke::LinesRenderer::Vertex);
-		//	auto vtx_dst = (tke::LinesRenderer::Vertex*)physx_vertex_buffer->map(0, size);
+		//	auto size = vertex_count * sizeof(flame::LinesRenderer::Vertex);
+		//	auto vtx_dst = (flame::LinesRenderer::Vertex*)physx_vertex_buffer->map(0, size);
 		//	for (int i = 0; i < lineCount; i++)
 		//	{
 		//		auto &line = rb.getLines()[i];
-		//		vtx_dst[0].position = tke::physx_vec3_to_vec3(line.pos0);
-		//		vtx_dst[0].color = tke::physx_u32_to_vec3(line.color0);
-		//		vtx_dst[1].position = tke::physx_vec3_to_vec3(line.pos1);
-		//		vtx_dst[1].color = tke::physx_u32_to_vec3(line.color1);
+		//		vtx_dst[0].position = flame::physx_vec3_to_vec3(line.pos0);
+		//		vtx_dst[0].color = flame::physx_u32_to_vec3(line.color0);
+		//		vtx_dst[1].position = flame::physx_vec3_to_vec3(line.pos1);
+		//		vtx_dst[1].color = flame::physx_u32_to_vec3(line.color1);
 		//		vtx_dst += 2;
 		//	}
 		//	physx_vertex_buffer->unmap();
-		//	tke::LinesRenderer::DrawData data;
+		//	flame::LinesRenderer::DrawData data;
 		//	data.vertex_buffer = physx_vertex_buffer.get();
 		//	data.vertex_count = vertex_count;
 		//	lines_renderer->render(layer.framebuffer.get(), false, camera, &data);
@@ -428,12 +428,12 @@ void SceneEditor::on_show()
 	if (showSelectedWireframe)
 	{
 		//auto n = selected.get_node();
-		//if (n && n->get_type() == tke::NodeTypeObject)
+		//if (n && n->get_type() == flame::NodeTypeObject)
 		//{
-		//	auto obj = (tke::Object*)n;
-		//	tke::PlainRenderer::DrawData data;
-		//	data.mode = tke::PlainRenderer::mode_wireframe;
-		//	tke::PlainRenderer::DrawData::ObjData obj_data;
+		//	auto obj = (flame::Object*)n;
+		//	flame::PlainRenderer::DrawData data;
+		//	data.mode = flame::PlainRenderer::mode_wireframe;
+		//	flame::PlainRenderer::DrawData::ObjData obj_data;
 		//	obj_data.mat = obj->get_matrix();
 		//	obj_data.color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 		//	obj_data.fill_with_model(obj->model.get());
@@ -446,7 +446,7 @@ void SceneEditor::on_show()
 	}
 }
 
-void SceneEditor::save(tke::XMLNode *n)
+void SceneEditor::save(flame::XMLNode *n)
 {
-	n->add_attribute(new tke::XMLAttribute("filename", scene->get_filename()));
+	n->add_attribute(new flame::XMLAttribute("filename", scene->get_filename()));
 }

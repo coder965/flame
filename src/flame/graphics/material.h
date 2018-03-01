@@ -6,7 +6,7 @@
 #include <flame/math/math.h>
 #include <flame/container/spare_list.h>
 
-namespace tke
+namespace flame
 {
 	enum { MaxMaterialCount = 256 };
 	enum { MaxMaterialImageCount = 256 };

@@ -3,7 +3,7 @@
 #include <memory>
 #include <functional>
 
-namespace tke
+namespace flame
 {
 	struct Texture;
 	struct Framebuffer;

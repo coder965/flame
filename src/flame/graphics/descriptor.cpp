@@ -5,7 +5,7 @@
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 
-namespace tke
+namespace flame
 {
 	bool operator==(const DescriptorSetLayoutBinding &lhs, const DescriptorSetLayoutBinding &rhs)
 	{

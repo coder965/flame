@@ -3,7 +3,7 @@
 #include <flame/global.h>
 #include <flame/graphics/renderpass.h>
 
-namespace tke
+namespace flame
 {
 	VkAttachmentDescription colorAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp)
 	{

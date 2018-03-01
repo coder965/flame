@@ -1,7 +1,7 @@
 #include <flame/utils/utils.h>
 #include <flame/utils/pick_up.h>
 
-namespace tke
+namespace flame
 {
 	void init_utils()
 	{

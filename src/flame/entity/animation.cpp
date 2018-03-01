@@ -8,7 +8,7 @@
 #include <flame/entity/model.h>
 #include <flame/entity/animation.h>
 
-namespace tke
+namespace flame
 {
 	KeyFrame *AnimationTrack::new_keyframe()
 	{
@@ -325,7 +325,7 @@ namespace tke
 				}
 
 				auto data = &bone_data[t.first];
-				data->rotation = tke::quaternion_to_mat3(glm::normalize((1.f - beta) *
+				data->rotation = flame::quaternion_to_mat3(glm::normalize((1.f - beta) *
 					left_keyframe->quaternion + beta * right_keyframe->quaternion));
 				data->coord = left_keyframe->coord + (right_keyframe->coord - 
 					right_keyframe->coord) * beta;

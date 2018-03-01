@@ -12,7 +12,7 @@
 #include <flame/entity/water.h>
 #include <flame/entity/scene.h>
 
-namespace tke
+namespace flame
 {
 	static const float gravity = 9.81f;
 
@@ -571,7 +571,7 @@ namespace tke
 		auto s = new Scene;
 		s->set_filename(filename);
 
-		tke::XMLDoc at("scene", filename);
+		flame::XMLDoc at("scene", filename);
 
 		_load_node(&at, s);
 

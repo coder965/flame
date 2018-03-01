@@ -4,7 +4,7 @@
 
 #include <flame/graphics/graphics.h>
 
-namespace tke
+namespace flame
 {
 	VkAttachmentDescription colorAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
 	VkAttachmentDescription depthAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);

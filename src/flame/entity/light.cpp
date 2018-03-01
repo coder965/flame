@@ -2,7 +2,7 @@
 #include <flame/utils/filesystem.h>
 #include <flame/entity/light.h>
 
-namespace tke
+namespace flame
 {
 	std::string get_light_type_name(LightType type)
 	{

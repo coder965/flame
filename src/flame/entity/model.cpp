@@ -17,7 +17,7 @@
 #include <flame/entity/animation.h>
 #include <flame/physics/physics.h>
 
-namespace tke
+namespace flame
 {
 	bool ModelVertex::operator==(const ModelVertex &right)
 	{

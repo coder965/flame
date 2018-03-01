@@ -2,7 +2,7 @@
 
 #include <flame/graphics/synchronization.h>
 
-namespace tke
+namespace flame
 {
 	VkFence createFence()
 	{

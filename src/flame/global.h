@@ -31,7 +31,7 @@ size_t TK_GET_ADDRESS(std::function<T(U...)> f)
 	return (size_t)*fnPointer;
 }
 
-namespace tke
+namespace flame
 {
 	typedef unsigned char uchar;
 	typedef unsigned short ushort;

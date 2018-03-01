@@ -3,7 +3,7 @@
 
 #include <flame/utils/string.h>
 
-namespace tke
+namespace flame
 {
 	int get_str_line_number(const char *str)
 	{

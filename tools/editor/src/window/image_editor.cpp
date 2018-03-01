@@ -6,14 +6,14 @@
 
 static int _magic_number = 0;
 
-ImageEditor::ImageEditor(std::shared_ptr<tke::Texture> _texture) :
-	Window(_texture->filename != "" ? _texture->filename : "Image - " + std::to_string(_magic_number++), tke::ui::WindowHasMenu | tke::ui::WindowNoSavedSettings)
+ImageEditor::ImageEditor(std::shared_ptr<flame::Texture> _texture) :
+	Window(_texture->filename != "" ? _texture->filename : "Image - " + std::to_string(_magic_number++), flame::ui::WindowHasMenu | flame::ui::WindowNoSavedSettings)
 {
 	first_cx = 800;
 	first_cy = 600;
 
 	texture = _texture;
-	staging_buffer = std::make_unique<tke::Buffer>(tke::BufferTypeStaging, texture->get_size());
+	staging_buffer = std::make_unique<flame::Buffer>(flame::BufferTypeStaging, texture->get_size());
 	texture->copy_to_buffer(staging_buffer.get());
 }
 
@@ -23,7 +23,7 @@ void ImageEditor::on_show()
 	if (ImGui::BeginMenu("File"))
 	{
 		if (ImGui::MenuItem("Save"))
-			/*tke::save_image_file(image->filename, image->levels[0], image->bpp)*/;
+			/*flame::save_image_file(image->filename, image->levels[0], image->bpp)*/;
 		ImGui::EndMenu();
 	}
 	if (ImGui::BeginMenu("Filter"))
@@ -31,7 +31,7 @@ void ImageEditor::on_show()
 		if (ImGui::MenuItem("Signed Distance Field"))
 		{
 			auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
-			//tke::create_and_save_image_distance_transform(pixel, texture->get_cy(), texture->get_cx(), 0, texture->bpp / 8, "sdf.png");
+			//flame::create_and_save_image_distance_transform(pixel, texture->get_cy(), texture->get_cx(), 0, texture->bpp / 8, "sdf.png");
 			staging_buffer->unmap();
 		}
 
@@ -75,10 +75,10 @@ void ImageEditor::on_show()
 	draw_list->AddImage(ImGui::ImageID(texture), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
-		if (tke::app->mouse_button[0].pressing && penId != -1)
+		if (flame::app->mouse_button[0].pressing && penId != -1)
 		{
-			auto x = tke::app->mouseX - image_pos.x;
-			auto y = tke::app->mouseY - image_pos.y;
+			auto x = flame::app->mouseX - image_pos.x;
+			auto y = flame::app->mouseY - image_pos.y;
 
 			auto pixel = (unsigned char*)staging_buffer->map(texture->get_linear_offset(x, y), texture->bpp / 8);
 			switch (penId)

@@ -7,7 +7,7 @@
 #include <flame/utils/string.h>
 #include <flame/engine/system.h>
 
-namespace tke
+namespace flame
 {
 	void *get_hinst()
 	{

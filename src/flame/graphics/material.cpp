@@ -6,7 +6,7 @@
 #include <flame/graphics/sampler.h>
 #include <flame/graphics/material.h>
 
-namespace tke
+namespace flame
 {
 	struct MaterialShaderStruct
 	{

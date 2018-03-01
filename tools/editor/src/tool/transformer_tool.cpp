@@ -69,7 +69,7 @@ bool TransformerTool::is_over()
 
 ImVec2 TransformerTool::world_to_screen(const glm::vec3 &coord, const glm::mat4 &mat)
 {
-	auto v = tke::transform(coord, mat);
+	auto v = flame::transform(coord, mat);
 	return window_pos + (ImVec2(v.x, v.y) / 2.f + ImVec2(0.5f, 0.5f)) * window_size;
 }
 
@@ -103,7 +103,7 @@ void TransformerTool::compute_tripod_axis_and_visibility(int axis_index, glm::ve
 
 float TransformerTool::compute_angle_on_plan()
 {
-	const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
+	const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
 	auto local_pos = glm::normalize(ray_origin + ray_vector * len - model_position);
 
 	auto perpendicular_vector = glm::normalize(glm::cross(rotation_vector_source, glm::vec3(translation_plane)));
@@ -170,7 +170,7 @@ int TransformerTool::get_move_type( glm::vec3 *hit_proportion)
 
 		const auto plan_normal = (i + 2) % 3;
 
-		const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, tke::plane(model_position, direction[plan_normal]));
+		const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, flame::plane(model_position, direction[plan_normal]));
 		auto pos_on_plane = ray_origin + ray_vector * len;
 
 		const auto dx = glm::dot(dir_plane_x, (pos_on_plane - model_position) / screen_factor);
@@ -201,9 +201,9 @@ int TransformerTool::get_rotate_type()
 
 	for (auto i = 0; i < 3 && type == NONE; i++)
 	{
-		auto pickup_plan = tke::plane(model_position, plan_normals[i]);
+		auto pickup_plan = flame::plane(model_position, plan_normals[i]);
 
-		const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, pickup_plan);
+		const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, pickup_plan);
 		auto local_pos = ray_origin + ray_vector * len - model_position;
 
 		if (glm::dot(glm::normalize(local_pos), ray_vector) > FLT_EPSILON)
@@ -233,12 +233,12 @@ int TransformerTool::get_scale_type()
 		glm::vec3 dir_plane_x, dir_plane_y;
 		bool below_axis_limit, below_plane_limit;
 		compute_tripod_axis_and_visibility(i, dir_plane_x, dir_plane_y, below_axis_limit, below_plane_limit);
-		dir_plane_x = tke::transform(dir_plane_x, model_matrix);
-		dir_plane_y = tke::transform(dir_plane_y, model_matrix);
+		dir_plane_x = flame::transform(dir_plane_x, model_matrix);
+		dir_plane_y = flame::transform(dir_plane_y, model_matrix);
 
 		const auto planNormal = (i + 2) % 3;
 
-		const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, tke::plane(model_position, direction[planNormal]));
+		const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, flame::plane(model_position, direction[planNormal]));
 		auto pos_on_plan = ray_origin + ray_vector * len;
 
 		const auto dx = glm::dot(dir_plane_x, (pos_on_plan - model_position) / screen_factor);
@@ -260,7 +260,7 @@ void TransformerTool::draw_hatched_axis(const glm::vec3 &axis)
 	}
 }
 
-void TransformerTool::show(tke::CameraComponent *camera)
+void TransformerTool::show(flame::CameraComponent *camera)
 {
 	if (!target)
 		return;
@@ -279,7 +279,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 	if (mode == LOCAL)
 	{
 		model_matrix = model_source;
-		tke::ortho_normalize(model_matrix);
+		flame::ortho_normalize(model_matrix);
 	}
 	else
 		model_matrix = glm::translate(model_position);
@@ -294,8 +294,8 @@ void TransformerTool::show(tke::CameraComponent *camera)
 
 		ImVec2 mo = ImVec2((io.MousePos - window_pos) / window_size) * 2.f - ImVec2(1.f, 1.f);
 
-		ray_origin = tke::transform(glm::vec3(mo.x, mo.y, -1.f), proj_view_inverse);
-		ray_vector = glm::normalize(tke::transform(glm::vec3(mo.x, mo.y, 1.f), proj_view_inverse) - ray_origin);
+		ray_origin = flame::transform(glm::vec3(mo.x, mo.y, -1.f), proj_view_inverse);
+		ray_vector = glm::normalize(flame::transform(glm::vec3(mo.x, mo.y, 1.f), proj_view_inverse) - ray_origin);
 	}
 
 	screen_factor = 0.1f * (proj_view * glm::vec4(model_position, 1.f)).w;
@@ -314,7 +314,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 				if (using_)
 				{
 					ImGui::CaptureMouseFromApp();
-					const float len = tke::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
+					const float len = flame::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
 					auto new_pos = ray_origin + ray_vector * len;
 
 					auto new_origin = new_pos - relative_origin * screen_factor;
@@ -333,11 +333,11 @@ void TransformerTool::show(tke::CameraComponent *camera)
 						if (apply_rotation_localy)
 						{
 							auto model_source_normalized = model_source;
-							tke::ortho_normalize(model_source_normalized);
+							flame::ortho_normalize(model_source_normalized);
 							auto model_source_normalized_inverse = glm::inverse(model_source_normalized);
-							cumulative_delta = tke::transform(cumulative_delta, model_source_normalized_inverse);
+							cumulative_delta = flame::transform(cumulative_delta, model_source_normalized_inverse);
 							compute_snap(cumulative_delta, translate_snap);
-							cumulative_delta = tke::transform(cumulative_delta, model_source_normalized);
+							cumulative_delta = flame::transform(cumulative_delta, model_source_normalized);
 						}
 						else
 							compute_snap(cumulative_delta, translate_snap);
@@ -361,8 +361,8 @@ void TransformerTool::show(tke::CameraComponent *camera)
 						using_ = true;
 						this->type = (TransType)type;
 						const glm::vec3 move_plan_normal[] = { model_matrix[1], model_matrix[2], model_matrix[0], model_matrix[2], model_matrix[0], model_matrix[1], -camera_dir };
-						translation_plane = tke::plane(model_position, move_plan_normal[type - MOVE_X]);
-						const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
+						translation_plane = flame::plane(model_position, move_plan_normal[type - MOVE_X]);
+						const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
 						translation_plane_origin = ray_origin + ray_vector * len;
 						matrix_origin = model_position;
 
@@ -390,11 +390,11 @@ void TransformerTool::show(tke::CameraComponent *camera)
 						const glm::vec3 rotate_plan_normal[] = { model_matrix[0], model_matrix[1], model_matrix[2], -camera_dir };
 
 						if (apply_rotation_localy)
-							translation_plane = tke::plane(model_position, rotate_plan_normal[type - ROTATE_X]);
+							translation_plane = flame::plane(model_position, rotate_plan_normal[type - ROTATE_X]);
 						else
-							translation_plane = tke::plane(model_source[3], direction_unary[type - ROTATE_X]);
+							translation_plane = flame::plane(model_source[3], direction_unary[type - ROTATE_X]);
 
-						const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
+						const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
 						auto local_pos = ray_origin + ray_vector * len - model_position;
 						rotation_vector_source = glm::normalize(local_pos);
 						rotation_angle_origin = compute_angle_on_plan();
@@ -411,7 +411,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 						compute_snap(&rotation_angle, snap_in_radian);
 					}
 
-					auto rotation_axis_local_space = glm::normalize(tke::transform(glm::vec3(translation_plane), model_matrix_inverse));
+					auto rotation_axis_local_space = glm::normalize(flame::transform(glm::vec3(translation_plane), model_matrix_inverse));
 
 					auto delta_rotation = glm::rotate(rotation_angle - rotation_angle_origin, rotation_axis_local_space);
 					rotation_angle_origin = rotation_angle;
@@ -440,8 +440,8 @@ void TransformerTool::show(tke::CameraComponent *camera)
 						this->type = (TransType)type;
 						const glm::vec3 move_plane_normal[] = { model_matrix[1], model_matrix[2], model_matrix[0], model_matrix[2], model_matrix[1], model_matrix[0], -camera_dir };
 
-						translation_plane = tke::plane(model_position, move_plane_normal[type - SCALE_X]);
-						const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
+						translation_plane = flame::plane(model_position, move_plane_normal[type - SCALE_X]);
+						const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
 						translation_plane_origin = ray_origin + ray_vector * len;
 						matrix_origin = model_position;
 						scale = glm::vec3(1.f);
@@ -454,7 +454,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 				if (using_)
 				{
 					ImGui::CaptureMouseFromApp();
-					const auto len = tke::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
+					const auto len = flame::ray_intersect_plane(ray_origin, ray_vector, translation_plane);
 					auto new_pos = ray_origin + ray_vector * len;
 					auto new_origin = new_pos - relative_origin * screen_factor;
 					auto delta = new_origin - model_position;
@@ -571,7 +571,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 		}
 		case ROTATE:
 		{
-			auto camera_to_model_normalized = tke::transform(glm::normalize(model_position - camera_position), model_matrix_inverse);
+			auto camera_to_model_normalized = flame::transform(glm::normalize(model_position - camera_position), model_matrix_inverse);
 
 			radius_square_center = screen_rotate_size * window_size.y;
 			for (auto axis = 0; axis < 3; axis++)
@@ -605,7 +605,7 @@ void TransformerTool::show(tke::CameraComponent *camera)
 				{
 					auto ng = rotation_angle * ((float)(i - 1) / (float)(half_circle_segment_count - 1));
 					auto rotate_vector_matrix = glm::rotate(ng, glm::vec3(translation_plane));
-					auto pos = tke::transform(rotation_vector_source, rotate_vector_matrix);
+					auto pos = flame::transform(rotation_vector_source, rotate_vector_matrix);
 					pos *= screen_factor;
 					circle_pos[i] = world_to_screen(pos + model_position, proj_view);
 				}

@@ -2,7 +2,7 @@
 
 #include <flame/entity/component.h>
 
-namespace tke
+namespace flame
 {
 	class WaterComponent : public Component
 	{

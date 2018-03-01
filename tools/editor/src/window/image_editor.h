@@ -4,11 +4,11 @@
 #include <flame/graphics/texture.h>
 #include <flame/ui/ui.h>
 
-struct ImageEditor : tke::ui::Window
+struct ImageEditor : flame::ui::Window
 {
-	std::shared_ptr<tke::Texture> texture;
-	std::shared_ptr<tke::Buffer> staging_buffer;
+	std::shared_ptr<flame::Texture> texture;
+	std::shared_ptr<flame::Buffer> staging_buffer;
 
-	ImageEditor(std::shared_ptr<tke::Texture> _texture);
+	ImageEditor(std::shared_ptr<flame::Texture> _texture);
 	virtual void on_show() override;
 };

@@ -2,7 +2,7 @@
 
 #include <flame/graphics/sampler.h>
 
-namespace tke
+namespace flame
 {
 	VkSampler plainSampler;
 	VkSampler plainUnnormalizedSampler;
