@@ -18,7 +18,8 @@ namespace flame
 		return calc_pitch(cx * (bpp / 8));
 	}
 
-	Image::Image(const std::string &filename)
+	Image::Image(const std::string &filename) :
+		own_data(true)
 	{
 		auto fif = FIF_UNKNOWN;
 		fif = FreeImage_GetFileType(filename.c_str());
@@ -55,25 +56,37 @@ namespace flame
 		bpp = FreeImage_GetBPP(dib);
 		auto size = FreeImage_GetDIBSize(dib);
 		size = calc_pitch(cx, bpp) * cy;
-		data = std::make_unique<unsigned char[]>(size);
-		memcpy(data.get(), FreeImage_GetBits(dib), size);
+		data = new unsigned char[size];
+		memcpy(data, FreeImage_GetBits(dib), size);
 		FreeImage_Unload(dib);
 	}
 
-	Image::Image(int _cx, int _cy, int _channel, int _bpp, unsigned char *_data) :
+	Image::Image(int _cx, int _cy, int _channel, int _bpp, unsigned char *_data, bool _own_data) :
 		cx(_cx),
 		cy(_cy),
 		channel(_channel),
 		bpp(_bpp),
-		sRGB(false)
+		sRGB(false),
+		own_data(_own_data)
 	{
 		const auto stride = bpp / 8;
 		auto size = calc_pitch(cx * stride) * cy;
-		data = std::make_unique<unsigned char[]>(size);
-		if (_data)
-			memcpy(data.get(), _data, size);
+		if (own_data)
+		{
+			data = new unsigned char[size];
+			if (_data)
+				memcpy(data, _data, size);
+			else
+				memset(data, 0, size);
+		}
 		else
-			memset(data.get(), 0, size);
+			data = _data;
+	}
+
+	Image::~Image()
+	{
+		if (own_data)
+			delete[]data;
 	}
 
 	void Image::clear(float color)
@@ -99,7 +112,7 @@ namespace flame
 	void Image::save(const std::string &filename)
 	{
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		auto dib = FreeImage_ConvertFromRawBits(data.get(), cx, cy, calc_pitch(cx * (bpp / 8)), bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
+		auto dib = FreeImage_ConvertFromRawBits(data, cx, cy, calc_pitch(cx * (bpp / 8)), bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
 		FreeImage_Save(fif, dib, filename.c_str());
 		FreeImage_Unload(dib);
 	}
@@ -112,7 +125,7 @@ namespace flame
 		auto temp = std::make_unique<unsigned int[]>(cx * cy);
 		for (auto y = 0; y < cy; y++)
 		{
-			auto line = data.get() + y * pitch;
+			auto line = data + y * pitch;
 
 			for (auto i = 0; i < cx; i++)
 			{

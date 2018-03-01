@@ -217,7 +217,7 @@ namespace flame
 		{
 			auto icon = std::make_unique<Image>("ico.png");
 			wcex.hIcon = CreateIcon(wcex.hInstance, icon->cx, icon->cy, 1,
-				icon->bpp, nullptr, icon->data.get());
+				icon->bpp, nullptr, icon->data);
 		}
 		else
 			wcex.hIcon = 0;

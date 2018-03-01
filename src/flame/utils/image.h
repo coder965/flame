@@ -18,10 +18,12 @@ namespace flame
 		int channel;
 		int bpp;
 		bool sRGB;
-		std::unique_ptr<unsigned char[]> data;
+		unsigned char *data;
+		bool own_data;
 
 		Image(const std::string &filename);
-		Image(int _cx, int _cy, int _channel, int _bpp, unsigned char *_data = nullptr);
+		Image(int _cx, int _cy, int _channel, int _bpp, unsigned char *_data = nullptr, bool _own_data = true);
+		~Image();
 		void clear(float color);
 		void clear(glm::vec2 color);
 		void clear(glm::vec3 color);

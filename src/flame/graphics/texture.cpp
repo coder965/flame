@@ -373,54 +373,67 @@ namespace flame
 		{
 			case VK_FORMAT_R8_UNORM:
 				type = TypeColor;
+				channel = 1;
 				bpp = 8;
 				break;
 			case VK_FORMAT_R16_UNORM:
 				type = TypeColor;
+				channel = 1;
 				bpp = 16;
 				break;
 			case VK_FORMAT_R8G8B8A8_UNORM:
 				type = TypeColor;
+				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_R8G8B8A8_SRGB:
 				type = TypeColor;
+				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_B8G8R8A8_UNORM:
 				type = TypeColor;
+				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_B8G8R8A8_SRGB:
 				type = TypeColor;
+				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_R16G16B16A16_SFLOAT:
 				type = TypeColor;
+				channel = 4;
 				bpp = 64;
 				break;
 			case VK_FORMAT_R16G16B16A16_UNORM:
 				type = TypeColor;
+				channel = 4;
 				bpp = 64;
 				break;
 			case VK_FORMAT_D16_UNORM:
 				type = TypeDepth;
+				channel = 1;
 				bpp = 16;
 				break;
 			case VK_FORMAT_D32_SFLOAT:
 				type = TypeDepth;
+				channel = 1;
 				bpp = 32;
 				break;
 			case VK_FORMAT_D16_UNORM_S8_UINT:
 				type = TypeDepthStencil;
+				channel = 1;
 				bpp = 24;
 				break;
 			case VK_FORMAT_D24_UNORM_S8_UINT:
 				type = TypeDepthStencil;
+				channel = 1;
 				bpp = 32;
 				break;
 			case VK_FORMAT_D32_SFLOAT_S8_UINT:
 				type = TypeDepthStencil;
+				channel = 1;
 				bpp = 40;
 				break;
 		}
@@ -665,7 +678,7 @@ namespace flame
 
 			t = std::make_shared<Texture>(image->cx, image->cy,
 				_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			t->fill_data(0, image->data.get());
+			t->fill_data(0, image->data);
 			t->levels[0]->pitch = calc_pitch(image->cx, image->bpp);
 			t->bpp = image->bpp;
 			t->sRGB = sRGB;

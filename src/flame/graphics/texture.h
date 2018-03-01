@@ -43,6 +43,7 @@ namespace flame
 		VkImageViewType view_type;
 		VkImageLayout layout;
 
+		int channel;
 		int bpp;
 		std::vector<std::unique_ptr<TextureLevel>> levels;
 		int layer;

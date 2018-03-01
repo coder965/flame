@@ -3,6 +3,7 @@
 #include <flame/graphics/command_buffer.h>
 
 #include "image_editor.h"
+#include "file_selector.h"
 
 static int _magic_number = 0;
 
@@ -22,8 +23,38 @@ void ImageEditor::on_show()
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
+		auto do_save = false;
+		auto need_filename_popup = false;
 		if (ImGui::MenuItem("Save"))
-			/*flame::save_image_file(image->filename, image->levels[0], image->bpp)*/;
+		{
+			do_save = true;
+			if (texture->filename == "")
+				need_filename_popup = true;
+		}
+		if (ImGui::MenuItem("Save As"))
+		{
+			do_save = true;
+			need_filename_popup = true;
+		}
+		if (do_save)
+		{
+			auto fun_save = [&](const std::string &filename) {
+				auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
+				flame::Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, pixel, false);
+				img.save(filename);
+				staging_buffer->unmap();
+				return true;
+			};
+			if (need_filename_popup)
+			{
+				auto dialog = new FileSelector("Save Image", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings);
+				dialog->first_cx = 800;
+				dialog->first_cy = 600;
+				dialog->callback = fun_save;
+			}
+			else
+				fun_save(texture->filename);
+		}
 		ImGui::EndMenu();
 	}
 	if (ImGui::BeginMenu("Filter"))
