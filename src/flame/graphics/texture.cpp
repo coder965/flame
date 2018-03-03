@@ -11,6 +11,42 @@
 
 namespace flame
 {
+	VkFormat get_texture_format(int bpp, int channel, bool sRGB)
+	{
+		switch (channel)
+		{
+			case 0:
+				switch (bpp)
+				{
+					case 8:
+						return VK_FORMAT_R8_UNORM;
+				}
+				break;
+			case 1:
+				switch (bpp)
+				{
+					case 8:
+						return VK_FORMAT_R8_UNORM;
+					case 16:
+						return VK_FORMAT_R16_UNORM;
+				}
+				break;
+			case 3:
+				// vk do not support 3 channels
+				break;
+			case 4:
+				switch (bpp)
+				{
+					case 32:
+						if (sRGB)
+							return VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
+						else
+							return VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
+				}
+		}
+		return VK_FORMAT_UNDEFINED;
+	}
+
 	Texture::Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
 		view_type(VK_IMAGE_VIEW_TYPE_2D),
@@ -454,42 +490,6 @@ namespace flame
 		return i;
 	}
 
-	static VkFormat _get_texture_format(int bpp, int channel, bool sRGB)
-	{
-		switch (channel)
-		{
-			case 0:
-				switch (bpp)
-				{
-					case 8:
-						return VK_FORMAT_R8_UNORM;
-				}
-				break;
-			case 1:
-				switch (bpp)
-				{
-					case 8:
-						return VK_FORMAT_R8_UNORM;
-					case 16:
-						return VK_FORMAT_R16_UNORM;
-				}
-				break;
-			case 3:
-				// vk do not support 3 channels
-				break;
-			case 4:
-				switch (bpp)
-				{
-					case 32:
-						if (sRGB)
-							return VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
-						else
-							return VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
-				}
-		}
-		return VK_FORMAT_UNDEFINED;
-	}
-
 	static std::map<unsigned int, std::weak_ptr<Texture>> _images;
 
 	std::shared_ptr<Texture> get_or_create_texture(const std::string &filename)
@@ -654,7 +654,7 @@ namespace flame
 				case gli::gl::TYPE_UINT16_A1RGB5_GTC:
 					assert(0); // WIP
 			}
-			auto _format = _get_texture_format(bpp, channel, sRGB);
+			auto _format = get_texture_format(bpp, channel, sRGB);
 			assert(_format != VK_FORMAT_UNDEFINED);
 
 			t = std::make_shared<Texture>(_Texture.extent().x, _Texture.extent().y,
@@ -673,7 +673,7 @@ namespace flame
 
 			auto sRGB = std::filesystem::exists(filename + ".srgb") || image->sRGB;
 
-			auto _format = _get_texture_format(image->bpp, image->channel, sRGB);
+			auto _format = get_texture_format(image->bpp, image->channel, sRGB);
 			assert(_format != VK_FORMAT_UNDEFINED);
 
 			t = std::make_shared<Texture>(image->cx, image->cy,

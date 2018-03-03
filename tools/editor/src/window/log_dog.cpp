@@ -1,7 +1,7 @@
 #include <regex>
 
 #include <flame/global.h>
-#include "file_selector.h"
+#include <flame/ui/ui.h>
 #include "log_dog.h"
 
 LogDog::Column::Column() :
@@ -37,13 +37,13 @@ LogDog::~LogDog()
 	log_dog = nullptr;
 }
 
-struct SelectFileDialog : FileSelector
+struct SelectFileDialog : flame::ui::FileSelector
 {
 	LogDog *dst;
 
 	SelectFileDialog(LogDog *_dst) :
-		FileSelector("Select File", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings, 
-			FileSelectorNoRightArea),
+		FileSelector("Select File", flame::ui::FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings,
+			flame::ui::FileSelectorNoRightArea),
 		dst(_dst)
 	{
 		first_cx = 800;

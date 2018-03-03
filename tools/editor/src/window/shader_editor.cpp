@@ -1,7 +1,7 @@
 #include "shader_editor.h"
 
 ShaderEditor::ShaderEditor() :
-	FileSelector("Shader Editor", FileSelectorOpen, "../shader")
+	FileSelector("Shader Editor", flame::ui::FileSelectorOpen, "../shader")
 {
 	splitter.size[0] = 300;
 }

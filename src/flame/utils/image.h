@@ -17,6 +17,7 @@ namespace flame
 		int cy;
 		int channel;
 		int bpp;
+		int pitch;
 		bool sRGB;
 		unsigned char *data;
 		bool own_data;
@@ -28,8 +29,9 @@ namespace flame
 		void clear(glm::vec2 color);
 		void clear(glm::vec3 color);
 		void clear(glm::vec4 color);
+		void copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y);
 		void save(const std::string &filename);
 
-		Image *create_distance_transform(int offset);
+		std::unique_ptr<Image> create_distance_transform(int offset);
 	};
 }

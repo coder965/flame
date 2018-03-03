@@ -13,5 +13,4 @@ layout(location = 0) out vec4 fColor;
 void main()
 {
 	fColor = inColor * texture(images[inID], inUV);
-	//fColor = vec4(1.0);
 }

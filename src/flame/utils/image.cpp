@@ -66,6 +66,7 @@ namespace flame
 		cy(_cy),
 		channel(_channel),
 		bpp(_bpp),
+		pitch(calc_pitch(cx, bpp)),
 		sRGB(false),
 		own_data(_own_data)
 	{
@@ -109,6 +110,15 @@ namespace flame
 		assert(channel == 4);
 	}
 
+	void Image::copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y)
+	{
+		for (auto j = 0; j < cy; j++)
+		{
+			for (auto i = 0; i < cx; i++)
+				dst->data[(dst_y + j) * dst->pitch + dst_x + i] = data[(src_y + j) * pitch + src_x + i];
+		}
+	}
+
 	void Image::save(const std::string &filename)
 	{
 		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
@@ -117,7 +127,7 @@ namespace flame
 		FreeImage_Unload(dib);
 	}
 
-	Image* Image::create_distance_transform(int offset)
+	std::unique_ptr<Image> Image::create_distance_transform(int offset)
 	{
 		auto bound = 0U;	
 		const auto stride = bpp / 8;
@@ -137,12 +147,10 @@ namespace flame
 						auto dist = glm::abs(ii - i);
 						dist *= dist;
 						if (dist < _m)
-						{
 							_m = dist;
-							temp[y * cx + i] = dist;
-						}
 					}
 				}
+				temp[y * cx + i] = _m;
 			}
 		}
 		for (auto x = 0; x < cx; x++)
@@ -154,22 +162,19 @@ namespace flame
 				{
 					auto dist = glm::abs(ii - i);
 					dist *= dist;
-					dist += temp[i * cx + x];
+					dist += temp[ii * cx + x];
 					if (dist < _m)
-					{
 						_m = dist;
-						temp[i * cx + x] = dist;
-						if (dist > bound)
-							bound = dist;
-					}
 				}
+				temp[i * cx + x] = _m;
+				if (_m > bound)
+					bound = _m;
 			}
 		}
-		auto i = new Image(cx, cy, 1, 8);
-		auto alpha = new unsigned char(cx * cy);
+		auto i = std::make_unique<Image>(cx, cy, 1, 8, nullptr, true);
 		auto total_size = cx * cy;
-		for (auto i = 0; i < total_size; i++)
-			alpha[i] = (temp[i] / bound) * 255.f;
+		for (auto j = 0; j < total_size; j++)
+			i->data[j] = (1.f - (float)temp[j] / bound) * 255.f;
 		return i;
 	}
 }

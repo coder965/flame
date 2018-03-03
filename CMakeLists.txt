@@ -68,10 +68,10 @@ target_link_libraries(flame spirv-cross-cpp)
 target_link_libraries(flame spirv-cross-glsl)
 
 add_custom_target(copy_dlls 
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Bin/vc15win32/PhysX3CommonDEBUG_x86.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Bin/vc15win32/PhysX3DEBUG_x86.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ext/Physx-3.4/PxShared/bin/vc15win32/PxFoundationDEBUG_x86.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ext/bin/x86/FreeImage.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Bin/vc15win32/PhysX3CommonDEBUG_x86.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Bin/vc15win32/PhysX3DEBUG_x86.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/ext/Physx-3.4/PxShared/bin/vc15win32/PxFoundationDEBUG_x86.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/ext/bin/x86/FreeImage.dll ${CMAKE_CURRENT_SOURCE_DIR}/bin
 )
 
 add_dependencies(flame copy_dlls)

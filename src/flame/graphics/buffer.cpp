@@ -107,6 +107,8 @@ namespace flame
 
 	void *Buffer::map(int offset, int _size)
 	{
+		if (_size == 0)
+			_size = size;
 		void *map;
 		vk_device.mtx.lock();
 		auto res = vkMapMemory(vk_device.v, memory, offset, _size, 0, &map);

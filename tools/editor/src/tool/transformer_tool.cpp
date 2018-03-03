@@ -260,7 +260,7 @@ void TransformerTool::draw_hatched_axis(const glm::vec3 &axis)
 	}
 }
 
-void TransformerTool::show(flame::CameraComponent *camera)
+void TransformerTool::show(glm::vec2 _window_pos, glm::vec2 _window_size, flame::CameraComponent *camera)
 {
 	if (!target)
 		return;
@@ -271,8 +271,10 @@ void TransformerTool::show(flame::CameraComponent *camera)
 
 	auto &io = ImGui::GetIO();
 
-	window_pos = ImGui::GetWindowPos();
-	window_size = ImGui::GetWindowSize();
+	window_pos = ImVec2(_window_pos.x, _window_pos.y);
+	window_size = ImVec2(_window_size.x, _window_size.y);
+
+	draw_list->PushClipRect(window_pos, window_pos + window_size);
 
 	model_position = target->get_world_coord();
 	model_source = target->get_world_matrix();
@@ -668,4 +670,6 @@ void TransformerTool::show(flame::CameraComponent *camera)
 			break;
 		}
 	}
+
+	draw_list->PopClipRect();
 }

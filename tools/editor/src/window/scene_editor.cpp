@@ -250,8 +250,9 @@ void SceneEditor::on_show()
 
 	ImGui::SetCursorScreenPos(pos);
 	ImGui::InvisibleButton("canvas", ImVec2(flame::resolution.x(), flame::resolution.y()));
-	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImGui::ImageID(layer.image), pos, pos + ImVec2(flame::resolution.x(), flame::resolution.y()));
+	auto draw_list = ImGui::GetWindowDrawList();
+	auto canvas_size = ImVec2(flame::resolution.x(), flame::resolution.y());
+	draw_list->AddImage(ImGui::ImageID(layer.image), pos, pos + canvas_size);
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))
@@ -283,7 +284,7 @@ void SceneEditor::on_show()
 		transformerTool->target = selected.get_node();
 		if (transformerTool->target == scene)
 			transformerTool->target = nullptr;
-		transformerTool->show(camera);
+		transformerTool->show(glm::vec2(pos.x, pos.y), glm::vec2(canvas_size.x, canvas_size.y), camera);
 	}
 
 	if (ImGui::IsItemHovered())

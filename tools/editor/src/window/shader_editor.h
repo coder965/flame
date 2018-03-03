@@ -1,6 +1,6 @@
 #pragma once
 
-#include "file_selector.h"
+#include <flame/ui/ui.h>
 
 struct Shader
 {
@@ -8,7 +8,7 @@ struct Shader
 	std::string name;
 };
 
-struct ShaderEditor : FileSelector
+struct ShaderEditor : flame::ui::FileSelector
 {
 	std::vector<std::unique_ptr<Shader>> shaders;
 

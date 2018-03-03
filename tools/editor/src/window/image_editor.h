@@ -4,11 +4,12 @@
 #include <flame/graphics/texture.h>
 #include <flame/ui/ui.h>
 
-struct ImageEditor : flame::ui::Window
+struct ImageEditor : flame::ui::ImageViewer
 {
-	std::shared_ptr<flame::Texture> texture;
-	std::shared_ptr<flame::Buffer> staging_buffer;
+	int penID;
 
 	ImageEditor(std::shared_ptr<flame::Texture> _texture);
-	virtual void on_show() override;
+	virtual void on_menu_bar() override;
+	virtual void on_top_area() override;
+	virtual void on_mouse_overing_image(ImVec2 image_pos) override;
 };

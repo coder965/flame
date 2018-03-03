@@ -26,6 +26,8 @@ namespace flame
 		VkImageView v;
 	};
 
+	VkFormat get_texture_format(int bpp, int channel, bool sRGB);
+
 	struct Texture
 	{
 		enum Type

@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <vector>
+#include <memory>
 
 namespace flame
 {
@@ -53,4 +54,6 @@ namespace flame
 	std::unique_ptr<FileWatcherHandler> add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback = nullptr);
 
 	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line);
+
+	std::unique_ptr<unsigned char[]> read_process_memory(void *process, void *address, int size);
 }
