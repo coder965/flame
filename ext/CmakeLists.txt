@@ -47,3 +47,8 @@ set_target_properties(spirv-cross-cpp PROPERTIES FOLDER "ext/spirv_cross")
 set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ext/spirv_cross") 
 set_target_properties(spirv-cross-hlsl PROPERTIES FOLDER "ext/spirv_cross") 
 set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ext/spirv_cross") 
+
+add_subdirectory(msdfgen)
+set_target_properties(lib_msdfgen PROPERTIES FOLDER "ext/msdfgen") 
+set_target_properties(msdfgen PROPERTIES FOLDER "ext/msdfgen") 
+target_include_directories(lib_msdfgen PUBLIC "")

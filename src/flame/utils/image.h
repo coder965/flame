@@ -31,7 +31,5 @@ namespace flame
 		void clear(glm::vec4 color);
 		void copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y);
 		void save(const std::string &filename);
-
-		std::unique_ptr<Image> create_distance_transform(int offset);
 	};
 }

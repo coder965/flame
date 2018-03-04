@@ -14,8 +14,10 @@
 #include <flame/engine/system.h>
 #include <flame/engine/application.h>
 #include <flame/ui/ui.h>
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb_truetype.h>
+#include <msdfgen.h>
+#include <msdfgen-ext.h>
+//#define STB_TRUETYPE_IMPLEMENTATION
+//#include <stb_truetype.h>
 
 const unsigned int ImageCount = 127;
 
@@ -1291,6 +1293,9 @@ namespace flame
 
 		static Pipeline *pipeline_ui;
 		static Pipeline *pipeline_sdf_text;
+		static const char *sdf_text_chars = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		static int sdf_text_char_count = strlen(sdf_text_chars);
+		static int sdf_text_size = 32;
 		struct SdfTextDrawCommand
 		{
 			std::string text;
@@ -1384,29 +1389,50 @@ namespace flame
 			io.Fonts->TexID = (void*)0; // image index
 			updateDescriptorSets(&pipeline_ui->descriptor_set->imageWrite(0, 0, font_image, colorSampler));
 
-			auto ttf_data = get_file_content("c:/windows/fonts/arialbd.ttf");
-			stbtt_fontinfo font_info;
-			stbtt_InitFont(&font_info, (unsigned char*)ttf_data.first.get(), stbtt_GetFontOffsetForIndex((unsigned char*)ttf_data.first.get(), 0));
+			auto ft_library = msdfgen::initializeFreetype();
+			auto ttf_data = msdfgen::loadFont(ft_library, "c:/windows/fonts/arialbd.ttf");
+			//auto ttf_data = get_file_content("c:/windows/fonts/arialbd.ttf");
+			//stbtt_fontinfo font_info;
+			//stbtt_InitFont(&font_info, (unsigned char*)ttf_data.first.get(), stbtt_GetFontOffsetForIndex((unsigned char*)ttf_data.first.get(), 0));
 			auto i_c = 0;
-			auto text = "0123456789abcdefghijklmnopqrstuvwxyz";
-			Image sdf_total(32 * 36, 32, 1, 8, nullptr, true);
-			for (auto i_c = 0; i_c < 36; i_c++)
+			Image sdf_total(sdf_text_size * sdf_text_char_count, sdf_text_size, 4, 32, nullptr, true);
+			for (auto i_c = 0; i_c < sdf_text_char_count; i_c++)
 			{
-				int w, h;
-				auto bitmap = stbtt_GetCodepointBitmap(&font_info, 0, stbtt_ScaleForPixelHeight(&font_info, 32), text[i_c], &w, &h, 0, 0);
-				Image glyph_img(32, 32, 1, 8, nullptr, true);
-				auto x = (32 - w) / 2;
-				auto y = (32 - h) / 2;
-				for (auto j = 0; j < h; j++) 
+				msdfgen::Shape shape;
+				if (msdfgen::loadGlyph(shape, ttf_data, sdf_text_chars[i_c]))
 				{
-					for (auto i = 0; i < w; i++)
-						glyph_img.data[(y + j) * 32 + x + i] = bitmap[j * w + i];
+					shape.normalize();
+					msdfgen::edgeColoringSimple(shape, 3.0);
+					msdfgen::Bitmap<msdfgen::FloatRGB> msdf(sdf_text_size, sdf_text_size);
+					msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, msdfgen::Vector2(4.0, 4.0));
+					for (auto j = 0; j < sdf_text_size; j++)
+					{
+						for (auto i = 0; i < sdf_text_size; i++)
+						{
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 0] = glm::clamp(msdf(i, j).r * 255.f, 0.f, 255.f);
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 1] = glm::clamp(msdf(i, j).g * 255.f, 0.f, 255.f);
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 2] = glm::clamp(msdf(i, j).b * 255.f, 0.f, 255.f);
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 3] = 255;
+						}
+					}
 				}
-				stbtt_FreeBitmap(bitmap, nullptr);
-				auto sdf = glyph_img.create_distance_transform(0);
-				sdf->copy_to(&sdf_total, 0, 0, 32, 32, i_c * 32, 0);
+				//int w, h;
+				//auto bitmap = stbtt_GetCodepointBitmap(&font_info, 0, stbtt_ScaleForPixelHeight(&font_info, sdf_text_size), sdf_text_chars[i_c], &w, &h, 0, 0);
+				//Image glyph_img(sdf_text_size, sdf_text_size, 1, 8, nullptr, true);
+				//auto x = (sdf_text_size - w) / 2;
+				//auto y = (sdf_text_size - h) / 2;
+				//for (auto j = 0; j < h; j++) 
+				//{
+				//	for (auto i = 0; i < w; i++)
+				//		glyph_img.data[(y + j) * sdf_text_size + x + i] = bitmap[j * w + i];
+				//}
+				//stbtt_FreeBitmap(bitmap, nullptr);
+				//auto sdf = glyph_img.create_distance_transform(0);
+				//sdf->copy_to(&sdf_total, 0, 0, sdf_text_size, sdf_text_size, i_c * sdf_text_size, 0);
 			}
-			sdf_font_image = new Texture(32 * 36, 32, VK_FORMAT_R8_UNORM,
+			msdfgen::destroyFont(ttf_data);
+			msdfgen::deinitializeFreetype(ft_library);
+			sdf_font_image = new Texture(sdf_text_size * sdf_text_char_count, sdf_text_size, VK_FORMAT_R8G8B8A8_UNORM,
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 			sdf_font_image->fill_data(0, sdf_total.data);
 			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->imageWrite(0, 0, sdf_font_image, colorSampler));
@@ -1654,39 +1680,72 @@ namespace flame
 					indexBuffer_ui->unmap();
 				}
 
+				auto _chr_count = 0;
 				if (!sdf_text_draw_commands.empty())
 				{
-					auto sdf_text_vertex_size = sdf_text_draw_commands.size() * 6 * sizeof(SdfTextDrawVertex);
+					for (auto &c : sdf_text_draw_commands)
+					{
+						for (auto i = 0; i < c.text.size(); i++)
+						{
+							auto chr = c.text[i];
+							if (chr == ' ' ||
+								(chr >= '0' && chr <= '9') ||
+								(chr >= 'A' && chr <= 'Z') || 
+								(chr >= 'a' && chr <= 'z'))
+								_chr_count++;
+						}
+					}
+
+					auto sdf_text_vertex_size = _chr_count * 6 * sizeof(SdfTextDrawVertex);
 					if (!sdf_text_vertex_buffer || sdf_text_vertex_buffer->size < sdf_text_vertex_size)
 						sdf_text_vertex_buffer = std::make_unique<Buffer>(BufferTypeImmediateVertex, sdf_text_vertex_size);
 
 					auto vtx_dst = (SdfTextDrawVertex*)sdf_text_vertex_buffer->map(0, sdf_text_vertex_size);
 					for (auto &cmd : sdf_text_draw_commands)
 					{
-						auto w_s = glm::vec2(app->window_cx, app->window_cy);
-						auto p = glm::vec2(cmd.x, cmd.y) / w_s;
-						auto hs = glm::vec2(cmd.size, cmd.size) / w_s / 2.f;
-						auto a = p - hs;
-						a = a * 2.f - 1.f;
-						auto b = p + glm::vec2(hs.x, -hs.y);
-						b = b * 2.f - 1.f;
-						auto c = p + glm::vec2(-hs.x, hs.y);
-						c = c * 2.f - 1.f;
-						auto d = p + hs;
-						d = d * 2.f - 1.f;
-						vtx_dst[0].pos = a;
-						vtx_dst[0].uv = glm::vec2(0.f);
-						vtx_dst[1].pos = c;
-						vtx_dst[1].uv = glm::vec2(0.f, 1.f);
-						vtx_dst[2].pos = d;
-						vtx_dst[2].uv = glm::vec2(1.f / 36, 1.f);
-						vtx_dst[3].pos = a;
-						vtx_dst[3].uv = glm::vec2(0.f);
-						vtx_dst[4].pos = d;
-						vtx_dst[4].uv = glm::vec2(1.f / 36, 1.f);
-						vtx_dst[5].pos = b;
-						vtx_dst[5].uv = glm::vec2(1.f / 36, 0.f);
-						vtx_dst += 6;
+						auto _chr_count = 0;
+						for (auto i = 0; i < cmd.text.size(); i++)
+						{
+							auto chr = cmd.text[i];
+							int offset;
+							if (chr == ' ')
+								offset = 0;
+							else if (chr >= '0' && chr <= '9')
+								offset = chr - '0' + 1;
+							else if (chr >= 'A' && chr <= 'Z')
+								offset = chr - 'A' + 1 + 10;
+							else if (chr >= 'a' && chr <= 'z')
+								offset = chr - 'a' + 1 + 10 + 26;
+							else
+								continue;
+							auto w_s = glm::vec2(app->window_cx, app->window_cy);
+							auto hs = glm::vec2(cmd.size, cmd.size) / w_s / 2.f;
+							auto p = glm::vec2(cmd.x + _chr_count * cmd.size, cmd.y) / w_s;
+							auto a_pos = p - hs;
+							a_pos = a_pos * 2.f - 1.f;
+							auto b_pos = p + glm::vec2(hs.x, -hs.y);
+							b_pos = b_pos * 2.f - 1.f;
+							auto c_pos = p + glm::vec2(-hs.x, hs.y);
+							c_pos = c_pos * 2.f - 1.f;
+							auto d_pos = p + hs;
+							d_pos = d_pos * 2.f - 1.f;
+							auto u0 = (float)offset / sdf_text_char_count;
+							auto u1 = (float)(offset + 1) / sdf_text_char_count;
+							vtx_dst[0].pos = a_pos;
+							vtx_dst[0].uv = glm::vec2(u0, 0.f);
+							vtx_dst[1].pos = c_pos;
+							vtx_dst[1].uv = glm::vec2(u0, 1.f);
+							vtx_dst[2].pos = d_pos;
+							vtx_dst[2].uv = glm::vec2(u1, 1.f);
+							vtx_dst[3].pos = a_pos;
+							vtx_dst[3].uv = glm::vec2(u0, 0.f);
+							vtx_dst[4].pos = d_pos;
+							vtx_dst[4].uv = glm::vec2(u1, 1.f);
+							vtx_dst[5].pos = b_pos;
+							vtx_dst[5].uv = glm::vec2(u1, 0.f);
+							vtx_dst += 6;
+							_chr_count++;
+						}
 					}
 					sdf_text_vertex_buffer->unmap();
 				}
@@ -1753,7 +1812,7 @@ namespace flame
 					cb_ui->bind_pipeline(pipeline_sdf_text);
 					cb_ui->bind_descriptor_set();
 
-					cb_ui->draw(sdf_text_draw_commands.size() * 6);
+					cb_ui->draw(_chr_count * 6);
 
 					sdf_text_draw_commands.clear();
 				}
