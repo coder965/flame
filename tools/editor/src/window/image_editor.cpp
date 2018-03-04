@@ -16,18 +16,6 @@ void ImageEditor::on_menu_bar()
 {
 	if (ImGui::BeginMenu("Filter"))
 	{
-		if (ImGui::MenuItem("Signed Distance Field"))
-		{
-			auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
-			flame::Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, pixel, false);
-			auto sdf = img.create_distance_transform(0);
-			staging_buffer->unmap();
-			auto t = std::make_shared<flame::Texture>(texture->get_cx(), texture->get_cy(),
-				VK_FORMAT_R8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			t->fill_data(0, sdf->data);
-			new ImageEditor(t);
-		}
-
 		ImGui::EndMenu();
 	}
 }

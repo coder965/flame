@@ -16,8 +16,6 @@
 #include <flame/ui/ui.h>
 #include <msdfgen.h>
 #include <msdfgen-ext.h>
-//#define STB_TRUETYPE_IMPLEMENTATION
-//#include <stb_truetype.h>
 
 const unsigned int ImageCount = 127;
 
