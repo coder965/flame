@@ -1,5 +1,5 @@
-#include <flame/utils/filesystem.h>
-#include <flame/graphics/texture.h>
+#include <flame/common/filesystem.h>
+#include <flame/engine/graphics/texture.h>
 #include "show_material.h"
 
 static void show_map(std::function<std::string()> getter, const char *tooltip, std::function<void(const std::string &)> setter)

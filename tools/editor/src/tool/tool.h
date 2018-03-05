@@ -1,6 +1,6 @@
 #pragma once
 
-#include <flame/entity/camera.h>
+#include <flame/engine/entity/camera.h>
 
 struct Tool
 {

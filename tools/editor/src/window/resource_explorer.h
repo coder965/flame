@@ -3,8 +3,8 @@
 #include <vector>
 #include <memory>
 
-#include <flame/graphics/texture.h>
-#include <flame/ui/ui.h>
+#include <flame/engine/graphics/texture.h>
+#include <flame/engine/ui/ui.h>
 
 struct ResourceExplorer : flame::ui::FileSelector
 {

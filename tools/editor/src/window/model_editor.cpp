@@ -1,7 +1,7 @@
 #include <flame/global.h>
-#include <flame/engine/application.h>
-#include <flame/graphics/texture.h>
-#include <flame/graphics/command_buffer.h>
+#include <flame/engine/core/application.h>
+#include <flame/engine/graphics/texture.h>
+#include <flame/engine/graphics/command_buffer.h>
 
 #include "model_editor.h"
 

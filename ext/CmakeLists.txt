@@ -48,6 +48,8 @@ set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ext/spirv_cross")
 set_target_properties(spirv-cross-hlsl PROPERTIES FOLDER "ext/spirv_cross") 
 set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ext/spirv_cross") 
 
+set(FREETYPE_LIBRARY "../../../ext/msdfgen/lib/freetype")
+set(FREETYPE_INCLUDE_DIRS "ext/msdfgen/lib/include")
 add_subdirectory(msdfgen)
 set_target_properties(lib_msdfgen PROPERTIES FOLDER "ext/msdfgen") 
 set_target_properties(msdfgen PROPERTIES FOLDER "ext/msdfgen") 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <flame/utils/filesystem.h>
-#include <flame/entity/scene.h>
-#include <flame/graphics/display_layer.h>
-#include <flame/graphics/renderer.h>
-#include <flame/ui/ui.h>
+#include <flame/common/filesystem.h>
+#include <flame/engine/entity/scene.h>
+#include <flame/engine/graphics/display_layer.h>
+#include <flame/engine/graphics/renderer.h>
+#include <flame/engine/ui/ui.h>
 #include "../tool/transformer_tool.h"
 
 struct SceneEditor : flame::ui::Window

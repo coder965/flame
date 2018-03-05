@@ -37,8 +37,6 @@ namespace flame
 	typedef unsigned short ushort;
 	typedef unsigned int uint;
 
-	extern bool only_2d;
-
 	enum Err
 	{
 		NoErr,
@@ -50,54 +48,28 @@ namespace flame
 		ErrResourceLost
 	};
 
-	std::string get_error_string(Err errNum);
-
-	extern float near_plane;
-	extern float far_plane;
-	extern float fovy;
-
-	extern long long now_ns;
-	extern double elapsed_time;
-
-	long long get_now_time_ns();
-
-	extern std::string engine_path;
-
-	extern unsigned long long total_frame_count;
-	extern uint32_t FPS;
-
-	enum DescriptorSetBindings
+	inline std::string get_error_string(Err errNum)
 	{
-		MainDescriptorSetBinding,
-		MaterialDescriptorSetBinding,
-		BoneSetDescriptorBinding
-	};
-
-	enum MainDescriptorSetBindings
-	{
-		ConstantBufferDescriptorBinding,
-		MatrixBufferDescriptorBinding,
-		ObjectMatrixBufferDescriptorBinding,
-		TerrainBufferDescriptorBinding,
-		TerrainBlendImageDescriptorBinding,
-		WaterBufferDescriptorBinding,
-		DepthImageDescriptorBinding,
-		AlbedoAlphaImageDescriptorBinding,
-		NormalHeightImageDescriptorBinding,
-		SpecRoughnessDescriptorImageBinding,
-		LightBufferDescriptorBinding,
-		EnvrImageDescriptorBinding,
-		AmbientBufferDescriptorBinding,
-		AoImageDescriptorBinding,
-		ShadowBufferDescriptorBinding,
-		ShadowImageDescriptorBinding
-	};
-
-	enum MaterialDescriptorSetBindings
-	{
-		MaterialBufferDescriptorBinding,
-		MaterialImagesDescriptorBinding
-	};
+		switch (errNum)
+		{
+			case NoErr:
+				return "No error.";
+			case ErrInvalidEnum:
+				return "Invalid enum.";
+			case ErrInvalidValue:
+				return "Invalid value.";
+			case ErrInvalidOperation:
+				return "Invalid operation.";
+			case ErrOutOfMemory:
+				return "Out of memory.";
+			case ErrContextLost:
+				return "Context lost.";
+			case ErrResourceLost:
+				return "Resource lost.";
+			default:
+				return "unknow error";
+		}
+	}
 
 	enum Op
 	{

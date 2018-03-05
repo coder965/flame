@@ -1,7 +1,7 @@
-#include <flame/ui/ui.h>
+#include <flame/engine/ui/ui.h>
 #include <flame/global.h>
-#include <flame/engine/core.h>
-#include <flame/engine/application.h>
+#include <flame/engine/core/core.h>
+#include <flame/engine/core/application.h>
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
 #include "window/inspector.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <flame/ui/ui.h>
+#include <flame/engine/ui/ui.h>
 
 struct BlueprintEditor : flame::ui::Window
 {

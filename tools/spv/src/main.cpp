@@ -1,9 +1,9 @@
-#include <flame/engine/core.h>
-#include <flame/engine/application.h>
-#include <flame/engine/system.h>
-#include <flame/graphics/texture.h>
-#include <flame/ui/ui.h>
-#include <flame/utils/image.h>
+#include <flame/common/system.h>
+#include <flame/common/image.h>
+#include <flame/engine/core/core.h>
+#include <flame/engine/core/application.h>
+#include <flame/engine/graphics/texture.h>
+#include <flame/engine/ui/ui.h>
 
 struct App : flame::Application
 {

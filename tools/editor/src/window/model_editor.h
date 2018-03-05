@@ -1,10 +1,10 @@
 #pragma once
 
-#include <flame/graphics/display_layer.h>
-#include <flame/graphics/renderer.h>
-#include <flame/entity/model.h>
-#include <flame/entity/camera.h>
-#include <flame/ui/ui.h>
+#include <flame/engine/graphics/display_layer.h>
+#include <flame/engine/graphics/renderer.h>
+#include <flame/engine/entity/model.h>
+#include <flame/engine/entity/camera.h>
+#include <flame/engine/ui/ui.h>
 
 struct ModelEditor : flame::ui::Window
 {

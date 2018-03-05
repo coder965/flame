@@ -1,6 +1,6 @@
 #pragma once
 
-#include <flame/graphics/material.h>
-#include <flame/ui/ui.h>
+#include <flame/engine/graphics/material.h>
+#include <flame/engine/ui/ui.h>
 
 void show_material(flame::Material *m);

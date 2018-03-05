@@ -1,8 +1,8 @@
 #pragma once
 
-#include <flame/graphics/buffer.h>
-#include <flame/graphics/texture.h>
-#include <flame/ui/ui.h>
+#include <flame/engine/graphics/buffer.h>
+#include <flame/engine/graphics/texture.h>
+#include <flame/engine/ui/ui.h>
 
 struct ImageEditor : flame::ui::ImageViewer
 {

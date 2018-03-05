@@ -1,10 +1,10 @@
 #include <flame/global.h>
-#include <flame/utils/string.h>
-#include <flame/graphics/texture.h>
-#include <flame/entity/model.h>
-#include <flame/entity/scene.h>
-#include <flame/entity/model_instance.h>
-#include <flame/entity/terrain.h>
+#include <flame/common/string.h>
+#include <flame/engine/graphics/texture.h>
+#include <flame/engine/entity/model.h>
+#include <flame/engine/entity/scene.h>
+#include <flame/engine/entity/model_instance.h>
+#include <flame/engine/entity/terrain.h>
 #include "../select.h"
 #include "inspector.h"
 #include "show_material.h"
