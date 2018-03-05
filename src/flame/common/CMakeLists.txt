@@ -4,7 +4,14 @@ file(GLOB_RECURSE FLAME_COMMON_SOURCE_LIST "*.c*")
 GROUP_SRC("${FLAME_COMMON_HEADER_LIST}" "" "Header")
 GROUP_SRC("${FLAME_COMMON_SOURCE_LIST}" "" "Source")
 
-add_library(flame_common SHARED ${FLAME_COMMON_HEADER_LIST} ${FLAME_COMMON_SOURCE_LIST})
+add_library(flame_common SHARED ${FLAME_COMMON_HEADER_LIST} ${FLAME_COMMON_SOURCE_LIST} flame_common_exports.h)
+
+GENERATE_EXPORT_HEADER(flame_common
+    BASE_NAME flame_common 
+    EXPORT_MACRO_NAME FLAME_COMMON_EXPORTS
+    EXPORT_FILE_NAME flame_common_exports.h
+    STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC
+)
 
 target_include_directories(flame_common PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_common PUBLIC "${CMAKE_SOURCE_DIR}/ext/rapidxml-1.13")

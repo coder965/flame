@@ -38,25 +38,21 @@ void calc(const fs::path &path)
 			auto ext = p.extension().string();
 			if (ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp")
 			{
-				auto f = flame::get_file_content(p.string());
-				auto last_line_has_content = false;
-				auto fun_judge = [&]() {
-					total_lines++;
-					if (last_line_has_content)
-						SLOC++;
-				};
-				for (auto i = 0; i < f.second; i++)
+				auto f = std::ifstream(p.string());
+				std::string line;
+				while (!f.eof())
 				{
-					auto chr = f.first[i];
-					if (chr == '\n')
+					total_lines++;
+					std::getline(f, line);
+					for (auto &chr : line)
 					{
-						fun_judge();
-						last_line_has_content = false;
+						if (chr != ' ' && chr != 9 && chr != '\r')
+						{
+							SLOC++;
+							break;
+						}
 					}
-					else if (chr != ' ' && chr != 9 && chr != '\r')
-						last_line_has_content = true;
 				}
-				fun_judge();
 			}
 		}
 	}

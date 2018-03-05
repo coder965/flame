@@ -1,3 +1,5 @@
+include(GenerateExportHeader)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_definitions(-W0)
