@@ -3,10 +3,13 @@
 #include <fstream>
 #include <iterator>
 
+#include <flame/common/filesystem.h>
+
 namespace fs = std::experimental::filesystem;
 
 static std::vector<std::string> excludes;
 
+static long long total_lines = 0;
 static long long SLOC = 0;
 
 void calc(const fs::path &path)
@@ -35,9 +38,25 @@ void calc(const fs::path &path)
 			auto ext = p.extension().string();
 			if (ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp")
 			{
-				std::ifstream f(p.string());
-				f.unsetf(std::ios_base::skipws);
-				SLOC += std::count(std::istream_iterator<char>(f), std::istream_iterator<char>(), '\n');
+				auto f = flame::get_file_content(p.string());
+				auto last_line_has_content = false;
+				auto fun_judge = [&]() {
+					total_lines++;
+					if (last_line_has_content)
+						SLOC++;
+				};
+				for (auto i = 0; i < f.second; i++)
+				{
+					auto chr = f.first[i];
+					if (chr == '\n')
+					{
+						fun_judge();
+						last_line_has_content = false;
+					}
+					else if (chr != ' ' && chr != 9 && chr != '\r')
+						last_line_has_content = true;
+				}
+				fun_judge();
 			}
 		}
 	}
@@ -67,6 +86,7 @@ int main(int argc, char **args)
 
 	calc(args[1]);
 
+	printf("total:%d\n", total_lines);
 	printf("SLOC:%d\n", SLOC);
 
 	return 0;

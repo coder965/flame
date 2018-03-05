@@ -8,4 +8,6 @@ GROUP_SRC("${EDITOR_SOURCE_LIST}" "/src" "Source")
 
 add_executable(SLOC ${EDITOR_HEADER_LIST} ${EDITOR_SOURCE_LIST})
 
+target_link_libraries(SLOC flame_common)
+
 set_target_properties(SLOC PROPERTIES FOLDER "tools") 
