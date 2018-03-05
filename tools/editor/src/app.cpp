@@ -2,7 +2,6 @@
 #include <flame/global.h>
 #include <flame/engine/core.h>
 #include <flame/engine/application.h>
-#include "window/file_selector.h"
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
 #include "window/inspector.h"
@@ -12,13 +11,13 @@
 #include "window/blueprint_editor.h"
 #include "window/image_editor.h"
 
-struct NewImageDialog : FileSelector
+struct NewImageDialog : flame::ui::FileSelector
 {
 	int cx = 512;
 	int cy = 512;
 
 	NewImageDialog() :
-		FileSelector("New Image", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings)
+		FileSelector("New Image", flame::ui::FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings)
 	{
 		first_cx = 800;
 		first_cy = 600;
@@ -49,10 +48,10 @@ struct NewImageDialog : FileSelector
 	}
 };
 
-struct NewSceneDialog : FileSelector
+struct NewSceneDialog : flame::ui::FileSelector
 {
 	NewSceneDialog() :
-		FileSelector("New Scene", FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings)
+		FileSelector("New Scene", flame::ui::FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings)
 	{
 		first_cx = 800;
 		first_cy = 600;
@@ -71,7 +70,7 @@ struct NewSceneDialog : FileSelector
 struct App : flame::Application
 {
 	App() :
-		Application(1280, 720, flame::WindowStyleFrame | flame::WindowStyleResizable, "TK Engine Editor")
+		Application(1280, 720, flame::WindowStyleFrame | flame::WindowStyleResizable, "Flame Engine Editor")
 	{
 		flame::XMLDoc doc("ui", "ui.xml");
 		if (doc.good)
@@ -124,6 +123,8 @@ struct App : flame::Application
 
 	virtual void on_render() override
 	{
+		flame::ui::draw_text("Hello 2018", 100, 400, 150);
+
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
 		bool open_preferences_popup = false;
@@ -597,9 +598,6 @@ int main(int argc, char** argv)
 	flame::init("../", 1280, 720, 1, true, false);
 	new App;
 	flame::app->set_window_maximized(true);
-
-	auto i = new flame::Image(5, 3, 1, 8);
-
 	flame::run();
 
 	return 0;

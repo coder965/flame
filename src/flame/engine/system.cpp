@@ -221,4 +221,12 @@ namespace flame
 
 		return str;
 	}
+
+	std::unique_ptr<unsigned char[]> read_process_memory(void *process, void *address, int size)
+	{
+		auto m = std::make_unique<unsigned char[]>(size);
+		unsigned long ret_byte;
+		assert(ReadProcessMemory(process, address, m.get(), size, &ret_byte));
+		return m;
+	}
 }

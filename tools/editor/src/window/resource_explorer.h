@@ -4,10 +4,9 @@
 #include <memory>
 
 #include <flame/graphics/texture.h>
+#include <flame/ui/ui.h>
 
-#include "file_selector.h"
-
-struct ResourceExplorer : FileSelector
+struct ResourceExplorer : flame::ui::FileSelector
 {
 	ResourceExplorer();
 	virtual ~ResourceExplorer() override;

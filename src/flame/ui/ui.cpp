@@ -3,6 +3,7 @@
 
 #include <flame/global.h>
 #include <flame/container/spare_list.h>
+#include <flame/utils/string.h>
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/renderpass.h>
@@ -13,6 +14,8 @@
 #include <flame/engine/system.h>
 #include <flame/engine/application.h>
 #include <flame/ui/ui.h>
+#include <msdfgen.h>
+#include <msdfgen-ext.h>
 
 const unsigned int ImageCount = 127;
 
@@ -178,7 +181,9 @@ namespace ImGui
 		SetNextWindowPos(ImVec2(0, menubar_height));
 		SetNextWindowSize(ImVec2(flame::app->window_cx, toolbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
-		return Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+		return Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | 
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 	}
 
 	void EndToolBar()
@@ -197,7 +202,9 @@ namespace ImGui
 		SetNextWindowPos(ImVec2(0, flame::app->window_cy - statusbar_height));
 		SetNextWindowSize(ImVec2(flame::app->window_cx, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
-		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | 
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 		Text("%d", _statusbar_int_debug);
 		SameLine();
 		return open;
@@ -207,6 +214,22 @@ namespace ImGui
 	{
 		End();
 		PopStyleColor();
+		PopStyleVar();
+	}
+
+	void BeginOverlapWindow(const char *title)
+	{
+		SetNextWindowPos(ImVec2(0, 0));
+		SetNextWindowSize(ImVec2(flame::app->window_cx, flame::app->window_cy));
+		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+		Begin(title, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | 
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | 
+			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
+	}
+
+	void EndOverlapWindow()
+	{
+		End();
 		PopStyleVar();
 	}
 }
@@ -359,7 +382,7 @@ namespace flame
 			first_cy(0),
 			_need_focus(false),
 			_tag(WindowTagNull),
-			enable_menu(flags & enable_menu),
+			enable_menu(flags & WindowHasMenu),
 			enable_saved_settings(!(flags & WindowNoSavedSettings)),
 			modal(flags & WindowModal),
 			opened(true),
@@ -475,6 +498,546 @@ namespace flame
 		const std::list<std::unique_ptr<Window>> &get_windows()
 		{
 			return windows;
+		}
+
+		FileSelector::FileSelector(const std::string &_title, FileSelectorIo io, const std::string &_default_dir,
+			unsigned int window_flags, unsigned int flags) :
+			Window(_title, window_flags),
+			io_mode(io),
+			enable_file(!(flags & FileSelectorNoFiles)),
+			enable_right_area(!(flags & FileSelectorNoRightArea)),
+			tree_mode(flags & FileSelectorTreeMode),
+			splitter(true)
+		{
+			splitter.size[0] = 300;
+			filename[0] = 0;
+			if (_default_dir != "")
+			{
+				default_dir = _default_dir;
+				set_current_path(default_dir);
+			}
+			else
+				set_current_path(get_exe_path());
+		}
+
+		const char *drivers[] = {
+			"c:",
+			"d:",
+			"e:",
+			"f:"
+		};
+
+		void FileSelector::set_current_path(const std::string &s)
+		{
+			if (s == curr_dir.filename)
+				return;
+
+			curr_dir.filename = s;
+			need_refresh = true;
+			if (!tree_mode)
+			{
+				curr_dir_hierarchy.clear();
+				if (default_dir == "")
+				{
+					std::filesystem::path path(curr_dir.filename);
+					auto root_path = path.root_path();
+					while (path != root_path)
+					{
+						curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
+						path = path.parent_path();
+					}
+					curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), string_cut(root_path.string(), -1));
+					curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), "");
+				}
+				else
+				{
+					std::filesystem::path path(curr_dir.filename);
+					while (path != default_dir)
+					{
+						curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), path.filename().string());
+						path = path.parent_path();
+					}
+					curr_dir_hierarchy.insert(curr_dir_hierarchy.begin(), default_dir);
+				}
+			}
+			else
+			{
+				std::filesystem::path path(s);
+				auto str = path.filename().string();
+				curr_dir.value = str;
+				curr_dir.name = ICON_FA_FOLDER_O" " + str;
+			}
+
+			file_watcher = add_file_watcher(FileWatcherModeAll, s);
+		}
+
+		void FileSelector::refresh()
+		{
+			std::string select_dir_filename;
+			if (select_dir)
+				select_dir_filename = select_dir->filename;
+
+			curr_dir.dir_list.clear();
+			curr_dir.file_list.clear();
+			select_index = -1;
+			select_dir = nullptr;
+
+			if (!on_refresh())
+				return;
+
+			std::function<void(DirItem *, const std::filesystem::path &)> fIterDir;
+			fIterDir = [&](DirItem *dst, const std::filesystem::path &src) {
+				if (src.string() == select_dir_filename)
+					select_dir = dst;
+
+				std::filesystem::directory_iterator end_it;
+				for (std::filesystem::directory_iterator it(src); it != end_it; it++)
+				{
+					auto str = it->path().filename().string();
+					if (std::filesystem::is_directory(it->status()))
+					{
+						auto i = new DirItem;
+						i->value = str;
+						i->name = ICON_FA_FOLDER_O" " + str;
+						i->filename = it->path().string();
+						if (tree_mode)
+							fIterDir(i, it->path());
+						dst->dir_list.emplace_back(i);
+					}
+					else if (enable_file)
+					{
+						auto i = on_new_file_item();
+
+						auto ext = it->path().extension().string();
+						const char *prefix;
+						if (is_text_file(ext))
+						{
+							i->file_type = FileTypeText;
+							prefix = ICON_FA_FILE_TEXT_O" ";
+						}
+						else if (is_image_file(ext))
+						{
+							i->file_type = FileTypeImage;
+							prefix = ICON_FA_FILE_IMAGE_O" ";
+						}
+						else if (is_model_file(ext))
+						{
+							i->file_type = FileTypeModel;
+							prefix = ICON_FA_FILE_O" ";
+						}
+						else if (is_terrain_file(ext))
+						{
+							i->file_type = FileTypeTerrain;
+							prefix = ICON_FA_FILE_O" ";
+						}
+						else if (is_scene_file(ext))
+						{
+							i->file_type = FileTypeScene;
+							prefix = ICON_FA_FILE_O" ";
+						}
+						else
+							prefix = ICON_FA_FILE_O" ";
+						i->value = str;
+						i->name = prefix + str;
+						i->filename = it->path().string();
+
+						on_add_file_item(i);
+
+						dst->file_list.emplace_back(i);
+					}
+				}
+			};
+
+			fIterDir(&curr_dir, curr_dir.filename);
+		}
+
+		void FileSelector::on_show()
+		{
+			if (file_watcher->ptr->dirty)
+			{
+				file_watcher->ptr->dirty = false;
+				need_refresh = true;
+			}
+			if (need_refresh)
+			{
+				refresh();
+				need_refresh = false;
+			}
+
+			const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
+
+			if (!tree_mode)
+			{
+				ImGui::BeginChild("top", ImVec2(0, ImGui::GetFrameHeightWithSpacing()));
+
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+				auto h_index = 0;
+				static int popup_index;
+				static std::vector<std::string> popup_list;
+				std::string jump_dir;
+				for (auto &i : curr_dir_hierarchy)
+				{
+					ImGui::PushID(h_index);
+					if (i != "")
+					{
+						const auto offset = 5.f;
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - offset);
+						if (ImGui::Button(i.c_str()))
+						{
+							auto it = curr_dir_hierarchy.begin();
+							if (default_dir == "")
+								it++;
+							for (; ; it++)
+							{
+								jump_dir += *it;
+								if (&i == &(*it))
+									break;
+								jump_dir += "/";
+							}
+							if (default_dir == "" && h_index == 1)
+								jump_dir += "/";
+						}
+						ImGui::SameLine();
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset);
+					}
+					ImGui::SetWindowFontScale(0.5f);
+					if (ImGui::Button(ICON_FA_CHEVRON_RIGHT))
+					{
+						popup_index = -1;
+						popup_list.clear();
+						if (default_dir == "" && h_index == 0)
+						{
+							std::filesystem::path path(curr_dir.filename);
+							auto root_name = path.root_name().string();
+							std::transform(root_name.begin(), root_name.end(), root_name.begin(), tolower);
+							for (int i = 0; i < TK_ARRAYSIZE(drivers); i++)
+							{
+								popup_list.push_back(drivers[i]);
+								if (root_name == drivers[i])
+									popup_index = i;
+							}
+						}
+						else
+						{
+							std::string parent_path;
+							std::string next_path;
+							auto it = curr_dir_hierarchy.begin();
+							if (default_dir == "")
+								it++;
+							for (; ; it++)
+							{
+								parent_path += *it;
+								if (&i == &(*it))
+								{
+									it++;
+									if (it != curr_dir_hierarchy.end())
+										next_path = *it;
+									break;
+								}
+								parent_path += "/";
+							}
+							std::filesystem::directory_iterator end_it;
+							int index = 0;
+							for (std::filesystem::directory_iterator it(parent_path); it != end_it; it++)
+							{
+								if (std::filesystem::is_directory(it->status()))
+								{
+									auto str = it->path().filename().string();
+									popup_list.push_back(str);
+									if (str == next_path)
+										popup_index = index;
+									index++;
+								}
+							}
+						}
+						ImGui::OpenPopup("DirPopup");
+					}
+					ImGui::SetWindowFontScale(1.f);
+					if (ImGui::BeginPopup("DirPopup"))
+					{
+						auto index = 0;
+						for (auto &s : popup_list)
+						{
+							if (ImGui::Selectable(s.c_str(), popup_index == index))
+							{
+								if (default_dir == "" && h_index == 0)
+									jump_dir = s + "/";
+								else
+								{
+									auto it = curr_dir_hierarchy.begin();
+									if (default_dir == "")
+										it++;
+									for (; ; it++)
+									{
+										jump_dir += *it;
+										if (&i == &(*it))
+											break;
+										jump_dir += "/";
+									}
+									jump_dir += "/" + s;
+								}
+							}
+							index++;
+						}
+						ImGui::EndPopup();
+					}
+					ImGui::PopID();
+					h_index++;
+					if (h_index < curr_dir_hierarchy.size())
+						ImGui::SameLine();
+				}
+				ImGui::PopStyleColor();
+				ImGui::PopStyleVar();
+
+				if (jump_dir != "")
+					set_current_path(jump_dir);
+
+				ImGui::EndChild();
+			}
+
+			if (enable_right_area)
+			{
+				splitter.set_size_greedily();
+				splitter.do_split();
+				ImGui::BeginChild("left", ImVec2(splitter.size[0], 0), tree_mode);
+			}
+
+			if (!tree_mode)
+			{
+				on_top_area_show();
+				ImGui::BeginChild("list", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 1), true);
+				auto index = 0;
+				if (ImGui::Selectable(ICON_FA_FOLDER_O" ..", select_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
+				{
+					select_index = index;
+					if (ImGui::IsMouseDoubleClicked(0))
+					{
+						std::filesystem::path path(curr_dir.filename);
+						if (curr_dir.filename != default_dir && path.root_path() != path)
+							set_current_path(path.parent_path().string());
+					}
+				}
+				index++;
+				for (auto &i : curr_dir.dir_list)
+				{
+					if (ImGui::Selectable(i->name.c_str(), select_index == index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
+					{
+						strcpy(filename, i->value.c_str());
+						on_dir_item_selected(i.get());
+						select_index = index;
+						if (ImGui::IsMouseDoubleClicked(0))
+							set_current_path((std::filesystem::path(curr_dir.filename) / i->value).string());
+					}
+					index++;
+				}
+				if (enable_file)
+				{
+					for (auto &i : curr_dir.file_list)
+					{
+						if (ImGui::Selectable(i->name.c_str(), index == select_index, ImGuiSelectableFlags_DontClosePopups | ImGuiSelectableFlags_AllowDoubleClick))
+						{
+							select_index = index;
+							strcpy(filename, i->value.c_str());
+							on_file_item_selected(i.get(), ImGui::IsMouseDoubleClicked(0));
+						}
+						if (ImGui::BeginDragDropSource())
+						{
+							ImGui::SetDragDropPayload("file", i->filename.c_str(), i->filename.size() + 1);
+							ImGui::TextUnformatted(i->filename.c_str());
+							ImGui::EndDragDropSource();
+						}
+						index++;
+					}
+				}
+				ImGui::EndChild();
+
+				on_bottom_area_show();
+			}
+			else
+			{
+				auto need_open = select_dir != nullptr;
+				std::function<void(DirItem *)> fShowDir;
+				fShowDir = [&](DirItem *src) {
+					auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+					node_flags |= select_dir == src ? ImGuiTreeNodeFlags_Selected : 0;
+					if (src->dir_list.empty())
+						node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+					else
+					{
+						if (select_dir == src)
+							need_open = false;
+						if (need_open)
+							ImGui::SetNextTreeNodeOpen(true);
+					}
+					auto node_open = ImGui::TreeNodeEx(src->name.c_str(), node_flags);
+					if (ImGui::IsItemClicked())
+						select_dir = src;
+					if (node_open && !(node_flags & ImGuiTreeNodeFlags_Leaf))
+					{
+						for (auto &d : src->dir_list)
+							fShowDir(d.get());
+						ImGui::TreePop();
+					}
+				};
+				fShowDir(&curr_dir);
+			}
+
+			if (enable_right_area)
+			{
+				ImGui::EndChild();
+				ImGui::SameLine();
+				ImGui::BeginChild("right", ImVec2(0, 0));
+				on_right_area_show();
+				ImGui::EndChild();
+			}
+		}
+
+		bool FileSelector::on_refresh()
+		{
+			return true;
+		}
+
+		FileSelector::FileItem *FileSelector::on_new_file_item()
+		{
+			return new FileItem;
+		}
+
+		void FileSelector::on_add_file_item(FileItem *i)
+		{
+		}
+
+		void FileSelector::on_dir_item_selected(DirItem *i)
+		{
+		}
+
+		void FileSelector::on_file_item_selected(FileItem *i, bool doubleClicked)
+		{
+		}
+
+		void FileSelector::on_top_area_show()
+		{
+		}
+
+		void FileSelector::on_bottom_area_show()
+		{
+			static float okButtonWidth = 100;
+			static float cancelButtonWidth = 100;
+
+			const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+			ImGui::PushItemWidth(ImGui::GetWindowWidth() - okButtonWidth - cancelButtonWidth - itemSpacing * 4);
+			ImGui::InputText("##filename", filename, TK_ARRAYSIZE(filename));
+			ImGui::PopItemWidth();
+			ImGui::PopStyleVar();
+
+			float pos = okButtonWidth + itemSpacing;
+			ImGui::SameLine(ImGui::GetWindowWidth() - pos);
+			if (ImGui::Button("  Ok  "))
+			{
+				auto path = std::filesystem::path(curr_dir.filename) / filename;
+				if (io_mode == FileSelectorSave || std::filesystem::exists(path))
+				{
+					if (callback(path.string()))
+					{
+						opened = false;
+						ImGui::CloseCurrentPopup();
+					}
+				}
+			}
+			okButtonWidth = ImGui::GetItemRectSize().x;
+
+			pos += cancelButtonWidth + itemSpacing;
+			ImGui::SameLine(ImGui::GetWindowWidth() - pos);
+			if (ImGui::Button("Cancel"))
+			{
+				opened = false;
+				ImGui::CloseCurrentPopup();
+			}
+			cancelButtonWidth = ImGui::GetItemRectSize().x;
+		}
+
+		void FileSelector::on_right_area_show()
+		{
+		}
+
+		DirSelectorDialog::DirSelectorDialog() :
+			FileSelector("Dir Selector", FileSelectorOpen, "", WindowModal | WindowNoSavedSettings, FileSelectorNoFiles | FileSelectorNoRightArea)
+		{
+			first_cx = 800;
+			first_cy = 600;
+		}
+
+		void DirSelectorDialog::open(const std::string &default_dir, const std::function<bool(std::string)> &_callback)
+		{
+			auto w = new DirSelectorDialog;
+			w->set_current_path(default_dir);
+			w->callback = _callback;
+		}
+
+		ImageViewer::ImageViewer(const std::string &_title, std::shared_ptr<Texture> _texture) :
+			Window(_title, WindowHasMenu | WindowNoSavedSettings),
+			texture(_texture)
+		{
+			first_cx = 800;
+			first_cy = 600;
+
+			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, texture->get_size());
+			texture->copy_to_buffer(staging_buffer.get());
+		}
+
+		void ImageViewer::on_show()
+		{
+			ImGui::BeginMenuBar();
+			if (ImGui::BeginMenu("File"))
+			{
+				auto do_save = false;
+				auto need_filename_popup = false;
+				if (ImGui::MenuItem("Save"))
+				{
+					do_save = true;
+					if (texture->filename == "")
+						need_filename_popup = true;
+				}
+				if (ImGui::MenuItem("Save As"))
+				{
+					do_save = true;
+					need_filename_popup = true;
+				}
+				if (do_save)
+				{
+					auto fun_save = [&](const std::string &filename) {
+						auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
+						Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, pixel, false);
+						img.save(filename);
+						staging_buffer->unmap();
+						return true;
+					};
+					if (need_filename_popup)
+					{
+						auto dialog = new FileSelector("Save Image", FileSelectorSave, "", WindowModal | WindowNoSavedSettings);
+						dialog->first_cx = 800;
+						dialog->first_cy = 600;
+						dialog->callback = fun_save;
+					}
+					else
+						fun_save(texture->filename);
+				}
+				ImGui::EndMenu();
+			}
+			on_menu_bar();
+			ImGui::EndMenuBar();
+
+			on_top_area();
+
+			auto image_pos = ImGui::GetCursorScreenPos();
+			auto image_size = ImVec2(texture->get_cx(), texture->get_cy());
+			ImGui::InvisibleButton("canvas", image_size);
+			auto draw_list = ImGui::GetWindowDrawList();
+			draw_list->AddImage(ImGui::ImageID(texture), image_pos, image_pos + image_size);
+			if (ImGui::IsItemHovered())
+				on_mouse_overing_image(image_pos);
 		}
 
 		float get_layout_padding(bool horizontal)
@@ -727,11 +1290,31 @@ namespace flame
 		}
 
 		static Pipeline *pipeline_ui;
+		static Pipeline *pipeline_sdf_text;
+		static const char *sdf_text_chars = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		static int sdf_text_char_count = strlen(sdf_text_chars);
+		static int sdf_text_size = 32;
+		struct SdfTextDrawCommand
+		{
+			std::string text;
+			int x;
+			int y;
+			int size;
+		};
+		struct SdfTextDrawVertex
+		{
+			glm::vec2 pos;
+			glm::vec2 uv;
+		};
+		static std::vector<SdfTextDrawCommand> sdf_text_draw_commands;
+		static std::unique_ptr<Buffer> sdf_text_vertex_buffer;
 		static CommandBuffer *cb_ui;
 		static std::unique_ptr<Buffer> vertexBuffer_ui;
 		static std::unique_ptr<Buffer> indexBuffer_ui;
 
 		static Texture *font_image;
+		static Texture *sdf_font_image;
+
 		void init()
 		{
 			add_keydown_listener([](int k) {
@@ -766,10 +1349,20 @@ namespace flame
 			pipeline_ui = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 },{ TokenB8V4, 0 } })
 				.set_cull_mode(VK_CULL_MODE_NONE)
-				.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+				.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, 
+					VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
 				.add_dynamic_state(VK_DYNAMIC_STATE_SCISSOR)
 				.add_shader("ui.vert", {})
 				.add_shader("ui.frag", {}),
+				renderPass_window, 0, true);
+
+			pipeline_sdf_text = new Pipeline(PipelineInfo()
+				.set_vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 } })
+				.set_cull_mode(VK_CULL_MODE_NONE)
+				.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+					VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+				.add_shader("sdf_text.vert", {})
+				.add_shader("sdf_text.frag", {}),
 				renderPass_window, 0, true);
 
 			ImGui::CreateContext();
@@ -792,8 +1385,55 @@ namespace flame
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 			font_image->fill_data(0, pixels);
 			io.Fonts->TexID = (void*)0; // image index
-
 			updateDescriptorSets(&pipeline_ui->descriptor_set->imageWrite(0, 0, font_image, colorSampler));
+
+			auto ft_library = msdfgen::initializeFreetype();
+			auto ttf_data = msdfgen::loadFont(ft_library, "c:/windows/fonts/arialbd.ttf");
+			//auto ttf_data = get_file_content("c:/windows/fonts/arialbd.ttf");
+			//stbtt_fontinfo font_info;
+			//stbtt_InitFont(&font_info, (unsigned char*)ttf_data.first.get(), stbtt_GetFontOffsetForIndex((unsigned char*)ttf_data.first.get(), 0));
+			auto i_c = 0;
+			Image sdf_total(sdf_text_size * sdf_text_char_count, sdf_text_size, 4, 32, nullptr, true);
+			for (auto i_c = 0; i_c < sdf_text_char_count; i_c++)
+			{
+				msdfgen::Shape shape;
+				if (msdfgen::loadGlyph(shape, ttf_data, sdf_text_chars[i_c]))
+				{
+					shape.normalize();
+					msdfgen::edgeColoringSimple(shape, 3.0);
+					msdfgen::Bitmap<msdfgen::FloatRGB> msdf(sdf_text_size, sdf_text_size);
+					msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, msdfgen::Vector2(4.0, 4.0));
+					for (auto j = 0; j < sdf_text_size; j++)
+					{
+						for (auto i = 0; i < sdf_text_size; i++)
+						{
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 0] = glm::clamp(msdf(i, j).r * 255.f, 0.f, 255.f);
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 1] = glm::clamp(msdf(i, j).g * 255.f, 0.f, 255.f);
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 2] = glm::clamp(msdf(i, j).b * 255.f, 0.f, 255.f);
+							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 3] = 255;
+						}
+					}
+				}
+				//int w, h;
+				//auto bitmap = stbtt_GetCodepointBitmap(&font_info, 0, stbtt_ScaleForPixelHeight(&font_info, sdf_text_size), sdf_text_chars[i_c], &w, &h, 0, 0);
+				//Image glyph_img(sdf_text_size, sdf_text_size, 1, 8, nullptr, true);
+				//auto x = (sdf_text_size - w) / 2;
+				//auto y = (sdf_text_size - h) / 2;
+				//for (auto j = 0; j < h; j++) 
+				//{
+				//	for (auto i = 0; i < w; i++)
+				//		glyph_img.data[(y + j) * sdf_text_size + x + i] = bitmap[j * w + i];
+				//}
+				//stbtt_FreeBitmap(bitmap, nullptr);
+				//auto sdf = glyph_img.create_distance_transform(0);
+				//sdf->copy_to(&sdf_total, 0, 0, sdf_text_size, sdf_text_size, i_c * sdf_text_size, 0);
+			}
+			msdfgen::destroyFont(ttf_data);
+			msdfgen::deinitializeFreetype(ft_library);
+			sdf_font_image = new Texture(sdf_text_size * sdf_text_char_count, sdf_text_size, VK_FORMAT_R8G8B8A8_UNORM,
+				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
+			sdf_font_image->fill_data(0, sdf_total.data);
+			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->imageWrite(0, 0, sdf_font_image, colorSampler));
 
 			cb_ui = new CommandBuffer;
 			cb_ui->begin();
@@ -1038,6 +1678,76 @@ namespace flame
 					indexBuffer_ui->unmap();
 				}
 
+				auto _chr_count = 0;
+				if (!sdf_text_draw_commands.empty())
+				{
+					for (auto &c : sdf_text_draw_commands)
+					{
+						for (auto i = 0; i < c.text.size(); i++)
+						{
+							auto chr = c.text[i];
+							if (chr == ' ' ||
+								(chr >= '0' && chr <= '9') ||
+								(chr >= 'A' && chr <= 'Z') || 
+								(chr >= 'a' && chr <= 'z'))
+								_chr_count++;
+						}
+					}
+
+					auto sdf_text_vertex_size = _chr_count * 6 * sizeof(SdfTextDrawVertex);
+					if (!sdf_text_vertex_buffer || sdf_text_vertex_buffer->size < sdf_text_vertex_size)
+						sdf_text_vertex_buffer = std::make_unique<Buffer>(BufferTypeImmediateVertex, sdf_text_vertex_size);
+
+					auto vtx_dst = (SdfTextDrawVertex*)sdf_text_vertex_buffer->map(0, sdf_text_vertex_size);
+					for (auto &cmd : sdf_text_draw_commands)
+					{
+						auto _chr_count = 0;
+						for (auto i = 0; i < cmd.text.size(); i++)
+						{
+							auto chr = cmd.text[i];
+							int offset;
+							if (chr == ' ')
+								offset = 0;
+							else if (chr >= '0' && chr <= '9')
+								offset = chr - '0' + 1;
+							else if (chr >= 'A' && chr <= 'Z')
+								offset = chr - 'A' + 1 + 10;
+							else if (chr >= 'a' && chr <= 'z')
+								offset = chr - 'a' + 1 + 10 + 26;
+							else
+								continue;
+							auto w_s = glm::vec2(app->window_cx, app->window_cy);
+							auto hs = glm::vec2(cmd.size, cmd.size) / w_s / 2.f;
+							auto p = glm::vec2(cmd.x + _chr_count * cmd.size, cmd.y) / w_s;
+							auto a_pos = p - hs;
+							a_pos = a_pos * 2.f - 1.f;
+							auto b_pos = p + glm::vec2(hs.x, -hs.y);
+							b_pos = b_pos * 2.f - 1.f;
+							auto c_pos = p + glm::vec2(-hs.x, hs.y);
+							c_pos = c_pos * 2.f - 1.f;
+							auto d_pos = p + hs;
+							d_pos = d_pos * 2.f - 1.f;
+							auto u0 = (float)offset / sdf_text_char_count;
+							auto u1 = (float)(offset + 1) / sdf_text_char_count;
+							vtx_dst[0].pos = a_pos;
+							vtx_dst[0].uv = glm::vec2(u0, 0.f);
+							vtx_dst[1].pos = c_pos;
+							vtx_dst[1].uv = glm::vec2(u0, 1.f);
+							vtx_dst[2].pos = d_pos;
+							vtx_dst[2].uv = glm::vec2(u1, 1.f);
+							vtx_dst[3].pos = a_pos;
+							vtx_dst[3].uv = glm::vec2(u0, 0.f);
+							vtx_dst[4].pos = d_pos;
+							vtx_dst[4].uv = glm::vec2(u1, 1.f);
+							vtx_dst[5].pos = b_pos;
+							vtx_dst[5].uv = glm::vec2(u1, 0.f);
+							vtx_dst += 6;
+							_chr_count++;
+						}
+					}
+					sdf_text_vertex_buffer->unmap();
+				}
+
 				cb_ui->reset();
 				cb_ui->begin();
 
@@ -1077,16 +1787,32 @@ namespace flame
 							}
 							else
 							{
-								cb_ui->set_scissor(ImMax((int32_t)(pcmd->ClipRect.x), 0),
+								cb_ui->set_scissor(
+									ImMax((int32_t)(pcmd->ClipRect.x), 0),
 									ImMax((int32_t)(pcmd->ClipRect.y), 0),
 									ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
-									ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)); // TODO: + 1??????
+									ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
+								);
 								cb_ui->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 							}
 							idx_offset += pcmd->ElemCount;
 						}
 						vtx_offset += cmd_list->VtxBuffer.Size;
 					}
+				}
+
+				if (!sdf_text_draw_commands.empty())
+				{
+					cb_ui->set_scissor(0, 0, app->window_cx, app->window_cy);
+
+					cb_ui->bind_vertex_buffer(sdf_text_vertex_buffer.get());
+
+					cb_ui->bind_pipeline(pipeline_sdf_text);
+					cb_ui->bind_descriptor_set();
+
+					cb_ui->draw(_chr_count * 6);
+
+					sdf_text_draw_commands.clear();
 				}
 
 				cb_ui->end_renderpass();
@@ -1139,6 +1865,11 @@ namespace flame
 					}
 				}
 			}
+		}
+
+		void draw_text(const std::string &text, int x, int y, int size)
+		{
+			sdf_text_draw_commands.push_back({text, x, y, size});
 		}
 
 		void save_layout()

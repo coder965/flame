@@ -13,7 +13,7 @@
 ResourceExplorer *resourceExplorer = nullptr;
 
 ResourceExplorer::ResourceExplorer() :
-	FileSelector("Resource Explorer", FileSelectorOpen, "", 0, FileSelectorTreeMode)
+	FileSelector("Resource Explorer", flame::ui::FileSelectorOpen, "", 0, flame::ui::FileSelectorTreeMode)
 {
 }
 

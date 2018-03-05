@@ -2,10 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#include "..\depth.glsl"
-#include "..\pi.glsl"
-#include "..\panorama.glsl"
-#include "..\esm.glsl"
+#include "..\math.glsl"
 
 #if !defined(USE_PHGON) && !defined(USE_PBR)
 #define USE_PHONG

@@ -93,7 +93,7 @@ struct TransformerTool : Tool
 	ImDrawList *draw_list;
 
 	TransformerTool();
-	virtual void show(flame::CameraComponent *camera) override;
+	virtual void show(glm::vec2 _window_pos, glm::vec2 _window_size, flame::CameraComponent *camera) override;
 	bool is_over();
 private:
 	ImVec2 world_to_screen(const glm::vec3 &coord, const glm::mat4 &mat);

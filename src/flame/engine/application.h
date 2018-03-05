@@ -6,6 +6,7 @@
 #include <vector>
 #include <list>
 
+#include <flame/global.h>
 #include <flame/graphics/graphics.h>
 
 namespace flame

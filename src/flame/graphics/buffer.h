@@ -33,7 +33,7 @@ namespace flame
 		~Buffer();
 		void create();
 		void resize(int new_size);
-		void *map(int offset, int _size);
+		void *map(int offset = 0, int _size = 0);
 		void unmap();
 		void copy_to(Buffer *dst, int size, int src_offset = 0, int dst_offset = 0);
 		void copy_to(Buffer *dst, int range_count, VkBufferCopy *ranges);
