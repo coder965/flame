@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flame/common_exports.h>
+
 #include <fstream>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -101,8 +103,8 @@ namespace flame
 
 	float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane);
 
-	glm::mat3 quaternion_to_mat3(glm::vec4 &q);
-	glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
+	FLAME_COMMON_EXPORTS glm::mat3 quaternion_to_mat3(glm::vec4 &q);
+	FLAME_COMMON_EXPORTS glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
 	glm::vec3 quaternion_to_euler(glm::vec4 &q);
 	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
 	glm::mat3 euler_to_mat3(float x, float y, float z);

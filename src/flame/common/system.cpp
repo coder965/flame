@@ -135,7 +135,7 @@ namespace flame
 						auto str_size = WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), NULL, 0, NULL, NULL);
 						filename.resize(str_size);
 						WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), (char*)filename.data(), str_size, NULL, NULL);
-						if (!string_contain(filename, '~'))
+						if (filename.find('~') != std::string::npos)
 						{
 							FileChangeType type;
 							switch (p->Action)
@@ -200,13 +200,24 @@ namespace flame
 
 		assert(SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0));
 
+		char cl_buf[260];
+		cl_buf[0] = 0;
+		assert(command_line.size() < sizeof(cl_buf));
+		if (filename.empty())
+			strcpy(cl_buf, filename.c_str());
+		strcat(cl_buf, command_line.c_str());
+
 		STARTUPINFO start_info = {}; 
 		start_info.cb = sizeof(STARTUPINFO);
 		start_info.hStdError = g_hChildStd_OUT_Wr;
 		start_info.hStdOutput = g_hChildStd_OUT_Wr;
 		start_info.dwFlags |= STARTF_USESTDHANDLES;
 		PROCESS_INFORMATION proc_info = {};
-		auto success = CreateProcess(filename.c_str(), (char*)command_line.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info);
+		if (!CreateProcess(filename.empty() ? nullptr : filename.c_str(), cl_buf, NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info))
+		{
+			auto e = GetLastError();
+			assert(0);
+		}
 
 		WaitForSingleObject(proc_info.hProcess, INFINITE);
 

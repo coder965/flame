@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flame/common_exports.h>
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -8,10 +10,10 @@
 
 namespace flame
 {
-	int calc_pitch(int cx);
-	int calc_pitch(int cx, int bpp);
+	FLAME_COMMON_EXPORTS int calc_pitch(int cx);
+	FLAME_COMMON_EXPORTS int calc_pitch(int cx, int bpp);
 
-	struct Image
+	FLAME_COMMON_EXPORTS struct Image
 	{
 		int cx;
 		int cy;

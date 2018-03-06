@@ -197,7 +197,7 @@ namespace flame
 
 	glm::mat3 euler_to_mat3(float x, float y, float z)
 	{
-		return euler_to_mat3(x, y, z);
+		return euler_to_mat3(glm::vec3(x, y, z));
 	}
 
 	glm::mat3 euler_to_mat3(glm::vec3 &e)

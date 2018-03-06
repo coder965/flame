@@ -1,5 +1,3 @@
-include(GenerateExportHeader)
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_definitions(-W0)
@@ -29,6 +27,8 @@ set(FLAME_EXT_BIN_DIR "ext/bin/x64")
 else()
 set(FLAME_EXT_BIN_DIR "ext/bin/x86")
 endif()
+
+include(GenerateExportHeader)
 
 add_subdirectory(src)
 

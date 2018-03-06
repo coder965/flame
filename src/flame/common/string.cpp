@@ -17,23 +17,6 @@ namespace flame
 		return lineNumber;
 	}
 
-	std::string string_cut(const std::string &str, int length)
-	{
-		if (length < 0)
-			length = str.size() + length;
-		return std::string(str.begin(), str.begin() + length);
-	}
-
-	bool string_contain(const std::string &str, char v)
-	{
-		for (auto &c : str)
-		{
-			if (c == v)
-				return true;
-		}
-		return false;
-	}
-
 	std::string translate(int srcCP, int dstCP, const std::string &src)
 	{
 		auto wbuf = new wchar_t[src.size() + 1];
@@ -44,10 +27,5 @@ namespace flame
 		std::string str(buf);
 		delete[]buf;
 		return str;
-	}
-
-	std::string japanese_to_chinese(const std::string &src)
-	{
-		return translate(932, 936, src);
 	}
 }

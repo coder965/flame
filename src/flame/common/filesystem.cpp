@@ -226,7 +226,7 @@ namespace flame
 		return FileTypeUnknown;
 	}
 
-	size_t get_file_length(std::ifstream &f)
+	long long get_file_length(std::ifstream &f)
 	{
 		f.seekg(0, std::ios::end);
 		auto s = f.tellg();
@@ -247,7 +247,7 @@ namespace flame
 		return std::make_pair(std::unique_ptr<char[]>(data), length);
 	}
 
-	std::string float_serialize(float v)
+	std::string ftos(float v)
 	{
 		auto str = std::to_string(v);
 		str.erase(str.find_last_not_of('0') + 1, std::string::npos);
@@ -349,22 +349,22 @@ namespace flame
 
 	void XMLAttribute::set(float v)
 	{
-		value = float_serialize(v);
+		value = ftos(v);
 	}
 
 	void XMLAttribute::set(const glm::vec2 &v)
 	{
-		value = float_serialize(v.x) + "/" + float_serialize(v.y);
+		value = ftos(v.x) + "/" + ftos(v.y);
 	}
 
 	void XMLAttribute::set(const glm::vec3 &v)
 	{
-		value = float_serialize(v.x) + "/" + float_serialize(v.y) + "/" + float_serialize(v.z);
+		value = ftos(v.x) + "/" + ftos(v.y) + "/" + ftos(v.z);
 	}
 
 	void XMLAttribute::set(const glm::vec4 &v)
 	{
-		value = float_serialize(v.x) + "/" + float_serialize(v.y) + "/" + float_serialize(v.z) + "/" + float_serialize(v.w);
+		value = ftos(v.x) + "/" + ftos(v.y) + "/" + ftos(v.z) + "/" + ftos(v.w);
 	}
 
 	void XMLAttribute::set(const std::string &v)

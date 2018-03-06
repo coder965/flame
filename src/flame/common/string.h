@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flame/common_exports.h>
+
 inline constexpr unsigned int _HASH(char const * str, unsigned int seed)
 {
 	return 0 == *str ? seed : _HASH(str + 1, seed ^ (*str + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
@@ -19,11 +21,19 @@ struct EnsureConst
 
 namespace flame
 {
-	int get_str_line_number(const char *str);
+	FLAME_COMMON_EXPORTS int get_str_line_number(const char *str);
 
-	std::string string_cut(const std::string &str, int length);
-	bool string_contain(const std::string &str, char v);
+	inline std::string string_cut(const std::string &str, int length)
+	{
+		if (length < 0)
+			length = str.size() + length;
+		return std::string(str.begin(), str.begin() + length);
+	}
 
-	std::string translate(int srcCP, int dstCP, const std::string &src);
-	std::string japanese_to_chinese(const std::string &src);
+	FLAME_COMMON_EXPORTS std::string translate(int srcCP, int dstCP, const std::string &src);
+
+	inline std::string japanese_to_chinese(const std::string &src)
+	{
+		return translate(932, 936, src);
+	}
 }

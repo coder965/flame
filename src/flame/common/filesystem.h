@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flame/common_exports.h>
+
 #include <fstream>
 #include <filesystem>
 #include <memory>
@@ -13,31 +15,31 @@ namespace std
 
 namespace flame
 {
-	void skip(std::ifstream &file, int byte_count);
+	FLAME_COMMON_EXPORTS void skip(std::ifstream &file, int byte_count);
 
-	char read_char(std::ifstream &file);
-	short read_short(std::ifstream &file);
-	int read_int(std::ifstream &file);
-	glm::ivec2 read_int2(std::ifstream &file);
-	glm::ivec3 read_int3(std::ifstream &file);
-	glm::ivec4 read_int4(std::ifstream &file);
-	float read_float(std::ifstream &file);
-	glm::vec2 read_float2(std::ifstream &file);
-	glm::vec3 read_float3(std::ifstream &file);
-	glm::vec4 read_float4(std::ifstream &file);
-	std::string read_string(std::ifstream &file);
+	FLAME_COMMON_EXPORTS char read_char(std::ifstream &file);
+	FLAME_COMMON_EXPORTS short read_short(std::ifstream &file);
+	FLAME_COMMON_EXPORTS int read_int(std::ifstream &file);
+	FLAME_COMMON_EXPORTS glm::ivec2 read_int2(std::ifstream &file);
+	FLAME_COMMON_EXPORTS glm::ivec3 read_int3(std::ifstream &file);
+	FLAME_COMMON_EXPORTS glm::ivec4 read_int4(std::ifstream &file);
+	FLAME_COMMON_EXPORTS float read_float(std::ifstream &file);
+	FLAME_COMMON_EXPORTS glm::vec2 read_float2(std::ifstream &file);
+	FLAME_COMMON_EXPORTS glm::vec3 read_float3(std::ifstream &file);
+	FLAME_COMMON_EXPORTS glm::vec4 read_float4(std::ifstream &file);
+	FLAME_COMMON_EXPORTS std::string read_string(std::ifstream &file);
 
-	void write_char(std::ofstream &file, char v);
-	void write_short(std::ofstream &file, short v);
-	void write_int(std::ofstream &file, int v);
-	void write_int2(std::ofstream &file, const glm::ivec2 &v);
-	void write_int3(std::ofstream &file, const glm::ivec3 &v);
-	void write_int4(std::ofstream &file, const glm::ivec4 &v);
-	void write_float(std::ofstream &file, float v);
-	void write_float2(std::ofstream &file, const glm::vec2 &v);
-	void write_float3(std::ofstream &file, const glm::vec3 &v);
-	void write_float4(std::ofstream &file, const glm::vec4 &v);
-	void write_string(std::ofstream &file, const std::string &v);
+	FLAME_COMMON_EXPORTS void write_char(std::ofstream &file, char v);
+	FLAME_COMMON_EXPORTS void write_short(std::ofstream &file, short v);
+	FLAME_COMMON_EXPORTS void write_int(std::ofstream &file, int v);
+	FLAME_COMMON_EXPORTS void write_int2(std::ofstream &file, const glm::ivec2 &v);
+	FLAME_COMMON_EXPORTS void write_int3(std::ofstream &file, const glm::ivec3 &v);
+	FLAME_COMMON_EXPORTS void write_int4(std::ofstream &file, const glm::ivec4 &v);
+	FLAME_COMMON_EXPORTS void write_float(std::ofstream &file, float v);
+	FLAME_COMMON_EXPORTS void write_float2(std::ofstream &file, const glm::vec2 &v);
+	FLAME_COMMON_EXPORTS void write_float3(std::ofstream &file, const glm::vec3 &v);
+	FLAME_COMMON_EXPORTS void write_float4(std::ofstream &file, const glm::vec4 &v);
+	FLAME_COMMON_EXPORTS void write_string(std::ofstream &file, const std::string &v);
 
 	enum FileType
 	{
@@ -50,20 +52,20 @@ namespace flame
 		FileTypeScene
 	};
 
-	bool is_text_file(const std::string &ext);
-	bool is_image_file(const std::string &ext);
-	bool is_model_file(const std::string &ext);
-	bool is_terrain_file(const std::string &ext);
-	bool is_scene_file(const std::string &ext);
-	FileType get_file_type(const std::string &ext);
+	FLAME_COMMON_EXPORTS bool is_text_file(const std::string &ext);
+	FLAME_COMMON_EXPORTS bool is_image_file(const std::string &ext);
+	FLAME_COMMON_EXPORTS bool is_model_file(const std::string &ext);
+	FLAME_COMMON_EXPORTS bool is_terrain_file(const std::string &ext);
+	FLAME_COMMON_EXPORTS bool is_scene_file(const std::string &ext);
+	FLAME_COMMON_EXPORTS FileType get_file_type(const std::string &ext);
 
-	size_t get_file_length(std::ifstream &f);
+	FLAME_COMMON_EXPORTS long long get_file_length(std::ifstream &f);
 
-	std::pair<std::unique_ptr<char[]>, size_t> get_file_content(const std::string &filename);
+	FLAME_COMMON_EXPORTS std::pair<std::unique_ptr<char[]>, size_t> get_file_content(const std::string &filename);
 
-	std::string float_serialize(float v);
+	FLAME_COMMON_EXPORTS std::string ftos(float v);
 
-	struct XMLAttribute
+	FLAME_COMMON_EXPORTS struct XMLAttribute
 	{
 		std::string name;
 		std::string value;
@@ -104,7 +106,7 @@ namespace flame
 		std::string get_string() const;
 	};
 
-	struct XMLNode
+	FLAME_COMMON_EXPORTS struct XMLNode
 	{
 		std::string name;
 		std::string content;
@@ -136,7 +138,7 @@ namespace flame
 		//void obtainFromAttributes(void *dst, ReflectionBank *b);
 	};
 
-	struct XMLDoc : XMLNode
+	FLAME_COMMON_EXPORTS struct XMLDoc : XMLNode
 	{
 		bool good = true;
 
