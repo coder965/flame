@@ -123,7 +123,7 @@ struct App : flame::Application
 
 	virtual void on_render() override
 	{
-		flame::ui::draw_text("Hello 2018", 100, 400, 150);
+		//flame::ui::draw_text("Hello 2018", 100, 400, 150); // test for sdf
 
 		bool open_windows_popup = false;
 		bool open_device_popup = false;

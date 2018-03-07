@@ -126,4 +126,14 @@ namespace flame
 		FreeImage_Save(fif, dib, filename.c_str());
 		FreeImage_Unload(dib);
 	}
+
+	void Image::save_as_raw_bit_rgba32(const std::string &filename)
+	{
+		assert(channel == 4);
+		assert(bpp == 32);
+		std::ofstream file(filename, std::ios::binary);
+		write_int(file, cx);
+		write_int(file, cy);
+		file.write((char*)data, pitch * cy);
+	}
 }

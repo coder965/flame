@@ -29,7 +29,7 @@ struct App : flame::Application
 			o_file.write(text_buf, strlen(text_buf));
 			o_file.close();
 
-			std::stringstream sstream(flame::create_process_and_get_output("", "gcc temp.c -E"));
+			std::stringstream sstream(flame::create_process_and_get_output("", "gcc temp.c -E -o temp.perprocess"));
 			text_buf[0] = 0;
 			auto p = text_buf;
 			while (!sstream.eof())
