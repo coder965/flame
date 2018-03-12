@@ -16,6 +16,12 @@ namespace flame
 {
 	static std::string shader_path;
 	static std::string vk_sdk_path;
+	static const char additional_lines[] =
+		"#version 450 core\n"
+		"#extension GL_ARB_separate_shader_objects : enable\n"
+		"#extension GL_ARB_shading_language_420pack : enable\n"
+	;
+	static const auto additional_lines_count = std::count(std::begin(additional_lines), std::end(additional_lines), '\n');
 	static bool watch_shader_file;
 
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines) :
@@ -48,8 +54,7 @@ namespace flame
 		std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file
 
 		auto _filename = engine_path + shader_path + "src/" + filename;
-		std::filesystem::path path(_filename);
-		auto shader_file_timestamp = std::filesystem::last_write_time(path);
+		auto shader_file_timestamp = std::filesystem::last_write_time(_filename);
 
 		auto spv_filename = filename;
 		for (auto &d : defines)
@@ -66,17 +71,44 @@ namespace flame
 
 		if (!spv_up_to_date)
 		{
-			std::string command_line(" " + _filename + " ");
+			{
+				std::ofstream ofile("temp.glsl");
+				auto file = get_file_content(_filename);
+				ofile.write(additional_lines, sizeof(additional_lines) - 1);
+				ofile.write(file.first.get(), file.second);
+			}
+			std::string command_line(" temp.glsl ");
 			for (auto &d : defines)
 				command_line += "-D" + d + " ";
 			command_line += " -flimit-file ";
 			command_line += engine_path + "src/shader/src/shader_compile_config.conf";
 			command_line += " -o temp.spv";
 			auto output = create_process_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
+			std::filesystem::remove("temp.glsl");
 			if (!std::filesystem::exists("temp.spv"))
 			{
 				// shader compile error, try to use previous spv file
-				printf("\n=====Shader Compile Error=====\n%s\n=============================\n",output.c_str());
+				printf("\n=====Shader Compile Error=====\n", output.c_str());
+				auto p = (char*)output.c_str();
+				while (true)
+				{
+					auto p0 = std::strstr(p, ":");
+					if (!p0)
+						break;
+					auto p1 = std::strstr(p0 + 1, ":");
+					if (!p1)
+						break;
+					*p0 = 0;
+					*p1 = 0;
+					printf("%s:%d:", p, std::atoi(p0 + 1) - additional_lines_count);
+					p = std::strstr(p1 + 1, "\n");
+					if (p)
+						*p = 0;
+					printf("%s\n", p1 + 1);
+					if (!p)
+						break;
+				}
+				printf("=============================\n", output.c_str());
 			}
 			else
 			{
@@ -90,7 +122,7 @@ namespace flame
 		auto spv_file = get_file_content(spv_filename);
 		if (!spv_file.first)  // missing spv file!
 		{
-			if (!v) // if we are running first time
+			if (!v) // if we are running first time and no previous spv
 				assert(0);
 			return;
 		}

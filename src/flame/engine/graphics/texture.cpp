@@ -692,6 +692,7 @@ namespace flame
 
 	std::shared_ptr<Texture> default_color_texture;
 	std::shared_ptr<Texture> default_normal_texture;
+	std::shared_ptr<Texture> default_height_texture;
 	std::shared_ptr<Texture> default_blend_texture;
 
 	void init_texture()
@@ -705,5 +706,8 @@ namespace flame
 		default_blend_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		default_blend_texture->filename = "[default_blend_texture]";
 		default_blend_texture->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
+		default_height_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		default_height_texture->filename = "[default_height_texture]";
+		default_height_texture->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
 	}
 }

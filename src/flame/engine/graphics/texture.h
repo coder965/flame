@@ -87,6 +87,7 @@ namespace flame
 
 	extern std::shared_ptr<Texture> default_color_texture; // R:0 G:0 B:0 A:0
 	extern std::shared_ptr<Texture> default_normal_texture; // X:0 Y:0 Z:1
+	extern std::shared_ptr<Texture> default_height_texture; // R:1 G:0 B:0 A:0
 	extern std::shared_ptr<Texture> default_blend_texture; // R:1 G:0 B:0 A:0
 
 	void init_texture();

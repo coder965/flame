@@ -17,6 +17,7 @@ namespace flame
 		displacement_height(1.f),
 		tessellation_factor(0.75f),
 		tiling_scale(8.f),
+		height_image(default_height_texture),
 		blend_image(default_blend_texture),
 		material_count(0),
 		enable_physics(false),

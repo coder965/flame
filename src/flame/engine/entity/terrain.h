@@ -28,15 +28,13 @@ namespace flame
 		float tessellation_factor;
 		float tiling_scale;
 
+		std::shared_ptr<Texture> height_image;
 		std::shared_ptr<Texture> blend_image;
 
 		int material_count;
 		std::shared_ptr<Material> materials[4];
 
 		bool enable_physics;
-
-		std::unique_ptr<TerrainVertex[]> vertex;
-		std::unique_ptr<Buffer> vertex_buffer;
 
 		physx::PxRigidActor *actor;
 
