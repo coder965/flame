@@ -13,7 +13,9 @@ struct ModelEditor : flame::ui::Window
 
 	flame::DisplayLayer layer;
 
-	flame::CameraComponent camera;
+	flame::Node *camera_node;
+	flame::CameraComponent *camera;
+	float camera_view_length;
 	std::unique_ptr<flame::PlainRenderer> renderer;
 
 	ModelEditor(std::shared_ptr<flame::Model> _model);

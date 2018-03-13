@@ -33,10 +33,11 @@ SceneEditor::SceneEditor(flame::Scene *_scene) :
 	layer(true),
 	curr_tool(nullptr)
 {
-	camera_node = new flame::Node(flame::NodeTypeNode);
+	camera_node = new flame::Node;
 	camera = new flame::CameraComponent;
+	camera_controller = new flame::ControllerComponent;
 	camera_node->add_component(camera);
-	camera->set_length(2.f);
+	camera_node->add_component(camera_controller);
 	flame::app->root_node->add_child(camera_node);
 
 	plain_renderer = std::make_unique<flame::PlainRenderer>();
@@ -83,9 +84,9 @@ void SceneEditor::on_menu_bar()
 				light_type = flame::LightTypeSpot;
 			if (light_type != -1)
 			{
-				auto n = new flame::Node(flame::NodeTypeNode);
+				auto n = new flame::Node;
 				n->name = "Light";
-				n->set_coord(camera->get_target());
+				n->set_coord(camera_node->get_world_coord());
 				auto i = new flame::LightComponent;
 				i->set_type(light_type);
 				n->add_component(i);
@@ -115,7 +116,7 @@ void SceneEditor::on_menu_bar()
 					{
 						auto n = new flame::Node(flame::NodeTypeNode);
 						n->name = "Object";
-						n->set_coord(camera->get_target());
+						n->set_coord(camera_node->get_world_coord());
 						auto i = new flame::ModelInstanceComponent;
 						i->set_model(m);
 						n->add_component(i);
@@ -127,7 +128,7 @@ void SceneEditor::on_menu_bar()
 			if (ImGui::MenuItem("Terrain"))
 			{
 				auto n = new flame::Node(flame::NodeTypeNode);
-				n->set_coord(camera->get_target());
+				n->set_coord(camera_node->get_world_coord());
 				auto t = new flame::TerrainComponent;
 				n->add_component(t);
 				scene->add_child(n);
@@ -135,7 +136,7 @@ void SceneEditor::on_menu_bar()
 			if (ImGui::MenuItem("Water"))
 			{
 				auto n = new flame::Node(flame::NodeTypeNode);
-				n->set_coord(camera->get_target());
+				n->set_coord(camera_node->get_world_coord());
 				auto w = new flame::WaterComponent;
 				n->add_component(w);
 				scene->add_child(n);
@@ -268,7 +269,7 @@ void SceneEditor::on_show()
 				{
 					auto n = new flame::Node(flame::NodeTypeNode);
 					n->name = "Object";
-					n->set_coord(camera->get_target());
+					n->set_coord(camera_node->get_world_coord());
 					auto i = new flame::ModelInstanceComponent;
 					i->set_model(m);
 					n->add_component(i);
@@ -295,16 +296,10 @@ void SceneEditor::on_show()
 			{
 				auto distX = (float)flame::app->mouseDispX / (float)flame::resolution.x();
 				auto distY = (float)flame::app->mouseDispY / (float)flame::resolution.y();
-				if (flame::app->key_states[VK_SHIFT].pressing && flame::app->mouse_button[2].pressing)
-					camera->move_by_cursor(distX, distY);
-				else if (flame::app->key_states[VK_CONTROL].pressing && flame::app->mouse_button[2].pressing)
-					camera->scroll(distX);
-				else if (flame::app->mouse_button[2].pressing)
-					camera->rotate_by_cursor(distX, distY);
+				if (flame::app->mouse_button[1].pressing)
+					camera_node->add_euler(-distX * 180.f, -distY * 180.f, 0.f);
 			}
 		}
-		if (flame::app->mouseScroll != 0)
-			camera->scroll(flame::app->mouseScroll);
 		if (flame::app->mouse_button[0].just_down)
 		{
 			if (!flame::app->key_states[VK_SHIFT].pressing && !flame::app->key_states[VK_CONTROL].pressing)
@@ -338,9 +333,16 @@ void SceneEditor::on_show()
 			}
 		}
 
+		camera_controller->set_state(flame::ControllerComponent::StateForward, flame::app->key_states['W'].pressing);
+		camera_controller->set_state(flame::ControllerComponent::StateBackward, flame::app->key_states['S'].pressing);
+		camera_controller->set_state(flame::ControllerComponent::StateLeft, flame::app->key_states['A'].pressing);
+		camera_controller->set_state(flame::ControllerComponent::StateRight, flame::app->key_states['D'].pressing);
+
 		if (ImGui::IsKeyDown(VK_DELETE))
 			on_delete();
 	}
+	else
+		camera_controller->set_state(flame::ControllerComponent::StateStand, true);
 
 	//{
 	//	auto n = selected.get_node();

@@ -210,8 +210,8 @@ namespace flame
 			break;
 		}
 
-		broadcast(this, MessageSkyDirty);
-		broadcast(this, MessageAmbientDirty);
+		broadcast_upward(this, MessageSkyDirty);
+		broadcast_upward(this, MessageAmbientDirty);
 	}
 
 	void Scene::set_pano_sky_image(std::shared_ptr<Texture> i)
@@ -222,14 +222,14 @@ namespace flame
 		auto pa = (SkyPanorama*)sky.get();
 		pa->panoImage = i;
 
-		broadcast(this, MessageSkyDirty);
-		broadcast(this, MessageAmbientDirty);
+		broadcast_upward(this, MessageSkyDirty);
+		broadcast_upward(this, MessageAmbientDirty);
 	}
 
 	//void Scene::addLight(Light *l) // when a light is added to scene, the owner is the scene, light cannot be deleted elsewhere
 	//{
 	//	lights.emplace_back(l);
-	//	broadcast(this, MessageLightCountDirty);
+	//	broadcast_upward(this, MessageLightCountDirty);
 	//}
 
 	//Light *Scene::removeLight(Light *l)
@@ -243,7 +243,7 @@ namespace flame
 	//			break;
 	//		}
 	//	}
-	//	broadcast(this, MessageLightCountDirty);
+	//	broadcast_upward(this, MessageLightCountDirty);
 	//	return l;
 	//}
 
@@ -396,7 +396,7 @@ namespace flame
 
 	//	objects.emplace_back(o);
 
-	//	broadcast(this, MessageObjectCountDirty);
+	//	broadcast_upward(this, MessageObjectCountDirty);
 	//}
 
 	//Object *Scene::removeObject(Object *o)
@@ -412,7 +412,7 @@ namespace flame
 	//			break;
 	//		}
 	//	}
-	//	broadcast(this, MessageObjectCountDirty);
+	//	broadcast_upward(this, MessageObjectCountDirty);
 	//	return o;
 	//}
 
@@ -469,7 +469,7 @@ namespace flame
 	//	//}
 
 	//	terrains.emplace_back(t);
-	//	broadcast(this, MessageTerrainCountDirty);
+	//	broadcast_upward(this, MessageTerrainCountDirty);
 	//}
 
 	//Terrain *Scene::removeTerrain(Terrain *t)
@@ -484,7 +484,7 @@ namespace flame
 	//		}
 	//	}
 
-	//	broadcast(this, MessageTerrainCountDirty);
+	//	broadcast_upward(this, MessageTerrainCountDirty);
 	//	return t;
 	//}
 
@@ -494,33 +494,33 @@ namespace flame
 			return;
 		auto as = (SkyAtmosphereScattering*)sky.get();
 		as->node->set_euler(glm::vec3(v.x, v.y, 0.f));
-		broadcast(this, MessageSkyDirty);
-		broadcast(this, MessageAmbientDirty);
+		broadcast_upward(this, MessageSkyDirty);
+		broadcast_upward(this, MessageAmbientDirty);
 	}
 
 	void Scene::set_bg_color(const glm::vec3 &v)
 	{
 		bg_color = v;
-		broadcast(this, MessageSkyDirty);
+		broadcast_upward(this, MessageSkyDirty);
 	}
 
 	void Scene::set_ambient_color(const glm::vec3 &v)
 	{
 		ambient_color = v;
-		broadcast(this, MessageAmbientDirty);
+		broadcast_upward(this, MessageAmbientDirty);
 	}
 
 	void Scene::set_fog_color(const glm::vec3 &v)
 	{
 		fog_color = v;
-		broadcast(this, MessageAmbientDirty);
+		broadcast_upward(this, MessageAmbientDirty);
 	}
 
 	void Scene::loadSky(const char *skyMapFilename, int radianceMapCount, const char *radianceMapFilenames[], const char *irradianceMapFilename)
 	{
 
-		broadcast(this, MessageSkyDirty);
-		broadcast(this, MessageAmbientDirty);
+		broadcast_upward(this, MessageSkyDirty);
+		broadcast_upward(this, MessageAmbientDirty);
 	}
 
 	static void _load_node(XMLNode *src, Node *dst)

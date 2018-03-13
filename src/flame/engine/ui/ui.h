@@ -6,7 +6,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_tabs.h>
-#include <IconsFontAwesome.h>
+#include <IconsFontAwesome4.h>
 
 #include <flame/common/filesystem.h>
 #include <flame/common/math.h>

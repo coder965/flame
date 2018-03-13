@@ -7,10 +7,15 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 
 extern "C" {
-void android_main(android_app *app) {
+
+void android_main(android_app *app)
+{
     auto lib_vulkan = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
     if (!lib_vulkan)
+    {
+        __android_log_print(ANDROID_LOG_INFO, "native-activity", "%s", "Vulkan Not Support");
         return;
+    }
 
     int frames = 0;
 
@@ -32,4 +37,5 @@ void android_main(android_app *app) {
         frames++;
     }
 }
+
 }

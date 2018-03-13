@@ -2,6 +2,8 @@
 
 #include <flame/common/filesystem.h>
 #include <flame/engine/entity/scene.h>
+#include <flame/engine/entity/camera.h>
+#include <flame/engine/entity/controller.h>
 #include <flame/engine/graphics/display_layer.h>
 #include <flame/engine/graphics/renderer.h>
 #include <flame/engine/ui/ui.h>
@@ -11,6 +13,7 @@ struct SceneEditor : flame::ui::Window
 {
 	flame::Node *camera_node;
 	flame::CameraComponent *camera;
+	flame::ControllerComponent *camera_controller;
 
 	flame::Scene *scene;
 
