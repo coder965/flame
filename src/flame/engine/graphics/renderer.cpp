@@ -11,6 +11,7 @@
 #include <flame/engine/graphics/sampler.h>
 #include <flame/engine/graphics/command_buffer.h>
 #include <flame/engine/graphics/renderer.h>
+#include <flame/engine/entity/node.h>
 #include <flame/engine/entity/camera.h>
 #include <flame/engine/entity/light.h>
 #include <flame/engine/entity/model_instance.h>
@@ -1311,13 +1312,14 @@ namespace flame
 							auto center = lighAxis * ((vMax + vMin) * 0.5f) + cameraCoord;
 							//auto shadowMatrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, TKE_NEAR, halfDepth + halfDepth) * 
 							//glm::lookAt(center + halfDepth * lighAxis[2], center, lighAxis[1]);
+							auto camera_coord = camera->get_parent()->get_world_coord();
 							auto shadowMatrix = glm::mat4(
 								1.f, 0.f, 0.f, 0.f,
 								0.f, 1.f, 0.f, 0.f,
 								0.f, 0.f, 0.5f, 0.f,
 								0.f, 0.f, 0.5f, 1.f
 							) * glm::ortho(-1.f, 1.f, -1.f, 1.f, near_plane, far_plane) *
-								glm::lookAt(camera->get_target() + glm::vec3(0, 0, 100), camera->get_target(), glm::vec3(0, 1, 0));
+								glm::lookAt(camera_coord + glm::vec3(0, 100, 0), camera_coord, glm::vec3(0, 1, 0));
 
 							auto srcOffset = sizeof(glm::mat4) * ranges.size();
 							memcpy(map + srcOffset, &shadowMatrix, sizeof(glm::mat4));

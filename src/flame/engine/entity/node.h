@@ -48,20 +48,18 @@ namespace flame
 		std::vector<std::unique_ptr<Node>> children; 
 		std::vector<std::unique_ptr<Component>> components;
 	public:
-		virtual bool on_message(Object*, Message) { return false; }
-
-		bool broadcast(Object *src, Message msg);
+		bool broadcast_upward(Object *src, Message msg);
 
 		Node(NodeType _type = NodeTypeNode);
-		virtual ~Node();
+		virtual ~Node() {};
 
-		glm::vec3 get_coord() const;
-		glm::vec3 get_euler();
-		glm::vec4 get_quat();
-		glm::vec3 get_scale() const;
+		const glm::vec3 &get_coord() const;
+		const glm::vec3 &get_euler();
+		const glm::vec4 &get_quat();
+		const glm::vec3 &get_scale() const;
 
-		glm::mat3 get_axis();
-		glm::mat4 get_matrix();
+		const glm::mat3 &get_axis();
+		const glm::mat4 &get_matrix();
 		glm::mat4 get_world_matrix();
 		glm::vec3 get_world_coord();
 		glm::mat3 get_world_axis();

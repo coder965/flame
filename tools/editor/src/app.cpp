@@ -123,7 +123,7 @@ struct App : flame::Application
 
 	virtual void on_render() override
 	{
-		flame::ui::draw_text("Hello 2018", 100, 400, 150);
+		//flame::ui::draw_text("Hello 2018", 100, 400, 150); // test for sdf
 
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
@@ -595,6 +595,10 @@ struct App : flame::Application
 
 int main(int argc, char** argv)
 {
+	float a = -1.f;
+	unsigned int b;
+	memcpy(&b, &a, sizeof(a));
+
 	flame::init("../", 1280, 720, 1, true, false);
 	new App;
 	flame::app->set_window_maximized(true);

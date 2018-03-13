@@ -30,8 +30,6 @@ namespace flame
 	CameraComponent::CameraComponent() :
 		Component(ComponentTypeCamera),
 		proj_type(ProjectionTypePerspective),
-		target(0.f),
-		length(0.f),
 		aux_updated_frame(-1)
 	{
 		follow_to(&resolution);
@@ -44,71 +42,22 @@ namespace flame
 		update_proj();
 	}
 
-	void CameraComponent::set_length(float _length)
-	{
-		length = _length;
-		look_at_target();
-	}
-
-	void CameraComponent::set_target(const glm::vec3 &_target)
-	{
-		target = _target;
-		look_at_target();
-	}
-
 	void CameraComponent::reset()
 	{
 		get_parent()->set_coord(glm::vec3(0.f));
-		set_length(0.f);
 	}
 
-	void CameraComponent::rotate_by_cursor(float x, float y)
-	{
-		get_parent()->add_euler(-x * 180.f, -y * 180.f, 0.f);
-		look_at_target();
-	}
-
-	void CameraComponent::move_by_cursor(float x, float y)
-	{
-		if (length != 0.f)
-		{
-			auto l = length / near_plane;
-			auto cy = tan(glm::radians(fovy / 2.f)) * near_plane * 2.f;
-			target += (-x * cy * resolution.aspect() * l) * get_parent()->get_axis()[0] + (y * cy * l) *
-				get_parent()->get_axis()[1];
-			look_at_target();
-		}
-	}
-
-	void CameraComponent::scroll(float value)
-	{
-		if (value < 0.f)
-			set_length((length + 0.1) * 1.1f);
-		else
-			set_length(glm::max((length - 0.1f) / 1.1f, 0.f));
-	}
-
-	glm::vec3 CameraComponent::get_target() const
-	{
-		return target;
-	}
-
-	float CameraComponent::get_length() const
-	{
-		return length;
-	}
-
-	glm::mat4 CameraComponent::get_proj_matrix() const
+	const glm::mat4 &CameraComponent::get_proj_matrix() const
 	{
 		return proj_matrix;
 	}
 
-	glm::mat4 CameraComponent::get_proj_matrix_inverse() const
+	const glm::mat4 &CameraComponent::get_proj_matrix_inverse() const
 	{
 		return proj_matrix_inverse;
 	}
 
-	glm::mat4 CameraComponent::get_view_matrix() const
+	const glm::mat4 &CameraComponent::get_view_matrix() const
 	{
 		return view_matrix;
 	}
@@ -142,14 +91,6 @@ namespace flame
 				proj_matrix_inverse = glm::inverse(proj_matrix);
 				break;
 		}
-	}
-
-	void CameraComponent::look_at_target()
-	{
-		if (length != 0.f)
-			get_parent()->set_coord(target + get_parent()->get_axis()[2] * length);
-		else
-			get_parent()->set_coord(target);
 	}
 
 	void CameraComponent::update_frustum()

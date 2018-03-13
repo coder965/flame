@@ -4,12 +4,12 @@
 
 namespace flame
 {
-	bool Node::broadcast(Object *src, Message msg)
+	bool Node::broadcast_upward(Object *src, Message msg)
 	{
 		if (Object::broadcast(src, msg))
 			return true;
 		if (parent)
-			return parent->broadcast(src, msg);
+			return parent->broadcast_upward(src, msg);
 		return false;
 	}
 
@@ -30,40 +30,38 @@ namespace flame
 	{
 	}
 
-	Node::~Node() {}
-
-	glm::vec3 Node::get_coord() const
+	const glm::vec3 &Node::get_coord() const
 	{
 		return coord;
 	}
 
-	glm::mat3 Node::get_axis()
+	const glm::mat3 &Node::get_axis()
 	{
 		if (axis_dirty)
 			update_axis();
 		return axis;
 	}
 
-	glm::vec3 Node::get_scale() const
+	const glm::vec3 &Node::get_scale() const
 	{
 		return scale;
 	}
 
-	glm::vec3 Node::get_euler()
+	const glm::vec3 &Node::get_euler()
 	{
 		if (euler_dirty)
 			update_euler();
 		return euler;
 	}
 
-	glm::vec4 Node::get_quat()
+	const glm::vec4 &Node::get_quat()
 	{
 		if (quat_dirty)
 			update_quat();
 		return quat;
 	}
 
-	glm::mat4 Node::get_matrix()
+	const glm::mat4 &Node::get_matrix()
 	{
 		if (matrix_dirty)
 			update_matrix();
@@ -480,11 +478,11 @@ namespace flame
 
 	void Node::update()
 	{
-		on_update();
-		for (auto &c : components)
-			c->on_update();
 		for (auto &c : children)
 			c->update();
+		for (auto &c : components)
+			c->on_update();
+		on_update();
 	}
 
 	NodeType Node::get_type() const
@@ -511,7 +509,7 @@ namespace flame
 	{
 		n->parent = this;
 		children.emplace_back(n);
-		broadcast(n, MessageNodeAdd);
+		broadcast_upward(n, MessageNodeAdd);
 		component_boardcast(n, MessageComponentAdd);
 	}
 
@@ -522,7 +520,7 @@ namespace flame
 			if (it->get() == n)
 			{
 				component_boardcast(n, MessageComponentRemove);
-				broadcast(n, MessageNodeRemove);
+				broadcast_upward(n, MessageNodeRemove);
 				children.erase(it);
 				return;
 			}
@@ -533,7 +531,7 @@ namespace flame
 	{
 		c->parent = this;
 		components.emplace_back(c);
-		broadcast(c, MessageComponentAdd);
+		broadcast_upward(c, MessageComponentAdd);
 	}
 
 	void Node::remove_component(Component *c)
@@ -543,7 +541,7 @@ namespace flame
 			if (it->get() == c)
 			{
 				components.erase(it);
-				broadcast(c, MessageComponentRemove);
+				broadcast_upward(c, MessageComponentRemove);
 				return;
 			}
 		}
@@ -591,7 +589,7 @@ namespace flame
 	void Node::component_boardcast(Node *n, Message msg)
 	{
 		for (auto &c : n->components)
-			n->broadcast(c.get(), msg);
+			n->broadcast_upward(c.get(), msg);
 		for (auto &c : n->children)
 			c->component_boardcast(c.get(), msg);
 	}

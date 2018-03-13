@@ -18,6 +18,24 @@ void ImageEditor::on_menu_bar()
 	{
 		ImGui::EndMenu();
 	}
+	if (ImGui::BeginMenu("Special Save"))
+	{
+		if (ImGui::MenuItem("Save As Raw Bit RGBA32"))
+		{
+			auto dialog = new flame::ui::FileSelector("Save Image", flame::ui::FileSelectorSave, "", flame::ui::WindowModal | flame::ui::WindowNoSavedSettings);
+			dialog->first_cx = 800;
+			dialog->first_cy = 600;
+			dialog->callback = [&](const std::string &filename) {
+				auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
+				flame::Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, pixel, false);
+				img.save_as_raw_bit_rgba32(filename);
+				staging_buffer->unmap();
+				return true;
+			};
+		}
+
+		ImGui::EndMenu();
+	}
 }
 
 void ImageEditor::on_top_area()
@@ -71,7 +89,8 @@ void ImageEditor::on_mouse_overing_image(ImVec2 image_pos)
 				pixel[0] = 255; pixel[1] = 0; pixel[2] = 0; pixel[3] = 255;
 				break;
 			case 3:
-				pixel[0] = 0; pixel[1] = 0; pixel[2] = 0; pixel[3] = 255;
+				//pixel[0] = 0; pixel[1] = 0; pixel[2] = 0; pixel[3] = 0;
+				pixel[3] = 0;
 				break;
 		}
 		staging_buffer->unmap();

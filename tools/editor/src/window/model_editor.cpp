@@ -1,5 +1,7 @@
 #include <flame/global.h>
 #include <flame/engine/core/application.h>
+#include <flame/engine/entity/node.h>
+#include <flame/engine/entity/camera_third_person.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/command_buffer.h>
 
@@ -19,7 +21,12 @@ ModelEditor::ModelEditor(std::shared_ptr<flame::Model> _model) :
 	draw_data.obj_data[0].color = glm::vec4(0.f, 1.f, 0.f, 1.f);
 	draw_data.obj_data[0].fill_with_model_texture_mode(model.get());
 
-	camera.set_length(1.f);
+	camera_node = new flame::Node;
+	camera = new flame::CameraComponent;
+	camera_node->add_component(camera);
+	camera_view_length = 1.f;
+	flame::set_camera_third_person_position(camera, glm::vec3(0), camera_view_length);
+
 	renderer = std::make_unique<flame::PlainRenderer>();
 }
 
@@ -35,10 +42,10 @@ void ModelEditor::on_show()
 	}
 	ImGui::EndMenuBar();
 
-	ImVec2 image_pos = ImGui::GetCursorScreenPos();
-	ImVec2 image_size = ImVec2(layer.image->get_cx(), layer.image->get_cy());
+	auto image_pos = ImGui::GetCursorScreenPos();
+	auto image_size = ImVec2(layer.image->get_cx(), layer.image->get_cy());
 	ImGui::InvisibleButton("canvas", image_size);
-	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	auto draw_list = ImGui::GetWindowDrawList();
 	draw_list->AddImage(ImGui::ImageID(layer.image), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
@@ -47,10 +54,19 @@ void ModelEditor::on_show()
 			auto distX = (float)flame::app->mouseDispX / (float)flame::resolution.x();
 			auto distY = (float)flame::app->mouseDispY / (float)flame::resolution.y();
 			if (flame::app->mouse_button[2].pressing)
-				camera.rotate_by_cursor(distX, distY);
+			{
+				camera_node->add_euler(-distX * 180.f, -distY * 180.f, 0.f);
+				flame::set_camera_third_person_position(camera, glm::vec3(0), camera_view_length);
+			}
 		}
 		if (flame::app->mouseScroll != 0)
-			camera.scroll(flame::app->mouseScroll);
+		{
+			if (flame::app->mouseScroll < 0.f)
+				camera_view_length = (camera_view_length + 0.1) * 1.1f;
+			else
+				camera_view_length = glm::max((camera_view_length - 0.1f) / 1.1f, 0.f);
+			flame::set_camera_third_person_position(camera, glm::vec3(0), camera_view_length);
+		}
 	}
 
 	ImGui::SameLine();
@@ -105,6 +121,6 @@ void ModelEditor::on_show()
 	ImGui::EndChild();
 	ImGui::EndGroup();
 
-	renderer->render(layer.framebuffer.get(), true, &camera, &draw_data);
+	renderer->render(layer.framebuffer.get(), true, camera, &draw_data);
 	renderer->add_to_drawlist();
 }
