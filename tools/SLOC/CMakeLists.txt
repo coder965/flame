@@ -1,12 +1,12 @@
 project(SLOC)
 
-file(GLOB_RECURSE EDITOR_HEADER_LIST "src/*.h*")
-file(GLOB_RECURSE EDITOR_SOURCE_LIST "src/*.c*")
+file(GLOB_RECURSE SLOC_HEADER_LIST "src/*.h*")
+file(GLOB_RECURSE SLOC_SOURCE_LIST "src/*.c*")
 
-GROUP_SRC("${EDITOR_HEADER_LIST}" "/src" "Header")
-GROUP_SRC("${EDITOR_SOURCE_LIST}" "/src" "Source")
+GROUP_SRC("${SLOC_HEADER_LIST}" "/src" "Header")
+GROUP_SRC("${SLOC_SOURCE_LIST}" "/src" "Source")
 
-add_executable(SLOC ${EDITOR_HEADER_LIST} ${EDITOR_SOURCE_LIST})
+add_executable(SLOC ${SLOC_HEADER_LIST} ${SLOC_SOURCE_LIST})
 
 target_link_libraries(SLOC flame_common)
 

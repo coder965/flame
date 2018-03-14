@@ -1,52 +1,9 @@
-layout(binding = 1) uniform ubo_matrix_
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}ubo_matrix;
-
-struct Terrain
-{
-	vec3 coord;
-	int block_cx;
-	int block_cy;
-	float block_size;
-	float terrain_height;
-	float displacement_height;
-	float tessellation_factor;
-	float tiling_scale;
-	uint material_count;
-	uint material_index;
-};
-
-layout(binding = 3) uniform ubo_terrain_
-{
-	Terrain d[8];
-}ubo_terrain;
+#include "../ubo_matrix.glsl"
+#include "terrain.glsl"
 
 layout(binding = 4) uniform sampler2D imgs_blend[8];
 
-struct Material
-{
-	uint albedoAlphaCompress;
-	uint specRoughnessCompress;
-
-	uint mapIndex;
-	
-	uint dummy;
-};
-
-layout(set = 1, binding = 0) uniform ubo_material_
-{
-	Material material[256];
-}ubo_material;
-
-layout(set = 1, binding = 1) uniform sampler2D imgs_material[256];
+#include "../material.glsl"
 
 layout (location = 0) in flat uint inTerrainId;
 layout (location = 1) in vec2 inUV;

@@ -7,66 +7,23 @@
 //#define DEBUG_NORMAL
 //#define DEBUG_WORLD_COORD
 
-layout(binding = 0) uniform ubo_constant_
-{
-	float near;
-	float far;
-	float cx;
-	float cy;
-	float aspect;
-	float fovy;
-	float tanHfFovy;
-	float envrCx;
-	float envrCy;
-}ubo_constant;
-
-layout(binding = 1) uniform ubo_matrix_
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}ubo_matrix;
+#include "../ubo_constant.glsl"
+#include "../ubo_matrix.glsl"
 
 layout(binding = 6) uniform sampler2D img_depth;
 layout(binding = 7) uniform sampler2D img_albedo_alpha;
 layout(binding = 8) uniform sampler2D img_normal_height;
 layout(binding = 9) uniform sampler2D img_spec_roughness;
 
-struct Light
-{
-	vec4 coord;
-	vec4 color;
-	vec4 spotData;
-};
-
-layout(binding = 10) uniform ubo_light_
-{
-	uint count;
-	Light lights[256];
-}ubo_light;
+#include "../ubo_light.glsl"
 
 layout(binding = 11) uniform sampler2D img_envr;
 
-layout(binding = 12) uniform ubo_ambient_
-{
-	vec3 color;
-	uint envr_max_mipmap;
-	vec4 fogColor;
-}ubo_ambient;
+#include "../ubo_ambient.glsl"
 
 layout(binding = 13) uniform sampler2D img_ao;
 
-layout(binding = 14) uniform ubo_shadow_
-{
-	mat4 matrix[8];
-}ubo_shadow;
-
-layout(binding = 15) uniform sampler2DArray img_shadow;
+#include "../shadow.glsl"
 
 layout(location = 0) in vec3 inViewDir;
 

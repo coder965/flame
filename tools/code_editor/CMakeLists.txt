@@ -1,12 +1,12 @@
 project(code_editor)
 
-file(GLOB_RECURSE EDITOR_HEADER_LIST "src/*.h*")
-file(GLOB_RECURSE EDITOR_SOURCE_LIST "src/*.c*")
+file(GLOB_RECURSE CODE_EDITOR_HEADER_LIST "src/*.h*")
+file(GLOB_RECURSE CODE_EDITOR_SOURCE_LIST "src/*.c*")
 
 GROUP_SRC("${EDITOR_HEADER_LIST}" "/src" "Header")
 GROUP_SRC("${EDITOR_SOURCE_LIST}" "/src" "Source")
 
-add_executable(code_editor ${EDITOR_HEADER_LIST} ${EDITOR_SOURCE_LIST})
+add_executable(code_editor ${CODE_EDITOR_HEADER_LIST} ${CODE_EDITOR_SOURCE_LIST})
 
 target_link_libraries(code_editor flame_engine)
 

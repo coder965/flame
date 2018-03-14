@@ -1,33 +1,5 @@
-layout(binding = 1) uniform ubo_matrix_
-{
-	mat4 proj;
-	mat4 projInv;
-	mat4 view;
-	mat4 viewInv;
-	mat4 projView;
-	mat4 projViewRotate;
-	vec4 frustumPlanes[6];
-	vec2 viewportDim;
-}ubo_matrix;
-
-#if defined(ANIM)
-layout(binding = 2) uniform ubo_object_animated_
-{
-	mat4 matrix[8];
-}ubo_object;
-#else
-layout(binding = 2) uniform ubo_object_static_
-{
-	mat4 matrix[1024];
-}ubo_object;
-#endif
-
-#if defined(ANIM)
-layout(set = 2, binding = 0) uniform ubo_bone_
-{
-	mat4 matrix[256];
-}ubo_bone[8];
-#endif
+#include "../ubo_matrix.glsl"
+#include "object.glsl"
 
 layout(location = 0) in vec3 inVertex;
 layout(location = 1) in vec2 inTexcoord;

@@ -1,4 +1,5 @@
 add_subdirectory(SLOC)
-add_subdirectory(spv)
+add_subdirectory(spy)
 add_subdirectory(code_editor)
 add_subdirectory(editor)
+add_subdirectory(playground)

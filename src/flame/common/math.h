@@ -66,6 +66,8 @@ bool inline operator >= (glm::vec3 a, float b)
 
 namespace flame
 {
+	int digit_num(int a);
+
 	inline bool is_same(const float a, const float b)
 	{
 		return std::abs(a - b) <= TK_EPS;

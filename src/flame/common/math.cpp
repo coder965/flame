@@ -2,6 +2,17 @@
 
 namespace flame
 {
+	int digit_num(int a)
+	{
+		auto d = 0;
+		do
+		{
+			d++;
+			a /= 10;
+		} while (a);
+		return d;
+	}
+
 	float linear_depth_ortho(float z, float depth_near, float depth_far)
 	{
 		z = z * 0.5 + 0.5;
