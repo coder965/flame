@@ -595,10 +595,6 @@ struct App : flame::Application
 
 int main(int argc, char** argv)
 {
-	float a = -1.f;
-	unsigned int b;
-	memcpy(&b, &a, sizeof(a));
-
 	flame::init("../", 1280, 720, 1, true, false);
 	new App;
 	flame::app->set_window_maximized(true);

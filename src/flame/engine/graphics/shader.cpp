@@ -54,7 +54,8 @@ namespace flame
 		std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file
 
 		auto _filename = engine_path + shader_path + "src/" + filename;
-		auto shader_file_timestamp = std::filesystem::last_write_time(_filename);
+		std::filesystem::path _path(_filename);
+		auto shader_file_timestamp = std::filesystem::last_write_time(_path);
 
 		auto spv_filename = filename;
 		for (auto &d : defines)
@@ -71,20 +72,22 @@ namespace flame
 
 		if (!spv_up_to_date)
 		{
+			auto temp_filename = _path.parent_path().string() + "/temp." + _path.filename().string();
 			{
-				std::ofstream ofile("temp.glsl");
+				std::ofstream ofile(temp_filename);
 				auto file = get_file_content(_filename);
 				ofile.write(additional_lines, sizeof(additional_lines) - 1);
 				ofile.write(file.first.get(), file.second);
+				ofile.close();
 			}
-			std::string command_line(" temp.glsl ");
+			std::string command_line(" " + temp_filename + " ");
 			for (auto &d : defines)
 				command_line += "-D" + d + " ";
 			command_line += " -flimit-file ";
 			command_line += engine_path + "src/shader/src/shader_compile_config.conf";
 			command_line += " -o temp.spv";
 			auto output = create_process_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
-			std::filesystem::remove("temp.glsl");
+			std::filesystem::remove(temp_filename);
 			if (!std::filesystem::exists("temp.spv"))
 			{
 				// shader compile error, try to use previous spv file

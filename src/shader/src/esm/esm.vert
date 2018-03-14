@@ -1,7 +1,3 @@
-#version 450 core
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
-
 #if defined(ANIM)
 layout(binding = 2) uniform ubo_object_animated_
 {
