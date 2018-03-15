@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <rapidxml.hpp>
 #include <rapidxml_utils.hpp>
 #include <rapidxml_print.hpp>
@@ -170,8 +172,10 @@ namespace flame
 		file.write((char*)v.data(), v.size());
 	}
 
-	bool is_text_file(const std::string &ext)
+	bool is_text_file(const std::string &_ext)
 	{
+		auto ext = _ext;
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if (ext == ".txt" ||
 			ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp" || ext == ".cxx" || ext == ".inl" ||
 			ext == ".glsl" || ext == ".vert" || ext == ".tesc" || ext == ".tese" || ext == ".geom" || ext == ".frag" || ext == ".hlsl" ||
@@ -182,30 +186,38 @@ namespace flame
 		return false;
 	}
 
-	bool is_image_file(const std::string &ext)
+	bool is_image_file(const std::string &_ext)
 	{
+		auto ext = _ext;
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if (ext == ".bmp" || ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" ||
 			ext == ".tga" || ext == ".dds" || ext == ".ktx")
 			return true;
 		return false;
 	}
 
-	bool is_model_file(const std::string &ext)
+	bool is_model_file(const std::string &_ext)
 	{
+		auto ext = _ext;
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if (ext == ".obj" || ext == ".pmd" || ext == ".pmx" || ext == ".tkm" || ext == ".dae")
 			return true;
 		return false;
 	}
 
-	bool is_terrain_file(const std::string &ext)
+	bool is_terrain_file(const std::string &_ext)
 	{
+		auto ext = _ext;
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if (ext == ".tkt")
 			return true;
 		return false;
 	}
 
-	bool is_scene_file(const std::string &ext)
+	bool is_scene_file(const std::string &_ext)
 	{
+		auto ext = _ext;
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if (ext == ".tks")
 			return true;
 		return false;

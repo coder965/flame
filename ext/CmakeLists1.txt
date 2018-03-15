@@ -1,0 +1,8 @@
+project(imgui)
+
+file(GLOB HEADER_LIST imgui/*.h*)
+file(GLOB SOURCE_LIST imgui/*.c*)
+
+add_library(imgui ${HEADER_LIST} ${SOURCE_LIST})
+target_include_directories(imgui PUBLIC "imgui")
+set_target_properties(imgui PROPERTIES FOLDER "ext") 

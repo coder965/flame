@@ -1,5 +1,7 @@
-#define NOMINMAX
-#include <FreeImage.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 #include <flame/common/filesystem.h>
 #include <flame/common/image.h>
 
@@ -21,44 +23,18 @@ namespace flame
 	Image::Image(const std::string &filename) :
 		own_data(true)
 	{
-		auto fif = FIF_UNKNOWN;
-		fif = FreeImage_GetFileType(filename.c_str());
-		if (fif == FIF_UNKNOWN)
-			fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		if (fif == FIF_UNKNOWN)
+		auto ext = std::filesystem::path(filename).extension().string();
+		stbi_set_flip_vertically_on_load(is_image_file(ext));
+		auto img = stbi_load(filename.c_str(), &cx, &cy, &channel, 0);
+		if (!img)
 			assert(0); // format not support
-		auto dib = FreeImage_Load(fif, filename.c_str());
-		if (!dib)
-			assert(0);
-		if (fif == FREE_IMAGE_FORMAT::FIF_JPEG || fif == FREE_IMAGE_FORMAT::FIF_TARGA || fif == FREE_IMAGE_FORMAT::FIF_PNG)
-			FreeImage_FlipVertical(dib);
-		cx = FreeImage_GetWidth(dib);
-		cy = FreeImage_GetHeight(dib);
 		sRGB = false;
-		switch (FreeImage_GetColorType(dib))
-		{
-			case FIC_MINISBLACK: case FIC_MINISWHITE:
-				channel = 1;
-				break;
-			case FIC_RGB:
-			{
-				// convert RGB to RGBA
-				auto dib32 = FreeImage_ConvertTo32Bits(dib);
-				FreeImage_Unload(dib);
-				dib = dib32;
-				channel = 4;
-				break;
-			}
-			case FIC_RGBALPHA:
-				channel = 4;
-				break;
-		}
-		bpp = FreeImage_GetBPP(dib);
-		auto size = FreeImage_GetDIBSize(dib);
-		size = calc_pitch(cx, bpp) * cy;
+		bpp = channel * 8;
+		pitch = calc_pitch(cx, bpp);
+		auto size = pitch * cy;
 		data = new unsigned char[size];
-		memcpy(data, FreeImage_GetBits(dib), size);
-		FreeImage_Unload(dib);
+		memcpy(data, img, size);
+		stbi_image_free(img);
 	}
 
 	Image::Image(int _cx, int _cy, int _channel, int _bpp, unsigned char *_data, bool _own_data) :
@@ -121,10 +97,7 @@ namespace flame
 
 	void Image::save(const std::string &filename)
 	{
-		auto fif = FreeImage_GetFIFFromFilename(filename.c_str());
-		auto dib = FreeImage_ConvertFromRawBits(data, cx, cy, calc_pitch(cx * (bpp / 8)), bpp, 0x0000FF, 0xFF0000, 0x00FF00, true);
-		FreeImage_Save(fif, dib, filename.c_str());
-		FreeImage_Unload(dib);
+		stbi_write_png(filename.c_str(), cx, cy, channel, data, pitch);
 	}
 
 	void Image::save_as_raw_bit_rgba32(const std::string &filename)

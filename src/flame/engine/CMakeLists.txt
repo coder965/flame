@@ -4,14 +4,18 @@ file(GLOB_RECURSE FLAME_ENGINE_SOURCE_LIST "*.c*")
 GROUP_SRC("${FLAME_ENGINE_HEADER_LIST}" "" "Header")
 GROUP_SRC("${FLAME_ENGINE_SOURCE_LIST}" "" "Source")
 
-add_library(flame_engine STATIC ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST} ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h)
+if (TK_LIBRARY_SHARED)
+	add_library(flame_engine SHARED ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST} ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h)
+	GENERATE_EXPORT_HEADER(flame_engine
+		BASE_NAME flame_engine 
+		EXPORT_MACRO_NAME FLAME_ENGINE_EXPORTS
+		EXPORT_FILE_NAME ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h
+		STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC
+	)
+else()
+	add_library(flame_engine STATIC ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST})
+endif()
 
-GENERATE_EXPORT_HEADER(flame_engine
-    BASE_NAME flame_engine 
-    EXPORT_MACRO_NAME FLAME_ENGINE_EXPORTS
-    EXPORT_FILE_NAME ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h
-    STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC
-)
 
 target_include_directories(flame_engine PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_engine PUBLIC "${CMAKE_SOURCE_DIR}/ext/vulkan")
