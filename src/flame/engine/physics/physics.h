@@ -1,5 +1,9 @@
 #pragma once
 
+#include <flame/engine/config.h>
+
+#if FLAME_ENABLE_PHYSICS != 0
+
 #include <memory>
 #include <vector>
 
@@ -101,3 +105,5 @@ namespace flame
 
 	void init_physics();
 }
+
+#endif

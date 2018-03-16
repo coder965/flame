@@ -15,8 +15,6 @@
 #include <flame/engine/graphics/command_buffer.h>
 #include <flame/engine/core/application.h>
 #include <flame/engine/ui/ui.h>
-#include <msdfgen.h>
-#include <msdfgen-ext.h>
 
 const unsigned int ImageCount = 127;
 
@@ -1388,52 +1386,20 @@ namespace flame
 			io.Fonts->TexID = (void*)0; // image index
 			updateDescriptorSets(&pipeline_ui->descriptor_set->imageWrite(0, 0, font_image, colorSampler));
 
-			auto ft_library = msdfgen::initializeFreetype();
-			auto ttf_data = msdfgen::loadFont(ft_library, "c:/windows/fonts/arialbd.ttf");
-			//auto ttf_data = get_file_content("c:/windows/fonts/arialbd.ttf");
-			//stbtt_fontinfo font_info;
-			//stbtt_InitFont(&font_info, (unsigned char*)ttf_data.first.get(), stbtt_GetFontOffsetForIndex((unsigned char*)ttf_data.first.get(), 0));
-			auto i_c = 0;
-			Image sdf_total(sdf_text_size * sdf_text_char_count, sdf_text_size, 4, 32, nullptr, true);
-			for (auto i_c = 0; i_c < sdf_text_char_count; i_c++)
+			if (!std::filesystem::exists("sdf.rimg"))
 			{
-				msdfgen::Shape shape;
-				if (msdfgen::loadGlyph(shape, ttf_data, sdf_text_chars[i_c]))
-				{
-					shape.normalize();
-					msdfgen::edgeColoringSimple(shape, 3.0);
-					msdfgen::Bitmap<msdfgen::FloatRGB> msdf(sdf_text_size, sdf_text_size);
-					msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, msdfgen::Vector2(4.0, 4.0));
-					for (auto j = 0; j < sdf_text_size; j++)
-					{
-						for (auto i = 0; i < sdf_text_size; i++)
-						{
-							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 0] = glm::clamp(msdf(i, j).r * 255.f, 0.f, 255.f);
-							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 1] = glm::clamp(msdf(i, j).g * 255.f, 0.f, 255.f);
-							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 2] = glm::clamp(msdf(i, j).b * 255.f, 0.f, 255.f);
-							sdf_total.data[j * sdf_total.pitch + (i_c * sdf_text_size + i) * 4 + 3] = 255;
-						}
-					}
-				}
-				//int w, h;
-				//auto bitmap = stbtt_GetCodepointBitmap(&font_info, 0, stbtt_ScaleForPixelHeight(&font_info, sdf_text_size), sdf_text_chars[i_c], &w, &h, 0, 0);
-				//Image glyph_img(sdf_text_size, sdf_text_size, 1, 8, nullptr, true);
-				//auto x = (sdf_text_size - w) / 2;
-				//auto y = (sdf_text_size - h) / 2;
-				//for (auto j = 0; j < h; j++) 
-				//{
-				//	for (auto i = 0; i < w; i++)
-				//		glyph_img.data[(y + j) * sdf_text_size + x + i] = bitmap[j * w + i];
-				//}
-				//stbtt_FreeBitmap(bitmap, nullptr);
-				//auto sdf = glyph_img.create_distance_transform(0);
-				//sdf->copy_to(&sdf_total, 0, 0, sdf_text_size, sdf_text_size, i_c * sdf_text_size, 0);
+				std::string cl(sdf_text_chars);
+				cl += " ";
+				cl += std::to_string(sdf_text_size);
+				exec("sdf_generator", cl.c_str());
 			}
-			msdfgen::destroyFont(ttf_data);
-			msdfgen::deinitializeFreetype(ft_library);
+
+			Image sdf("sdf.rimg", true);
+			sdf.add_alpha_channel();
+
 			sdf_font_image = new Texture(sdf_text_size * sdf_text_char_count, sdf_text_size, VK_FORMAT_R8G8B8A8_UNORM,
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			sdf_font_image->fill_data(0, sdf_total.data);
+			sdf_font_image->fill_data(0, sdf.data);
 			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->imageWrite(0, 0, sdf_font_image, colorSampler));
 
 			cb_ui = new CommandBuffer;
@@ -1752,14 +1718,13 @@ namespace flame
 				cb_ui->reset();
 				cb_ui->begin();
 
-				if (bg_color.a > 0.f)
+				if (main_layout->is_empty(0))
 				{
 					VkClearValue clear_value = { bg_color.r, bg_color.g, bg_color.b, 1.f };
 					cb_ui->begin_renderpass(renderPass_windowC, app->get_curr_framebuffer(), &clear_value);
 				}
 				else
-					cb_ui->begin_renderpass(renderPass_window,
-						app->get_curr_framebuffer());
+					cb_ui->begin_renderpass(renderPass_window, app->get_curr_framebuffer());
 
 				if (draw_data->CmdListsCount > 0)
 				{

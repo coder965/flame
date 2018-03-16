@@ -1,6 +1,5 @@
+add_subdirectory(sdf_generator)
 add_subdirectory(SLOC)
 add_subdirectory(spy)
-add_subdirectory(code_editor)
 add_subdirectory(editor)
-add_subdirectory(playground)
 add_subdirectory(test)

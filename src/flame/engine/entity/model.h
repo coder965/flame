@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <flame/common/math.h>
+#include <flame/engine/config.h>
 #include <flame/engine/graphics/graphics.h>
 
 namespace flame
@@ -44,8 +45,10 @@ namespace flame
 	struct Buffer;
 	struct Animation;
 	struct AnimationBinding;
+#if FLAME_ENABLE_PHYSICS != 0
 	struct Rigidbody;
 	struct Joint;
+#endif
 
 	struct Geometry
 	{
@@ -135,8 +138,10 @@ namespace flame
 		std::string backward_animation_filename;
 		std::string jump_animation_filename;
 
+#if FLAME_ENABLE_PHYSICS != 0
 		std::vector<std::unique_ptr<Rigidbody>> rigidbodies;
 		std::vector<std::unique_ptr<Joint>> joints;
+#endif
 
 		glm::vec3 max_coord = glm::vec3(0.f);
 		glm::vec3 min_coord = glm::vec3(0.f);
@@ -167,11 +172,13 @@ namespace flame
 		BoneIK *new_bone_ik();
 		void remove_bone_ik(BoneIK *b);
 
+#if FLAME_ENABLE_PHYSICS != 0
 		Rigidbody *new_rigidbody();
 		void remove_rigidbody(Rigidbody *r);
 
 		Joint *new_joint();
 		void remove_joint(Joint *j);
+#endif
 	};
 
 	extern std::unique_ptr<Buffer> vertex_static_buffer;

@@ -1,5 +1,7 @@
 #include <flame/engine/physics/physics.h>
 
+#if FLAME_ENABLE_PHYSICS != 0
+
 namespace flame
 {
 	glm::vec3 physx_u32_to_vec3(const physx::PxU32 &src)
@@ -173,3 +175,5 @@ namespace flame
 		//pxDefaultMaterial = pxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 	}
 }
+
+#endif

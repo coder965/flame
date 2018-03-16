@@ -1,0 +1,3 @@
+#pragma once
+
+#define FLAME_ENABLE_PHYSICS ${FLAME_ENABLE_PHYSICS_VAR}

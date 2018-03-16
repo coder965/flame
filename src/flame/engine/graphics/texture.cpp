@@ -39,9 +39,9 @@ namespace flame
 				{
 					case 32:
 						if (sRGB)
-							return VK_FORMAT_B8G8R8A8_SRGB/*VK_FORMAT_R8G8B8A8_SRGB*/;
+							return /*VK_FORMAT_B8G8R8A8_SRGB*/VK_FORMAT_R8G8B8A8_SRGB;
 						else
-							return VK_FORMAT_B8G8R8A8_UNORM/*VK_FORMAT_R8G8B8A8_UNORM*/;
+							return /*VK_FORMAT_B8G8R8A8_UNORM*/VK_FORMAT_R8G8B8A8_UNORM;
 				}
 		}
 		return VK_FORMAT_UNDEFINED;
@@ -669,18 +669,20 @@ namespace flame
 		}
 		else
 		{
-			auto image = std::make_unique<Image>(filename);
+			Image image(filename);
+			if (image.channel == 3)
+				image.add_alpha_channel();
 
-			auto sRGB = std::filesystem::exists(filename + ".srgb") || image->sRGB;
+			auto sRGB = std::filesystem::exists(filename + ".srgb") || image.sRGB;
 
-			auto _format = get_texture_format(image->bpp, image->channel, sRGB);
+			auto _format = get_texture_format(image.bpp, image.channel, sRGB);
 			assert(_format != VK_FORMAT_UNDEFINED);
 
-			t = std::make_shared<Texture>(image->cx, image->cy,
+			t = std::make_shared<Texture>(image.cx, image.cy,
 				_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			t->fill_data(0, image->data);
-			t->levels[0]->pitch = calc_pitch(image->cx, image->bpp);
-			t->bpp = image->bpp;
+			t->fill_data(0, image.data);
+			t->levels[0]->pitch = calc_pitch(image.cx, image.bpp);
+			t->bpp = image.bpp;
 			t->sRGB = sRGB;
 		}
 

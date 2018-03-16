@@ -121,10 +121,8 @@ struct App : flame::Application
 		flame::ui::save_layout();
 	}
 
-	virtual void on_render() override
+	void show_menu()
 	{
-		//flame::ui::draw_text("Hello 2018", 100, 400, 150); // test for sdf
-
 		bool open_windows_popup = false;
 		bool open_device_popup = false;
 		bool open_preferences_popup = false;
@@ -582,10 +580,21 @@ struct App : flame::Application
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void show_toolbar()
+	{
 		ImGui::BeginToolBar();
 		if (scene_editor)
 			scene_editor->on_toolbar();
 		ImGui::EndToolBar();
+	}
+
+	virtual void on_render() override
+	{
+		//flame::ui::draw_text("Hello 2018", 100, 400, 150); // test for sdf
+		show_menu();
+		show_toolbar();
 
 		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", flame::FPS);
@@ -595,7 +604,7 @@ struct App : flame::Application
 
 int main(int argc, char** argv)
 {
-	flame::init("../", 1280, 720, 1, true, false);
+	flame::init("../", 1280, 720, 0, true, false);
 	new App;
 	flame::app->set_window_maximized(true);
 	flame::run();

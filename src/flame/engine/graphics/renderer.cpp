@@ -1236,7 +1236,6 @@ namespace flame
 			animated_model_instance_count_dirty = false;
 		}
 
-
 		if (light_count_dirty)
 		{
 			unsigned int count = lights.get_size();

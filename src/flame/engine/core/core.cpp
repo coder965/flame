@@ -48,7 +48,9 @@ namespace flame
 		init_sound();
 		if (!only_2d)
 		{
+#if FLAME_ENABLE_PHYSICS
 			init_physics();
+#endif
 			init_entity();
 		}
 
@@ -71,31 +73,29 @@ namespace flame
 		for (;;)
 		{
 			MSG msg;
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
 				if (msg.message == WM_QUIT)
 					return;
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else
+
+			last_time_ns = now_ns;
+			now_ns = get_now_time_ns();
+			elapsed_time = (now_ns - last_time_ns) / 1000000000.0;
+
+			static unsigned int frame_count = 0;
+			frame_count++;
+			total_frame_count++;
+			if (now_ns - _last_sec_time >= 1000000000)
 			{
-				last_time_ns = now_ns;
-				now_ns = get_now_time_ns();
-				elapsed_time = (now_ns - last_time_ns) / 1000000000.0;
-
-				static unsigned int frame_count = 0;
-				frame_count++;
-				total_frame_count++;
-				if (now_ns - _last_sec_time >= 1000000000)
-				{
-					FPS = std::max(frame_count, 1U);
-					_last_sec_time = now_ns;
-					frame_count = 0;
-				}
-
-				app->update();
+				FPS = std::max(frame_count, 1U);
+				_last_sec_time = now_ns;
+				frame_count = 0;
 			}
+
+			app->update();
 		}
 	}
 }

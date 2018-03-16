@@ -495,6 +495,7 @@ namespace flame
 		}
 	}
 
+#if FLAME_ENABLE_PHYSICS != 0
 	Rigidbody *Model::new_rigidbody()
 	{
 		auto r = new Rigidbody;
@@ -532,6 +533,7 @@ namespace flame
 			}
 		}
 	}
+#endif
 
 	std::unique_ptr<Buffer> vertex_static_buffer;
 	std::unique_ptr<Buffer> vertex_skeleton_Buffer;
@@ -1319,6 +1321,7 @@ namespace flame
 				RigidData data;
 				file.read((char*)&data, sizeof(RigidData));
 
+				#if FLAME_ENABLE_PHYSICS
 				auto r = m->new_rigidbody();
 				r->name = japanese_to_chinese(data.name);
 				r->boneID = data.bone;
@@ -1356,6 +1359,7 @@ namespace flame
 				auto v = s->getVolume();
 				if (v != 0.f) 
 					r->density = data.mass / v;
+				#endif
 			}
 
 			auto jointCount = read_int(file);
@@ -1364,6 +1368,7 @@ namespace flame
 				JointData data;
 				file.read((char*)&data, sizeof(JointData));
 
+				#if FLAME_ENABLE_PHYSICS
 				auto j = m->new_joint();
 				j->name = japanese_to_chinese(data.name);
 				j->rigid0ID = data.rigid0;
@@ -1378,6 +1383,7 @@ namespace flame
 				data.coord.z *= -1.f;
 				j->coord = data.coord;
 				j->quat = mat3_to_quaternion(euler_to_mat3(-data.rotation.y, -data.rotation.x, data.rotation.z));
+				#endif
 			}
 
 			_process_model(m, true);
@@ -1719,6 +1725,7 @@ namespace flame
 				m->jump_animation_filename = read_string(file);
 			}
 
+			#if FLAME_ENABLE_PHYSICS
 			auto rigidbodyCount = read_int(file);
 			for (int i = 0; i < rigidbodyCount; i++)
 			{
@@ -1763,6 +1770,7 @@ namespace flame
 				j->springConstant = read_float3(file);
 				j->sprintRotationConstant = read_float3(file);
 			}
+			#endif
 
 			m->bounding_position = read_float3(file);
 			m->bounding_size = read_float(file);
@@ -1837,6 +1845,7 @@ namespace flame
 				write_string(file, m->jump_animation_filename);
 			}
 
+			#if FLAME_ENABLE_PHYSICS
 			write_int(file, m->rigidbodies.size());
 			for (auto &r : m->rigidbodies)
 			{
@@ -1877,6 +1886,7 @@ namespace flame
 				write_float3(file, j->springConstant);
 				write_float3(file, j->sprintRotationConstant);
 			}
+			#endif
 
 			write_float3(file, m->bounding_position);
 			write_float(file, m->bounding_size);
@@ -1981,11 +1991,13 @@ namespace flame
 			g->indiceCount = m->indices.size();
 			m->geometries.emplace_back(g);
 
+#if FLAME_ENABLE_PHYSICS
 			auto r = m->new_rigidbody();
 			r->type = RigidbodyType::dynamic;
 			auto s = r->new_shape();
 			s->type = ShapeType::box;
 			s->scale = glm::vec3(0.5f);
+#endif
 
 			_process_model(m.get(), true);
 
@@ -2012,11 +2024,13 @@ namespace flame
 			m->geometries.emplace_back(g0);
 			m->geometries.emplace_back(g1);
 
+#if FLAME_ENABLE_PHYSICS
 			auto r = m->new_rigidbody();
 			r->type = RigidbodyType::dynamic;
 			auto s = r->new_shape();
 			s->type = ShapeType::sphere;
 			s->scale = glm::vec3(0.5f);
+#endif
 
 			_process_model(m.get(), true);
 
@@ -2037,11 +2051,13 @@ namespace flame
 			g->indiceCount = m->indices.size();
 			m->geometries.emplace_back(g);
 
+#if FLAME_ENABLE_PHYSICS
 			auto r = m->new_rigidbody();
 			r->type = RigidbodyType::dynamic;
 			auto s = r->new_shape();
 			s->type = ShapeType::capsule;
 			s->scale = glm::vec3(0.5f);
+#endif
 
 			_process_model(m.get(), true);
 

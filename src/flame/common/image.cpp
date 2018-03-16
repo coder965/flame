@@ -20,11 +20,25 @@ namespace flame
 		return calc_pitch(cx * (bpp / 8));
 	}
 
-	Image::Image(const std::string &filename) :
+	Image::Image(const std::string &filename, bool raw) :
 		own_data(true)
 	{
+		if (raw)
+		{
+			std::ifstream file(filename, std::ios::binary);
+			cx = read_int(file);
+			cy = read_int(file);
+			channel = read_int(file);
+			bpp = channel * 8;
+			pitch = calc_pitch(cx, bpp);
+			auto size = pitch * cy;
+			data = new unsigned char[size];
+			file.read((char*)data, size);
+			return;
+		}
+
 		auto ext = std::filesystem::path(filename).extension().string();
-		stbi_set_flip_vertically_on_load(is_image_file(ext));
+		//stbi_set_flip_vertically_on_load(is_image_file(ext));
 		auto img = stbi_load(filename.c_str(), &cx, &cy, &channel, 0);
 		if (!img)
 			assert(0); // format not support
@@ -86,6 +100,37 @@ namespace flame
 		assert(channel == 4);
 	}
 
+	void Image::add_alpha_channel()
+	{
+		assert(channel == 3);
+		auto new_data = new unsigned char[cx * cy * 4];
+		pitch = cx * 4;
+		for (auto j = 0; j < cy; j++)
+		{
+			for (auto i = 0; i < cx; i++)
+			{
+				new_data[j * pitch + i * 4 + 0] = data[j * cx * 3 + i * 3 + 0];
+				new_data[j * pitch + i * 4 + 1] = data[j * cx * 3 + i * 3 + 1];
+				new_data[j * pitch + i * 4 + 2] = data[j * cx * 3 + i * 3 + 2];
+				new_data[j * pitch + i * 4 + 3] = 255;
+			}
+		}
+		channel = 4;
+		bpp = 32;
+		delete[]data;
+		data = new_data;
+	}
+
+	void Image::swap_RB()
+	{
+		assert(channel > 2);
+		for (auto j = 0; j < cy; j++)
+		{
+			for (auto i = 0; i < cx; i++)
+				std::swap(data[j * pitch + i * channel + 0], data[j * pitch + i * channel + 2]);
+		}
+	}
+
 	void Image::copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y)
 	{
 		for (auto j = 0; j < cy; j++)
@@ -100,13 +145,12 @@ namespace flame
 		stbi_write_png(filename.c_str(), cx, cy, channel, data, pitch);
 	}
 
-	void Image::save_as_raw_bit_rgba32(const std::string &filename)
+	void Image::save_raw(const std::string &filename)
 	{
-		assert(channel == 4);
-		assert(bpp == 32);
 		std::ofstream file(filename, std::ios::binary);
 		write_int(file, cx);
 		write_int(file, cy);
+		write_int(file, channel);
 		file.write((char*)data, pitch * cy);
 	}
 }
