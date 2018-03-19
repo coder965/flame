@@ -76,8 +76,10 @@ namespace flame
 			cy = glm::max(cy, 1);
 		}
 
-		VkImageCreateInfo imageInfo = {};
+		VkImageCreateInfo imageInfo;
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageInfo.flags = 0;
+		imageInfo.pNext = nullptr;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
 		imageInfo.extent.width = _cx;
 		imageInfo.extent.height = _cy;
@@ -90,23 +92,23 @@ namespace flame
 		imageInfo.usage = usage;
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageInfo.queueFamilyIndexCount = 0;
+		imageInfo.pQueueFamilyIndices = nullptr;
 
-		auto res = vkCreateImage(vk_device.v, &imageInfo, nullptr, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateImage(vk_device, &imageInfo, nullptr, &v));
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(vk_device.v, v, &memRequirements);
+		vkGetImageMemoryRequirements(vk_device, v, &memRequirements);
 
-		VkMemoryAllocateInfo allocInfo = {};
+		VkMemoryAllocateInfo allocInfo;
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.pNext = nullptr;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = find_vk_memory_type(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		allocInfo.memoryTypeIndex = vk_find_memory_type(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		res = vkAllocateMemory(vk_device.v, &allocInfo, nullptr, &memory);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkAllocateMemory(vk_device, &allocInfo, nullptr, &memory));
 
-		res = vkBindImageMemory(vk_device.v, v, memory, 0);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkBindImageMemory(vk_device, v, memory, 0));
 
 		//total_size = memRequirements.size;
 
@@ -137,11 +139,11 @@ namespace flame
 	Texture::~Texture()
 	{
 		for (auto &v : views)
-			vkDestroyImageView(vk_device.v, v->v, nullptr);
+			vkDestroyImageView(vk_device, v->v, nullptr);
 		if (memory)
 		{
-			vkFreeMemory(vk_device.v, memory, nullptr);
-			vkDestroyImage(vk_device.v, v, nullptr);
+			vkFreeMemory(vk_device, memory, nullptr);
+			vkDestroyImage(vk_device, v, nullptr);
 		}
 	}
 
@@ -294,7 +296,8 @@ namespace flame
 
 		Buffer staging_buffer(BufferTypeStaging, size);
 
-		void* map = staging_buffer.map(0, size);
+		staging_buffer.map(0, size);
+		void* map = staging_buffer.mapped;
 		memcpy(map, src, size);
 		staging_buffer.unmap();
 
@@ -396,8 +399,7 @@ namespace flame
 		info.subresourceRange.baseArrayLayer = baseLayer;
 		info.subresourceRange.layerCount = layerCount;
 
-		auto res = vkCreateImageView(vk_device.v, &info, nullptr, &view->v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateImageView(vk_device, &info, nullptr, &view->v));
 
 		views.emplace_back(view);
 		return view->v;

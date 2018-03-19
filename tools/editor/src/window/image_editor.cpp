@@ -58,7 +58,8 @@ void ImageEditor::on_mouse_overing_image(ImVec2 image_pos)
 		auto x = flame::app->mouseX - image_pos.x;
 		auto y = flame::app->mouseY - image_pos.y;
 
-		auto pixel = (unsigned char*)staging_buffer->map(texture->get_linear_offset(x, y), texture->bpp / 8);
+		staging_buffer->map(texture->get_linear_offset(x, y), texture->bpp / 8);
+		auto pixel = (unsigned char*)staging_buffer->mapped;
 		switch (penID)
 		{
 			case 0:

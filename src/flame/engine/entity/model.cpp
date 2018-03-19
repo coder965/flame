@@ -60,7 +60,8 @@ namespace flame
 
 		Buffer stagingBuffer(BufferTypeStaging, vertex_static_buffer->size + vertex_skeleton_Buffer->size + index_buffer->size);
 
-		unsigned char *vs_map = (unsigned char*)stagingBuffer.map(0, stagingBuffer.size);
+		stagingBuffer.map(0, stagingBuffer.size);
+		unsigned char *vs_map = (unsigned char*)stagingBuffer.mapped;
 		auto va_map = vs_map + vertex_static_buffer->size;
 		auto i_map = va_map + vertex_skeleton_Buffer->size;
 		auto vertex_offset = 0;

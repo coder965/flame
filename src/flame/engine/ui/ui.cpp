@@ -1007,7 +1007,8 @@ namespace flame
 				if (do_save)
 				{
 					auto fun_save = [&](const std::string &filename) {
-						auto pixel = (unsigned char*)staging_buffer->map(0, texture->get_size());
+						staging_buffer->map(0, texture->get_size());
+						auto pixel = (unsigned char*)staging_buffer->mapped;
 						Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, pixel, false);
 						img.save(filename);
 						staging_buffer->unmap();
@@ -1620,27 +1621,38 @@ namespace flame
 				{
 					draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-					size_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
+					auto vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 					if (!vertexBuffer_ui || vertexBuffer_ui->size < vertex_size)
+					{
+						if (vertexBuffer_ui)
+							vertexBuffer_ui->unmap();
 						vertexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateVertex, vertex_size);
+						vertexBuffer_ui->map();
+					}
 
-					size_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
+					auto index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 					if (!indexBuffer_ui || indexBuffer_ui->size < index_size)
+					{
+						if (indexBuffer_ui)
+							indexBuffer_ui->unmap();
 						indexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateIndex, index_size);
+						indexBuffer_ui->map();
+					}
 
-					auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->map(0, vertex_size);
-					auto idx_dst = (ImDrawIdx*)indexBuffer_ui->map(0, index_size);
+					auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->mapped;
+					auto idx_dst = (ImDrawIdx*)indexBuffer_ui->mapped;
+
 					for (int n = 0; n < draw_data->CmdListsCount; n++)
 					{
-						const ImDrawList* cmd_list = draw_data->CmdLists[n];
+						const auto cmd_list = draw_data->CmdLists[n];
 						memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
 						memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-
 						vtx_dst += cmd_list->VtxBuffer.Size;
 						idx_dst += cmd_list->IdxBuffer.Size;
 					}
-					vertexBuffer_ui->unmap();
-					indexBuffer_ui->unmap();
+
+					vertexBuffer_ui->flush();
+					indexBuffer_ui->flush();
 				}
 
 				auto _chr_count = 0;
@@ -1663,7 +1675,8 @@ namespace flame
 					if (!sdf_text_vertex_buffer || sdf_text_vertex_buffer->size < sdf_text_vertex_size)
 						sdf_text_vertex_buffer = std::make_unique<Buffer>(BufferTypeImmediateVertex, sdf_text_vertex_size);
 
-					auto vtx_dst = (SdfTextDrawVertex*)sdf_text_vertex_buffer->map(0, sdf_text_vertex_size);
+					sdf_text_vertex_buffer->map(0, sdf_text_vertex_size);
+					auto vtx_dst = (SdfTextDrawVertex*)sdf_text_vertex_buffer->mapped;
 					for (auto &cmd : sdf_text_draw_commands)
 					{
 						auto _chr_count = 0;

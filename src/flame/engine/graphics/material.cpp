@@ -51,7 +51,8 @@ namespace flame
 
 	static void _update_material(Material *m)
 	{
-		auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(MaterialShaderStruct));
+		defalut_staging_buffer->map(0, sizeof(MaterialShaderStruct));
+		auto map = (unsigned char*)defalut_staging_buffer->mapped;
 		MaterialShaderStruct stru;
 		auto albedo_alpha = glm::clamp(m->get_albedo_alpha(), 0.f, 1.f);
 		stru.albedo_alpha.albedo_r = albedo_alpha.r * 255.f;

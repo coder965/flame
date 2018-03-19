@@ -239,7 +239,7 @@ namespace flame
 			surface_info.pNext = nullptr;
 			surface_info.hinstance = (HINSTANCE)get_hinst();
 			surface_info.hwnd = (HWND)hWnd;
-			chk_vk_res(vkCreateWin32SurfaceKHR(vk_instance, &surface_info, nullptr, &window_surface));
+			vk_chk_res(vkCreateWin32SurfaceKHR(vk_instance, &surface_info, nullptr, &window_surface));
 
 			VkBool32 supported;
 			vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, 0, window_surface, &supported);
@@ -345,7 +345,7 @@ namespace flame
 		{
 			window_cx = x;
 			window_cy = y;
-			vkDestroySwapchainKHR(vk_device.v, swapchain, nullptr);
+			vkDestroySwapchainKHR(vk_device, swapchain, nullptr);
 			create_swapchain();
 			for (auto &e : _resize_listeners)
 				e(x, y);
@@ -359,7 +359,7 @@ namespace flame
 
 		root_node->update();
 
-		chk_vk_res(vkAcquireNextImageKHR(vk_device.v, swapchain, UINT64_MAX, image_available, VK_NULL_HANDLE, &window_image_index));
+		vk_chk_res(vkAcquireNextImageKHR(vk_device, swapchain, UINT64_MAX, image_available, VK_NULL_HANDLE, &window_image_index));
 
 		ui::begin();
 
@@ -369,7 +369,7 @@ namespace flame
 
 		if (!cbs.empty())
 		{
-			vk_graphics_queue.submit(cbs.size(), cbs.data(), image_available, 0, frame_finished);
+			vk_queue_submit(cbs.size(), cbs.data(), image_available, 0, frame_finished);
 			wait_fence(frame_finished);
 			cbs.clear();
 		}
@@ -384,9 +384,7 @@ namespace flame
 		present_info.pSwapchains = &swapchain;
 		present_info.pImageIndices = &window_image_index;
 
-		vk_graphics_queue.mtx.lock();
-		chk_vk_res(vkQueuePresentKHR(vk_graphics_queue.v, &present_info));
-		vk_graphics_queue.mtx.unlock();
+		vk_chk_res(vkQueuePresentKHR(vk_graphics_queue, &present_info));
 
 		for (auto i = 0; i < 3; i++)
 		{
@@ -444,12 +442,12 @@ namespace flame
 		swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		swapchain_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		swapchain_info.clipped = true;
-		chk_vk_res(vkCreateSwapchainKHR(vk_device.v, &swapchain_info, nullptr, &swapchain));
+		vk_chk_res(vkCreateSwapchainKHR(vk_device, &swapchain_info, nullptr, &swapchain));
 
 		VkImage vkImages[2];
 		uint32_t imageCount = 0;
-		vkGetSwapchainImagesKHR(vk_device.v, swapchain, &imageCount, nullptr);
-		vkGetSwapchainImagesKHR(vk_device.v, swapchain, &imageCount, vkImages);
+		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, vkImages);
 
 		for (int i = 0; i < 2; i++)
 		{

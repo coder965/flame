@@ -23,9 +23,7 @@ namespace flame
 		int size;
 		VkBuffer v;
 		VkDeviceMemory memory;
-
-		VkBufferUsageFlags usage;
-		VkMemoryPropertyFlags memory_property;
+		void *mapped;
 
 		VkDescriptorBufferInfo info;
 
@@ -33,8 +31,9 @@ namespace flame
 		~Buffer();
 		void create();
 		void resize(int new_size);
-		void *map(int offset = 0, int _size = 0);
+		void map(int offset = 0, int _size = 0);
 		void unmap();
+		void flush();
 		void copy_to(Buffer *dst, int size, int src_offset = 0, int dst_offset = 0);
 		void copy_to(Buffer *dst, int range_count, VkBufferCopy *ranges);
 		void update(void *data, int _size = 0, Buffer *staging_buffer = nullptr);

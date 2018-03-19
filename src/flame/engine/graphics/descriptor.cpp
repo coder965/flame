@@ -49,13 +49,12 @@ namespace flame
 		info.bindingCount = bindings.size();
 		info.pBindings = vk_bindings.data();
 
-		auto res = vkCreateDescriptorSetLayout(vk_device.v, &info, nullptr, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateDescriptorSetLayout(vk_device, &info, nullptr, &v));
 	}
 
 	DescriptorSetLayout::~DescriptorSetLayout()
 	{
-		vkDestroyDescriptorSetLayout(vk_device.v, v, nullptr);
+		vkDestroyDescriptorSetLayout(vk_device, v, nullptr);
 	}
 
 	bool operator==(const DescriptorSetLayout &lhs, const DescriptorSetLayout &rhs)
@@ -96,8 +95,7 @@ namespace flame
 		descriptorSetInfo.descriptorSetCount = 1;
 		descriptorSetInfo.pSetLayouts = &layout->v;
 
-		auto res = vkAllocateDescriptorSets(vk_device.v, &descriptorSetInfo, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkAllocateDescriptorSets(vk_device, &descriptorSetInfo, &v));
 	}
 
 	DescriptorSet::DescriptorSet(Pipeline *pipeline, int index) :
@@ -107,8 +105,7 @@ namespace flame
 
 	DescriptorSet::~DescriptorSet()
 	{
-		auto res = vkFreeDescriptorSets(vk_device.v, descriptorPool->v, 1, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkFreeDescriptorSets(vk_device, descriptorPool->v, 1, &v));
 	}
 
 	VkWriteDescriptorSet DescriptorSet::bufferWrite(int binding, int index, Buffer *buffer)
@@ -147,9 +144,7 @@ namespace flame
 		if (count <= 0)
 			return;
 
-		vk_device.mtx.lock();
-		vkUpdateDescriptorSets(vk_device.v, count, writes, 0, nullptr);
-		vk_device.mtx.unlock();
+		vkUpdateDescriptorSets(vk_device, count, writes, 0, nullptr);
 	}
 
 	DescriptorPool::DescriptorPool()
@@ -159,19 +154,19 @@ namespace flame
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2048 },
 		};
 
-		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
+		VkDescriptorPoolCreateInfo descriptorPoolInfo;
 		descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		descriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		descriptorPoolInfo.pNext = nullptr;
 		descriptorPoolInfo.poolSizeCount = ARRAYSIZE(descriptorPoolSizes);
 		descriptorPoolInfo.pPoolSizes = descriptorPoolSizes;
 		descriptorPoolInfo.maxSets = 64;
-		auto res = vkCreateDescriptorPool(vk_device.v, &descriptorPoolInfo, nullptr, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateDescriptorPool(vk_device, &descriptorPoolInfo, nullptr, &v));
 	}
 
 	DescriptorPool::~DescriptorPool()
 	{
-		vkDestroyDescriptorPool(vk_device.v, v, nullptr);
+		vkDestroyDescriptorPool(vk_device, v, nullptr);
 	}
 
 	DescriptorPool *descriptorPool = nullptr;

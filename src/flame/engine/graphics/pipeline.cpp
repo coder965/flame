@@ -218,13 +218,12 @@ namespace flame
 		info.pushConstantRangeCount = vk_push_constant_ranges.size();
 		info.pPushConstantRanges = vk_push_constant_ranges.data();
 
-		auto res = vkCreatePipelineLayout(vk_device.v, &info, nullptr, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreatePipelineLayout(vk_device, &info, nullptr, &v));
 	}
 
 	PipelineLayout::~PipelineLayout()
 	{
-		vkDestroyPipelineLayout(vk_device.v, v, nullptr);
+		vkDestroyPipelineLayout(vk_device, v, nullptr);
 	}
 
 	static std::vector<std::weak_ptr<PipelineLayout>> pipelineLayouts;
@@ -276,7 +275,7 @@ namespace flame
 
 	Pipeline::~Pipeline()
 	{
-		vkDestroyPipeline(vk_device.v, v, nullptr);
+		vkDestroyPipeline(vk_device, v, nullptr);
 	}
 
 	void Pipeline::create()
@@ -490,9 +489,8 @@ namespace flame
 		pipeline_info.pDynamicState = info.dynamic_states.size() ? &dynamic_state : nullptr;
 
 		if (v)
-			vkDestroyPipeline(vk_device.v, v, nullptr);
-		auto res = vkCreateGraphicsPipelines(vk_device.v, 0, 1, &pipeline_info, nullptr, &v);
-		assert(res == VK_SUCCESS);
+			vkDestroyPipeline(vk_device, v, nullptr);
+		vk_chk_res(vkCreateGraphicsPipelines(vk_device, 0, 1, &pipeline_info, nullptr, &v));
 	}
 
 	void Pipeline::link_descriptors(DescriptorSet *set, Resource *resource)

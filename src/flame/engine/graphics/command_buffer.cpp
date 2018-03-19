@@ -20,12 +20,12 @@ namespace flame
 		info.commandPool = command_pool->v;
 		info.commandBufferCount = 1;
 
-		chk_vk_res(vkAllocateCommandBuffers(vk_device.v, &info, &v));
+		vk_chk_res(vkAllocateCommandBuffers(vk_device, &info, &v));
 	}
 
 	CommandBuffer::~CommandBuffer()
 	{
-		vkFreeCommandBuffers(vk_device.v, command_pool->v, 1, &v);
+		vkFreeCommandBuffers(vk_device, command_pool->v, 1, &v);
 	}
 
 	void CommandBuffer::begin(VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
@@ -37,20 +37,23 @@ namespace flame
 		info.flags = flags;
 		info.pNext = nullptr;
 		info.pInheritanceInfo = pInheritance;
-		chk_vk_res(vkBeginCommandBuffer(v, &info));
+		vk_chk_res(vkBeginCommandBuffer(v, &info));
 	}
 
 	void CommandBuffer::end()
 	{
-		chk_vk_res(vkEndCommandBuffer(v));
+		vk_chk_res(vkEndCommandBuffer(v));
 	}
 
 	void CommandBuffer::begin_renderpass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue)
 	{
-		VkRenderPassBeginInfo info = {};
+		VkRenderPassBeginInfo info;
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.pNext = nullptr;
 		info.renderPass = renderPass->v;
 		info.framebuffer = fb->v;
+		info.renderArea.offset.x = 0;
+		info.renderArea.offset.y = 0;
 		info.renderArea.extent.width = fb->cx;
 		info.renderArea.extent.height = fb->cy;
 		info.clearValueCount = renderPass->clearValues.size();
@@ -100,8 +103,8 @@ namespace flame
 
 	void CommandBuffer::bind_vertex_buffer(Buffer *b)
 	{
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(v, 0, 1, &b->v, offsets);
+		VkDeviceSize offset = 0;
+		vkCmdBindVertexBuffers(v, 0, 1, &b->v, &offset);
 	}
 
 	void CommandBuffer::bind_vertex_buffer(VkBuffer *b, int count, VkDeviceSize *offsets)
@@ -200,17 +203,17 @@ namespace flame
 
 	CommandPool::CommandPool()
 	{
-		VkCommandPoolCreateInfo info = {};
+		VkCommandPoolCreateInfo info;
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		info.pNext = nullptr;
 		info.queueFamilyIndex = 0;
-		auto res = vkCreateCommandPool(vk_device.v, &info, nullptr, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateCommandPool(vk_device, &info, nullptr, &v));
 	}
 
 	CommandPool::~CommandPool()
 	{
-		vkDestroyCommandPool(vk_device.v, v, nullptr);
+		vkDestroyCommandPool(vk_device, v, nullptr);
 	}
 
 	CommandBuffer *begin_once_command_buffer()
@@ -224,8 +227,8 @@ namespace flame
 	{
 		cb->end();
 
-		vk_graphics_queue.submit(1, &cb->v);
-		vk_graphics_queue.wait_idle();
+		vk_queue_submit(1, &cb->v);
+		vk_queue_wait_idle();
 
 		delete cb;
 	}

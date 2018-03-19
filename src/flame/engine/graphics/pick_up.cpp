@@ -27,7 +27,8 @@ namespace flame
 
 		pick_up_image->copy_to_buffer(defalut_staging_buffer, 0, x, y, 1, 1);
 
-		auto pixel = (unsigned char*)defalut_staging_buffer->map(0, 4);
+		defalut_staging_buffer->map(0, 4);
+		auto pixel = (unsigned char*)defalut_staging_buffer->mapped;
 		unsigned int index = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16) + (pixel[3] << 24);
 		defalut_staging_buffer->unmap();
 

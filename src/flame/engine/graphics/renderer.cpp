@@ -1084,7 +1084,8 @@ namespace flame
 			if (list.get_size() > 0)
 			{
 				std::vector<VkBufferCopy> ranges;
-				auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * list.get_size());
+				defalut_staging_buffer->map(0, sizeof(glm::mat4) * list.get_size());
+				auto map = (unsigned char*)defalut_staging_buffer->mapped;
 
 				list.iterate([&](int index, void *p, bool &remove) {
 					auto i = (ModelInstanceComponent*)p;
@@ -1118,7 +1119,8 @@ namespace flame
 		if (terrains.get_size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(TerrainShaderStruct) * terrains.get_size());
+			defalut_staging_buffer->map(0, sizeof(TerrainShaderStruct) * terrains.get_size());
+			auto map = (unsigned char*)defalut_staging_buffer->mapped;
 
 			terrains.iterate([&](int index, void *p, bool &remove) {
 				auto t = (TerrainComponent*)p;
@@ -1167,7 +1169,8 @@ namespace flame
 		if (waters.get_size() > 0)
 		{
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * waters.get_size());
+			defalut_staging_buffer->map(0, sizeof(WaterShaderStruct) * waters.get_size());
+			auto map = (unsigned char*)defalut_staging_buffer->mapped;
 
 			waters.iterate([&](int index, void *p, bool &remove) {
 				auto w = (WaterComponent*)p;
@@ -1245,7 +1248,8 @@ namespace flame
 		if (lights.get_size() > 0)
 		{ // light attribute
 			std::vector<VkBufferCopy> ranges;
-			auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * lights.get_size());
+			defalut_staging_buffer->map(0, sizeof(LightShaderStruct) * lights.get_size());
+			auto map = (unsigned char*)defalut_staging_buffer->mapped;
 
 			lights.iterate([&](int index, void *p, bool &remove) {
 				auto l = (LightComponent*)p;
@@ -1281,7 +1285,8 @@ namespace flame
 			{
 				shadow_lights.iterate([&](int index, void *p, bool &remove) {
 					std::vector<VkBufferCopy> ranges;
-					auto map = (unsigned char*)defalut_staging_buffer->map(0, sizeof(glm::mat4) * shadow_lights.get_size());
+					defalut_staging_buffer->map(0, sizeof(glm::mat4) * shadow_lights.get_size());
+					auto map = (unsigned char*)defalut_staging_buffer->mapped;
 
 					auto l = (LightComponent*)p;
 					auto n = l->get_parent();

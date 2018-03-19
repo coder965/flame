@@ -84,8 +84,10 @@ namespace flame
 				clearValues.push_back({ 1, 0.f });
 		}
 
-		VkRenderPassCreateInfo info = {};
+		VkRenderPassCreateInfo info;
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		info.flags = 0;
+		info.pNext = nullptr;
 		info.attachmentCount = attachmentCount;
 		info.pAttachments = pAttachments;
 		info.subpassCount = subpassCount;
@@ -93,13 +95,12 @@ namespace flame
 		info.dependencyCount = dependencyCount;
 		info.pDependencies = pDependencies;
 
-		auto res = vkCreateRenderPass(vk_device.v, &info, nullptr, &v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateRenderPass(vk_device, &info, nullptr, &v));
 	}
 
 	RenderPass::~RenderPass()
 	{
-		vkDestroyRenderPass(vk_device.v, v, nullptr);
+		vkDestroyRenderPass(vk_device, v, nullptr);
 	}
 
 	RenderPass *renderPass_image8 = nullptr;

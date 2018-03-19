@@ -21,24 +21,23 @@ namespace flame
 	float far_plane = 1000.f;
 	float fovy = 60.f;
 
-	void Device::wait_idle()
+	VkInstance vk_instance;
+	VkPhysicalDevice vk_physical_device;
+	VkPhysicalDeviceProperties vk_physical_device_properties;
+	VkPhysicalDeviceFeatures vk_physical_device_features;
+	VkDevice vk_device;
+	VkQueue vk_graphics_queue;
+
+	void vk_device_wait_idle()
 	{
-		mtx.lock();
-		vkDeviceWaitIdle(v);
-		mtx.unlock();
+		vkDeviceWaitIdle(vk_device);
 	}
 
-	void Queue::wait_idle()
+	void vk_queue_submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence)
 	{
-		mtx.lock();
-		vkQueueWaitIdle(v);
-		mtx.unlock();
-	}
-
-	void Queue::submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence)
-	{
-		VkSubmitInfo info = {};
+		VkSubmitInfo info;
 		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		info.pNext = nullptr;
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		info.pWaitDstStageMask = &waitStage;
 		info.waitSemaphoreCount = waitSemaphore ? 1 : 0;
@@ -48,13 +47,15 @@ namespace flame
 		info.signalSemaphoreCount = signalSemaphore ? 1 : 0;
 		info.pSignalSemaphores = signalSemaphore ? &signalSemaphore : nullptr;
 
-		vk_graphics_queue.mtx.lock();
-		auto res = vkQueueSubmit(vk_graphics_queue.v, 1, &info, fence);
-		assert(res == VK_SUCCESS);
-		vk_graphics_queue.mtx.unlock();
+		vk_chk_res(vkQueueSubmit(vk_graphics_queue, 1, &info, fence));
 	}
 
-	void chk_vk_res(VkResult res)
+	void vk_queue_wait_idle()
+	{
+		vkQueueWaitIdle(vk_graphics_queue);
+	}
+
+	void vk_chk_res(VkResult res)
 	{
 		assert(res == VK_SUCCESS);
 	}
@@ -67,15 +68,9 @@ namespace flame
 		"cpu"
 	};
 
-	VkInstance vk_instance;
-	VkPhysicalDevice vk_physical_device;
-	VkPhysicalDeviceProperties vk_physical_device_properties;
-	VkPhysicalDeviceFeatures vk_physical_device_features;
-	Device vk_device;
-	Queue vk_graphics_queue;
 	static VkPhysicalDeviceMemoryProperties memProperties;
 
-	int find_vk_memory_type(uint typeFilter, VkMemoryPropertyFlags properties)
+	int vk_find_memory_type(uint typeFilter, VkMemoryPropertyFlags properties)
 	{
 		for (uint i = 0; i < memProperties.memoryTypeCount; i++)
 		{
@@ -172,7 +167,7 @@ namespace flame
 		instInfo.ppEnabledExtensionNames = instExtensions.data();
 		instInfo.enabledLayerCount = instLayers.size();
 		instInfo.ppEnabledLayerNames = instLayers.data();
-		chk_vk_res(vkCreateInstance(&instInfo, nullptr, &vk_instance));
+		vk_chk_res(vkCreateInstance(&instInfo, nullptr, &vk_instance));
 
 		if (debug)
 		{
@@ -186,11 +181,11 @@ namespace flame
 			callbackCreateInfo.pUserData = nullptr;
 
 			VkDebugReportCallbackEXT callback;
-			chk_vk_res(_vkCreateDebugReportCallbackEXT(vk_instance, &callbackCreateInfo, nullptr, &callback));
+			vk_chk_res(_vkCreateDebugReportCallbackEXT(vk_instance, &callbackCreateInfo, nullptr, &callback));
 		}
 
 		uint32_t gpuCount = 1;
-		chk_vk_res(vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &vk_physical_device));
+		vk_chk_res(vkEnumeratePhysicalDevices(vk_instance, &gpuCount, &vk_physical_device));
 
 		VkPhysicalDeviceFeatures features;
 
@@ -225,9 +220,9 @@ namespace flame
 		deviceInfo.enabledExtensionCount = deviceExtensions.size();
 		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		deviceInfo.pEnabledFeatures = &vk_physical_device_features;
-		chk_vk_res(vkCreateDevice(vk_physical_device, &deviceInfo, nullptr, &vk_device.v));
+		vk_chk_res(vkCreateDevice(vk_physical_device, &deviceInfo, nullptr, &vk_device));
 
-		vkGetDeviceQueue(vk_device.v, 0, 0, &vk_graphics_queue.v);
+		vkGetDeviceQueue(vk_device, 0, 0, &vk_graphics_queue);
 
 		command_pool = new CommandPool;
 		descriptorPool = new DescriptorPool;

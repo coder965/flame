@@ -8,7 +8,7 @@ namespace flame
 {
 	Framebuffer::~Framebuffer()
 	{
-		vkDestroyFramebuffer(vk_device.v, v, nullptr);
+		vkDestroyFramebuffer(vk_device, v, nullptr);
 	}
 
 	static std::vector<std::weak_ptr<Framebuffer>> _framebuffers;
@@ -63,8 +63,7 @@ namespace flame
 		info.attachmentCount = viewCount;
 		info.pAttachments = views;
 
-		auto res = vkCreateFramebuffer(vk_device.v, &info, nullptr, &f->v);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateFramebuffer(vk_device, &info, nullptr, &f->v));
 
 		_framebuffers.push_back(f);
 		return f;

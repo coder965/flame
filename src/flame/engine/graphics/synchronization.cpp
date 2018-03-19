@@ -10,15 +10,14 @@ namespace flame
 		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
 		VkFence fence;
-		auto res = vkCreateFence(vk_device.v, &info, nullptr, &fence);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateFence(vk_device, &info, nullptr, &fence));
 
 		return fence;
 	}
 
 	void destroyFence(VkFence fence)
 	{
-		vkDestroyFence(vk_device.v, fence, nullptr);
+		vkDestroyFence(vk_device, fence, nullptr);
 	}
 
 	VkEvent createEvent()
@@ -27,15 +26,14 @@ namespace flame
 		info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
 
 		VkEvent event;
-		auto res = vkCreateEvent(vk_device.v, &info, nullptr, &event);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateEvent(vk_device, &info, nullptr, &event));
 
 		return event;
 	}
 
 	void destroyEvent(VkEvent event)
 	{
-		vkDestroyEvent(vk_device.v, event, nullptr);
+		vkDestroyEvent(vk_device, event, nullptr);
 	}
 
 	VkSemaphore createSemaphore()
@@ -44,22 +42,19 @@ namespace flame
 		info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 		VkSemaphore semaphore;
-		auto res = vkCreateSemaphore(vk_device.v, &info, nullptr, &semaphore);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkCreateSemaphore(vk_device, &info, nullptr, &semaphore));
 
 		return semaphore;
 	}
 
 	void destroySemaphore(VkSemaphore semaphore)
 	{
-		vkDestroySemaphore(vk_device.v, semaphore, nullptr);
+		vkDestroySemaphore(vk_device, semaphore, nullptr);
 	}
 
 	void wait_fence(VkFence fence)
 	{
-		auto res = vkWaitForFences(vk_device.v, 1, &fence, true, UINT64_MAX);
-		assert(res == VK_SUCCESS);
-		res = vkResetFences(vk_device.v, 1, &fence);
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkWaitForFences(vk_device, 1, &fence, true, UINT64_MAX));
+		vk_chk_res(vkResetFences(vk_device, 1, &fence));
 	}
 }

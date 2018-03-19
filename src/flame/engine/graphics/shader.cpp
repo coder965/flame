@@ -46,7 +46,7 @@ namespace flame
 
 	Shader::~Shader()
 	{
-		vkDestroyShaderModule(vk_device.v, v, nullptr);
+		vkDestroyShaderModule(vk_device, v, nullptr);
 	}
 
 	void Shader::create()
@@ -138,8 +138,8 @@ namespace flame
 		shader_info.pCode = (uint32_t*)spv_file.first.get();
 
 		if (v)
-			vkDestroyShaderModule(vk_device.v, v, nullptr);
-		chk_vk_res(vkCreateShaderModule(vk_device.v, &shader_info, nullptr, &v));
+			vkDestroyShaderModule(vk_device, v, nullptr);
+		vk_chk_res(vkCreateShaderModule(vk_device, &shader_info, nullptr, &v));
 
 		auto res_filename = spv_filename + ".res";
 		if (std::filesystem::exists(res_filename) &&
