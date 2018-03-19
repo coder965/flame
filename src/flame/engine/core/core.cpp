@@ -21,11 +21,32 @@ namespace flame
 	long long now_ns;
 	double elapsed_time;
 
-	long long get_now_time_ns()
+	long long get_now_ns()
 	{
 		return std::chrono::time_point_cast<std::chrono::nanoseconds>(
 			std::chrono::system_clock::now()
 			).time_since_epoch().count();
+	}
+
+	struct Profile
+	{
+		std::string name;
+		long long time;
+	};
+
+	std::vector<Profile> profiles;
+
+	void begin_profile(const std::string &name)
+	{
+		Profile p;
+		p.name = name;
+		p.time = get_now_ns();
+		profiles.push_back(p);
+	}
+
+	void end_profile()
+	{
+		profiles.back().time = get_now_ns() - profiles.back().time;
 	}
 
 	unsigned long long total_frame_count = 0;
@@ -65,13 +86,17 @@ namespace flame
 	{
 		assert(app);
 
-		now_ns = get_now_time_ns();
+		now_ns = get_now_ns();
 		_last_sec_time = now_ns;
 
 		static long long last_time_ns;
 
 		for (;;)
 		{
+			profiles.clear();
+
+			begin_profile("one");
+
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -81,8 +106,12 @@ namespace flame
 				DispatchMessage(&msg);
 			}
 
+			end_profile();
+
+			begin_profile("two");
+
 			last_time_ns = now_ns;
-			now_ns = get_now_time_ns();
+			now_ns = get_now_ns();
 			elapsed_time = (now_ns - last_time_ns) / 1000000000.0;
 
 			static unsigned int frame_count = 0;
@@ -96,6 +125,10 @@ namespace flame
 			}
 
 			app->update();
+
+			end_profile();
+
+			int cut = 1;
 		}
 	}
 }

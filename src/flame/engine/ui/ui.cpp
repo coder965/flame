@@ -1308,7 +1308,7 @@ namespace flame
 		};
 		static std::vector<SdfTextDrawCommand> sdf_text_draw_commands;
 		static std::unique_ptr<Buffer> sdf_text_vertex_buffer;
-		static CommandBuffer *cb_ui;
+		static CommandBuffer *cmd;
 		static std::unique_ptr<Buffer> vertexBuffer_ui;
 		static std::unique_ptr<Buffer> indexBuffer_ui;
 
@@ -1403,7 +1403,7 @@ namespace flame
 			sdf_font_image->fill_data(0, sdf.data);
 			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->imageWrite(0, 0, sdf_font_image, colorSampler));
 
-			cb_ui = new CommandBuffer;
+			cmd = new CommandBuffer;
 
 			io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 			io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
@@ -1726,27 +1726,27 @@ namespace flame
 					sdf_text_vertex_buffer->unmap();
 				}
 
-				cb_ui->begin();
+				cmd->begin();
 
 				if (main_layout->is_empty(0))
 				{
 					VkClearValue clear_value = { bg_color.r, bg_color.g, bg_color.b, 1.f };
-					cb_ui->begin_renderpass(renderPass_windowC, app->get_curr_framebuffer(), &clear_value);
+					cmd->begin_renderpass(renderPass_windowC, app->get_curr_framebuffer(), &clear_value);
 				}
 				else
-					cb_ui->begin_renderpass(renderPass_window, app->get_curr_framebuffer());
+					cmd->begin_renderpass(renderPass_window, app->get_curr_framebuffer());
 
 				if (draw_data->CmdListsCount > 0)
 				{
-					cb_ui->set_viewport_and_scissor(app->window_cx, app->window_cy);
+					cmd->set_viewport_and_scissor(app->window_cx, app->window_cy);
 
-					cb_ui->bind_vertex_buffer(vertexBuffer_ui.get());
-					cb_ui->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
+					cmd->bind_vertex_buffer(vertexBuffer_ui.get());
+					cmd->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
 
-					cb_ui->bind_pipeline(pipeline_ui);
-					cb_ui->bind_descriptor_set();
+					cmd->bind_pipeline(pipeline_ui);
+					cmd->bind_descriptor_set();
 
-					cb_ui->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+					cmd->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
 
 					int vtx_offset = 0;
 					int idx_offset = 0;
@@ -1763,13 +1763,13 @@ namespace flame
 							}
 							else
 							{
-								cb_ui->set_scissor(
+								cmd->set_scissor(
 									ImMax((int32_t)(pcmd->ClipRect.x), 0),
 									ImMax((int32_t)(pcmd->ClipRect.y), 0),
 									ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
 									ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
 								);
-								cb_ui->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+								cmd->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 							}
 							idx_offset += pcmd->ElemCount;
 						}
@@ -1779,23 +1779,23 @@ namespace flame
 
 				if (!sdf_text_draw_commands.empty())
 				{
-					cb_ui->set_scissor(0, 0, app->window_cx, app->window_cy);
+					cmd->set_scissor(0, 0, app->window_cx, app->window_cy);
 
-					cb_ui->bind_vertex_buffer(sdf_text_vertex_buffer.get());
+					cmd->bind_vertex_buffer(sdf_text_vertex_buffer.get());
 
-					cb_ui->bind_pipeline(pipeline_sdf_text);
-					cb_ui->bind_descriptor_set();
+					cmd->bind_pipeline(pipeline_sdf_text);
+					cmd->bind_descriptor_set();
 
-					cb_ui->draw(_chr_count * 6);
+					cmd->draw(_chr_count * 6);
 
 					sdf_text_draw_commands.clear();
 				}
 
-				cb_ui->end_renderpass();
+				cmd->end_renderpass();
 
-				cb_ui->end();
+				cmd->end();
 
-				app->add_cb(cb_ui->v);
+				app->add_cb(cmd->v);
 			}
 
 			accepted_mouse = ImGui::IsMouseHoveringAnyWindow();

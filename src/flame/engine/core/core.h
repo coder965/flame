@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <string>
 
 namespace flame
 {
@@ -11,7 +12,10 @@ namespace flame
 	extern long long now_ns;
 	extern double elapsed_time;
 
-	long long get_now_time_ns();
+	long long get_now_ns();
+
+	void begin_profile(const std::string &name);
+	void end_profile();
 
 	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;
