@@ -1403,8 +1403,6 @@ namespace flame
 			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->imageWrite(0, 0, sdf_font_image, colorSampler));
 
 			cb_ui = new CommandBuffer;
-			cb_ui->begin();
-			cb_ui->end();
 
 			io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 			io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
@@ -1715,7 +1713,6 @@ namespace flame
 					sdf_text_vertex_buffer->unmap();
 				}
 
-				cb_ui->reset();
 				cb_ui->begin();
 
 				if (main_layout->is_empty(0))

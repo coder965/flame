@@ -3,8 +3,8 @@ project(spy)
 file(GLOB_RECURSE SPY_HEADER_LIST "src/*.h*")
 file(GLOB_RECURSE SPY_SOURCE_LIST "src/*.c*")
 
-GROUP_SRC("${SPY_HEADER_LIST}" "/src" "Header")
-GROUP_SRC("${SPY_SOURCE_LIST}" "/src" "Source")
+group_source("${SPY_HEADER_LIST}" "/src" "Header")
+group_source("${SPY_SOURCE_LIST}" "/src" "Source")
 
 add_executable(spy ${SPY_HEADER_LIST} ${SPY_SOURCE_LIST})
 

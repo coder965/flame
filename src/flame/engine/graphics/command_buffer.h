@@ -21,7 +21,6 @@ namespace flame
 		CommandBuffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 		// must call in main thread
 		~CommandBuffer();
-		void reset();
 		void begin(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, VkCommandBufferInheritanceInfo *pInheritance = nullptr);
 		void end();
 		void begin_renderpass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue = nullptr);

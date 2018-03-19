@@ -13,14 +13,14 @@ namespace flame
 {
 	CommandBuffer::CommandBuffer(VkCommandBufferLevel level)
 	{
-		VkCommandBufferAllocateInfo info = {};
+		VkCommandBufferAllocateInfo info;
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		info.pNext = nullptr;
 		info.level = level;
 		info.commandPool = command_pool->v;
 		info.commandBufferCount = 1;
 
-		auto res = vkAllocateCommandBuffers(vk_device.v, &info, &v);
-		assert(res == VK_SUCCESS);
+		chk_vk_res(vkAllocateCommandBuffers(vk_device.v, &info, &v));
 	}
 
 	CommandBuffer::~CommandBuffer()
@@ -28,27 +28,21 @@ namespace flame
 		vkFreeCommandBuffers(vk_device.v, command_pool->v, 1, &v);
 	}
 
-	void CommandBuffer::reset()
-	{
-		vkResetCommandBuffer(v, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-	}
-
 	void CommandBuffer::begin(VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
 	{
 		currentPipeline = nullptr;
 
-		VkCommandBufferBeginInfo info = {};
+		VkCommandBufferBeginInfo info;
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		info.flags = flags;
+		info.pNext = nullptr;
 		info.pInheritanceInfo = pInheritance;
-		auto res = vkBeginCommandBuffer(v, &info);
-		assert(res == VK_SUCCESS);
+		chk_vk_res(vkBeginCommandBuffer(v, &info));
 	}
 
 	void CommandBuffer::end()
 	{
-		auto res = vkEndCommandBuffer(v);
-		assert(res == VK_SUCCESS);
+		chk_vk_res(vkEndCommandBuffer(v));
 	}
 
 	void CommandBuffer::begin_renderpass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue)

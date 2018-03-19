@@ -1,8 +1,8 @@
 file(GLOB_RECURSE FLAME_ENGINE_HEADER_LIST "*.h*")
 file(GLOB_RECURSE FLAME_ENGINE_SOURCE_LIST "*.c*")
 
-GROUP_SRC("${FLAME_ENGINE_HEADER_LIST}" "" "Header")
-GROUP_SRC("${FLAME_ENGINE_SOURCE_LIST}" "" "Source")
+group_source("${FLAME_ENGINE_HEADER_LIST}" "" "Header")
+group_source("${FLAME_ENGINE_SOURCE_LIST}" "" "Source")
 
 if (FLAME_BUILD_SHARED_LIBRARY)
 	add_library(flame_engine SHARED ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST} ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h)

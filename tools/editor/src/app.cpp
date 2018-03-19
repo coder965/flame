@@ -604,7 +604,7 @@ struct App : flame::Application
 
 int main(int argc, char** argv)
 {
-	flame::init("../", 1280, 720, 0, true, false);
+	flame::init("../", 1280, 720, 1, true, false);
 	new App;
 	flame::app->set_window_maximized(true);
 	flame::run();

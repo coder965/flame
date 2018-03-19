@@ -1,7 +1,14 @@
-#include <flame/common/filesystem.h>
-#include <flame/common/image.h>
 #include <msdfgen.h>
 #include <msdfgen-ext.h>
+
+float clamp(float v, float _min, float _max)
+{
+	if (v < _min)
+		return _min;
+	if (v > _max)
+		return _max;
+	return v;
+}
 
 int main(int argc, char **args)
 {
@@ -15,7 +22,14 @@ int main(int argc, char **args)
 	auto ft_library = msdfgen::initializeFreetype();
 	auto ttf_data = msdfgen::loadFont(ft_library, "c:/windows/fonts/arialbd.ttf");
 	auto i_c = 0;
-	flame::Image sdf(size * count, size, 3, 24, nullptr, true);
+	auto cx = size * count;
+	auto pitch = cx * 3;
+	if (pitch % 4 != 0)
+		pitch += 4 - pitch % 4;
+	auto cy = size;
+	auto channel = 3;
+	auto img_size = cx * pitch;
+	auto data = new unsigned char[img_size];
 	for (auto i_c = 0; i_c < count; i_c++)
 	{
 		msdfgen::Shape shape;
@@ -29,9 +43,9 @@ int main(int argc, char **args)
 			{
 				for (auto i = 0; i < size; i++)
 				{
-					sdf.data[j * sdf.pitch + (i_c * size + i) * 3 + 0] = glm::clamp(msdf(i, j).r * 255.f, 0.f, 255.f);
-					sdf.data[j * sdf.pitch + (i_c * size + i) * 3 + 1] = glm::clamp(msdf(i, j).g * 255.f, 0.f, 255.f);
-					sdf.data[j * sdf.pitch + (i_c * size + i) * 3 + 2] = glm::clamp(msdf(i, j).b * 255.f, 0.f, 255.f);
+					data[j * pitch + (i_c * size + i) * 3 + 0] = clamp(msdf(i, j).r * 255.f, 0.f, 255.f);
+					data[j * pitch + (i_c * size + i) * 3 + 1] = clamp(msdf(i, j).g * 255.f, 0.f, 255.f);
+					data[j * pitch + (i_c * size + i) * 3 + 2] = clamp(msdf(i, j).b * 255.f, 0.f, 255.f);
 				}
 			}
 		}
@@ -39,7 +53,13 @@ int main(int argc, char **args)
 	msdfgen::destroyFont(ttf_data);
 	msdfgen::deinitializeFreetype(ft_library);
 
-	sdf.save_raw("sdf.rimg");
+	auto f = fopen("sdf.rimg", "wb");
+	fwrite(&cx, 4, 1, f);
+	fwrite(&cy, 4, 1, f);
+	fwrite(&channel, 4, 1, f);
+	fwrite(data, img_size, 1, f);
+	fclose(f);
+	delete[]data;
 
 	return 0;
 }

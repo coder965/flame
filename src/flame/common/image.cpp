@@ -38,7 +38,6 @@ namespace flame
 		}
 
 		auto ext = std::filesystem::path(filename).extension().string();
-		//stbi_set_flip_vertically_on_load(is_image_file(ext));
 		auto img = stbi_load(filename.c_str(), &cx, &cy, &channel, 0);
 		if (!img)
 			assert(0); // format not support

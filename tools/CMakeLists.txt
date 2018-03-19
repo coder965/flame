@@ -1,4 +1,3 @@
-add_subdirectory(sdf_generator)
 add_subdirectory(SLOC)
 add_subdirectory(spy)
 add_subdirectory(editor)

@@ -169,7 +169,6 @@ namespace flame
 
 	void PlainRenderer::render(Framebuffer *framebuffer, bool clear, CameraComponent *camera, DrawData *data)
 	{
-		cb->reset();
 		cb->begin();
 		RenderPass *rp;
 		if (data->mode == mode_wireframe)
@@ -316,7 +315,6 @@ namespace flame
 
 	void LinesRenderer::render(Framebuffer *framebuffer, bool clear, CameraComponent *camera, DrawData *data)
 	{
-		cb->reset();
 		cb->begin();
 
 		cb->begin_renderpass(renderPass_image8, framebuffer);
@@ -1360,7 +1358,6 @@ namespace flame
 
 		if (enable_shadow)
 		{
-			cb_shad->reset();
 			cb_shad->begin();
 
 			shadow_lights.iterate([&](int index, void *p, bool &remove) {
@@ -1413,7 +1410,6 @@ namespace flame
 			cb_shad->end();
 		}
 
-		cb_defe->reset();
 		cb_defe->begin();
 
 		cb_defe->begin_renderpass(defe_renderpass, framebuffer.get());

@@ -3,8 +3,8 @@ project(test)
 file(GLOB_RECURSE TEST_HEADER_LIST "src/*.h*")
 file(GLOB_RECURSE TEST_SOURCE_LIST "src/*.c*")
 
-GROUP_SRC("${TEST_HEADER_LIST}" "/src" "Header")
-GROUP_SRC("${TEST_SOURCE_LIST}" "/src" "Source")
+group_source("${TEST_HEADER_LIST}" "/src" "Header")
+group_source("${TEST_SOURCE_LIST}" "/src" "Source")
 
 add_executable(test ${TEST_HEADER_LIST} ${TEST_SOURCE_LIST})
 
