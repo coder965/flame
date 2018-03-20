@@ -3,6 +3,7 @@
 #include <flame/global.h>
 #include <flame/common/filesystem.h>
 #include <flame/common/system.h>
+#include <flame/engine/core/core.h>
 #include <flame/engine/core/application.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/framebuffer.h>
@@ -253,7 +254,7 @@ namespace flame
 		create_swapchain();
 
 		image_available = createSemaphore();
-		frame_finished = createFence();
+		render_finished = createSemaphore();
 
 		app = this;
 	}
@@ -354,6 +355,7 @@ namespace flame
 
 	void Application::update()
 	{
+		begin_profile("one");
 		mouseDispX = mouseX - mousePrevX;
 		mouseDispY = mouseY - mousePrevY;
 
@@ -365,12 +367,18 @@ namespace flame
 
 		on_render();
 
+		end_profile();
+
+		begin_profile("two");
 		ui::end();
+		end_profile();
+
+		begin_profile("three");
 
 		if (!cbs.empty())
 		{
-			vk_queue_submit(cbs.size(), cbs.data(), image_available, 0, frame_finished);
-			wait_fence(frame_finished);
+			vk_queue_submit(cbs.size(), cbs.data(), image_available, render_finished, 0);
+			//wait_fence(frame_finished);
 			cbs.clear();
 		}
 
@@ -378,13 +386,19 @@ namespace flame
 		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		present_info.pNext = nullptr;
 		present_info.pResults = nullptr;
-		present_info.waitSemaphoreCount = 0;
-		present_info.pWaitSemaphores = nullptr;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = &render_finished;
 		present_info.swapchainCount = 1;
 		present_info.pSwapchains = &swapchain;
 		present_info.pImageIndices = &window_image_index;
 
 		vk_chk_res(vkQueuePresentKHR(vk_graphics_queue, &present_info));
+
+		//vk_queue_wait_idle();
+
+		end_profile();
+
+		int cut = 1;
 
 		for (auto i = 0; i < 3; i++)
 		{

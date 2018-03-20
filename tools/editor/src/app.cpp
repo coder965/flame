@@ -2,6 +2,7 @@
 #include <flame/global.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/core/application.h>
+#include <flame/engine/graphics/shader.h>
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
 #include "window/inspector.h"
@@ -604,7 +605,8 @@ struct App : flame::Application
 
 int main(int argc, char** argv)
 {
-	flame::init("../", 1280, 720, 1, true, false);
+	flame::init(1280, 720, 0, false);
+	flame::setup_shader_file_watcher();
 	new App;
 	flame::app->set_window_maximized(true);
 	flame::run();

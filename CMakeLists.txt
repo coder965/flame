@@ -29,6 +29,6 @@ else()
 	set(FLAME_ENABLE_PHYSICS_VAR 0)
 endif()
 
-add_subdirectory(src)
+add_subdirectory(src/flame)
 
 add_subdirectory(tools)

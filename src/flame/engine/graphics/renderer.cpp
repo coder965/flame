@@ -23,50 +23,6 @@
 
 namespace flame
 {
-	int Resolution::x() const
-	{
-		return _x;
-	}
-
-	int Resolution::y() const
-	{
-		return _y;
-	}
-
-	float Resolution::aspect() const
-	{
-		return _aspect;
-	}
-
-	long long Resolution::dirty_frame() const
-	{
-		return _dirty_frame;
-	}
-
-	void Resolution::set(int x, int y)
-	{
-		_x = x;
-		_y = y;
-		_aspect = (float)_x / _y;
-
-		_dirty_frame = total_frame_count;
-		add_after_frame_event([this]() {
-			broadcast(this, MessageResolutionChange, false);
-		});
-	}
-
-	void Resolution::set_x(int x)
-	{
-		set(x, _y);
-	}
-
-	void Resolution::set_y(int y)
-	{
-		set(_x, y);
-	}
-
-	Resolution resolution;
-
 	void PlainRenderer::DrawData::ObjData::fill_with_model(Model *m)
 	{
 		geo_data.resize(1);
@@ -827,8 +783,8 @@ namespace flame
 					.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 					.set_depth_test(true)
 					.set_depth_write(true)
-					.add_shader(engine_path + "shader/esm/esm.vert", {})
-					.add_shader(engine_path + "shader/esm/esm.frag", {})
+					.add_shader("esm/esm.vert", {})
+					.add_shader("esm/esm.frag", {})
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
 					.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
@@ -838,8 +794,8 @@ namespace flame
 					.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 					.set_depth_test(true)
 					.set_depth_write(true)
-					.add_shader(engine_path + "shader/esm/esm.vert", { "ANIM" })
-					.add_shader(engine_path + "shader/esm/esm.frag", { "ANIM" })
+					.add_shader("esm/esm.vert", { "ANIM" })
+					.add_shader("esm/esm.frag", { "ANIM" })
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
 					.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),

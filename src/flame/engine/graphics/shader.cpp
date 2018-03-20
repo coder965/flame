@@ -22,7 +22,6 @@ namespace flame
 		"#extension GL_ARB_shading_language_420pack : enable\n"
 	;
 	static const auto additional_lines_count = std::count(std::begin(additional_lines), std::end(additional_lines), '\n');
-	static bool watch_shader_file;
 
 	Shader::Shader(const std::string &_filename, const std::vector<std::string> &_defines) :
 		filename(_filename),
@@ -53,7 +52,7 @@ namespace flame
 	{
 		std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file
 
-		auto _filename = engine_path + shader_path + "src/" + filename;
+		auto _filename = shader_path + "src/" + filename;
 		std::filesystem::path _path(_filename);
 		auto shader_file_timestamp = std::filesystem::last_write_time(_path);
 
@@ -61,7 +60,7 @@ namespace flame
 		for (auto &d : defines)
 			spv_filename += "." + d;
 		spv_filename += ".spv";
-		spv_filename = engine_path + shader_path + "bin/" + spv_filename;
+		spv_filename = shader_path + "bin/" + spv_filename;
 
 		bool spv_up_to_date = false;
 		if (std::filesystem::exists(spv_filename))
@@ -84,7 +83,7 @@ namespace flame
 			for (auto &d : defines)
 				command_line += "-D" + d + " ";
 			command_line += " -flimit-file ";
-			command_line += engine_path + "src/shader/src/shader_compile_config.conf";
+			command_line += shader_path + "src/shader_compile_config.conf";
 			command_line += " -o temp.spv";
 			auto output = create_process_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
 			std::filesystem::remove(temp_filename);
@@ -253,16 +252,21 @@ namespace flame
 
 	std::unique_ptr<FileWatcherHandler> shader_change_watcher;
 
-	void init_shader(bool _watch_shader_file)
+	void init_shader()
 	{
-		shader_path = "src/shader/";
+		shader_path = "shaders/";
 		vk_sdk_path = getenv("VK_SDK_PATH");
 		assert(vk_sdk_path != "");
-		watch_shader_file = _watch_shader_file;
+	}
 
-		if (_watch_shader_file)
+	void setup_shader_file_watcher()
+	{
+		static bool first = true;
+		if (first)
 		{
-			shader_change_watcher = add_file_watcher(FileWatcherModeContent, engine_path + shader_path + "src/", [](const std::vector<FileChangeInfo> &infos) {
+			first = false;
+
+			shader_change_watcher = add_file_watcher(FileWatcherModeContent, shader_path + "src/", [](const std::vector<FileChangeInfo> &infos) {
 				std::vector<Shader*> changed_shaders;
 				for (auto &i : infos)
 				{

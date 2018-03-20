@@ -20,25 +20,6 @@ namespace flame
 	struct CommandBuffer;
 	struct Scene;
 
-	class Resolution : public Object
-	{
-	private:
-		int _x, _y;
-		float _aspect;
-
-		long long _dirty_frame;
-	public:
-		int x() const;
-		int y() const;
-		float aspect() const;
-		long long dirty_frame() const;
-
-		void set(int x, int y);
-		void set_x(int x);
-		void set_y(int y);
-	};
-	extern Resolution resolution;
-
 	struct Renderer : Object
 	{
 

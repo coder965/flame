@@ -6,6 +6,7 @@
 #undef INFINITE
 
 #include <flame/global.h>
+#include <flame/engine/core/object.h>
 
 namespace flame
 {
@@ -65,5 +66,32 @@ namespace flame
 
 	int vk_find_memory_type(uint typeFilter, VkMemoryPropertyFlags properties);
 
-	void init_graphics(bool debug, int _resolution_x, int _resolution_y, bool watch_shader_file);
+	void init_graphics(bool debug, int _resolution_x, int _resolution_y);
+
+	class Resolution : public Object
+	{
+	private:
+		int _x, _y;
+		float _aspect;
+
+		long long _dirty_frame;
+	public:
+		int x() const;
+		int y() const;
+		float aspect() const;
+		long long dirty_frame() const;
+
+		void set(int x, int y);
+		void set_x(int x);
+		void set_y(int y);
+	};
+
+	extern Resolution resolution;
+
+	enum LightingModel
+	{
+		LightingModelPhong,
+		LightingModelPbr,
+		LightingModelPbrIbl
+	};
 }

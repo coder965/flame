@@ -65,7 +65,7 @@ namespace flame
 		std::shared_ptr<Framebuffer> window_framebuffers[2];
 		uint window_image_index;
 		VkSemaphore image_available;
-		VkFence frame_finished;
+		VkSemaphore render_finished;
 	public:
 		Node *root_node;
 

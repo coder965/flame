@@ -16,8 +16,6 @@ namespace flame
 {
 	bool only_2d = false;
 
-	std::string engine_path;
-
 	long long now_ns;
 	double elapsed_time;
 
@@ -52,7 +50,7 @@ namespace flame
 	unsigned long long total_frame_count = 0;
 	uint32_t FPS;
 
-	int init(const std::string &_engine_path, int _resolution_x, int _resolution_y, int debug_level, bool watch_shader_file, bool _only_2d)
+	int init(int _resolution_x, int _resolution_y, int debug_level, bool _only_2d)
 	{
 		printf("%d\n", GetCurrentProcessId());
 
@@ -62,9 +60,8 @@ namespace flame
 #ifdef _MSVC_LANG
 		SetProcessDPIAware();
 #endif
-		engine_path = _engine_path;
 
-		init_graphics(debug_level > 0, _resolution_x, _resolution_y, watch_shader_file);
+		init_graphics(debug_level > 0, _resolution_x, _resolution_y);
 		ui::init();
 		init_sound();
 		if (!only_2d)
@@ -95,8 +92,6 @@ namespace flame
 		{
 			profiles.clear();
 
-			begin_profile("one");
-
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -105,10 +100,6 @@ namespace flame
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-
-			end_profile();
-
-			begin_profile("two");
 
 			last_time_ns = now_ns;
 			now_ns = get_now_ns();
@@ -125,10 +116,6 @@ namespace flame
 			}
 
 			app->update();
-
-			end_profile();
-
-			int cut = 1;
 		}
 	}
 }

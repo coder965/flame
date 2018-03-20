@@ -2,6 +2,8 @@
 #include <set>
 
 #include <flame/global.h>
+#include <flame/engine/core/core.h>
+#include <flame/engine/core/application.h>
 #include <flame/engine/graphics/graphics.h>
 #include <flame/engine/graphics/command_buffer.h>
 #include <flame/engine/graphics/buffer.h>
@@ -28,6 +30,11 @@ namespace flame
 	VkDevice vk_device;
 	VkQueue vk_graphics_queue;
 
+	void vk_chk_res(VkResult res)
+	{
+		assert(res == VK_SUCCESS);
+	}
+
 	void vk_device_wait_idle()
 	{
 		vkDeviceWaitIdle(vk_device);
@@ -52,12 +59,7 @@ namespace flame
 
 	void vk_queue_wait_idle()
 	{
-		vkQueueWaitIdle(vk_graphics_queue);
-	}
-
-	void vk_chk_res(VkResult res)
-	{
-		assert(res == VK_SUCCESS);
+		vk_chk_res(vkQueueWaitIdle(vk_graphics_queue));
 	}
 
 	const char *vk_device_type_names[] = {
@@ -139,12 +141,13 @@ namespace flame
 		return VK_FALSE;
 	}
 
-	void init_graphics(bool debug, int _resolution_x, int _resolution_y, bool watch_shader_file)
+	void init_graphics(bool debug, int _resolution_x, int _resolution_y)
 	{
 		resolution.set(_resolution_x, _resolution_y);
 
-		VkApplicationInfo appInfo = {};
+		VkApplicationInfo appInfo;
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		appInfo.pNext = nullptr;
 		appInfo.pApplicationName = "";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "Flame Engine";
@@ -231,8 +234,52 @@ namespace flame
 		init_texture();
 		init_material();
 		init_renderpass();
-		init_shader(watch_shader_file);
+		init_shader();
 		init_sampler();
 		init_pick_up();
 	}
+
+	int Resolution::x() const
+	{
+		return _x;
+	}
+
+	int Resolution::y() const
+	{
+		return _y;
+	}
+
+	float Resolution::aspect() const
+	{
+		return _aspect;
+	}
+
+	long long Resolution::dirty_frame() const
+	{
+		return _dirty_frame;
+	}
+
+	void Resolution::set(int x, int y)
+	{
+		_x = x;
+		_y = y;
+		_aspect = (float)_x / _y;
+
+		_dirty_frame = total_frame_count;
+		add_after_frame_event([this]() {
+			broadcast(this, MessageResolutionChange, false);
+		});
+	}
+
+	void Resolution::set_x(int x)
+	{
+		set(x, _y);
+	}
+
+	void Resolution::set_y(int y)
+	{
+		set(_x, y);
+	}
+
+	Resolution resolution;
 }
