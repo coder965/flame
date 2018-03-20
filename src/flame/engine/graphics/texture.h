@@ -83,7 +83,7 @@ namespace flame
 		void set_data_from_format();
 	};
 
-	std::shared_ptr<Texture> get_or_create_texture(const std::string &filename);
+	std::shared_ptr<Texture> get_texture(const std::string &filename);
 
 	extern std::shared_ptr<Texture> default_color_texture; // R:0 G:0 B:0 A:0
 	extern std::shared_ptr<Texture> default_normal_texture; // X:0 Y:0 Z:1

@@ -64,7 +64,7 @@ namespace flame
 
 	static std::vector<std::weak_ptr<DescriptorSetLayout>> _descriptor_set_layouts;
 
-	std::shared_ptr<DescriptorSetLayout> get_or_create_descriptor_set_layout(const std::vector<DescriptorSetLayoutBinding> &_bindings)
+	std::shared_ptr<DescriptorSetLayout> get_descriptor_set_layout(const std::vector<DescriptorSetLayoutBinding> &_bindings)
 	{
 		for (auto it = _descriptor_set_layouts.begin(); it != _descriptor_set_layouts.end(); )
 		{

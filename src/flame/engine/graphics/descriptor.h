@@ -42,7 +42,7 @@ namespace flame
 	bool operator==(const DescriptorSetLayout &lhs, const DescriptorSetLayout &rhs);
 
 	// must call in main thread
-	std::shared_ptr<DescriptorSetLayout> get_or_create_descriptor_set_layout(const std::vector<DescriptorSetLayoutBinding> &_bindings);
+	std::shared_ptr<DescriptorSetLayout> get_descriptor_set_layout(const std::vector<DescriptorSetLayoutBinding> &_bindings);
 
 	struct Pipeline;
 	struct Buffer;

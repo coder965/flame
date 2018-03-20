@@ -26,7 +26,7 @@ target_include_directories(flame_engine PUBLIC "${CMAKE_SOURCE_DIR}/ext/Physx-3.
 endif()
 
 target_link_libraries(flame_engine flame_common)
-target_link_libraries(flame_engine ${CMAKE_SOURCE_DIR}/ext/bin/x${FLAME_SYS_NAME}/vulkan-1)
+target_link_libraries(flame_engine ${CMAKE_SOURCE_DIR}/ext/bin/x${FLAME_SYS_NAME}/vulkan-1.lib)
 target_link_libraries(flame_engine imgui)
 if (FLAME_ENABLE_PHYSICS)
 target_link_libraries(flame_engine ${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Lib/vc15win${FLAME_SYS_BIT}/PhysX3DEBUG_x${FLAME_SYS_NAME})

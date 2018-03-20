@@ -184,7 +184,6 @@ namespace flame
 	{
 		just_down = false;
 		just_up = false;
-		pressing = false;
 	}
 
 	void InputState::on_down()
@@ -394,7 +393,7 @@ namespace flame
 
 		vk_chk_res(vkQueuePresentKHR(vk_graphics_queue, &present_info));
 
-		//vk_queue_wait_idle();
+		vk_queue_wait_idle();
 
 		end_profile();
 

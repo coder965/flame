@@ -225,7 +225,7 @@ namespace flame
 
 	static std::vector<std::weak_ptr<Shader>> _shaders;
 
-	std::shared_ptr<Shader> get_or_create_shader(const std::string &filename, const std::vector<std::string> &defines, Pipeline *pipeline)
+	std::shared_ptr<Shader> get_shader(const std::string &filename, const std::vector<std::string> &defines, Pipeline *pipeline)
 	{
 		for (auto it = _shaders.begin(); it != _shaders.end(); )
 		{

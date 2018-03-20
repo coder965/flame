@@ -61,7 +61,7 @@ void ResourceExplorer::on_right_area_show()
 						{
 							case flame::FileTypeImage:
 							{
-								new ImageEditor(flame::get_or_create_texture(f->filename));
+								new ImageEditor(flame::get_texture(f->filename));
 								break;
 							}
 							case flame::FileTypeModel:
@@ -111,7 +111,7 @@ void ResourceExplorer::on_right_area_show()
 					img_name = "file.png";
 			}
 			{
-				auto t = flame::get_or_create_texture(img_name);
+				auto t = flame::get_texture(img_name);
 				if (t)
 					draw_list->AddImage(ImGui::ImageID(t), pos, pos + img_size);
 			}

@@ -10,7 +10,7 @@ namespace flame
 	{
 	}
 
-	ControllerComponent::State ControllerComponent::get_state() const
+	ControllerState ControllerComponent::get_state() const
 	{
 		return state;
 	}
@@ -30,13 +30,13 @@ namespace flame
 		return turn_speed;
 	}
 
-	bool ControllerComponent::set_state(State _s, bool enable)
+	bool ControllerComponent::set_state(ControllerState _s, bool enable)
 	{
-		if (_s == State::StateStand)
+		if (_s == ControllerStateStand)
 		{
-			if (state != State::StateStand)
+			if (state != ControllerStateStand)
 			{
-				state = State::StateStand;
+				state = ControllerStateStand;
 				return true;
 			}
 			return false;
@@ -46,7 +46,7 @@ namespace flame
 		{
 			if (!(state & _s))
 			{
-				state = State(state | _s);
+				state = ControllerState(state | _s);
 				return true;
 			}
 			return false;
@@ -55,7 +55,7 @@ namespace flame
 		{
 			if (state & _s)
 			{
-				state = State(state & ~_s);
+				state = ControllerState(state & ~_s);
 				return true;
 			}
 			return false;
@@ -79,7 +79,7 @@ namespace flame
 
 	void ControllerComponent::reset()
 	{
-		state = State::StateStand;
+		state = ControllerStateStand;
 	}
 
 	void ControllerComponent::on_update()
@@ -87,14 +87,14 @@ namespace flame
 		auto coord = get_parent()->get_coord();
 		auto yaw = get_parent()->get_euler().x;
 
-		if (state == StateStand)
+		if (state == ControllerStateStand)
 			return;
 
 		if (turn_speed > 0.f)
 		{
-			if ((state & StateTurnLeft) && !(state & StateTurnRight))
+			if ((state & ControllerStateTurnLeft) && !(state & ControllerStateTurnRight))
 				yaw += turn_speed * elapsed_time;
-			if ((state & StateTurnRight) && !(state & StateTurnLeft))
+			if ((state & ControllerStateTurnRight) && !(state & ControllerStateTurnLeft))
 				yaw -= turn_speed * elapsed_time;
 		}
 
@@ -102,29 +102,29 @@ namespace flame
 
 		if (speed > 0.f)
 		{
-			if ((state & StateForward) && !(state & StateBackward))
+			if ((state & ControllerStateForward) && !(state & ControllerStateBackward))
 			{
 				coord.x -= sin(rad) * speed * elapsed_time;
 				coord.z -= cos(rad) * speed * elapsed_time;
 			}
-			if ((state & StateBackward) && !(state & StateForward))
+			if ((state & ControllerStateBackward) && !(state & ControllerStateForward))
 			{
 				coord.x += sin(rad) * speed * elapsed_time;
 				coord.z += cos(rad) * speed * elapsed_time;
 			}
-			if ((state & StateLeft) && !(state & StateRight))
+			if ((state & ControllerStateLeft) && !(state & ControllerStateRight))
 			{
 				coord.x -= cos(rad) * speed * elapsed_time;
 				coord.z += sin(rad) * speed * elapsed_time;
 			}
-			if ((state & StateRight) && !(state & StateLeft))
+			if ((state & ControllerStateRight) && !(state & ControllerStateLeft))
 			{
 				coord.x += cos(rad) * speed * elapsed_time;
 				coord.z -= sin(rad) * speed * elapsed_time;
 			}
-			if ((state & StateUp) && !(state & StateDown))
+			if ((state & ControllerStateUp) && !(state & ControllerStateDown))
 				coord.y += speed * elapsed_time;
-			if ((state & StateDown) && !(state & StateUp))
+			if ((state & ControllerStateDown) && !(state & ControllerStateUp))
 				coord.y -= speed * elapsed_time;
 		}
 

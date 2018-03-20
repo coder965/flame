@@ -104,9 +104,9 @@ namespace ImGui
 
 	void Image_f(const std::string &filename, const ImVec2& size, const ImVec4& border_col)
 	{
-		auto i = flame::get_or_create_texture(filename);
+		auto i = flame::get_texture(filename);
 		if (!i)
-			i = flame::get_or_create_texture("empty.png");
+			i = flame::get_texture("empty.png");
 		assert(i);
 
 		Image(ImageID(i), size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), border_col);
@@ -114,9 +114,9 @@ namespace ImGui
 
 	bool ImageButton_f(const std::string &filename, const ImVec2& size, bool active)
 	{
-		auto i = flame::get_or_create_texture(filename);
+		auto i = flame::get_texture(filename);
 		if (!i)
-			i = flame::get_or_create_texture("empty.png");
+			i = flame::get_texture("empty.png");
 		assert(i);
 
 		PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));

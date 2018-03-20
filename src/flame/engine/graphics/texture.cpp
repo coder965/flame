@@ -494,7 +494,7 @@ namespace flame
 
 	static std::map<unsigned int, std::weak_ptr<Texture>> _images;
 
-	std::shared_ptr<Texture> get_or_create_texture(const std::string &filename)
+	std::shared_ptr<Texture> get_texture(const std::string &filename)
 	{
 		auto hash = HASH(filename.c_str());
 		auto it = _images.find(hash);

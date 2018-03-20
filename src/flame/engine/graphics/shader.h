@@ -27,7 +27,7 @@ namespace flame
 		void create();
 	};
 
-	std::shared_ptr<Shader> get_or_create_shader(const std::string &filename, const std::vector<std::string> &defines, Pipeline *pipeline = nullptr);
+	std::shared_ptr<Shader> get_shader(const std::string &filename, const std::vector<std::string> &defines, Pipeline *pipeline = nullptr);
 
 	void init_shader();
 

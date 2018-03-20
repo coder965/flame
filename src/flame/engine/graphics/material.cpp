@@ -319,7 +319,7 @@ namespace flame
 
 		if (!i)
 		{
-			i = get_or_create_texture(_filename);
+			i = get_texture(_filename);
 			if (!i)
 				return nullptr;
 
@@ -353,7 +353,7 @@ namespace flame
 				VK_SHADER_STAGE_FRAGMENT_BIT
 			}
 		};
-		_material_layout = get_or_create_descriptor_set_layout(bindings);
+		_material_layout = get_descriptor_set_layout(bindings);
 
 		ds_material = new DescriptorSet(_material_layout.get());
 

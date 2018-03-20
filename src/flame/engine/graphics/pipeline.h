@@ -40,7 +40,7 @@ namespace flame
 		~PipelineLayout();
 	};
 
-	std::shared_ptr<PipelineLayout> get_or_create_pipeline_layout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges);
+	std::shared_ptr<PipelineLayout> get_pipeline_layout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges);
 
 	enum VertexInputToken
 	{

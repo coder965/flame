@@ -58,7 +58,7 @@ void InspectorWindow::on_show()
 					{
 						case flame::FileTypeImage:
 						{
-							auto i = flame::get_or_create_texture(filename);
+							auto i = flame::get_texture(filename);
 							if (i)
 							{
 								image_file_resolution.x = i->get_cx();
@@ -172,7 +172,7 @@ void InspectorWindow::on_show()
 											std::experimental::filesystem::path path(filename);
 											auto ext = path.extension();
 											if (flame::is_image_file(ext.string()))
-												scene->set_pano_sky_image(flame::get_or_create_texture(filename));
+												scene->set_pano_sky_image(flame::get_texture(filename));
 										}
 									}
 									ImGui::EndDragDropTarget();

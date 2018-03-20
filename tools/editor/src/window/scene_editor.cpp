@@ -215,6 +215,8 @@ void SceneEditor::on_toolbar()
 
 void SceneEditor::on_show()
 {
+	emmm = false;
+
 	auto size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
 	size.y -= ImGui::GetFrameHeightWithSpacing() + ImGui::GetItemRectSize().y + 1;
 	size.x = glm::max(size.x, 1.f);
@@ -333,28 +335,16 @@ void SceneEditor::on_show()
 			}
 		}
 
-		camera_controller->set_state(flame::ControllerComponent::StateForward, flame::app->key_states['W'].pressing);
-		camera_controller->set_state(flame::ControllerComponent::StateBackward, flame::app->key_states['S'].pressing);
-		camera_controller->set_state(flame::ControllerComponent::StateLeft, flame::app->key_states['A'].pressing);
-		camera_controller->set_state(flame::ControllerComponent::StateRight, flame::app->key_states['D'].pressing);
+		camera_controller->set_state(flame::ControllerStateForward, flame::app->key_states['W'].pressing);
+		camera_controller->set_state(flame::ControllerStateBackward, flame::app->key_states['S'].pressing);
+		camera_controller->set_state(flame::ControllerStateLeft, flame::app->key_states['A'].pressing);
+		camera_controller->set_state(flame::ControllerStateRight, flame::app->key_states['D'].pressing);
 
 		if (ImGui::IsKeyDown(VK_DELETE))
 			on_delete();
 	}
 	else
-		camera_controller->set_state(flame::ControllerComponent::StateStand, true);
-
-	//{
-	//	auto n = selected.get_node();
-	//	if (n && n->get_type() == flame::NodeTypeObject)
-	//	{
-	//		auto obj = (flame::Object*)n;
-	//		obj->setState(flame::Controller::State::forward, flame::keyStates[VK_UP].pressing);
-	//		obj->setState(flame::Controller::State::backward, flame::keyStates[VK_DOWN].pressing);
-	//		obj->setState(flame::Controller::State::left, flame::keyStates[VK_LEFT].pressing);
-	//		obj->setState(flame::Controller::State::right, flame::keyStates[VK_RIGHT].pressing);
-	//	}
-	//}
+		camera_controller->set_state(flame::ControllerStateStand, true);
 
 	if (enableRender)
 	{

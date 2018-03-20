@@ -228,7 +228,7 @@ namespace flame
 
 	static std::vector<std::weak_ptr<PipelineLayout>> pipelineLayouts;
 
-	std::shared_ptr<PipelineLayout> get_or_create_pipeline_layout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges)
+	std::shared_ptr<PipelineLayout> get_pipeline_layout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges)
 	{
 		bool found = false;
 		for (auto it = pipelineLayouts.begin(); it != pipelineLayouts.end(); )
@@ -260,7 +260,7 @@ namespace flame
 
 		for (auto &_s : info.shaders)
 		{
-			auto s = get_or_create_shader(_s.first, _s.second, this);
+			auto s = get_shader(_s.first, _s.second, this);
 			shaders.push_back(s);
 		}
 
@@ -359,9 +359,9 @@ namespace flame
 		}
 
 		for (auto set = 0; set < descriptor_sets.size(); set++)
-			descriptor_set_layouts[set] = get_or_create_descriptor_set_layout(descriptor_sets[set]);
+			descriptor_set_layouts[set] = get_descriptor_set_layout(descriptor_sets[set]);
 
-		pipeline_layout = get_or_create_pipeline_layout(descriptor_set_layouts, push_constant_ranges);
+		pipeline_layout = get_pipeline_layout(descriptor_set_layouts, push_constant_ranges);
 
 		VkPipelineInputAssemblyStateCreateInfo assembly_state;
 		assembly_state.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
