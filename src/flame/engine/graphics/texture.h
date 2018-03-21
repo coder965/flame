@@ -19,6 +19,7 @@ namespace flame
 
 	struct TextureView
 	{
+		VkImageViewType view_type;
 		int baseLevel;
 		int levelCount;
 		int baseLayer;
@@ -28,21 +29,18 @@ namespace flame
 
 	VkFormat get_texture_format(int bpp, int channel, bool sRGB);
 
+	enum TextureType
+	{
+		TextureTypeAttachment,
+		TextureTypeFile,
+		TextureTypeTransfer
+	};
+
 	struct Texture
 	{
-		enum Type
-		{
-			TypeColor,
-			TypeDepth,
-			TypeDepthStencil
-		};
-
-		Type type;
-
 		VkFormat format;
 		VkImage v;
 		VkDeviceMemory memory;
-		VkImageViewType view_type;
 		VkImageLayout layout;
 
 		int channel;
@@ -63,7 +61,7 @@ namespace flame
 		// must call in main thread
 		Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool need_general_layout = true);
 		// must call in main thread
-		Texture(VkImage _image, int _cx, int _cy, VkFormat _format);
+		Texture(VkImage _image, int _cx, int _cy, VkFormat _format); // for swapchain
 		// must call in main thread
 		~Texture();
 		VkImageAspectFlags get_aspect() const;
@@ -71,7 +69,7 @@ namespace flame
 		int get_cy(int level = 0) const;
 		int get_size(int level = 0) const;
 		int get_linear_offset(int x, int y, int level = 0) const;
-		VkImageView get_view(int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkImageView get_view(VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
 		VkDescriptorImageInfo *get_info(VkImageView view, VkSampler sampler);
 		void transition_layout(int _level, VkImageLayout _layout);
 		void transition_layout(VkImageLayout _layout);

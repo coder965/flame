@@ -64,6 +64,15 @@ namespace flame
 	void vk_queue_submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
 	void vk_queue_wait_idle();
 
+	enum FormatType
+	{
+		FormatTypeColor,
+		FormatTypeDepth,
+		FormatTypeDepthStencil
+	};
+
+	FormatType get_format_type(VkFormat format);
+
 	int vk_find_memory_type(uint typeFilter, VkMemoryPropertyFlags properties);
 
 	void init_graphics(bool debug, int _resolution_x, int _resolution_y);

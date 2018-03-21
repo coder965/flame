@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <memory>
 
 #include <flame/global.h>
 #include <flame/engine/core/core.h>
@@ -6,96 +7,130 @@
 
 namespace flame
 {
-	VkAttachmentDescription colorAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp)
+	RenderPassInfo &RenderPassInfo::add_attachment(VkFormat format, bool clear, bool is_for_present)
 	{
-		VkAttachmentDescription desc = {};
-		desc.format = format;
-		desc.samples = VK_SAMPLE_COUNT_1_BIT;
-		desc.loadOp = loadOp;
-		desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		desc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		return desc;
+		attachments.emplace_back(format, clear, is_for_present);
+		return *this;
 	}
 
-	VkAttachmentDescription depthAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp)
+	RenderPassInfo &RenderPassInfo::add_subpass(const std::initializer_list<int> &color_attachments, int depth_attachment)
 	{
-		VkAttachmentDescription desc = {};
-		desc.format = format;
-		desc.samples = VK_SAMPLE_COUNT_1_BIT;
-		desc.loadOp = loadOp;
-		desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		return desc;
+		subpasses.emplace_back(color_attachments, depth_attachment);
+		return *this;
 	}
 
-	VkAttachmentDescription swapchainAttachmentDesc(VkAttachmentLoadOp loadOp)
+	RenderPassInfo &RenderPassInfo::add_dependency(int src_subpass, int dst_subpass)
 	{
-		VkAttachmentDescription desc = {};
-		desc.format = swapchain_format;
-		desc.samples = VK_SAMPLE_COUNT_1_BIT;
-		desc.loadOp = loadOp;
-		desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		desc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		return desc;
+		dependencies.emplace_back(src_subpass, dst_subpass);
+		return *this;
 	}
 
-	VkSubpassDescription subpassDesc(int colorCount, VkAttachmentReference *pColors, VkAttachmentReference *pDepth, int inputCount, VkAttachmentReference *pInputs)
+	RenderPass::RenderPass(const RenderPassInfo &_info)
 	{
-		VkSubpassDescription desc = {};
-		desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		desc.inputAttachmentCount = inputCount;
-		desc.pInputAttachments = pInputs;
-		desc.colorAttachmentCount = colorCount;
-		desc.pColorAttachments = pColors;
-		desc.pDepthStencilAttachment = pDepth;
-		return desc;
-	}
+		info = _info;
 
-	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass)
-	{
-		VkSubpassDependency dependency = {};
-		dependency.srcSubpass = srcSubpass;
-		dependency.dstSubpass = dstSubpass;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-		return dependency;
-	}
-
-	RenderPass::RenderPass(int attachmentCount, VkAttachmentDescription *pAttachments, int subpassCount, VkSubpassDescription *pSubpasses, int dependencyCount, VkSubpassDependency *pDependencies)
-	{
-		for (int i = 0; i < attachmentCount; i++)
+		std::vector<VkAttachmentDescription> vk_attachments(info.attachments.size());
+		for (auto i = 0; i < vk_attachments.size(); i++)
 		{
-			if (pAttachments[i].finalLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ||
-				pAttachments[i].finalLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-				clearValues.push_back({});
-			else
-				clearValues.push_back({ 1, 0.f });
+			vk_attachments[i].flags = 0;
+			vk_attachments[i].format = std::get<0>(info.attachments[i]);
+			if (std::get<2>(info.attachments[i]))
+				vk_attachments[i].format = swapchain_format;
+			vk_attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
+			vk_attachments[i].loadOp = std::get<1>(info.attachments[i]) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			vk_attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			vk_attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			vk_attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			switch (get_format_type(std::get<0>(info.attachments[i])))
+			{
+				case FormatTypeColor:
+				{
+					if (std::get<2>(info.attachments[i]))
+					{
+						vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+						vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+					}
+					else
+					{
+						vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+						vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					}
+					clear_values.push_back({});
+					break;
+				}
+				case FormatTypeDepth: case FormatTypeDepthStencil:
+				{
+					vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					clear_values.push_back({ 1, 0.f });
+					break;
+				}
+			}
 		}
 
-		VkRenderPassCreateInfo info;
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		info.flags = 0;
-		info.pNext = nullptr;
-		info.attachmentCount = attachmentCount;
-		info.pAttachments = pAttachments;
-		info.subpassCount = subpassCount;
-		info.pSubpasses = pSubpasses;
-		info.dependencyCount = dependencyCount;
-		info.pDependencies = pDependencies;
+		std::vector<std::unique_ptr<VkAttachmentReference[]>> vk_color_refs(info.subpasses.size());
+		std::vector<std::unique_ptr<VkAttachmentReference>> vk_depth_refs(info.subpasses.size());
+		std::vector<VkSubpassDescription> vk_subpasses(info.subpasses.size());
+		for (auto i = 0; i < vk_subpasses.size(); i++)
+		{
+			vk_subpasses[i].flags = 0;
+			vk_subpasses[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			vk_subpasses[i].inputAttachmentCount = 0;
+			vk_subpasses[i].pInputAttachments = nullptr;
+			vk_subpasses[i].preserveAttachmentCount = 0;
+			vk_subpasses[i].pPreserveAttachments = nullptr;
+			vk_subpasses[i].pResolveAttachments = nullptr;
+			if (info.subpasses[i].first.size() > 0)
+			{
+				vk_color_refs[i] = std::make_unique<VkAttachmentReference[]>(info.subpasses[i].first.size());
+				for (auto j = 0; j < info.subpasses[i].first.size(); j++)
+				{
+					vk_color_refs[i][j].attachment = info.subpasses[i].first[j];
+					vk_color_refs[i][j].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				}
+				vk_subpasses[i].colorAttachmentCount = info.subpasses[i].first.size();
+				vk_subpasses[i].pColorAttachments = vk_color_refs[i].get();
+			}
+			else
+			{
+				vk_subpasses[i].colorAttachmentCount = 0;
+				vk_subpasses[i].pColorAttachments = nullptr;
+			}
+			if (info.subpasses[i].second != -1)
+			{
+				vk_depth_refs[i] = std::make_unique<VkAttachmentReference>();
+				vk_depth_refs[i]->attachment = info.subpasses[i].second;
+				vk_depth_refs[i]->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				vk_subpasses[i].pDepthStencilAttachment = vk_depth_refs[i].get();
+			}
+			else
+				vk_subpasses[i].pDepthStencilAttachment = nullptr;
+		}
+		
+		std::vector<VkSubpassDependency> vk_dependencies(info.dependencies.size());
+		for (auto i = 0; i < vk_dependencies.size(); i++)
+		{
+			vk_dependencies[i].srcSubpass = info.dependencies[i].first;
+			vk_dependencies[i].dstSubpass = info.dependencies[i].second;
+			vk_dependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			vk_dependencies[i].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			vk_dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			vk_dependencies[i].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			vk_dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		}
 
-		vk_chk_res(vkCreateRenderPass(vk_device, &info, nullptr, &v));
+		VkRenderPassCreateInfo create_info;
+		create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		create_info.flags = 0;
+		create_info.pNext = nullptr;
+		create_info.attachmentCount = vk_attachments.size();
+		create_info.pAttachments = vk_attachments.data();
+		create_info.subpassCount = vk_subpasses.size();
+		create_info.pSubpasses = vk_subpasses.data();
+		create_info.dependencyCount = vk_dependencies.size();
+		create_info.pDependencies = vk_dependencies.data();
+
+		vk_chk_res(vkCreateRenderPass(vk_device, &create_info, nullptr, &v));
 	}
 
 	RenderPass::~RenderPass()
@@ -103,60 +138,63 @@ namespace flame
 		vkDestroyRenderPass(vk_device, v, nullptr);
 	}
 
-	RenderPass *renderPass_image8 = nullptr;
-	RenderPass *renderPass_image8C = nullptr;
-	RenderPass *renderPass_image16 = nullptr;
-	RenderPass *renderPass_image16C = nullptr;
-	RenderPass *renderPass_depthC = nullptr;
-	RenderPass *renderPass_depthC_image8 = nullptr;
-	RenderPass *renderPass_depthC_image8C = nullptr;
-	RenderPass *renderPass_depthC_image32fC = nullptr;
-	RenderPass *renderPass_window = nullptr;
-	RenderPass *renderPass_windowC = nullptr;
-
-	void init_renderpass()
+	bool operator==(const RenderPassInfo &lhs, const RenderPassInfo &rhs)
 	{
-		auto att0 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-		auto att1 = swapchainAttachmentDesc(VK_ATTACHMENT_LOAD_OP_CLEAR);
-		VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-		renderPass_window = new RenderPass(1, &att0, 1, &subpass0);
-		renderPass_windowC = new RenderPass(1, &att1, 1, &subpass0);
-
-		if (!only_2d)
+		if (lhs.attachments.size() != rhs.attachments.size())
+			return false;
+		if (lhs.subpasses.size() != rhs.subpasses.size())
+			return false;
+		if (lhs.dependencies.size() != rhs.dependencies.size())
+			return false;
+		for (auto i = 0; i < lhs.attachments.size(); i++)
 		{
-			auto att2 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att3 = colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att4 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-			auto att5 = colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att6 = depthAttachmentDesc(VK_FORMAT_D16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			auto att7 = colorAttachmentDesc(VK_FORMAT_R32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR);
-			VkAttachmentReference col_ref = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-			VkAttachmentReference dep_ref0 = { 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-			VkAttachmentReference dep_ref1 = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-			VkSubpassDescription subpass0 = subpassDesc(1, &col_ref);
-			VkSubpassDescription subpass1 = subpassDesc(0, nullptr, &dep_ref0);
-			VkSubpassDescription subpass2 = subpassDesc(1, &col_ref, &dep_ref1);
-			VkAttachmentDescription atts0[] = {
-				att2,
-				att6
-			};
-			VkAttachmentDescription atts1[] = {
-				att3,
-				att6
-			};
-			VkAttachmentDescription atts2[] = {
-				att7,
-				att6
-			};
-			renderPass_image8 = new RenderPass(1, &att2, 1, &subpass0);
-			renderPass_image8C = new RenderPass(1, &att3, 1, &subpass0);
-			renderPass_image16 = new RenderPass(1, &att4, 1, &subpass0);
-			renderPass_image16C = new RenderPass(1, &att5, 1, &subpass0);
-			renderPass_depthC = new RenderPass(1, &att6, 1, &subpass1);
-			renderPass_depthC_image8 = new RenderPass(ARRAYSIZE(atts0), atts0, 1, &subpass2);
-			renderPass_depthC_image8C = new RenderPass(ARRAYSIZE(atts1), atts1, 1, &subpass2);
-			renderPass_depthC_image32fC = new RenderPass(ARRAYSIZE(atts2), atts2, 1, &subpass2);
+			if (std::get<0>(lhs.attachments[i]) != std::get<0>(rhs.attachments[i]))
+				return false;
+			if (std::get<1>(lhs.attachments[i]) != std::get<1>(rhs.attachments[i]))
+				return false;
+			if (std::get<2>(lhs.attachments[i]) != std::get<2>(rhs.attachments[i]))
+				return false;
 		}
+		for (auto i = 0; i < lhs.subpasses.size(); i++)
+		{
+			if (lhs.subpasses[i].first.size() != rhs.subpasses[i].first.size())
+				return false;
+			for (auto j = 0; j < lhs.subpasses[i].first.size(); j++)
+			{
+				if (lhs.subpasses[i].first[j] != rhs.subpasses[i].first[j])
+					return false;
+			}
+			if (lhs.subpasses[i].second != rhs.subpasses[i].second)
+				return false;
+		}
+		for (auto i = 0; i < lhs.dependencies.size(); i++)
+		{
+			if (lhs.dependencies[i].first != rhs.dependencies[i].first)
+				return false;
+			if (lhs.dependencies[i].second != rhs.dependencies[i].second)
+				return false;
+		}
+		return true;
+	}
+
+	static std::vector<std::weak_ptr<RenderPass>> _renderpasses;
+
+	std::shared_ptr<RenderPass> get_renderpass(const RenderPassInfo &_info)
+	{
+		for (auto it = _renderpasses.begin(); it != _renderpasses.end(); )
+		{
+			auto s = it->lock();
+			if (s)
+			{
+				if (s->info == _info)
+					return s;
+				it++;
+			}
+			else
+				it = _renderpasses.erase(it);
+		}
+		auto s = std::make_shared<RenderPass>(_info);
+		_renderpasses.push_back(s);
+		return s;
 	}
 }

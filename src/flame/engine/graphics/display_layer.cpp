@@ -1,8 +1,8 @@
 #include <flame/global.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/renderpass.h>
+#include <flame/engine/graphics/renderpass.h>
 #include <flame/engine/graphics/framebuffer.h>
-#include <flame/engine/graphics/renderer.h>
 #include <flame/engine/graphics/display_layer.h>
 
 namespace flame
@@ -37,9 +37,20 @@ namespace flame
 				image->get_view(),
 				depth_image->get_view()
 			};
-			framebuffer = getFramebuffer(resolution.x(), resolution.y(), renderPass_depthC_image8, TK_ARRAYSIZE(views), views);
+			renderpass = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
+				.add_attachment(VK_FORMAT_D16_UNORM, false)
+				.add_subpass({ 0 }, 1)
+			);
+			framebuffer = get_framebuffer(resolution.x(), resolution.y(), renderpass.get(), TK_ARRAYSIZE(views), views);
 		}
 		else
-			framebuffer = getFramebuffer(image.get(), renderPass_image8);
+		{
+			renderpass = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
+				.add_subpass({ 0 }, -1)
+			);
+			framebuffer = get_framebuffer(image.get(), renderpass.get());
+		}
 	}
 }

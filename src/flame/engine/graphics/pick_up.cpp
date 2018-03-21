@@ -12,6 +12,7 @@ namespace flame
 {
 	Texture *pick_up_image = nullptr;
 	Texture *pick_up_depth_image = nullptr;
+	static std::shared_ptr<RenderPass> renderpass;
 	std::shared_ptr<Framebuffer> pick_up_fb;
 
 	unsigned int pick_up(int x, int y, const std::function<void(CommandBuffer*)> &drawCallback)
@@ -20,7 +21,7 @@ namespace flame
 			return 0;
 
 		auto cb = begin_once_command_buffer();
-		cb->begin_renderpass(renderPass_depthC_image8C, pick_up_fb.get());
+		cb->begin_renderpass(renderpass.get(), pick_up_fb.get());
 		drawCallback(cb);
 		cb->end_renderpass();
 		end_once_command_buffer(cb);
@@ -49,7 +50,14 @@ namespace flame
 				pick_up_image->get_view(),
 				pick_up_depth_image->get_view()
 			};
-			pick_up_fb = getFramebuffer(resolution.x(), resolution.y(), renderPass_depthC_image8C, TK_ARRAYSIZE(views), views);
+
+			renderpass = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
+				.add_attachment(VK_FORMAT_D16_UNORM, true)
+				.add_subpass({ 0 }, 1)
+			);
+
+			pick_up_fb = get_framebuffer(resolution.x(), resolution.y(), renderpass.get(), TK_ARRAYSIZE(views), views);
 		}
 	}
 }

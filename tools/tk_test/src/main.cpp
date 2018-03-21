@@ -1,12 +1,9 @@
-
-#include <experimental/filesystem>
+#include <vector>
 
 int main(int argc, char **args)
 {
-	auto s = "a.AbC";
-	std::experimental::filesystem::path p(s);
-	auto e = p.extension().string();
-
+	std::vector<int> a;
+	auto p = a.data();
 
 	return 0;
 }

@@ -35,6 +35,11 @@ namespace flame
 		static Buffer *last_bone_buffer_mode2;
 		static Buffer *last_bone_buffer_mode3;
 
+		static std::shared_ptr<RenderPass> renderpass_color;
+		static std::shared_ptr<RenderPass> renderpass_color_and_depth;
+		static std::shared_ptr<RenderPass> renderpass_color_clear;
+		static std::shared_ptr<RenderPass> renderpass_color_clear_and_depth;
+
 		enum Mode
 		{
 			mode_just_color,
@@ -82,6 +87,8 @@ namespace flame
 	{
 		static bool first;
 
+		static std::shared_ptr<RenderPass> renderpass_color;
+
 		std::unique_ptr<CommandBuffer> cb;
 
 		struct Vertex
@@ -117,6 +124,11 @@ namespace flame
 	{
 		static bool defe_inited;
 		static bool shad_inited;
+		static std::shared_ptr<RenderPass> renderpass_color;
+		static std::shared_ptr<RenderPass> renderpass_color16;
+		static std::shared_ptr<RenderPass> renderpass_color_and_depth;
+		static std::shared_ptr<RenderPass> renderpass_color32_and_depth;
+		static std::shared_ptr<RenderPass> renderpass_defe;
 
 		bool sky_dirty;
 		bool ambient_dirty;

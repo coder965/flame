@@ -102,7 +102,9 @@ namespace flame
 	public:
 		void update();
 
-		Framebuffer *get_curr_framebuffer() const;
+		Texture *get_image(int i) const;
+
+		int get_curr_image_index() const;
 
 		void create_swapchain();
 

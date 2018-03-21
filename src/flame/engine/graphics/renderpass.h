@@ -1,40 +1,37 @@
 #pragma once
 
 #include <vector>
+#include <tuple>
 
 #include <flame/engine/graphics/graphics.h>
 
 namespace flame
 {
-	VkAttachmentDescription colorAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
-	VkAttachmentDescription depthAttachmentDesc(VkFormat format, VkAttachmentLoadOp loadOp);
-	VkAttachmentDescription swapchainAttachmentDesc(VkAttachmentLoadOp loadOp);
-	VkSubpassDescription subpassDesc(int colorCount, VkAttachmentReference *pColors, VkAttachmentReference *pDepth = nullptr, int inputCount = 0, VkAttachmentReference *pInputs = nullptr);
-	VkSubpassDependency subpassDependency(int srcSubpass, int dstSubpass);
+	struct RenderPassInfo
+	{
+		std::vector<std::tuple<VkFormat, bool, bool>> attachments;
+		std::vector<std::pair<std::vector<int>, int>> subpasses;
+		std::vector<std::pair<int, int>> dependencies;
+
+		RenderPassInfo &add_attachment(VkFormat format, bool clear, bool is_for_present = false);
+		RenderPassInfo &add_subpass(const std::initializer_list<int> &color_attachments, int depth_attachment);
+		RenderPassInfo &add_dependency(int src_subpass, int dst_subpass);
+	};
+
+	bool operator==(const RenderPassInfo &lhs, const RenderPassInfo &rhs);
 
 	struct RenderPass
 	{
+		RenderPassInfo info;
+		std::vector<VkClearValue> clear_values;
+
 		VkRenderPass v;
-		std::vector<VkClearValue> clearValues;
 
 		// must call in main thread
-		RenderPass(int attachmentCount, VkAttachmentDescription *pAttachments, int subpassCount, VkSubpassDescription *pSubpasses, int dependencyCount = 0, VkSubpassDependency *pDependencies = nullptr);
+		RenderPass(const RenderPassInfo &_info);
 		// must call in main thread
 		~RenderPass();
 	};
 
-	// C means clear
-
-	extern RenderPass *renderPass_image8;
-	extern RenderPass *renderPass_image8C;
-	extern RenderPass *renderPass_image16;
-	extern RenderPass *renderPass_image16C;
-	extern RenderPass *renderPass_depthC;
-	extern RenderPass *renderPass_depthC_image8;
-	extern RenderPass *renderPass_depthC_image8C;
-	extern RenderPass *renderPass_depthC_image32fC;
-	extern RenderPass *renderPass_window;
-	extern RenderPass *renderPass_windowC;
-
-	void init_renderpass();
+	std::shared_ptr<RenderPass> get_renderpass(const RenderPassInfo &_info);
 }

@@ -19,7 +19,7 @@ set_target_properties(unit PROPERTIES FOLDER "ext/assimp")
 set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "ext/assimp") 
 set_target_properties(zlib PROPERTIES FOLDER "ext/assimp") 
 set_target_properties(zlibstatic PROPERTIES FOLDER "ext/assimp")
-set_target_properties(assimp_viewer PROPERTIES FOLDER "ext/assimp") 
+#set_target_properties(assimp_viewer PROPERTIES FOLDER "ext/assimp") 
 
 option(FLAME_INTEGRATE_PHYSX "FLAME_INTEGRATE_PHYSX" OFF)
 if (FLAME_ENABLE_PHYSICS)

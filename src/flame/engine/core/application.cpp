@@ -417,9 +417,14 @@ namespace flame
 		_after_frame_event_mtx.unlock();
 	}
 
-	Framebuffer *Application::get_curr_framebuffer() const
+	Texture *Application::get_image(int i) const
 	{
-		return window_framebuffers[window_image_index].get();
+		return window_images[i].get();
+	}
+
+	int Application::get_curr_image_index() const
+	{
+		return window_image_index;
 	}
 
 	void Application::create_swapchain()
@@ -463,10 +468,7 @@ namespace flame
 		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, vkImages);
 
 		for (int i = 0; i < 2; i++)
-		{
 			window_images[i] = std::make_unique<Texture>(vkImages[i], window_cx, window_cy, swapchain_format);
-			window_framebuffers[i] = getFramebuffer(window_images[i].get(), renderPass_window);
-		}
 	}
 
 	void Application::set_window_size(int cx, int cy, int style)

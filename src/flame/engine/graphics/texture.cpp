@@ -49,7 +49,6 @@ namespace flame
 
 	Texture::Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
 		format(_format),
-		view_type(VK_IMAGE_VIEW_TYPE_2D),
 		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		layer(1),
 		sRGB(false),
@@ -120,7 +119,6 @@ namespace flame
 		v(_image),
 		memory(0),
 		format(_format),
-		view_type(VK_IMAGE_VIEW_TYPE_2D),
 		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		layer(1),
 		sRGB(false),
@@ -149,13 +147,13 @@ namespace flame
 
 	VkImageAspectFlags Texture::get_aspect() const
 	{
-		switch (type)
+		switch (get_format_type(format))
 		{
-			case TypeColor:
+			case FormatTypeColor:
 				return VK_IMAGE_ASPECT_COLOR_BIT;
-			case TypeDepth:
+			case FormatTypeDepth:
 				return VK_IMAGE_ASPECT_DEPTH_BIT;
-			case TypeDepthStencil:
+			case FormatTypeDepthStencil:
 				return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 		}
 		return 0;
@@ -373,16 +371,17 @@ namespace flame
 		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	VkImageView Texture::get_view(int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkImageView Texture::get_view(VkImageViewType view_type, int baseLevel, int levelCount, int baseLayer, int layerCount)
 	{
 		for (auto &view : views)
 		{
-			if (view->baseLevel == baseLevel && view->levelCount == levelCount &&
+			if (view->view_type == view_type && view->baseLevel == baseLevel && view->levelCount == levelCount &&
 				view->baseLayer == baseLayer && view->layerCount == layerCount)
 				return view->v;
 		}
 
 		auto view = new TextureView;
+		view->view_type = view_type;
 		view->baseLevel = baseLevel;
 		view->levelCount = levelCount;
 		view->baseLayer = baseLayer;
@@ -410,67 +409,54 @@ namespace flame
 		switch (format)
 		{
 			case VK_FORMAT_R8_UNORM:
-				type = TypeColor;
 				channel = 1;
 				bpp = 8;
 				break;
 			case VK_FORMAT_R16_UNORM:
-				type = TypeColor;
 				channel = 1;
 				bpp = 16;
 				break;
 			case VK_FORMAT_R8G8B8A8_UNORM:
-				type = TypeColor;
 				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_R8G8B8A8_SRGB:
-				type = TypeColor;
 				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_B8G8R8A8_UNORM:
-				type = TypeColor;
 				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_B8G8R8A8_SRGB:
-				type = TypeColor;
 				channel = 4;
 				bpp = 32;
 				break;
 			case VK_FORMAT_R16G16B16A16_SFLOAT:
-				type = TypeColor;
 				channel = 4;
 				bpp = 64;
 				break;
 			case VK_FORMAT_R16G16B16A16_UNORM:
-				type = TypeColor;
 				channel = 4;
 				bpp = 64;
 				break;
 			case VK_FORMAT_D16_UNORM:
-				type = TypeDepth;
 				channel = 1;
 				bpp = 16;
 				break;
 			case VK_FORMAT_D32_SFLOAT:
-				type = TypeDepth;
 				channel = 1;
 				bpp = 32;
 				break;
 			case VK_FORMAT_D16_UNORM_S8_UINT:
-				type = TypeDepthStencil;
 				channel = 1;
 				bpp = 24;
 				break;
 			case VK_FORMAT_D24_UNORM_S8_UINT:
-				type = TypeDepthStencil;
 				channel = 1;
 				bpp = 32;
 				break;
 			case VK_FORMAT_D32_SFLOAT_S8_UINT:
-				type = TypeDepthStencil;
 				channel = 1;
 				bpp = 40;
 				break;

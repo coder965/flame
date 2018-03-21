@@ -56,8 +56,8 @@ namespace flame
 		info.renderArea.offset.y = 0;
 		info.renderArea.extent.width = fb->cx;
 		info.renderArea.extent.height = fb->cy;
-		info.clearValueCount = renderPass->clearValues.size();
-		info.pClearValues = pClearValue ? pClearValue : renderPass->clearValues.data();
+		info.clearValueCount = renderPass->clear_values.size();
+		info.pClearValues = pClearValue ? pClearValue : renderPass->clear_values.data();
 
 		vkCmdBeginRenderPass(v, &info, VK_SUBPASS_CONTENTS_INLINE);
 	}

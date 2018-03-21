@@ -605,7 +605,7 @@ struct App : flame::Application
 
 int main(int argc, char** argv)
 {
-	flame::init(1280, 720, 0, false);
+	flame::init(1280, 720, 1, false);
 	flame::setup_shader_file_watcher();
 	new App;
 	flame::app->set_window_maximized(true);

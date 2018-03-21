@@ -215,8 +215,6 @@ void SceneEditor::on_toolbar()
 
 void SceneEditor::on_show()
 {
-	emmm = false;
-
 	auto size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
 	size.y -= ImGui::GetFrameHeightWithSpacing() + ImGui::GetItemRectSize().y + 1;
 	size.x = glm::max(size.x, 1.f);

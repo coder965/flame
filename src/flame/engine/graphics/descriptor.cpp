@@ -130,7 +130,7 @@ namespace flame
 		write.dstArrayElement = index;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		write.descriptorCount = 1;
-		write.pImageInfo = image->get_info(image->get_view(baseLevel, levelCount, baseLayer, layerCount), sampler);
+		write.pImageInfo = image->get_info(image->get_view(VK_IMAGE_VIEW_TYPE_2D, baseLevel, levelCount, baseLayer, layerCount), sampler);
 		return write;
 	}
 

@@ -8,6 +8,7 @@
 #include <flame/engine/core/core.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
+#include <flame/engine/graphics/framebuffer.h>
 #include <flame/engine/graphics/renderpass.h>
 #include <flame/engine/graphics/descriptor.h>
 #include <flame/engine/graphics/pipeline.h>
@@ -1289,8 +1290,14 @@ namespace flame
 			bg_color = v;
 		}
 
+		static std::shared_ptr<RenderPass> renderpass;
+		static std::shared_ptr<RenderPass> renderpass_clear;
+
+		static std::shared_ptr<Framebuffer> framebuffers[2];
+
 		static Pipeline *pipeline_ui;
 		static Pipeline *pipeline_sdf_text;
+
 		static const char *sdf_text_chars = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		static int sdf_text_char_count = strlen(sdf_text_chars);
 		static int sdf_text_size = 32;
@@ -1346,6 +1353,16 @@ namespace flame
 					io.AddInputCharacter((unsigned short)c);
 			});
 
+			renderpass = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_UNDEFINED, false, true)
+				.add_subpass({ 0 }, -1)
+			);
+
+			renderpass_clear = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_UNDEFINED, true, true)
+				.add_subpass({ 0 }, -1)
+			);
+
 			pipeline_ui = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 },{ TokenB8V4, 0 } })
 				.set_cull_mode(VK_CULL_MODE_NONE)
@@ -1354,7 +1371,7 @@ namespace flame
 				.add_dynamic_state(VK_DYNAMIC_STATE_SCISSOR)
 				.add_shader("ui.vert", {})
 				.add_shader("ui.frag", {}),
-				renderPass_window, 0, true);
+				renderpass.get(), 0, true);
 
 			pipeline_sdf_text = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 } })
@@ -1363,7 +1380,7 @@ namespace flame
 					VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
 				.add_shader("sdf_text.vert", {})
 				.add_shader("sdf_text.frag", {}),
-				renderPass_window, 0, true);
+				renderpass_clear.get(), 0, true);
 
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();
@@ -1516,6 +1533,11 @@ namespace flame
 			static bool first = true;
 			if (first)
 			{
+				first = false;
+
+				for (auto i = 0; i < 2; i++)
+					framebuffers[i] = get_framebuffer(app->get_image(i), renderpass.get());
+
 				ImGuiContext& g = *GImGui;
 				ImGui::menubar_height = g.FontBaseSize + g.Style.FramePadding.y * 2.0f;
 				ImGui::toolbar_height = 16.f + g.Style.WindowPadding.y * 2.f;
@@ -1527,8 +1549,6 @@ namespace flame
 					_load_layout(&doc, main_layout);
 				cleanup_layout();
 				add_resize_listener(on_resize);
-
-				first = false;
 			}
 
 			_image_list.iterate([&](int index, void *p, bool &remove) {
@@ -1731,10 +1751,10 @@ namespace flame
 				if (main_layout->is_empty(0))
 				{
 					VkClearValue clear_value = { bg_color.r, bg_color.g, bg_color.b, 1.f };
-					cmd->begin_renderpass(renderPass_windowC, app->get_curr_framebuffer(), &clear_value);
+					cmd->begin_renderpass(renderpass_clear.get(), framebuffers[app->get_curr_image_index()].get(), &clear_value);
 				}
 				else
-					cmd->begin_renderpass(renderPass_window, app->get_curr_framebuffer());
+					cmd->begin_renderpass(renderpass.get(), framebuffers[app->get_curr_image_index()].get());
 
 				if (draw_data->CmdListsCount > 0)
 				{

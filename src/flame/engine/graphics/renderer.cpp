@@ -63,59 +63,82 @@ namespace flame
 	Buffer *PlainRenderer::last_bone_buffer_mode0;
 	Buffer *PlainRenderer::last_bone_buffer_mode2;
 	Buffer *PlainRenderer::last_bone_buffer_mode3;
+	std::shared_ptr<RenderPass> PlainRenderer::renderpass_color;
+	std::shared_ptr<RenderPass> PlainRenderer::renderpass_color_and_depth;
+	std::shared_ptr<RenderPass> PlainRenderer::renderpass_color_clear;
+	std::shared_ptr<RenderPass> PlainRenderer::renderpass_color_clear_and_depth;
 	PlainRenderer::PlainRenderer()
 	{
 		if (first)
 		{
+			renderpass_color = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
+				.add_subpass({ 0 }, -1)
+			);
+			renderpass_color_and_depth = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
+				.add_attachment(VK_FORMAT_D16_UNORM, true)
+				.add_subpass({ 0 }, 1)
+			);
+			renderpass_color_clear = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
+				.add_subpass({ 0 }, -1)
+			);
+			renderpass_color_clear_and_depth = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
+				.add_attachment(VK_FORMAT_D16_UNORM, true)
+				.add_subpass({ 0 }, 1)
+			);
+
 			pipeline_plain = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0}, { TokenF32V2, 0}, { TokenF32V3, 0}, { TokenF32V3, 0} })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 } })
 				.set_depth_test(true)
 				.set_depth_write(true)
 				.add_shader("plain3d/plain3d.vert", {})
 				.add_shader("plain3d/plain3d.frag", {}),
-				renderPass_depthC_image8, 0);
+				renderpass_color_and_depth.get(), 0);
 			pipeline_plain_anim = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 }, { TokenF32V4, 1 }, { TokenF32V4, 1 } })
 				.set_depth_test(true)
 				.set_depth_write(true)
 				.add_shader("plain3d/plain3d.vert", { "ANIM" })
 				.add_shader("plain3d/plain3d.frag", { "ANIM" }),
-				renderPass_depthC_image8, 0, true);
+				renderpass_color_and_depth.get(), 0, true);
 			pipeline_frontlight = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 } })
 				.set_depth_test(true)
 				.set_depth_write(true)
 				.add_shader("plain3d/plain3d.vert", { "USE_NORMAL" })
 				.add_shader("plain3d/plain3d.frag", { "USE_NORMAL" }),
-				renderPass_depthC_image8, 0);
+				renderpass_color_and_depth.get(), 0);
 			pipeline_material = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 } })
 				.set_depth_test(true)
 				.set_depth_write(true)
 				.add_shader("plain3d/plain3d.vert", { "USE_MATERIAL" })
 				.add_shader("plain3d/plain3d.frag", { "USE_MATERIAL" }),
-				renderPass_depthC_image8, 0);
+				renderpass_color_and_depth.get(), 0);
 			pipeline_material_anim = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 }, { TokenF32V4, 1 }, { TokenF32V4, 1 } })
 				.set_depth_test(true)
 				.set_depth_write(true)
 				.add_shader("plain3d/plain3d.vert", { "ANIM", "USE_MATERIAL" })
 				.add_shader("plain3d/plain3d.frag", { "ANIM", "USE_MATERIAL" }),
-				renderPass_depthC_image8, 0, true);
+				renderpass_color_and_depth.get(), 0, true);
 			pipeline_wireframe = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 } })
 				.set_polygon_mode(VK_POLYGON_MODE_LINE)
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("plain3d/plain3d.vert", {})
 				.add_shader("plain3d/plain3d.frag", {}),
-				renderPass_image8, 0);
+				renderpass_color.get(), 0);
 			pipeline_wireframe_anim = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
+				.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V2, 0 }, { TokenF32V3, 0 }, { TokenF32V3, 0 }, { TokenF32V4, 1 }, { TokenF32V4, 1 } })
 				.set_polygon_mode(VK_POLYGON_MODE_LINE)
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("plain3d/plain3d.vert", { "ANIM" })
 				.add_shader("plain3d/plain3d.frag", { "ANIM" }),
-				renderPass_image8, 0, true);
+				renderpass_color.get(), 0, true);
 
 			first = false;
 		}
@@ -130,16 +153,16 @@ namespace flame
 		if (data->mode == mode_wireframe)
 		{
 			if (clear)
-				rp = renderPass_image8C;
+				rp = renderpass_color_clear.get();
 			else
-				rp = renderPass_image8;
+				rp = renderpass_color.get();
 		}
 		else
 		{
 			if (clear)
-				rp = renderPass_depthC_image8C;
+				rp = renderpass_color_clear_and_depth.get();
 			else
-				rp = renderPass_depthC_image8;
+				rp = renderpass_color_and_depth.get();
 		}
 		cb->begin_renderpass(rp, framebuffer);
 		do_render(cb.get(), camera, data);
@@ -250,18 +273,24 @@ namespace flame
 
 	static Pipeline *pipeline_lines;
 	bool LinesRenderer::first = true;
+	std::shared_ptr<RenderPass> LinesRenderer::renderpass_color;
 	LinesRenderer::LinesRenderer()
 	{
 		if (first)
 		{
+			renderpass_color = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
+				.add_subpass({ 0 }, -1)
+			);
+
 			pipeline_lines = new Pipeline(PipelineInfo()
-					.set_vertex_input_state({ { TokenF32V3, 0}, { TokenF32V3, 0} })
+					.set_vertex_input_state({ { TokenF32V3, 0 }, { TokenF32V3, 0 } })
 					.set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
 					.set_polygon_mode(VK_POLYGON_MODE_LINE)
 					.set_cull_mode(VK_CULL_MODE_NONE)
 					.add_shader("plain3d/plain3d_line.vert", {})
 					.add_shader("plain3d/plain3d_line.frag", {}),
-					renderPass_image8, 0);
+					renderpass_color.get(), 0);
 
 			first = false;
 		}
@@ -273,7 +302,7 @@ namespace flame
 	{
 		cb->begin();
 
-		cb->begin_renderpass(renderPass_image8, framebuffer);
+		cb->begin_renderpass(renderpass_color.get(), framebuffer);
 
 		cb->set_viewport_and_scissor(resolution.x(), resolution.y());
 
@@ -401,10 +430,14 @@ namespace flame
 	static Pipeline *compose_pipeline;
 	static Pipeline *esm_pipeline;
 	static Pipeline *esm_anim_pipeline;
-	static RenderPass *defe_renderpass;
 	static Texture *envr_image_downsample[3] = {};
 	bool DeferredRenderer::defe_inited = false;
 	bool DeferredRenderer::shad_inited = false;
+	std::shared_ptr<RenderPass> DeferredRenderer::renderpass_color;
+	std::shared_ptr<RenderPass> DeferredRenderer::renderpass_color16;
+	std::shared_ptr<RenderPass> DeferredRenderer::renderpass_color_and_depth;
+	std::shared_ptr<RenderPass> DeferredRenderer::renderpass_color32_and_depth;
+	std::shared_ptr<RenderPass> DeferredRenderer::renderpass_defe;
 
 	bool DeferredRenderer::on_message(Object *sender, Message msg)
 	{
@@ -607,62 +640,57 @@ namespace flame
 
 		if (!defe_inited)
 		{
-			VkAttachmentDescription atts[] = {
-				colorAttachmentDesc(VK_FORMAT_R16G16B16A16_SFLOAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE), // main
-				depthAttachmentDesc(VK_FORMAT_D32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR),				 // depth
-				colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // albedo alpha
-				colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // normal height
-				colorAttachmentDesc(VK_FORMAT_R16G16B16A16_UNORM, VK_ATTACHMENT_LOAD_OP_CLEAR),		 // spec roughness
-				colorAttachmentDesc(VK_FORMAT_R8G8B8A8_UNORM, VK_ATTACHMENT_LOAD_OP_DONT_CARE)		 // dst
-			};
-			VkAttachmentReference main_col_ref = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-			VkAttachmentReference mrt_col_ref[] = {
-				{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
-				{3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
-				{4, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }
-			};
-			VkAttachmentReference dep_ref = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-			VkAttachmentReference dst_col_ref = { 5, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-			VkSubpassDescription subpasses[] = {
-				subpassDesc(ARRAYSIZE(mrt_col_ref), mrt_col_ref, &dep_ref), // mrt
-				subpassDesc(1, &main_col_ref),                              // deferred
-				subpassDesc(1, &dst_col_ref)                                // compose
-			};
+			renderpass_color = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
+				.add_subpass({ 0 }, -1)
+			);
 
-			VkSubpassDependency dependencies[] = {
-				subpassDependency(0, 1),
-				subpassDependency(1, 2)
-			};
+			renderpass_color16 = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R16G16B16A16_SFLOAT, false)
+				.add_subpass({ 0 }, -1)
+			);
 
-			defe_renderpass = new RenderPass(ARRAYSIZE(atts), atts, ARRAYSIZE(subpasses), subpasses, ARRAYSIZE(dependencies), dependencies);
+			renderpass_defe = get_renderpass(RenderPassInfo()
+				.add_attachment(VK_FORMAT_R16G16B16A16_SFLOAT, false)    // main
+				.add_attachment(VK_FORMAT_D32_SFLOAT, true)              // depth
+				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // albedo alpha
+				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // normal height
+				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // spec roughness
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false, true)   // dst
+				.add_subpass({ 2, 3, 4 }, 1)
+				.add_subpass({ 0 }, -1)
+				.add_subpass({ 5 }, -1)
+				.add_dependency(0, 1)
+				.add_dependency(1, 2)
+			);
 
 			scattering_pipeline = new Pipeline(PipelineInfo()
 				.set_cx(512).set_cy(256)
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_UV" })
 				.add_shader("sky/scattering.frag", {}),
-				renderPass_image16, 0);
+				renderpass_color16.get(), 0);
 			output_debug_panorama_pipeline = new Pipeline(PipelineInfo()
 				.set_cx(512).set_cy(256)
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_UV" })
 				.add_shader("sky/output_debug_panorama.frag", {}),
-				renderPass_image8, 0);
+				renderpass_color.get(), 0);
 			downsample_pipeline = new Pipeline(PipelineInfo()
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_UV" })
 				.add_shader("sky/downsample.frag", {})
-				, renderPass_image16, 0, true);
+				, renderpass_color16.get(), 0, true);
 			convolve_pipeline = new Pipeline(PipelineInfo()
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_UV" })
 				.add_shader("sky/convolve.frag", {}),
-				renderPass_image16, 0, true);
+				renderpass_color16.get(), 0, true);
 			copy_pipeline = new Pipeline(PipelineInfo()
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_UV" })
 				.add_shader("copy.frag", {}),
-				renderPass_image16, 0, true);
+				renderpass_color16.get(), 0, true);
 			mrt_pipeline = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
 				.set_depth_test(true)
@@ -674,7 +702,7 @@ namespace flame
 				.add_shader("deferred/mrt.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
-				defe_renderpass, 0);
+				renderpass_defe.get(), 0);
 			mrt_anim_pipeline = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
 				.set_depth_test(true)
@@ -686,7 +714,7 @@ namespace flame
 				.add_shader("deferred/mrt.frag", { "ANIM" })
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
-				defe_renderpass, 0);
+				renderpass_defe.get(), 0);
 			terrain_pipeline = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 } })
 				.set_patch_control_points(4)
@@ -702,7 +730,7 @@ namespace flame
 				.add_shader("deferred/terrain.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_terrain_", "Terrain.UniformBuffer"),
-				defe_renderpass, 0);
+				renderpass_defe.get(), 0);
 			water_pipeline = new Pipeline(PipelineInfo()
 				.set_patch_control_points(4)
 				.set_depth_test(true)
@@ -717,7 +745,7 @@ namespace flame
 				.add_shader("deferred/water.frag", {})
 				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
 				.add_link("ubo_water_", "Water.UniformBuffer"),
-				defe_renderpass, 0);
+				renderpass_defe.get(), 0);
 			deferred_pipeline = new Pipeline(PipelineInfo()
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_VIEW" })
@@ -733,13 +761,13 @@ namespace flame
 				.add_link("ubo_ambient_", "Ambient.UniformBuffer"),
 				//.add_link("img_shadow", "Shadow.Image")
 				//.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
-				defe_renderpass, 1);
+				renderpass_defe.get(), 1);
 			compose_pipeline = new Pipeline(PipelineInfo()
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", {})
 				.add_shader("compose/compose.frag", {})
 				.add_link("img_source", "Main.Image", 0, plainUnnormalizedSampler),
-				defe_renderpass, 2);
+				renderpass_defe.get(), 2);
 
 			defe_inited = true;
 		}
@@ -778,6 +806,18 @@ namespace flame
 		{
 			if (!shad_inited)
 			{
+				renderpass_color_and_depth = get_renderpass(RenderPassInfo()
+					.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
+					.add_attachment(VK_FORMAT_D16_UNORM, true)
+					.add_subpass({ 0 }, 1)
+				);
+
+				renderpass_color32_and_depth = get_renderpass(RenderPassInfo()
+					.add_attachment(VK_FORMAT_R32_SFLOAT, true)
+					.add_attachment(VK_FORMAT_D16_UNORM, true)
+					.add_subpass({ 0 }, 1)
+				);
+
 				esm_pipeline = new Pipeline(PipelineInfo()
 					.set_cx(2048).set_cy(2048)
 					.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 } })
@@ -788,7 +828,7 @@ namespace flame
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
 					.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
-					renderPass_depthC_image8C, 0);
+					renderpass_color_and_depth.get(), 0);
 				esm_anim_pipeline = new Pipeline(PipelineInfo()
 					.set_cx(2048).set_cy(2048)
 					.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
@@ -799,7 +839,7 @@ namespace flame
 					.add_link("ubo_constant_", "Constant.UniformBuffer")
 					.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer")
 					.add_link("u_shadow_", "Shadow.UniformBuffer"),
-					renderPass_depthC_image8C, 0);
+					renderpass_color_and_depth.get(), 0);
 
 				shad_inited = true;
 			}
@@ -816,10 +856,10 @@ namespace flame
 			for (int i = 0; i < MaxShadowCount * 6; i++)
 			{
 				VkImageView views[] = {
-					esmImage->get_view(0, 1, i),
+					esmImage->get_view(VK_IMAGE_VIEW_TYPE_2D, 0, 1, i),
 					esmDepthImage->get_view()
 				};
-				fb_esm[i] = getFramebuffer(ShadowMapCx, ShadowMapCy, renderPass_depthC_image32fC, TK_ARRAYSIZE(views), views);
+				fb_esm[i] = get_framebuffer(ShadowMapCx, ShadowMapCy, renderpass_color32_and_depth.get(), TK_ARRAYSIZE(views), views);
 			}
 
 			ds_esm = std::make_unique<DescriptorSet>(esm_pipeline);
@@ -881,7 +921,7 @@ namespace flame
 				specRoughnessImage->get_view(),
 				dst->image->get_view(),
 			};
-			framebuffer = getFramebuffer(resolution.x(), resolution.y(), defe_renderpass, ARRAYSIZE(views), views);
+			framebuffer = get_framebuffer(resolution.x(), resolution.y(), renderpass_defe.get(), ARRAYSIZE(views), views);
 		}
 	}
 
@@ -922,9 +962,9 @@ namespace flame
 				for (int i = 0; i < envrImage->levels.size() - 1; i++)
 				{
 					auto cb = begin_once_command_buffer();
-					auto fb = getFramebuffer(envr_image_downsample[i], renderPass_image16);
+					auto fb = get_framebuffer(envr_image_downsample[i], renderpass_color16.get());
 
-					cb->begin_renderpass(renderPass_image16, fb.get());
+					cb->begin_renderpass(renderpass_color16.get(), fb.get());
 					cb->bind_pipeline(downsample_pipeline);
 					cb->set_viewport_and_scissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
@@ -940,9 +980,9 @@ namespace flame
 				for (int i = 1; i < envrImage->levels.size(); i++)
 				{
 					auto cb = begin_once_command_buffer();
-					auto fb = getFramebuffer(envrImage.get(), renderPass_image16, i);
+					auto fb = get_framebuffer(envrImage.get(), renderpass_color16.get(), i);
 
-					cb->begin_renderpass(renderPass_image16, fb.get());
+					cb->begin_renderpass(renderpass_color16.get(), fb.get());
 					cb->bind_pipeline(convolve_pipeline);
 					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
@@ -964,9 +1004,9 @@ namespace flame
 				case SkyTypeDebug:
 				{
 					auto cb = begin_once_command_buffer();
-					auto fb = getFramebuffer(envrImage.get(), renderPass_image8);
+					auto fb = get_framebuffer(envrImage.get(), renderpass_color.get());
 
-					cb->begin_renderpass(renderPass_image8, fb.get());
+					cb->begin_renderpass(renderpass_color.get(), fb.get());
 					cb->bind_pipeline(output_debug_panorama_pipeline);
 					cb->draw(3);
 					cb->end_renderpass();
@@ -982,9 +1022,9 @@ namespace flame
 					auto as = (SkyAtmosphereScattering*)scene->get_sky();
 
 					auto cb = begin_once_command_buffer();
-					auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
+					auto fb = get_framebuffer(envrImage.get(), renderpass_color16.get());
 
-					cb->begin_renderpass(renderPass_image16, fb.get());
+					cb->begin_renderpass(renderpass_color16.get(), fb.get());
 					cb->bind_pipeline(scattering_pipeline);
 					auto dir = -as->sun_light->get_parent()->get_axis()[2];
 					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(dir), &dir);
@@ -1004,9 +1044,9 @@ namespace flame
 					if (pa->panoImage)
 					{
 						auto cb = begin_once_command_buffer();
-						auto fb = getFramebuffer(envrImage.get(), renderPass_image16);
+						auto fb = get_framebuffer(envrImage.get(), renderpass_color16.get());
 
-						cb->begin_renderpass(renderPass_image16, fb.get());
+						cb->begin_renderpass(renderpass_color16.get(), fb.get());
 						cb->bind_pipeline(copy_pipeline);
 						cb->set_viewport_and_scissor(EnvrSizeCx, EnvrSizeCy);
 						updateDescriptorSets(1, &copy_pipeline->descriptor_set->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
@@ -1328,7 +1368,7 @@ namespace flame
 					{ 1.f, 0 },
 					{ 1.f, 1.f, 1.f, 1.f }
 				};
-				cb_shad->begin_renderpass(renderPass_depthC_image32fC, fb_esm[index].get(), clearValues);
+				cb_shad->begin_renderpass(renderpass_color32_and_depth.get(), fb_esm[index].get(), clearValues);
 
 				cb_shad->bind_vertex_buffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());
 				cb_shad->bind_index_buffer(index_buffer.get());
@@ -1373,7 +1413,7 @@ namespace flame
 
 		cb_defe->begin();
 
-		cb_defe->begin_renderpass(defe_renderpass, framebuffer.get());
+		cb_defe->begin_renderpass(renderpass_defe.get(), framebuffer.get());
 		cb_defe->set_viewport_and_scissor(resolution.x(), resolution.y());
 
 		cb_defe->bind_vertex_buffer2(vertex_static_buffer.get(), vertex_skeleton_Buffer.get());

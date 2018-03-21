@@ -10,6 +10,12 @@
 
 namespace flame
 {
+	ResourceLink::ResourceLink() :
+		binding(-1),
+		array_element(0)
+	{
+	}
+
 	bool operator==(const PushConstantRange &lhs, const PushConstantRange &rhs)
 	{
 		return lhs.offset == rhs.offset && lhs.size == rhs.size && lhs.stage == rhs.stage;

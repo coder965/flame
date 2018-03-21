@@ -10,16 +10,37 @@ namespace flame
 	struct DescriptorSetLayout;
 	struct DescriptorSet;
 
-	struct LinkResource
+	struct ResourceLink
 	{
 		int binding = -1;
 		int array_element = 0;
 		std::string descriptor_name;
 		std::string resource_name;
 
-		VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-		VkSampler vkSampler = 0;
+		ResourceLink();
 	};
+
+	struct UniformBufferResourceLink : ResourceLink
+	{
+		int offset;
+		int size;
+	};
+
+	struct TextureResourceLink : ResourceLink
+	{
+
+	};
+
+	//struct LinkResource
+	//{
+	//	int binding = -1;
+	//	int array_element = 0;
+	//	std::string descriptor_name;
+	//	std::string resource_name;
+
+	//	VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+	//	VkSampler vkSampler = 0;
+	//};
 
 	struct PushConstantRange
 	{

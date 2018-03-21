@@ -13,13 +13,13 @@ namespace flame
 
 	static std::vector<std::weak_ptr<Framebuffer>> _framebuffers;
 
-	std::shared_ptr<Framebuffer> getFramebuffer(Texture *i, RenderPass *renderPass, int level)
+	std::shared_ptr<Framebuffer> get_framebuffer(Texture *i, RenderPass *renderpass, int level)
 	{
-		auto view = i->get_view(level);
-		return getFramebuffer(i->levels[level]->cx, i->levels[level]->cy, renderPass, 1, &view);
+		auto view = i->get_view(VK_IMAGE_VIEW_TYPE_2D, level);
+		return get_framebuffer(i->levels[level]->cx, i->levels[level]->cy, renderpass, 1, &view);
 	}
 
-	std::shared_ptr<Framebuffer> getFramebuffer(int cx, int cy, RenderPass *renderPass, int viewCount, VkImageView *views)
+	std::shared_ptr<Framebuffer> get_framebuffer(int cx, int cy, RenderPass *renderpass, int view_count, VkImageView *views)
 	{
 		for (auto it = _framebuffers.begin(); it != _framebuffers.end(); )
 		{
@@ -27,10 +27,10 @@ namespace flame
 
 			if (f)
 			{
-				if (f->views.size() == viewCount)
+				if (f->views.size() == view_count)
 				{
 					bool same = true;
-					for (auto i = 0; i < viewCount; i++)
+					for (auto i = 0; i < view_count; i++)
 					{
 						if (f->views[i] != views[i])
 						{
@@ -51,16 +51,18 @@ namespace flame
 		auto f = std::make_shared<Framebuffer>();
 		f->cx = cx;
 		f->cy = cy;
-		for (int i = 0; i < viewCount; i++)
+		for (int i = 0; i < view_count; i++)
 			f->views.push_back(views[i]);
 
-		VkFramebufferCreateInfo info = {};
+		VkFramebufferCreateInfo info;
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		info.flags = 0;
+		info.pNext = nullptr;
 		info.width = cx;
 		info.height = cy;
 		info.layers = 1;
-		info.renderPass = renderPass->v;
-		info.attachmentCount = viewCount;
+		info.renderPass = renderpass->v;
+		info.attachmentCount = view_count;
 		info.pAttachments = views;
 
 		vk_chk_res(vkCreateFramebuffer(vk_device, &info, nullptr, &f->v));

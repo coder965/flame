@@ -70,6 +70,15 @@ namespace flame
 		"cpu"
 	};
 
+	FormatType get_format_type(VkFormat format)
+	{
+		if (format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT)
+			return FormatTypeDepth;
+		if (format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT)
+			return FormatTypeDepthStencil;
+		return FormatTypeColor;
+	}
+
 	static VkPhysicalDeviceMemoryProperties memProperties;
 
 	int vk_find_memory_type(uint typeFilter, VkMemoryPropertyFlags properties)
@@ -233,7 +242,6 @@ namespace flame
 		init_buffer();
 		init_texture();
 		init_material();
-		init_renderpass();
 		init_shader();
 		init_sampler();
 		init_pick_up();
