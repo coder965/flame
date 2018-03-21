@@ -360,7 +360,7 @@ namespace flame
 
 		root_node->update();
 
-		vk_chk_res(vkAcquireNextImageKHR(vk_device, swapchain, UINT64_MAX, image_available, VK_NULL_HANDLE, &window_image_index));
+		vk_chk_res(vkAcquireNextImageKHR(vk_device, swapchain, UINT64_MAX, image_available, VK_NULL_HANDLE, &curr_window_image_index));
 
 		ui::begin();
 
@@ -389,7 +389,7 @@ namespace flame
 		present_info.pWaitSemaphores = &render_finished;
 		present_info.swapchainCount = 1;
 		present_info.pSwapchains = &swapchain;
-		present_info.pImageIndices = &window_image_index;
+		present_info.pImageIndices = &curr_window_image_index;
 
 		vk_chk_res(vkQueuePresentKHR(vk_graphics_queue, &present_info));
 
@@ -424,7 +424,7 @@ namespace flame
 
 	int Application::get_curr_image_index() const
 	{
-		return window_image_index;
+		return curr_window_image_index;
 	}
 
 	void Application::create_swapchain()

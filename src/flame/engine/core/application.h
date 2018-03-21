@@ -61,9 +61,9 @@ namespace flame
 	private:
 		VkSurfaceKHR window_surface;
 		VkSwapchainKHR swapchain;
-		std::unique_ptr<Texture> window_images[2];
-		std::shared_ptr<Framebuffer> window_framebuffers[2];
-		uint window_image_index;
+		VkImage window_images[2];
+		VkImageView window_image_views[2];
+		uint curr_window_image_index;
 		VkSemaphore image_available;
 		VkSemaphore render_finished;
 	public:

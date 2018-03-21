@@ -38,16 +38,17 @@ namespace flame
 
 	struct Texture
 	{
+		TextureType type;
 		VkFormat format;
-		VkImage v;
-		VkDeviceMemory memory;
-		VkImageLayout layout;
+		std::vector<std::unique_ptr<TextureLevel>> levels;
+		int layer;
+		bool cube;
 
 		int channel;
 		int bpp;
-		std::vector<std::unique_ptr<TextureLevel>> levels;
-		int layer;
 		bool sRGB;
+
+		VkImageLayout layout;
 
 		std::vector<std::unique_ptr<TextureView>> views;
 
@@ -56,8 +57,11 @@ namespace flame
 		int material_index;
 		int ui_index;
 
+		VkImage v;
+		VkDeviceMemory memory;
+
 		// must call in main thread
-		Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level = 1, int _layer = 1, bool need_general_layout = true);
+		Texture(TextureType type, int _cx, int _cy, VkFormat _format, int _level = 1, int _layer = 1, bool _cube = false);
 		// must call in main thread
 		Texture(VkImage _image, int _cx, int _cy, VkFormat _format); // for swapchain
 		// must call in main thread

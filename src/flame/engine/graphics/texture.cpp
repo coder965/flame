@@ -47,14 +47,17 @@ namespace flame
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	Texture::Texture(int _cx, int _cy, VkFormat _format, VkImageUsageFlags usage, int _level, int _layer, bool need_general_layout) :
+	Texture::Texture(TextureType type, int _cx, int _cy, VkFormat _format, int _level, int _layer, bool _cube) :
 		format(_format),
 		layout(VK_IMAGE_LAYOUT_UNDEFINED),
-		layer(1),
+		layer(_layer),
+		cube(_cube),
 		sRGB(false),
 		material_index(-1),
 		ui_index(-1)
 	{
+		VkImageUsageFlags usage;
+
 		set_data_from_format();
 
 		assert(_level >= 1);
@@ -83,8 +86,8 @@ namespace flame
 		imageInfo.extent.width = _cx;
 		imageInfo.extent.height = _cy;
 		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = _level;
-		imageInfo.arrayLayers = _layer;
+		imageInfo.mipLevels = levels.size();
+		imageInfo.arrayLayers = layer;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -116,6 +119,7 @@ namespace flame
 	}
 
 	Texture::Texture(VkImage _image, int _cx, int _cy, VkFormat _format) :
+		type(TextureTypeAttachment),
 		v(_image),
 		memory(0),
 		format(_format),
