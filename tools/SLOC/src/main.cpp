@@ -36,7 +36,8 @@ void calc(const fs::path &path)
 		{
 			auto p = it->path();
 			auto ext = p.extension().string();
-			if (ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp")
+			if (ext == ".h" || ext == ".c" || ext == ".cpp" || ext == ".hpp" ||
+				ext == ".glsl" || ext == ".vert" || ext == ".tesc" || ext == ".tese" || ext == ".geom" || ext == ".frag")
 			{
 				auto f = std::ifstream(p.string());
 				std::string line;

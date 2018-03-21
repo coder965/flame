@@ -10,12 +10,6 @@
 
 namespace flame
 {
-	ResourceLink::ResourceLink() :
-		binding(-1),
-		array_element(0)
-	{
-	}
-
 	bool operator==(const PushConstantRange &lhs, const PushConstantRange &rhs)
 	{
 		return lhs.offset == rhs.offset && lhs.size == rhs.size && lhs.stage == rhs.stage;
@@ -187,15 +181,38 @@ namespace flame
 		return *this;
 	}
 
-	PipelineInfo& PipelineInfo::add_link(const std::string &descriptor_name,
-		const std::string &resource_name, int array_element, VkSampler sampler)
+	PipelineInfo &PipelineInfo::add_uniform_buffer_link(const std::string &descriptor_name,
+		const std::string &resource_name, int array_element,
+		int offset, int range)
 	{
-		LinkResource l;
+		UniformBufferResourceLink l;
+		l.binding = -1;
 		l.descriptor_name = descriptor_name;
 		l.resource_name = resource_name;
 		l.array_element = array_element;
-		l.vkSampler = sampler;
-		links.push_back(l);
+		l.offset = offset;
+		l.range = range;
+		uniform_buffer_links.push_back(l);
+		return *this;
+	}
+
+	PipelineInfo &PipelineInfo::add_texture_link(const std::string &descriptor_name,
+		const std::string &resource_name, int array_element,
+		VkSampler sampler, int base_level, int level_count,
+		int base_array, int array_count, VkImageViewType view_type)
+	{
+		TextureResourceLink l;
+		l.binding = -1;
+		l.descriptor_name = descriptor_name;
+		l.resource_name = resource_name;
+		l.array_element = array_element;
+		l.sampler = sampler;
+		l.base_level = base_level;
+		l.level_count = level_count;
+		l.base_array = base_array;
+		l.array_count = array_count;
+		l.view_type = view_type;
+		texture_links.push_back(l);
 		return *this;
 	}
 
@@ -502,14 +519,15 @@ namespace flame
 	void Pipeline::link_descriptors(DescriptorSet *set, Resource *resource)
 	{
 		std::vector<VkWriteDescriptorSet> writes;
-		for (auto &link : info.links)
-		{
+
+		auto prepare_link = [&](ResourceLink &link) {
 			if (link.binding == -1)
 			{
 				bool found = false;
 				for (auto &s : shaders)
 				{
-					if (found) break;
+					if (found) 
+						break;
 
 					for (auto set = 0; set < s->descriptor_sets.size(); set++)
 					{
@@ -518,7 +536,6 @@ namespace flame
 							if (d->name == link.descriptor_name)
 							{
 								link.binding = d->binding;
-								link.type = d->type;
 								found = true;
 								break;
 							}
@@ -529,53 +546,42 @@ namespace flame
 					int cut = 1;
 				//assert(found);
 			}
-			if (link.type == VK_DESCRIPTOR_TYPE_MAX_ENUM)
-			{
-				bool found = false;
-				for (auto &s : shaders)
-				{
-					if (found) break;
+		};
 
-					for (auto set = 0; set < s->descriptor_sets.size(); set++)
-					{
-						for (auto &d : s->descriptor_sets[set])
-						{
-							if (d->binding == link.binding)
-							{
-								link.type = d->type;
-								found = true;
-								break;
-							}
-						}
-					}
-				}
-				if (!found)
-					int cut = 1;
-				//assert(found);
-			}
+		std::vector<VkDescriptorBufferInfo> buffer_infos(info.uniform_buffer_links.size());
+		for (auto i = 0; i < info.uniform_buffer_links.size(); i++)
+		{
+			auto &link = info.uniform_buffer_links[i];
 
-			switch (link.type)
+			prepare_link(link);
+
+			auto buffer = resource->getBuffer(link.resource_name);
+			if (buffer)
 			{
-			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-			{
-				auto buffer = resource->getBuffer(link.resource_name);
-				if (buffer)
-					writes.push_back(set->bufferWrite(link.binding, link.array_element, buffer));
-				else
-					printf("unable to link resource %s (binding:%d, type:uniform buffer)\n", link.resource_name.c_str(), link.binding);
+				buffer_infos[i] = get_buffer_info(buffer, link.offset, link.range);
+				writes.push_back(set->get_write(link.binding, link.array_element, &buffer_infos[i]));
 			}
-				break;
-			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-			{
-				auto image = resource->getImage(link.resource_name);
-				if (image)
-					writes.push_back(set->imageWrite(link.binding, link.array_element, image, link.vkSampler, 0, image->levels.size(), 0, image->layer));
-				else
-					printf("unable to link resource %s (binding:%d, type:combined image sampler)\n", link.resource_name.c_str(), link.binding);
-			}
-				break;
-			}
+			else
+				printf("unable to link resource %s (binding:%d, type:uniform buffer)\n", link.resource_name.c_str(), link.binding);
 		}
+
+		std::vector<VkDescriptorImageInfo> image_infos(info.texture_links.size());
+		for (auto i = 0; i < info.texture_links.size(); i++)
+		{
+			auto &link = info.texture_links[i];
+
+			prepare_link(link);
+
+			auto image = resource->getImage(link.resource_name);
+			if (image)
+			{
+				image_infos[i] = get_texture_info(image, link.sampler, link.base_level, link.level_count, link.base_array, link.array_count, link.view_type);
+				writes.push_back(set->get_write(link.binding, link.array_element, &image_infos[i]));
+			}
+			else
+				printf("unable to link resource %s (binding:%d, type:combined image sampler)\n", link.resource_name.c_str(), link.binding);
+		}
+
 		updateDescriptorSets(writes.size(), writes.data());
 	}
 

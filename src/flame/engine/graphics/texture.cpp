@@ -463,21 +463,6 @@ namespace flame
 		}
 	}
 
-	VkDescriptorImageInfo *Texture::get_info(VkImageView view, VkSampler sampler)
-	{
-		for (auto &i : infos)
-		{
-			if (i->imageView == view && i->sampler == sampler)
-				return i.get();
-		}
-		auto i = new VkDescriptorImageInfo;
-		i->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		i->imageView = view;
-		i->sampler = sampler;
-		infos.emplace_back(i);
-		return i;
-	}
-
 	static std::map<unsigned int, std::weak_ptr<Texture>> _images;
 
 	std::shared_ptr<Texture> get_texture(const std::string &filename)

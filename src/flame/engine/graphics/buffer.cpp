@@ -90,10 +90,6 @@ namespace flame
 		vk_chk_res(vkAllocateMemory(vk_device, &alloc_info, nullptr, &memory));
 
 		vk_chk_res(vkBindBufferMemory(vk_device, v, memory, 0));
-
-		info.offset = 0;
-		info.buffer = v;
-		info.range = size;
 	}
 
 	void Buffer::resize(int new_size)

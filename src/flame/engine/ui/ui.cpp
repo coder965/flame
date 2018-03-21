@@ -1402,7 +1402,7 @@ namespace flame
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 			font_image->fill_data(0, pixels);
 			io.Fonts->TexID = (void*)0; // image index
-			updateDescriptorSets(&pipeline_ui->descriptor_set->imageWrite(0, 0, font_image, colorSampler));
+			updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, 0, &get_texture_info(font_image, colorSampler)));
 
 			if (!std::filesystem::exists("sdf.rimg"))
 			{
@@ -1418,7 +1418,7 @@ namespace flame
 			sdf_font_image = new Texture(sdf_text_size * sdf_text_char_count, sdf_text_size, VK_FORMAT_R8G8B8A8_UNORM,
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
 			sdf_font_image->fill_data(0, sdf.data);
-			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->imageWrite(0, 0, sdf_font_image, colorSampler));
+			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->get_write(0, 0, &get_texture_info(sdf_font_image, colorSampler)));
 
 			cmd = new CommandBuffer;
 
@@ -1612,23 +1612,23 @@ namespace flame
 			}
 
 			{
-				std::vector<VkWriteDescriptorSet> writes;
+				//std::vector<VkWriteDescriptorSet> writes;
 				_image_list.iterate([&](int index, void *p, bool &remove) {
 					auto op = _image_ops[index].second;
 					if (op == OpNeedRemove)
 					{
 						remove = true;
 						_image_ops[index].first.reset();
-						writes.push_back(pipeline_ui->descriptor_set->imageWrite(0, index + 1, font_image, colorSampler));
+						updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, index + 1, &get_texture_info(font_image, colorSampler)));
 					}
 					else if (op == OpNeedUpdate)
 					{
 						auto image = (Texture*)p;
-						writes.push_back(pipeline_ui->descriptor_set->imageWrite(0, index + 1, image, colorSampler));
+						updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, index + 1, &get_texture_info(image, colorSampler)));
 					}
 					return true;
 				});
-				updateDescriptorSets(writes.size(), writes.data());
+				//updateDescriptorSets(writes.size(), writes.data());
 			}
 
 			ImGui::Render();

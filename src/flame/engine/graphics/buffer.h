@@ -25,8 +25,6 @@ namespace flame
 		VkDeviceMemory memory;
 		void *mapped;
 
-		VkDescriptorBufferInfo info;
-
 		Buffer(BufferType _type, int _size);
 		~Buffer();
 		void create();

@@ -86,6 +86,28 @@ namespace flame
 		return l;
 	}
 
+	VkDescriptorBufferInfo get_buffer_info(Buffer *b, int offset, int range)
+	{
+		VkDescriptorBufferInfo i;
+		i.buffer = b->v;
+		i.offset = offset;
+		i.range = range == 0 ? b->size : range;
+		return i;
+	}
+
+	VkDescriptorImageInfo get_texture_info(Texture *t, VkSampler sampler, int base_level, int level_count, int base_array, int array_count, VkImageViewType view_type)
+	{
+		VkDescriptorImageInfo i;
+		i.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		if (level_count == 0)
+			level_count = t->levels.size();
+		if (array_count == 0)
+			array_count = t->layer;
+		i.imageView = t->get_view(view_type, base_level, level_count, base_array, array_count);
+		i.sampler = sampler;
+		return i;
+	}
+
 	DescriptorSet::DescriptorSet(DescriptorSetLayout *_layout)
 		:layout(_layout)
 	{
@@ -108,29 +130,35 @@ namespace flame
 		vk_chk_res(vkFreeDescriptorSets(vk_device, descriptorPool->v, 1, &v));
 	}
 
-	VkWriteDescriptorSet DescriptorSet::bufferWrite(int binding, int index, Buffer *buffer)
+	VkWriteDescriptorSet DescriptorSet::get_write(int binding, int index, VkDescriptorBufferInfo *info)
 	{
-		VkWriteDescriptorSet write = {};
+		VkWriteDescriptorSet write;
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.pNext = nullptr;
 		write.dstSet = v;
 		write.dstBinding = binding;
 		write.dstArrayElement = index;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		write.descriptorCount = 1;
-		write.pBufferInfo = &buffer->info;
+		write.pBufferInfo = info;
+		write.pImageInfo = nullptr;
+		write.pTexelBufferView = nullptr;
 		return write;
 	}
 
-	VkWriteDescriptorSet DescriptorSet::imageWrite(int binding, int index, Texture *image, VkSampler sampler, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkWriteDescriptorSet DescriptorSet::get_write(int binding, int index, VkDescriptorImageInfo *info)
 	{
-		VkWriteDescriptorSet write = {};
+		VkWriteDescriptorSet write;
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.pNext = nullptr;
 		write.dstSet = v;
 		write.dstBinding = binding;
 		write.dstArrayElement = index;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		write.descriptorCount = 1;
-		write.pImageInfo = image->get_info(image->get_view(VK_IMAGE_VIEW_TYPE_2D, baseLevel, levelCount, baseLayer, layerCount), sampler);
+		write.pBufferInfo = nullptr;
+		write.pImageInfo = info;
+		write.pTexelBufferView = nullptr;
 		return write;
 	}
 

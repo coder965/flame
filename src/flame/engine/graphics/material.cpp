@@ -327,7 +327,7 @@ namespace flame
 			i->material_index = index;
 			_material_images[index] = i;
 
-			updateDescriptorSets(1, &ds_material->imageWrite(MaterialImagesDescriptorBinding, index, i.get(), colorSampler));
+			updateDescriptorSets(&ds_material->get_write(MaterialImagesDescriptorBinding, index, &get_texture_info(i.get(), colorSampler)));
 		}
 
 		return i;
@@ -368,6 +368,6 @@ namespace flame
 		}
 		_update_material(default_material.get());
 
-		updateDescriptorSets(1, &ds_material->bufferWrite(MaterialBufferDescriptorBinding, 0, materialBuffer));
+		updateDescriptorSets(1, &ds_material->get_write(MaterialBufferDescriptorBinding, 0, &get_buffer_info(materialBuffer)));
 	}
 }

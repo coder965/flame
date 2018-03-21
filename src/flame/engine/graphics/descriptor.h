@@ -47,6 +47,10 @@ namespace flame
 	struct Pipeline;
 	struct Buffer;
 	struct Texture;
+
+	VkDescriptorBufferInfo get_buffer_info(Buffer *b, int offset = 0, int range = 0);
+	VkDescriptorImageInfo get_texture_info(Texture *t, VkSampler sampler, int base_level = 0, int level_count = 0, int base_array = 0, int array_count = 0, VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D);
+
 	struct DescriptorSet
 	{
 		DescriptorSetLayout *layout;
@@ -58,8 +62,8 @@ namespace flame
 		DescriptorSet(Pipeline *pipeline, int index = 0);
 		// must call in main thread
 		~DescriptorSet();
-		VkWriteDescriptorSet bufferWrite(int binding, int index, Buffer *buffer);
-		VkWriteDescriptorSet imageWrite(int binding, int index, Texture *image, VkSampler sampler, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkWriteDescriptorSet get_write(int binding, int index, VkDescriptorBufferInfo *info);
+		VkWriteDescriptorSet get_write(int binding, int index, VkDescriptorImageInfo *info);
 	};
 
 	void updateDescriptorSets(VkWriteDescriptorSet *writes);

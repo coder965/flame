@@ -210,7 +210,7 @@ namespace flame
 						cb->bind_pipeline(pipeline_plain_anim);
 						if (last_bone_buffer_mode0 != d.bone_buffer)
 						{
-							updateDescriptorSets(1, &pipeline_plain_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
+							updateDescriptorSets(1, &pipeline_plain_anim->descriptor_set->get_write(0, 0, &get_buffer_info(d.bone_buffer)));
 							last_bone_buffer_mode0 = d.bone_buffer;
 						}
 						cb->bind_descriptor_set();
@@ -231,7 +231,7 @@ namespace flame
 						cb->bind_pipeline(pipeline_material_anim);
 						if (last_bone_buffer_mode2 != d.bone_buffer)
 						{
-							updateDescriptorSets(1, &pipeline_material_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
+							updateDescriptorSets(1, &pipeline_material_anim->descriptor_set->get_write(0, 0, &get_buffer_info(d.bone_buffer)));
 							last_bone_buffer_mode2 = d.bone_buffer;
 						}
 						VkDescriptorSet sets[] = {
@@ -250,7 +250,7 @@ namespace flame
 						cb->bind_pipeline(pipeline_wireframe_anim);
 						if (last_bone_buffer_mode3 != d.bone_buffer)
 						{
-							updateDescriptorSets(1, &pipeline_wireframe_anim->descriptor_set->bufferWrite(0, 0, d.bone_buffer));
+							updateDescriptorSets(1, &pipeline_wireframe_anim->descriptor_set->get_write(0, 0, &get_buffer_info(d.bone_buffer)));
 							last_bone_buffer_mode3 = d.bone_buffer;
 						}
 						cb->bind_descriptor_set();
@@ -700,8 +700,8 @@ namespace flame
 				.add_blend_attachment_state(false)
 				.add_shader("deferred/mrt.vert", {})
 				.add_shader("deferred/mrt.frag", {})
-				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
+				.add_uniform_buffer_link("ubo_matrix_", "Matrix.UniformBuffer")
+				.add_uniform_buffer_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer"),
 				renderpass_defe.get(), 0);
 			mrt_anim_pipeline = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 },{ TokenF32V3, 0 },{ TokenF32V3, 0 },{ TokenF32V4, 1 },{ TokenF32V4, 1 } })
@@ -712,8 +712,8 @@ namespace flame
 				.add_blend_attachment_state(false)
 				.add_shader("deferred/mrt.vert", { "ANIM" })
 				.add_shader("deferred/mrt.frag", { "ANIM" })
-				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
+				.add_uniform_buffer_link("ubo_matrix_", "Matrix.UniformBuffer")
+				.add_uniform_buffer_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer"),
 				renderpass_defe.get(), 0);
 			terrain_pipeline = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({ { TokenF32V3, 0 },{ TokenF32V2, 0 } })
@@ -728,8 +728,8 @@ namespace flame
 				.add_shader("deferred/terrain.tesc", {})
 				.add_shader("deferred/terrain.tese", {})
 				.add_shader("deferred/terrain.frag", {})
-				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("ubo_terrain_", "Terrain.UniformBuffer"),
+				.add_uniform_buffer_link("ubo_matrix_", "Matrix.UniformBuffer")
+				.add_uniform_buffer_link("ubo_terrain_", "Terrain.UniformBuffer"),
 				renderpass_defe.get(), 0);
 			water_pipeline = new Pipeline(PipelineInfo()
 				.set_patch_control_points(4)
@@ -743,22 +743,22 @@ namespace flame
 				.add_shader("deferred/water.tesc", {})
 				.add_shader("deferred/water.tese", {})
 				.add_shader("deferred/water.frag", {})
-				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("ubo_water_", "Water.UniformBuffer"),
+				.add_uniform_buffer_link("ubo_matrix_", "Matrix.UniformBuffer")
+				.add_uniform_buffer_link("ubo_water_", "Water.UniformBuffer"),
 				renderpass_defe.get(), 0);
 			deferred_pipeline = new Pipeline(PipelineInfo()
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", { "USE_VIEW" })
 				.add_shader("deferred/deferred.frag", { "USE_PBR" })
-				.add_link("ubo_constant_", "Constant.UniformBuffer")
-				.add_link("ubo_matrix_", "Matrix.UniformBuffer")
-				.add_link("img_depth", "Depth.Image", 0, plainUnnormalizedSampler)
-				.add_link("img_albedo_alpha", "AlbedoAlpha.Image", 0, plainUnnormalizedSampler)
-				.add_link("img_normal_height", "NormalHeight.Image", 0, plainUnnormalizedSampler)
-				.add_link("img_spec_roughness", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
-				.add_link("ubo_light_", "Light.UniformBuffer")
-				.add_link("img_envr", "Envr.Image", 0, colorSampler)
-				.add_link("ubo_ambient_", "Ambient.UniformBuffer"),
+				.add_uniform_buffer_link("ubo_constant_", "Constant.UniformBuffer")
+				.add_uniform_buffer_link("ubo_matrix_", "Matrix.UniformBuffer")
+				.add_texture_link("img_depth", "Depth.Image", 0, plainUnnormalizedSampler)
+				.add_texture_link("img_albedo_alpha", "AlbedoAlpha.Image", 0, plainUnnormalizedSampler)
+				.add_texture_link("img_normal_height", "NormalHeight.Image", 0, plainUnnormalizedSampler)
+				.add_texture_link("img_spec_roughness", "SpecRoughness.Image", 0, plainUnnormalizedSampler)
+				.add_uniform_buffer_link("ubo_light_", "Light.UniformBuffer")
+				.add_texture_link("img_envr", "Envr.Image", 0, colorSampler)
+				.add_uniform_buffer_link("ubo_ambient_", "Ambient.UniformBuffer"),
 				//.add_link("img_shadow", "Shadow.Image")
 				//.add_link("ubo_shadow_", "Shadow.UniformBuffer"),
 				renderpass_defe.get(), 1);
@@ -766,7 +766,7 @@ namespace flame
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_shader("fullscreen.vert", {})
 				.add_shader("compose/compose.frag", {})
-				.add_link("img_source", "Main.Image", 0, plainUnnormalizedSampler),
+				.add_texture_link("img_source", "Main.Image", 0, plainUnnormalizedSampler),
 				renderpass_defe.get(), 2);
 
 			defe_inited = true;
@@ -825,9 +825,9 @@ namespace flame
 					.set_depth_write(true)
 					.add_shader("esm/esm.vert", {})
 					.add_shader("esm/esm.frag", {})
-					.add_link("ubo_constant_", "Constant.UniformBuffer")
-					.add_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
-					.add_link("u_shadow_", "Shadow.UniformBuffer"),
+					.add_uniform_buffer_link("ubo_constant_", "Constant.UniformBuffer")
+					.add_uniform_buffer_link("ubo_object_static_", "StaticObjectMatrix.UniformBuffer")
+					.add_uniform_buffer_link("u_shadow_", "Shadow.UniformBuffer"),
 					renderpass_color_and_depth.get(), 0);
 				esm_anim_pipeline = new Pipeline(PipelineInfo()
 					.set_cx(2048).set_cy(2048)
@@ -836,9 +836,9 @@ namespace flame
 					.set_depth_write(true)
 					.add_shader("esm/esm.vert", { "ANIM" })
 					.add_shader("esm/esm.frag", { "ANIM" })
-					.add_link("ubo_constant_", "Constant.UniformBuffer")
-					.add_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer")
-					.add_link("u_shadow_", "Shadow.UniformBuffer"),
+					.add_uniform_buffer_link("ubo_constant_", "Constant.UniformBuffer")
+					.add_uniform_buffer_link("ubo_object_animated_", "AnimatedObjectMatrix.UniformBuffer")
+					.add_uniform_buffer_link("u_shadow_", "Shadow.UniformBuffer"),
 					renderpass_color_and_depth.get(), 0);
 
 				shad_inited = true;
@@ -969,7 +969,7 @@ namespace flame
 					cb->set_viewport_and_scissor(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					auto size = glm::vec2(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1));
 					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof glm::vec2, &size);
-					updateDescriptorSets(1, &downsample_pipeline->descriptor_set->imageWrite(0, 0, i == 0 ? envrImage.get() : envr_image_downsample[i - 1], plainSampler));
+					updateDescriptorSets(1, &downsample_pipeline->descriptor_set->get_write(0, 0, &get_texture_info(i == 0 ? envrImage.get() : envr_image_downsample[i - 1], plainSampler)));
 					cb->bind_descriptor_set();
 					cb->draw(3);
 					cb->end_renderpass();
@@ -987,7 +987,7 @@ namespace flame
 					auto data = 1.f + 1024.f - 1024.f * (i / 3.f);
 					cb->push_constant(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &data);
 					cb->set_viewport_and_scissor(EnvrSizeCx >> i, EnvrSizeCy >> i);
-					updateDescriptorSets(1, &convolve_pipeline->descriptor_set->imageWrite(0, 0, envr_image_downsample[i - 1], plainSampler));
+					updateDescriptorSets(1, &convolve_pipeline->descriptor_set->get_write(0, 0, &get_texture_info(envr_image_downsample[i - 1], plainSampler)));
 					cb->bind_descriptor_set();
 					cb->draw(3);
 					cb->end_renderpass();
@@ -1049,7 +1049,7 @@ namespace flame
 						cb->begin_renderpass(renderpass_color16.get(), fb.get());
 						cb->bind_pipeline(copy_pipeline);
 						cb->set_viewport_and_scissor(EnvrSizeCx, EnvrSizeCy);
-						updateDescriptorSets(1, &copy_pipeline->descriptor_set->imageWrite(0, 0, pa->panoImage.get(), colorSampler));
+						updateDescriptorSets(1, &copy_pipeline->descriptor_set->get_write(0, 0, &get_texture_info(pa->panoImage.get(), colorSampler)));
 						cb->bind_descriptor_set();
 						cb->draw(3);
 						cb->end_renderpass();
@@ -1151,8 +1151,8 @@ namespace flame
 				}
 				if (terrain_auxes[index].blend_map_updated_frame < t->get_blend_image_dirty_frame())
 				{
-					writes.push_back(ds_terrain->imageWrite(TerrainBlendImageDescriptorBinding,
-						index, t->get_blend_image(), colorBorderSampler));
+					writes.push_back(ds_terrain->get_write(TerrainBlendImageDescriptorBinding,
+						index, &get_texture_info(t->get_blend_image(), colorBorderSampler)));
 
 					terrain_auxes[index].blend_map_updated_frame = total_frame_count;
 				}

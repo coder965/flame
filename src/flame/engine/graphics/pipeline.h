@@ -16,31 +16,23 @@ namespace flame
 		int array_element = 0;
 		std::string descriptor_name;
 		std::string resource_name;
-
-		ResourceLink();
 	};
 
 	struct UniformBufferResourceLink : ResourceLink
 	{
 		int offset;
-		int size;
+		int range;
 	};
 
 	struct TextureResourceLink : ResourceLink
 	{
-
+		VkSampler sampler;
+		int base_level;
+		int level_count;
+		int base_array;
+		int array_count;
+		VkImageViewType view_type;
 	};
-
-	//struct LinkResource
-	//{
-	//	int binding = -1;
-	//	int array_element = 0;
-	//	std::string descriptor_name;
-	//	std::string resource_name;
-
-	//	VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-	//	VkSampler vkSampler = 0;
-	//};
 
 	struct PushConstantRange
 	{
@@ -89,7 +81,8 @@ namespace flame
 		std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states;
 		std::vector<VkDynamicState> dynamic_states;
 		std::vector<std::pair<std::string, std::vector<std::string>>> shaders;
-		std::vector<LinkResource> links;
+		std::vector<UniformBufferResourceLink> uniform_buffer_links;
+		std::vector<TextureResourceLink> texture_links;
 
 		PipelineInfo();
 		PipelineInfo &set_cx(int v);
@@ -108,8 +101,13 @@ namespace flame
 		PipelineInfo &add_dynamic_state(VkDynamicState v);
 		PipelineInfo &add_shader(const std::string &filename,
 			const std::initializer_list<std::string> &defines);
-		PipelineInfo &add_link(const std::string &descriptor_name,
-			const std::string &resource_name, int array_element = 0, VkSampler sampler = 0);
+		PipelineInfo &add_uniform_buffer_link(const std::string &descriptor_name,
+			const std::string &resource_name, int array_element = 0,
+			int offset = 0, int range = 0);
+		PipelineInfo &add_texture_link(const std::string &descriptor_name,
+			const std::string &resource_name, int array_element = 0, 
+			VkSampler sampler = 0, int base_level = 0, int level_count = 0,
+			int base_array = 0, int array_count = 0, VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D);
 	};
 
 	struct Resource;

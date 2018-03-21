@@ -51,8 +51,6 @@ namespace flame
 
 		std::vector<std::unique_ptr<TextureView>> views;
 
-		std::vector<std::unique_ptr<VkDescriptorImageInfo>> infos;
-
 		std::string filename;
 
 		int material_index;
@@ -70,7 +68,6 @@ namespace flame
 		int get_size(int level = 0) const;
 		int get_linear_offset(int x, int y, int level = 0) const;
 		VkImageView get_view(VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
-		VkDescriptorImageInfo *get_info(VkImageView view, VkSampler sampler);
 		void transition_layout(int _level, VkImageLayout _layout);
 		void transition_layout(VkImageLayout _layout);
 		void clear(const glm::vec4 &color);
