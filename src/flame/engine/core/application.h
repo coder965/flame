@@ -47,6 +47,7 @@ namespace flame
 
 	struct Framebuffer;
 	struct Texture;
+	struct TextureView;
 	class Node;
 
 	class Application
@@ -62,7 +63,7 @@ namespace flame
 		VkSurfaceKHR window_surface;
 		VkSwapchainKHR swapchain;
 		VkImage window_images[2];
-		VkImageView window_image_views[2];
+		std::unique_ptr<TextureView> window_image_views[2];
 		uint curr_window_image_index;
 		VkSemaphore image_available;
 		VkSemaphore render_finished;
@@ -102,7 +103,7 @@ namespace flame
 	public:
 		void update();
 
-		Texture *get_image(int i) const;
+		VkImageView get_image_view(int i) const;
 
 		int get_curr_image_index() const;
 

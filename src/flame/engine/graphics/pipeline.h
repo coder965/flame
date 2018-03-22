@@ -107,7 +107,7 @@ namespace flame
 		PipelineInfo &add_texture_link(const std::string &descriptor_name,
 			const std::string &resource_name, int array_element = 0, 
 			VkSampler sampler = 0, int base_level = 0, int level_count = 0,
-			int base_array = 0, int array_count = 0, VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D);
+			int base_layer = 0, int layer_count = 0, VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D);
 	};
 
 	struct Resource;

@@ -417,9 +417,9 @@ namespace flame
 		_after_frame_event_mtx.unlock();
 	}
 
-	Texture *Application::get_image(int i) const
+	VkImageView Application::get_image_view(int i) const
 	{
-		return window_images[i].get();
+		return window_image_views[i]->v;
 	}
 
 	int Application::get_curr_image_index() const
@@ -443,7 +443,7 @@ namespace flame
 			first = false;
 		}
 
-		VkSwapchainCreateInfoKHR swapchain_info = {};
+		VkSwapchainCreateInfoKHR swapchain_info;
 		swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchain_info.flags = 0;
 		swapchain_info.pNext = nullptr;
@@ -456,19 +456,22 @@ namespace flame
 		swapchain_info.imageArrayLayers = 1;
 		swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchain_info.queueFamilyIndexCount = 0;
+		swapchain_info.pQueueFamilyIndices = nullptr;
 		swapchain_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		swapchain_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		swapchain_info.clipped = true;
+		swapchain_info.oldSwapchain = 0;
 		vk_chk_res(vkCreateSwapchainKHR(vk_device, &swapchain_info, nullptr, &swapchain));
 
 		VkImage vkImages[2];
-		uint32_t imageCount = 0;
+		uint imageCount = 0;
 		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, nullptr);
-		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, vkImages);
+		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, window_images);
 
 		for (int i = 0; i < 2; i++)
-			window_images[i] = std::make_unique<Texture>(vkImages[i], window_cx, window_cy, swapchain_format);
+			window_image_views[i] = std::make_unique<TextureView>(vkImages[i], swapchain_format, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 
 	void Application::set_window_size(int cx, int cy, int style)

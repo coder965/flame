@@ -9,6 +9,7 @@
 namespace flame
 {
 	struct Buffer;
+	struct Texture;
 
 	struct TextureLevel
 	{
@@ -20,11 +21,14 @@ namespace flame
 	struct TextureView
 	{
 		VkImageViewType view_type;
-		int baseLevel;
-		int levelCount;
-		int baseLayer;
-		int layerCount;
+		int base_level;
+		int level_count;
+		int base_layer;
+		int layer_count;
 		VkImageView v;
+
+		TextureView(VkImage i, VkFormat format, VkImageAspectFlags aspect, VkImageViewType _view_type = VK_IMAGE_VIEW_TYPE_2D, int _base_Level = 0, int _level_count = 1, int _base_layer = 0, int _layer_count = 1);
+		~TextureView();
 	};
 
 	VkFormat get_texture_format(int bpp, int channel, bool sRGB);
@@ -32,8 +36,8 @@ namespace flame
 	enum TextureType
 	{
 		TextureTypeAttachment,
-		TextureTypeFile,
-		TextureTypeTransfer
+		TextureTypeTransferDst,
+		TextureTypeTransferSrc
 	};
 
 	struct Texture
@@ -61,9 +65,7 @@ namespace flame
 		VkDeviceMemory memory;
 
 		// must call in main thread
-		Texture(TextureType type, int _cx, int _cy, VkFormat _format, int _level = 1, int _layer = 1, bool _cube = false);
-		// must call in main thread
-		Texture(VkImage _image, int _cx, int _cy, VkFormat _format); // for swapchain
+		Texture(TextureType _type, int _cx, int _cy, VkFormat _format, int _level = 1, int _layer = 1, bool _cube = false);
 		// must call in main thread
 		~Texture();
 		VkImageAspectFlags get_aspect() const;
@@ -71,7 +73,7 @@ namespace flame
 		int get_cy(int level = 0) const;
 		int get_size(int level = 0) const;
 		int get_linear_offset(int x, int y, int level = 0) const;
-		VkImageView get_view(VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int baseLevel = 0, int levelCount = 1, int baseLayer = 0, int layerCount = 1);
+		VkImageView get_view(VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int base_Level = 0, int level_count = 1, int base_layer = 0, int layer_count = 1);
 		void transition_layout(int _level, VkImageLayout _layout);
 		void transition_layout(VkImageLayout _layout);
 		void clear(const glm::vec4 &color);

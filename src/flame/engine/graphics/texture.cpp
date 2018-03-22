@@ -11,6 +11,35 @@
 
 namespace flame
 {
+	TextureView::TextureView(VkImage i, VkFormat format, VkImageAspectFlags aspect, VkImageViewType _view_type, int _base_level, int _level_count, int _base_layer, int _layer_count) :
+		view_type(_view_type),
+		base_level(_base_level),
+		level_count(_level_count),
+		base_layer(_base_layer),
+		layer_count(_layer_count)
+	{
+		VkImageViewCreateInfo info;
+		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		info.flags = 0;
+		info.pNext = nullptr;
+		info.components = {};
+		info.image = i;
+		info.viewType = view_type;
+		info.format = format;
+		info.subresourceRange.aspectMask = aspect;
+		info.subresourceRange.baseMipLevel = base_level;
+		info.subresourceRange.levelCount = level_count;
+		info.subresourceRange.baseArrayLayer = base_layer;
+		info.subresourceRange.layerCount = layer_count;
+
+		vk_chk_res(vkCreateImageView(vk_device, &info, nullptr, &v));
+	}
+
+	TextureView::~TextureView()
+	{
+		vkDestroyImageView(vk_device, v, nullptr);
+	}
+
 	VkFormat get_texture_format(int bpp, int channel, bool sRGB)
 	{
 		switch (channel)
@@ -47,9 +76,9 @@ namespace flame
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	Texture::Texture(TextureType type, int _cx, int _cy, VkFormat _format, int _level, int _layer, bool _cube) :
+	Texture::Texture(TextureType _type, int _cx, int _cy, VkFormat _format, int _level, int _layer, bool _cube) :
+		type(_type),
 		format(_format),
-		layout(VK_IMAGE_LAYOUT_UNDEFINED),
 		layer(_layer),
 		cube(_cube),
 		sRGB(false),
@@ -62,6 +91,9 @@ namespace flame
 
 		assert(_level >= 1);
 		assert(_layer >= 1);
+
+		if (cube)
+			assert(layer >= 6);
 
 		auto cx = _cx;
 		auto cy = _cy;
@@ -78,6 +110,8 @@ namespace flame
 			cy = glm::max(cy, 1);
 		}
 
+		layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
 		VkImageCreateInfo imageInfo;
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.flags = 0;
@@ -90,7 +124,7 @@ namespace flame
 		imageInfo.arrayLayers = layer;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.initialLayout = layout;
 		imageInfo.usage = usage;
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -118,30 +152,8 @@ namespace flame
 			transition_layout(VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	Texture::Texture(VkImage _image, int _cx, int _cy, VkFormat _format) :
-		type(TextureTypeAttachment),
-		v(_image),
-		memory(0),
-		format(_format),
-		layout(VK_IMAGE_LAYOUT_UNDEFINED),
-		layer(1),
-		sRGB(false),
-		material_index(-1),
-		ui_index(-1)
-	{
-		set_data_from_format();
-
-		levels.resize(1);
-		levels[0] = std::make_unique<TextureLevel>();
-		levels[0]->cx = _cx;
-		levels[0]->cy = _cy;
-		levels[0]->pitch = calc_pitch(_cx * (bpp / 8));
-	}
-
 	Texture::~Texture()
 	{
-		for (auto &v : views)
-			vkDestroyImageView(vk_device, v->v, nullptr);
 		if (memory)
 		{
 			vkFreeMemory(vk_device, memory, nullptr);
@@ -282,7 +294,6 @@ namespace flame
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 		end_once_command_buffer(cb);
-
 	}
 
 	void Texture::transition_layout(VkImageLayout _layout)
@@ -375,35 +386,16 @@ namespace flame
 		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
-	VkImageView Texture::get_view(VkImageViewType view_type, int baseLevel, int levelCount, int baseLayer, int layerCount)
+	VkImageView Texture::get_view(VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
 	{
 		for (auto &view : views)
 		{
-			if (view->view_type == view_type && view->baseLevel == baseLevel && view->levelCount == levelCount &&
-				view->baseLayer == baseLayer && view->layerCount == layerCount)
+			if (view->view_type == view_type && view->base_level == base_level && view->level_count == level_count &&
+				view->base_layer == base_layer && view->layer_count == layer_count)
 				return view->v;
 		}
 
-		auto view = new TextureView;
-		view->view_type = view_type;
-		view->baseLevel = baseLevel;
-		view->levelCount = levelCount;
-		view->baseLayer = baseLayer;
-		view->layerCount = layerCount;
-
-		VkImageViewCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		info.image = v;
-		info.viewType = view_type;
-		info.format = format;
-		info.subresourceRange.aspectMask = get_aspect();
-		info.subresourceRange.baseMipLevel = baseLevel;
-		info.subresourceRange.levelCount = levelCount;
-		info.subresourceRange.baseArrayLayer = baseLayer;
-		info.subresourceRange.layerCount = layerCount;
-
-		vk_chk_res(vkCreateImageView(vk_device, &info, nullptr, &view->v));
-
+		auto view = new TextureView(v, format, get_aspect(), view_type, base_level, level_count, base_layer, layer_count);
 		views.emplace_back(view);
 		return view->v;
 	}

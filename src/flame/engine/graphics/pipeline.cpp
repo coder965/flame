@@ -199,7 +199,7 @@ namespace flame
 	PipelineInfo &PipelineInfo::add_texture_link(const std::string &descriptor_name,
 		const std::string &resource_name, int array_element,
 		VkSampler sampler, int base_level, int level_count,
-		int base_array, int array_count, VkImageViewType view_type)
+		int base_layer, int layer_count, VkImageViewType view_type)
 	{
 		TextureResourceLink l;
 		l.binding = -1;
@@ -209,8 +209,8 @@ namespace flame
 		l.sampler = sampler;
 		l.base_level = base_level;
 		l.level_count = level_count;
-		l.base_array = base_array;
-		l.array_count = array_count;
+		l.base_array = base_layer;
+		l.array_count = layer_count;
 		l.view_type = view_type;
 		texture_links.push_back(l);
 		return *this;

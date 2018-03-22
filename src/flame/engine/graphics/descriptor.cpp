@@ -95,15 +95,15 @@ namespace flame
 		return i;
 	}
 
-	VkDescriptorImageInfo get_texture_info(Texture *t, VkSampler sampler, int base_level, int level_count, int base_array, int array_count, VkImageViewType view_type)
+	VkDescriptorImageInfo get_texture_info(Texture *t, VkSampler sampler, int base_level, int level_count, int base_layer, int layer_count, VkImageViewType view_type)
 	{
 		VkDescriptorImageInfo i;
 		i.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		if (level_count == 0)
 			level_count = t->levels.size();
-		if (array_count == 0)
-			array_count = t->layer;
-		i.imageView = t->get_view(view_type, base_level, level_count, base_array, array_count);
+		if (layer_count == 0)
+			layer_count = t->layer;
+		i.imageView = t->get_view(view_type, base_level, level_count, base_layer, layer_count);
 		i.sampler = sampler;
 		return i;
 	}

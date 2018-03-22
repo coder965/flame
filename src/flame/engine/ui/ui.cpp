@@ -1536,7 +1536,10 @@ namespace flame
 				first = false;
 
 				for (auto i = 0; i < 2; i++)
-					framebuffers[i] = get_framebuffer(app->get_image(i), renderpass.get());
+				{
+					auto v = app->get_image_view(i);
+					framebuffers[i] = get_framebuffer(app->window_cx, app->window_cy, renderpass.get(), 1, &v);
+				}
 
 				ImGuiContext& g = *GImGui;
 				ImGui::menubar_height = g.FontBaseSize + g.Style.FramePadding.y * 2.0f;
