@@ -76,10 +76,10 @@ namespace flame
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	Texture::Texture(TextureType _type, int _cx, int _cy, VkFormat _format, int _level, int _layer, bool _cube) :
+	Texture::Texture(TextureType _type, int _cx, int _cy, VkFormat _format, int _level, int _layer, bool _cube, void *data) :
 		type(_type),
 		format(_format),
-		layer(_layer),
+		layer_count(_layer),
 		cube(_cube),
 		sRGB(false),
 		material_index(-1),
@@ -91,30 +91,31 @@ namespace flame
 		assert(_layer >= 1);
 
 		if (cube)
-			assert(layer >= 6);
+			assert(layer_count >= 6);
 
 		auto cx = _cx;
 		auto cy = _cy;
 		levels.resize(_level);
+		total_size = 0;
 		for (int i = 0; i < _level; i++)
 		{
-			levels[i] = std::make_unique<TextureLevel>();
-			levels[i]->cx = cx;
-			levels[i]->cy = cy;
-			levels[i]->pitch = calc_pitch(cx * (bpp / 8));
+			levels[i].cx = cx;
+			levels[i].cy = cy;
+			levels[i].pitch = calc_pitch(cx * (bpp / 8));
+			levels[i].size_per_layer = levels[i].pitch * cy;
 			cx >>= 1;
 			cy >>= 1;
 			cx = glm::max(cx, 1);
 			cy = glm::max(cy, 1);
+			total_size += levels[i].size_per_layer * layer_count;
 		}
 
-		layout = VK_IMAGE_LAYOUT_UNDEFINED;
-
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		auto format_type = get_format_type(format);
 		switch (type)
 		{
 			case TextureTypeAttachment:
-				if (get_format_type(format) == FormatTypeColor)
+				if (format_type == FormatTypeColor)
 					usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 				else
 					usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -127,6 +128,8 @@ namespace flame
 				break;
 		}
 
+		layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
 		VkImageCreateInfo imageInfo;
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.flags = 0;
@@ -136,7 +139,7 @@ namespace flame
 		imageInfo.extent.height = _cy;
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = levels.size();
-		imageInfo.arrayLayers = layer;
+		imageInfo.arrayLayers = layer_count;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = layout;
@@ -161,10 +164,23 @@ namespace flame
 
 		vk_chk_res(vkBindImageMemory(vk_device, v, memory, 0));
 
-		//total_size = memRequirements.size;
+		auto cb = begin_once_command_buffer();
 
-		if (type != TextureTypeTransferDst)
-			transition_layout(VK_IMAGE_LAYOUT_GENERAL);
+		VkImageLayout final_layout;
+		if (type == TextureTypeTransferDst)
+		{
+			final_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+		else
+		{
+			final_layout = format_type == FormatTypeColor ?
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL :
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		}
+		transition_layout(cb, final_layout);
+		layout = final_layout;
+
+		end_once_command_buffer(cb);
 	}
 
 	Texture::~Texture()
@@ -192,24 +208,21 @@ namespace flame
 
 	int Texture::get_cx(int level) const
 	{
-		return levels[level]->cx;
+		return levels[level].cx;
 	}
 
 	int Texture::get_cy(int level) const
 	{
-		return levels[level]->cy;
+		return levels[level].cy;
 	}
 
-	int Texture::get_size(int level) const
+	int Texture::get_linear_offset(int x, int y, int level, int layer) const
 	{
-		auto l = levels[level].get();
-		return l->pitch * l->cy;
-	}
-
-	int Texture::get_linear_offset(int x, int y, int level) const
-	{
-		auto l = levels[level].get();
-		return l->pitch * y + x * (bpp / 8);
+		auto offset = 0;
+		for (auto i = 0; i < level - 1; i++)
+			offset += levels[i].size_per_layer * layer_count;
+		offset += levels[level].size_per_layer * layer;
+		return offset + levels[level].pitch * y + x * (bpp / 8);
 	}
 
 	void Texture::clear(const glm::vec4 &color)
@@ -228,10 +241,8 @@ namespace flame
 		transition_layout(last_layout);
 	}
 
-	void Texture::transition_layout(int _level, VkImageLayout _layout)
+	void Texture::transition_layout(CommandBuffer *cb, VkImageLayout _layout, int base_level, int level_count, int base_layer, int layer_count)
 	{
-		auto cb = begin_once_command_buffer();
-
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = layout;
@@ -240,10 +251,10 @@ namespace flame
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = v;
 		barrier.subresourceRange.aspectMask = get_aspect();
-		barrier.subresourceRange.baseMipLevel = _level;
-		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = levels.size();
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount = layer_count;
 
 		switch (barrier.oldLayout)
 		{
@@ -307,32 +318,23 @@ namespace flame
 
 		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-		end_once_command_buffer(cb);
 	}
 
-	void Texture::transition_layout(VkImageLayout _layout)
-	{
-		for (auto i = 0; i < levels.size(); i++)
-			transition_layout(i, _layout);
-		layout = _layout;
-	}
+	//void Texture::fill_data(int level, unsigned char *src)
+	//{
+	//	auto size = get_size(level);
 
-	void Texture::fill_data(int level, unsigned char *src)
-	{
-		auto size = get_size(level);
+	//	Buffer staging_buffer(BufferTypeStaging, size);
 
-		Buffer staging_buffer(BufferTypeStaging, size);
+	//	staging_buffer.map(0, size);
+	//	void* map = staging_buffer.mapped;
+	//	memcpy(map, src, size);
+	//	staging_buffer.unmap();
 
-		staging_buffer.map(0, size);
-		void* map = staging_buffer.mapped;
-		memcpy(map, src, size);
-		staging_buffer.unmap();
+	//	copy_from_buffer(&staging_buffer, level);
+	//}
 
-		copy_from_buffer(&staging_buffer, level);
-	}
-
-	void Texture::copy_to_buffer(Buffer *dst, int level, int x, int y, int width, int height, int buffer_offset)
+	void Texture::copy_to_buffer(Buffer *dst, int level, int layer, int x, int y, int width, int height, int buffer_offset)
 	{
 		if (width == 0)
 			width = get_cx(level);
@@ -368,7 +370,7 @@ namespace flame
 		layout = last_layout;
 	}
 
-	void Texture::copy_from_buffer(Buffer *src, int level, int x, int y, int width, int height, int buffer_offset)
+	void Texture::copy_from_buffer(Buffer *src, int level, int layer, int x, int y, int width, int height, int buffer_offset)
 	{
 		if (width == 0)
 			width = get_cx(level);

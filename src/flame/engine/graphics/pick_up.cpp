@@ -26,7 +26,7 @@ namespace flame
 		cb->end_renderpass();
 		end_once_command_buffer(cb);
 
-		pick_up_image->copy_to_buffer(defalut_staging_buffer, 0, x, y, 1, 1);
+		pick_up_image->copy_to_buffer(defalut_staging_buffer, 0, 0, x, y, 1, 1);
 
 		defalut_staging_buffer->map(0, 4);
 		auto pixel = (unsigned char*)defalut_staging_buffer->mapped;

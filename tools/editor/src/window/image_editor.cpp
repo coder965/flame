@@ -78,6 +78,6 @@ void ImageEditor::on_mouse_overing_image(ImVec2 image_pos)
 		}
 		staging_buffer->unmap();
 
-		texture->copy_from_buffer(staging_buffer.get(), 0, x, y, 1, 1, -1);
+		texture->copy_from_buffer(staging_buffer.get(), 0, 0, x, y, 1, 1, -1);
 	}
 }

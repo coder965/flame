@@ -1,0 +1,1517 @@
+Info,  T10812: Load daedae
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: Found positive match for header keyword: <collada
+Info,  T10812: Found a matching importer for this file format: Collada Importer.
+Info,  T10812: Import root directory is '.\'
+Debug, T10812: Collada schema version is 1.4.n
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: START `t1`
+Debug, T10812: END   `t1`, dt= 0.000286 s
+Info,  T10812: Load D:/flame/ext/assimp/test/models/LWS/move_x.lws
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: LightWave Scene Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/LWS\'
+Debug, T10812: LWS: Skipping over plugin-specific data
+Skipping one or more lines with the same contents
+Info,  T10812: LWS file format version is 5
+Info,  T10812: %%% BEGIN EXTERNAL FILE %%%
+Info,  T10812: File: simple_cube.lwo
+Info,  T10812: Load simple_cube.lwo
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: LightWave/Modo Object Importer.
+Info,  T10812: Import root directory is '.\'
+Info,  T10812: LWO file format: LWO2 (>= LightWave 6)
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Info,  T10812: %%% END EXTERNAL FILE %%%
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Info,  T10812: Load D:/flame/ext/assimp/test/models/SMD/triangle.smd
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Valve SMD Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/SMD\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/SMD/holy_grailref.smd
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Valve SMD Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/SMD\'
+Error, T10812: [SMD/VTA] Bone index overflow. The bone index will be ignored, the weight will be assigned to the vertex' parent node
+Skipping one or more lines with the same contents
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/glTF/TwoBoxes/TwoBoxes.gltf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: glTF Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/glTF/TwoBoxes\'
+Debug, T10812: MakeVerboseFormatProcess begin
+Info,  T10812: MakeVerboseFormatProcess finished. There was much work to do ...
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/glTF2/BoxTextured-glTF/BoxTextured.gltf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: glTF2 Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/glTF2/BoxTextured-glTF\'
+Debug, T10812: MakeVerboseFormatProcess begin
+Info,  T10812: MakeVerboseFormatProcess finished. There was much work to do ...
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/glTF2/2CylinderEngine-glTF-Binary/2CylinderEngine.glb
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: glTF2 Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/glTF2/2CylinderEngine-glTF-Binary\'
+Debug, T10812: MakeVerboseFormatProcess begin
+Info,  T10812: MakeVerboseFormatProcess finished. There was much work to do ...
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/glTF2/BoxTextured-glTF/BoxTextured.gltf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: glTF2 Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/glTF2/BoxTextured-glTF\'
+Debug, T10812: MakeVerboseFormatProcess begin
+Info,  T10812: MakeVerboseFormatProcess finished. There was much work to do ...
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (Mesh) | Verts in: 36 out: 24 | ~33.3333%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 36 out: 24 | ~33.3%
+Debug, T10812: SplitLargeMeshesProcess_Triangle begin
+Debug, T10812: SplitLargeMeshesProcess_Triangle finished. There was nothing to do
+Debug, T10812: SplitLargeMeshesProcess_Vertex begin
+Debug, T10812: SplitLargeMeshesProcess_Vertex finished. There was nothing to do
+Info,  T10812: Load D:/flame/ext/assimp/test/models/HMP/terrain.hmp
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: 3D GameStudio Heightmap (HMP) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/HMP\'
+Debug, T10812: HMP subtype: 3D GameStudio A7, magic word is HMP7
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/IFC/AC14-FZK-Haus.ifc
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Industry Foundation Classes (IFC) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/IFC\'
+Debug, T10812: IFC: File schema is 'IFC2X3'
+Debug, T10812: STEP: got 82226 object records with 5788 inverse index entries
+Debug, T10812: IFC: got units used for lengths
+Debug, T10812: IFC: got units used for angles
+Debug, T10812: IFC: got world coordinate system
+Debug, T10812: IFC: looking at spatial structure `Gelände`
+Debug, T10812: IFC: selecting this spatial structure as root structure
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing degenerate faces
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: skipping IfcAnnotation entity due to importer settings
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: skipping IfcSpace entity due to importer settings
+Skipping one or more lines with the same contents
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping (IfcBooleanClippingResult)
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping with polygonal bounding (IfcBooleanClippingResult)
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping (IfcBooleanClippingResult)
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Warn,  T10812: IFC: skipping unknown IfcGeometricRepresentationItem entity, type is IfcPolyline
+Debug, T10812: IFC: removing duplicate vertices
+Error, T10812: IFC: failed to generate all window caps
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping with polygonal bounding (IfcBooleanClippingResult)
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping (IfcBooleanClippingResult)
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping (IfcBooleanClippingResult)
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: generating CSG geometry by plane clipping (IfcBooleanClippingResult)
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: generating CSG geometry by plane clipping (IfcBooleanClippingResult)
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Warn,  T10812: IFC: failed to resolve all openings, presumably their topology is not supported by Assimp
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: removing degenerate faces
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: removing duplicate vertices
+Debug, T10812: IFC: generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)
+Debug, T10812: IFC: skipping IfcAnnotation entity due to importer settings
+Skipping one or more lines with the same contents
+Debug, T10812: IFC: skipping IfcSpace entity due to importer settings
+Debug, T10812: IFC: STEP: evaluated 70094 object records
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: Found positive match for header keyword: ISO-10303-21
+Info,  T10812: Found a matching importer for this file format: Industry Foundation Classes (IFC) Importer.
+Info,  T10812: Import root directory is './'
+Debug, T10812: IFC: File schema is 'IFC2X3'
+Warn,  T10812: STEP: ignoring unexpected EOF
+Debug, T10812: STEP: got 4 object records with 0 inverse index entries
+Error, T10812: IFC: missing IfcProject entity
+Info,  T10812: Load D:/flame/ext/assimp/test/models/FBX/spider.fbx
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Autodesk FBX Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/FBX\'
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0x1b544) shading mode not recognized: Phong
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0x1b96a) shading mode not recognized: Phong
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0x1bd8d) shading mode not recognized: Phong
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0x1c1b4) shading mode not recognized: Phong
+Debug, T10812: ValidateDataStructureProcess begin
+Warn,  T10812: Validation warning: Invalid opacity value (must be 0 < opacity < 1.0)
+Skipping one or more lines with the same contents
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/FBX/box.fbx
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Autodesk FBX Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/FBX\'
+Error, T10812: FBX-Parser did not find required element "UV"
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0x3b94) failed to read source object for incoming Model link, ignoring
+Info,  T10812: FBX: generating full transformation chain for node: root
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/FBX/phong_cube.fbx
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Autodesk FBX Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/FBX\'
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0x4190) source object for connection does not exist
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/FBX/global_settings.fbx
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Autodesk FBX Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/FBX\'
+Error, T10812: FBX: no material assigned to mesh, setting default material
+Warn,  T10812: FBX-DOM (TOK_KEY, offset 0xd9cd) shading mode not recognized: Phong
+Debug, T10812: ValidateDataStructureProcess begin
+Warn,  T10812: Validation warning: Invalid opacity value (must be 0 < opacity < 1.0)
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load $$$___magic___$$$.3ds
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Discreet 3DS Importer.
+Info,  T10812: Import root directory is './'
+Info,  T10812: 3DS file format version: 3
+Warn,  T10812: 3DS: Skipping TCB animation info
+Skipping one or more lines with the same contents
+Error, T10812: 3DS: Skipping FOV animation track. This is not supported
+Warn,  T10812: 3DS: Skipping TCB animation info
+Skipping one or more lines with the same contents
+Info,  T10812: 3DS: Generating default material
+Debug, T10812: 3DS: Converting camera roll track ...
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Setting animation duration
+Info,  T10812: Entering post processing pipeline
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: RemoveRedundantMatsProcess finished 
+Debug, T10812: FindDegeneratesProcess begin
+Debug, T10812: FindDegeneratesProcess finished
+Debug, T10812: GenUVCoordsProcess begin
+Debug, T10812: GenUVCoordsProcess finished
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: FindInvalidDataProcess begin
+Debug, T10812: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T10812: SplitLargeMeshesProcess_Triangle begin
+Debug, T10812: SplitLargeMeshesProcess_Triangle finished. There was nothing to do
+Debug, T10812: Generate spatially-sorted vertex cache
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: CalcTangentsProcess begin
+Info,  T10812: CalcTangentsProcess finished. Tangents have been calculated
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (0) | Verts in: 36 out: 24 | ~33.3333%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 36 out: 24 | ~33.3%
+Debug, T10812: SplitLargeMeshesProcess_Vertex begin
+Debug, T10812: SplitLargeMeshesProcess_Vertex finished. There was nothing to do
+Debug, T10812: LimitBoneWeightsProcess begin
+Debug, T10812: LimitBoneWeightsProcess end
+Debug, T10812: ImproveCacheLocalityProcess begin
+Debug, T10812: Mesh 0 | ACMR in: 2.000000 out: 2.000000 | ~0.0%
+Info,  T10812: Cache relevant are 1 meshes (12 faces). Average output ACMR is 2.000000
+Debug, T10812: ImproveCacheLocalityProcess finished. 
+Info,  T10812: Leaving post processing pipeline
+Info,  T10812: Registering custom importer for these file extensions: applelinuxmacwindows
+Info,  T10812: Unregistering custom importer: 
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/test.x
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Warn,  T10812: Unknown data object in mesh in x file
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Entering post processing pipeline
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: RemoveRedundantMatsProcess finished 
+Debug, T10812: OptimizeGraphProcess begin
+Debug, T10812: OptimizeGraphProcess finished
+Debug, T10812: FindDegeneratesProcess begin
+Debug, T10812: FindDegeneratesProcess finished
+Debug, T10812: GenUVCoordsProcess begin
+Debug, T10812: GenUVCoordsProcess finished
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: FindInvalidDataProcess begin
+Debug, T10812: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T10812: Skipping OptimizeMeshesProcess
+Debug, T10812: Generate spatially-sorted vertex cache
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (pCube1) | Verts in: 36 out: 24 | ~33.3333%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 36 out: 24 | ~33.3%
+Info,  T10812: Leaving post processing pipeline
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/Testwuson.X
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Warn,  T10812: Unknown data object in animation of .x file
+Skipping one or more lines with the same contents
+Warn,  T10812: Unknown data object in frame in x file
+Skipping one or more lines with the same contents
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Entering post processing pipeline
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: RemoveRedundantMatsProcess finished 
+Debug, T10812: OptimizeGraphProcess begin
+Debug, T10812: OptimizeGraphProcess finished
+Debug, T10812: FindDegeneratesProcess begin
+Debug, T10812: FindDegeneratesProcess finished
+Debug, T10812: GenUVCoordsProcess begin
+Debug, T10812: GenUVCoordsProcess finished
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: FindInvalidDataProcess begin
+Debug, T10812: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T10812: Skipping OptimizeMeshesProcess
+Debug, T10812: Generate spatially-sorted vertex cache
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (Wuson) | Verts in: 11196 out: 3205 | ~71.3737%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 11196 out: 3205 | ~71.4%
+Info,  T10812: Leaving post processing pipeline
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/anim_test.x
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Warn,  T10812: Length of texture file name is zero. Skipping this texture.
+Warn,  T10812: Unknown data object in mesh in x file
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Entering post processing pipeline
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: RemoveRedundantMatsProcess finished 
+Debug, T10812: OptimizeGraphProcess begin
+Debug, T10812: OptimizeGraphProcess finished
+Debug, T10812: FindDegeneratesProcess begin
+Debug, T10812: FindDegeneratesProcess finished
+Debug, T10812: GenUVCoordsProcess begin
+Debug, T10812: GenUVCoordsProcess finished
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: FindInvalidDataProcess begin
+Warn,  T10812: Simplified dummy tracks with just one key
+Skipping one or more lines with the same contents
+Debug, T10812: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T10812: Skipping OptimizeMeshesProcess
+Debug, T10812: Generate spatially-sorted vertex cache
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (pCylinder1) | Verts in: 2520 out: 485 | ~80.754%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 2520 out: 485 | ~80.8%
+Info,  T10812: Leaving post processing pipeline
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/anim_test.x
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Warn,  T10812: Length of texture file name is zero. Skipping this texture.
+Warn,  T10812: Unknown data object in mesh in x file
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Entering post processing pipeline
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: RemoveRedundantMatsProcess finished 
+Debug, T10812: OptimizeGraphProcess begin
+Debug, T10812: OptimizeGraphProcess finished
+Debug, T10812: FindDegeneratesProcess begin
+Debug, T10812: FindDegeneratesProcess finished
+Debug, T10812: GenUVCoordsProcess begin
+Debug, T10812: GenUVCoordsProcess finished
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: FindInvalidDataProcess begin
+Warn,  T10812: Simplified dummy tracks with just one key
+Skipping one or more lines with the same contents
+Debug, T10812: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T10812: Skipping OptimizeMeshesProcess
+Debug, T10812: Generate spatially-sorted vertex cache
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (pCylinder1) | Verts in: 2520 out: 485 | ~80.754%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 2520 out: 485 | ~80.8%
+Info,  T10812: Leaving post processing pipeline
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/BCN_Epileptic.X
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Warn,  T10812: Unknown data object in animation of .x file
+Skipping one or more lines with the same contents
+Warn,  T10812: Unknown data object in frame in x file
+Skipping one or more lines with the same contents
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Entering post processing pipeline
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: RemoveRedundantMatsProcess finished 
+Debug, T10812: OptimizeGraphProcess begin
+Debug, T10812: OptimizeGraphProcess finished
+Debug, T10812: FindDegeneratesProcess begin
+Debug, T10812: FindDegeneratesProcess finished
+Debug, T10812: GenUVCoordsProcess begin
+Debug, T10812: GenUVCoordsProcess finished
+Debug, T10812: TriangulateProcess begin
+Debug, T10812: TriangulateProcess finished. There was nothing to be done.
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 0, Lines: 0, Triangles: 3, Polygons: 0 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
+Debug, T10812: FindInvalidDataProcess begin
+Debug, T10812: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T10812: OptimizeMeshesProcess begin
+Debug, T10812: OptimizeMeshesProcess finished
+Debug, T10812: Generate spatially-sorted vertex cache
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: JoinVerticesProcess begin
+Debug, T10812: Mesh 0 (Torso) | Verts in: 5898 out: 1170 | ~80.1628%
+Debug, T10812: Mesh 1 (Head) | Verts in: 6108 out: 1196 | ~80.4191%
+Debug, T10812: Mesh 2 (Legs) | Verts in: 3372 out: 648 | ~80.7829%
+Info,  T10812: JoinVerticesProcess finished | Verts in: 15378 out: 3014 | ~80.4%
+Info,  T10812: Leaving post processing pipeline
+Info,  T10812: Load D:/flame/ext/assimp/test/models/3D/box_a.3d
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Unreal Mesh Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/3D\'
+Debug, T10812: UNREAL: data file is D:/flame/ext/assimp/test/models/3D/box_d.3d
+Debug, T10812: UNREAL: aniv file is D:/flame/ext/assimp/test/models/3D/box_a.3d
+Debug, T10812: UNREAL: uc file is D:/flame/ext/assimp/test/models/3D/box.uc
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/3DS/fels.3ds
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Discreet 3DS Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/3DS\'
+Info,  T10812: 3DS file format version: 3
+Warn,  T10812: No hierarchy information has been found in the file. 
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/AC/Wuson.ac
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: AC3D Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/AC\'
+Info,  T10812: AC3D file format version: 11
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/AMF/test1.amf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Additive manufacturing file format(AMF) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/AMF\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: ScenePreprocessor: Adding default material 'DefaultMaterial'
+Info,  T10812: Load D:/flame/ext/assimp/test/models/ASE/ThreeCubesGreen.ASE
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: ASE Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/ASE\'
+Info,  T10812: Line 1: Comment: AsciiExport-Version  2,00 - Tue May 06 17:21:38 2008
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/3MF/box.3mf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: 3mf Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/3MF\'
+Debug, T10812: 3D/3dmodel.model
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: ScenePreprocessor: Adding default material 'DefaultMaterial'
+Info,  T10812: Load D:/flame/ext/assimp/test/models/3MF/box.3mf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: 3mf Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/3MF\'
+Debug, T10812: 3D/3dmodel.model
+Debug, T10812: ScenePreprocessor: Adding default material 'DefaultMaterial'
+Info,  T10812: Load D:/flame/ext/assimp/test/models/Q3D/earth.q3o
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Quick3D Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/Q3D\'
+Info,  T10812: Quick3D File format version: 30
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/STL/Spider_ascii.stl
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Stereolithography (STL) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/STL\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/STL/triangle_with_two_solids.stl
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Stereolithography (STL) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/STL\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/test.x
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Warn,  T10812: Unknown data object in mesh in x file
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X/OV_GetNextToken
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Direct3D XFile Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X\'
+Info,  T10812: Successfully decompressed MSZIP-compressed file
+Error, T10812: Opening brace expected.
+Info,  T10812: Load D:/flame/ext/assimp/test/models/X3D/ComputerKeyboard.x3d
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Extensible 3D(X3D) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/X3D\'
+Info,  T10812: Skipping node "Viewpoint" in Scene.
+Info,  T10812: Skipping node "TouchSensor" in Scene.
+Info,  T10812: Skipping node "TimeSensor" in Scene.
+Info,  T10812: Skipping node "PositionInterpolator" in Scene.
+Info,  T10812: Skipping node "ROUTE" in Scene.
+Skipping one or more lines with the same contents
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/DXF/PinkEggFromLW.dxf
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Drawing Interchange Format (DXF) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/DXF\'
+Debug, T10812: DXF: got 0 entries in BLOCKS
+Debug, T10812: DXF: got 288 polylines and 0 inserted blocks in ENTITIES
+Debug, T10812: DXF: Unexpanded polycount is 288, vertex count is 1152
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/PLY/cube.ply
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Stanford Polygon Library (PLY) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/PLY\'
+Debug, T10812: PLY::DOM::ParseInstance() begin
+Debug, T10812: PLY::DOM::ParseHeader() begin
+Debug, T10812: PLY::DOM::ParseHeader() succeeded
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() begin
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() succeeded
+Debug, T10812: PLY::DOM::ParseInstance() succeeded
+Info,  T10812: Load D:/flame/ext/assimp/test/models/PLY/cube.ply
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Stanford Polygon Library (PLY) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/PLY\'
+Debug, T10812: PLY::DOM::ParseInstance() begin
+Debug, T10812: PLY::DOM::ParseHeader() begin
+Debug, T10812: PLY::DOM::ParseHeader() succeeded
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() begin
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() succeeded
+Debug, T10812: PLY::DOM::ParseInstance() succeeded
+Debug, T10812: PretransformVerticesProcess begin
+Debug, T10812: PretransformVerticesProcess finished
+Info,  T10812: Removed 1 nodes and 0 animation channels (1 output nodes)
+Info,  T10812: Kept 0 lights and 0 cameras
+Info,  T10812: Moved 1 meshes to WCS (number of output meshes: 1)
+Info,  T10812: Load D:/flame/ext/assimp/test/models/PLY/cube.ply
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Stanford Polygon Library (PLY) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/PLY\'
+Debug, T10812: PLY::DOM::ParseInstance() begin
+Debug, T10812: PLY::DOM::ParseHeader() begin
+Debug, T10812: PLY::DOM::ParseHeader() succeeded
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() begin
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() succeeded
+Debug, T10812: PLY::DOM::ParseInstance() succeeded
+Info,  T10812: Load D:/flame/ext/assimp/test/models/PLY/cube.ply
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Stanford Polygon Library (PLY) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/PLY\'
+Debug, T10812: PLY::DOM::ParseInstance() begin
+Debug, T10812: PLY::DOM::ParseHeader() begin
+Debug, T10812: PLY::DOM::ParseHeader() succeeded
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() begin
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() succeeded
+Debug, T10812: PLY::DOM::ParseInstance() succeeded
+Info,  T10812: Load D:/flame/ext/assimp/test/models/PLY/float-color.ply
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Stanford Polygon Library (PLY) Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/PLY\'
+Debug, T10812: PLY::DOM::ParseInstance() begin
+Debug, T10812: PLY::DOM::ParseHeader() begin
+Debug, T10812: PLY::DOM::ParseHeader() succeeded
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() begin
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() succeeded
+Debug, T10812: PLY::DOM::ParseInstance() succeeded
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: Found positive match for header keyword: ply
+Info,  T10812: Found a matching importer for this file format: Stanford Polygon Library (PLY) Importer.
+Info,  T10812: Import root directory is './'
+Debug, T10812: PLY::DOM::ParseInstance() begin
+Debug, T10812: PLY::DOM::ParseHeader() begin
+Debug, T10812: PLY::DOM::ParseHeader() succeeded
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() begin
+Debug, T10812: PLY::DOM::ParseElementInstanceLists() succeeded
+Debug, T10812: PLY::DOM::ParseInstance() succeeded
+Info,  T10812: Load D:/flame/ext/assimp/test/models/OBJ/spider.obj
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/OBJ\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/OBJ/spider.obj
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/OBJ\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: usemtl
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Error, T10812: OBJ: failed to locate material Default, creating new material
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: usemtl
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Info,  T10812: Load D:/flame/ext/assimp/test/models/OBJ/cube_with_vertexcolors.obj
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/OBJ\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: GenVertexNormalsProcess begin
+Debug, T10812: GenVertexNormalsProcess finished. Normals are already there
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: v 
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Debug, T10812: ValidateDataStructureProcess begin
+Error, T10812: Validation failed: aiScene::mNumMeshes is 0. At least one mesh must be there
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: v 
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: v 
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: v 
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Error, T10812: OBJ: Invalid component in homogeneous vector (Division by zero)
+Info,  T10812: Load $$$___magic___$$$.
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: File extension not known, trying signature-based detection
+Debug, T10812: Found positive match for header keyword: v 
+Info,  T10812: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T10812: Import root directory is './'
+Error, T10812: OBJ: Invalid face indice
+Info,  T10812: Load D:/flame/ext/assimp/test/models/OpenGEX/Example.ogex
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Open Game Engine Exchange.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/OpenGEX\'
+Info,  T10812: Load D:/flame/ext/assimp/test/models/OpenGEX/light_issue1262.ogex
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Open Game Engine Exchange.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/OpenGEX\'
+Info,  T10812: Load D:/flame/ext/assimp/test/models/SIB/heffalump.sib
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Silo SIB Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/SIB\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/BLEND/AreaLight_269.blend
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Blender 3D Importer 
+http://www.blender3d.org.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/BLEND\'
+Info,  T10812: BLEND: Blender version is 2.69 (64bit: true, little endian: true)
+Debug, T10812: REND
+Debug, T10812: TEST
+Debug, T10812: GLOB
+Debug, T10812: WM
+Debug, T10812: DATA
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SC
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: CA
+Debug, T10812: LA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: LA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: LA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: WO
+Debug, T10812: DATA
+Debug, T10812: OB
+Skipping one or more lines with the same contents
+Debug, T10812: DATA
+Debug, T10812: OB
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: OB
+Debug, T10812: MA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: TE
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: ME
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: LS
+Debug, T10812: DATA
+Debug, T10812: DNA1
+Debug, T10812: BlenderDNA: Got 551 structures with totally 6353 fields
+Info,  T10812: BlenderDNA: Dumped dna to dna.txt
+Debug, T10812: ENDB
+Warn,  T10812: <add reason>
+Skipping one or more lines with the same contents
+Warn,  T10812: BlendDNA: Did not find a field named `flags` in structure `Lamp`
+Warn,  T10812: <add reason>
+Skipping one or more lines with the same contents
+Warn,  T10812: BlendDNA: Did not find a field named `flags` in structure `Lamp`
+Warn,  T10812: <add reason>
+Skipping one or more lines with the same contents
+Warn,  T10812: BlendDNA: Did not find a field named `flags` in structure `Lamp`
+Info,  T10812: (Stats) Fields read: 515, pointers resolved: 23, cache hits: 3, cached objects: 19
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/BLEND/box.blend
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Blender 3D Importer 
+http://www.blender3d.org.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/BLEND\'
+Info,  T10812: BLEND: Blender version is 2.76 (64bit: true, little endian: true)
+Debug, T10812: REND
+Debug, T10812: TEST
+Debug, T10812: GLOB
+Debug, T10812: WM
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SC
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: CA
+Debug, T10812: LA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: WO
+Debug, T10812: DATA
+Debug, T10812: OB
+Debug, T10812: DATA
+Debug, T10812: OB
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: OB
+Debug, T10812: DATA
+Debug, T10812: MA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: TE
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: ME
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: LS
+Debug, T10812: DATA
+Debug, T10812: DNA1
+Debug, T10812: BlenderDNA: Got 604 structures with totally 6955 fields
+Info,  T10812: BlenderDNA: Dumped dna to dna.txt
+Debug, T10812: ENDB
+Warn,  T10812: <add reason>
+Skipping one or more lines with the same contents
+Warn,  T10812: BlendDNA: Did not find a field named `flags` in structure `Lamp`
+Info,  T10812: (Stats) Fields read: 431, pointers resolved: 17, cache hits: 3, cached objects: 13
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/BLEND/BlenderMaterial_269.blend
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Blender 3D Importer 
+http://www.blender3d.org.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/BLEND\'
+Info,  T10812: BLEND: Blender version is 2.69 (64bit: true, little endian: true)
+Debug, T10812: REND
+Debug, T10812: TEST
+Debug, T10812: GLOB
+Debug, T10812: WM
+Debug, T10812: DATA
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SN
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: SC
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: CA
+Debug, T10812: LA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: WO
+Debug, T10812: DATA
+Debug, T10812: AC
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: OB
+Debug, T10812: DATA
+Debug, T10812: OB
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: OB
+Debug, T10812: DATA
+Debug, T10812: MA
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: TE
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: ME
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: BR
+Debug, T10812: DATA
+Skipping one or more lines with the same contents
+Debug, T10812: LS
+Debug, T10812: DATA
+Debug, T10812: DNA1
+Debug, T10812: BlenderDNA: Got 551 structures with totally 6353 fields
+Info,  T10812: BlenderDNA: Dumped dna to dna.txt
+Debug, T10812: ENDB
+Warn,  T10812: <add reason>
+Skipping one or more lines with the same contents
+Warn,  T10812: BlendDNA: Did not find a field named `flags` in structure `Lamp`
+Info,  T10812: (Stats) Fields read: 431, pointers resolved: 17, cache hits: 3, cached objects: 13
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/BVH/01_01.bvh
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: BVH Importer (MoCap).
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/BVH\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/Collada/cameras.dae
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Collada Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/Collada\'
+Debug, T10812: Collada schema version is 1.4.n
+Warn,  T10812: Collada: Orthographic cameras are not supported.
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load cameraExp.dae
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Collada Importer.
+Info,  T10812: Import root directory is '.\'
+Debug, T10812: Collada schema version is 1.4.n
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/Collada/lights.dae
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Collada Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/Collada\'
+Debug, T10812: Collada schema version is 1.4.n
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load lightsExp.dae
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Debug, T10812: (Deleting previous scene)
+Info,  T10812: Found a matching importer for this file format: Collada Importer.
+Info,  T10812: Import root directory is '.\'
+Debug, T10812: Collada schema version is 1.4.n
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/Collada/duck.dae
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: Collada Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/Collada\'
+Debug, T10812: Collada schema version is 1.4.n
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Info,  T10812: Load D:/flame/ext/assimp/test/models/CSM/ThomasFechten.csm
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: CharacterStudio Motion Importer (MoCap).
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/CSM\'
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy scaling track has been generated
+Info,  T10812: Load D:/flame/ext/assimp/test/models/B3D/WusonBlitz.b3d
+Debug, T10812: Assimp 4.1.1184306478 amd64 msvc debug singlethreaded
+Info,  T10812: Found a matching importer for this file format: BlitzBasic 3D Importer.
+Info,  T10812: Import root directory is 'D:/flame/ext/assimp/test/models/B3D\'
+Info,  T10812: B3D file format version: 1
+Debug, T10812: MakeLeftHandedProcess begin
+Debug, T10812: MakeLeftHandedProcess finished
+Debug, T10812: FlipWindingOrderProcess begin
+Debug, T10812: FlipWindingOrderProcess finished
+Debug, T10812: ValidateDataStructureProcess begin
+Debug, T10812: ValidateDataStructureProcess end
+Debug, T10812: RemoveRedundantMatsProcess begin
+Info,  T10812: RemoveRedundantMatsProcess finished. Removed 2 redundant and 0 unused materials.
+Debug, T10812: RemoveRedundantMatsProcess begin
+Debug, T10812: Found positive match in exclusion list: 'Unique Mat2'
+Debug, T10812: Found positive match in exclusion list: 'Complex material name'
+Info,  T10812: RemoveRedundantMatsProcess finished. Removed 1 redundant and 0 unused materials.
+Debug, T10812: RemoveVCProcess begin
+Debug, T10812: Setting AI_SCENE_FLAGS_INCOMPLETE flag
+Debug, T10812: RemoveVCProcess finished. Nothing to be done ...
+Debug, T10812: Mesh 0 (unnamed) | Verts in: 900 out: 300 | ~66.6667%
+Debug, T10812: RemoveVCProcess begin
+Debug, T10812: Setting AI_SCENE_FLAGS_INCOMPLETE flag
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Debug, T10812: RemoveVCProcess begin
+Debug, T10812: Setting AI_SCENE_FLAGS_INCOMPLETE flag
+Info,  T10812: RemoveVCProcess finished. Data structure cleanup has been done.
+Info,  T10812: Mesh exceeds the triangle limit. It will be split ...
+Warn,  T10812: Found 300 degenerated primitives
+Skipping one or more lines with the same contents
+Warn,  T10812: Found 200 degenerated primitives
+Error, T10812: FindInvalidDataProcess fails on mesh uvcoords: INF/NAN was found in a vector component
+Error, T10812: FindInvalidDataProcess fails on mesh normals: Found zero-length vector
+Error, T10812: FindInvalidDataProcess fails on mesh bitangents: All vectors are identical
+Info,  T10812: Removed 5500 weights. Input bones: 30. Output bones: 8
+Debug, T10812: PretransformVerticesProcess begin
+Debug, T10812: PretransformVerticesProcess finished
+Info,  T10812: Removed 31 nodes and 0 animation channels (11 output nodes)
+Info,  T10812: Kept 0 lights and 0 cameras
+Info,  T10812: Moved 25 meshes to WCS (number of output meshes: 10)
+Debug, T10812: PretransformVerticesProcess begin
+Info,  T10812: PretransformVertices: Copying mesh due to mismatching transforms
+Skipping one or more lines with the same contents
+Debug, T10812: PretransformVerticesProcess finished
+Info,  T10812: Removed 31 nodes and 0 animation channels (31 output nodes)
+Info,  T10812: Kept 0 lights and 0 cameras
+Info,  T10812: Moved 25 meshes to WCS (number of output meshes: 49)
+Debug, T10812: ScenePreprocessor: Dummy rotation track has been generated
+Debug, T10812: ScenePreprocessor: Dummy position track has been generated
+Debug, T10812: ScenePreprocessor: Setting animation duration
+Debug, T10812: ScenePreprocessor: Adding default material 'DefaultMaterial'
+Debug, T10812: SortByPTypeProcess begin
+Info,  T10812: Points: 5, Lines: 6, Triangles: 5, Polygons: 5 (Meshes, X = removed)
+Debug, T10812: SortByPTypeProcess finished
