@@ -85,8 +85,6 @@ namespace flame
 		material_index(-1),
 		ui_index(-1)
 	{
-		VkImageUsageFlags usage;
-
 		set_data_from_format();
 
 		assert(_level >= 1);
@@ -111,6 +109,23 @@ namespace flame
 		}
 
 		layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		switch (type)
+		{
+			case TextureTypeAttachment:
+				if (get_format_type(format) == FormatTypeColor)
+					usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+				else
+					usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+				break;
+			case TextureTypeTransferDst:
+				usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+				break;
+			case TextureTypeTransferSrc:
+				usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+				break;
+		}
 
 		VkImageCreateInfo imageInfo;
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -148,7 +163,7 @@ namespace flame
 
 		//total_size = memRequirements.size;
 
-		if (need_general_layout)
+		if (type != TextureTypeTransferDst)
 			transition_layout(VK_IMAGE_LAYOUT_GENERAL);
 	}
 
@@ -626,8 +641,8 @@ namespace flame
 			auto _format = get_texture_format(bpp, channel, sRGB);
 			assert(_format != VK_FORMAT_UNDEFINED);
 
-			t = std::make_shared<Texture>(_Texture.extent().x, _Texture.extent().y,
-				_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, _Texture.levels(), 1, false);
+			t = std::make_shared<Texture>(TextureTypeTransferDst, _Texture.extent().x, _Texture.extent().y,
+				_format, _Texture.levels(), 1, false);
 			for (auto i = 0; i < _Texture.levels(); i++)
 			{
 				t->fill_data(i, (unsigned char*)_Texture.data(0, 0, i));
