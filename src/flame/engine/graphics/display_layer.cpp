@@ -29,10 +29,10 @@ namespace flame
 		if (image && image->get_cx() == resolution.x() && image->get_cy() == resolution.y())
 			return;
 
-		image = std::make_shared<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		image = std::make_shared<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, 0);
 		if (enable_depth)
 		{
-			depth_image = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			depth_image = std::make_unique<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, 0);
 			VkImageView views[] = {
 				image->get_view(),
 				depth_image->get_view()

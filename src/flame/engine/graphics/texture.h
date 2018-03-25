@@ -38,8 +38,7 @@ namespace flame
 	enum TextureType
 	{
 		TextureTypeAttachment,
-		TextureTypeTransferDst,
-		TextureTypeTransferSrc
+		TextureTypeImage
 	};
 
 	struct Texture
@@ -68,7 +67,7 @@ namespace flame
 		VkDeviceMemory memory;
 
 		// must call in main thread
-		Texture(TextureType _type, int _cx, int _cy, VkFormat _format, int _level = 1, int _layer = 1, bool _cube = false, void *data = nullptr);
+		Texture(TextureType _type, int _cx, int _cy, VkFormat _format, VkImageUsageFlags extra_usage, int _level = 1, int _layer = 1, bool _cube = false);
 		// must call in main thread
 		~Texture();
 		VkImageAspectFlags get_aspect() const;
@@ -76,11 +75,7 @@ namespace flame
 		int get_cy(int level = 0) const;
 		int get_linear_offset(int x, int y, int level = 0, int layer = 0) const;
 		VkImageView get_view(VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int base_Level = 0, int level_count = 1, int base_layer = 0, int layer_count = 1);
-		void transition_layout(CommandBuffer *cb, VkImageLayout _layout, int base_level = 0, int level_count = 0, int base_layer = 0, int layer_count = 0);
-		void clear(const glm::vec4 &color);
-		//void fill_data(int level, unsigned char *src);
-		void copy_to_buffer(Buffer *dst, int level = 0, int layer = 0, int x = 0, int y = 0, int width = 0, int height = 0, int buffer_offset = 0);
-		void copy_from_buffer(Buffer *src, int level = 0, int layer = 0, int x = 0, int y = 0, int width = 0, int height = 0, int buffer_offset = 0);
+		void transition_layout(CommandBuffer *cb, VkImageLayout old_layout, VkImageLayout new_layout, int base_level = 0, int level_count = 0, int base_layer = 0, int layer_count = 0);
 	private:
 		void set_data_from_format();
 	};

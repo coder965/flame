@@ -31,7 +31,7 @@ namespace flame
 			channel = read_int(file);
 			bpp = channel * 8;
 			pitch = calc_pitch(cx, bpp);
-			auto size = pitch * cy;
+			size = pitch * cy;
 			data = new unsigned char[size];
 			file.read((char*)data, size);
 			return;
@@ -44,7 +44,7 @@ namespace flame
 		sRGB = false;
 		bpp = channel * 8;
 		pitch = calc_pitch(cx, bpp);
-		auto size = pitch * cy;
+		size = pitch * cy;
 		data = new unsigned char[size];
 		memcpy(data, img, size);
 		stbi_image_free(img);
@@ -59,8 +59,7 @@ namespace flame
 		sRGB(false),
 		own_data(_own_data)
 	{
-		const auto stride = bpp / 8;
-		auto size = calc_pitch(cx * stride) * cy;
+		size = calc_pitch(cx, bpp) * cy;
 		if (own_data)
 		{
 			data = new unsigned char[size];
@@ -116,6 +115,7 @@ namespace flame
 		}
 		channel = 4;
 		bpp = 32;
+		size = cx * 4 * cy;
 		delete[]data;
 		data = new_data;
 	}

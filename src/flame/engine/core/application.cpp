@@ -465,13 +465,12 @@ namespace flame
 		swapchain_info.oldSwapchain = 0;
 		vk_chk_res(vkCreateSwapchainKHR(vk_device, &swapchain_info, nullptr, &swapchain));
 
-		VkImage vkImages[2];
 		uint imageCount = 0;
 		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, nullptr);
 		vkGetSwapchainImagesKHR(vk_device, swapchain, &imageCount, window_images);
 
 		for (int i = 0; i < 2; i++)
-			window_image_views[i] = std::make_unique<TextureView>(vkImages[i], swapchain_format, VK_IMAGE_ASPECT_COLOR_BIT);
+			window_image_views[i] = std::make_unique<TextureView>(window_images[i], swapchain_format, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 
 	void Application::set_window_size(int cx, int cy, int style)

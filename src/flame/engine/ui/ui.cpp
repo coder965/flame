@@ -983,8 +983,22 @@ namespace flame
 			first_cx = 800;
 			first_cy = 600;
 
-			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, texture->get_size());
-			texture->copy_to_buffer(staging_buffer.get());
+			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, texture->total_size);
+
+			{
+				VkBufferImageCopy r = {};
+				r.imageExtent.width = texture->get_cx();
+				r.imageExtent.height = texture->get_cy();
+				r.imageExtent.depth = 1;
+				r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				r.imageSubresource.layerCount = 1;
+
+				auto cb = begin_once_command_buffer();
+				texture->transition_layout(cb, texture->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+				vkCmdCopyImageToBuffer(cb->v, texture->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, staging_buffer->v, 1, &r);
+				texture->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->layout);
+				end_once_command_buffer(cb);
+			}
 		}
 
 		void ImageViewer::on_show()
@@ -1008,9 +1022,8 @@ namespace flame
 				if (do_save)
 				{
 					auto fun_save = [&](const std::string &filename) {
-						staging_buffer->map(0, texture->get_size());
-						auto pixel = (unsigned char*)staging_buffer->mapped;
-						Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, pixel, false);
+						staging_buffer->map();
+						Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, (unsigned char*)staging_buffer->mapped, false);
 						img.save(filename);
 						staging_buffer->unmap();
 						return true;
@@ -1396,13 +1409,33 @@ namespace flame
 			icons_config.MergeMode = true;
 			icons_config.PixelSnapH = true;
 			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
-			unsigned char* pixels; int width, height;
-			io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-			font_image = new Texture(width, height, VK_FORMAT_R8G8B8A8_UNORM,
-				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			font_image->fill_data(0, pixels);
+			{
+				unsigned char* pixels; int width, height;
+				io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+				font_image = new Texture(TextureTypeImage, width, height, VK_FORMAT_R8G8B8A8_UNORM, 0);
+
+				Buffer staging_buffer(BufferTypeStaging, font_image->total_size);
+				staging_buffer.map();
+				memcpy(staging_buffer.mapped, pixels, staging_buffer.size);
+				staging_buffer.unmap();
+
+				VkBufferImageCopy r = {};
+				r.imageExtent.width = width;
+				r.imageExtent.height = height;
+				r.imageExtent.depth = 1;
+				r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				r.imageSubresource.layerCount = 1;
+
+				auto cb = begin_once_command_buffer();
+				font_image->transition_layout(cb, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				vkCmdCopyBufferToImage(cb->v, staging_buffer.v, font_image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &r);
+				font_image->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				font_image->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				end_once_command_buffer(cb);
+			}
 			io.Fonts->TexID = (void*)0; // image index
-			updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, 0, &get_texture_info(font_image, colorSampler)));
+			for (auto i = 0; i < 128; i++)
+				updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, i, &get_texture_info(font_image, colorSampler)));
 
 			if (!std::filesystem::exists("sdf.rimg"))
 			{
@@ -1415,9 +1448,28 @@ namespace flame
 			Image sdf("sdf.rimg", true);
 			sdf.add_alpha_channel();
 
-			sdf_font_image = new Texture(sdf_text_size * sdf_text_char_count, sdf_text_size, VK_FORMAT_R8G8B8A8_UNORM,
-				VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			sdf_font_image->fill_data(0, sdf.data);
+			{
+				sdf_font_image = new Texture(TextureTypeImage, sdf_text_size * sdf_text_char_count, sdf_text_size, VK_FORMAT_R8G8B8A8_UNORM, 0);
+
+				Buffer staging_buffer(BufferTypeStaging, sdf_font_image->total_size);
+				staging_buffer.map();
+				memcpy(staging_buffer.mapped, sdf.data, staging_buffer.size);
+				staging_buffer.unmap();
+
+				VkBufferImageCopy r = {};
+				r.imageExtent.width = sdf_font_image->get_cx();
+				r.imageExtent.height = sdf_font_image->get_cy();
+				r.imageExtent.depth = 1;
+				r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				r.imageSubresource.layerCount = 1;
+
+				auto cb = begin_once_command_buffer();
+				sdf_font_image->transition_layout(cb, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				vkCmdCopyBufferToImage(cb->v, staging_buffer.v, sdf_font_image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &r);
+				sdf_font_image->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				sdf_font_image->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				end_once_command_buffer(cb);
+			}
 			updateDescriptorSets(&pipeline_sdf_text->descriptor_set->get_write(0, 0, &get_texture_info(sdf_font_image, colorSampler)));
 
 			cmd = new CommandBuffer;

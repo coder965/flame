@@ -112,9 +112,6 @@ namespace flame
 		const char* pMessage,
 		void* pUserData)
 	{
-		if (messageCode == 6)
-			int cut = 1;
-
 		auto pr = _vulkan_errors.insert({objectType, object, location, messageCode});
 		if (pr.second)
 			printf("\n=====VK ERROR=====\nERROR NUM:%d\n%s\n==================\n", messageCode, pMessage);
@@ -123,7 +120,6 @@ namespace flame
 		if (messageCode == 10) return VK_FALSE; // Dest AccessMask 0 [None] must have required access bit 4096 [VK_ACCESS_TRANSFER_WRITE_BIT]  when layout is VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, unless the app has previously added a barrier for this transition.
 		if (messageCode == 0) return VK_FALSE; // descriptor set bind warmming
 		if (messageCode == 2) return VK_FALSE; // Vertex attribute not consumed by vertex shader, never mind
-		if (messageCode == 6) return VK_FALSE; // Image layout should be attachment optimal but got general, never mind
 		if (messageCode == 53) return VK_FALSE; // You have gave more clear values, never mind
 		if (messageCode == 1) return VK_FALSE; // THREADING ERROR, 0.0 what is this
 
@@ -137,6 +133,8 @@ namespace flame
 
 												// ignore above
 
+		if (messageCode == 6) 
+			return VK_FALSE;
 		if (messageCode == 101) return VK_FALSE; // vkQueuePresentKHR: Presenting image without calling vkGetPhysicalDeviceSurfaceSupportKHR
 		if (messageCode == 100) return VK_FALSE; // vkCreateSwapChainKHR(): surface capabilities not retrieved for this physical device
 		if (messageCode == 1922 || messageCode == 341838316) return VK_FALSE; // vkCreateSwapChainKHR(): pCreateInfo->surface is not known at this time to be supported for presentation by this device. The vkGetPhysicalDeviceSurfaceSupportKHR() must be called beforehand, and it must return VK_TRUE support with this surface for at least one queue family of this device
@@ -241,9 +239,9 @@ namespace flame
 
 		init_buffer();
 		init_texture();
+		init_sampler();
 		init_material();
 		init_shader();
-		init_sampler();
 		init_pick_up();
 	}
 

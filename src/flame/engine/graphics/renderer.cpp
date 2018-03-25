@@ -656,7 +656,7 @@ namespace flame
 				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // albedo alpha
 				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // normal height
 				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // spec roughness
-				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false, true)   // dst
+				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)   // dst
 				.add_subpass({ 2, 3, 4 }, 1)
 				.add_subpass({ 0 }, -1)
 				.add_subpass({ 5 }, -1)
@@ -785,11 +785,9 @@ namespace flame
 		staticObjectIndirectBuffer = std::make_unique<Buffer>(BufferTypeIndirectIndex, sizeof(VkDrawIndexedIndirectCommand) * MaxStaticModelInstanceCount);
 		animatedObjectIndirectBuffer = std::make_unique<Buffer>(BufferTypeIndirectIndex, sizeof(VkDrawIndexedIndirectCommand) * MaxAnimatedModelInstanceCount);
 
-		envrImage = std::make_unique<Texture>(EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
+		envrImage = std::make_unique<Texture>(TextureTypeAttachment, EnvrSizeCx, EnvrSizeCy, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT, 4);
 		for (int i = 0; i < 3; i++)
-			envr_image_downsample[i] = new Texture(EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1),
-				VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			envr_image_downsample[i] = new Texture(TextureTypeAttachment, EnvrSizeCx >> (i + 1), EnvrSizeCy >> (i + 1), VK_FORMAT_R16G16B16A16_SFLOAT, 0);
 
 		resource.setBuffer(constantBuffer.get(), "Constant.UniformBuffer");
 		resource.setBuffer(matrixBuffer.get(), "Matrix.UniformBuffer");
@@ -848,8 +846,8 @@ namespace flame
 
 			shadowBuffer = std::make_unique<Buffer>(BufferTypeUniform, sizeof(glm::mat4) * MaxShadowCount);
 
-			esmImage = std::make_unique<Texture>(ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, MaxShadowCount * 6);
-			esmDepthImage = std::make_unique<Texture>(ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			esmImage = std::make_unique<Texture>(TextureTypeAttachment, ShadowMapCx, ShadowMapCy, VK_FORMAT_R32_SFLOAT, 0, 1, MaxShadowCount * 6);
+			esmDepthImage = std::make_unique<Texture>(TextureTypeAttachment, ShadowMapCx, ShadowMapCy, VK_FORMAT_D16_UNORM, 0);
 
 			resource.setImage(esmImage.get(), "Shadow.Image");
 
@@ -892,11 +890,11 @@ namespace flame
 		if (mainImage && mainImage->get_cx() == resolution.x() && mainImage->get_cy() == resolution.y())
 			return;
 
-		mainImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		depthImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		albedoAlphaImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		normalHeightImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		specRoughnessImage = std::make_unique<Texture>(resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		mainImage = std::make_unique<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_SFLOAT, 0);
+		depthImage = std::make_unique<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT);
+		albedoAlphaImage = std::make_unique<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, 0);
+		normalHeightImage = std::make_unique<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, 0);
+		specRoughnessImage = std::make_unique<Texture>(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R16G16B16A16_UNORM, 0);
 
 		resource.setImage(envrImage.get(), "Envr.Image");
 		resource.setImage(mainImage.get(), "Main.Image");
@@ -999,7 +997,19 @@ namespace flame
 			switch (scene->get_sky_type())
 			{
 				case SkyTypeNull:
-					envrImage->clear(glm::vec4(scene->get_bg_color(), 0.f));
+				{
+					auto cb = begin_once_command_buffer();
+					envrImage->transition_layout(cb, envrImage->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+					VkClearColorValue clear_value = {};
+					VkImageSubresourceRange range = {
+						VK_IMAGE_ASPECT_COLOR_BIT,
+						0, envrImage->levels.size(),
+						0, envrImage->layer_count
+					};
+					vkCmdClearColorImage(cb->v, envrImage->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
+					envrImage->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, envrImage->layout);
+					end_once_command_buffer(cb);
+				}
 					break;
 				case SkyTypeDebug:
 				{
@@ -1059,7 +1069,19 @@ namespace flame
 						funUpdateIBL();
 					}
 					else
-						envrImage->clear(glm::vec4(0.f));
+					{
+						auto cb = begin_once_command_buffer();
+						envrImage->transition_layout(cb, envrImage->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+						VkClearColorValue clear_value = {};
+						VkImageSubresourceRange range = {
+							VK_IMAGE_ASPECT_COLOR_BIT,
+							0, envrImage->levels.size(),
+							0, envrImage->layer_count
+						};
+						vkCmdClearColorImage(cb->v, envrImage->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
+						envrImage->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, envrImage->layout);
+						end_once_command_buffer(cb);
+					}
 					break;
 				}
 			}

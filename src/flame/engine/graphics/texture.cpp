@@ -33,6 +33,9 @@ namespace flame
 		info.subresourceRange.layerCount = layer_count;
 
 		vk_chk_res(vkCreateImageView(vk_device, &info, nullptr, &v));
+
+		if ((int)v == 0xda)
+			int cut = 1;
 	}
 
 	TextureView::~TextureView()
@@ -40,7 +43,7 @@ namespace flame
 		vkDestroyImageView(vk_device, v, nullptr);
 	}
 
-	VkFormat get_texture_format(int bpp, int channel, bool sRGB)
+	VkFormat get_texture_format(int channel, int bpp, bool sRGB)
 	{
 		switch (channel)
 		{
@@ -76,7 +79,7 @@ namespace flame
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	Texture::Texture(TextureType _type, int _cx, int _cy, VkFormat _format, int _level, int _layer, bool _cube, void *data) :
+	Texture::Texture(TextureType _type, int _cx, int _cy, VkFormat _format, VkImageUsageFlags extra_usage, int _level, int _layer, bool _cube) :
 		type(_type),
 		format(_format),
 		layer_count(_layer),
@@ -110,25 +113,20 @@ namespace flame
 			total_size += levels[i].size_per_layer * layer_count;
 		}
 
-		VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		auto usage = extra_usage;
 		auto format_type = get_format_type(format);
 		switch (type)
 		{
 			case TextureTypeAttachment:
 				if (format_type == FormatTypeColor)
-					usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+					usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 				else
 					usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 				break;
-			case TextureTypeTransferDst:
-				usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-				break;
-			case TextureTypeTransferSrc:
-				usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+			case TextureTypeImage:
+				usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 				break;
 		}
-
-		layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		VkImageCreateInfo imageInfo;
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -142,7 +140,7 @@ namespace flame
 		imageInfo.arrayLayers = layer_count;
 		imageInfo.format = format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = layout;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = usage;
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -150,6 +148,9 @@ namespace flame
 		imageInfo.pQueueFamilyIndices = nullptr;
 
 		vk_chk_res(vkCreateImage(vk_device, &imageInfo, nullptr, &v));
+
+		if ((int)v == 0xda)
+			int cut = 1;
 
 		VkMemoryRequirements memRequirements;
 		vkGetImageMemoryRequirements(vk_device, v, &memRequirements);
@@ -164,23 +165,17 @@ namespace flame
 
 		vk_chk_res(vkBindImageMemory(vk_device, v, memory, 0));
 
-		auto cb = begin_once_command_buffer();
-
-		VkImageLayout final_layout;
-		if (type == TextureTypeTransferDst)
-		{
-			final_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		}
+		if (type == TextureTypeImage)
+			layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		else
 		{
-			final_layout = format_type == FormatTypeColor ?
+			layout = format_type == FormatTypeColor ?
 				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL :
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			auto cb = begin_once_command_buffer();
+			transition_layout(cb, VK_IMAGE_LAYOUT_UNDEFINED, layout);
+			end_once_command_buffer(cb);
 		}
-		transition_layout(cb, final_layout);
-		layout = final_layout;
-
-		end_once_command_buffer(cb);
 	}
 
 	Texture::~Texture()
@@ -225,43 +220,29 @@ namespace flame
 		return offset + levels[level].pitch * y + x * (bpp / 8);
 	}
 
-	void Texture::clear(const glm::vec4 &color)
+	void Texture::transition_layout(CommandBuffer *cb, VkImageLayout old_layout, VkImageLayout new_layout, int base_level, int level_count, int base_layer, int _layer_count)
 	{
-		auto last_layout = layout;
-		transition_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		auto cb = begin_once_command_buffer();
-		VkClearColorValue clear_value = { color.x, color.y, color.z, color.a };
-		VkImageSubresourceRange range = {
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			0, levels.size(),
-			0, 1
-		};
-		vkCmdClearColorImage(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
-		end_once_command_buffer(cb);
-		transition_layout(last_layout);
-	}
-
-	void Texture::transition_layout(CommandBuffer *cb, VkImageLayout _layout, int base_level, int level_count, int base_layer, int layer_count)
-	{
-		VkImageMemoryBarrier barrier = {};
+		VkImageMemoryBarrier barrier;
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = layout;
-		barrier.newLayout = _layout;
+		barrier.pNext = nullptr;
+		barrier.oldLayout = old_layout;
+		barrier.newLayout = new_layout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = v;
 		barrier.subresourceRange.aspectMask = get_aspect();
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = levels.size();
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = layer_count;
+		barrier.subresourceRange.baseMipLevel = base_level;
+		barrier.subresourceRange.levelCount = level_count == 0 ? levels.size() : level_count;
+		barrier.subresourceRange.baseArrayLayer = base_layer;
+		barrier.subresourceRange.layerCount = _layer_count == 0 ? layer_count : _layer_count;
 
-		switch (barrier.oldLayout)
+		switch (old_layout)
 		{
 			case VK_IMAGE_LAYOUT_UNDEFINED:
-				//barrier.srcAccessMask |= VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+				barrier.srcAccessMask = 0;
 				break;
-			case VK_IMAGE_LAYOUT_GENERAL:
+			case VK_IMAGE_LAYOUT_PREINITIALIZED:
+				barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 				break;
 			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
 				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -269,28 +250,27 @@ namespace flame
 			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
 				barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 				break;
-			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
-				break;
-			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-				barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-				break;
 			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
 				barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 				break;
 			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 				break;
-			case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+				barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 				break;
 			case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
 				barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				break;
 		}
 
-		switch (_layout)
+		switch (new_layout)
 		{
-			case VK_IMAGE_LAYOUT_UNDEFINED:
+			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 				break;
-			case VK_IMAGE_LAYOUT_GENERAL:
+			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 				break;
 			case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
 				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -301,106 +281,14 @@ namespace flame
 			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
 				break;
 			case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-				break;
-			case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+				if (barrier.srcAccessMask == 0)
+					barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
 				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-				break;
-			case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-				barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-				break;
-			case VK_IMAGE_LAYOUT_PREINITIALIZED:
-				break;
-			case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-				barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				break;
 		}
 
-		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
-	}
-
-	//void Texture::fill_data(int level, unsigned char *src)
-	//{
-	//	auto size = get_size(level);
-
-	//	Buffer staging_buffer(BufferTypeStaging, size);
-
-	//	staging_buffer.map(0, size);
-	//	void* map = staging_buffer.mapped;
-	//	memcpy(map, src, size);
-	//	staging_buffer.unmap();
-
-	//	copy_from_buffer(&staging_buffer, level);
-	//}
-
-	void Texture::copy_to_buffer(Buffer *dst, int level, int layer, int x, int y, int width, int height, int buffer_offset)
-	{
-		if (width == 0)
-			width = get_cx(level);
-		if (height == 0)
-			height = get_cy(level);
-		if (buffer_offset < 0)
-			buffer_offset = get_linear_offset(x, y, level);
-
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = get_aspect();
-		region.imageSubresource.mipLevel = level;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageOffset.x = x;
-		region.imageOffset.y = y;
-		region.imageOffset.z = 0;
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = 1;
-		region.bufferOffset = buffer_offset;
-		region.bufferRowLength = 0;
-		region.bufferImageHeight = 0;
-
-		auto last_layout = layout;
-		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-
-		auto cb = begin_once_command_buffer();
-		vkCmdCopyImageToBuffer(cb->v, v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst->v, 1, &region);
-		end_once_command_buffer(cb);
-
-		transition_layout(level, last_layout);
-		layout = last_layout;
-	}
-
-	void Texture::copy_from_buffer(Buffer *src, int level, int layer, int x, int y, int width, int height, int buffer_offset)
-	{
-		if (width == 0)
-			width = get_cx(level);
-		if (height == 0)
-			height = get_cy(level);
-		if (buffer_offset < 0)
-			buffer_offset = get_linear_offset(x, y, level);
-
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = get_aspect();
-		region.imageSubresource.mipLevel = level;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageOffset.x = x;
-		region.imageOffset.y = y;
-		region.imageOffset.z = 0;
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = 1;
-		region.bufferOffset = buffer_offset;
-		region.bufferRowLength = 0;
-		region.bufferImageHeight = 0;
-
-		transition_layout(level, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		auto cb = begin_once_command_buffer();
-		vkCmdCopyBufferToImage(cb->v, src->v, v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		end_once_command_buffer(cb);
-
-		transition_layout(level, VK_IMAGE_LAYOUT_GENERAL);
 	}
 
 	VkImageView Texture::get_view(VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
@@ -436,6 +324,7 @@ namespace flame
 			case VK_FORMAT_R8G8B8A8_SRGB:
 				channel = 4;
 				bpp = 32;
+				sRGB = true;
 				break;
 			case VK_FORMAT_B8G8R8A8_UNORM:
 				channel = 4;
@@ -478,6 +367,104 @@ namespace flame
 
 	static std::map<unsigned int, std::weak_ptr<Texture>> _images;
 
+	static void _gli_get_channel_bpp(const gli::gl::format &format, int &channel, int &bpp, bool &sRGB)
+	{
+		assert(format.External != gli::gl::EXTERNAL_NONE && format.Type != gli::gl::TYPE_NONE);
+		switch (format.External)
+		{
+			case gli::gl::EXTERNAL_RED:
+				channel = 1;
+				break;
+			case gli::gl::EXTERNAL_RG:
+				channel = 2;
+				break;
+			case gli::gl::EXTERNAL_RGB:
+				channel = 3;
+				break;
+			case gli::gl::EXTERNAL_BGR:
+				channel = 3;
+				break;
+			case gli::gl::EXTERNAL_RGBA:
+				channel = 4;
+				break;
+			case gli::gl::EXTERNAL_BGRA:
+				channel = 4;
+				break;
+			case gli::gl::EXTERNAL_RED_INTEGER:
+				channel = 1;
+				break;
+			case gli::gl::EXTERNAL_RG_INTEGER:
+				channel = 2;
+				break;
+			case gli::gl::EXTERNAL_RGB_INTEGER:
+				channel = 3;
+				break;
+			case gli::gl::EXTERNAL_BGR_INTEGER:
+				channel = 3;
+				break;
+			case gli::gl::EXTERNAL_RGBA_INTEGER:
+				channel = 4;
+				break;
+			case gli::gl::EXTERNAL_BGRA_INTEGER:
+				channel = 4;
+				break;
+			case gli::gl::EXTERNAL_ALPHA:
+				channel = 1;
+				break;
+			case gli::gl::EXTERNAL_SRGB_EXT:
+				channel = 3;
+				sRGB = true;
+				break;
+			case gli::gl::EXTERNAL_SRGB_ALPHA_EXT:
+				channel = 4;
+				sRGB = true;
+				break;
+			default:
+				assert(0); // WIP
+		}
+		switch (format.Type)
+		{
+			case gli::gl::TYPE_I8:
+				bpp = 8;
+				break;
+			case gli::gl::TYPE_U8:
+				bpp = 8;
+				break;
+			case gli::gl::TYPE_I16:
+				bpp = 16;
+				break;
+			case gli::gl::TYPE_U16:
+				bpp = 16;
+				break;
+			case gli::gl::TYPE_I32:
+				bpp = 32;
+				break;
+			case gli::gl::TYPE_U32:
+				bpp = 32;
+				break;
+			case gli::gl::TYPE_I64:
+				bpp = 64;
+				break;
+			case gli::gl::TYPE_F16:
+				bpp = 16;
+				break;
+			case gli::gl::TYPE_F32:
+				bpp = 32;
+				break;
+			case gli::gl::TYPE_F64:
+				bpp = 64;
+				break;
+			case gli::gl::TYPE_UINT32_RGBA8:
+				bpp = 8;
+				break;
+			case gli::gl::TYPE_UINT32_RGBA8_REV:
+				bpp = 8;
+				break;
+			default:
+				assert(0); // WIP
+		}
+	}
+
 	std::shared_ptr<Texture> get_texture(const std::string &filename)
 	{
 		auto hash = HASH(filename.c_str());
@@ -493,165 +480,92 @@ namespace flame
 		if (!std::filesystem::exists(path))
 			return nullptr;
 
-		std::shared_ptr<Texture> t;
+		auto sRGB = false, cube = false;
+
+		{
+			std::ifstream ext(filename + ".ext");
+			if (ext.good())
+			{
+				std::string line;
+				while (!ext.eof())
+				{
+					std::getline(ext, line);
+					if (line == "srgb")
+						sRGB = true;
+					else if (line == "cube")
+						cube = true;
+				}
+			}
+		}
+
+		int width, height, level, layer;
+		int channel, bpp;
+		std::unique_ptr<Buffer> staging_buffer;
+		std::vector<VkBufferImageCopy> buffer_copy_regions;
 
 		auto ext = path.extension().string();
 		if (ext == ".ktx" || ext == ".dds")
 		{
-			gli::texture _Texture = gli::load(filename);
-			if (_Texture.empty())
+			gli::gl GL(gli::gl::PROFILE_GL33);
+
+			auto gli_texture = gli::load(filename);
+			if (gli_texture.empty())
 				assert(0);
 
-			gli::gl GL(gli::gl::PROFILE_GL33);
-			auto const Format = GL.translate(_Texture.format(), _Texture.swizzles());
-			auto Target = GL.translate(_Texture.target());
-			assert(!gli::is_compressed(_Texture.format()) && Target == gli::TARGET_2D);
-			assert(Format.External != gli::gl::EXTERNAL_NONE && Format.Type != gli::gl::TYPE_NONE);
+			auto const gli_format = GL.translate(gli_texture.format(), gli_texture.swizzles());
+			assert(!gli::is_compressed(gli_texture.format()) && GL.translate(gli_texture.target()) == gli::TARGET_2D);
 
-			auto channel = 0;
-			auto sRGB = false;
-			switch (Format.External)
-			{
-				case gli::gl::EXTERNAL_RED:
-					channel = 1;
-					break;
-				case gli::gl::EXTERNAL_RG:
-					channel = 2;
-					break;
-				case gli::gl::EXTERNAL_RGB:
-					channel = 3;
-					break;
-				case gli::gl::EXTERNAL_BGR:
-					channel = 3;
-					break;
-				case gli::gl::EXTERNAL_RGBA:
-					channel = 4;
-					break;
-				case gli::gl::EXTERNAL_BGRA:
-					channel = 4;
-					break;
-				case gli::gl::EXTERNAL_RED_INTEGER:
-					channel = 1;
-					break;
-				case gli::gl::EXTERNAL_RG_INTEGER:
-					channel = 2;
-					break;
-				case gli::gl::EXTERNAL_RGB_INTEGER:
-					channel = 3;
-					break;
-				case gli::gl::EXTERNAL_BGR_INTEGER:
-					channel = 3;
-					break;
-				case gli::gl::EXTERNAL_RGBA_INTEGER:
-					channel = 4;
-					break;
-				case gli::gl::EXTERNAL_BGRA_INTEGER:
-					channel = 4;
-					break;
-				case gli::gl::EXTERNAL_DEPTH:
-					assert(0); // WIP
-				case gli::gl::EXTERNAL_DEPTH_STENCIL:
-					assert(0); // WIP
-				case gli::gl::EXTERNAL_STENCIL:
-					assert(0); // WIP
-				case gli::gl::EXTERNAL_LUMINANCE:
-					assert(0); // WIP
-				case gli::gl::EXTERNAL_ALPHA:
-					channel = 1;
-					break;
-				case gli::gl::EXTERNAL_LUMINANCE_ALPHA:
-					assert(0); // WIP
-				case gli::gl::EXTERNAL_SRGB_EXT:
-					channel = 3;
-					sRGB = true;
-					break;
-				case gli::gl::EXTERNAL_SRGB_ALPHA_EXT:
-					channel = 4;
-					sRGB = true;
-					break;
-			}
-			auto bpp = 0;
-			switch (Format.Type)
-			{
-				case gli::gl::TYPE_I8:
-					bpp = 8;
-					break;
-				case gli::gl::TYPE_U8:
-					bpp = 8;
-					break;
-				case gli::gl::TYPE_I16:
-					bpp = 16;
-					break;
-				case gli::gl::TYPE_U16:
-					bpp = 16;
-					break;
-				case gli::gl::TYPE_I32:
-					bpp = 32;
-					break;
-				case gli::gl::TYPE_U32:
-					bpp = 32;
-					break;
-				case gli::gl::TYPE_I64:
-					bpp = 64;
-					break;
-				case gli::gl::TYPE_F16:
-					bpp = 16;
-					break;
-				case gli::gl::TYPE_F16_OES:
-					assert(0); // WIP
-				case gli::gl::TYPE_F32:
-					bpp = 32;
-					break;
-				case gli::gl::TYPE_F64:
-					bpp = 64;
-					break;
-				case gli::gl::TYPE_UINT32_RGB9_E5_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT32_RG11B10F_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT8_RG3B2:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT8_RG3B2_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_RGB5A1:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_RGB5A1_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_R5G6B5:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_R5G6B5_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_RGBA4:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_RGBA4_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT32_RGBA8:
-					bpp = 8;
-					break;
-				case gli::gl::TYPE_UINT32_RGBA8_REV:
-					bpp = 8;
-					break;
-				case gli::gl::TYPE_UINT32_RGB10A2:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT32_RGB10A2_REV:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT8_RG4_REV_GTC:
-					assert(0); // WIP
-				case gli::gl::TYPE_UINT16_A1RGB5_GTC:
-					assert(0); // WIP
-			}
-			auto _format = get_texture_format(bpp, channel, sRGB);
-			assert(_format != VK_FORMAT_UNDEFINED);
+			width = gli_texture.extent().x;
+			height = gli_texture.extent().y;
+			level = gli_texture.levels();
+			layer = cube ? 6 : gli_texture.layers();
 
-			t = std::make_shared<Texture>(TextureTypeTransferDst, _Texture.extent().x, _Texture.extent().y,
-				_format, _Texture.levels(), 1, false);
-			for (auto i = 0; i < _Texture.levels(); i++)
+			int channel, bpp;
+			_gli_get_channel_bpp(gli_format, channel, bpp, sRGB);
+
+			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, gli_texture.size());
+			staging_buffer->map();
+			memcpy(staging_buffer->mapped, gli_texture.data(), staging_buffer->size);
+			staging_buffer->unmap();
+			if (cube)
 			{
-				t->fill_data(i, (unsigned char*)_Texture.data(0, 0, i));
-				t->levels[i]->pitch = calc_pitch(_Texture.extent(i).x, bpp);
+				gli::texture_cube gli_texture_cube(gli_texture);
+				auto offset = 0;
+				for (auto j = 0; j < 6; j++)
+				{
+					for (auto i = 0; i < level; i++)
+					{
+						VkBufferImageCopy r = {};
+						r.bufferOffset = offset;
+						r.imageExtent.width = gli_texture_cube[j][i].extent().x;
+						r.imageExtent.height = gli_texture_cube[j][i].extent().y;
+						r.imageExtent.depth = 1;
+						r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						r.imageSubresource.mipLevel = i;
+						r.imageSubresource.baseArrayLayer = j;
+						r.imageSubresource.layerCount = 1;
+						buffer_copy_regions.push_back(r);
+						offset += gli_texture_cube[j][i].size();
+					}
+				}
 			}
-			t->bpp = bpp;
-			t->sRGB = sRGB;
+			else
+			{
+				auto offset = 0;
+				for (auto i = 0; i < level; i++)
+				{
+					VkBufferImageCopy r = {};
+					r.bufferOffset = offset;
+					r.imageExtent.width = gli_texture.extent(i).x;
+					r.imageExtent.height = gli_texture.extent(i).y;
+					r.imageExtent.depth = 1;
+					r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					r.imageSubresource.mipLevel = i;
+					r.imageSubresource.layerCount = 1;
+					buffer_copy_regions.push_back(r);
+					offset += gli_texture.size(i);
+				}
+			}
 		}
 		else
 		{
@@ -659,20 +573,40 @@ namespace flame
 			if (image.channel == 3)
 				image.add_alpha_channel();
 
-			auto sRGB = std::filesystem::exists(filename + ".srgb") || image.sRGB;
+			width = image.cx;
+			height = image.cy;
+			level = layer = 1;
+			channel = image.channel;
+			bpp = image.bpp;
 
-			auto _format = get_texture_format(image.bpp, image.channel, sRGB);
-			assert(_format != VK_FORMAT_UNDEFINED);
+			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, image.size);
+			staging_buffer->map();
+			memcpy(staging_buffer->mapped, image.data, staging_buffer->size);
+			staging_buffer->unmap();
 
-			t = std::make_shared<Texture>(image.cx, image.cy,
-				_format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1, 1, false);
-			t->fill_data(0, image.data);
-			t->levels[0]->pitch = calc_pitch(image.cx, image.bpp);
-			t->bpp = image.bpp;
-			t->sRGB = sRGB;
+			{
+				VkBufferImageCopy r = {};
+				r.imageExtent.width = width;
+				r.imageExtent.height = height;
+				r.imageExtent.depth = 1;
+				r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				r.imageSubresource.layerCount = 1;
+				buffer_copy_regions.push_back(r);
+			}
 		}
 
+		auto format = get_texture_format(channel, bpp, sRGB);
+		assert(format != VK_FORMAT_UNDEFINED);
+		auto t = std::make_shared<Texture>(TextureTypeImage, width, height,
+			format, 0, level, layer, cube);
 		t->filename = filename;
+
+		auto cb = begin_once_command_buffer();
+		t->transition_layout(cb, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		vkCmdCopyBufferToImage(cb->v, staging_buffer->v, t->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, buffer_copy_regions.size(), buffer_copy_regions.data());
+		t->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		t->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		end_once_command_buffer(cb);
 
 		_images[hash] = t;
 		return t;
@@ -685,17 +619,33 @@ namespace flame
 
 	void init_texture()
 	{
-		default_color_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		auto cb = begin_once_command_buffer();
+
+		auto init_with_color = [&](Texture *t, const glm::vec4 &color){
+			t->transition_layout(cb, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			VkClearColorValue clear_value = { color.x, color.y, color.z, color.a };
+			VkImageSubresourceRange range = {
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				0, t->levels.size(),
+				0, t->layer_count
+			};
+			vkCmdClearColorImage(cb->v, t->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1, &range);
+			t->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		};
+
+		default_color_texture = std::make_shared<Texture>(TextureTypeImage, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, 0);
 		default_color_texture->filename = "[default_color_texture]";
-		default_color_texture->clear(glm::vec4(0.f));
-		default_normal_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		init_with_color(default_color_texture.get(), glm::vec4(0.f));
+		default_normal_texture = std::make_shared<Texture>(TextureTypeImage, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, 0);
 		default_normal_texture->filename = "[default_normal_texture]";
-		default_normal_texture->clear(glm::vec4(0.f, 0.f, 1.f, 0.f));
-		default_blend_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		init_with_color(default_normal_texture.get(), glm::vec4(0.f, 0.f, 1.f, 0.f));
+		default_blend_texture = std::make_shared<Texture>(TextureTypeImage, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, 0);
 		default_blend_texture->filename = "[default_blend_texture]";
-		default_blend_texture->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
-		default_height_texture = std::make_shared<Texture>(4, 4, VK_FORMAT_R8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		init_with_color(default_blend_texture.get(), glm::vec4(1.f, 0.f, 0.f, 0.f));
+		default_height_texture = std::make_shared<Texture>(TextureTypeImage, 4, 4, VK_FORMAT_R8_UNORM, 0);
 		default_height_texture->filename = "[default_height_texture]";
-		default_height_texture->clear(glm::vec4(1.f, 0.f, 0.f, 0.f));
+		init_with_color(default_height_texture.get(), glm::vec4(1.f, 0.f, 0.f, 0.f));
+
+		end_once_command_buffer(cb);
 	}
 }

@@ -368,6 +368,9 @@ namespace flame
 		}
 		_update_material(default_material.get());
 
-		updateDescriptorSets(1, &ds_material->get_write(MaterialBufferDescriptorBinding, 0, &get_buffer_info(materialBuffer)));
+		updateDescriptorSets(&ds_material->get_write(MaterialBufferDescriptorBinding, 0, &get_buffer_info(materialBuffer)));
+
+		for (auto i = 0; i < MaxMaterialImageCount; i++)
+			updateDescriptorSets(&ds_material->get_write(MaterialImagesDescriptorBinding, i, &get_texture_info(default_color_texture.get(), colorSampler)));
 	}
 }

@@ -28,7 +28,7 @@ int main(int argc, char **args)
 		pitch += 4 - pitch % 4;
 	auto cy = size;
 	auto channel = 3;
-	auto img_size = cx * pitch;
+	auto img_size = cy * pitch;
 	auto data = new unsigned char[img_size];
 	for (auto i_c = 0; i_c < count; i_c++)
 	{

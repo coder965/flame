@@ -78,6 +78,22 @@ void ImageEditor::on_mouse_overing_image(ImVec2 image_pos)
 		}
 		staging_buffer->unmap();
 
-		texture->copy_from_buffer(staging_buffer.get(), 0, 0, x, y, 1, 1, -1);
+		{
+			VkBufferImageCopy r = {};
+			r.bufferOffset = texture->get_linear_offset(x, y);
+			r.imageOffset.x = x;
+			r.imageOffset.y = y;
+			r.imageExtent.width = 1;
+			r.imageExtent.height = 1;
+			r.imageExtent.depth = 1;
+			r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			r.imageSubresource.layerCount = 1;
+
+			auto cb = flame::begin_once_command_buffer();
+			texture->transition_layout(cb, texture->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			vkCmdCopyBufferToImage(cb->v, staging_buffer->v, texture->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1, &r);
+			texture->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->layout);
+			flame::end_once_command_buffer(cb);
+		}
 	}
 }

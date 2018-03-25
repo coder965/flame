@@ -19,8 +19,9 @@ namespace flame
 		int cy;
 		int channel;
 		int bpp;
-		int pitch;
 		bool sRGB;
+		int pitch;
+		int size;
 		unsigned char *data;
 		bool own_data;
 

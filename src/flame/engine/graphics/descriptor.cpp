@@ -102,7 +102,7 @@ namespace flame
 		if (level_count == 0)
 			level_count = t->levels.size();
 		if (layer_count == 0)
-			layer_count = t->layer;
+			layer_count = t->layer_count;
 		i.imageView = t->get_view(view_type, base_level, level_count, base_layer, layer_count);
 		i.sampler = sampler;
 		return i;

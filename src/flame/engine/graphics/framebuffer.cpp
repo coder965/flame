@@ -16,7 +16,7 @@ namespace flame
 	std::shared_ptr<Framebuffer> get_framebuffer(Texture *i, RenderPass *renderpass, int level)
 	{
 		auto view = i->get_view(VK_IMAGE_VIEW_TYPE_2D, level);
-		return get_framebuffer(i->levels[level]->cx, i->levels[level]->cy, renderpass, 1, &view);
+		return get_framebuffer(i->levels[level].cx, i->levels[level].cy, renderpass, 1, &view);
 	}
 
 	std::shared_ptr<Framebuffer> get_framebuffer(int cx, int cy, RenderPass *renderpass, int view_count, VkImageView *views)

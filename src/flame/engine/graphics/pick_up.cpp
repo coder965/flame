@@ -26,7 +26,22 @@ namespace flame
 		cb->end_renderpass();
 		end_once_command_buffer(cb);
 
-		pick_up_image->copy_to_buffer(defalut_staging_buffer, 0, 0, x, y, 1, 1);
+		{
+			VkBufferImageCopy r = {};
+			r.imageOffset.x = x;
+			r.imageOffset.y = y;
+			r.imageExtent.width = 1;
+			r.imageExtent.height = 1;
+			r.imageExtent.depth = 1;
+			r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			r.imageSubresource.layerCount = 1;
+
+			auto cb = flame::begin_once_command_buffer();
+			pick_up_image->transition_layout(cb, pick_up_image->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			vkCmdCopyImageToBuffer(cb->v, pick_up_image->v, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, defalut_staging_buffer->v, 1, &r);
+			pick_up_image->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pick_up_image->layout);
+			flame::end_once_command_buffer(cb);
+		}
 
 		defalut_staging_buffer->map(0, 4);
 		auto pixel = (unsigned char*)defalut_staging_buffer->mapped;
@@ -40,11 +55,8 @@ namespace flame
 	{
 		if (!only_2d)
 		{
-			pick_up_image = new Texture(resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM,
-				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-				VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-			pick_up_depth_image = new Texture(resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM,
-				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			pick_up_image = new Texture(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+			pick_up_depth_image = new Texture(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, 0);
 
 			VkImageView views[] = {
 				pick_up_image->get_view(),
