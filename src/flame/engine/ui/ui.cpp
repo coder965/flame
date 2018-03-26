@@ -200,7 +200,8 @@ namespace ImGui
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		SetNextWindowPos(ImVec2(0, flame::app->window_cy - statusbar_height));
-		SetNextWindowSize(ImVec2(flame::app->window_cx, statusbar_height));
+		//SetNextWindowSize(ImVec2(flame::app->window_cx, statusbar_height));
+		SetNextWindowSize(ImVec2(100, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | 
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
@@ -1335,6 +1336,15 @@ namespace flame
 		static Texture *font_image;
 		static Texture *sdf_font_image;
 
+		static void create_framebuffer(int, int)
+		{
+			for (auto i = 0; i < 2; i++)
+			{
+				auto v = app->get_image_view(i);
+				framebuffers[i] = get_framebuffer(app->window_cx, app->window_cy, renderpass.get(), 1, &v);
+			}
+		}
+
 		void init()
 		{
 			add_keydown_listener([](int k) {
@@ -1393,7 +1403,7 @@ namespace flame
 					VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
 				.add_shader("sdf_text.vert", {})
 				.add_shader("sdf_text.frag", {}),
-				renderpass_clear.get(), 0, true);
+				renderpass.get(), 0, true);
 
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();
@@ -1587,11 +1597,8 @@ namespace flame
 			{
 				first = false;
 
-				for (auto i = 0; i < 2; i++)
-				{
-					auto v = app->get_image_view(i);
-					framebuffers[i] = get_framebuffer(app->window_cx, app->window_cy, renderpass.get(), 1, &v);
-				}
+				create_framebuffer(0, 0);
+				add_resize_listener(create_framebuffer);
 
 				ImGuiContext& g = *GImGui;
 				ImGui::menubar_height = g.FontBaseSize + g.Style.FramePadding.y * 2.0f;

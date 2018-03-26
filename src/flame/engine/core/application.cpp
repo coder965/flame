@@ -338,7 +338,6 @@ namespace flame
 
 	void Application::update()
 	{
-		begin_profile("one");
 		mouseDispX = mouseX - mousePrevX;
 		mouseDispY = mouseY - mousePrevY;
 
@@ -350,18 +349,12 @@ namespace flame
 
 		on_render();
 
-		end_profile();
-
-		begin_profile("two");
 		ui::end();
-		end_profile();
 
-		begin_profile("three");
-
+		begin_profile("render");
 		if (!cbs.empty())
 		{
-			vk_queue_submit(cbs.size(), cbs.data(), image_available, render_finished, 0);
-			//wait_fence(frame_finished);
+			vk_queue_submit(cbs.size(), cbs.data(), image_available, render_finished);
 			cbs.clear();
 		}
 
@@ -374,15 +367,13 @@ namespace flame
 		present_info.swapchainCount = 1;
 		present_info.pSwapchains = &swapchain;
 		present_info.pImageIndices = &curr_window_image_index;
-
 		vk_chk_res(vkQueuePresentKHR(vk_graphics_queue, &present_info));
-
 		vk_queue_wait_idle();
-
 		end_profile();
 
 		int cut = 1;
 
+		begin_profile("one");
 		for (auto i = 0; i < 3; i++)
 		{
 			mouse_button[i].just_down = false;
@@ -399,6 +390,7 @@ namespace flame
 			e();
 		_after_frame_events.clear();
 		_after_frame_event_mtx.unlock();
+		end_profile();
 	}
 
 	VkImageView Application::get_image_view(int i) const

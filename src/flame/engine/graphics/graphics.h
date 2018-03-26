@@ -61,7 +61,7 @@ namespace flame
 	extern VkQueue vk_graphics_queue;
 
 	void vk_device_wait_idle();
-	void vk_queue_submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0, VkFence fence = 0);
+	void vk_queue_submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore = 0, VkSemaphore signalSemaphore = 0);
 	void vk_queue_wait_idle();
 
 	enum FormatType

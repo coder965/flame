@@ -2,6 +2,7 @@
 #include <regex>
 #include <list>
 #include <chrono>
+#include <stack>
 
 #include <flame/global.h>
 #include <flame/common/system.h>
@@ -32,6 +33,7 @@ namespace flame
 		long long time;
 	};
 
+	std::stack<Profile> profile_stack;
 	std::vector<Profile> profiles;
 
 	void begin_profile(const std::string &name)
@@ -39,11 +41,13 @@ namespace flame
 		Profile p;
 		p.name = name;
 		p.time = get_now_ns();
-		profiles.push_back(p);
+		profile_stack.push(p);
 	}
 
 	void end_profile()
 	{
+		profiles.push_back(profile_stack.top());
+		profile_stack.pop();
 		profiles.back().time = get_now_ns() - profiles.back().time;
 	}
 

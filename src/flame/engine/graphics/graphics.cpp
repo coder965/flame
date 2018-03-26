@@ -42,7 +42,7 @@ namespace flame
 		vkDeviceWaitIdle(vk_device);
 	}
 
-	void vk_queue_submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence)
+	void vk_queue_submit(int count, VkCommandBuffer *cmds, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore)
 	{
 		VkSubmitInfo info;
 		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -56,7 +56,7 @@ namespace flame
 		info.signalSemaphoreCount = signalSemaphore ? 1 : 0;
 		info.pSignalSemaphores = signalSemaphore ? &signalSemaphore : nullptr;
 
-		vk_chk_res(vkQueueSubmit(vk_graphics_queue, 1, &info, fence));
+		vk_chk_res(vkQueueSubmit(vk_graphics_queue, 1, &info, VK_NULL_HANDLE));
 	}
 
 	void vk_queue_wait_idle()

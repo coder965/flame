@@ -594,8 +594,8 @@ struct App : flame::Application
 	virtual void on_render() override
 	{
 		//flame::ui::draw_text("Hello 2018", 100, 400, 150); // test for sdf
-		show_menu();
-		show_toolbar();
+		//show_menu();
+		//show_toolbar();
 
 		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", flame::FPS);
@@ -608,7 +608,7 @@ int main(int argc, char** argv)
 	flame::init(1280, 720, 1, false);
 	flame::setup_shader_file_watcher();
 	new App;
-	flame::app->set_window_maximized(true);
+	//flame::app->set_window_maximized(true);
 	flame::run();
 
 	return 0;

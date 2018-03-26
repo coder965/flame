@@ -1,8 +1,8 @@
 <ui>
-	<resource_explorer/>
-	<hierarchy_window/>
-	<inspector_window/>
-	<scene_editor filename="res\scene.tks"/>
+	<resource_explorer1/>
+	<hierarchy_window1/>
+	<inspector_window1/>
+	<scene_editor1 filename="res\scene.tks"/>
 	<select/>
 </ui>
 

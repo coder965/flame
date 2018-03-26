@@ -43,6 +43,7 @@ namespace flame
 			{
 				vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+				clear_values.push_back({});
 			}
 			else
 			{
