@@ -30,6 +30,8 @@ namespace flame
 	VkDevice vk_device;
 	VkQueue vk_graphics_queue;
 
+	VkFormat swapchain_format = VK_FORMAT_B8G8R8A8_UNORM;
+
 	void vk_chk_res(VkResult res)
 	{
 		assert(res == VK_SUCCESS);
@@ -112,6 +114,9 @@ namespace flame
 		const char* pMessage,
 		void* pUserData)
 	{
+		if (flags == VK_DEBUG_REPORT_ERROR_BIT_EXT)
+			int cut = 1;
+
 		auto pr = _vulkan_errors.insert({objectType, object, location, messageCode});
 		if (pr.second)
 			printf("\n=====VK ERROR=====\nERROR NUM:%d\n%s\n==================\n", messageCode, pMessage);

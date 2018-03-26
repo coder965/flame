@@ -1367,17 +1367,17 @@ namespace flame
 			});
 
 			renderpass = get_renderpass(RenderPassInfo()
-				.add_attachment(VK_FORMAT_UNDEFINED, false, true)
-				.add_subpass({ 0 }, -1)
+				.add_attachment(VK_FORMAT_UNDEFINED, false)
+				.add_subpass({0}, -1)
 			);
 
 			renderpass_clear = get_renderpass(RenderPassInfo()
-				.add_attachment(VK_FORMAT_UNDEFINED, true, true)
-				.add_subpass({ 0 }, -1)
+				.add_attachment(VK_FORMAT_UNDEFINED, true)
+				.add_subpass({0}, -1)
 			);
 
 			pipeline_ui = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({ { TokenF32V2, 0 },{ TokenF32V2, 0 },{ TokenB8V4, 0 } })
+				.set_vertex_input_state({{TokenF32V2, 0},{TokenF32V2, 0},{TokenB8V4, 0}})
 				.set_cull_mode(VK_CULL_MODE_NONE)
 				.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, 
 					VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)

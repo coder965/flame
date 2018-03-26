@@ -7,9 +7,9 @@
 
 namespace flame
 {
-	RenderPassInfo &RenderPassInfo::add_attachment(VkFormat format, bool clear, bool is_for_present)
+	RenderPassInfo &RenderPassInfo::add_attachment(VkFormat format, bool clear)
 	{
-		attachments.emplace_back(format, clear, is_for_present);
+		attachments.emplace_back(format, clear);
 		return *this;
 	}
 
@@ -33,37 +33,35 @@ namespace flame
 		for (auto i = 0; i < vk_attachments.size(); i++)
 		{
 			vk_attachments[i].flags = 0;
-			vk_attachments[i].format = std::get<0>(info.attachments[i]);
-			if (std::get<2>(info.attachments[i]))
-				vk_attachments[i].format = swapchain_format;
+			vk_attachments[i].format = info.attachments[i].first == VK_FORMAT_UNDEFINED ? swapchain_format : info.attachments[i].first;
 			vk_attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
 			vk_attachments[i].loadOp = std::get<1>(info.attachments[i]) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			vk_attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			vk_attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			vk_attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			switch (get_format_type(std::get<0>(info.attachments[i])))
+			if (info.attachments[i].first == VK_FORMAT_UNDEFINED)
 			{
-				case FormatTypeColor:
+				vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			}
+			else
+			{
+				switch (get_format_type(std::get<0>(info.attachments[i])))
 				{
-					if (std::get<2>(info.attachments[i]))
-					{
-						vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-						vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-					}
-					else
+					case FormatTypeColor:
 					{
 						vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 						vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+						clear_values.push_back({});
+						break;
 					}
-					clear_values.push_back({});
-					break;
-				}
-				case FormatTypeDepth: case FormatTypeDepthStencil:
-				{
-					vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-					vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-					clear_values.push_back({ 1, 0.f });
-					break;
+					case FormatTypeDepth: case FormatTypeDepthStencil:
+					{
+						vk_attachments[i].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+						vk_attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+						clear_values.push_back({ 1, 0.f });
+						break;
+					}
 				}
 			}
 		}
@@ -148,11 +146,9 @@ namespace flame
 			return false;
 		for (auto i = 0; i < lhs.attachments.size(); i++)
 		{
-			if (std::get<0>(lhs.attachments[i]) != std::get<0>(rhs.attachments[i]))
+			if (lhs.attachments[i].first != rhs.attachments[i].first)
 				return false;
-			if (std::get<1>(lhs.attachments[i]) != std::get<1>(rhs.attachments[i]))
-				return false;
-			if (std::get<2>(lhs.attachments[i]) != std::get<2>(rhs.attachments[i]))
+			if (lhs.attachments[i].second != rhs.attachments[i].second)
 				return false;
 		}
 		for (auto i = 0; i < lhs.subpasses.size(); i++)

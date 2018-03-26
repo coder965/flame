@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <tuple>
 
 #include <flame/engine/graphics/graphics.h>
 
@@ -9,11 +8,11 @@ namespace flame
 {
 	struct RenderPassInfo
 	{
-		std::vector<std::tuple<VkFormat, bool, bool>> attachments;
+		std::vector<std::pair<VkFormat, bool>> attachments;
 		std::vector<std::pair<std::vector<int>, int>> subpasses;
 		std::vector<std::pair<int, int>> dependencies;
 
-		RenderPassInfo &add_attachment(VkFormat format, bool clear, bool is_for_present = false);
+		RenderPassInfo &add_attachment(VkFormat format, bool clear);
 		RenderPassInfo &add_subpass(const std::initializer_list<int> &color_attachments, int depth_attachment);
 		RenderPassInfo &add_dependency(int src_subpass, int dst_subpass);
 	};

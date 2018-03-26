@@ -33,9 +33,6 @@ namespace flame
 		info.subresourceRange.layerCount = layer_count;
 
 		vk_chk_res(vkCreateImageView(vk_device, &info, nullptr, &v));
-
-		if ((int)v == 0xda)
-			int cut = 1;
 	}
 
 	TextureView::~TextureView()
@@ -148,9 +145,6 @@ namespace flame
 		imageInfo.pQueueFamilyIndices = nullptr;
 
 		vk_chk_res(vkCreateImage(vk_device, &imageInfo, nullptr, &v));
-
-		if ((int)v == 0xda)
-			int cut = 1;
 
 		VkMemoryRequirements memRequirements;
 		vkGetImageMemoryRequirements(vk_device, v, &memRequirements);

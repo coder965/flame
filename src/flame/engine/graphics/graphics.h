@@ -47,7 +47,7 @@ namespace flame
 		MaterialImagesDescriptorBinding
 	};
 
-	const VkFormat swapchain_format = VK_FORMAT_B8G8R8A8_UNORM;
+	extern VkFormat swapchain_format;
 
 	void vk_chk_res(VkResult res);
 

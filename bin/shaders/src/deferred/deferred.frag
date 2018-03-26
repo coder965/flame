@@ -113,6 +113,7 @@ void main()
 		Light light = ubo_light.lights[i];
 
 		float visibility = 1.0;
+		/*
 		{
 			int shadowId = int(light.color.a);
 			if (shadowId != -1)
@@ -133,6 +134,7 @@ void main()
 				//lightSumColor = vec3(visibility); break;
 			}
 		}
+		*/
 		if (visibility == 0.0) continue;
 		
 		vec3 lightColor = light.color.xyz * visibility;

@@ -40,7 +40,7 @@ namespace flame
 			renderpass = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
 				.add_attachment(VK_FORMAT_D16_UNORM, false)
-				.add_subpass({ 0 }, 1)
+				.add_subpass({0}, 1)
 			);
 			framebuffer = get_framebuffer(resolution.x(), resolution.y(), renderpass.get(), TK_ARRAYSIZE(views), views);
 		}
@@ -48,7 +48,7 @@ namespace flame
 		{
 			renderpass = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
-				.add_subpass({ 0 }, -1)
+				.add_subpass({0}, -1)
 			);
 			framebuffer = get_framebuffer(image.get(), renderpass.get());
 		}

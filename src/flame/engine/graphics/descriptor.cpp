@@ -98,7 +98,15 @@ namespace flame
 	VkDescriptorImageInfo get_texture_info(Texture *t, VkSampler sampler, int base_level, int level_count, int base_layer, int layer_count, VkImageViewType view_type)
 	{
 		VkDescriptorImageInfo i;
-		i.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		if (t->type == TextureTypeImage)
+			i.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		else
+		{
+			if (get_format_type(t->format) == FormatTypeColor)
+				i.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			else
+				i.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		}
 		if (level_count == 0)
 			level_count = t->levels.size();
 		if (layer_count == 0)

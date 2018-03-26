@@ -73,21 +73,21 @@ namespace flame
 		{
 			renderpass_color = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
-				.add_subpass({ 0 }, -1)
+				.add_subpass({0}, -1)
 			);
 			renderpass_color_and_depth = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
 				.add_attachment(VK_FORMAT_D16_UNORM, true)
-				.add_subpass({ 0 }, 1)
+				.add_subpass({0}, 1)
 			);
 			renderpass_color_clear = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
-				.add_subpass({ 0 }, -1)
+				.add_subpass({0}, -1)
 			);
 			renderpass_color_clear_and_depth = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
 				.add_attachment(VK_FORMAT_D16_UNORM, true)
-				.add_subpass({ 0 }, 1)
+				.add_subpass({0}, 1)
 			);
 
 			pipeline_plain = new Pipeline(PipelineInfo()
@@ -280,7 +280,7 @@ namespace flame
 		{
 			renderpass_color = get_renderpass(RenderPassInfo()
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)
-				.add_subpass({ 0 }, -1)
+				.add_subpass({0}, -1)
 			);
 
 			pipeline_lines = new Pipeline(PipelineInfo()
@@ -657,9 +657,9 @@ namespace flame
 				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // normal height
 				.add_attachment(VK_FORMAT_R16G16B16A16_UNORM, true)      // spec roughness
 				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, false)   // dst
-				.add_subpass({ 2, 3, 4 }, 1)
-				.add_subpass({ 0 }, -1)
-				.add_subpass({ 5 }, -1)
+				.add_subpass({2, 3, 4}, 1)
+				.add_subpass({0}, -1)
+				.add_subpass({5}, -1)
 				.add_dependency(0, 1)
 				.add_dependency(1, 2)
 			);
@@ -1000,7 +1000,8 @@ namespace flame
 				{
 					auto cb = begin_once_command_buffer();
 					envrImage->transition_layout(cb, envrImage->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-					VkClearColorValue clear_value = {};
+					auto col = scene->get_bg_color();
+					VkClearColorValue clear_value = {col.r, col.g, col.b, 1.f};
 					VkImageSubresourceRange range = {
 						VK_IMAGE_ASPECT_COLOR_BIT,
 						0, envrImage->levels.size(),

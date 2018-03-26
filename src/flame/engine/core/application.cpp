@@ -201,7 +201,8 @@ namespace flame
 	}
 
 	Application::Application(int _window_cx, int _window_cy, int _window_style, const std::string &_window_title) :
-		hWnd(0)
+		hWnd(0),
+		window_surface(0)
 	{
 		root_node = new Node;
 		root_node->name = "root";
@@ -231,24 +232,6 @@ namespace flame
 
 		window_title = _window_title;
 		set_window_size(_window_cx, _window_cy, _window_style);
-
-		{
-			VkWin32SurfaceCreateInfoKHR surface_info;
-			surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			surface_info.flags = 0;
-			surface_info.pNext = nullptr;
-			surface_info.hinstance = (HINSTANCE)get_hinst();
-			surface_info.hwnd = (HWND)hWnd;
-			vk_chk_res(vkCreateWin32SurfaceKHR(vk_instance, &surface_info, nullptr, &window_surface));
-
-			VkBool32 supported;
-			vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, 0, window_surface, &supported);
-
-			VkSurfaceCapabilitiesKHR surfaceCapabilities;
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device, window_surface, &surfaceCapabilities);
-
-			int cut = 1;
-		}
 
 		create_swapchain();
 
@@ -346,6 +329,7 @@ namespace flame
 			window_cx = x;
 			window_cy = y;
 			vkDestroySwapchainKHR(vk_device, swapchain, nullptr);
+			vkDestroySurfaceKHR(vk_instance, window_surface, nullptr);
 			create_swapchain();
 			for (auto &e : _resize_listeners)
 				e(x, y);
@@ -429,19 +413,35 @@ namespace flame
 
 	void Application::create_swapchain()
 	{
-		static bool first = true;
-		if (first)
-		{
-			static unsigned int count = 0;
-			static std::vector<VkSurfaceFormatKHR> physicalDeviceSurfaceFormats;
-			vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface,
-				&count, nullptr);
-			physicalDeviceSurfaceFormats.resize(count);
-			vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface,
-				&count, physicalDeviceSurfaceFormats.data());
+		VkWin32SurfaceCreateInfoKHR surface_info;
+		surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		surface_info.flags = 0;
+		surface_info.pNext = nullptr;
+		surface_info.hinstance = (HINSTANCE)get_hinst();
+		surface_info.hwnd = (HWND)hWnd;
+		vk_chk_res(vkCreateWin32SurfaceKHR(vk_instance, &surface_info, nullptr, &window_surface));
 
-			first = false;
-		}
+		VkBool32 surface_supported;
+		vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, 0, window_surface, &surface_supported);
+		assert(surface_supported);
+
+		VkSurfaceCapabilitiesKHR surface_capabilities;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device, window_surface, &surface_capabilities);
+		assert(window_cx >= surface_capabilities.minImageExtent.width);
+		assert(window_cy >= surface_capabilities.minImageExtent.height);
+		assert(window_cx <= surface_capabilities.maxImageExtent.width);
+		assert(window_cy <= surface_capabilities.maxImageExtent.height);
+
+		unsigned int surface_format_count = 0;
+		std::vector<VkSurfaceFormatKHR> surface_formats;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface,
+			&surface_format_count, nullptr);
+		assert(surface_format_count > 0);
+		surface_formats.resize(surface_format_count);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, window_surface,
+			&surface_format_count, surface_formats.data());
+
+		swapchain_format = surface_formats[0].format;
 
 		VkSwapchainCreateInfoKHR swapchain_info;
 		swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -450,7 +450,7 @@ namespace flame
 		swapchain_info.surface = window_surface;
 		swapchain_info.minImageCount = 2;
 		swapchain_info.imageFormat = swapchain_format;
-		swapchain_info.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+		swapchain_info.imageColorSpace = surface_formats[0].colorSpace;
 		swapchain_info.imageExtent.width = window_cx;
 		swapchain_info.imageExtent.height = window_cy;
 		swapchain_info.imageArrayLayers = 1;
