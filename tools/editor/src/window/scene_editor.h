@@ -6,7 +6,7 @@
 #include <flame/engine/entity/controller.h>
 #include <flame/engine/graphics/display_layer.h>
 #include <flame/engine/graphics/renderer.h>
-#include <flame/engine/ui/ui.h>
+#include <flame/engine/ui/window.h>
 #include "../tool/transformer_tool.h"
 
 struct SceneEditor : flame::ui::Window
@@ -32,6 +32,11 @@ struct SceneEditor : flame::ui::Window
 
 	Tool *curr_tool;
 	std::unique_ptr<TransformerTool> transformerTool;
+
+	std::shared_ptr<flame::Texture> select_image;
+	std::shared_ptr<flame::Texture> move_image;
+	std::shared_ptr<flame::Texture> rotate_image;
+	std::shared_ptr<flame::Texture> scale_image;
 
 	SceneEditor(flame::Scene *_scene);
 	~SceneEditor();

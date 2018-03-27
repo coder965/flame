@@ -50,6 +50,21 @@ SceneEditor::SceneEditor(flame::Scene *_scene) :
 	lines_renderer = std::make_unique<flame::LinesRenderer>();
 
 	transformerTool = std::make_unique<TransformerTool>();
+
+	select_image = flame::get_texture("Select.png");
+	move_image = flame::get_texture("Move.png");
+	rotate_image = flame::get_texture("Rotate.png");
+	scale_image = flame::get_texture("Scale.png");
+
+	assert(select_image);
+	assert(move_image);
+	assert(rotate_image);
+	assert(scale_image);
+
+	flame::ui::increase_texture_ref(select_image.get());
+	flame::ui::increase_texture_ref(move_image.get());
+	flame::ui::increase_texture_ref(rotate_image.get());
+	flame::ui::increase_texture_ref(scale_image.get());
 }
 
 SceneEditor::~SceneEditor()
@@ -57,6 +72,11 @@ SceneEditor::~SceneEditor()
 	flame::app->root_node->remove_child(camera_node);
 	flame::app->root_node->remove_child(scene);
 	scene_editor = nullptr;
+
+	flame::ui::decrease_texture_ref(select_image.get());
+	flame::ui::decrease_texture_ref(move_image.get());
+	flame::ui::decrease_texture_ref(rotate_image.get());
+	flame::ui::decrease_texture_ref(scale_image.get());
 }
 
 void SceneEditor::on_file_menu()
@@ -168,22 +188,22 @@ void SceneEditor::on_menu_bar()
 
 void SceneEditor::on_toolbar()
 {
-	if (ImGui::ImageButton_f("Select.png", ImVec2(16, 16), curr_tool == nullptr))
+	if (ImGui::ImageButton_s(select_image.get(), ImVec2(16, 16), curr_tool == nullptr))
 		curr_tool = nullptr;
 	ImGui::SameLine();
-	if (ImGui::ImageButton_f("Move.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::TRANSLATE))
+	if (ImGui::ImageButton_s(move_image.get(), ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::TRANSLATE))
 	{
 		curr_tool = transformerTool.get();
 		transformerTool->operation = TransformerTool::TRANSLATE;
 	}
 	ImGui::SameLine();
-	if (ImGui::ImageButton_f("Rotate.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::ROTATE))
+	if (ImGui::ImageButton_s(rotate_image.get(), ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::ROTATE))
 	{
 		curr_tool = transformerTool.get();
 		transformerTool->operation = TransformerTool::ROTATE;
 	}
 	ImGui::SameLine();
-	if (ImGui::ImageButton_f("Scale.png", ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::SCALE))
+	if (ImGui::ImageButton_s(scale_image.get(), ImVec2(16, 16), curr_tool && curr_tool == transformerTool.get() && transformerTool->operation == TransformerTool::SCALE))
 	{
 		curr_tool = transformerTool.get();
 		transformerTool->operation = TransformerTool::SCALE;
@@ -253,7 +273,7 @@ void SceneEditor::on_show()
 	ImGui::InvisibleButton("canvas", ImVec2(flame::resolution.x(), flame::resolution.y()));
 	auto draw_list = ImGui::GetWindowDrawList();
 	auto canvas_size = ImVec2(flame::resolution.x(), flame::resolution.y());
-	draw_list->AddImage(ImGui::ImageID(layer.image), pos, pos + canvas_size);
+	draw_list->AddImage(ImTextureID(layer.image->ui_index), pos, pos + canvas_size);
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("file"))

@@ -46,7 +46,7 @@ void ModelEditor::on_show()
 	auto image_size = ImVec2(layer.image->get_cx(), layer.image->get_cy());
 	ImGui::InvisibleButton("canvas", image_size);
 	auto draw_list = ImGui::GetWindowDrawList();
-	draw_list->AddImage(ImGui::ImageID(layer.image), image_pos, image_pos + image_size);
+	draw_list->AddImage(ImTextureID(layer.image->ui_index), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
 		if (flame::app->mouseDispX != 0 || flame::app->mouseDispY != 0)

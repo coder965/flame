@@ -8,6 +8,7 @@
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/command_buffer.h>
+#include <flame/engine/ui/ui.h>
 
 namespace flame
 {
@@ -83,7 +84,8 @@ namespace flame
 		cube(_cube),
 		sRGB(false),
 		material_index(-1),
-		ui_index(-1)
+		ui_index(-1),
+		ui_ref_count(0)
 	{
 		set_data_from_format();
 
@@ -179,6 +181,8 @@ namespace flame
 			vkFreeMemory(vk_device, memory, nullptr);
 			vkDestroyImage(vk_device, v, nullptr);
 		}
+		if (ui_index != -1)
+			ui::unregister_texture(this);
 	}
 
 	VkImageAspectFlags Texture::get_aspect() const
@@ -212,6 +216,20 @@ namespace flame
 			offset += levels[i].size_per_layer * layer_count;
 		offset += levels[level].size_per_layer * layer;
 		return offset + levels[level].pitch * y + x * (bpp / 8);
+	}
+
+	VkImageView Texture::get_view(VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
+	{
+		for (auto &view : views)
+		{
+			if (view->view_type == view_type && view->base_level == base_level && view->level_count == level_count &&
+				view->base_layer == base_layer && view->layer_count == layer_count)
+				return view->v;
+		}
+
+		auto view = new TextureView(v, format, get_aspect(), view_type, base_level, level_count, base_layer, layer_count);
+		views.emplace_back(view);
+		return view->v;
 	}
 
 	void Texture::transition_layout(CommandBuffer *cb, VkImageLayout old_layout, VkImageLayout new_layout, int base_level, int level_count, int base_layer, int _layer_count)
@@ -283,20 +301,6 @@ namespace flame
 
 		vkCmdPipelineBarrier(cb->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
-	}
-
-	VkImageView Texture::get_view(VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
-	{
-		for (auto &view : views)
-		{
-			if (view->view_type == view_type && view->base_level == base_level && view->level_count == level_count &&
-				view->base_layer == base_layer && view->layer_count == layer_count)
-				return view->v;
-		}
-
-		auto view = new TextureView(v, format, get_aspect(), view_type, base_level, level_count, base_layer, layer_count);
-		views.emplace_back(view);
-		return view->v;
 	}
 
 	void Texture::set_data_from_format()

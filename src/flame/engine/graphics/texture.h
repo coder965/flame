@@ -62,6 +62,7 @@ namespace flame
 
 		int material_index;
 		int ui_index;
+		int ui_ref_count;
 
 		VkImage v;
 		VkDeviceMemory memory;

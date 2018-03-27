@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <flame/engine/graphics/texture.h>
-#include <flame/engine/ui/ui.h>
+#include <flame/engine/ui/fileselector.h>
 
 struct ResourceExplorer : flame::ui::FileSelector
 {

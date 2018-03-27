@@ -21,6 +21,7 @@ namespace flame
 		virtual bool on_message(Object *sender, Message msg) override;
 
 		DisplayLayer(bool _enable_depth = false);
+		~DisplayLayer();
 
 	private:
 		void create();

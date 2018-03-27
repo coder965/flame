@@ -1,9 +1,11 @@
 #pragma once
 
-#include <flame/engine/ui/ui.h>
+#include "material_shower.h"
 
 struct InspectorWindow : flame::ui::Window
 {
+	std::unique_ptr<MaterialShower> material_shower;
+
 	InspectorWindow();
 	~InspectorWindow();
 	virtual void on_show() override;

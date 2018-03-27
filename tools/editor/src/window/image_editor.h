@@ -3,6 +3,7 @@
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/ui/ui.h>
+#include <flame/engine/ui/imageviewer.h>
 
 struct ImageEditor : flame::ui::ImageViewer
 {

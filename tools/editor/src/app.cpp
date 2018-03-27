@@ -1,8 +1,9 @@
-#include <flame/engine/ui/ui.h>
 #include <flame/global.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/core/application.h>
 #include <flame/engine/graphics/shader.h>
+#include <flame/engine/ui/ui.h>
+#include <flame/engine/ui/fileselector.h>
 #include "window/resource_explorer.h"
 #include "window/hierarchy.h"
 #include "window/inspector.h"
@@ -261,7 +262,7 @@ struct App : flame::Application
 				{
 					if (ImGui::Button("Undock"))
 					{
-						windows_popup_w->undock();
+						flame::ui::undock(windows_popup_w);
 						need_exit_window_popup = true;
 					}
 				}
@@ -315,7 +316,7 @@ struct App : flame::Application
 						{
 							if (target || flame::ui::main_layout->is_empty(0))
 							{
-								windows_popup_w->dock(target, dir);
+								flame::ui::dock(windows_popup_w, target, dir);
 								need_exit_window_popup = true;
 							}
 							ImGui::CloseCurrentPopup();

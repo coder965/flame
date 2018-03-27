@@ -196,6 +196,7 @@ namespace flame
 		}
 		_update_material(this);
 	}
+
 	void Material::set_normal_height_map(const std::string &filename)
 	{
 		if (filename == "")

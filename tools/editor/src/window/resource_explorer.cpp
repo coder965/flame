@@ -99,22 +99,18 @@ void ResourceExplorer::on_right_area_show()
 				sel = 2;
 			if (sel > 0)
 				draw_list->AddRectFilled(pos, pos + widget_size, ImColor(255, 122, 50, sel == 1 ? 60 : 255));
-			std::string img_name;
+			flame::Texture *img = nullptr;
 			if (is_folder)
-				img_name = "folder.png";
+				img = folder_image.get();
 			else
 			{
 				auto f = (FileItem*)d;
 				if (f->file_type == flame::FileTypeImage)
-					img_name = f->filename;
+					img = f->preview_image.get();
 				else
-					img_name = "file.png";
+					img = file_image.get();
 			}
-			{
-				auto t = flame::get_texture(img_name);
-				if (t)
-					draw_list->AddImage(ImGui::ImageID(t), pos, pos + img_size);
-			}
+			draw_list->AddImage(ImTextureID(img->ui_index), pos, pos + img_size);
 			draw_list->AddText(pos + ImVec2(0, img_size.y), ImColor(0, 0, 0), d->value.c_str());
 			//draw_list->PopClipRect();
 			if (column_count > 1)

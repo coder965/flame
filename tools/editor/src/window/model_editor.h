@@ -4,7 +4,7 @@
 #include <flame/engine/graphics/renderer.h>
 #include <flame/engine/entity/model.h>
 #include <flame/engine/entity/camera.h>
-#include <flame/engine/ui/ui.h>
+#include <flame/engine/ui/window.h>
 
 struct ModelEditor : flame::ui::Window
 {

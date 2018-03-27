@@ -1,13 +1,14 @@
 #include <flame/global.h>
 #include <flame/common/string.h>
 #include <flame/engine/graphics/texture.h>
+#include <flame/engine/graphics/material.h>
 #include <flame/engine/entity/model.h>
 #include <flame/engine/entity/scene.h>
 #include <flame/engine/entity/model_instance.h>
 #include <flame/engine/entity/terrain.h>
+#include <flame/engine/ui/window.h>
 #include "../select.h"
 #include "inspector.h"
-#include "show_material.h"
 
 InspectorWindow *inspector_window = nullptr;
 
@@ -376,7 +377,10 @@ void InspectorWindow::on_show()
 												ImGui::Text("Indice Count:%d", g->indiceCount);
 												ImGui::Separator();
 												ImGui::Text("Material:%s", g->material->get_name().c_str());
-												show_material(g->material.get());
+												auto m = g->material.get();
+												if (!material_shower || material_shower->m != m)
+													material_shower = std::make_unique<MaterialShower>(m);
+												material_shower->show();
 											}
 
 											ImGui::TreePop();
