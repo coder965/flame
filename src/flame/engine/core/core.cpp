@@ -27,14 +27,15 @@ namespace flame
 			).time_since_epoch().count();
 	}
 
-	struct Profile
-	{
-		std::string name;
-		long long time;
-	};
-
 	std::stack<Profile> profile_stack;
 	std::vector<Profile> profiles;
+
+	long long p_total_time = 1;
+	long long p_head_time;
+	long long p_ui_begin_time;
+	long long p_ui_end_time;
+	long long p_render_time;
+	long long p_tail_time;
 
 	void begin_profile(const std::string &name)
 	{
@@ -96,6 +97,9 @@ namespace flame
 		{
 			profiles.clear();
 
+			begin_profile("total");
+
+			begin_profile("head");
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -112,14 +116,28 @@ namespace flame
 			static unsigned int frame_count = 0;
 			frame_count++;
 			total_frame_count++;
+			bool do_copy_profile = false;
 			if (now_ns - _last_sec_time >= 1000000000)
 			{
 				FPS = std::max(frame_count, 1U);
 				_last_sec_time = now_ns;
 				frame_count = 0;
+				do_copy_profile = true;
 			}
 
 			app->update();
+
+			end_profile();
+
+			if (do_copy_profile)
+			{
+				p_head_time = profiles[0].time;
+				p_ui_begin_time = profiles[1].time;
+				p_ui_end_time = profiles[2].time;
+				p_render_time = profiles[3].time;
+				p_tail_time = profiles[4].time;
+				p_total_time = profiles[5].time;
+			}
 		}
 	}
 }

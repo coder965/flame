@@ -594,8 +594,20 @@ struct App : flame::Application
 	virtual void on_render() override
 	{
 		//flame::ui::draw_text("Hello 2018", 100, 400, 150); // test for sdf
-		//show_menu();
-		//show_toolbar();
+		show_menu();
+		show_toolbar();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+		ImGui::Begin("Profile");
+		ImGui::Text("FPS:%d", flame::FPS);
+		ImGui::Text("total:%dk", int(flame::p_total_time / 1000));
+		ImGui::Text("head:%dk %d%%", int(flame::p_head_time / 1000), 100 * flame::p_head_time / flame::p_total_time);
+		ImGui::Text("ui begin:%dk %d%%", int(flame::p_ui_begin_time / 1000), 100 * flame::p_ui_begin_time / flame::p_total_time);
+		ImGui::Text("ui end:%dk %d%%", int(flame::p_ui_end_time / 1000), 100 * flame::p_ui_end_time / flame::p_total_time);
+		ImGui::Text("render:%dk %d%%", int(flame::p_render_time / 1000), 100 * flame::p_render_time / flame::p_total_time);
+		ImGui::Text("tail:%dk %d%%", int(flame::p_tail_time / 1000), 100 * flame::p_tail_time / flame::p_total_time);
+		ImGui::End();
+		ImGui::PopStyleVar();
 
 		ImGui::BeginStatusBar();
 		ImGui::Text("FPS:%d", flame::FPS);

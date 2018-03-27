@@ -344,14 +344,18 @@ namespace flame
 		root_node->update();
 
 		vk_chk_res(vkAcquireNextImageKHR(vk_device, swapchain, UINT64_MAX, image_available, VK_NULL_HANDLE, &curr_window_image_index));
+		end_profile();
 
+		begin_profile("ui begin");
 		ui::begin();
+		end_profile();
 
 		on_render();
 
+		begin_profile("ui end");
 		ui::end();
+		end_profile();
 
-		begin_profile("render");
 		if (!cbs.empty())
 		{
 			vk_queue_submit(cbs.size(), cbs.data(), image_available, render_finished);
@@ -367,13 +371,14 @@ namespace flame
 		present_info.swapchainCount = 1;
 		present_info.pSwapchains = &swapchain;
 		present_info.pImageIndices = &curr_window_image_index;
+		begin_profile("render");
 		vk_chk_res(vkQueuePresentKHR(vk_graphics_queue, &present_info));
 		vk_queue_wait_idle();
 		end_profile();
 
 		int cut = 1;
 
-		begin_profile("one");
+		begin_profile("tail");
 		for (auto i = 0; i < 3; i++)
 		{
 			mouse_button[i].just_down = false;
