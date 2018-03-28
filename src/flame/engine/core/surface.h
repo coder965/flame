@@ -23,13 +23,21 @@ namespace flame
 		int style;
 		std::string title;
 
-		VkSurfaceKHR v;
-		VkSwapchainKHR swapchain;
 		VkImage images[2];
 		std::unique_ptr<TextureView> image_views[2];
 		uint image_index;
 		VkSemaphore image_available;
 
-		Surface(int _window_cx, int _window_cy, int _window_style, const std::string &_window_title);
+		Surface(int _cx, int _cy, int _style, const std::string &_title);
+		void set_window_size(int _cx, int _cy, int _style);
+		void set_window_maximized(bool v);
+		void create_swapchain();
+		void acquire_image();
+		void present(VkSemaphore wait_semaphore);
 	};
+
+	extern Surface *surface;
+
+	void add_resize_listener(const std::function<void(int, int)> &e);
+	void remove_resize_listener(const std::function<void(int, int)> &e);
 }

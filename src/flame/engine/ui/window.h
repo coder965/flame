@@ -54,3 +54,6 @@ namespace flame
 		void show_windows();
 	}
 }
+
+typedef flame::ui::Window *(*PF_FLAME_CREATE_UI_WINDOW)();
+typedef void (*PF_FLAME_DESTROY_UI_WINDOW)(flame::ui::Window *w);

@@ -7,7 +7,6 @@
 #include <flame/common/filesystem.h>
 #include <flame/common/system.h>
 #include <flame/engine/core/core.h>
-#include <flame/engine/core/application.h>
 #include <flame/engine/graphics/descriptor.h>
 #include <flame/engine/graphics/shader.h>
 #include <flame/engine/graphics/pipeline.h>

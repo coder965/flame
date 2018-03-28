@@ -1,4 +1,5 @@
-#include <flame/engine/core/application.h>
+#include <flame/engine/core/input.h>
+#include <flame/engine/core/surface.h>
 #include <flame/engine/ui/layout.h>
 #include <flame/engine/ui/window.h>
 
@@ -145,7 +146,7 @@ namespace flame
 
 		static void _draw_drag_overlay(ImRect rect, Layout *layout, int idx, DockDirection dir)
 		{
-			if (rect.Contains(ImVec2(app->mouseX, app->mouseY)))
+			if (rect.Contains(ImVec2(mouse.x, mouse.y)))
 			{
 				dock_target_layout = layout;
 				dock_target_idx = idx;
@@ -157,7 +158,7 @@ namespace flame
 				{
 					auto _rect = ImRect(center + ImVec2(-32, -32), center + ImVec2(32, 32));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
+					if (_rect.Contains(ImVec2(mouse.x, mouse.y)))
 					{
 						draw_list->AddRectFilled(rect.Min, rect.Max, col1);
 						dock_dir = DockCenter;
@@ -167,7 +168,7 @@ namespace flame
 				{
 					auto _rect = ImRect(center + ImVec2(-96, -32), center + ImVec2(-64, 32));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
+					if (_rect.Contains(ImVec2(mouse.x, mouse.y)))
 					{
 						draw_list->AddRectFilled(rect.Min, rect.Max - ImVec2(rect.GetWidth() / 2.f, 0), col1);
 						dock_dir = DockLeft;
@@ -177,7 +178,7 @@ namespace flame
 				{
 					auto _rect = ImRect(center + ImVec2(64, -32), center + ImVec2(96, 32));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
+					if (_rect.Contains(ImVec2(mouse.x, mouse.y)))
 					{
 						draw_list->AddRectFilled(rect.Min + ImVec2(rect.GetWidth() / 2.f, 0), rect.Max, col1);
 						dock_dir = DockRight;
@@ -187,7 +188,7 @@ namespace flame
 				{
 					auto _rect = ImRect(center + ImVec2(-32, -96), center + ImVec2(32, -64));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
+					if (_rect.Contains(ImVec2(mouse.x, mouse.y)))
 					{
 						draw_list->AddRectFilled(rect.Min, rect.Max - ImVec2(0, rect.GetHeight() / 2.f), col1);
 						dock_dir = DockTop;
@@ -197,7 +198,7 @@ namespace flame
 				{
 					auto _rect = ImRect(center + ImVec2(-32, 64), center + ImVec2(32, 96));
 					draw_list->AddRectFilled(_rect.Min, _rect.Max, col0);
-					if (_rect.Contains(ImVec2(app->mouseX, app->mouseY)))
+					if (_rect.Contains(ImVec2(mouse.x, mouse.y)))
 					{
 						draw_list->AddRectFilled(rect.Min + ImVec2(0, rect.GetHeight() / 2.f), rect.Max, col1);
 						dock_dir = DockBottom;
@@ -363,8 +364,8 @@ namespace flame
 
 		void resize_layout()
 		{
-			main_layout->width = app->window_cx;
-			main_layout->height = app->window_cy - ImGui::menubar_height - ImGui::toolbar_height - ImGui::statusbar_height;
+			main_layout->width = surface->cx;
+			main_layout->height = surface->cy - ImGui::menubar_height - ImGui::toolbar_height - ImGui::statusbar_height;
 			_resize_layout(main_layout);
 		}
 

@@ -53,23 +53,20 @@ namespace flame
 
 	void init_pick_up() 
 	{
-		if (!only_2d)
-		{
-			pick_up_image = new Texture(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-			pick_up_depth_image = new Texture(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, 0);
+		pick_up_image = new Texture(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		pick_up_depth_image = new Texture(TextureTypeAttachment, resolution.x(), resolution.y(), VK_FORMAT_D16_UNORM, 0);
 
-			VkImageView views[] = {
-				pick_up_image->get_view(),
-				pick_up_depth_image->get_view()
-			};
+		VkImageView views[] = {
+			pick_up_image->get_view(),
+			pick_up_depth_image->get_view()
+		};
 
-			renderpass = get_renderpass(RenderPassInfo()
-				.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
-				.add_attachment(VK_FORMAT_D16_UNORM, true)
-				.add_subpass({0}, 1)
-			);
+		renderpass = get_renderpass(RenderPassInfo()
+			.add_attachment(VK_FORMAT_R8G8B8A8_UNORM, true)
+			.add_attachment(VK_FORMAT_D16_UNORM, true)
+			.add_subpass({ 0 }, 1)
+		);
 
-			pick_up_fb = get_framebuffer(resolution.x(), resolution.y(), renderpass.get(), TK_ARRAYSIZE(views), views);
-		}
+		pick_up_fb = get_framebuffer(resolution.x(), resolution.y(), renderpass.get(), TK_ARRAYSIZE(views), views);
 	}
 }

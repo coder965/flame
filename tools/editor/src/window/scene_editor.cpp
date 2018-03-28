@@ -1,6 +1,7 @@
 #include <flame/global.h>
 #include <flame/common/filesystem.h>
-#include <flame/engine/core/application.h>
+#include <flame/engine/core/core.h>
+#include <flame/engine/core/input.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/descriptor.h>
 #include <flame/engine/graphics/command_buffer.h>
@@ -38,13 +39,13 @@ SceneEditor::SceneEditor(flame::Scene *_scene) :
 	camera_controller = new flame::ControllerComponent;
 	camera_node->add_component(camera);
 	camera_node->add_component(camera_controller);
-	flame::app->root_node->add_child(camera_node);
+	flame::root_node->add_child(camera_node);
 
 	plain_renderer = std::make_unique<flame::PlainRenderer>();
 	defe_renderer = std::make_unique<flame::DeferredRenderer>(false, &layer);
 
 	scene = _scene;
-	flame::app->root_node->add_child(scene);
+	flame::root_node->add_child(scene);
 
 	physx_vertex_buffer = std::make_unique<flame::Buffer>(flame::BufferTypeImmediateVertex, 16);
 	lines_renderer = std::make_unique<flame::LinesRenderer>();
@@ -69,8 +70,8 @@ SceneEditor::SceneEditor(flame::Scene *_scene) :
 
 SceneEditor::~SceneEditor()
 {
-	flame::app->root_node->remove_child(camera_node);
-	flame::app->root_node->remove_child(scene);
+	flame::root_node->remove_child(camera_node);
+	flame::root_node->remove_child(scene);
 	scene_editor = nullptr;
 
 	flame::ui::decrease_texture_ref(select_image.get());
@@ -310,22 +311,22 @@ void SceneEditor::on_show()
 
 	if (ImGui::IsItemHovered())
 	{
-		if (flame::app->mouseDispX != 0 || flame::app->mouseDispY != 0)
+		if (flame::mouse.disp_x != 0 || flame::mouse.disp_y != 0)
 		{
 			if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 			{
-				auto distX = (float)flame::app->mouseDispX / (float)flame::resolution.x();
-				auto distY = (float)flame::app->mouseDispY / (float)flame::resolution.y();
-				if (flame::app->mouse_button[1].pressing)
+				auto distX = (float)flame::mouse.disp_x / (float)flame::resolution.x();
+				auto distY = (float)flame::mouse.disp_y / (float)flame::resolution.y();
+				if (flame::mouse.button[1].pressing)
 					camera_node->add_euler(-distX * 180.f, -distY * 180.f, 0.f);
 			}
 		}
-		if (flame::app->mouse_button[0].just_down)
+		if (flame::mouse.button[0].just_down)
 		{
-			if (!flame::app->key_states[VK_SHIFT].pressing && !flame::app->key_states[VK_CONTROL].pressing)
+			if (!flame::key_states[VK_SHIFT].pressing && !flame::key_states[VK_CONTROL].pressing)
 			{
-				auto x = (flame::app->mouseX - 0) / flame::resolution.x();
-				auto y = (flame::app->mouseY - 0) / flame::resolution.y();
+				auto x = (flame::mouse.x - 0) / flame::resolution.x();
+				auto y = (flame::mouse.y - 0) / flame::resolution.y();
 				if (!curr_tool || !(curr_tool == transformerTool.get() && transformerTool->is_over()))
 				{
 					//flame::PlainRenderer::DrawData draw_data;
@@ -353,10 +354,10 @@ void SceneEditor::on_show()
 			}
 		}
 
-		camera_controller->set_state(flame::ControllerStateForward, flame::app->key_states['W'].pressing);
-		camera_controller->set_state(flame::ControllerStateBackward, flame::app->key_states['S'].pressing);
-		camera_controller->set_state(flame::ControllerStateLeft, flame::app->key_states['A'].pressing);
-		camera_controller->set_state(flame::ControllerStateRight, flame::app->key_states['D'].pressing);
+		camera_controller->set_state(flame::ControllerStateForward, flame::key_states['W'].pressing);
+		camera_controller->set_state(flame::ControllerStateBackward, flame::key_states['S'].pressing);
+		camera_controller->set_state(flame::ControllerStateLeft, flame::key_states['A'].pressing);
+		camera_controller->set_state(flame::ControllerStateRight, flame::key_states['D'].pressing);
 
 		if (ImGui::IsKeyDown(VK_DELETE))
 			on_delete();

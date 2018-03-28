@@ -1,5 +1,5 @@
 #include <flame/global.h>
-#include <flame/engine/core/application.h>
+#include <flame/engine/core/input.h>
 #include <flame/engine/graphics/command_buffer.h>
 
 #include "image_editor.h"
@@ -53,10 +53,10 @@ void ImageEditor::on_top_area()
 
 void ImageEditor::on_mouse_overing_image(ImVec2 image_pos)
 {
-	if (flame::app->mouse_button[0].pressing && penID != -1)
+	if (flame::mouse.button[0].pressing && penID != -1)
 	{
-		auto x = flame::app->mouseX - image_pos.x;
-		auto y = flame::app->mouseY - image_pos.y;
+		auto x = flame::mouse.x - image_pos.x;
+		auto y = flame::mouse.y - image_pos.y;
 
 		staging_buffer->map(texture->get_linear_offset(x, y), texture->bpp / 8);
 		auto pixel = (unsigned char*)staging_buffer->mapped;

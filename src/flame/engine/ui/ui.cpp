@@ -12,7 +12,8 @@
 #include <flame/engine/graphics/pipeline.h>
 #include <flame/engine/graphics/sampler.h>
 #include <flame/engine/graphics/command_buffer.h>
-#include <flame/engine/core/application.h>
+#include <flame/engine/core/input.h>
+#include <flame/engine/core/surface.h>
 #include <flame/engine/ui/ui.h>
 #include <flame/engine/ui/layout.h>
 #include <flame/engine/ui/window.h>
@@ -148,7 +149,7 @@ namespace ImGui
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		SetNextWindowPos(ImVec2(0, menubar_height));
-		SetNextWindowSize(ImVec2(flame::app->window_cx, toolbar_height));
+		SetNextWindowSize(ImVec2(flame::surface->cx, toolbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		return Begin("toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | 
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
@@ -167,8 +168,8 @@ namespace ImGui
 	bool BeginStatusBar()
 	{
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		SetNextWindowPos(ImVec2(0, flame::app->window_cy - statusbar_height));
-		SetNextWindowSize(ImVec2(flame::app->window_cx, statusbar_height));
+		SetNextWindowPos(ImVec2(0, flame::surface->cy - statusbar_height));
+		SetNextWindowSize(ImVec2(flame::surface->cx, statusbar_height));
 		PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.8f, 0.91f, 0.94f, 1.f));
 		auto open = ImGui::Begin("statusbar", nullptr, ImGuiWindowFlags_NoTitleBar | 
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
@@ -188,7 +189,7 @@ namespace ImGui
 	void BeginOverlapWindow(const char *title)
 	{
 		SetNextWindowPos(ImVec2(0, 0));
-		SetNextWindowSize(ImVec2(flame::app->window_cx, flame::app->window_cy));
+		SetNextWindowSize(ImVec2(flame::surface->cx, flame::surface->cy));
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		Begin(title, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | 
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | 
@@ -229,10 +230,7 @@ namespace flame
 		static void on_resize(int, int)
 		{
 			for (auto i = 0; i < 2; i++)
-			{
-				auto v = app->get_image_view(i);
-				framebuffers[i] = get_framebuffer(app->window_cx, app->window_cy, renderpass.get(), 1, &v);
-			}
+				framebuffers[i] = get_framebuffer(surface->cx, surface->cy, renderpass.get(), 1, &surface->image_views[i]->v);
 
 			resize_layout();
 		}
@@ -460,17 +458,17 @@ namespace flame
 
 			ImGuiIO& io = ImGui::GetIO();
 
-			io.DisplaySize = ImVec2((float)app->window_cx, (float)app->window_cy);
+			io.DisplaySize = ImVec2((float)surface->cx, (float)surface->cy);
 			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
 			io.DeltaTime = elapsed_time;
 
-			io.MousePos = ImVec2((float)app->mouseX, (float)app->mouseY);
+			io.MousePos = ImVec2((float)mouse.x, (float)mouse.y);
 
 			for (auto i = 0; i < 3; i++)
-				io.MouseDown[i] = app->mouse_button[i].pressing;
+				io.MouseDown[i] = mouse.button[i].pressing;
 
-			io.MouseWheel = app->mouseScroll / 120;
+			io.MouseWheel = mouse.scroll / 120;
 
 			ImGui::NewFrame();
 		}
@@ -565,7 +563,7 @@ namespace flame
 								offset = chr - 'a' + 1 + 10 + 26;
 							else
 								continue;
-							auto w_s = glm::vec2(app->window_cx, app->window_cy);
+							auto w_s = glm::vec2(surface->cx, surface->cy);
 							auto hs = glm::vec2(cmd.size, cmd.size) / w_s / 2.f;
 							auto p = glm::vec2(cmd.x + _chr_count * cmd.size, cmd.y) / w_s;
 							auto a_pos = p - hs;
@@ -602,14 +600,14 @@ namespace flame
 				if (main_layout->is_empty(0))
 				{
 					VkClearValue clear_value = {bg_color.r, bg_color.g, bg_color.b, 1.f};
-					cmds->begin_renderpass(renderpass_clear.get(), framebuffers[app->get_curr_image_index()].get(), &clear_value);
+					cmds->begin_renderpass(renderpass_clear.get(), framebuffers[surface->image_index].get(), &clear_value);
 				}
 				else
-					cmds->begin_renderpass(renderpass.get(), framebuffers[app->get_curr_image_index()].get());
+					cmds->begin_renderpass(renderpass.get(), framebuffers[surface->image_index].get());
 
 				if (draw_data->CmdListsCount > 0)
 				{
-					cmds->set_viewport_and_scissor(app->window_cx, app->window_cy);
+					cmds->set_viewport_and_scissor(surface->cx, surface->cy);
 
 					cmds->bind_vertex_buffer(vertexBuffer_ui.get());
 					cmds->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
@@ -650,7 +648,7 @@ namespace flame
 
 				if (!sdf_draw_commands.empty())
 				{
-					cmds->set_scissor(0, 0, app->window_cx, app->window_cy);
+					cmds->set_scissor(0, 0, surface->cx, surface->cy);
 
 					cmds->bind_vertex_buffer(sdf_vertex_buffer.get());
 
@@ -666,7 +664,7 @@ namespace flame
 
 				cmds->end();
 
-				app->add_cb(cmds->v);
+				add_to_draw_list(cmds->v);
 			}
 
 			accepted_mouse = ImGui::IsMouseHoveringAnyWindow();

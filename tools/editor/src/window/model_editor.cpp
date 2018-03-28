@@ -1,5 +1,5 @@
 #include <flame/global.h>
-#include <flame/engine/core/application.h>
+#include <flame/engine/core/input.h>
 #include <flame/engine/entity/node.h>
 #include <flame/engine/entity/camera_third_person.h>
 #include <flame/engine/graphics/texture.h>
@@ -49,19 +49,19 @@ void ModelEditor::on_show()
 	draw_list->AddImage(ImTextureID(layer.image->ui_index), image_pos, image_pos + image_size);
 	if (ImGui::IsItemHovered())
 	{
-		if (flame::app->mouseDispX != 0 || flame::app->mouseDispY != 0)
+		if (flame::mouse.disp_x != 0 || flame::mouse.disp_y != 0)
 		{
-			auto distX = (float)flame::app->mouseDispX / (float)flame::resolution.x();
-			auto distY = (float)flame::app->mouseDispY / (float)flame::resolution.y();
-			if (flame::app->mouse_button[2].pressing)
+			auto distX = (float)flame::mouse.disp_x / (float)flame::resolution.x();
+			auto distY = (float)flame::mouse.disp_y / (float)flame::resolution.y();
+			if (flame::mouse.button[2].pressing)
 			{
 				camera_node->add_euler(-distX * 180.f, -distY * 180.f, 0.f);
 				flame::set_camera_third_person_position(camera, glm::vec3(0), camera_view_length);
 			}
 		}
-		if (flame::app->mouseScroll != 0)
+		if (flame::mouse.scroll != 0)
 		{
-			if (flame::app->mouseScroll < 0.f)
+			if (flame::mouse.scroll < 0.f)
 				camera_view_length = (camera_view_length + 0.1) * 1.1f;
 			else
 				camera_view_length = glm::max((camera_view_length - 0.1f) / 1.1f, 0.f);

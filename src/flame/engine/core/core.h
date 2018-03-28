@@ -4,9 +4,12 @@
 #include <string>
 #include <vector>
 
+#include <flame/global.h>
+#include <flame/engine/graphics/graphics.h>
+
 namespace flame
 {
-	extern bool only_2d;
+	struct Node;
 
 	extern long long now_ns;
 	extern double elapsed_time;
@@ -34,7 +37,13 @@ namespace flame
 	extern unsigned long long total_frame_count;
 	extern uint32_t FPS;
 
-	int init(int _resolution_x, int _resolution_y, int debug_level, bool _only_2d);
+	extern Node *root_node;
 
-	void run();
+	int init(int _resolution_x, int _resolution_y, int debug_level,
+		int window_cx, int window_cy, int window_style, const std::string &window_title);
+	void add_destroy_listener(const std::function<void()> &e);
+	void remove_destroy_listener(const std::function<void()> &e);
+	void add_after_frame_event(const std::function<void()> &e); // once
+	void add_to_draw_list(VkCommandBuffer cb);
+	void run(PF_EVENT0 render_func);
 }

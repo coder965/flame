@@ -3,7 +3,6 @@
 
 #include <flame/global.h>
 #include <flame/engine/core/core.h>
-#include <flame/engine/core/application.h>
 #include <flame/engine/graphics/graphics.h>
 #include <flame/engine/graphics/command_buffer.h>
 #include <flame/engine/graphics/buffer.h>

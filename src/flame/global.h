@@ -4,9 +4,11 @@
 #include <functional>
 
 #if defined(_WIN64)
-typedef __int64 TK_LONG_PTR;
+typedef long long TK_LONG_PTR;
+typedef unsigned long long TK_ULONG_PTR;
 #else
-typedef _W64 long TK_LONG_PTR;
+typedef long TK_LONG_PTR;
+typedef unsigned long TK_ULONG_PTR;
 #endif
 
 #define TK_ARRAYSIZE(_ARR) ((int)(sizeof(_ARR)/sizeof(*_ARR)))

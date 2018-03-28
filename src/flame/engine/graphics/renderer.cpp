@@ -1,5 +1,5 @@
 #include <flame/engine/core/core.h>
-#include <flame/engine/core/application.h>
+#include <flame/engine/core/surface.h>
 #include <flame/engine/graphics/synchronization.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
@@ -268,7 +268,7 @@ namespace flame
 
 	void PlainRenderer::add_to_drawlist()
 	{
-		app->add_cb(cb->v);
+		add_to_draw_list(cb->v);
 	}
 
 	static Pipeline *pipeline_lines;
@@ -320,7 +320,7 @@ namespace flame
 
 	void LinesRenderer::add_to_drawlist()
 	{
-		app->add_cb(cb->v);
+		add_to_draw_list(cb->v);
 	}
 
 	struct ConstantBufferStruct
@@ -635,7 +635,7 @@ namespace flame
 		waters(MaxWaterCount),
 		shadow_lights(MaxShadowCount)
 	{
-		follow_to(app->root_node);
+		follow_to(root_node);
 		follow_to(&resolution);
 
 		if (!defe_inited)
@@ -882,7 +882,7 @@ namespace flame
 
 	DeferredRenderer::~DeferredRenderer()
 	{
-		break_link(app->root_node, this);
+		break_link(root_node, this);
 	}
 
 	void DeferredRenderer::create_resolution_related()
@@ -1518,7 +1518,7 @@ namespace flame
 	void DeferredRenderer::add_to_drawlist()
 	{
 		if (enable_shadow)
-			app->add_cb(cb_shad->v);
-		app->add_cb(cb_defe->v);
+			add_to_draw_list(cb_shad->v);
+		add_to_draw_list(cb_defe->v);
 	}
 }
