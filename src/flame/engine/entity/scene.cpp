@@ -1,9 +1,9 @@
 #include <map>
 
 #include <flame/global.h>
+#include <flame/filesystem/filesystem.h>
 #include <flame/common/math.h>
 #include <flame/common/string.h>
-#include <flame/common/filesystem.h>
 #include <flame/engine/physics/physics.h>
 #include <flame/engine/entity/camera.h>
 #include <flame/engine/entity/light.h>
@@ -571,9 +571,9 @@ namespace flame
 		auto s = new Scene;
 		s->set_filename(filename);
 
-		flame::XMLDoc at("scene", filename);
-
-		_load_node(&at, s);
+		auto xml = flame::load_xml("scene", filename);
+		_load_node(xml, s);
+		flame::release_xml(xml);
 
 		return s;
 	}
@@ -623,10 +623,8 @@ namespace flame
 
 	void save_scene(Scene *src)
 	{
-		XMLDoc at("scene");
-
-		_save_node(&at, src);
-
-		at.save(src->get_filename());
+		XMLDoc xml("scene");
+		_save_node(&xml, src);
+		save_xml(&xml, src->get_filename());
 	}
 }

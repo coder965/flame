@@ -1,5 +1,7 @@
 #pragma once
 
+#include <list>
+
 #include <flame/engine/ui/ui.h>
 
 namespace flame

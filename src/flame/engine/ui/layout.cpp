@@ -1,3 +1,4 @@
+#include <flame/filesystem/filesystem.h>
 #include <flame/engine/core/input.h>
 #include <flame/engine/core/surface.h>
 #include <flame/engine/ui/layout.h>
@@ -484,9 +485,12 @@ namespace flame
 
 		void load_layout()
 		{
-			XMLDoc doc("layout", "ui_layout.xml");
-			if (doc.good)
-				_load_layout(&doc, main_layout);
+			auto xml = load_xml("layout", "ui_layout.xml");
+			if (xml)
+			{
+				_load_layout(xml, main_layout);
+				release_xml(xml);
+			}
 			cleanup_layout();
 		}
 
@@ -533,9 +537,9 @@ namespace flame
 
 		void save_layout()
 		{
-			XMLDoc doc("layout");
-			_save_layout(&doc, main_layout);
-			doc.save("ui_layout.xml");
+			XMLDoc xml("layout");
+			_save_layout(&xml, main_layout);
+			save_xml(&xml, "ui_layout.xml");
 		}
 
 		void reset_dragging()

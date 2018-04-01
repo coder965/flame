@@ -1,11 +1,12 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <thread>
+#include <assert.h>
 
 #include <flame/global.h>
-#include <flame/common/filesystem.h>
-#include <flame/common/string.h>
-#include <flame/common/system.h>
+#include <flame/filesystem.h>
+#include <flame/string.h>
+#include <flame/system.h>
 
 namespace flame
 {
@@ -33,7 +34,7 @@ namespace flame
 		return cy;
 	}
 
-	std::string get_exe_path()
+	std::string get_app_path()
 	{
 		static std::string path;
 		if (path == "")
@@ -57,6 +58,53 @@ namespace flame
 		WaitForSingleObject(info.hProcess, INFINITE);
 	}
 
+	std::string exec_and_get_output(const std::string &filename, const std::string &command_line)
+	{
+		HANDLE g_hChildStd_OUT_Rd = NULL;
+		HANDLE g_hChildStd_OUT_Wr = NULL;
+
+		SECURITY_ATTRIBUTES saAttr;
+		saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+		saAttr.bInheritHandle = TRUE;
+		saAttr.lpSecurityDescriptor = NULL;
+
+		assert(CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0));
+
+		assert(SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0));
+
+		char cl_buf[260];
+		cl_buf[0] = 0;
+		assert(command_line.size() < sizeof(cl_buf));
+		if (filename.empty())
+			strcpy(cl_buf, filename.c_str());
+		strcat(cl_buf, command_line.c_str());
+
+		STARTUPINFO start_info = {};
+		start_info.cb = sizeof(STARTUPINFO);
+		start_info.hStdError = g_hChildStd_OUT_Wr;
+		start_info.hStdOutput = g_hChildStd_OUT_Wr;
+		start_info.dwFlags |= STARTF_USESTDHANDLES;
+		PROCESS_INFORMATION proc_info = {};
+		if (!CreateProcess(filename.empty() ? nullptr : filename.c_str(), cl_buf, NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info))
+		{
+			auto e = GetLastError();
+			assert(0);
+		}
+
+		WaitForSingleObject(proc_info.hProcess, INFINITE);
+
+		CloseHandle(proc_info.hProcess);
+		CloseHandle(proc_info.hThread);
+
+		DWORD size;
+		PeekNamedPipe(g_hChildStd_OUT_Rd, NULL, NULL, NULL, &size, NULL);
+		std::string str;
+		str.resize(size);
+		PeekNamedPipe(g_hChildStd_OUT_Rd, (void*)str.data(), size, NULL, NULL, NULL);
+
+		return str;
+	}
+
 	std::string get_clipBoard()
 	{
 		OpenClipboard(NULL);
@@ -78,9 +126,11 @@ namespace flame
 		CloseClipboard();
 	}
 
-	std::unique_ptr<FileWatcherHandler> add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback)
+	FileWatcher *add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback)
 	{
 		auto w = new FileWatcher;
+		w->dirty = false;
+		w->hEventExpired = CreateEvent(NULL, false, false, NULL);
 
 		std::thread new_thread([=]() {
 			auto dir_handle = CreateFileA(filepath.c_str(), GENERIC_READ | GENERIC_WRITE |
@@ -170,74 +220,18 @@ namespace flame
 		});
 		new_thread.detach();
 
-		auto h = std::make_unique<FileWatcherHandler>();
-		h->ptr = w;
-		return h;
+		return w;
 	}
 
-	FileWatcher::FileWatcher() :
-		dirty(false)
+	void remove_file_watcher(FileWatcher *w)
 	{
-		hEventExpired = CreateEvent(NULL, false, false, NULL);
+		SetEvent(w->hEventExpired);
+		delete w;
 	}
 
-	FileWatcherHandler::~FileWatcherHandler()
+	void read_process_memory(void *process, void *address, int size, void *dst)
 	{
-		SetEvent(ptr->hEventExpired);
-	}
-
-	std::string create_process_and_get_output(const std::string &filename, const std::string &command_line)
-	{
-		HANDLE g_hChildStd_OUT_Rd = NULL;
-		HANDLE g_hChildStd_OUT_Wr = NULL; 
-
-		SECURITY_ATTRIBUTES saAttr;
-		saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-		saAttr.bInheritHandle = TRUE;
-		saAttr.lpSecurityDescriptor = NULL; 
-
-		assert(CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0));
-
-		assert(SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0));
-
-		char cl_buf[260];
-		cl_buf[0] = 0;
-		assert(command_line.size() < sizeof(cl_buf));
-		if (filename.empty())
-			strcpy(cl_buf, filename.c_str());
-		strcat(cl_buf, command_line.c_str());
-
-		STARTUPINFO start_info = {}; 
-		start_info.cb = sizeof(STARTUPINFO);
-		start_info.hStdError = g_hChildStd_OUT_Wr;
-		start_info.hStdOutput = g_hChildStd_OUT_Wr;
-		start_info.dwFlags |= STARTF_USESTDHANDLES;
-		PROCESS_INFORMATION proc_info = {};
-		if (!CreateProcess(filename.empty() ? nullptr : filename.c_str(), cl_buf, NULL, NULL, TRUE, 0, NULL, NULL, &start_info, &proc_info))
-		{
-			auto e = GetLastError();
-			assert(0);
-		}
-
-		WaitForSingleObject(proc_info.hProcess, INFINITE);
-
-		CloseHandle(proc_info.hProcess);
-		CloseHandle(proc_info.hThread);
-
-		DWORD size;
-		PeekNamedPipe(g_hChildStd_OUT_Rd, NULL, NULL, NULL, &size, NULL);
-		std::string str;
-		str.resize(size);
-		PeekNamedPipe(g_hChildStd_OUT_Rd, (void*)str.data(), size, NULL, NULL, NULL);
-
-		return str;
-	}
-
-	std::unique_ptr<unsigned char[]> read_process_memory(void *process, void *address, int size)
-	{
-		auto m = std::make_unique<unsigned char[]>(size);
 		SIZE_T ret_byte;
-		assert(ReadProcessMemory(process, address, m.get(), size, &ret_byte));
-		return m;
+		assert(ReadProcessMemory(process, address, dst, size, &ret_byte));
 	}
 }

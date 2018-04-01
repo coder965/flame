@@ -2,24 +2,11 @@
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
-#include <flame/common/filesystem.h>
-#include <flame/common/image.h>
+#include <flame/filesystem.h>
+#include <flame/image.h>
 
 namespace flame
 {
-	int calc_pitch(int cx)
-	{
-		auto pitch = cx;
-		if (pitch % 4 == 0)
-			return pitch;
-		return pitch + 4 - pitch % 4;
-	}
-
-	int calc_pitch(int cx, int bpp)
-	{
-		return calc_pitch(cx * (bpp / 8));
-	}
-
 	Image::Image(const std::string &filename, bool raw) :
 		own_data(true)
 	{
@@ -78,26 +65,6 @@ namespace flame
 			delete[]data;
 	}
 
-	void Image::clear(float color)
-	{
-		assert(channel == 1);
-	}
-
-	void Image::clear(glm::vec2 color)
-	{
-		assert(channel == 2);
-	}
-
-	void Image::clear(glm::vec3 color)
-	{
-		assert(channel == 3);
-	}
-
-	void Image::clear(glm::vec4 color)
-	{
-		assert(channel == 4);
-	}
-
 	void Image::add_alpha_channel()
 	{
 		assert(channel == 3);
@@ -151,5 +118,46 @@ namespace flame
 		write_int(file, cy);
 		write_int(file, channel);
 		file.write((char*)data, pitch * cy);
+	}
+
+	Image *load_image(const std::string &filename)
+	{
+		auto ext = std::filesystem::path(filename).extension().string();
+		if (ext == ".rimg")
+		{
+			std::ifstream file(filename, std::ios::binary);
+			if (!file.good())
+				return nullptr;
+			cx = read_int(file);
+			cy = read_int(file);
+			channel = read_int(file);
+			bpp = channel * 8;
+			pitch = calc_pitch(cx, bpp);
+			size = pitch * cy;
+			data = new unsigned char[size];
+			file.read((char*)data, size);
+			return;
+		}
+
+		auto img = stbi_load(filename.c_str(), &cx, &cy, &channel, 0);
+		if (!img)
+			return nullptr;
+		sRGB = false;
+		bpp = channel * 8;
+		pitch = calc_pitch(cx, bpp);
+		size = pitch * cy;
+		data = new unsigned char[size];
+		memcpy(data, img, size);
+		stbi_image_free(img);
+	}
+
+	void save_image(Image *i, const std::string &filename)
+	{
+
+	}
+
+	void release_image(Image *i)
+	{
+
 	}
 }

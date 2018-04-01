@@ -5,7 +5,7 @@
 #include <map>
 #include <deque>
 #include <tuple>
-#include <flame/common/filesystem.h>
+#include <flame/filesystem/filesystem.h>
 #include <flame/common/string.h>
 #include <flame/engine/resource/resource.h>
 #include <flame/engine/graphics/buffer.h>
@@ -1289,32 +1289,30 @@ namespace flame
 			{
 				MorphHeadData data;
 				file.read((char*)&data, sizeof(MorphHeadData));
-
-				for (int j = 0; j < data.size; j++)
-					skip(file, sizeof(MorphData)); // MorphData
+				file.seekg(sizeof(MorphData) * data.size, std::ios::cur); // MorphData
 			}
 
 			auto dispMorphsListLength = read_char(file);
-			skip(file, sizeof(short) * dispMorphsListLength); //id
+			file.seekg(sizeof(short) * dispMorphsListLength, std::ios::cur); //id
 			auto dispBoneListLength = read_char(file);
-			skip(file, 50 * dispBoneListLength); // char name[50]
+			file.seekg(50 * dispBoneListLength, std::ios::cur); // char name[50]
 
 			auto dispBoneCount = read_int(file);
-			skip(file, (sizeof(short) + sizeof(char)) * dispBoneCount); // bone index, index
+			file.seekg((sizeof(short) + sizeof(char)) * dispBoneCount, std::ios::cur); // bone index, index
 
 			auto endFlag = read_char(file);
 			if (endFlag)
 			{
-				skip(file,
+				file.seekg(
 					20 + // english name
 					256 + // english comment
 					20 * boneCount + // char name[20]
 					20 * morphsCount + // char name[20]
 					50 * dispBoneListLength // char name[50]
-				);
+				, std::ios::cur);
 			}
 
-			skip(file, 10 * 100); // char toonTextureName[100] * 10
+			file.seekg(10 * 100, std::ios::cur); // char toonTextureName[100] * 10
 
 			auto rigidCount = read_int(file);
 			for (int i = 0; i < rigidCount; i++)
@@ -1426,9 +1424,9 @@ namespace flame
 
 		void load(Model *m, const std::string &filename)
 		{
-			XMLDoc at("COLLADA", filename);
+			auto xml = load_xml("COLLADA", filename);
 			XMLNode *n;
-			n = at.first_node("library_geometries"); assert(n);
+			n = xml->first_node("library_geometries"); assert(n);
 			n = n->first_node("geometry"); assert(n);
 			n = n->first_node("mesh"); assert(n);
 			std::vector<std::unique_ptr<Source>> sources;
@@ -1633,6 +1631,8 @@ namespace flame
 					}
 				}
 			}
+
+			release_xml(xml);
 
 			auto g = new Geometry;
 			g->material = default_material;

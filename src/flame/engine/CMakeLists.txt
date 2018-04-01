@@ -5,13 +5,7 @@ group_source("${FLAME_ENGINE_HEADER_LIST}" "" "Header")
 group_source("${FLAME_ENGINE_SOURCE_LIST}" "" "Source")
 
 if (FLAME_BUILD_SHARED_LIBRARY)
-	add_library(flame_engine SHARED ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST} ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h)
-	GENERATE_EXPORT_HEADER(flame_engine
-		BASE_NAME flame_engine 
-		EXPORT_MACRO_NAME FLAME_ENGINE_EXPORTS
-		EXPORT_FILE_NAME ${CMAKE_SOURCE_DIR}/src/flame/engine_exports.h
-		STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC
-	)
+	add_library(flame_engine SHARED ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST})
 else()
 	add_library(flame_engine STATIC ${FLAME_ENGINE_HEADER_LIST} ${FLAME_ENGINE_SOURCE_LIST})
 endif()
@@ -25,6 +19,7 @@ target_include_directories(flame_engine PUBLIC "${CMAKE_SOURCE_DIR}/ext/Physx-3.
 target_include_directories(flame_engine PUBLIC "${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PxShared/include")
 endif()
 
+target_link_libraries(flame_engine flame_filesystem)
 target_link_libraries(flame_engine flame_common)
 target_link_libraries(flame_engine ${CMAKE_SOURCE_DIR}/ext/bin/x${FLAME_SYS_NAME}/vulkan-1.lib)
 target_link_libraries(flame_engine imgui)

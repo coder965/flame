@@ -4,7 +4,7 @@
 
 #include <spirv_glsl.hpp>
 #include <flame/global.h>
-#include <flame/common/filesystem.h>
+#include <flame/filesystem/filesystem.h>
 #include <flame/common/system.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/graphics/descriptor.h>

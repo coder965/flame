@@ -1,6 +1,5 @@
 #pragma once
 
-#include <flame/common/filesystem.h>
 #include <flame/engine/entity/scene.h>
 #include <flame/engine/entity/camera.h>
 #include <flame/engine/entity/controller.h>

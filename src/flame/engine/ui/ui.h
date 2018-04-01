@@ -8,7 +8,6 @@
 #include <imgui_tabs.h>
 #include <IconsFontAwesome4.h>
 
-#include <flame/common/filesystem.h>
 #include <flame/common/math.h>
 #include <flame/common/system.h>
 

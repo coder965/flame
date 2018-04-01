@@ -1,6 +1,7 @@
 #include <process.h>
 #include <map>
 
+#include <flame/filesystem/filesystem.h>
 #include <flame/common/spare_list.h>
 #include <flame/common/system.h>
 #include <flame/engine/core/core.h>

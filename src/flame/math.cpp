@@ -1,55 +1,7 @@
-#include <flame/common/math.h>
+#include <flame/math.h>
 
 namespace flame
 {
-	int digit_num(int a)
-	{
-		auto d = 0;
-		do
-		{
-			d++;
-			a /= 10;
-		} while (a);
-		return d;
-	}
-
-	float linear_depth_ortho(float z, float depth_near, float depth_far)
-	{
-		z = z * 0.5 + 0.5;
-		return z * (depth_far - depth_near) + depth_near;
-	}
-
-	float linear_depth_perspective(float z, float depth_near, float depth_far)
-	{
-		float a = (1.0 - depth_far / depth_near) * 0.5 / depth_far;
-		float b = (1.0 + depth_far / depth_near) * 0.5 / depth_far;
-		return 1.0 / (a * z + b);
-	}
-
-	glm::vec3 transform(const glm::vec3 &v, const glm::mat4 &mat)
-	{
-		auto v_ = mat * glm::vec4(v, 1.f);
-		v_ /= v_.w;
-		return v_;
-	}
-
-	glm::vec4 plane(const glm::vec3 &p, const glm::vec3 &normal)
-	{
-		return glm::vec4(normal, glm::dot(normal, p));
-	}
-
-	void ortho_normalize(glm::mat3 &mat)
-	{
-		for (auto i = 0; i < 3; i++)
-			mat[i] = glm::normalize(mat[i]);
-	}
-
-	void ortho_normalize(glm::mat4 &mat)
-	{
-		for (auto i = 0; i < 3; i++)
-			mat[i] = glm::vec4(glm::normalize(glm::vec3(mat[i])), 0.f);
-	}
-
 	float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane)
 	{
 		auto numer = glm::dot(glm::vec3(plane), origin) - plane.w;
@@ -206,11 +158,6 @@ namespace flame
 		v.z = s * z + i * y - j * x;
 	}
 
-	glm::mat3 euler_to_mat3(float x, float y, float z)
-	{
-		return euler_to_mat3(glm::vec3(x, y, z));
-	}
-
 	glm::mat3 euler_to_mat3(glm::vec3 &e)
 	{
 		using namespace glm;
@@ -225,26 +172,6 @@ namespace flame
 		y = matRoll * y;
 		x = matRoll * x;
 		return glm::mat3(x, y, z);
-	}
-
-	glm::mat4 make_matrix(const glm::mat3 &rotation, const glm::vec3 coord)
-	{
-		return glm::mat4(
-			glm::vec4(rotation[0], 0.f), 
-			glm::vec4(rotation[1], 0.f), 
-			glm::vec4(rotation[2], 0.f), 
-			glm::vec4(coord, 1.f)
-		);
-	}
-
-	glm::mat4 make_matrix(const glm::vec3 &x, const glm::vec3 &y, const glm::vec3 coord)
-	{
-		return glm::mat4(
-			glm::vec4(x, 0.f),
-			glm::vec4(y, 0.f),
-			glm::vec4(glm::cross(x, y), 0.f),
-			glm::vec4(coord, 1.f)
-		);
 	}
 
 	float rand2d(const glm::vec2 &v)

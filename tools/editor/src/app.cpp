@@ -63,8 +63,8 @@ struct NewSceneDialog : flame::ui::FileSelector
 			if (std::experimental::filesystem::exists(s))
 				return false;
 
-			flame::XMLDoc doc("scene");
-			doc.save(s);
+			flame::XMLDoc xml("scene");
+			flame::save_xml(&xml, s);
 			return true;
 		};
 	}
@@ -563,10 +563,10 @@ int main(int argc, char** argv)
 	}
 
 	{
-		flame::XMLDoc doc("ui", "ui.xml");
-		if (doc.good)
+		auto xml = flame::load_xml("ui", "ui.xml");
+		if (xml)
 		{
-			for (auto &n : doc.children)
+			for (auto &n : xml->children)
 			{
 				if (n->name == "resource_explorer")
 					resourceExplorer = new ResourceExplorer;
@@ -585,28 +585,29 @@ int main(int argc, char** argv)
 					}
 				}
 			}
+			flame::release_xml(xml);
 		}
 	}
 
 	flame::add_destroy_listener([]() {
-		flame::XMLDoc doc("ui");
+		flame::XMLDoc xml("ui");
 		if (resourceExplorer)
-			doc.add_node(new flame::XMLNode("resource_explorer"));
+			xml.add_node(new flame::XMLNode("resource_explorer"));
 		if (hierarchy_window)
-			doc.add_node(new flame::XMLNode("hierarchy_window"));
+			xml.add_node(new flame::XMLNode("hierarchy_window"));
 		if (inspector_window)
-			doc.add_node(new flame::XMLNode("inspector_window"));
+			xml.add_node(new flame::XMLNode("inspector_window"));
 		if (scene_editor)
 		{
 			auto n = new flame::XMLNode("scene_editor");
 			n->add_attribute(new flame::XMLAttribute("filename", scene_editor->scene->get_filename()));
-			doc.add_node(n);
+			xml.add_node(n);
 
 			flame::save_scene(scene_editor->scene);
 		}
 		if (SelectObject)
-			doc.add_node(new flame::XMLNode("select"));
-		doc.save("ui.xml");
+			xml.add_node(new flame::XMLNode("select"));
+		flame::save_xml(&xml, "ui.xml");
 
 		flame::ui::save_layout();
 	});
