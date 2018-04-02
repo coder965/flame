@@ -3,8 +3,8 @@
 #include <memory>
 
 #include <flame/global.h>
-#include <flame/common/spare_list.h>
-#include <flame/common/math.h>
+#include <flame/spare_list.h>
+#include <flame/math.h>
 #include <flame/engine/core/object.h>
 #include <flame/engine/resource/resource.h>
 #include <flame/engine/graphics/graphics.h>

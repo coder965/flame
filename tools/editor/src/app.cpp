@@ -29,8 +29,10 @@ struct NewImageDialog : flame::ui::FileSelector
 			if (std::experimental::filesystem::exists(s))
 				return false;
 
-			auto i = new flame::Image(cx, cy, 4, 32);
-			i->save(s);
+			auto i = flame::create_image(cx, cy, 4, 32);
+			flame::save_image(i, s);
+			delete i;
+			
 			return true;
 		};
 	}
@@ -576,7 +578,7 @@ int main(int argc, char** argv)
 					inspector_window = new InspectorWindow;
 				else if (n->name == "scene_editor")
 				{
-					auto s = flame::create_scene(n->first_attribute("filename")->value);
+					auto s = flame::create_scene(n->find_attribute("filename")->value);
 					if (s)
 					{
 						s->name = "scene";
@@ -592,21 +594,21 @@ int main(int argc, char** argv)
 	flame::add_destroy_listener([]() {
 		flame::XMLDoc xml("ui");
 		if (resourceExplorer)
-			xml.add_node(new flame::XMLNode("resource_explorer"));
+			xml.children.emplace_back(new flame::XMLNode("resource_explorer"));
 		if (hierarchy_window)
-			xml.add_node(new flame::XMLNode("hierarchy_window"));
+			xml.children.emplace_back(new flame::XMLNode("hierarchy_window"));
 		if (inspector_window)
-			xml.add_node(new flame::XMLNode("inspector_window"));
+			xml.children.emplace_back(new flame::XMLNode("inspector_window"));
 		if (scene_editor)
 		{
 			auto n = new flame::XMLNode("scene_editor");
-			n->add_attribute(new flame::XMLAttribute("filename", scene_editor->scene->get_filename()));
-			xml.add_node(n);
+			n->attributes.emplace_back(new flame::XMLAttribute("filename", scene_editor->scene->get_filename()));
+			xml.children.emplace_back(n);
 
 			flame::save_scene(scene_editor->scene);
 		}
 		if (SelectObject)
-			xml.add_node(new flame::XMLNode("select"));
+			xml.children.emplace_back(new flame::XMLNode("select"));
 		flame::save_xml(&xml, "ui.xml");
 
 		flame::ui::save_layout();
@@ -618,7 +620,7 @@ int main(int argc, char** argv)
 		show_menu();
 		show_toolbar();
 
-		test_window->show();
+		//test_window->show();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		ImGui::Begin("Profile");

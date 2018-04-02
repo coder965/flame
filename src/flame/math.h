@@ -110,7 +110,7 @@ namespace flame
 	{
 		auto v_ = mat * glm::vec4(v, 1.f);
 		v_ /= v_.w;
-		return v_;
+		return glm::vec3(v_);
 	}
 
 	inline glm::vec4 plane(const glm::vec3 &p, const glm::vec3 &normal)

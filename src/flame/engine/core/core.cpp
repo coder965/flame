@@ -5,7 +5,7 @@
 #include <stack>
 
 #include <flame/global.h>
-#include <flame/common/system.h>
+#include <flame/system.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/core/input.h>
 #include <flame/engine/core/surface.h>

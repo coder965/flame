@@ -74,12 +74,12 @@ namespace flame
 	{
 		dst->content = src->value();
 		for (auto a = src->first_attribute(); a; a = a->next_attribute())
-			dst->add_attribute(new XMLAttribute(a->name(), std::string(a->value())));
+			dst->attributes.emplace_back(new XMLAttribute(a->name(), std::string(a->value())));
 
 		for (auto n = src->first_node(); n; n = n->next_sibling())
 		{
 			auto c = new XMLNode(n->name());
-			dst->add_node(c);
+			dst->children.emplace_back(c);
 			_load_XML(n, c);
 		}
 	}

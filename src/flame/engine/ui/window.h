@@ -1,6 +1,6 @@
 #pragma once
 
-#include <flame/filesystem/filesystem.h>
+#include <flame/filesystem.h>
 #include <flame/engine/ui/ui.h>
 #include <flame/engine/ui/layout.h>
 

@@ -6,8 +6,6 @@
 #include <filesystem>
 #include <memory>
 
-#include <flame/math.h> // opt: should we not include this?
-
 namespace std
 {
 	namespace filesystem = experimental::filesystem;
@@ -165,13 +163,6 @@ namespace flame
 		return std::make_pair(std::unique_ptr<char[]>(data), length);
 	}
 
-	inline std::string ftos(float v)
-	{
-		auto str = std::to_string(v);
-		str.erase(str.find_last_not_of('0') + 1, std::string::npos);
-		return str;
-	}
-
 	struct XMLAttribute
 	{
 		std::string name;
@@ -179,180 +170,10 @@ namespace flame
 
 		XMLAttribute() {}
 
-		XMLAttribute(const std::string &_name, bool v) :
-			name(_name)
+		XMLAttribute(const std::string &_name = "", const std::string &_value = "") :
+			name(_name),
+			value(_value)
 		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, int v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const glm::ivec2 &v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const glm::ivec3 &v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const glm::ivec4 &v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, float v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const glm::vec2 &v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const glm::vec3 &v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const glm::vec4 &v) :
-			name(_name)
-		{
-			set(v);
-		}
-
-		XMLAttribute(const std::string &_name, const char *v) :
-			name(_name), value(v)
-		{
-		}
-
-		XMLAttribute(const std::string &_name, const std::string &v) :
-			name(_name), value(v)
-		{
-		}
-
-		void set(bool v)
-		{
-			value = v ? "true" : "false";
-		}
-
-		void set(int v)
-		{
-			value = std::to_string(v);
-		}
-
-		void set(const glm::ivec2 &v)
-		{
-			value = std::to_string(v.x) + "/" + std::to_string(v.y);
-		}
-
-		void set(const glm::ivec3 &v)
-		{
-			value = std::to_string(v.x) + "/" + std::to_string(v.y) + "/" + std::to_string(v.z);
-		}
-
-		void set(const glm::ivec4 &v)
-		{
-			value = std::to_string(v.x) + "/" + std::to_string(v.y) + "/" + std::to_string(v.z) + "/" + std::to_string(v.w);
-		}
-
-		void set(float v)
-		{
-			value = ftos(v);
-		}
-
-		void set(const glm::vec2 &v)
-		{
-			value = ftos(v.x) + "/" + ftos(v.y);
-		}
-
-		void set(const glm::vec3 &v)
-		{
-			value = ftos(v.x) + "/" + ftos(v.y) + "/" + ftos(v.z);
-		}
-
-		void set(const glm::vec4 &v)
-		{
-			value = ftos(v.x) + "/" + ftos(v.y) + "/" + ftos(v.z) + "/" + ftos(v.w);
-		}
-
-		void set(const std::string &v)
-		{
-			value = v;
-		}
-
-		bool get_bool() const
-		{
-			return value == "true";
-		}
-
-		int get_int() const
-		{
-			return std::stoi(value);
-		}
-
-		glm::ivec2 get_int2() const
-		{
-			glm::ivec2 v;
-			assert(sscanf(value.c_str(), "%d/%d", &v.x, &v.y) == 2);
-			return v;
-		}
-
-		glm::ivec3 get_int3() const
-		{
-			glm::ivec3 v;
-			assert(sscanf(value.c_str(), "%d/%d/%d", &v.x, &v.y, &v.z) == 3);
-			return v;
-		}
-
-		glm::ivec4 get_int4() const
-		{
-			glm::ivec4 v;
-			assert(sscanf(value.c_str(), "%d/%d/%d/%d", &v.x, &v.y, &v.z, &v.w) == 4);
-			return v;
-		}
-
-		float get_float() const
-		{
-			return std::stof(value);
-		}
-
-		glm::vec2 get_float2() const
-		{
-			glm::vec2 v;
-			assert(sscanf(value.c_str(), "%f/%f", &v.x, &v.y) == 2);
-			return v;
-		}
-
-		glm::vec3 get_float3() const
-		{
-			glm::vec3 v;
-			assert(sscanf(value.c_str(), "%f/%f/%f", &v.x, &v.y, &v.z) == 3);
-			return v;
-		}
-
-		glm::vec4 get_float4() const
-		{
-			glm::vec4 v;
-			assert(sscanf(value.c_str(), "%f/%f/%f/%f", &v.x, &v.y, &v.z, &v.w) == 4);
-			return v;
-		}
-
-		std::string get_string() const
-		{
-			return value;
 		}
 	};
 
@@ -371,12 +192,7 @@ namespace flame
 		{
 		}
 
-		void add_attribute(XMLAttribute *a)
-		{
-			attributes.emplace_back(a);
-		}
-
-		XMLAttribute *first_attribute(const std::string &_name) const
+		XMLAttribute *find_attribute(const std::string &_name) const
 		{
 			for (auto &a : attributes)
 			{
@@ -386,82 +202,7 @@ namespace flame
 			return nullptr;
 		}
 
-		void get_attribute_bool(const std::string &_name, bool &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_bool();
-		}
-
-		void get_attribute_int(const std::string &_name, int &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_int();
-		}
-
-		void get_attribute_int2(const std::string &_name, glm::ivec2 &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_int2();
-		}
-
-		void get_attribute_int3(const std::string &_name, glm::ivec3 &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_int3();
-		}
-
-		void get_attribute_int4(const std::string &_name, glm::ivec4 &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_int4();
-		}
-
-		void get_attribute_float(const std::string &_name, float &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_float();
-		}
-
-		void get_attribute_float2(const std::string &_name, glm::vec2 &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_float2();
-		}
-
-		void get_attribute_float3(const std::string &_name, glm::vec3 &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_float3();
-		}
-
-		void get_attribute_float4(const std::string &_name, glm::vec4 &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_float4();
-		}
-
-		void get_attribute_string(const std::string &_name, std::string &dst) const
-		{
-			auto a = first_attribute(_name);
-			if (a)
-				dst = a->get_string();
-		}
-
-		void add_node(XMLNode *n)
-		{
-			children.emplace_back(n);
-		}
-
-		XMLNode *first_node(const std::string &_name) const
+		XMLNode *find_node(const std::string &_name) const
 		{
 			for (auto &c : children)
 			{

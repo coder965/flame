@@ -8,8 +8,8 @@
 #include <imgui_tabs.h>
 #include <IconsFontAwesome4.h>
 
-#include <flame/common/math.h>
-#include <flame/common/system.h>
+#include <flame/math.h>
+#include <flame/system.h>
 
 namespace flame
 {

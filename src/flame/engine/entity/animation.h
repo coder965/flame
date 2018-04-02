@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-#include <flame/common/math.h>
+#include <flame/math.h>
 
 namespace flame
 {

@@ -1,9 +1,10 @@
 #include <map>
 
 #include <flame/global.h>
-#include <flame/filesystem/filesystem.h>
-#include <flame/common/math.h>
-#include <flame/common/string.h>
+#include <flame/string.h>
+#include <flame/filesystem.h>
+#include <flame/serialize_math.h>
+#include <flame/math.h>
 #include <flame/engine/physics/physics.h>
 #include <flame/engine/entity/camera.h>
 #include <flame/engine/entity/light.h>
@@ -529,7 +530,7 @@ namespace flame
 		{
 			if (nn->name == "component")
 			{
-				auto type_name = nn->first_attribute("component_type")->get_string(); // required
+				auto type_name = nn->find_attribute("component_type")->value; // required
 				Component *c = nullptr;
 				if (type_name == "controller")
 					c = new ControllerComponent;
@@ -550,10 +551,17 @@ namespace flame
 			else if (nn->name == "node")
 			{
 				auto n = new Node(NodeTypeNode);
-				n->name = nn->first_attribute("name")->get_string(); // required
-				n->set_coord(nn->first_attribute("coord")->get_float3()); // required
-				n->set_euler(nn->first_attribute("euler")->get_float3()); // required
-				n->set_scale(nn->first_attribute("scale")->get_float3()); // required
+				for (auto &a : nn->attributes)
+				{
+					if (a->name == "name")
+						n->name = a->value;
+					else if (a->name == "coord")
+						n->set_coord(to_float3(a->value));
+					else if (a->name == "euler")
+						n->set_euler(to_float3(a->value));
+					else if (a->name == "scale")
+						n->set_scale(to_float3(a->value));
+				}
 				dst->add_child(n);
 				_load_node(nn.get(), n);
 			}
@@ -605,18 +613,18 @@ namespace flame
 					type_name = "water";
 					break;
 			}
-			nn->add_attribute(new XMLAttribute("component_type", type_name));
+			nn->attributes.emplace_back(new XMLAttribute("component_type", type_name));
 			c->serialize(nn);
-			dst->add_node(nn);
+			dst->children.emplace_back(nn);
 		}
 		for (auto &c : src->get_children())
 		{
 			auto n = new XMLNode("node");
-			n->add_attribute(new XMLAttribute("name", c->name));
-			n->add_attribute(new XMLAttribute("coord", c->get_coord()));
-			n->add_attribute(new XMLAttribute("euler", c->get_euler()));
-			n->add_attribute(new XMLAttribute("scale", c->get_scale()));
-			dst->add_node(n);
+			n->attributes.emplace_back(new XMLAttribute("name", c->name));
+			n->attributes.emplace_back(new XMLAttribute("coord", to_str(c->get_coord())));
+			n->attributes.emplace_back(new XMLAttribute("euler", to_str(c->get_euler())));
+			n->attributes.emplace_back(new XMLAttribute("scale", to_str(c->get_scale())));
+			dst->children.emplace_back(n);
 			_save_node(n, c.get());
 		}
 	}

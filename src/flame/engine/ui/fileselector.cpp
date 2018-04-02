@@ -1,5 +1,5 @@
 #include <flame/global.h>
-#include <flame/common/string.h>
+#include <flame/string.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/ui/fileselector.h>
 
@@ -28,6 +28,8 @@ namespace flame
 			tree_mode(flags & FileSelectorTreeMode),
 			splitter(true)
 		{
+			file_watcher = nullptr;
+
 			splitter.size[0] = 300;
 			filename[0] = 0;
 			if (_default_dir != "")
@@ -36,7 +38,7 @@ namespace flame
 				set_current_path(default_dir);
 			}
 			else
-				set_current_path(get_exe_path());
+				set_current_path(get_app_path());
 
 			if (tree_mode)
 			{
@@ -112,6 +114,8 @@ namespace flame
 				curr_dir.name = ICON_FA_FOLDER_O" " + str;
 			}
 
+			if (file_watcher)
+				remove_file_watcher(file_watcher);
 			file_watcher = add_file_watcher(FileWatcherModeAll, s);
 		}
 
@@ -205,9 +209,9 @@ namespace flame
 
 		void FileSelector::on_show()
 		{
-			if (file_watcher->ptr->dirty)
+			if (file_watcher->dirty)
 			{
-				file_watcher->ptr->dirty = false;
+				file_watcher->dirty = false;
 				need_refresh = true;
 			}
 			if (need_refresh)

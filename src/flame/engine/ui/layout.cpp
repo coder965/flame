@@ -1,4 +1,5 @@
-#include <flame/filesystem/filesystem.h>
+#include <flame/serialize.h>
+#include <flame/filesystem.h>
 #include <flame/engine/core/input.h>
 #include <flame/engine/core/surface.h>
 #include <flame/engine/ui/layout.h>
@@ -431,17 +432,23 @@ namespace flame
 
 		static void _load_layout(XMLNode *n, Layout *layout)
 		{
-			auto mode_name = n->first_attribute("mode")->get_string();
-			if (mode_name == "horizontal")
-				layout->type = LayoutHorizontal;
-			else if (mode_name == "vertical")
-				layout->type = LayoutVertical;
-			else if (mode_name == "center")
-				layout->type = LayoutCenter;
-			else
-				assert(0); // vaild name required
+			for (auto &a : n->attributes)
+			{
+				if (a->name == "mode")
+				{
+					if (a->value == "horizontal")
+						layout->type = LayoutHorizontal;
+					else if (a->value == "vertical")
+						layout->type = LayoutVertical;
+					else if (a->value == "center")
+						layout->type = LayoutCenter;
+					else
+						assert(0); // vaild name required
+				}
+				else if (a->name == "size_radio")
+					layout->size_radio = to_float(a->value);
+			}
 
-			layout->size_radio = n->first_attribute("size_radio")->get_float();
 			layout->splitter.set_vertically(layout->type == LayoutHorizontal);
 			layout->set_size();
 
@@ -450,7 +457,7 @@ namespace flame
 				auto c = n->children[i].get();
 				if (c->name == "node")
 				{
-					auto type_name = c->first_attribute("type")->get_string();
+					auto type_name = c->find_attribute("type")->value;
 					if (type_name == "layout")
 					{
 						auto l = new Layout;
@@ -463,7 +470,7 @@ namespace flame
 						{
 							if (cc->name == "window")
 							{
-								auto window_name = cc->first_attribute("name")->get_string();
+								auto window_name = cc->find_attribute("name")->value;
 								for (auto &w : get_windows())
 								{
 									if (w->title == window_name)
@@ -509,27 +516,27 @@ namespace flame
 					mode_name = "center";
 					break;
 			}
-			n->add_attribute(new XMLAttribute("mode", mode_name));
+			n->attributes.emplace_back(new XMLAttribute("mode", mode_name));
 
-			n->add_attribute(new XMLAttribute("size_radio", layout->size_radio));
+			n->attributes.emplace_back(new XMLAttribute("size_radio", to_str(layout->size_radio)));
 
 			for (int i = 0; i < 2; i++)
 			{
 				auto c = new XMLNode("node");
-				n->add_node(c);
+				n->children.emplace_back(c);
 				if (layout->children[i])
 				{
-					c->add_attribute(new XMLAttribute("type", "layout"));
+					c->attributes.emplace_back(new XMLAttribute("type", "layout"));
 					_save_layout(c, layout->children[i].get());
 				}
 				else
 				{
-					c->add_attribute(new XMLAttribute("type", "windows"));
+					c->attributes.emplace_back(new XMLAttribute("type", "windows"));
 					for (auto w : layout->windows[i])
 					{
 						auto window_node = new XMLNode("window");
-						window_node->add_attribute(new XMLAttribute("name", w->title));
-						c->add_node(window_node);
+						window_node->attributes.emplace_back(new XMLAttribute("name", w->title));
+						c->children.emplace_back(window_node);
 					}
 				}
 			}

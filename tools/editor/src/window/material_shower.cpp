@@ -1,4 +1,4 @@
-#include <flame/common/filesystem.h>
+#include <flame/filesystem.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/material.h>
 #include <flame/engine/ui/ui.h>

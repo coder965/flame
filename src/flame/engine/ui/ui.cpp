@@ -1,9 +1,9 @@
 #include <process.h>
 #include <map>
 
-#include <flame/filesystem/filesystem.h>
-#include <flame/common/spare_list.h>
-#include <flame/common/system.h>
+#include <flame/filesystem.h>
+#include <flame/spare_list.h>
+#include <flame/system.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
@@ -378,16 +378,17 @@ namespace flame
 				exec("sdf_generator", cl.c_str());
 			}
 
-			Image sdf("sdf.rimg", true);
-			sdf.add_alpha_channel();
-
 			{
-				sdf_font_image = new Texture(TextureTypeImage, sdf.cx, sdf.cy, VK_FORMAT_R8G8B8A8_UNORM, 0);
+				auto sdf_image = load_image("sdf.rimg");
+				sdf_image->add_alpha_channel();
+				sdf_font_image = new Texture(TextureTypeImage, sdf_image->cx, sdf_image->cy, VK_FORMAT_R8G8B8A8_UNORM, 0);
 
 				Buffer staging_buffer(BufferTypeStaging, sdf_font_image->total_size);
 				staging_buffer.map();
-				memcpy(staging_buffer.mapped, sdf.data, staging_buffer.size);
+				memcpy(staging_buffer.mapped, sdf_image->data, staging_buffer.size);
 				staging_buffer.unmap();
+
+				release_image(sdf_image);
 
 				VkBufferImageCopy r = {};
 				r.imageExtent.width = sdf_font_image->get_cx();

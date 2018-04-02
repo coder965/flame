@@ -4,8 +4,8 @@
 
 #include <spirv_glsl.hpp>
 #include <flame/global.h>
-#include <flame/filesystem/filesystem.h>
-#include <flame/common/system.h>
+#include <flame/filesystem.h>
+#include <flame/system.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/graphics/descriptor.h>
 #include <flame/engine/graphics/shader.h>
@@ -84,7 +84,7 @@ namespace flame
 			command_line += " -flimit-file ";
 			command_line += shader_path + "src/shader_compile_config.conf";
 			command_line += " -o temp.spv";
-			auto output = create_process_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
+			auto output = exec_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
 			std::filesystem::remove(temp_filename);
 			if (!std::filesystem::exists("temp.spv"))
 			{
@@ -145,35 +145,35 @@ namespace flame
 		{
 			std::ifstream resFile(res_filename, std::ios::binary);
 
-			auto ubo_count = read_int(resFile);
+			auto ubo_count = read<int>(resFile);
 			for (auto i = 0; i < ubo_count; i++)
 			{
-				auto set = read_int(resFile);
+				auto set = read<int>(resFile);
 				if (set >= descriptor_sets.size())
 					descriptor_sets.resize(set + 1);
 
 				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				d->name = read_string(resFile);
-				d->binding = read_int(resFile);
-				d->count = read_int(resFile);
+				d->binding = read<int>(resFile);
+				d->count = read<int>(resFile);
 				descriptor_sets[set].emplace_back(d);
 			}
-			auto image_count = read_int(resFile);
+			auto image_count = read<int>(resFile);
 			for (int i = 0; i < image_count; i++)
 			{
-				auto set = read_int(resFile);
+				auto set = read<int>(resFile);
 				if (set >= descriptor_sets.size())
 					descriptor_sets.resize(set + 1);
 
 				auto d = new Descriptor;
 				d->type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				d->name = read_string(resFile);
-				d->binding = read_int(resFile);
-				d->count = read_int(resFile);
+				d->binding = read<int>(resFile);
+				d->count = read<int>(resFile);
 				descriptor_sets[set].emplace_back(d);
 			}
-			push_constant_size = read_int(resFile);
+			push_constant_size = read<int>(resFile);
 		}
 		else
 		{
@@ -191,7 +191,7 @@ namespace flame
 				auto set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
 				if (set >= descriptor_sets.size())
 					descriptor_sets.resize(set + 1);
-				write_int(res_file, set);
+				write<int>(res_file, set);
 
 				auto d = new Descriptor;
 				d->type = desc_type;
@@ -202,20 +202,20 @@ namespace flame
 				descriptor_sets[set].emplace_back(d);
 
 				write_string(res_file, d->name);
-				write_int(res_file, d->binding);
-				write_int(res_file, d->count);
+				write<int>(res_file, d->binding);
+				write<int>(res_file, d->count);
 			};
 
-			write_int(res_file, resources.uniform_buffers.size());
+			write<int>(res_file, resources.uniform_buffers.size());
 			for (auto &r : resources.uniform_buffers)
 				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, r);
-			write_int(res_file, resources.sampled_images.size());
+			write<int>(res_file, resources.sampled_images.size());
 			for (auto &r : resources.sampled_images)
 				_process_descriptor_resource(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, r);
 
 			for (auto &r : resources.push_constant_buffers)
 				push_constant_size = glsl.get_declared_struct_size(glsl.get_type(r.type_id));
-			write_int(res_file, push_constant_size);
+			write<int>(res_file, push_constant_size);
 		}
 
 		for (auto p : referencing_pipelines)
@@ -249,7 +249,7 @@ namespace flame
 		return s;
 	}
 
-	std::unique_ptr<FileWatcherHandler> shader_change_watcher;
+	FileWatcher *shader_change_watcher = nullptr;
 
 	void init_shader()
 	{

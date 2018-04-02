@@ -5,8 +5,9 @@
 #include <map>
 #include <deque>
 #include <tuple>
-#include <flame/filesystem/filesystem.h>
-#include <flame/common/string.h>
+
+#include <flame/string.h>
+#include <flame/filesystem.h>
 #include <flame/engine/resource/resource.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
@@ -1205,7 +1206,7 @@ namespace flame
 			Header header;
 			file.read((char*)&header, sizeof(Header));
 
-			auto vertex_count = read_int(file);
+			auto vertex_count = read<int>(file);
 			m->vertexes.resize(vertex_count);
 			m->vertexes_skeleton.resize(vertex_count);
 			for (int i = 0; i < vertex_count; i++)
@@ -1225,16 +1226,16 @@ namespace flame
 				m->vertexes_skeleton[i].bone_ID.y = data.boneID1;
 			}
 
-			auto indice_count = read_int(file);
+			auto indice_count = read<int>(file);
 			m->indices.resize(indice_count);
 			for (int i = 0; i < indice_count; i += 3)
 			{
-				m->indices[i + 0] = (unsigned short)read_short(file);
-				m->indices[i + 2] = (unsigned short)read_short(file);
-				m->indices[i + 1] = (unsigned short)read_short(file);
+				m->indices[i + 0] = (unsigned short)read<short>(file);
+				m->indices[i + 2] = (unsigned short)read<short>(file);
+				m->indices[i + 1] = (unsigned short)read<short>(file);
 			}
 
-			auto materialCount = read_int(file);
+			auto materialCount = read<int>(file);
 			int currentIndiceVertex = 0;
 			for (int i = 0; i < materialCount; i++)
 			{
@@ -1252,7 +1253,7 @@ namespace flame
 				m->geometries.emplace_back(g);
 			}
 
-			unsigned short boneCount = read_short(file);
+			unsigned short boneCount = read<short>(file);
 			for (int i = 0; i < boneCount; i++)
 			{
 				BoneData data;
@@ -1267,7 +1268,7 @@ namespace flame
 				b->rootCoord.z *= -1.f;
 			}
 
-			unsigned short ikCount = read_short(file);
+			unsigned short ikCount = read<short>(file);
 			for (int i = 0; i < ikCount; i++)
 			{
 				IkData data;
@@ -1281,10 +1282,10 @@ namespace flame
 				b->weight = data.weight;
 				b->chain.resize(data.chainLength);
 				for (int j = 0; j < data.chainLength; j++)
-					b->chain[j] = read_short(file); // bone id
+					b->chain[j] = read<short>(file); // bone id
 			}
 
-			unsigned short morphsCount = read_short(file);
+			unsigned short morphsCount = read<short>(file);
 			for (int i = 0; i < morphsCount; i++)
 			{
 				MorphHeadData data;
@@ -1292,15 +1293,15 @@ namespace flame
 				file.seekg(sizeof(MorphData) * data.size, std::ios::cur); // MorphData
 			}
 
-			auto dispMorphsListLength = read_char(file);
+			auto dispMorphsListLength = read<char>(file);
 			file.seekg(sizeof(short) * dispMorphsListLength, std::ios::cur); //id
-			auto dispBoneListLength = read_char(file);
+			auto dispBoneListLength = read<char>(file);
 			file.seekg(50 * dispBoneListLength, std::ios::cur); // char name[50]
 
-			auto dispBoneCount = read_int(file);
+			auto dispBoneCount = read<int>(file);
 			file.seekg((sizeof(short) + sizeof(char)) * dispBoneCount, std::ios::cur); // bone index, index
 
-			auto endFlag = read_char(file);
+			auto endFlag = read<char>(file);
 			if (endFlag)
 			{
 				file.seekg(
@@ -1314,7 +1315,7 @@ namespace flame
 
 			file.seekg(10 * 100, std::ios::cur); // char toonTextureName[100] * 10
 
-			auto rigidCount = read_int(file);
+			auto rigidCount = read<int>(file);
 			for (int i = 0; i < rigidCount; i++)
 			{
 				RigidData data;
@@ -1361,7 +1362,7 @@ namespace flame
 				#endif
 			}
 
-			auto jointCount = read_int(file);
+			auto jointCount = read<int>(file);
 			for (int i = 0; i < jointCount; i++)
 			{
 				JointData data;
@@ -1426,9 +1427,9 @@ namespace flame
 		{
 			auto xml = load_xml("COLLADA", filename);
 			XMLNode *n;
-			n = xml->first_node("library_geometries"); assert(n);
-			n = n->first_node("geometry"); assert(n);
-			n = n->first_node("mesh"); assert(n);
+			n = xml->find_node("library_geometries"); assert(n);
+			n = n->find_node("geometry"); assert(n);
+			n = n->find_node("mesh"); assert(n);
 			std::vector<std::unique_ptr<Source>> sources;
 			VertexInfo vertex_info;
 
@@ -1439,10 +1440,10 @@ namespace flame
 					XMLNode *n;
 					XMLAttribute *a;
 					auto s = new Source;
-					a = c->first_attribute("id"); assert(a);
+					a = c->find_attribute("id"); assert(a);
 					s->id = a->value;
-					n = c->first_node("float_array"); assert(n);
-					a = n->first_attribute("count"); assert(a);
+					n = c->find_node("float_array"); assert(n);
+					a = n->find_attribute("count"); assert(a);
 					auto count = std::stoi(a->value);
 					s->float_array = new float[count];
 					auto str = n->content;
@@ -1461,10 +1462,10 @@ namespace flame
 					{
 						if (cc->name == "input")
 						{
-							auto a = cc->first_attribute("semantic"); assert(a);
+							auto a = cc->find_attribute("semantic"); assert(a);
 							if (a->value == "POSITION")
 							{
-								a = cc->first_attribute("source"); assert(a);
+								a = cc->find_attribute("source"); assert(a);
 								auto id = getId(a->value);
 								for (int i = 0; i < sources.size(); i++)
 								{
@@ -1493,7 +1494,7 @@ namespace flame
 						if (cc->name == "input")
 						{
 							XMLAttribute *a;
-							a = cc->first_attribute("source"); assert(a);
+							a = cc->find_attribute("source"); assert(a);
 							auto id = getId(a->value);
 							int source_index = -1;
 							for (int i = 0; i < sources.size(); i++)
@@ -1504,9 +1505,9 @@ namespace flame
 									break;
 								}
 							}
-							a = cc->first_attribute("offset"); assert(a);
+							a = cc->find_attribute("offset"); assert(a);
 							auto offset = std::stoi(a->value);
-							a = cc->first_attribute("semantic"); assert(a);
+							a = cc->find_attribute("semantic"); assert(a);
 							if (a->value == "VERTEX")
 							{
 								position_source_index = vertex_info.position_source_index;
@@ -1649,10 +1650,10 @@ namespace flame
 		{
 			std::ifstream file(filename, std::ios::binary);
 
-			bool animated = read_char(file);
+			bool animated = read<char>(file);
 
-			auto vertex_count = read_int(file);
-			auto indice_count = read_int(file);
+			auto vertex_count = read<int>(file);
+			auto indice_count = read<int>(file);
 			if (vertex_count > 0)
 			{
 				m->vertexes.resize(vertex_count);
@@ -1669,12 +1670,12 @@ namespace flame
 				file.read((char*)m->indices.data(), sizeof(int) * indice_count);
 			}
 
-			auto geometryCount = read_int(file);
+			auto geometryCount = read<int>(file);
 			for (int i = 0; i < geometryCount; i++)
 			{
-				auto albedo_alpha = read_float4(file);
-				auto spec = read_float(file);
-				auto roughness = read_float(file);
+				auto albedo_alpha = read<glm::vec4>(file);
+				auto spec = read<float>(file);
+				auto roughness = read<float>(file);
 				auto albedoAlphaMapName = read_string(file);
 				auto specRoughnessMapName = read_string(file);
 				auto normalHeightMapName = read_string(file);
@@ -1684,35 +1685,35 @@ namespace flame
 					m->filepath + "/" + albedoAlphaMapName,
 					m->filepath + "/" + specRoughnessMapName,
 					m->filepath + "/" + normalHeightMapName);
-				g->indiceBase = read_int(file);
-				g->indiceCount = read_int(file);
+				g->indiceBase = read<int>(file);
+				g->indiceCount = read<int>(file);
 
 				m->geometries.emplace_back(g);
 			}
 
-			auto boneCount = read_int(file);
+			auto boneCount = read<int>(file);
 			for (int i = 0; i < boneCount; i++)
 			{
 				auto b = m->new_bone();
 
 				b->name = read_string(file);
-				b->type = read_char(file);
-				b->parent = read_int(file);
-				b->rootCoord = read_float3(file);
+				b->type = read<char>(file);
+				b->parent = read<int>(file);
+				b->rootCoord = read<glm::vec3>(file);
 			}
 
-			auto ikCount = read_int(file);
+			auto ikCount = read<int>(file);
 			m->iks.resize(boneCount);
 			for (int i = 0; i < ikCount; i++)
 			{
 				auto b = m->new_bone_ik();
 
-				b->targetID = read_int(file);
-				b->effectorID = read_int(file);
-				b->iterations = read_short(file);
-				b->weight = read_float(file);
+				b->targetID = read<int>(file);
+				b->effectorID = read<int>(file);
+				b->iterations = read<short>(file);
+				b->weight = read<float>(file);
 
-				b->chain.resize(read_int(file));
+				b->chain.resize(read<int>(file));
 				file.read((char*)b->chain.data(), sizeof(int) * b->chain.size());
 			}
 
@@ -1773,13 +1774,13 @@ namespace flame
 			}
 			#endif
 
-			m->bounding_position = read_float3(file);
-			m->bounding_size = read_float(file);
+			m->bounding_position = read<glm::vec3>(file);
+			m->bounding_size = read<float>(file);
 
-			m->controller_height = read_float(file);
-			m->controller_radius = read_float(file);
+			m->controller_height = read<float>(file);
+			m->controller_radius = read<float>(file);
 
-			m->eye_position = read_float3(file);
+			m->eye_position = read<glm::vec3>(file);
 
 			_process_model(m, false);
 		}
@@ -1788,10 +1789,10 @@ namespace flame
 		{
 			std::ofstream file(filename, std::ios::binary);
 
-			write_char(file, m->vertexes_skeleton.size() > 0);
+			write<char>(file, m->vertexes_skeleton.size() > 0);
 
-			write_int(file, m->vertexes.size());
-			write_int(file, m->indices.size());
+			write<int>(file, m->vertexes.size());
+			write<int>(file, m->indices.size());
 			if (m->vertexes.size() > 0)
 			{
 				file.write((char*)m->vertexes.data(), sizeof(ModelVertex) * m->vertexes.size());
@@ -1801,38 +1802,38 @@ namespace flame
 			if (m->indices.size() > 0)
 				file.write((char*)m->indices.data(), sizeof(int) * m->indices.size());
 
-			write_int(file, m->geometries.size());
+			write<int>(file, m->geometries.size());
 			for (auto &g : m->geometries)
 			{
-				write_float4(file, g->material->get_albedo_alpha());
-				write_float(file, g->material->get_spec());
-				write_float(file, g->material->get_roughness());
+				write<glm::vec4>(file, g->material->get_albedo_alpha());
+				write<float>(file, g->material->get_spec());
+				write<float>(file, g->material->get_roughness());
 				write_string(file, g->material->get_albedo_alpha_map_name());
 				write_string(file, g->material->get_spec_roughness_map_name());
 				write_string(file, g->material->get_normal_height_map_name());
 
-				write_int(file, g->indiceBase);
-				write_int(file, g->indiceCount);
+				write<int>(file, g->indiceBase);
+				write<int>(file, g->indiceCount);
 			}
 
-			write_int(file, m->bones.size());
+			write<int>(file, m->bones.size());
 			for (auto &b : m->bones)
 			{
 				write_string(file, b->name);
-				write_char(file, b->type);
-				write_int(file, b->parent);
-				write_float3(file, b->rootCoord);
+				write<char>(file, b->type);
+				write<int>(file, b->parent);
+				write<glm::vec3>(file, b->rootCoord);
 			}
 
-			write_int(file, m->iks.size());
+			write<int>(file, m->iks.size());
 			for (auto &b : m->iks)
 			{
-				write_int(file, b->targetID);
-				write_int(file, b->effectorID);
-				write_short(file, b->iterations);
-				write_float(file, b->weight);
+				write<int>(file, b->targetID);
+				write<int>(file, b->effectorID);
+				write<short>(file, b->iterations);
+				write<float>(file, b->weight);
 
-				write_int(file, b->chain.size());
+				write<int>(file, b->chain.size());
 				file.write((char*)b->chain.data(), sizeof(int) * b->chain.size());
 			}
 
@@ -1889,13 +1890,13 @@ namespace flame
 			}
 			#endif
 
-			write_float3(file, m->bounding_position);
-			write_float(file, m->bounding_size);
+			write<glm::vec3>(file, m->bounding_position);
+			write<float>(file, m->bounding_size);
 
-			write_float(file, m->controller_height);
-			write_float(file, m->controller_radius);
+			write<float>(file, m->controller_height);
+			write<float>(file, m->controller_radius);
 
-			write_float3(file, m->eye_position);
+			write<glm::vec3>(file, m->eye_position);
 		}
 	}
 

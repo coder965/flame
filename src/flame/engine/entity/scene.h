@@ -1,6 +1,6 @@
 #pragma once
 
-#include <flame/common/math.h>
+#include <flame/math.h>
 #include <flame/engine/entity/node.h>
 #include <flame/engine/entity/camera.h>
 #include <flame/engine/entity/light.h>

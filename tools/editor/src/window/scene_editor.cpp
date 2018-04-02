@@ -1,5 +1,5 @@
 #include <flame/global.h>
-#include <flame/common/filesystem.h>
+#include <flame/filesystem.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/core/input.h>
 #include <flame/engine/graphics/buffer.h>
@@ -460,5 +460,5 @@ void SceneEditor::on_show()
 
 void SceneEditor::save(flame::XMLNode *n)
 {
-	n->add_attribute(new flame::XMLAttribute("filename", scene->get_filename()));
+	n->attributes.emplace_back(new flame::XMLAttribute("filename", scene->get_filename()));
 }

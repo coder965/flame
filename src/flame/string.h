@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <locale>
+
 #include <flame/exports.h>
 
 inline constexpr unsigned int _HASH(char const * str, unsigned int seed)
@@ -16,8 +19,6 @@ struct EnsureConst
 };
 
 #define CHASH(x) (EnsureConst<_HASH(x, 0)>::value)
-
-#include <string>
 
 namespace flame
 {

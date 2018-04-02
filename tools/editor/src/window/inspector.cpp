@@ -1,5 +1,6 @@
 #include <flame/global.h>
-#include <flame/common/string.h>
+#include <flame/string.h>
+#include <flame/filesystem.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/material.h>
 #include <flame/engine/entity/model.h>

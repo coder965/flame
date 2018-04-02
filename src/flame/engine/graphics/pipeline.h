@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <flame/common/math.h>
+#include <flame/math.h>
 #include <flame/engine/graphics/graphics.h>
 
 namespace flame

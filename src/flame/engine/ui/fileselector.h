@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flame/filesystem.h>
+#include <flame/system.h>
 #include <flame/engine/ui/window.h>
 
 namespace flame
@@ -68,7 +70,7 @@ namespace flame
 
 			std::function<bool(std::string)> callback;
 
-			std::unique_ptr<FileWatcherHandler> file_watcher;
+			FileWatcher *file_watcher;
 
 			std::shared_ptr<Texture> folder_image;
 			std::shared_ptr<Texture> file_image;

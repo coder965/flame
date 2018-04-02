@@ -2,8 +2,9 @@
 #include <map>
 
 #include <flame/global.h>
-#include <flame/filesystem/filesystem.h>
-#include <flame/common/string.h>
+#include <flame/string.h>
+#include <flame/math.h>
+#include <flame/filesystem.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/entity/model.h>
@@ -99,7 +100,7 @@ namespace flame
 			Header header;
 			file.read((char*)&header, sizeof(Header));
 
-			int count = read_int(file);
+			auto count = read<int>(file);
 			for (auto i = 0; i < count; i++)
 			{
 				KeyFrameData data;
@@ -136,18 +137,18 @@ namespace flame
 		{
 			std::ifstream file(filename, std::ios::binary);
 
-			auto track_count = read_int(file);
+			auto track_count = read<int>(file);
 			for (auto i = 0; i < track_count; i++)
 			{
 				auto t = a->new_track();
 				t->bone_name = read_string(file);
-				auto keyframe_count = read_int(file);
+				auto keyframe_count = read<int>(file);
 				for (auto j = 0; j < keyframe_count; j++)
 				{
 					auto k = t->new_keyframe();
-					k->frame = read_int(file);
-					k->coord = read_float3(file);
-					k->quaternion = read_float4(file);
+					k->frame = read<int>(file);
+					k->coord = read<glm::vec3>(file);
+					k->quaternion = read<glm::vec4>(file);
 				}
 			}
 		}
@@ -156,16 +157,16 @@ namespace flame
 		{
 			std::ofstream file(filename, std::ios::binary);
 
-			write_int(file, a->tracks.size());
+			write<int>(file, a->tracks.size());
 			for (auto &t : a->tracks)
 			{
 				write_string(file, t->bone_name);
-				write_int(file, t->keyframes.size());
+				write<int>(file, t->keyframes.size());
 				for (auto &k : t->keyframes)
 				{
-					write_int(file, k->frame);
-					write_float3(file, k->coord);
-					write_float4(file, k->quaternion);
+					write<int>(file, k->frame);
+					write<glm::vec3>(file, k->coord);
+					write<glm::vec4>(file, k->quaternion);
 				}
 			}
 		}

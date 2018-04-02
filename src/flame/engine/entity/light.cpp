@@ -1,5 +1,6 @@
 #include <flame/global.h>
-#include <flame/filesystem/filesystem.h>
+#include <flame/serialize_math.h>
+#include <flame/filesystem.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/entity/light.h>
 
@@ -17,26 +18,34 @@ namespace flame
 
 	void LightComponent::serialize(XMLNode *dst)
 	{
-		dst->add_attribute(new XMLAttribute("type", get_light_type_name(type)));
-		dst->add_attribute(new XMLAttribute("color", color));
-		dst->add_attribute(new XMLAttribute("range", range));
-		dst->add_attribute(new XMLAttribute("enable_shadow", enable_shadow));
+		dst->attributes.emplace_back(new XMLAttribute("type", get_light_type_name(type)));
+		dst->attributes.emplace_back(new XMLAttribute("color", to_str(color)));
+		dst->attributes.emplace_back(new XMLAttribute("range", to_str(range)));
+		dst->attributes.emplace_back(new XMLAttribute("enable_shadow", to_str(enable_shadow)));
 	}
 
 	void LightComponent::unserialize(XMLNode *src)
 	{
-		auto type_name = src->first_attribute("type")->get_string(); // required
-		if (type_name == "parallax")
-			type = LightTypeParallax;
-		else if (type_name == "point")
-			type = LightTypePoint;
-		else if (type_name == "spot")
-			type = LightTypeSpot;
-		else
-			assert(0); // require a vaild type name
-		src->get_attribute_float3("color", color);
-		src->get_attribute_float("range", range);
-		src->get_attribute_bool("enable_shadow", enable_shadow);
+		for (auto &a : src->attributes)
+		{
+			if (a->name == "type")
+			{
+				if (a->value == "parallax")
+					type = LightTypeParallax;
+				else if (a->value == "point")
+					type = LightTypePoint;
+				else if (a->value == "spot")
+					type = LightTypeSpot;
+				else
+					assert(0); // require a vaild type name
+			}
+			else if (a->name == "color")
+				color = to_float3(a->value);
+			else if (a->name == "range")
+				range = to_float(a->value);
+			else if (a->name == "enable_shadow")
+				enable_shadow = to_bool(a->value);
+		}
 	}
 
 	LightComponent::LightComponent() :

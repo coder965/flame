@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <filesystem>
 #include <map>
-
 #include <gli/gli.hpp>
-#include <flame/filesystem/filesystem.h>
-#include <flame/common/string.h>
+
+#include <flame/string.h>
+#include <flame/filesystem.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/command_buffer.h>
@@ -567,20 +567,22 @@ namespace flame
 		}
 		else
 		{
-			Image image(filename);
-			if (image.channel == 3)
-				image.add_alpha_channel();
+			auto image = load_image(filename);
+			if (image->channel == 3)
+				image->add_alpha_channel();
 
-			width = image.cx;
-			height = image.cy;
+			width = image->cx;
+			height = image->cy;
 			level = layer = 1;
-			channel = image.channel;
-			bpp = image.bpp;
+			channel = image->channel;
+			bpp = image->bpp;
 
-			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, image.size);
+			staging_buffer = std::make_unique<Buffer>(BufferTypeStaging, image->size);
 			staging_buffer->map();
-			memcpy(staging_buffer->mapped, image.data, staging_buffer->size);
+			memcpy(staging_buffer->mapped, image->data, staging_buffer->size);
 			staging_buffer->unmap();
+
+			release_image(image);
 
 			{
 				VkBufferImageCopy r = {};

@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <assert.h>
 
-#include <flame/common/filesystem.h>
-#include <flame/common/system.h>
-#include <flame/common/image.h>
+#include <flame/filesystem.h>
+#include <flame/system.h>
+#include <flame/image.h>
 #include <flame/engine/core/input.h>
 #include <flame/engine/core/surface.h>
 #include <flame/engine/graphics/texture.h>
@@ -63,10 +63,11 @@ namespace flame
 		wcex.hInstance = (HINSTANCE)get_hinst();
 		if (std::filesystem::exists("ico.png"))
 		{
-			Image icon("ico.png");
-			icon.swap_RB();
-			wcex.hIcon = CreateIcon(wcex.hInstance, icon.cx, icon.cy, 1,
-				icon.bpp, nullptr, icon.data);
+			auto icon_image = load_image("ico.png");
+			icon_image->swap_RB();
+			wcex.hIcon = CreateIcon(wcex.hInstance, icon_image->cx, icon_image->cy, 1,
+				icon_image->bpp, nullptr, icon_image->data);
+			release_image(icon_image);
 		}
 		else
 			wcex.hIcon = 0;

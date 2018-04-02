@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include <flame/common/math.h>
-#include <flame/common/image.h>
+#include <flame/math.h>
+#include <flame/image.h>
 #include <flame/engine/graphics/graphics.h>
 
 namespace flame

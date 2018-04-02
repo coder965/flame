@@ -62,8 +62,7 @@ namespace flame
 				{
 					auto fun_save = [&](const std::string &filename) {
 						staging_buffer->map();
-						Image img(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, (unsigned char*)staging_buffer->mapped, false);
-						img.save(filename);
+						save_image(texture->get_cx(), texture->get_cy(), texture->channel, texture->bpp, (unsigned char*)staging_buffer->mapped, filename);
 						staging_buffer->unmap();
 						return true;
 					};

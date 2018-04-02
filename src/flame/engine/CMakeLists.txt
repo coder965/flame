@@ -20,7 +20,9 @@ target_include_directories(flame_engine PUBLIC "${CMAKE_SOURCE_DIR}/ext/Physx-3.
 endif()
 
 target_link_libraries(flame_engine flame_filesystem)
-target_link_libraries(flame_engine flame_common)
+target_link_libraries(flame_engine flame_math)
+target_link_libraries(flame_engine flame_system)
+target_link_libraries(flame_engine flame_image)
 target_link_libraries(flame_engine ${CMAKE_SOURCE_DIR}/ext/bin/x${FLAME_SYS_NAME}/vulkan-1.lib)
 target_link_libraries(flame_engine imgui)
 if (FLAME_ENABLE_PHYSICS)

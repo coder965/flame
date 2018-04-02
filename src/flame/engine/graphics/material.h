@@ -3,8 +3,8 @@
 #include <string>
 #include <memory>
 
-#include <flame/common/math.h>
-#include <flame/common/spare_list.h>
+#include <flame/math.h>
+#include <flame/spare_list.h>
 
 namespace flame
 {
