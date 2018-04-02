@@ -63,4 +63,5 @@ target_include_directories(flame_system PUBLIC "${CMAKE_SOURCE_DIR}/src")
 
 set_target_properties(flame_system PROPERTIES FOLDER "flame")
 
+add_subdirectory(surface)
 add_subdirectory(engine)

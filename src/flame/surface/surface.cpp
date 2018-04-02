@@ -1,27 +1,102 @@
 #include <algorithm>
+#include <list>
 #include <assert.h>
+#include <Windows.h>
 
 #include <flame/filesystem.h>
 #include <flame/system.h>
 #include <flame/image.h>
-#include <flame/engine/core/input.h>
-#include <flame/engine/core/surface.h>
-#include <flame/engine/graphics/texture.h>
-#include <flame/engine/graphics/synchronization.h>
+#include <flame/surface/surface.h>
 
 namespace flame
 {
-	Surface *surface;
+	InputState key_states[256];
 
-	static void *hWnd;
-	static VkSurfaceKHR vk_surface;
-	static VkSwapchainKHR vk_swapchain;
+	Mouse mouse;
 
-	static std::list<std::function<void(int, int)>> _resize_listeners;
+	struct SurfaceImpl
+	{
+		HWND hWnd;
+
+		std::list<std::function<void(Surface *, int)>> keydown_listeners;
+		std::list<std::function<void(Surface *, int)>> keyup_listeners;
+		std::list<std::function<void(Surface *, int)>> char_listeners;
+		std::list<std::function<void(Surface *, int, int)>> resize_listeners;
+		std::list<std::function<void(Surface *)>> destroy_listeners;
+	};
 
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		handle_input_message_win32(hWnd, message, wParam, lParam);
+		auto pSurface = (Surface*)GetWindowLong(hWnd, 0);
+
+		if (pSurface)
+		{
+			auto impl = (SurfaceImpl*)pSurface->impl;
+
+			switch (message)
+			{
+				case WM_LBUTTONDOWN:
+					mouse.button[0].on_down();
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					SetCapture((HWND)hwnd);
+					break;
+				case WM_LBUTTONUP:
+					mouse.button[0].on_up();
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					ReleaseCapture();
+					break;
+				case WM_MBUTTONDOWN:
+					mouse.button[2].on_down();
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					SetCapture((HWND)hwnd);
+					break;
+				case WM_MBUTTONUP:
+					mouse.button[2].on_up();
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					ReleaseCapture();
+					break;
+				case WM_RBUTTONDOWN:
+					mouse.button[1].on_down();
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					SetCapture((HWND)hwnd);
+					break;
+				case WM_RBUTTONUP:
+					mouse.button[1].on_up();
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					ReleaseCapture();
+					break;
+				case WM_MOUSEMOVE:
+					mouse.x = LOWORD(lParam);
+					mouse.y = HIWORD(lParam);
+					break;
+				case WM_MOUSEWHEEL:
+					mouse.scroll += (short)HIWORD(wParam);
+					break;
+				case WM_KEYDOWN:
+					key_states[wParam].on_down();
+					for (auto &e : _keydown_listeners)
+						e(wParam);
+					break;
+				case WM_KEYUP:
+					key_states[wParam].on_up();
+					for (auto &e : _keyup_listeners)
+						e(wParam);
+					break;
+				case WM_CHAR:
+					for (auto &e : _char_listeners)
+						e(wParam);
+					break;
+				case WM_DESTROY:
+					PostQuitMessage(0);
+					break;
+			}
+		}
 
 		switch (message)
 		{
@@ -242,4 +317,20 @@ namespace flame
 			}
 		}
 	}
+
+	Surface *create_surface(int _cx, int _cy, int _style, const std::string &_title);
+	void destroy_surface(Surface *s);
+
+	void set_surface_size(Surface *s, int _cx, int _cy, int _style);
+	void set_surface_maximized(Surface *s, bool v);
+
+	void *add_keydown_listener(Surface *s, const std::function<void(int)> &e);
+	void *add_keyup_listener(Surface *s, const std::function<void(int)> &e);
+	void *add_char_listener(Surface *s, const std::function<void(int)> &e);
+	void *add_resize_listener(Surface *s, const std::function<void(int, int)> &e);
+
+	void remove_keydown_listener(Surface *s, void *p);
+	void remove_keyup_listener(Surface *s, void *p);
+	void remove_char_listener(Surface *s, void *p);
+	void remove_resize_listener(Surface *s, void *p);
 }

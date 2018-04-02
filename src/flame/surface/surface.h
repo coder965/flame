@@ -1,12 +1,62 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <functional>
 
-#include <flame/engine/graphics/graphics.h>
+#include <flame/exports.h>
+#include <flame/global.h>
 
 namespace flame
 {
-	struct TextureView;
+	struct InputState
+	{
+		bool just_down;
+		bool just_up;
+		bool pressing;
+
+		InputState() :
+			just_down(false),
+			just_up(false),
+			pressing(false)
+		{
+		}
+
+		void reset()
+		{
+			just_down = just_up = false;
+		}
+
+		void on_down()
+		{
+			just_down = true;
+			just_up = false;
+			pressing = true;
+		}
+
+		void on_up()
+		{
+			just_down = false;
+			just_up = true;
+			pressing = false;
+		}
+	};
+
+	FLAME_EXPORTS extern InputState key_states[256];
+
+	struct Mouse
+	{
+		int x;
+		int y;
+		int prev_x;
+		int prev_y;
+		int disp_x;
+		int disp_y;
+		int scroll;
+		InputState button[3]; // left, right, middle
+	};
+
+	FLAME_EXPORTS extern Mouse mouse;
 
 	enum SurfaceStyle
 	{
@@ -18,26 +68,31 @@ namespace flame
 
 	struct Surface
 	{
+		void *impl;
+
 		int cx;
 		int cy;
 		int style;
 		std::string title;
-
-		VkImage images[2];
-		std::unique_ptr<TextureView> image_views[2];
-		uint image_index;
-		VkSemaphore image_available;
-
-		Surface(int _cx, int _cy, int _style, const std::string &_title);
-		void set_window_size(int _cx, int _cy, int _style);
-		void set_window_maximized(bool v);
-		void create_swapchain();
-		void acquire_image();
-		void present(VkSemaphore wait_semaphore);
 	};
 
-	extern Surface *surface;
+	FLAME_EXPORTS Surface *create_surface(int _cx, int _cy, int _style, const std::string &_title);
+	FLAME_EXPORTS void destroy_surface(Surface *s);
 
-	void add_resize_listener(const std::function<void(int, int)> &e);
-	void remove_resize_listener(const std::function<void(int, int)> &e);
+	FLAME_EXPORTS void set_surface_size(Surface *s, int _cx, int _cy, int _style);
+	FLAME_EXPORTS void set_surface_maximized(Surface *s, bool v);
+
+	FLAME_EXPORTS void *add_keydown_listener(Surface *s, const std::function<void(Surface *, int)> &e);
+	FLAME_EXPORTS void *add_keyup_listener(Surface *s, const std::function<void(Surface *, int)> &e);
+	FLAME_EXPORTS void *add_char_listener(Surface *s, const std::function<void(Surface *, int)> &e);
+	FLAME_EXPORTS void *add_resize_listener(Surface *s, const std::function<void(Surface *, int, int)> &e);
+
+	FLAME_EXPORTS void remove_keydown_listener(Surface *s, void *p);
+	FLAME_EXPORTS void remove_keyup_listener(Surface *s, void *p);
+	FLAME_EXPORTS void remove_char_listener(Surface *s, void *p);
+	FLAME_EXPORTS void remove_resize_listener(Surface *s, void *p);
+
+	void input_on_frame_begin();
+	void input_on_frame_end();
+
 }
