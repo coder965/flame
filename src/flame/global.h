@@ -25,19 +25,17 @@ typedef void(*PF_EVENT0)();
 typedef void(*PF_EVENT1)(int);
 typedef void(*PF_EVENT2)(int, int);
 
-template<typename T, typename... U>
-size_t TK_GET_ADDRESS(std::function<T(U...)> f)
-{
-	typedef T(fnType)(U...);
-	fnType ** fnPointer = f.template target<fnType*>();
-	return (size_t)*fnPointer;
-}
-
 namespace flame
 {
 	typedef unsigned char uchar;
 	typedef unsigned short ushort;
 	typedef unsigned int uint;
+
+	struct IVEC2
+	{
+		int x;
+		int y;
+	};
 
 	enum Err
 	{

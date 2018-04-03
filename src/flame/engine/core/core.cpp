@@ -139,9 +139,6 @@ namespace flame
 		{
 			profiles.clear();
 
-			//begin_profile("total");
-
-			//begin_profile("head");
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -173,17 +170,12 @@ namespace flame
 				root_node->update();
 
 				surface->acquire_image();
-				//end_profile();
 
-				//begin_profile("ui begin");
 				ui::begin();
-				//end_profile();
 
 				render_func();
 
-				//begin_profile("ui end");
 				ui::end();
-				//end_profile();
 
 				if (!draw_list.empty())
 				{
@@ -192,11 +184,9 @@ namespace flame
 				}
 
 				surface->present(render_finished);
-				//end_profile();
 
 				int cut = 1;
 
-				//begin_profile("tail");
 				input_on_frame_end();
 
 				_after_frame_event_mtx.lock();
@@ -206,18 +196,6 @@ namespace flame
 				_after_frame_event_mtx.unlock();
 				//end_profile();
 			}
-
-			//end_profile();
-
-			//if (do_copy_profile)
-			//{
-			//	p_head_time = profiles[0].time;
-			//	p_ui_begin_time = profiles[1].time;
-			//	p_ui_end_time = profiles[2].time;
-			//	p_render_time = profiles[3].time;
-			//	p_tail_time = profiles[4].time;
-			//	p_total_time = profiles[5].time;
-			//}
 		}
 
 		for (auto &e : _destroy_listeners)

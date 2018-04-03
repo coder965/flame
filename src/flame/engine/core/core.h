@@ -45,5 +45,4 @@ namespace flame
 	void remove_destroy_listener(const std::function<void()> &e);
 	void add_after_frame_event(const std::function<void()> &e); // once
 	void add_to_draw_list(VkCommandBuffer cb);
-	void run(PF_EVENT0 render_func);
 }
