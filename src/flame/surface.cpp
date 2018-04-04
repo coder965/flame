@@ -8,7 +8,7 @@
 #include <flame/filesystem.h>
 #include <flame/system.h>
 #include <flame/image.h>
-#include <flame/surface/surface.h>
+#include <flame/surface.h>
 
 namespace flame
 {
@@ -43,23 +43,27 @@ namespace flame
 		int mouse_disp_y;
 		int mouse_scroll;
 
-		int mouse_button[3];
+		int mouse_buttons[3];
 
-		std::list<std::function<void(Surface *, int)>> keydown_listeners;
-		std::list<std::function<void(Surface *, int)>> keyup_listeners;
-		std::list<std::function<void(Surface *, int)>> char_listeners;
-		std::list<std::function<void(Surface *, int, int)>> resize_listeners;
-		std::list<std::function<void(Surface *)>> destroy_listeners;
+		std::list<std::function<void(Surface *, int)>>           keydown_listeners;
+		std::list<std::function<void(Surface *, int)>>           keyup_listeners;
+		std::list<std::function<void(Surface *, int)>>           char_listeners;
+		std::list<std::function<void(Surface *, int, int, int)>> mousedown_listeners;
+		std::list<std::function<void(Surface *, int, int, int)>> mouseup_listeners;
+		std::list<std::function<void(Surface *, int, int)>>      mousemove_listeners;
+		std::list<std::function<void(Surface *, int)>>           mousescroll_listeners;
+		std::list<std::function<void(Surface *, int, int)>>      resize_listeners;
+		std::list<std::function<void(Surface *)>>                destroy_listeners;
 
 		KeyEventType key_event_type;
 		int key_event_key;
+
+		std::queue<int> char_events;
 
 		KeyEventType mouse_event_type;
 		int mouse_event_key;
 		bool mouse_move_event;
 		int mouse_scroll_event;
-
-		std::queue<int> char_events;
 
 		bool resize_event;
 
@@ -77,8 +81,8 @@ namespace flame
 			mouse_disp_x = mouse_disp_y = 0;
 			mouse_scroll = 0;
 
-			for (auto i = 0; i < TK_ARRAYSIZE(mouse_button); i++)
-				mouse_button[i] = KeyStateUp;
+			for (auto i = 0; i < TK_ARRAYSIZE(mouse_buttons); i++)
+				mouse_buttons[i] = KeyStateUp;
 
 			key_event_type = KeyEventNull;
 			key_event_key = 0;
@@ -118,7 +122,7 @@ namespace flame
 					impl->char_events.push(wParam);
 					break;
 				case WM_LBUTTONDOWN:
-					impl->mouse_button[0] = KeyStateDown | KeyStateJust;
+					impl->mouse_buttons[0] = KeyStateDown | KeyStateJust;
 					impl->mouse_x = LOWORD(lParam);
 					impl->mouse_y = HIWORD(lParam);
 					impl->mouse_event_type = KeyEventDown;
@@ -126,7 +130,7 @@ namespace flame
 					SetCapture(hWnd);
 					break;
 				case WM_LBUTTONUP:
-					impl->mouse_button[0] = KeyStateUp | KeyStateJust;
+					impl->mouse_buttons[0] = KeyStateUp | KeyStateJust;
 					impl->mouse_x = LOWORD(lParam);
 					impl->mouse_y = HIWORD(lParam);
 					impl->mouse_event_type = KeyEventUp;
@@ -134,7 +138,7 @@ namespace flame
 					ReleaseCapture();
 					break;
 				case WM_MBUTTONDOWN:
-					impl->mouse_button[2] = KeyStateDown | KeyStateJust;
+					impl->mouse_buttons[2] = KeyStateDown | KeyStateJust;
 					impl->mouse_x = LOWORD(lParam);
 					impl->mouse_y = HIWORD(lParam);
 					impl->mouse_event_type = KeyEventDown;
@@ -142,7 +146,7 @@ namespace flame
 					SetCapture(hWnd);
 					break;
 				case WM_MBUTTONUP:
-					impl->mouse_button[2] = KeyStateUp | KeyStateJust;
+					impl->mouse_buttons[2] = KeyStateUp | KeyStateJust;
 					impl->mouse_x = LOWORD(lParam);
 					impl->mouse_y = HIWORD(lParam);
 					impl->mouse_event_type = KeyEventUp;
@@ -150,7 +154,7 @@ namespace flame
 					ReleaseCapture();
 					break;
 				case WM_RBUTTONDOWN:
-					impl->mouse_button[1] = KeyStateDown | KeyStateJust;
+					impl->mouse_buttons[1] = KeyStateDown | KeyStateJust;
 					impl->mouse_x = LOWORD(lParam);
 					impl->mouse_y = HIWORD(lParam);
 					impl->mouse_event_type = KeyEventDown;
@@ -158,7 +162,7 @@ namespace flame
 					SetCapture(hWnd);
 					break;
 				case WM_RBUTTONUP:
-					impl->mouse_button[1] = KeyStateUp | KeyStateJust;
+					impl->mouse_buttons[1] = KeyStateUp | KeyStateJust;
 					impl->mouse_x = LOWORD(lParam);
 					impl->mouse_y = HIWORD(lParam);
 					impl->mouse_event_type = KeyEventUp;
@@ -203,6 +207,14 @@ namespace flame
 
 	void destroy_surface_manager(SurfaceManager *m)
 	{
+		auto impl = (SurfaceManagerImpl*)m->impl;
+		for (auto &s : impl->surfaces)
+		{
+			auto s_impl = (SurfaceImpl*)s->impl;
+			DestroyWindow(s_impl->hWnd);
+			delete s_impl;
+			delete s;
+		}
 		delete m->impl;
 		delete m;
 	}
@@ -220,8 +232,6 @@ namespace flame
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
-				if (msg.message == WM_QUIT)
-					return;
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -230,11 +240,89 @@ namespace flame
 			{
 				auto pSurface = *it;
 				auto s_impl = (SurfaceImpl*)pSurface->impl;
+
+				s_impl->mouse_disp_x = s_impl->mouse_x - s_impl->mouse_prev_x;
+				s_impl->mouse_disp_y = s_impl->mouse_y - s_impl->mouse_prev_y;
+
 				if (s_impl->destroy_event)
 				{
 					for (auto &e : s_impl->destroy_listeners)
 						e(pSurface);
+					delete s_impl;
+					delete pSurface;
 					it = impl->surfaces.erase(it);
+				}
+				else
+				{
+					switch (s_impl->key_event_type)
+					{
+						case KeyEventDown:
+							for (auto &e : s_impl->keydown_listeners)
+								e(pSurface, s_impl->key_event_key);
+							break;
+						case KeyEventUp:
+							for (auto &e : s_impl->keyup_listeners)
+								e(pSurface, s_impl->key_event_key);
+							break;
+					}
+					s_impl->key_event_type = KeyEventNull;
+
+					switch (s_impl->mouse_event_type)
+					{
+						case KeyEventDown:
+							for (auto &e : s_impl->mousedown_listeners)
+								e(pSurface, s_impl->mouse_event_key, s_impl->mouse_x, s_impl->mouse_y);
+							break;
+						case KeyEventUp:
+							for (auto &e : s_impl->mouseup_listeners)
+								e(pSurface, s_impl->mouse_event_key, s_impl->mouse_x, s_impl->mouse_y);
+							break;
+					}
+					s_impl->mouse_event_type = KeyEventNull;
+
+					if (!s_impl->char_events.empty())
+					{
+						while (!s_impl->char_events.empty())
+						{
+							auto c = s_impl->char_events.front();
+							for (auto &e : s_impl->char_listeners)
+								e(pSurface, c);
+							s_impl->char_events.pop();
+						}
+					}
+
+					if (s_impl->mouse_move_event)
+					{
+						for (auto &e : s_impl->mousemove_listeners)
+							e(pSurface, s_impl->mouse_x, s_impl->mouse_y);
+						s_impl->mouse_move_event = false;
+					}
+
+					if (s_impl->mouse_scroll_event)
+					{
+						for (auto &e : s_impl->mousescroll_listeners)
+							e(pSurface, s_impl->mouse_scroll);
+						s_impl->mouse_scroll_event = false;
+					}
+
+					if (s_impl->resize_event)
+					{
+						for (auto &e : s_impl->resize_listeners)
+							e(pSurface, s_impl->cx, s_impl->cy);
+						s_impl->resize_event = false;
+					}
+
+					for (int i = 0; i < TK_ARRAYSIZE(s_impl->key_states); i++)
+						s_impl->key_states[i] &= ~KeyStateJust;
+
+					for (auto i = 0; i < TK_ARRAYSIZE(s_impl->mouse_buttons); i++)
+						s_impl->mouse_buttons[i] &= ~KeyStateJust;
+
+					s_impl->mouse_prev_x = s_impl->mouse_x;
+					s_impl->mouse_prev_y = s_impl->mouse_y;
+					s_impl->mouse_scroll = 0;
+
+					it++;
 				}
 			}
 
@@ -301,12 +389,14 @@ namespace flame
 
 	std::string get_surface_title(Surface *s)
 	{
-
+		auto impl = (SurfaceImpl*)s->impl;
+		return impl->title;
 	}
 
 	IVEC2 get_surface_size(Surface *s)
 	{
-
+		auto impl = (SurfaceImpl*)s->impl;
+		return {impl->cx, impl->cy};
 	}
 
 	void set_surface_size(Surface *s, int _cx, int _cy, int _style)
@@ -345,7 +435,6 @@ namespace flame
 		auto x = (get_screen_cx() - _cx) / 2;
 		auto y = (get_screen_cy() - _cy) / 2;
 
-		auto impl = (SurfaceImpl*)s->impl;
 		if (impl->hWnd)
 		{
 			SetWindowLong(impl->hWnd, GWL_STYLE, win32_style);
@@ -383,6 +472,34 @@ namespace flame
 		auto impl = (SurfaceImpl*)s->impl;
 		impl->char_listeners.push_back(e);
 		return &impl->char_listeners.back();
+	}
+
+	void *add_mousedown_listener(Surface *s, const std::function<void(Surface *, int, int, int)> &e)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		impl->mousedown_listeners.push_back(e);
+		return &impl->mousedown_listeners.back();
+	}
+
+	void *add_mouseup_listener(Surface *s, const std::function<void(Surface *, int, int, int)> &e)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		impl->mouseup_listeners.push_back(e);
+		return &impl->mouseup_listeners.back();
+	}
+
+	void *add_mousemove_listener(Surface *s, const std::function<void(Surface *, int, int)> &e)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		impl->mousemove_listeners.push_back(e);
+		return &impl->mousemove_listeners.back();
+	}
+
+	void *add_mousescroll_listener(Surface *s, const std::function<void(Surface *, int)> &e)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		impl->mousescroll_listeners.push_back(e);
+		return &impl->mousescroll_listeners.back();
 	}
 
 	void *add_resize_listener(Surface *s, const std::function<void(Surface *s, int, int)> &e)
@@ -438,6 +555,58 @@ namespace flame
 		}
 	}
 
+	void remove_mousedown_listener(Surface *s, void *p)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		for (auto it = impl->mousedown_listeners.begin(); it != impl->mousedown_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				impl->mousedown_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_mouseup_listener(Surface *s, void *p)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		for (auto it = impl->mouseup_listeners.begin(); it != impl->mouseup_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				impl->mouseup_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_mousemove_listener(Surface *s, void *p)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		for (auto it = impl->mousemove_listeners.begin(); it != impl->mousemove_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				impl->mousemove_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void remove_mousescroll_listener(Surface *s, void *p)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		for (auto it = impl->mousescroll_listeners.begin(); it != impl->mousescroll_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				impl->mousescroll_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
 	void remove_resize_listener(Surface *s, void *p)
 	{
 		auto impl = (SurfaceImpl*)s->impl;
@@ -462,5 +631,35 @@ namespace flame
 				return;
 			}
 		}
+	}
+
+	int get_keyboard_state(Surface *s, int key)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		return impl->key_states[key];
+	}
+
+	int get_mouse_state(Surface *s, int key)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		return impl->mouse_buttons[key];
+	}
+
+	IVEC2 get_mouse_pos(Surface *s)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		return {impl->mouse_x, impl->mouse_y};
+	}
+
+	IVEC2 get_mouse_pos_disp(Surface *s)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		return {impl->mouse_disp_x, impl->mouse_disp_y};
+	}
+
+	int get_mouse_scroll(Surface *s)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		return impl->mouse_scroll;
 	}
 }

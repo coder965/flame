@@ -63,11 +63,12 @@ namespace flame
 	FLAME_EXPORTS void remove_mousedown_listener(Surface *s, void *p);
 	FLAME_EXPORTS void remove_mouseup_listener(Surface *s, void *p);
 	FLAME_EXPORTS void remove_mousemove_listener(Surface *s, void *p);
+	FLAME_EXPORTS void remove_mousescroll_listener(Surface *s, void *p);
 	FLAME_EXPORTS void remove_resize_listener(Surface *s, void *p);
 	FLAME_EXPORTS void remove_destroy_listener(Surface *s, void *p);
 
-	FLAME_EXPORTS KeyState get_keyboard_state(Surface *s, int key);
-	FLAME_EXPORTS KeyState get_mouse_state(Surface *s, int key);
+	FLAME_EXPORTS int get_keyboard_state(Surface *s, int key);
+	FLAME_EXPORTS int get_mouse_state(Surface *s, int key);
 	FLAME_EXPORTS IVEC2 get_mouse_pos(Surface *s);
 	FLAME_EXPORTS IVEC2 get_mouse_pos_disp(Surface *s);
 	FLAME_EXPORTS int get_mouse_scroll(Surface *s);

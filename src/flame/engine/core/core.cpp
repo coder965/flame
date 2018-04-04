@@ -7,8 +7,7 @@
 #include <flame/global.h>
 #include <flame/system.h>
 #include <flame/engine/core/core.h>
-#include <flame/engine/core/input.h>
-#include <flame/engine/core/surface.h>
+#include <flame/surface.h>
 #include <flame/engine/graphics/synchronization.h>
 #include <flame/engine/entity/entity.h>
 #include <flame/engine/entity/node.h>
@@ -53,6 +52,9 @@ namespace flame
 		profiles.back().time = get_now_ns() - profiles.back().time;
 	}
 
+	static SurfaceManager *surface_manager;
+	static Surface *surface;
+
 	unsigned long long total_frame_count = 0;
 	uint32_t FPS;
 
@@ -69,11 +71,13 @@ namespace flame
 
 		auto init_start_time = GetTickCount();
 
+		surface_manager = create_surface_manager();
+		surface = create_surface(surface_manager, window_cx, window_cy, window_style, window_title);
+
 #ifdef _MSVC_LANG
 		SetProcessDPIAware();
 #endif
 		init_graphics(debug_level > 0, _resolution_x, _resolution_y);
-		new Surface(window_cx, window_cy, window_style, window_title);
 		render_finished = createSemaphore();
 		ui::init();
 		init_sound();
@@ -87,25 +91,6 @@ namespace flame
 		printf("\n=====INFO=====\nengine init finished - %d ms\n==============\n", GetTickCount() - init_start_time);
 
 		return NoErr;
-	}
-
-	static std::list<std::function<void()>> _destroy_listeners;
-
-	void add_destroy_listener(const std::function<void()> &e)
-	{
-		_destroy_listeners.push_back(e);
-	}
-
-	void remove_destroy_listener(const std::function<void()> &e)
-	{
-		for (auto it = _destroy_listeners.begin(); it != _destroy_listeners.end(); it++)
-		{
-			if (TK_GET_ADDRESS(*it) == TK_GET_ADDRESS(e))
-			{
-				_destroy_listeners.erase(it);
-				return;
-			}
-		}
 	}
 
 	static std::list<std::function<void()>> _after_frame_events;
@@ -165,8 +150,6 @@ namespace flame
 			}
 
 			{
-				input_on_frame_begin();
-
 				root_node->update();
 
 				surface->acquire_image();
@@ -184,10 +167,6 @@ namespace flame
 				}
 
 				surface->present(render_finished);
-
-				int cut = 1;
-
-				input_on_frame_end();
 
 				_after_frame_event_mtx.lock();
 				for (auto &e : _after_frame_events)

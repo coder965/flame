@@ -41,8 +41,6 @@ namespace flame
 
 	int init(int _resolution_x, int _resolution_y, int debug_level,
 		int window_cx, int window_cy, int window_style, const std::string &window_title);
-	void add_destroy_listener(const std::function<void()> &e);
-	void remove_destroy_listener(const std::function<void()> &e);
 	void add_after_frame_event(const std::function<void()> &e); // once
 	void add_to_draw_list(VkCommandBuffer cb);
 }
