@@ -6,7 +6,7 @@
 #include <flame/spare_list.h>
 #include <flame/math.h>
 #include <flame/engine/core/object.h>
-#include <flame/engine/resource/resource.h>
+#include <flame/engine/graphics/resource.h>
 #include <flame/engine/graphics/graphics.h>
 #include <flame/engine/graphics/display_layer.h>
 

@@ -34,15 +34,16 @@ namespace flame
 		KeyStateJust = 1 << 2,
 	};
 
-	FLAME_EXPORTS SurfaceManager *create_surface_manager();
-	FLAME_EXPORTS void destroy_surface_manager(SurfaceManager *m);
-	FLAME_EXPORTS int surface_manager_run(SurfaceManager *m, void(*idle_callback)());
+	FLAME_EXPORTS SurfaceManager *create_surface_manager  ();
+	FLAME_EXPORTS void            destroy_surface_manager (SurfaceManager *m);
+	FLAME_EXPORTS int             surface_manager_run     (SurfaceManager *m, void(*idle_callback)());
 
-	FLAME_EXPORTS Surface *create_surface(SurfaceManager *m, int _cx, int _cy, int _style, const std::string &_title);
-	FLAME_EXPORTS void destroy_surface(SurfaceManager *m, Surface *s);
+	FLAME_EXPORTS Surface *create_surface  (SurfaceManager *m, int _cx, int _cy, int _style, const std::string &_title);
+	FLAME_EXPORTS void     destroy_surface (SurfaceManager *m, Surface *s);
 
-	FLAME_EXPORTS std::string get_surface_title(Surface *s);
-	FLAME_EXPORTS IVEC2 get_surface_size(Surface *s);
+	FLAME_EXPORTS std::string get_surface_title (Surface *s);
+	FLAME_EXPORTS IVEC2       get_surface_size  (Surface *s);
+	FLAME_EXPORTS void       *get_surface_win32_handle(Surface *s);
 
 	FLAME_EXPORTS void set_surface_size(Surface *s, int _cx, int _cy, int _style);
 	FLAME_EXPORTS void set_surface_maximized(Surface *s, bool v);

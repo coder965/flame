@@ -1,5 +1,4 @@
 #include <flame/engine/core/core.h>
-#include <flame/engine/core/surface.h>
 #include <flame/engine/graphics/synchronization.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>

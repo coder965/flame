@@ -99,7 +99,7 @@ namespace flame
 
 	struct Swapchain
 	{
-
+		void *impl;
 	};
 
 	enum LightingModel

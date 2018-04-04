@@ -1,5 +1,5 @@
 #include <flame/global.h>
-#include <flame/engine/resource/resource.h>
+#include <flame/engine/graphics/resource.h>
 #include <flame/engine/graphics/buffer.h>
 #include <flame/engine/graphics/texture.h>
 #include <flame/engine/graphics/descriptor.h>

@@ -1,5 +1,4 @@
 #include <flame/global.h>
-#include <flame/surface.h>
 #include <flame/engine/core/core.h>
 #include <flame/engine/graphics/shader.h>
 #include <flame/engine/ui/ui.h>

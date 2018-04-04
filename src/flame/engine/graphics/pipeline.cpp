@@ -5,7 +5,7 @@
 #include <flame/engine/graphics/renderer.h>
 #include <flame/engine/graphics/shader.h>
 #include <flame/engine/graphics/sampler.h>
-#include <flame/engine/resource/resource.h>
+#include <flame/engine/graphics/resource.h>
 #include <flame/engine/graphics/pipeline.h>
 
 namespace flame

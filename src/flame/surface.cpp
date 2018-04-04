@@ -412,6 +412,12 @@ namespace flame
 		return {impl->cx, impl->cy};
 	}
 
+	void *get_surface_win32_handle(Surface *s)
+	{
+		auto impl = (SurfaceImpl*)s->impl;
+		return impl->hWnd;
+	}
+
 	void set_surface_size(Surface *s, int _cx, int _cy, int _style)
 	{
 		auto impl = (SurfaceImpl*)s->impl;

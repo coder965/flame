@@ -13,8 +13,6 @@
 #include <flame/engine/graphics/pipeline.h>
 #include <flame/engine/graphics/sampler.h>
 #include <flame/engine/graphics/command_buffer.h>
-#include <flame/engine/core/input.h>
-#include <flame/engine/core/surface.h>
 #include <flame/engine/ui/ui.h>
 #include <flame/engine/ui/layout.h>
 #include <flame/engine/ui/window.h>
