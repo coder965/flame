@@ -100,7 +100,7 @@ namespace flame
 
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		auto pSurface = (Surface*)GetWindowLong(hWnd, 0);
+		auto pSurface = (Surface*)GetWindowLongPtr(hWnd, 0);
 
 		if (pSurface)
 		{
@@ -374,11 +374,24 @@ namespace flame
 
 		SetWindowLongPtr(impl->hWnd, 0, (LONG_PTR)s);
 
+		auto m_impl = (SurfaceManagerImpl*)m->impl;
+		m_impl->surfaces.push_back(s);
+
 		return s;
 	}
 
 	void destroy_surface(SurfaceManager *m, Surface *s)
 	{
+		auto m_impl = (SurfaceManagerImpl*)m->impl;
+		for (auto it = m_impl->surfaces.begin(); it != m_impl->surfaces.end(); it++)
+		{
+			if (*it == s)
+			{
+				m_impl->surfaces.erase(it);
+				break;
+			}
+		}
+
 		auto impl = (SurfaceImpl*)s->impl;
 		DestroyWindow(impl->hWnd);
 		for (auto &e : impl->destroy_listeners)

@@ -97,6 +97,11 @@ namespace flame
 
 	extern Resolution resolution;
 
+	struct Swapchain
+	{
+
+	};
+
 	enum LightingModel
 	{
 		LightingModelPhong,

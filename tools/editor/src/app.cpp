@@ -1,7 +1,6 @@
 #include <flame/global.h>
+#include <flame/surface.h>
 #include <flame/engine/core/core.h>
-#include <flame/engine/core/input.h>
-#include <flame/engine/core/surface.h>
 #include <flame/engine/graphics/shader.h>
 #include <flame/engine/ui/ui.h>
 #include <flame/engine/ui/fileselector.h>
