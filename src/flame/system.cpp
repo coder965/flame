@@ -1,7 +1,9 @@
 #define NOMINMAX
 #include <Windows.h>
-#include <thread>
 #include <assert.h>
+#include <thread>
+#include <list>
+#include <map>
 
 #include <flame/global.h>
 #include <flame/filesystem.h>
@@ -126,7 +128,7 @@ namespace flame
 		CloseClipboard();
 	}
 
-	FileWatcher *add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback)
+	FileWatcher *add_file_watcher(FileWatcherMode mode, const std::string &filepath, const std::function<void(const std::vector<FileChangeInfo> &infos)> &callback)
 	{
 		auto w = new FileWatcher;
 		w->dirty = false;
@@ -233,5 +235,66 @@ namespace flame
 	{
 		SIZE_T ret_byte;
 		assert(ReadProcessMemory(process, address, dst, size, &ret_byte));
+	}
+
+	static HHOOK global_key_hook = 0;
+	static std::map<int, std::list<std::function<void()>>> global_key_listeners;
+
+	LRESULT CALLBACK global_key_callback(int nCode, WPARAM wParam, LPARAM lParam)
+	{
+		auto kbhook = (KBDLLHOOKSTRUCT*)lParam;
+
+		auto it = global_key_listeners.find(kbhook->vkCode);
+		if (it != global_key_listeners.end())
+		{
+			for (auto &e : it->second)
+				e();
+		}
+
+		return CallNextHookEx(global_key_hook, nCode, wParam, lParam);
+	}
+
+	void *add_global_key_listener(int key, const std::function<void()> &callback)
+	{
+		void *ret;
+
+		auto it = global_key_listeners.find(key);
+		if (it == global_key_listeners.end())
+			it = global_key_listeners.emplace(key, std::list<std::function<void()>>()).first;
+		it->second.emplace_back(callback);
+		ret = &it->second.back();
+
+		if (global_key_hook == 0)
+			global_key_hook = SetWindowsHookEx(WH_KEYBOARD_LL, global_key_callback, (HINSTANCE)get_hinst(), 0);
+
+		return ret;
+	}
+
+	void remove_global_key_listener(int key, void *p)
+	{
+		auto it = global_key_listeners.find(key);
+		if (it == global_key_listeners.end())
+			return;
+
+		for (auto _it = it->second.begin(); _it != it->second.end(); _it++)
+		{
+			if (&(*_it) == p)
+			{
+				it->second.erase(_it);
+				break;
+			}
+		}
+
+		if (it->second.empty())
+			global_key_listeners.erase(it);
+
+		if (global_key_listeners.empty())
+		{
+			if (global_key_hook)
+			{
+				UnhookWindowsHookEx(global_key_hook);
+				global_key_hook = 0;
+			}
+		}
 	}
 }

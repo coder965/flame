@@ -7,6 +7,67 @@
 
 namespace flame
 {
+	static void set_size(Image *i)
+	{
+		i->pitch = calc_pitch(i->cx, i->bpp);
+		i->size = i->pitch * i->cy;
+		i->data = new unsigned char[i->size];
+	}
+
+	void Image::add_alpha_channel()
+	{
+		assert(channel == 3);
+		auto new_data = new unsigned char[cx * cy * 4];
+		pitch = cx * 4;
+		for (auto j = 0; j < cy; j++)
+		{
+			for (auto i = 0; i < cx; i++)
+			{
+				new_data[j * pitch + i * 4 + 0] = data[j * cx * 3 + i * 3 + 0];
+				new_data[j * pitch + i * 4 + 1] = data[j * cx * 3 + i * 3 + 1];
+				new_data[j * pitch + i * 4 + 2] = data[j * cx * 3 + i * 3 + 2];
+				new_data[j * pitch + i * 4 + 3] = 255;
+			}
+		}
+		channel = 4;
+		bpp = 32;
+		size = cx * 4 * cy;
+		delete[]data;
+		data = new_data;
+	}
+
+	void Image::swap_RB()
+	{
+		assert(channel > 2);
+		for (auto j = 0; j < cy; j++)
+		{
+			for (auto i = 0; i < cx; i++)
+				std::swap(data[j * pitch + i * channel + 0], data[j * pitch + i * channel + 2]);
+		}
+	}
+
+	void Image::copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y)
+	{
+		for (auto j = 0; j < cy; j++)
+		{
+			for (auto i = 0; i < cx; i++)
+				dst->data[(dst_y + j) * dst->pitch + dst_x + i] = data[(src_y + j) * pitch + src_x + i];
+		}
+	}
+
+	Image *create_image(int cx, int cy, int channel, int bpp)
+	{
+		auto i = new Image;
+		i->cx = cx;
+		i->cy = cy;
+		i->channel = channel;
+		i->bpp = bpp;
+		i->sRGB = false;
+		set_size(i);
+		memset(i->data, 0, i->size);
+		return i;
+	}
+
 	Image *load_image(const std::string &filename)
 	{
 		auto ext = std::filesystem::path(filename).extension().string();
@@ -21,7 +82,7 @@ namespace flame
 			i->cy = read<int>(file);
 			i->channel = read<int>(file);
 			i->bpp = i->channel * 8;
-			i->calc_size();
+			set_size(i);
 			file.read((char*)i->data, i->size);
 			return i;
 		}
@@ -36,7 +97,7 @@ namespace flame
 		i->cy = cy;
 		i->channel = channel;
 		i->bpp = channel * 8;
-		i->calc_size();
+		set_size(i);
 		memcpy(i->data, img, i->size);
 		stbi_image_free(img);
 		return i;

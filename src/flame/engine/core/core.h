@@ -14,8 +14,6 @@ namespace flame
 	extern long long now_ns;
 	extern double elapsed_time;
 
-	long long get_now_ns();
-
 	struct Profile
 	{
 		std::string name;

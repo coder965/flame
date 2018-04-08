@@ -45,8 +45,11 @@ namespace flame
 		std::string filename;
 	};
 
-	FLAME_EXPORTS FileWatcher *add_file_watcher(FileWatcherMode mode, const std::string &filepath, std::function<void(const std::vector<FileChangeInfo> infos)> callback = nullptr);
+	FLAME_EXPORTS FileWatcher *add_file_watcher(FileWatcherMode mode, const std::string &filepath, const std::function<void(const std::vector<FileChangeInfo> &infos)> &callback = nullptr);
 	FLAME_EXPORTS void remove_file_watcher(FileWatcher *w);
 
 	FLAME_EXPORTS void read_process_memory(void *process, void *address, int size, void *dst);
+
+	FLAME_EXPORTS void *add_global_key_listener(int key, const std::function<void()> &callback);
+	FLAME_EXPORTS void remove_global_key_listener(int key, void *p);
 }

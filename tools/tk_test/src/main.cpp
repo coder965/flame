@@ -1,22 +1,18 @@
+#include <flame/system.h>
 #include <flame/surface.h>
+#include <flame/image.h>
+#include <flame/graphics/graphics.h>
 
 int main(int argc, char **args)
 {
 	auto m = flame::create_surface_manager();
-	auto s = flame::create_surface(m, 400, 300, 
-		flame::SurfaceStyleFrame | 
-		flame::SurfaceStyleResizable, 
+	auto s = m->create_surface(300, 300, 0, 
 		"Hello");
 
-	flame::surface_manager_run(m, [](){
-		static int f = 0;
-		static int q = 0;
-		f++;
-		if (f == 1000000)
-		{
-			printf("%d\n", q++);
-			f = 0;
-		}
+	auto g = flame::graphics::create_graphics(false, 1280, 720);
+
+	m->run([&](){
+		printf("%lld\n", m->fps);
 	});
 
 	return 0;

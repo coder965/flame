@@ -5,6 +5,7 @@
 #define NOMINMAX
 #include <Windows.h>
 
+#include <flame/time.h>
 #include <flame/filesystem.h>
 #include <flame/system.h>
 #include <flame/image.h>
@@ -12,11 +13,6 @@
 
 namespace flame
 {
-	struct SurfaceManagerImpl
-	{
-		std::list<Surface*> surfaces;
-	};
-
 	enum KeyEventType
 	{
 		KeyEventNull,
@@ -24,26 +20,21 @@ namespace flame
 		KeyEventUp
 	};
 
-	struct SurfaceImpl
+	struct SurfaceManagerPrivate
 	{
-		int cx;
-		int cy;
-		int style;
-		std::string title;
+		std::list<Surface*> surfaces;
 
+		long long last_time;
+		long long last_frame_time;
+		long long counting_frame;
+	};
+
+	struct SurfacePrivate
+	{
 		HWND hWnd;
 
-		int key_states[512];
-
-		int mouse_x;
-		int mouse_y;
 		int mouse_prev_x;
 		int mouse_prev_y;
-		int mouse_disp_x;
-		int mouse_disp_y;
-		int mouse_scroll;
-
-		int mouse_buttons[3];
 
 		std::list<std::function<void(Surface *, int)>>           keydown_listeners;
 		std::list<std::function<void(Surface *, int)>>           keyup_listeners;
@@ -68,127 +59,316 @@ namespace flame
 		bool resize_event;
 
 		bool destroy_event;
-
-		SurfaceImpl()
-		{
-			hWnd = 0;
-
-			for (auto i = 0; i < TK_ARRAYSIZE(key_states); i++)
-				key_states[i] = KeyStateUp;
-
-			mouse_x = mouse_y = 0;
-			mouse_prev_x = mouse_prev_y = 0;
-			mouse_disp_x = mouse_disp_y = 0;
-			mouse_scroll = 0;
-
-			for (auto i = 0; i < TK_ARRAYSIZE(mouse_buttons); i++)
-				mouse_buttons[i] = KeyStateUp;
-
-			key_event_type = KeyEventNull;
-			key_event_key = 0;
-
-			mouse_event_type = KeyEventNull;
-			mouse_event_key = 0;
-			mouse_move_event = false;
-			mouse_scroll_event = false;
-
-			resize_event = false;
-
-			destroy_event = false;
-		}
 	};
+
+	void *Surface::get_win32_handle()
+	{
+		return _priv->hWnd;
+	}
+
+	void Surface::set_size(int _x, int _y, int _cx, int _cy, int _style)
+	{
+		if (_cx > 0)
+			cx = _cx;
+		if (_cy > 0)
+			cy = _cy;
+
+		bool style_changed = false;
+		if (_style != -1 && _style != style)
+		{
+			style = _style;
+			style_changed = true;
+		}
+
+		auto win32_style = WS_VISIBLE;
+		if ((style & SurfaceStyleFrame) && !(style & SurfaceStyleFullscreen))
+		{
+			RECT rect = {0, 0, cx, cy};
+			AdjustWindowRect(&rect, WS_CAPTION, false);
+			_cx = rect.right - rect.left;
+			_cy = rect.bottom - rect.top;
+
+			win32_style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+
+			if (style & SurfaceStyleResizable)
+				win32_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+		}
+		else
+		{
+			win32_style |= WS_POPUP | WS_BORDER;
+			if (style & SurfaceStyleFullscreen)
+			{
+				_cx = get_screen_cx();
+				_cy = get_screen_cy();
+			}
+		}
+
+		x = _x == -1 ? (get_screen_cx() - _cx) / 2 : _x;
+		y = _y == -1 ? (get_screen_cy() - _cy) / 2 : _y;
+
+		if (_priv->hWnd)
+		{
+			if (style_changed)
+				SetWindowLong(_priv->hWnd, GWL_STYLE, win32_style);
+			MoveWindow(_priv->hWnd, x, y, cx, cy, true);
+		}
+		else
+		{
+			_priv->hWnd = CreateWindowA("tke_wnd", title.c_str(), win32_style,
+				x, y, _cx, _cy, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
+		}
+	}
+
+	void Surface::set_maximized(bool v)
+	{
+		ShowWindow(_priv->hWnd, v ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+	}
+
+	void *Surface::add_keydown_listener(const std::function<void(Surface *s, int)> &e)
+	{
+		_priv->keydown_listeners.push_back(e);
+		return &_priv->keydown_listeners.back();
+	}
+
+	void *Surface::add_keyup_listener(const std::function<void(Surface *s, int)> &e)
+	{
+		_priv->keydown_listeners.push_back(e);
+		return &_priv->keydown_listeners.back();
+	}
+
+	void *Surface::add_char_listener(const std::function<void(Surface *s, int)> &e)
+	{
+		_priv->char_listeners.push_back(e);
+		return &_priv->char_listeners.back();
+	}
+
+	void *Surface::add_mousedown_listener(const std::function<void(Surface *, int, int, int)> &e)
+	{
+		_priv->mousedown_listeners.push_back(e);
+		return &_priv->mousedown_listeners.back();
+	}
+
+	void *Surface::add_mouseup_listener(const std::function<void(Surface *, int, int, int)> &e)
+	{
+		_priv->mouseup_listeners.push_back(e);
+		return &_priv->mouseup_listeners.back();
+	}
+
+	void *Surface::add_mousemove_listener(const std::function<void(Surface *, int, int)> &e)
+	{
+		_priv->mousemove_listeners.push_back(e);
+		return &_priv->mousemove_listeners.back();
+	}
+
+	void *Surface::add_mousescroll_listener(const std::function<void(Surface *, int)> &e)
+	{
+		_priv->mousescroll_listeners.push_back(e);
+		return &_priv->mousescroll_listeners.back();
+	}
+
+	void *Surface::add_resize_listener(const std::function<void(Surface *s, int, int)> &e)
+	{
+		_priv->resize_listeners.push_back(e);
+		return &_priv->resize_listeners.back();
+	}
+
+	void *Surface::add_destroy_listener(const std::function<void(Surface *s)> &e)
+	{
+		_priv->destroy_listeners.push_back(e);
+		return &_priv->destroy_listeners.back();
+	}
+
+	void Surface::remove_keydown_listener(void *p)
+	{
+		for (auto it = _priv->keydown_listeners.begin(); it != _priv->keydown_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->keydown_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_keyup_listener(void *p)
+	{
+		for (auto it = _priv->keyup_listeners.begin(); it != _priv->keyup_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->keyup_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_char_listener(void *p)
+	{
+		for (auto it = _priv->char_listeners.begin(); it != _priv->char_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->char_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_mousedown_listener(void *p)
+	{
+		for (auto it = _priv->mousedown_listeners.begin(); it != _priv->mousedown_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->mousedown_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_mouseup_listener(void *p)
+	{
+		for (auto it = _priv->mouseup_listeners.begin(); it != _priv->mouseup_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->mouseup_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_mousemove_listener(void *p)
+	{
+		for (auto it = _priv->mousemove_listeners.begin(); it != _priv->mousemove_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->mousemove_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_mousescroll_listener(void *p)
+	{
+		for (auto it = _priv->mousescroll_listeners.begin(); it != _priv->mousescroll_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->mousescroll_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_resize_listener(void *p)
+	{
+		for (auto it = _priv->keydown_listeners.begin(); it != _priv->keydown_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->keydown_listeners.erase(it);
+				return;
+			}
+		}
+	}
+
+	void Surface::remove_destroy_listener(void *p)
+	{
+		for (auto it = _priv->keydown_listeners.begin(); it != _priv->keydown_listeners.end(); it++)
+		{
+			if (&(*it) == p)
+			{
+				_priv->keydown_listeners.erase(it);
+				return;
+			}
+		}
+	}
 
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		auto pSurface = (Surface*)GetWindowLongPtr(hWnd, 0);
+		auto s = (Surface*)GetWindowLongPtr(hWnd, 0);
 
-		if (pSurface)
+		if (s)
 		{
-			auto impl = (SurfaceImpl*)pSurface->impl;
-
 			switch (message)
 			{
 				case WM_KEYDOWN:
-					impl->key_states[wParam] = KeyStateDown | KeyStateJust;
-					impl->key_event_type = KeyEventDown;
-					impl->key_event_key = wParam;
+					s->key_states[wParam] = KeyStateDown | KeyStateJust;
+					s->_priv->key_event_type = KeyEventDown;
+					s->_priv->key_event_key = wParam;
 					break;
 				case WM_KEYUP:
-					impl->key_states[wParam] = KeyStateUp | KeyStateJust;
-					impl->key_event_type = KeyEventUp;
-					impl->key_event_key = wParam;
+					s->key_states[wParam] = KeyStateUp | KeyStateJust;
+					s->_priv->key_event_type = KeyEventUp;
+					s->_priv->key_event_key = wParam;
 					break;
 				case WM_CHAR:
-					impl->char_events.push(wParam);
+					s->_priv->char_events.push(wParam);
 					break;
 				case WM_LBUTTONDOWN:
-					impl->mouse_buttons[0] = KeyStateDown | KeyStateJust;
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_event_type = KeyEventDown;
-					impl->mouse_event_key = 0;
-					SetCapture(hWnd);
+					s->mouse_buttons[0] = KeyStateDown | KeyStateJust;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_event_type = KeyEventDown;
+					s->_priv->mouse_event_key = 0;
 					break;
 				case WM_LBUTTONUP:
-					impl->mouse_buttons[0] = KeyStateUp | KeyStateJust;
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_event_type = KeyEventUp;
-					impl->mouse_event_key = 0;
-					ReleaseCapture();
+					s->mouse_buttons[0] = KeyStateUp | KeyStateJust;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_event_type = KeyEventUp;
+					s->_priv->mouse_event_key = 0;
 					break;
 				case WM_MBUTTONDOWN:
-					impl->mouse_buttons[2] = KeyStateDown | KeyStateJust;
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_event_type = KeyEventDown;
-					impl->mouse_event_key = 2;
-					SetCapture(hWnd);
+					s->mouse_buttons[2] = KeyStateDown | KeyStateJust;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_event_type = KeyEventDown;
+					s->_priv->mouse_event_key = 2;
 					break;
 				case WM_MBUTTONUP:
-					impl->mouse_buttons[2] = KeyStateUp | KeyStateJust;
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_event_type = KeyEventUp;
-					impl->mouse_event_key = 2;
-					ReleaseCapture();
+					s->mouse_buttons[2] = KeyStateUp | KeyStateJust;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_event_type = KeyEventUp;
+					s->_priv->mouse_event_key = 2;
 					break;
 				case WM_RBUTTONDOWN:
-					impl->mouse_buttons[1] = KeyStateDown | KeyStateJust;
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_event_type = KeyEventDown;
-					impl->mouse_event_key = 1;
-					SetCapture(hWnd);
+					s->mouse_buttons[1] = KeyStateDown | KeyStateJust;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_event_type = KeyEventDown;
+					s->_priv->mouse_event_key = 1;
 					break;
 				case WM_RBUTTONUP:
-					impl->mouse_buttons[1] = KeyStateUp | KeyStateJust;
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_event_type = KeyEventUp;
-					impl->mouse_event_key = 1;
-					ReleaseCapture();
+					s->mouse_buttons[1] = KeyStateUp | KeyStateJust;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_event_type = KeyEventUp;
+					s->_priv->mouse_event_key = 1;
 					break;
 				case WM_MOUSEMOVE:
-					impl->mouse_x = LOWORD(lParam);
-					impl->mouse_y = HIWORD(lParam);
-					impl->mouse_move_event = true;
+					s->mouse_x = LOWORD(lParam);
+					s->mouse_y = HIWORD(lParam);
+					s->_priv->mouse_move_event = true;
 					break;
 				case WM_MOUSEWHEEL:
-					impl->mouse_scroll = (short)HIWORD(wParam) > 0 ? 1 : -1;
-					impl->mouse_scroll_event = true;
+					s->mouse_scroll = (short)HIWORD(wParam) > 0 ? 1 : -1;
+					s->_priv->mouse_scroll_event = true;
 					break;
 				case WM_DESTROY:
-					impl->destroy_event = true;
+					s->_priv->destroy_event = true;
 				case WM_SIZE:
 				{
 					auto x = std::max((int)LOWORD(lParam), 1);
 					auto y = std::max((int)HIWORD(lParam), 1);
-					if (x != impl->cx || y != impl->cy)
+					if (x != s->cx || y != s->cy)
 					{
-						impl->cx = x;
-						impl->cy = y;
-						impl->resize_event = true;
+						s->cx = x;
+						s->cy = y;
+						s->_priv->resize_event = true;
 					}
 					break;
 				}
@@ -198,142 +378,7 @@ namespace flame
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	SurfaceManager *create_surface_manager()
-	{
-		auto m = new SurfaceManager;
-		m->impl = new SurfaceManagerImpl;
-		return m;
-	}
-
-	void destroy_surface_manager(SurfaceManager *m)
-	{
-		auto impl = (SurfaceManagerImpl*)m->impl;
-		for (auto &s : impl->surfaces)
-		{
-			auto s_impl = (SurfaceImpl*)s->impl;
-			DestroyWindow(s_impl->hWnd);
-			delete s_impl;
-			delete s;
-		}
-		delete m->impl;
-		delete m;
-	}
-
-	int surface_manager_run(SurfaceManager *m, void(*idle_callback)())
-	{
-		auto impl = (SurfaceManagerImpl*)m->impl;
-		if (impl->surfaces.size() == 0)
-			return 1;
-
-		assert(idle_callback);
-
-		for (;;)
-		{
-			MSG msg;
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-
-			for (auto it = impl->surfaces.begin(); it != impl->surfaces.end(); )
-			{
-				auto pSurface = *it;
-				auto s_impl = (SurfaceImpl*)pSurface->impl;
-
-				s_impl->mouse_disp_x = s_impl->mouse_x - s_impl->mouse_prev_x;
-				s_impl->mouse_disp_y = s_impl->mouse_y - s_impl->mouse_prev_y;
-
-				if (s_impl->destroy_event)
-				{
-					for (auto &e : s_impl->destroy_listeners)
-						e(pSurface);
-					delete s_impl;
-					delete pSurface;
-					it = impl->surfaces.erase(it);
-				}
-				else
-				{
-					switch (s_impl->key_event_type)
-					{
-						case KeyEventDown:
-							for (auto &e : s_impl->keydown_listeners)
-								e(pSurface, s_impl->key_event_key);
-							break;
-						case KeyEventUp:
-							for (auto &e : s_impl->keyup_listeners)
-								e(pSurface, s_impl->key_event_key);
-							break;
-					}
-					s_impl->key_event_type = KeyEventNull;
-
-					switch (s_impl->mouse_event_type)
-					{
-						case KeyEventDown:
-							for (auto &e : s_impl->mousedown_listeners)
-								e(pSurface, s_impl->mouse_event_key, s_impl->mouse_x, s_impl->mouse_y);
-							break;
-						case KeyEventUp:
-							for (auto &e : s_impl->mouseup_listeners)
-								e(pSurface, s_impl->mouse_event_key, s_impl->mouse_x, s_impl->mouse_y);
-							break;
-					}
-					s_impl->mouse_event_type = KeyEventNull;
-
-					if (!s_impl->char_events.empty())
-					{
-						while (!s_impl->char_events.empty())
-						{
-							auto c = s_impl->char_events.front();
-							for (auto &e : s_impl->char_listeners)
-								e(pSurface, c);
-							s_impl->char_events.pop();
-						}
-					}
-
-					if (s_impl->mouse_move_event)
-					{
-						for (auto &e : s_impl->mousemove_listeners)
-							e(pSurface, s_impl->mouse_x, s_impl->mouse_y);
-						s_impl->mouse_move_event = false;
-					}
-
-					if (s_impl->mouse_scroll_event)
-					{
-						for (auto &e : s_impl->mousescroll_listeners)
-							e(pSurface, s_impl->mouse_scroll);
-						s_impl->mouse_scroll_event = false;
-					}
-
-					if (s_impl->resize_event)
-					{
-						for (auto &e : s_impl->resize_listeners)
-							e(pSurface, s_impl->cx, s_impl->cy);
-						s_impl->resize_event = false;
-					}
-
-					for (int i = 0; i < TK_ARRAYSIZE(s_impl->key_states); i++)
-						s_impl->key_states[i] &= ~KeyStateJust;
-
-					for (auto i = 0; i < TK_ARRAYSIZE(s_impl->mouse_buttons); i++)
-						s_impl->mouse_buttons[i] &= ~KeyStateJust;
-
-					s_impl->mouse_prev_x = s_impl->mouse_x;
-					s_impl->mouse_prev_y = s_impl->mouse_y;
-					s_impl->mouse_scroll = 0;
-
-					it++;
-				}
-			}
-
-			if (impl->surfaces.empty())
-				return 0;
-
-			idle_callback();
-		}
-	}
-
-	Surface *create_surface(SurfaceManager *m, int _cx, int _cy, int _style, const std::string &_title)
+	Surface *SurfaceManager::create_surface(int _cx, int _cy, int _style, const std::string &_title)
 	{
 		static bool initialized = false;
 		if (!initialized)
@@ -366,319 +411,203 @@ namespace flame
 		}
 
 		auto s = new Surface;
-		s->impl = new SurfaceImpl;
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->title = _title;
+		s->title = _title;
 
-		set_surface_size(s, _cx, _cy, _style);
+		for (auto i = 0; i < TK_ARRAYSIZE(s->key_states); i++)
+			s->key_states[i] = KeyStateUp;
 
-		SetWindowLongPtr(impl->hWnd, 0, (LONG_PTR)s);
+		s->mouse_x = s->mouse_y = 0;
+		s->mouse_disp_x = s->mouse_disp_y = 0;
+		s->mouse_scroll = 0;
 
-		auto m_impl = (SurfaceManagerImpl*)m->impl;
-		m_impl->surfaces.push_back(s);
+		for (auto i = 0; i < TK_ARRAYSIZE(s->mouse_buttons); i++)
+			s->mouse_buttons[i] = KeyStateUp;
+
+		s->_priv = new SurfacePrivate;
+
+		s->_priv->hWnd = 0;
+
+		s->_priv->key_event_type = KeyEventNull;
+		s->_priv->key_event_key = 0;
+
+		s->_priv->mouse_prev_x = s->_priv->mouse_prev_y = 0;
+		s->_priv->mouse_event_type = KeyEventNull;
+		s->_priv->mouse_event_key = 0;
+		s->_priv->mouse_move_event = false;
+		s->_priv->mouse_scroll_event = false;
+
+		s->_priv->resize_event = false;
+
+		s->_priv->destroy_event = false;
+
+		s->style = 0;
+		s->set_size(-1, -1, _cx, _cy, _style);
+
+		SetWindowLongPtr(s->_priv->hWnd, 0, (LONG_PTR)s);
+
+		_priv->surfaces.push_back(s);
 
 		return s;
 	}
 
-	void destroy_surface(SurfaceManager *m, Surface *s)
+	void SurfaceManager::destroy_surface(Surface *s)
 	{
-		auto m_impl = (SurfaceManagerImpl*)m->impl;
-		for (auto it = m_impl->surfaces.begin(); it != m_impl->surfaces.end(); it++)
+		for (auto it = _priv->surfaces.begin(); it != _priv->surfaces.end(); it++)
 		{
 			if (*it == s)
 			{
-				m_impl->surfaces.erase(it);
+				_priv->surfaces.erase(it);
 				break;
 			}
 		}
 
-		auto impl = (SurfaceImpl*)s->impl;
-		DestroyWindow(impl->hWnd);
-		for (auto &e : impl->destroy_listeners)
+		DestroyWindow(s->_priv->hWnd);
+		for (auto &e : s->_priv->destroy_listeners)
 			e(s);
-		delete impl;
+		delete s->_priv;
 		delete s;
 	}
 
-	std::string get_surface_title(Surface *s)
+	int SurfaceManager::run(const std::function<void()> &idle_callback)
 	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return impl->title;
-	}
+		if (_priv->surfaces.size() == 0)
+			return 1;
 
-	IVEC2 get_surface_size(Surface *s)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return {impl->cx, impl->cy};
-	}
+		assert(idle_callback);
 
-	void *get_surface_win32_handle(Surface *s)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return impl->hWnd;
-	}
+		_priv->last_time = get_now_ns();
+		_priv->last_frame_time = _priv->last_time;
+		_priv->counting_frame = _priv->last_time;
 
-	void set_surface_size(Surface *s, int _cx, int _cy, int _style)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-
-		if (_cx > 0)
-			impl->cx = _cx;
-		if (_cy > 0)
-			impl->cy = _cy;
-		impl->style = _style;
-
-		auto win32_style = WS_VISIBLE;
-		if ((impl->style & SurfaceStyleFrame) && !(impl->style & SurfaceStyleFullscreen))
+		for (;;)
 		{
-			RECT rect = { 0, 0, impl->cx, impl->cy };
-			AdjustWindowRect(&rect, WS_CAPTION, false);
-			_cx = rect.right - rect.left;
-			_cy = rect.bottom - rect.top;
-
-			win32_style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-
-			if (impl->style & SurfaceStyleResizable)
-				win32_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
-		}
-		else
-		{
-			win32_style |= WS_BORDER;
-			if (impl->style & SurfaceStyleFullscreen)
+			MSG msg;
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
-				_cx = get_screen_cx();
-				_cy = get_screen_cy();
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
 			}
-		}
 
-		auto x = (get_screen_cx() - _cx) / 2;
-		auto y = (get_screen_cy() - _cy) / 2;
-
-		if (impl->hWnd)
-		{
-			SetWindowLong(impl->hWnd, GWL_STYLE, win32_style);
-			SetWindowPos(impl->hWnd, HWND_TOP, x, y, _cx, _cy, SWP_NOZORDER);
-		}
-		else
-		{
-			impl->hWnd = CreateWindowA("tke_wnd", impl->title.c_str(), win32_style,
-				x, y, _cx, _cy, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
-		}
-	}
-
-	void set_surface_maximized(Surface *s, bool v)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		ShowWindow(impl->hWnd, v ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
-	}
-
-	void *add_keydown_listener(Surface *s, const std::function<void(Surface *s, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->keydown_listeners.push_back(e);
-		return &impl->keydown_listeners.back();
-	}
-
-	void *add_keyup_listener(Surface *s, const std::function<void(Surface *s, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->keydown_listeners.push_back(e);
-		return &impl->keydown_listeners.back();
-	}
-
-	void *add_char_listener(Surface *s, const std::function<void(Surface *s, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->char_listeners.push_back(e);
-		return &impl->char_listeners.back();
-	}
-
-	void *add_mousedown_listener(Surface *s, const std::function<void(Surface *, int, int, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->mousedown_listeners.push_back(e);
-		return &impl->mousedown_listeners.back();
-	}
-
-	void *add_mouseup_listener(Surface *s, const std::function<void(Surface *, int, int, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->mouseup_listeners.push_back(e);
-		return &impl->mouseup_listeners.back();
-	}
-
-	void *add_mousemove_listener(Surface *s, const std::function<void(Surface *, int, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->mousemove_listeners.push_back(e);
-		return &impl->mousemove_listeners.back();
-	}
-
-	void *add_mousescroll_listener(Surface *s, const std::function<void(Surface *, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->mousescroll_listeners.push_back(e);
-		return &impl->mousescroll_listeners.back();
-	}
-
-	void *add_resize_listener(Surface *s, const std::function<void(Surface *s, int, int)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->resize_listeners.push_back(e);
-		return &impl->resize_listeners.back();
-	}
-
-	void *add_destroy_listener(Surface *s, const std::function<void(Surface *s)> &e)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		impl->destroy_listeners.push_back(e);
-		return &impl->destroy_listeners.back();
-	}
-
-	void remove_keydown_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->keydown_listeners.begin(); it != impl->keydown_listeners.end(); it++)
-		{
-			if (&(*it) == p)
+			for (auto it = _priv->surfaces.begin(); it != _priv->surfaces.end(); )
 			{
-				impl->keydown_listeners.erase(it);
-				return;
-			}
-		}
-	}
+				auto s = *it;
 
-	void remove_keyup_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->keyup_listeners.begin(); it != impl->keyup_listeners.end(); it++)
-		{
-			if (&(*it) == p)
+				s->mouse_disp_x = s->mouse_x - s->_priv->mouse_prev_x;
+				s->mouse_disp_y = s->mouse_y - s->_priv->mouse_prev_y;
+
+				if (s->_priv->destroy_event)
+				{
+					for (auto &e : s->_priv->destroy_listeners)
+						e(s);
+					delete s->_priv;
+					delete s;
+					it = _priv->surfaces.erase(it);
+				}
+				else
+				{
+					switch (s->_priv->key_event_type)
+					{
+						case KeyEventDown:
+							for (auto &e : s->_priv->keydown_listeners)
+								e(s, s->_priv->key_event_key);
+							break;
+						case KeyEventUp:
+							for (auto &e : s->_priv->keyup_listeners)
+								e(s, s->_priv->key_event_key);
+							break;
+					}
+					s->_priv->key_event_type = KeyEventNull;
+
+					switch (s->_priv->mouse_event_type)
+					{
+						case KeyEventDown:
+							for (auto &e : s->_priv->mousedown_listeners)
+								e(s, s->_priv->mouse_event_key, s->mouse_x, s->mouse_y);
+							break;
+						case KeyEventUp:
+							for (auto &e : s->_priv->mouseup_listeners)
+								e(s, s->_priv->mouse_event_key, s->mouse_x, s->mouse_y);
+							break;
+					}
+					s->_priv->mouse_event_type = KeyEventNull;
+
+					if (!s->_priv->char_events.empty())
+					{
+						while (!s->_priv->char_events.empty())
+						{
+							auto c = s->_priv->char_events.front();
+							for (auto &e : s->_priv->char_listeners)
+								e(s, c);
+							s->_priv->char_events.pop();
+						}
+					}
+
+					if (s->_priv->mouse_move_event)
+					{
+						for (auto &e : s->_priv->mousemove_listeners)
+							e(s, s->mouse_x, s->mouse_y);
+						s->_priv->mouse_move_event = false;
+					}
+
+					if (s->_priv->mouse_scroll_event)
+					{
+						for (auto &e : s->_priv->mousescroll_listeners)
+							e(s, s->mouse_scroll);
+						s->_priv->mouse_scroll_event = false;
+					}
+
+					if (s->_priv->resize_event)
+					{
+						for (auto &e : s->_priv->resize_listeners)
+							e(s, s->cx, s->cy);
+						s->_priv->resize_event = false;
+					}
+
+					for (int i = 0; i < TK_ARRAYSIZE(s->key_states); i++)
+						s->key_states[i] &= ~KeyStateJust;
+
+					for (auto i = 0; i < TK_ARRAYSIZE(s->mouse_buttons); i++)
+						s->mouse_buttons[i] &= ~KeyStateJust;
+
+					s->_priv->mouse_prev_x = s->mouse_x;
+					s->_priv->mouse_prev_y = s->mouse_y;
+					s->mouse_scroll = 0;
+
+					it++;
+				}
+			}
+
+			if (_priv->surfaces.empty())
+				return 0;
+			
+			if (_priv->last_time - _priv->last_frame_time >= 1000000000)
 			{
-				impl->keyup_listeners.erase(it);
-				return;
+				fps = _priv->counting_frame;
+				_priv->counting_frame = 0;
+				_priv->last_frame_time = _priv->last_time;
 			}
+			idle_callback();
+			_priv->counting_frame++;
+			_priv->last_time = get_now_ns();
 		}
 	}
 
-	void remove_char_listener(Surface *s, void *p)
+	SurfaceManager *create_surface_manager()
 	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->char_listeners.begin(); it != impl->char_listeners.end(); it++)
+		auto m = new SurfaceManager;
+		m->_priv = new SurfaceManagerPrivate;
+		return m;
+	}
+
+	void destroy_surface_manager(SurfaceManager *m)
+	{
+		for (auto &s : m->_priv->surfaces)
 		{
-			if (&(*it) == p)
-			{
-				impl->char_listeners.erase(it);
-				return;
-			}
+			DestroyWindow(s->_priv->hWnd);
+			delete s->_priv;
+			delete s;
 		}
-	}
-
-	void remove_mousedown_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->mousedown_listeners.begin(); it != impl->mousedown_listeners.end(); it++)
-		{
-			if (&(*it) == p)
-			{
-				impl->mousedown_listeners.erase(it);
-				return;
-			}
-		}
-	}
-
-	void remove_mouseup_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->mouseup_listeners.begin(); it != impl->mouseup_listeners.end(); it++)
-		{
-			if (&(*it) == p)
-			{
-				impl->mouseup_listeners.erase(it);
-				return;
-			}
-		}
-	}
-
-	void remove_mousemove_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->mousemove_listeners.begin(); it != impl->mousemove_listeners.end(); it++)
-		{
-			if (&(*it) == p)
-			{
-				impl->mousemove_listeners.erase(it);
-				return;
-			}
-		}
-	}
-
-	void remove_mousescroll_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->mousescroll_listeners.begin(); it != impl->mousescroll_listeners.end(); it++)
-		{
-			if (&(*it) == p)
-			{
-				impl->mousescroll_listeners.erase(it);
-				return;
-			}
-		}
-	}
-
-	void remove_resize_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->keydown_listeners.begin(); it != impl->keydown_listeners.end(); it++)
-		{
-			if (&(*it) == p)
-			{
-				impl->keydown_listeners.erase(it);
-				return;
-			}
-		}
-	}
-
-	void remove_destroy_listener(Surface *s, void *p)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		for (auto it = impl->keydown_listeners.begin(); it != impl->keydown_listeners.end(); it++)
-		{
-			if (&(*it) == p)
-			{
-				impl->keydown_listeners.erase(it);
-				return;
-			}
-		}
-	}
-
-	int get_keyboard_state(Surface *s, int key)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return impl->key_states[key];
-	}
-
-	int get_mouse_state(Surface *s, int key)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return impl->mouse_buttons[key];
-	}
-
-	IVEC2 get_mouse_pos(Surface *s)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return {impl->mouse_x, impl->mouse_y};
-	}
-
-	IVEC2 get_mouse_pos_disp(Surface *s)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return {impl->mouse_disp_x, impl->mouse_disp_y};
-	}
-
-	int get_mouse_scroll(Surface *s)
-	{
-		auto impl = (SurfaceImpl*)s->impl;
-		return impl->mouse_scroll;
+		delete m->_priv;
+		delete m;
 	}
 }

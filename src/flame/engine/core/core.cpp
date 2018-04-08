@@ -21,13 +21,6 @@ namespace flame
 	long long now_ns;
 	double elapsed_time;
 
-	long long get_now_ns()
-	{
-		return std::chrono::time_point_cast<std::chrono::nanoseconds>(
-			std::chrono::system_clock::now()
-			).time_since_epoch().count();
-	}
-
 	std::stack<Profile> profile_stack;
 	std::vector<Profile> profiles;
 
