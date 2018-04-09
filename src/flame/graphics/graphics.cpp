@@ -7,6 +7,7 @@
 #undef INFINITE
 
 #include <flame/global.h>
+#include <flame/system.h>
 #include <flame/graphics/graphics.h>
 
 //#include <flame/global.h>
@@ -79,12 +80,68 @@ namespace flame
 
 		struct SwapchainPrivate
 		{
-
+			VkSurfaceKHR surface;
+			VkSwapchainKHR swapchain;
 		};
 
-		Swapchain *Graphics::create_swapchain()
+		Swapchain *Graphics::create_swapchain(void *win32_hwnd, int cx, int cy)
 		{
-			return nullptr;
+			auto s = new Swapchain;
+			s->_priv = new SwapchainPrivate;
+
+			VkWin32SurfaceCreateInfoKHR surface_info;
+			surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surface_info.flags = 0;
+			surface_info.pNext = nullptr;
+			surface_info.hinstance = (HINSTANCE)get_hinst();
+			surface_info.hwnd = (HWND)win32_hwnd;
+			vk_chk_res(vkCreateWin32SurfaceKHR(_priv->instance, &surface_info, nullptr, &s->_priv->surface));
+
+			VkBool32 surface_supported;
+			vkGetPhysicalDeviceSurfaceSupportKHR(_priv->physical_device, 0, s->_priv->surface, &surface_supported);
+			assert(surface_supported);
+
+			VkSurfaceCapabilitiesKHR surface_capabilities;
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_priv->physical_device, s->_priv->surface, &surface_capabilities);
+			assert(cx >= surface_capabilities.minImageExtent.width);
+			assert(cy >= surface_capabilities.minImageExtent.height);
+			assert(cx <= surface_capabilities.maxImageExtent.width);
+			assert(cy <= surface_capabilities.maxImageExtent.height);
+
+			unsigned int surface_format_count = 0;
+			std::vector<VkSurfaceFormatKHR> surface_formats;
+			vkGetPhysicalDeviceSurfaceFormatsKHR(_priv->physical_device, s->_priv->surface,
+				&surface_format_count, nullptr);
+			assert(surface_format_count > 0);
+			surface_formats.resize(surface_format_count);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(_priv->physical_device, s->_priv->surface,
+				&surface_format_count, surface_formats.data());
+
+			//swapchain_format = surface_formats[0].format;
+
+			VkSwapchainCreateInfoKHR swapchain_info;
+			swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+			swapchain_info.flags = 0;
+			swapchain_info.pNext = nullptr;
+			swapchain_info.surface = s->_priv->surface;
+			swapchain_info.minImageCount = 2;
+			swapchain_info.imageFormat = surface_formats[0].format;
+			swapchain_info.imageColorSpace = surface_formats[0].colorSpace;
+			swapchain_info.imageExtent.width = cx;
+			swapchain_info.imageExtent.height = cy;
+			swapchain_info.imageArrayLayers = 1;
+			swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			swapchain_info.queueFamilyIndexCount = 0;
+			swapchain_info.pQueueFamilyIndices = nullptr;
+			swapchain_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+			swapchain_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+			swapchain_info.clipped = true;
+			swapchain_info.oldSwapchain = 0;
+			vk_chk_res(vkCreateSwapchainKHR(_priv->device, &swapchain_info, nullptr, &s->_priv->swapchain));
+
+			return s;
 		}
 
 		void Graphics::destroy_swapchain(Swapchain *s)

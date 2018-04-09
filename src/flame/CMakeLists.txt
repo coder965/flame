@@ -7,7 +7,7 @@ group_source("${FLAME_FILESYSTEM_SOURCE_LIST}" "" "Source")
 
 add_library(flame_filesystem SHARED ${FLAME_FILESYSTEM_HEADER_LIST} ${FLAME_FILESYSTEM_SOURCE_LIST})
 
-target_compile_definitions(flame_filesystem PRIVATE TK_EXPORTS)
+target_compile_definitions(flame_filesystem PRIVATE _FLAME_FILESYSTEM_EXPORTS)
 
 target_include_directories(flame_filesystem PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_filesystem PUBLIC "${CMAKE_SOURCE_DIR}/ext/rapidxml-1.13")
@@ -24,7 +24,7 @@ group_source("${FLAME_MATH_SOURCE_LIST}" "" "Source")
 
 add_library(flame_math SHARED ${FLAME_MATH_HEADER_LIST} ${FLAME_MATH_SOURCE_LIST})
 
-target_compile_definitions(flame_math PRIVATE TK_EXPORTS)
+target_compile_definitions(flame_math PRIVATE _FLAME_MATH_EXPORTS)
 
 target_include_directories(flame_math PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_math PUBLIC "${CMAKE_SOURCE_DIR}/ext/glm")
@@ -40,7 +40,7 @@ group_source("${FLAME_IMAGE_SOURCE_LIST}" "" "Source")
 
 add_library(flame_image SHARED ${FLAME_IMAGE_HEADER_LIST} ${FLAME_IMAGE_SOURCE_LIST})
 
-target_compile_definitions(flame_image PRIVATE TK_EXPORTS)
+target_compile_definitions(flame_image PRIVATE _FLAME_IMAGE_EXPORTS)
 
 target_include_directories(flame_image PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_image PUBLIC "${CMAKE_SOURCE_DIR}/ext/gli")
@@ -57,7 +57,7 @@ group_source("${FLAME_SYSTEM_SOURCE_LIST}" "" "Source")
 
 add_library(flame_system SHARED ${FLAME_SYSTEM_HEADER_LIST} ${FLAME_SYSTEM_SOURCE_LIST})
 
-target_compile_definitions(flame_system PRIVATE TK_EXPORTS)
+target_compile_definitions(flame_system PRIVATE _FLAME_SYSTEM_EXPORTS)
 
 target_include_directories(flame_system PUBLIC "${CMAKE_SOURCE_DIR}/src")
 
@@ -70,6 +70,8 @@ group_source("${FLAME_SURFACE_HEADER_LIST}" "" "Header")
 group_source("${FLAME_SURFACE_SOURCE_LIST}" "" "Source")
 
 add_library(flame_surface SHARED ${FLAME_SURFACE_HEADER_LIST} ${FLAME_SURFACE_SOURCE_LIST})
+
+target_compile_definitions(flame_surface PRIVATE _FLAME_SURFACE_EXPORTS)
 
 target_include_directories(flame_surface PUBLIC "${CMAKE_SOURCE_DIR}/src")
 

@@ -1,10 +1,14 @@
 #pragma once
 
+#ifdef _FLAME_IMAGE_EXPORTS
+#define FLAME_IMAGE_EXPORTS __declspec(dllexport)
+#else
+#define FLAME_IMAGE_EXPORTS __declspec(dllimport)
+#endif
+
 #include <vector>
 #include <string>
 #include <memory>
-
-#include <flame/exports.h>
 
 namespace flame
 {
@@ -32,23 +36,23 @@ namespace flame
 		int size;
 		unsigned char *data;
 
-		FLAME_EXPORTS void add_alpha_channel();
+		FLAME_IMAGE_EXPORTS void add_alpha_channel();
 
-		FLAME_EXPORTS void swap_RB();
+		FLAME_IMAGE_EXPORTS void swap_RB();
 
-		FLAME_EXPORTS void copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y);
+		FLAME_IMAGE_EXPORTS void copy_to(Image *dst, int src_x, int src_y, int cx, int cy, int dst_x, int dst_y);
 	};
 
-	FLAME_EXPORTS Image *create_image(int cx, int cy, int channel, int bpp);
+	FLAME_IMAGE_EXPORTS Image *create_image(int cx, int cy, int channel, int bpp);
 
-	FLAME_EXPORTS Image *load_image(const std::string &filename);
+	FLAME_IMAGE_EXPORTS Image *load_image(const std::string &filename);
 
-	FLAME_EXPORTS void save_image(int cx, int cy, int channel, int bpp, unsigned char *data, const std::string &filename);
+	FLAME_IMAGE_EXPORTS void save_image(int cx, int cy, int channel, int bpp, unsigned char *data, const std::string &filename);
 
 	inline void save_image(Image *i, const std::string &filename)
 	{
 		save_image(i->cx, i->cy, i->channel, i->bpp, i->data, filename);
 	}
 
-	FLAME_EXPORTS void release_image(Image *i);
+	FLAME_IMAGE_EXPORTS void release_image(Image *i);
 }

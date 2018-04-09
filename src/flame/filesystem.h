@@ -1,6 +1,10 @@
 #pragma once
 
-#include <flame/exports.h>
+#ifdef _FLAME_FILESYSTEM_EXPORTS
+#define FLAME_FILESYSTEM_EXPORTS __declspec(dllexport)
+#else
+#define FLAME_FILESYSTEM_EXPORTS __declspec(dllimport)
+#endif
 
 #include <fstream>
 #include <filesystem>
@@ -225,7 +229,7 @@ namespace flame
 		}
 	};
 
-	FLAME_EXPORTS XMLDoc *load_xml(const std::string &_name, const std::string &filename);
-	FLAME_EXPORTS void save_xml(XMLDoc *doc, const std::string &filename);
-	FLAME_EXPORTS void release_xml(XMLDoc *doc);
+	FLAME_FILESYSTEM_EXPORTS XMLDoc *load_xml(const std::string &_name, const std::string &filename);
+	FLAME_FILESYSTEM_EXPORTS void save_xml(XMLDoc *doc, const std::string &filename);
+	FLAME_FILESYSTEM_EXPORTS void release_xml(XMLDoc *doc);
 }

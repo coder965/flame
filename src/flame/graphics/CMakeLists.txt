@@ -6,6 +6,8 @@ group_source("${FLAME_GRAPHICS_SOURCE_LIST}" "" "Source")
 
 add_library(flame_graphics SHARED ${FLAME_GRAPHICS_HEADER_LIST} ${FLAME_GRAPHICS_SOURCE_LIST})
 
+target_compile_definitions(flame_graphics PRIVATE _FLAME_GRAPHICS_EXPORTS)
+
 target_include_directories(flame_graphics PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_graphics PUBLIC "$ENV{VK_SDK_PATH}/Include")
 

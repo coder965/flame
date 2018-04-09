@@ -1,6 +1,10 @@
 #pragma once
 
-#include <flame/exports.h>
+#ifdef _FLAME_MATH_EXPORTS
+#define FLAME_MATH_EXPORTS __declspec(dllexport)
+#else
+#define FLAME_MATH_EXPORTS __declspec(dllimport)
+#endif
 
 #include <fstream>
 #define _USE_MATH_DEFINES
@@ -130,17 +134,17 @@ namespace flame
 			mat[i] = glm::vec4(glm::normalize(glm::vec3(mat[i])), 0.f);
 	}
 
-	FLAME_EXPORTS float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane);
+	FLAME_MATH_EXPORTS float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane);
 
-	FLAME_EXPORTS glm::mat3 quaternion_to_mat3(glm::vec4 &q);
+	FLAME_MATH_EXPORTS glm::mat3 quaternion_to_mat3(glm::vec4 &q);
 
-	FLAME_EXPORTS glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
+	FLAME_MATH_EXPORTS glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
 
-	FLAME_EXPORTS glm::vec3 quaternion_to_euler(glm::vec4 &q);
+	FLAME_MATH_EXPORTS glm::vec3 quaternion_to_euler(glm::vec4 &q);
 
-	FLAME_EXPORTS void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
+	FLAME_MATH_EXPORTS void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
 
-	FLAME_EXPORTS glm::mat3 euler_to_mat3(glm::vec3 &e);
+	FLAME_MATH_EXPORTS glm::mat3 euler_to_mat3(glm::vec3 &e);
 
 	inline glm::mat3 euler_to_mat3(float x, float y, float z)
 	{
@@ -180,10 +184,10 @@ namespace flame
 		return 1.0 / (a * z + b);
 	}
 
-	FLAME_EXPORTS float rand2d(const glm::vec2 &v);
-	FLAME_EXPORTS float noise2d(glm::vec2 v);
-	FLAME_EXPORTS float fbm2d(glm::vec2 v);
+	FLAME_MATH_EXPORTS float rand2d(const glm::vec2 &v);
+	FLAME_MATH_EXPORTS float noise2d(glm::vec2 v);
+	FLAME_MATH_EXPORTS float fbm2d(glm::vec2 v);
 
-	FLAME_EXPORTS glm::vec4 fit_rect(const glm::vec2 &desired_size, float xy_aspect);
-	FLAME_EXPORTS glm::vec4 fit_rect_no_zoom_in(const glm::vec2 &desired_size, const glm::vec2 &size);
+	FLAME_MATH_EXPORTS glm::vec4 fit_rect(const glm::vec2 &desired_size, float xy_aspect);
+	FLAME_MATH_EXPORTS glm::vec4 fit_rect_no_zoom_in(const glm::vec2 &desired_size, const glm::vec2 &size);
 }

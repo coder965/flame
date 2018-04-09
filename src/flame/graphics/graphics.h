@@ -1,8 +1,12 @@
 #pragma once
 
-#include <functional>
+#ifdef _FLAME_GRAPHICS_EXPORTS
+#define FLAME_GRAPHICS_EXPORTS __declspec(dllexport)
+#else
+#define FLAME_GRAPHICS_EXPORTS __declspec(dllimport)
+#endif
 
-#include <flame/exports.h>
+#include <functional>
 
 //#include <flame/global.h>
 
@@ -80,6 +84,8 @@ namespace flame
 		struct Swapchain
 		{
 			SwapchainPrivate *_priv;
+
+			FLAME_GRAPHICS_EXPORTS int acquire_image();
 		};
 
 		struct FramebufferPrivate;
@@ -103,16 +109,16 @@ namespace flame
 
 			GraphicsPrivate *_priv;
 
-			FLAME_EXPORTS void set_resolution(int x, int y); // 0 means keep
-			FLAME_EXPORTS void *add_resolution_change_listener(const std::function<void(int, int)> &e);
-			FLAME_EXPORTS void remove_resolution_change_listener(void *p);
+			FLAME_GRAPHICS_EXPORTS void set_resolution(int x, int y); // 0 means keep
+			FLAME_GRAPHICS_EXPORTS void *add_resolution_change_listener(const std::function<void(int, int)> &e);
+			FLAME_GRAPHICS_EXPORTS void remove_resolution_change_listener(void *p);
 
-			FLAME_EXPORTS Swapchain *create_swapchain();
-			FLAME_EXPORTS void destroy_swapchain(Swapchain *s);
+			FLAME_GRAPHICS_EXPORTS Swapchain *create_swapchain(void *, int cx, int cy);
+			FLAME_GRAPHICS_EXPORTS void destroy_swapchain(Swapchain *s);
 		};
 
-		FLAME_EXPORTS Graphics *create_graphics(bool enable_debug, int _resolution_x, int _resolution_y);
-		FLAME_EXPORTS void destroy_graphics(Graphics *g);
+		FLAME_GRAPHICS_EXPORTS Graphics *create_graphics(bool enable_debug, int _resolution_x, int _resolution_y);
+		FLAME_GRAPHICS_EXPORTS void destroy_graphics(Graphics *g);
 	}
 
 	//extern VkFormat swapchain_format;
