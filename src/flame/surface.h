@@ -18,8 +18,7 @@ namespace flame
 	{
 		SurfaceStyleFrame = 1 << 0,
 		SurfaceStyleResizable = 1 << 1,
-		SurfaceStyleMaximized = 1 << 2,
-		SurfaceStyleFullscreen = 1 << 3
+		SurfaceStyleFullscreen = 1 << 2
 	};
 
 	enum KeyState

@@ -80,28 +80,28 @@ namespace flame
 			style_changed = true;
 		}
 
+		assert(!(style & SurfaceStyleFullscreen) || (!(style & SurfaceStyleFrame) && !(style & SurfaceStyleResizable)));
+
 		auto win32_style = WS_VISIBLE;
-		if ((style & SurfaceStyleFrame) && !(style & SurfaceStyleFullscreen))
-		{
-			RECT rect = {0, 0, cx, cy};
-			AdjustWindowRect(&rect, WS_CAPTION, false);
-			_cx = rect.right - rect.left;
-			_cy = rect.bottom - rect.top;
-
-			win32_style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-
-			if (style & SurfaceStyleResizable)
-				win32_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
-		}
+		if (style == 0)
+			win32_style |= WS_POPUP | WS_BORDER;
 		else
 		{
-			win32_style |= WS_POPUP | WS_BORDER;
 			if (style & SurfaceStyleFullscreen)
 			{
 				_cx = get_screen_cx();
 				_cy = get_screen_cy();
 			}
+			if (style & SurfaceStyleFrame)
+				win32_style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+			if (style & SurfaceStyleResizable)
+				win32_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
+
+		RECT rect = {0, 0, cx, cy};
+		AdjustWindowRect(&rect, win32_style, false);
+		_cx = rect.right - rect.left;
+		_cy = rect.bottom - rect.top;
 
 		x = _x == -1 ? (get_screen_cx() - _cx) / 2 : _x;
 		y = _y == -1 ? (get_screen_cy() - _cy) / 2 : _y;
