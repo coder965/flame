@@ -8,8 +8,6 @@
 
 #include <functional>
 
-//#include <flame/global.h>
-
 namespace flame
 {
 	namespace graphics
@@ -20,8 +18,9 @@ namespace flame
 			{
 				R8,
 				R8G8B8A8,
+				B8G8R8A8,
 				R16G16B16A16,
-				Swapchain,
+				R16G16B16A16_UNSCALED,
 				Depth16,
 				Depth32,
 				Depth24Stencil8
@@ -79,22 +78,6 @@ namespace flame
 			MaterialImagesDescriptorBinding
 		};
 
-		struct SwapchainPrivate;
-
-		struct Swapchain
-		{
-			SwapchainPrivate *_priv;
-
-			FLAME_GRAPHICS_EXPORTS int acquire_image();
-		};
-
-		struct FramebufferPrivate;
-
-		struct Framebuffer
-		{
-			FramebufferPrivate *_priv;
-		};
-
 		struct GraphicsPrivate;
 
 		struct Graphics
@@ -112,9 +95,6 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void set_resolution(int x, int y); // 0 means keep
 			FLAME_GRAPHICS_EXPORTS void *add_resolution_change_listener(const std::function<void(int, int)> &e);
 			FLAME_GRAPHICS_EXPORTS void remove_resolution_change_listener(void *p);
-
-			FLAME_GRAPHICS_EXPORTS Swapchain *create_swapchain(void *, int cx, int cy);
-			FLAME_GRAPHICS_EXPORTS void destroy_swapchain(Swapchain *s);
 		};
 
 		FLAME_GRAPHICS_EXPORTS Graphics *create_graphics(bool enable_debug, int _resolution_x, int _resolution_y);
