@@ -12,35 +12,6 @@
 
 namespace flame
 {
-	TextureView::TextureView(VkImage i, VkFormat format, VkImageAspectFlags aspect, VkImageViewType _view_type, int _base_level, int _level_count, int _base_layer, int _layer_count) :
-		view_type(_view_type),
-		base_level(_base_level),
-		level_count(_level_count),
-		base_layer(_base_layer),
-		layer_count(_layer_count)
-	{
-		VkImageViewCreateInfo info;
-		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		info.flags = 0;
-		info.pNext = nullptr;
-		info.components = {};
-		info.image = i;
-		info.viewType = view_type;
-		info.format = format;
-		info.subresourceRange.aspectMask = aspect;
-		info.subresourceRange.baseMipLevel = base_level;
-		info.subresourceRange.levelCount = level_count;
-		info.subresourceRange.baseArrayLayer = base_layer;
-		info.subresourceRange.layerCount = layer_count;
-
-		vk_chk_res(vkCreateImageView(vk_device, &info, nullptr, &v));
-	}
-
-	TextureView::~TextureView()
-	{
-		vkDestroyImageView(vk_device, v, nullptr);
-	}
-
 	VkFormat get_texture_format(int channel, int bpp, bool sRGB)
 	{
 		switch (channel)
