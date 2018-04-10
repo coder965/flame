@@ -201,21 +201,6 @@ namespace flame
 		vkCmdResetEvent(v, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 
-	CommandPool::CommandPool()
-	{
-		VkCommandPoolCreateInfo info;
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		info.pNext = nullptr;
-		info.queueFamilyIndex = 0;
-		vk_chk_res(vkCreateCommandPool(vk_device, &info, nullptr, &v));
-	}
-
-	CommandPool::~CommandPool()
-	{
-		vkDestroyCommandPool(vk_device, v, nullptr);
-	}
-
 	CommandBuffer *begin_once_command_buffer()
 	{
 		auto cb = new CommandBuffer;

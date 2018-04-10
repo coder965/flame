@@ -47,16 +47,6 @@ namespace flame
 		void reset_event(VkEvent e);
 	};
 
-	struct CommandPool
-	{
-		VkCommandPool v;
-
-		// must call in main thread
-		CommandPool();
-		// must call in main thread
-		~CommandPool();
-	};
-
 	CommandBuffer *begin_once_command_buffer();
 	void end_once_command_buffer(CommandBuffer *cb);
 

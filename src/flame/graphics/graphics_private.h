@@ -30,7 +30,6 @@ namespace flame
 			VkPhysicalDeviceProperties physical_device_properties;
 			VkPhysicalDeviceFeatures physical_device_features;
 			VkDevice device;
-			VkQueue graphics_queue;
 		};
 
 		VkImageView create_image_view(Graphics *g, VkImage i, VkFormat format, VkImageAspectFlags aspect, 

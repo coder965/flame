@@ -189,8 +189,6 @@ namespace flame
 			deviceInfo.pEnabledFeatures = &g->_priv->physical_device_features;
 			vk_chk_res(vkCreateDevice(g->_priv->physical_device, &deviceInfo, nullptr, &g->_priv->device));
 
-			vkGetDeviceQueue(g->_priv->device, 0, 0, &g->_priv->graphics_queue);
-
 			//command_pool = new CommandPool;
 			//descriptorPool = new DescriptorPool;
 
