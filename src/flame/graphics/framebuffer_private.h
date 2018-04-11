@@ -13,7 +13,7 @@ namespace flame
 
 		struct FramebufferPrivate
 		{
-			Graphics *g;
+			Device *d;
 			Renderpass *renderpass;
 			std::vector<VkImageView> views;
 			VkFramebuffer v;

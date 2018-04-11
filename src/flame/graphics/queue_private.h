@@ -9,6 +9,7 @@ namespace flame
 	{
 		struct QueuePrivate
 		{
+			Device *d;
 			VkQueue v;
 		};
 	}

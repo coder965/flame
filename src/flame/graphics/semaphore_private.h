@@ -1,15 +1,15 @@
-#include "texture.h"
+#pragma once
+
+#include "semaphore.h"
 #include "graphics_private.h"
 
 namespace flame
 {
 	namespace graphics
 	{
-		struct TexturePrivate
+		struct SemaphorePrivate
 		{
-			Device *d;
-			VkImage v;
+			VkSemaphore v;
 		};
 	}
 }
-

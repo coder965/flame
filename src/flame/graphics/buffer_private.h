@@ -1,14 +1,14 @@
-#include "texture.h"
+#include "buffer.h"
 #include "graphics_private.h"
 
 namespace flame
 {
 	namespace graphics
 	{
-		struct TexturePrivate
+		struct BufferPrivate
 		{
 			Device *d;
-			VkImage v;
+			VkBuffer v;
 		};
 	}
 }

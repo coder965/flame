@@ -12,7 +12,7 @@ namespace flame
 
 		struct CommandpoolPrivate
 		{
-			Graphics *g;
+			Device *d;
 			VkCommandPool v;
 		};
 	}

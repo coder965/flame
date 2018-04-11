@@ -13,53 +13,23 @@ namespace flame
 {
 	CommandBuffer::CommandBuffer(VkCommandBufferLevel level)
 	{
-		VkCommandBufferAllocateInfo info;
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		info.pNext = nullptr;
-		info.level = level;
-		info.commandPool = command_pool->v;
-		info.commandBufferCount = 1;
-
-		vk_chk_res(vkAllocateCommandBuffers(vk_device, &info, &v));
 	}
 
 	CommandBuffer::~CommandBuffer()
 	{
-		vkFreeCommandBuffers(vk_device, command_pool->v, 1, &v);
 	}
 
 	void CommandBuffer::begin(VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
 	{
 		currentPipeline = nullptr;
-
-		VkCommandBufferBeginInfo info;
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		info.flags = flags;
-		info.pNext = nullptr;
-		info.pInheritanceInfo = pInheritance;
-		vk_chk_res(vkBeginCommandBuffer(v, &info));
 	}
 
 	void CommandBuffer::end()
 	{
-		vk_chk_res(vkEndCommandBuffer(v));
 	}
 
 	void CommandBuffer::begin_renderpass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue)
 	{
-		VkRenderPassBeginInfo info;
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.pNext = nullptr;
-		info.renderPass = renderPass->v;
-		info.framebuffer = fb->v;
-		info.renderArea.offset.x = 0;
-		info.renderArea.offset.y = 0;
-		info.renderArea.extent.width = fb->cx;
-		info.renderArea.extent.height = fb->cy;
-		info.clearValueCount = renderPass->clear_values.size();
-		info.pClearValues = pClearValue ? pClearValue : renderPass->clear_values.data();
-
-		vkCmdBeginRenderPass(v, &info, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void CommandBuffer::next_subpass(VkSubpassContents contents)
@@ -69,7 +39,6 @@ namespace flame
 
 	void CommandBuffer::end_renderpass()
 	{
-		vkCmdEndRenderPass(v);
 	}
 
 	void CommandBuffer::set_viewport_and_scissor(int cx, int cy)

@@ -9,7 +9,7 @@ namespace flame
 	{
 		struct RenderpassPrivate
 		{
-			Graphics *g;
+			Device *d;
 			std::vector<std::tuple<Format, bool, bool>> attachments;
 			std::vector<std::pair<std::vector<int>, int>> subpasses;
 			std::vector<std::pair<int, int>> dependencies;

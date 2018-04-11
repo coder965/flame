@@ -14,27 +14,16 @@ namespace flame
 {
 	namespace graphics
 	{
+		struct Device;
+
 		inline void vk_chk_res(VkResult res)
 		{
 			assert(res == VK_SUCCESS);
 		}
 
-		struct GraphicsPrivate
-		{
-			std::list<std::function<void(int, int)>> resolution_change_listeners;
-
-			bool resolution_change_event;
-
-			VkInstance instance;
-			VkPhysicalDevice physical_device;
-			VkPhysicalDeviceProperties physical_device_properties;
-			VkPhysicalDeviceFeatures physical_device_features;
-			VkDevice device;
-		};
-
-		VkImageView create_image_view(Graphics *g, VkImage i, VkFormat format, VkImageAspectFlags aspect, 
+		VkImageView create_image_view(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect, 
 			VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int base_level = 0, int level_count = 1, int base_layer = 0, int layer_count = 1);
-		void destroy_image_view(Graphics *g, VkImageView v);
+		void destroy_image_view(Device *d, VkImageView v);
 
 		inline VkFormat Z(Format f)
 		{
@@ -44,6 +33,8 @@ namespace flame
 					return VK_FORMAT_R8_UNORM;
 				case Format::R8G8B8A8:
 					return VK_FORMAT_R8G8B8A8_UNORM;
+				case Format::B8G8R8A8:
+					return VK_FORMAT_B8G8R8A8_UNORM;
 				case Format::R16G16B16A16:
 					return VK_FORMAT_R16G16B16A16_UNORM;
 				case Format::R16G16B16A16_UNSCALED:

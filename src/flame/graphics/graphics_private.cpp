@@ -1,10 +1,11 @@
 #include "graphics_private.h"
+#include "device_private.h"
 
 namespace flame
 {
 	namespace graphics
 	{
-		VkImageView create_image_view(Graphics *g, VkImage i, VkFormat format, VkImageAspectFlags aspect,
+		VkImageView create_image_view(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect,
 			VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
 		{
 			VkImageViewCreateInfo info;
@@ -22,13 +23,13 @@ namespace flame
 			info.subresourceRange.layerCount = layer_count;
 
 			VkImageView v;
-			vk_chk_res(vkCreateImageView(g->_priv->device, &info, nullptr, &v));
+			vk_chk_res(vkCreateImageView(d->_priv->device, &info, nullptr, &v));
 			return v;
 		}
 
-		void destroy_image_view(Graphics *g, VkImageView v)
+		void destroy_image_view(Device *d, VkImageView v)
 		{
-			vkDestroyImageView(g->_priv->device, v, nullptr);
+			vkDestroyImageView(d->_priv->device, v, nullptr);
 		}
 	}
 }
