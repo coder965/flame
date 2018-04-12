@@ -17,5 +17,15 @@ namespace flame
 			VkPhysicalDeviceFeatures physical_device_features;
 			VkDevice device;
 		};
+
+		inline int find_memory_type(uint typeFilter, VkMemoryPropertyFlags properties)
+		{
+			for (uint i = 0; i < memProperties.memoryTypeCount; i++)
+			{
+				if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+					return i;
+			}
+			return -1;
+		}
 	}
 }
