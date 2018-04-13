@@ -39,11 +39,6 @@ namespace flame
 	{
 	}
 
-	void vk_queue_wait_idle()
-	{
-		//vk_chk_res(vkQueueWaitIdle(g->_priv->graphics_queue));
-	}
-
 	const char *vk_device_type_names[] = {
 		"other",
 		"integrated gpu",

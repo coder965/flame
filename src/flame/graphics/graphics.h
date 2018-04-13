@@ -17,7 +17,9 @@ namespace flame
 			enum Value
 			{
 				R8,
+				R16,
 				R8G8B8A8,
+				R8G8B8A8_SRGB,
 				B8G8R8A8,
 				R16G16B16A16,
 				R16G16B16A16_UNSCALED,
@@ -43,6 +45,13 @@ namespace flame
 					return TypeDepthStencil;
 				return TypeColor;
 			}
+		};
+
+		enum MemProp
+		{
+			MemPropDevice = 1 << 0,
+			MemPropHost = 1 << 1,
+			MemPropHostCoherent = 1 << 2
 		};
 
 		enum DescriptorSetBindings

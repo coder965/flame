@@ -7,11 +7,12 @@ namespace flame
 {
 	namespace graphics
 	{
-		void Commandbuffer::begin()
+		void Commandbuffer::begin(bool once)
 		{
 			VkCommandBufferBeginInfo info;
 			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+			info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT |
+				once ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
 			info.pNext = nullptr;
 			info.pInheritanceInfo = nullptr;
 			vk_chk_res(vkBeginCommandBuffer(_priv->v, &info));

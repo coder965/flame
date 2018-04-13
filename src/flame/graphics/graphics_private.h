@@ -31,8 +31,12 @@ namespace flame
 			{
 				case Format::R8:
 					return VK_FORMAT_R8_UNORM;
+				case Format::R16:
+					return VK_FORMAT_R16_UNORM;
 				case Format::R8G8B8A8:
 					return VK_FORMAT_R8G8B8A8_UNORM;
+				case Format::R8G8B8A8_SRGB:
+					return VK_FORMAT_R8G8B8A8_SRGB;
 				case Format::B8G8R8A8:
 					return VK_FORMAT_B8G8R8A8_UNORM;
 				case Format::R16G16B16A16:
@@ -45,6 +49,8 @@ namespace flame
 					return VK_FORMAT_D32_SFLOAT;
 				case Format::Depth24Stencil8:
 					return VK_FORMAT_D24_UNORM_S8_UINT;
+				default:
+					assert(0);
 			}
 		}
 
@@ -57,9 +63,22 @@ namespace flame
 				case VK_FORMAT_B8G8R8A8_UNORM:
 					ret.v = Format::B8G8R8A8;
 					break;
+				default:
+					assert(0);
 			}
 
 			return ret;
+		}
+
+		inline VkMemoryPropertyFlags Z(MemProp p)
+		{
+			VkMemoryPropertyFlags vk_mem_prop = 0;
+			if (p & MemPropDevice)
+				vk_mem_prop |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			if (p & MemPropHost)
+				vk_mem_prop |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+			if (p & MemPropHostCoherent)
+				vk_mem_prop |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		}
 	}
 }

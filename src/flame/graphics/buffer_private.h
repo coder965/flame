@@ -9,6 +9,7 @@ namespace flame
 		{
 			Device *d;
 			VkBuffer v;
+			VkDeviceMemory m;
 		};
 	}
 }

@@ -15,7 +15,7 @@ namespace flame
 		{
 			CommandbufferPrivate *_priv;
 
-			FLAME_GRAPHICS_EXPORTS void begin();
+			FLAME_GRAPHICS_EXPORTS void begin(bool once = false);
 			FLAME_GRAPHICS_EXPORTS void begin_renderpass(Renderpass *r, Framebuffer *f);
 			FLAME_GRAPHICS_EXPORTS void end_renderpass();
 			FLAME_GRAPHICS_EXPORTS void end();

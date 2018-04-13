@@ -11,34 +11,14 @@
 
 namespace flame
 {
-	CommandBuffer::CommandBuffer(VkCommandBufferLevel level)
-	{
-	}
-
-	CommandBuffer::~CommandBuffer()
-	{
-	}
-
 	void CommandBuffer::begin(VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
 	{
 		currentPipeline = nullptr;
 	}
 
-	void CommandBuffer::end()
-	{
-	}
-
-	void CommandBuffer::begin_renderpass(RenderPass *renderPass, Framebuffer *fb, VkClearValue *pClearValue)
-	{
-	}
-
 	void CommandBuffer::next_subpass(VkSubpassContents contents)
 	{
 		vkCmdNextSubpass(v, VK_SUBPASS_CONTENTS_INLINE);
-	}
-
-	void CommandBuffer::end_renderpass()
-	{
 	}
 
 	void CommandBuffer::set_viewport_and_scissor(int cx, int cy)
@@ -168,23 +148,6 @@ namespace flame
 	void CommandBuffer::reset_event(VkEvent e)
 	{
 		vkCmdResetEvent(v, e, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-	}
-
-	CommandBuffer *begin_once_command_buffer()
-	{
-		auto cb = new CommandBuffer;
-		cb->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		return cb;
-	}
-
-	void end_once_command_buffer(CommandBuffer *cb)
-	{
-		cb->end();
-
-		vk_queue_submit(1, &cb->v);
-		vk_queue_wait_idle();
-
-		delete cb;
 	}
 
 	CommandPool *command_pool = nullptr;

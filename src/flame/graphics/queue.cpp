@@ -8,6 +8,11 @@ namespace flame
 {
 	namespace graphics
 	{
+		void Queue::wait_idle()
+		{
+			vk_chk_res(vkQueueWaitIdle(_priv->v));
+		}
+
 		void Queue::submit(Commandbuffer *c, Semaphore *wait_semaphore, Semaphore *signal_semaphore)
 		{
 			VkSubmitInfo info;
@@ -15,12 +20,12 @@ namespace flame
 			info.pNext = nullptr;
 			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			info.pWaitDstStageMask = &waitStage;
-			info.waitSemaphoreCount = 1;
-			info.pWaitSemaphores = &wait_semaphore->_priv->v;
+			info.waitSemaphoreCount = wait_semaphore ? 1 : 0;
+			info.pWaitSemaphores = wait_semaphore ? &wait_semaphore->_priv->v : nullptr;
 			info.commandBufferCount = 1;
 			info.pCommandBuffers = &c->_priv->v;
-			info.signalSemaphoreCount = 1;
-			info.pSignalSemaphores = &signal_semaphore->_priv->v;
+			info.signalSemaphoreCount = signal_semaphore ? 1 : 0;
+			info.pSignalSemaphores = signal_semaphore  ? &signal_semaphore->_priv->v : nullptr;
 
 			vk_chk_res(vkQueueSubmit(_priv->v, 1, &info, VK_NULL_HANDLE));
 		}
