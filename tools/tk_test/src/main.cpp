@@ -22,7 +22,7 @@ int main(int argc, char **args)
 	auto rp = flame::graphics::create_renderpass(d);
 	rp->add_attachment_swapchain(sc, true);
 	rp->add_subpass({0}, -1);
-	rp->create();
+	rp->build();
 
 	flame::graphics::Framebuffer *fbs[2];
 	flame::graphics::Commandbuffer *cbs[2];
@@ -34,7 +34,8 @@ int main(int argc, char **args)
 		fbs[i]->cy = 720;
 		fbs[i]->set_renderpass(rp);
 		fbs[i]->set_view_swapchain(0, sc, i);
-		fbs[i]->create();
+		fbs[i]->build();
+
 		cbs[i] = cp->create_commandbuffer();
 		cbs[i]->begin();
 		cbs[i]->begin_renderpass(rp, fbs[i]);
