@@ -10,22 +10,6 @@ namespace flame
 	{
 		struct Device;
 
-		enum ShaderType
-		{
-			ShaderTypeNone,
-			ShaderTypeVert,
-			ShaderTypeTesc,
-			ShaderTypeTese,
-			ShaderTypeGeom,
-			ShaderTypeFrag
-		};
-
-		enum ShaderResourceType
-		{
-			ShaderResourceUniformBuffer,
-			ShaderResourceTexture
-		};
-
 		struct ShaderResource
 		{
 			ShaderResourceType type;

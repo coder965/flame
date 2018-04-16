@@ -8,6 +8,7 @@ namespace flame
 	{
 		struct Device;
 		struct Renderpass;
+		struct Descriptorsetlayout;
 
 		enum VertexAttributeType
 		{
@@ -83,6 +84,23 @@ namespace flame
 			DynamicStateStencilWriteMask,
 			DynamicStateStencilReference
 		};
+
+		struct PipelinelayoutPrivate;
+
+		struct Pipelinelayout
+		{
+			PipelinelayoutPrivate *_priv;
+
+			FLAME_GRAPHICS_EXPORTS void clear_descriptorsetlayouts();
+			FLAME_GRAPHICS_EXPORTS void add_descriptorsetlayout(Descriptorsetlayout *descriptorsetlayout);
+			FLAME_GRAPHICS_EXPORTS void clear_pushconstants();
+			FLAME_GRAPHICS_EXPORTS void add_pushconstant(int offset, int size, ShaderType shader_type);
+			FLAME_GRAPHICS_EXPORTS void build();
+			FLAME_GRAPHICS_EXPORTS void release();
+		};
+
+		FLAME_GRAPHICS_EXPORTS Pipelinelayout *create_pipelinelayout(Device *d);
+		FLAME_GRAPHICS_EXPORTS void destroy_pipelinelayout(Device *d, Pipelinelayout *p);
 
 		struct PipelinePrivate;
 

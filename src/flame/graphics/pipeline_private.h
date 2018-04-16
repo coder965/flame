@@ -10,6 +10,7 @@ namespace flame
 	namespace graphics
 	{
 		struct Shader;
+		struct Descriptorsetlayout;
 
 		inline VkPrimitiveTopology Z(PrimitiveTopology t)
 		{
@@ -138,6 +139,21 @@ namespace flame
 			}
 		}
 
+		struct PushconstantDescription
+		{
+			int offset;
+			int size;
+			int shader_stage;
+		};
+
+		struct PipelinelayoutPrivate
+		{
+			Device *d;
+			std::vector<Descriptorsetlayout*> descriptorsetlayouts;
+			std::vector<PushconstantDescription> pushconstants;
+			VkPipelineLayout v;
+		};
+
 		struct AttachmentBlendState
 		{
 			bool enable;
@@ -166,8 +182,8 @@ namespace flame
 			std::vector<DynamicState> dynamic_states;
 			std::vector<Shader*> shaders;
 
-			VkDescriptorSetLayout descriptor_set_layout;
-			VkPipelineLayout pipeline_layout;
+			std::vector<Descriptorsetlayout*> descriptorsetlayouts;
+			Pipelinelayout *pipelinelayout;
 			VkPipeline v;
 		};
 	}

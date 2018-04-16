@@ -81,5 +81,37 @@ namespace flame
 				vk_mem_prop |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 			return vk_mem_prop;
 		}
+
+		inline VkDescriptorType Z(ShaderResourceType t)
+		{
+			switch (t)
+			{
+				case ShaderResourceUniformBuffer:
+					return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				case ShaderResourceTexture:
+					return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			}
+		}
+
+		inline VkShaderStageFlags Z(ShaderType t)
+		{
+			VkShaderStageFlags vk_shader_stage = 0;
+			if (t & ShaderTypeVert)
+				vk_shader_stage |= VK_SHADER_STAGE_VERTEX_BIT;
+			if (t & ShaderTypeTesc)
+				vk_shader_stage |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+			if (t & ShaderTypeTese)
+				vk_shader_stage |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+			if (t & ShaderTypeGeom)
+				vk_shader_stage |= VK_SHADER_STAGE_GEOMETRY_BIT;
+			if (t & ShaderTypeFrag)
+				vk_shader_stage |= VK_SHADER_STAGE_FRAGMENT_BIT;
+			return vk_shader_stage;
+		}
+
+		inline VkShaderStageFlagBits Z(VkShaderStageFlags f)
+		{
+			return VkShaderStageFlagBits(f);
+		}
 	}
 }

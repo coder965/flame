@@ -2,18 +2,106 @@
 #include "device_private.h"
 #include "shader_private.h"
 #include "renderpass_private.h"
+#include "descriptor_private.h"
 
 namespace flame
 {
 	namespace graphics
 	{
+		void Pipelinelayout::clear_descriptorsetlayouts()
+		{
+			_priv->descriptorsetlayouts.clear();;
+		}
+
+		void Pipelinelayout::add_descriptorsetlayout(Descriptorsetlayout *descriptorsetlayout)
+		{
+			_priv->descriptorsetlayouts.push_back(descriptorsetlayout);
+		}
+
+		void Pipelinelayout::clear_pushconstants()
+		{
+			_priv->pushconstants.clear();
+		}
+
+		void Pipelinelayout::add_pushconstant(int offset, int size, ShaderType shader_type)
+		{
+			if (size <= 0)
+				return;
+
+			for (auto &p : _priv->pushconstants)
+			{
+				if (p.size == size)
+				{
+					p.shader_stage |= shader_type;
+					return;
+				}
+			}
+
+			PushconstantDescription d;
+			d.offset = 0;
+			d.size = size;
+			d.shader_stage = shader_type;
+			_priv->pushconstants.push_back(d);
+		}
+
+		void Pipelinelayout::build()
+		{
+			std::vector<VkDescriptorSetLayout> vk_descriptorsetlayouts;
+			vk_descriptorsetlayouts.resize(_priv->descriptorsetlayouts.size());
+			for (auto i = 0; i < vk_descriptorsetlayouts.size(); i++)
+				vk_descriptorsetlayouts[i] = _priv->descriptorsetlayouts[i]->_priv->v;
+
+			VkPipelineLayoutCreateInfo info;
+			info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			info.flags = 0;
+			info.pNext = nullptr;
+			info.setLayoutCount = vk_descriptorsetlayouts.size();
+			info.pSetLayouts = vk_descriptorsetlayouts.data();
+			info.pushConstantRangeCount = 0;
+			info.pPushConstantRanges = nullptr;
+
+			vk_chk_res(vkCreatePipelineLayout(_priv->d->_priv->device,
+				&info, nullptr, &_priv->v));
+		}
+
+		void Pipelinelayout::release()
+		{
+			if (_priv->v)
+			{
+				vkDestroyPipelineLayout(_priv->d->_priv->device, _priv->v, nullptr);
+				_priv->v = 0;
+			}
+		}
+
+		Pipelinelayout *create_pipelinelayout(Device *d)
+		{
+			auto p = new Pipelinelayout;
+
+			p->_priv = new PipelinelayoutPrivate;
+			p->_priv->d = d;
+			p->_priv->v = 0;
+
+			return p;
+		}
+
+		void destroy_pipelinelayout(Device *d, Pipelinelayout *p)
+		{
+			assert(d == p->_priv->d);
+
+			p->release();
+
+			delete p->_priv;
+			delete p;
+		}
+
 		void Pipeline::set_size(int cx, int cy)
 		{
 			_priv->cx = cx;
 			_priv->cy = cy;
 		}
 
-		void Pipeline::set_vertex_attributes(const std::initializer_list<std::initializer_list<VertexAttributeType>> &attributes)
+		void Pipeline::set_vertex_attributes(const std::initializer_list<
+			std::initializer_list<VertexAttributeType>> &attributes)
 		{
 			_priv->vertex_attributes.resize(attributes.size());
 			auto index = 0;
@@ -97,21 +185,6 @@ namespace flame
 			std::vector<VkPipelineShaderStageCreateInfo> vk_stage_infos;
 			std::vector<VkPipelineColorBlendAttachmentState> vk_blend_attachment_states;
 			std::vector<VkDynamicState> vk_dynamic_states;
-
-			for (auto s : _priv->shaders)
-			{
-				s->build();
-
-				VkPipelineShaderStageCreateInfo info;
-				info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-				info.flags = 0;
-				info.pNext = nullptr;
-				info.pSpecializationInfo = nullptr;
-				info.pName = "main";
-				info.stage = Z(s->type);
-				info.module = s->_priv->v;
-				vk_stage_infos.push_back(info);
-			}
 
 			auto cx = _priv->cx, cy = _priv->cy;
 
@@ -284,40 +357,56 @@ namespace flame
 				}
 			}
 
+			release();
+
 			VkPipelineVertexInputStateCreateInfo vertex_input_state;
+			vertex_input_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+			vertex_input_state.flags = 0;
+			vertex_input_state.pNext = nullptr;
 			vertex_input_state.vertexBindingDescriptionCount = vk_vertex_input_state_bindings.size();
 			vertex_input_state.pVertexBindingDescriptions = vk_vertex_input_state_bindings.data();
 			vertex_input_state.vertexAttributeDescriptionCount = vk_vertex_input_state_attributes.size();
 			vertex_input_state.pVertexAttributeDescriptions = vk_vertex_input_state_attributes.data();
 
-			release();
+			_priv->pipelinelayout->clear_descriptorsetlayouts();
+			_priv->pipelinelayout->clear_pushconstants();
 
-			VkDescriptorSetLayoutCreateInfo descriptor_set_layout_info;
-			descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			descriptor_set_layout_info.flags = 0;
-			descriptor_set_layout_info.pNext = nullptr;
-			descriptor_set_layout_info.bindingCount = 0;
-			descriptor_set_layout_info.pBindings = nullptr;
+			for (auto s : _priv->shaders)
+			{
+				s->build();
 
-			vk_chk_res(vkCreateDescriptorSetLayout(_priv->d->_priv->device, 
-				&descriptor_set_layout_info, nullptr, &_priv->descriptor_set_layout));
+				VkPipelineShaderStageCreateInfo info;
+				info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+				info.flags = 0;
+				info.pNext = nullptr;
+				info.pSpecializationInfo = nullptr;
+				info.pName = "main";
+				info.stage = Z(Z(s->type));
+				info.module = s->_priv->v;
+				vk_stage_infos.push_back(info);
 
-			VkPipelineLayoutCreateInfo pipeline_layout_info;
-			pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipeline_layout_info.flags = 0;
-			pipeline_layout_info.pNext = nullptr;
-			pipeline_layout_info.setLayoutCount = 1;
-			pipeline_layout_info.pSetLayouts = &_priv->descriptor_set_layout;
-			pipeline_layout_info.pushConstantRangeCount = 0;
-			pipeline_layout_info.pPushConstantRanges = nullptr;
+				if (_priv->descriptorsetlayouts.size() < s->_priv->resources.size())
+				{
+					_priv->descriptorsetlayouts.resize(s->_priv->resources.size());
+					_priv->descriptorsetlayouts.back() = create_descriptorsetlayout(_priv->d);
+				}
 
-			vk_chk_res(vkCreatePipelineLayout(_priv->d->_priv->device, 
-				&pipeline_layout_info, nullptr, &_priv->pipeline_layout));
+				for (auto i = 0; i < s->_priv->resources.size(); i++)
+				{
+					for (auto &r : s->_priv->resources[i])
+						_priv->descriptorsetlayouts[i]->add_binding(r.type, r.binding, r.count, s->type);
+				}
 
-			//for (auto set = 0; set < descriptor_sets.size(); set++)
-			//	descriptor_set_layouts[set] = get_descriptor_set_layout(descriptor_sets[set]);
+				_priv->pipelinelayout->add_pushconstant(0, s->_priv->push_constant_size, s->type);
+			}
 
-			//pipeline_layout = get_pipeline_layout(descriptor_set_layouts, push_constant_ranges);
+			for (auto d : _priv->descriptorsetlayouts)
+			{
+				d->build();
+				_priv->pipelinelayout->add_descriptorsetlayout(d);
+			}
+
+			_priv->pipelinelayout->build();
 
 			VkGraphicsPipelineCreateInfo pipeline_info;
 			pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -325,7 +414,7 @@ namespace flame
 			pipeline_info.pNext = nullptr;
 			pipeline_info.basePipelineHandle = 0;
 			pipeline_info.basePipelineIndex = 0;
-			pipeline_info.layout = _priv->pipeline_layout;
+			pipeline_info.layout = _priv->pipelinelayout->_priv->v;
 			pipeline_info.stageCount = vk_stage_infos.size();
 			pipeline_info.pStages = vk_stage_infos.data();
 			pipeline_info.pVertexInputState = &vertex_input_state;
@@ -345,34 +434,13 @@ namespace flame
 
 		void Pipeline::release()
 		{
-			//_priv->renderpass = nullptr;
-			//_priv->subpass_index = -1;
-			//_priv->cx = 0;
-			//_priv->cy = 0;
-			//_priv->patch_control_points = 0;
-			//_priv->depth_test = false;
-			//_priv->depth_write = false;
-			//_priv->depth_clamp = false;
-			//_priv->primitive_topology = PrimitiveTopologyTriangleList;
-			//_priv->polygon_mode = PolygonModeFill;
-			//_priv->cull_mode = CullModeBack;
-			//_priv->attachment_blend_states.resize(1);
-			//_priv->attachment_blend_states[0].enable = false;
-			//_priv->attachment_blend_states[0].src_color = BlendFactorOne;
-			//_priv->attachment_blend_states[0].dst_color = BlendFactorZero;
-			//_priv->attachment_blend_states[0].src_alpha = BlendFactorOne;
-			//_priv->attachment_blend_states[0].dst_alpha = BlendFactorZero;
-
-			if (_priv->descriptor_set_layout)
+			for (auto l : _priv->descriptorsetlayouts)
 			{
-				vkDestroyDescriptorSetLayout(_priv->d->_priv->device, _priv->descriptor_set_layout, nullptr);
-				_priv->descriptor_set_layout = 0;
+				l->release();
+				destroy_descriptorsetlayout(_priv->d, l);
 			}
-			if (_priv->pipeline_layout)
-			{
-				vkDestroyPipelineLayout(_priv->d->_priv->device, _priv->pipeline_layout, nullptr);
-				_priv->pipeline_layout = 0;
-			}
+			_priv->descriptorsetlayouts.clear();
+			_priv->pipelinelayout->release();
 			if (_priv->v)
 			{
 				vkDestroyPipeline(_priv->d->_priv->device, _priv->v, nullptr);
@@ -404,8 +472,7 @@ namespace flame
 			p->_priv->attachment_blend_states[0].src_alpha = BlendFactorOne;
 			p->_priv->attachment_blend_states[0].dst_alpha = BlendFactorZero;
 
-			p->_priv->descriptor_set_layout = 0;
-			p->_priv->pipeline_layout = 0;
+			p->_priv->pipelinelayout = create_pipelinelayout(d);
 			p->_priv->v = 0;
 
 			return p;
@@ -416,6 +483,8 @@ namespace flame
 			assert(d == p->_priv->d);
 
 			p->release();
+
+			destroy_pipelinelayout(d, p->_priv->pipelinelayout);
 
 			delete p->_priv;
 			delete p;

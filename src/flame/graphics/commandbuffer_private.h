@@ -7,6 +7,7 @@ namespace flame
 	{
 		struct CommandbufferPrivate
 		{
+			Pipeline *current_pipeline;
 			VkCommandBuffer v;
 		};
 

@@ -183,12 +183,6 @@ namespace flame
 
 		void Shader::release()
 		{
-			//filename.clear();
-			//defines.clear();
-			//type = ShaderTypeNone;
-			//_priv->resources.clear();
-			//_priv->push_constant_size = 0;
-
 			if (_priv->v)
 			{
 				vkDestroyShaderModule(_priv->d->_priv->device, _priv->v, nullptr);

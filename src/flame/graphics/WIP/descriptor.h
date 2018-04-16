@@ -7,32 +7,7 @@
 
 namespace flame
 {
-	struct DescriptorSetLayoutBinding
-	{
-		VkDescriptorType type;
-		int binding;
-		int count;
-		VkShaderStageFlags stage;
-	};
-
 	bool operator==(const DescriptorSetLayoutBinding &lhs, const DescriptorSetLayoutBinding &rhs);
-
-	struct Descriptor
-	{
-		Descriptor();
-		DescriptorSetLayoutBinding get_layout_binding(VkShaderStageFlags stage) const;
-	};
-
-	struct DescriptorSetLayout
-	{
-		std::vector<DescriptorSetLayoutBinding> bindings;
-		VkDescriptorSetLayout v;
-
-		// must call in main thread
-		DescriptorSetLayout(const std::vector<DescriptorSetLayoutBinding> &_bindings);
-		// must call in main thread
-		~DescriptorSetLayout();
-	};
 
 	bool operator==(const DescriptorSetLayout &lhs, const DescriptorSetLayout &rhs);
 

@@ -79,19 +79,6 @@ namespace flame
 		vkCmdBindIndexBuffer(v, b->v, 0, type);
 	}
 
-	void CommandBuffer::bind_pipeline(Pipeline *p)
-	{
-		if (currentPipeline == p)
-			return;
-		currentPipeline = p;
-		vkCmdBindPipeline(v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->v);
-	}
-
-	void CommandBuffer::bind_descriptor_set()
-	{
-		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipeline_layout->v, 0, 1, &currentPipeline->descriptor_set->v, 0, nullptr);
-	}
-
 	void CommandBuffer::bind_descriptor_set(VkDescriptorSet *sets, int index, int count)
 	{
 		vkCmdBindDescriptorSets(v, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->pipeline_layout->v, index, count, sets, 0, nullptr);
@@ -105,11 +92,6 @@ namespace flame
 	void CommandBuffer::push_constant(VkShaderStageFlags stage, int offset, int size, void *src)
 	{
 		vkCmdPushConstants(v, currentPipeline->pipeline_layout->v, stage, offset, size, src);
-	}
-
-	void CommandBuffer::draw(int vertexCount, int firstVertex, int instanceCount, int firstInstance)
-	{
-		vkCmdDraw(v, vertexCount, instanceCount, firstVertex, firstInstance);
 	}
 
 	void CommandBuffer::draw_index(int indexCount, int firstIndex, int vertexOffset, int instanceCount, int firstInstance)

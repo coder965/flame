@@ -3,6 +3,7 @@
 #include "renderpass_private.h"
 #include "framebuffer_private.h"
 #include "pipeline_private.h"
+#include "descriptor_private.h"
 
 namespace flame
 {
@@ -13,7 +14,7 @@ namespace flame
 			VkCommandBufferBeginInfo info;
 			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT |
-				once ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
+				(once ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0);
 			info.pNext = nullptr;
 			info.pInheritanceInfo = nullptr;
 			vk_chk_res(vkBeginCommandBuffer(_priv->v, &info));
@@ -28,8 +29,8 @@ namespace flame
 			info.framebuffer = f->_priv->v;
 			info.renderArea.offset.x = 0;
 			info.renderArea.offset.y = 0;
-			info.renderArea.extent.width = f->cx;
-			info.renderArea.extent.height = f->cy;
+			info.renderArea.extent.width = f->_priv->cx;
+			info.renderArea.extent.height = f->_priv->cy;
 			info.clearValueCount = r->_priv->clear_values.size();
 			info.pClearValues = r->_priv->clear_values.data();
 
@@ -43,7 +44,15 @@ namespace flame
 
 		void Commandbuffer::bind_pipeline(Pipeline *p)
 		{
+			if (_priv->current_pipeline == p)
+				return;
+			_priv->current_pipeline = p;
 			vkCmdBindPipeline(_priv->v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->_priv->v);
+		}
+
+		void Commandbuffer::bind_descriptorset(Descriptorset *s)
+		{
+			vkCmdBindDescriptorSets(_priv->v, VK_PIPELINE_BIND_POINT_GRAPHICS, _priv->current_pipeline->_priv->pipelinelayout->_priv->v, 0, 1, &s->_priv->v, 0, nullptr);
 		}
 
 		void Commandbuffer::draw(int count)

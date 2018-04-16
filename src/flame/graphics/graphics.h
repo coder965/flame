@@ -61,6 +61,33 @@ namespace flame
 			BoneSetDescriptorBinding
 		};
 
+		enum ShaderType
+		{
+			ShaderTypeNone = 1 << 0,
+			ShaderTypeVert = 1 << 1,
+			ShaderTypeTesc = 1 << 2,
+			ShaderTypeTese = 1 << 3,
+			ShaderTypeGeom = 1 << 4,
+			ShaderTypeFrag = 1 << 5
+		};
+
+		enum ShaderResourceType
+		{
+			ShaderResourceUniformBuffer,
+			ShaderResourceTexture
+		};
+
+		enum TextureViewType
+		{
+			TextureViewType1D,
+			TextureViewType2D,
+			TextureViewType3D,
+			TextureViewTypeCube,
+			TextureViewType1DArray,
+			TextureViewType2DArray,
+			TextureViewTypeCubeArray
+		};
+
 		enum MainDescriptorSetBindings
 		{
 			ConstantBufferDescriptorBinding,

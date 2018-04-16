@@ -11,6 +11,7 @@ namespace flame
 		struct Renderpass;
 		struct Framebuffer;
 		struct Pipeline;
+		struct Descriptorset;
 
 		struct Commandbuffer
 		{
@@ -20,6 +21,7 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void begin_renderpass(Renderpass *r, Framebuffer *f);
 			FLAME_GRAPHICS_EXPORTS void end_renderpass();
 			FLAME_GRAPHICS_EXPORTS void bind_pipeline(Pipeline *p);
+			FLAME_GRAPHICS_EXPORTS void bind_descriptorset(Descriptorset *s);
 			FLAME_GRAPHICS_EXPORTS void draw(int count);
 			FLAME_GRAPHICS_EXPORTS void end();
 		};
