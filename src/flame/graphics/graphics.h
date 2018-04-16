@@ -88,6 +88,12 @@ namespace flame
 			TextureViewTypeCubeArray
 		};
 
+		enum IndiceType
+		{
+			IndiceTypeUint,
+			IndiceTypeUshort
+		};
+
 		enum MainDescriptorSetBindings
 		{
 			ConstantBufferDescriptorBinding,

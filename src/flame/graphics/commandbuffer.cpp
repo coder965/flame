@@ -4,6 +4,7 @@
 #include "framebuffer_private.h"
 #include "pipeline_private.h"
 #include "descriptor_private.h"
+#include "buffer_private.h"
 
 namespace flame
 {
@@ -18,6 +19,7 @@ namespace flame
 			info.pNext = nullptr;
 			info.pInheritanceInfo = nullptr;
 			vk_chk_res(vkBeginCommandBuffer(_priv->v, &info));
+			_priv->current_pipeline = nullptr;
 		}
 
 		void Commandbuffer::begin_renderpass(Renderpass *r, Framebuffer *f)
@@ -55,9 +57,25 @@ namespace flame
 			vkCmdBindDescriptorSets(_priv->v, VK_PIPELINE_BIND_POINT_GRAPHICS, _priv->current_pipeline->_priv->pipelinelayout->_priv->v, 0, 1, &s->_priv->v, 0, nullptr);
 		}
 
+		void Commandbuffer::bind_vertexbuffer(Buffer *b)
+		{
+			VkDeviceSize offset = 0;
+			vkCmdBindVertexBuffers(_priv->v, 0, 1, &b->_priv->v, &offset);
+		}
+
+		void Commandbuffer::bind_indexbuffer(Buffer *b, IndiceType t)
+		{
+			vkCmdBindIndexBuffer(_priv->v, b->_priv->v, 0, t == IndiceTypeUint ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
+		}
+
 		void Commandbuffer::draw(int count)
 		{
 			vkCmdDraw(_priv->v, count, 1, 0, 0);
+		}
+
+		void Commandbuffer::draw_indexed(int count)
+		{
+			vkCmdDrawIndexed(_priv->v, count, 1, 0, 0, 0);
 		}
 
 		void Commandbuffer::end()

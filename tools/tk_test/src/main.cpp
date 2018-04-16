@@ -15,6 +15,8 @@
 #include <flame/graphics/semaphore.h>
 #include <flame/graphics/queue.h>
 
+#include <algorithm>
+
 int main(int argc, char **args)
 {
 	auto sm = flame::create_surface_manager();
@@ -44,7 +46,7 @@ int main(int argc, char **args)
 		glm::vec4(0.f, 0.f, 1.f, 0.f),
 		glm::vec4(0.f, 0.f, 0.f, 1.f)
 	) * glm::perspective(glm::radians(d->fovy), d->aspect, d->near_plane, d->far_plane);;
-	ubo.view = glm::lookAt(glm::vec3(0.f, 0.f, 20.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+	ubo.view = glm::lookAt(glm::vec3(0.f, 0.f, 10.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
 	ubo.model = glm::mat4(1.f);
 	glm::vec4 color(0.5f, 0.7f, 0.f, 1.f);
 	memcpy(ub->mapped, &ubo, ub->size);
@@ -55,6 +57,9 @@ int main(int argc, char **args)
 	rp->build();
 
 	auto p = flame::graphics::create_pipeline(d, rp, 0);
+	p->set_vertex_attributes({{flame::graphics::VertexAttributeFloat3, 
+		flame::graphics::VertexAttributeFloat2,
+		flame::graphics::VertexAttributeFloat3}});
 	p->set_size(-1, -1);
 	p->set_cull_mode(flame::graphics::CullModeNone);
 	p->add_shader("test/test.vert", {});
@@ -70,10 +75,30 @@ int main(int argc, char **args)
 	auto mvc = m->get_vertex_count();
 	auto mic = m->get_indice_count();
 
-	auto vb = flame::graphics::create_buffer(d, mvc, flame::graphics::BufferUsageVertexBuffer | 
+	auto vb = flame::graphics::create_buffer(d, mvc * m->get_vertex_size(0), flame::graphics::BufferUsageVertexBuffer | 
 		flame::graphics::BufferUsageTransferDst, flame::graphics::MemPropDevice);
-	auto ib = flame::graphics::create_buffer(d, mic, flame::graphics::BufferUsageIndexBuffer |
+	auto ib = flame::graphics::create_buffer(d, mic * sizeof(int), flame::graphics::BufferUsageIndexBuffer |
 		flame::graphics::BufferUsageTransferDst, flame::graphics::MemPropDevice);
+	auto sb = flame::graphics::create_buffer(d, std::max(vb->size, ib->size), flame::graphics::BufferUsageTransferSrc, flame::graphics::MemPropHost |
+		flame::graphics::MemPropHostCoherent);
+	sb->map();
+	{
+		auto c = cp->create_commandbuffer();
+		c->begin(true);
+		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
+		flame::graphics::copy_buffer(c, sb, vb, 0, 0, vb->size);
+		c->end();
+		q->submit(c, nullptr, nullptr);
+		q->wait_idle();
+		c->begin(true);
+		memcpy(sb->mapped, m->get_indices(), ib->size);
+		flame::graphics::copy_buffer(c, sb, ib, 0, 0, ib->size);
+		c->end();
+		q->submit(c, nullptr, nullptr);
+		q->wait_idle();
+		cp->destroy_commandbuffer(c);
+	}
+	sb->unmap();
 
 	flame::graphics::Framebuffer *fbs[2];
 	flame::graphics::Commandbuffer *cbs[2];
@@ -90,7 +115,10 @@ int main(int argc, char **args)
 		cbs[i]->begin_renderpass(rp, fbs[i]);
 		cbs[i]->bind_pipeline(p);
 		cbs[i]->bind_descriptorset(ds);
-		cbs[i]->draw(3);
+		cbs[i]->bind_vertexbuffer(vb);
+		cbs[i]->bind_indexbuffer(ib, flame::graphics::IndiceTypeUint);
+		cbs[i]->draw_indexed(m->get_indice_count());
+		//cbs[i]->draw(m->get_vertex_count());
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
 	}

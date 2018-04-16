@@ -11,11 +11,6 @@
 
 namespace flame
 {
-	void CommandBuffer::begin(VkCommandBufferUsageFlags flags, VkCommandBufferInheritanceInfo *pInheritance)
-	{
-		currentPipeline = nullptr;
-	}
-
 	void CommandBuffer::next_subpass(VkSubpassContents contents)
 	{
 		vkCmdNextSubpass(v, VK_SUBPASS_CONTENTS_INLINE);
@@ -50,12 +45,6 @@ namespace flame
 		vkCmdSetScissor(v, 0, 1, &scissor);
 	}
 
-	void CommandBuffer::bind_vertex_buffer(Buffer *b)
-	{
-		VkDeviceSize offset = 0;
-		vkCmdBindVertexBuffers(v, 0, 1, &b->v, &offset);
-	}
-
 	void CommandBuffer::bind_vertex_buffer(VkBuffer *b, int count, VkDeviceSize *offsets)
 	{
 		vkCmdBindVertexBuffers(v, 0, count, b, offsets);
@@ -72,11 +61,6 @@ namespace flame
 			0
 		};
 		vkCmdBindVertexBuffers(v, 0, 2, buffers, offsets);
-	}
-
-	void CommandBuffer::bind_index_buffer(Buffer *b, VkIndexType type)
-	{
-		vkCmdBindIndexBuffer(v, b->v, 0, type);
 	}
 
 	void CommandBuffer::bind_descriptor_set(VkDescriptorSet *sets, int index, int count)
