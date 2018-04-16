@@ -79,6 +79,7 @@ namespace flame
 				vk_mem_prop |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 			if (p & MemPropHostCoherent)
 				vk_mem_prop |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			return vk_mem_prop;
 		}
 	}
 }

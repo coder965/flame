@@ -2,6 +2,7 @@
 #include "commandbuffer_private.h"
 #include "renderpass_private.h"
 #include "framebuffer_private.h"
+#include "pipeline_private.h"
 
 namespace flame
 {
@@ -38,6 +39,16 @@ namespace flame
 		void Commandbuffer::end_renderpass()
 		{
 			vkCmdEndRenderPass(_priv->v);
+		}
+
+		void Commandbuffer::bind_pipeline(Pipeline *p)
+		{
+			vkCmdBindPipeline(_priv->v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->_priv->v);
+		}
+
+		void Commandbuffer::draw(int count)
+		{
+			vkCmdDraw(_priv->v, count, 1, 0, 0);
 		}
 
 		void Commandbuffer::end()

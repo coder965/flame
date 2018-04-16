@@ -183,6 +183,12 @@ namespace flame
 
 		void Shader::release()
 		{
+			//filename.clear();
+			//defines.clear();
+			//type = ShaderTypeNone;
+			//_priv->resources.clear();
+			//_priv->push_constant_size = 0;
+
 			if (_priv->v)
 			{
 				vkDestroyShaderModule(_priv->d->_priv->device, _priv->v, nullptr);
@@ -192,15 +198,11 @@ namespace flame
 
 		Shader *create_shader(Device *d, const std::string &filename, const std::vector<std::string> &defines)
 		{
-			std::filesystem::path path(filename);
-			if (!std::filesystem::exists(path))
-				return nullptr;
-
 			auto s = new Shader;
 			s->filename = filename;
 			s->defines = defines;
 
-			auto ext = path.extension().string();
+			auto ext = std::filesystem::path(filename).extension().string();
 			if (ext == ".vert")
 				s->type = ShaderTypeVert;
 			else if (ext == ".tesc")
@@ -217,6 +219,8 @@ namespace flame
 			s->_priv->d = d;
 			s->_priv->v = 0;
 			s->build();
+
+			return s;
 		}
 
 		void destroy_shader(Device *d, Shader *s)

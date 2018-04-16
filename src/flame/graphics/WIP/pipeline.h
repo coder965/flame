@@ -55,52 +55,12 @@ namespace flame
 
 	std::shared_ptr<PipelineLayout> get_pipeline_layout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges);
 
-	enum VertexInputToken
-	{
-		TokenF32,
-		TokenF32V2,
-		TokenF32V3,
-		TokenF32V4,
-		TokenB8V4,
-	};
-
 	struct PipelineInfo
 	{
-		int cx;
-		int cy;
-		std::vector<VkVertexInputBindingDescription> vertex_input_state_bindings;
-		std::vector<VkVertexInputAttributeDescription> vertex_input_state_attributes;
-		VkPipelineVertexInputStateCreateInfo vertex_input_state;
-		int patch_control_points;
-		bool depth_test;
-		bool depth_write;
-		bool depth_clamp;
-		VkPrimitiveTopology primitive_topology;
-		VkPolygonMode polygon_mode;
-		VkCullModeFlagBits cull_mode;
-		std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states;
-		std::vector<VkDynamicState> dynamic_states;
-		std::vector<std::pair<std::string, std::vector<std::string>>> shaders;
 		std::vector<UniformBufferResourceLink> uniform_buffer_links;
 		std::vector<TextureResourceLink> texture_links;
 
 		PipelineInfo();
-		PipelineInfo &set_cx(int v);
-		PipelineInfo &set_cy(int v);
-		PipelineInfo &set_vertex_input_state(const std::initializer_list<std::pair<VertexInputToken, int>> &tokens);
-		PipelineInfo &set_patch_control_points(int v);
-		PipelineInfo &set_depth_test(bool v);
-		PipelineInfo &set_depth_write(bool v);
-		PipelineInfo &set_depth_clamp(bool v);
-		PipelineInfo &set_primitive_topology(VkPrimitiveTopology v);
-		PipelineInfo &set_polygon_mode(VkPolygonMode v);
-		PipelineInfo &set_cull_mode(VkCullModeFlagBits v);
-		PipelineInfo &add_blend_attachment_state(bool enable,
-			VkBlendFactor fsrc_color = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_color = VK_BLEND_FACTOR_ZERO,
-			VkBlendFactor fsrc_alpha = VK_BLEND_FACTOR_ONE, VkBlendFactor fdst_alpha = VK_BLEND_FACTOR_ZERO);
-		PipelineInfo &add_dynamic_state(VkDynamicState v);
-		PipelineInfo &add_shader(const std::string &filename,
-			const std::initializer_list<std::string> &defines);
 		PipelineInfo &add_uniform_buffer_link(const std::string &descriptor_name,
 			const std::string &resource_name, int array_element = 0,
 			int offset = 0, int range = 0);

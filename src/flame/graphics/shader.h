@@ -12,6 +12,7 @@ namespace flame
 
 		enum ShaderType
 		{
+			ShaderTypeNone,
 			ShaderTypeVert,
 			ShaderTypeTesc,
 			ShaderTypeTese,

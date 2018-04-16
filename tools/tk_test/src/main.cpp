@@ -4,6 +4,7 @@
 #include <flame/graphics/device.h>
 #include <flame/graphics/swapchain.h>
 #include <flame/graphics/renderpass.h>
+#include <flame/graphics/pipeline.h>
 #include <flame/graphics/framebuffer.h>
 #include <flame/graphics/commandbuffer.h>
 #include <flame/graphics/semaphore.h>
@@ -24,6 +25,13 @@ int main(int argc, char **args)
 	rp->add_subpass({0}, -1);
 	rp->build();
 
+	auto p = flame::graphics::create_pipeline(d, rp, 0);
+	p->set_size(1280, 720);
+	p->set_cull_mode(flame::graphics::CullModeNone);
+	p->add_shader("fullscreen.vert", {});
+	p->add_shader("test.frag", {});
+	p->build();
+
 	flame::graphics::Framebuffer *fbs[2];
 	flame::graphics::Commandbuffer *cbs[2];
 	auto cp = flame::graphics::create_commandpool(d);
@@ -39,6 +47,8 @@ int main(int argc, char **args)
 		cbs[i] = cp->create_commandbuffer();
 		cbs[i]->begin();
 		cbs[i]->begin_renderpass(rp, fbs[i]);
+		cbs[i]->bind_pipeline(p);
+		cbs[i]->draw(3);
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
 	}

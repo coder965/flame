@@ -41,20 +41,6 @@ namespace flame
 			vk_bindings[i].descriptorCount = bindings[i].count;
 			vk_bindings[i].stageFlags = bindings[i].stage;
 		}
-
-		VkDescriptorSetLayoutCreateInfo info;
-		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		info.flags = 0;
-		info.pNext = nullptr;
-		info.bindingCount = bindings.size();
-		info.pBindings = vk_bindings.data();
-
-		vk_chk_res(vkCreateDescriptorSetLayout(vk_device, &info, nullptr, &v));
-	}
-
-	DescriptorSetLayout::~DescriptorSetLayout()
-	{
-		vkDestroyDescriptorSetLayout(vk_device, v, nullptr);
 	}
 
 	bool operator==(const DescriptorSetLayout &lhs, const DescriptorSetLayout &rhs)
