@@ -19,11 +19,6 @@ namespace flame
 
 	struct Descriptor
 	{
-		VkDescriptorType type;
-		int binding;
-		int count;
-		std::string name;
-
 		Descriptor();
 		DescriptorSetLayoutBinding get_layout_binding(VkShaderStageFlags stage) const;
 	};
