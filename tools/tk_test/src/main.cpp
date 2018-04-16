@@ -1,3 +1,4 @@
+#include <flame/time.h>
 #include <flame/system.h>
 #include <flame/surface.h>
 #include <flame/image.h>
@@ -27,25 +28,26 @@ int main(int argc, char **args)
 	auto q = flame::graphics::create_queue(d);
 	auto cp = flame::graphics::create_commandpool(d);
 
-	auto sb = flame::graphics::create_buffer(d, sizeof(glm::vec4), flame::graphics::BufferUsageTransferSrc, flame::graphics::MemPropHost |
-		flame::graphics::MemPropHostCoherent);
-	sb->map();
-	glm::vec4 color(0.5f, 0.7f, 0.f, 1.f);
-	memcpy(sb->mapped, &color, sizeof(glm::vec4));
-	sb->unmap();
-
-	auto ub = flame::graphics::create_buffer(d, sizeof(glm::vec4), flame::graphics::BufferUsageUniformBuffer |
-		flame::graphics::BufferUsageTransferDst, flame::graphics::MemPropDevice);
-
+	struct UBO
 	{
-		auto c = cp->create_commandbuffer();
-		c->begin(true);
-		flame::graphics::copy_buffer(c, sb, ub, 0, 0, sizeof(glm::vec4));
-		c->end();
-		q->submit(c, nullptr, nullptr);
-		q->wait_idle();
-		cp->destroy_commandbuffer(c);
-	}
+		glm::mat4 proj;
+		glm::mat4 view;
+		glm::mat4 model;
+	}ubo;
+
+	auto ub = flame::graphics::create_buffer(d, sizeof(glm::mat4) * 3, flame::graphics::BufferUsageUniformBuffer, flame::graphics::MemPropHost |
+		flame::graphics::MemPropHostCoherent);
+	ub->map();
+	ubo.proj = glm::mat4(
+		glm::vec4(1.f, 0.f, 0.f, 0.f),
+		glm::vec4(0.f, -1.f, 0.f, 0.f),
+		glm::vec4(0.f, 0.f, 1.f, 0.f),
+		glm::vec4(0.f, 0.f, 0.f, 1.f)
+	) * glm::perspective(glm::radians(d->fovy), d->aspect, d->near_plane, d->far_plane);;
+	ubo.view = glm::lookAt(glm::vec3(0.f, 0.f, 20.f), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+	ubo.model = glm::mat4(1.f);
+	glm::vec4 color(0.5f, 0.7f, 0.f, 1.f);
+	memcpy(ub->mapped, &ubo, ub->size);
 
 	auto rp = flame::graphics::create_renderpass(d);
 	rp->add_attachment_swapchain(sc, true);
@@ -55,8 +57,8 @@ int main(int argc, char **args)
 	auto p = flame::graphics::create_pipeline(d, rp, 0);
 	p->set_size(-1, -1);
 	p->set_cull_mode(flame::graphics::CullModeNone);
-	p->add_shader("fullscreen.vert", {});
-	p->add_shader("test.frag", {});
+	p->add_shader("test/test.vert", {});
+	p->add_shader("test/test.frag", {});
 	p->build();
 
 	auto dp = flame::graphics::create_descriptorpool(d);
@@ -70,7 +72,7 @@ int main(int argc, char **args)
 
 	auto vb = flame::graphics::create_buffer(d, mvc, flame::graphics::BufferUsageVertexBuffer | 
 		flame::graphics::BufferUsageTransferDst, flame::graphics::MemPropDevice);
-	auto ib = flame::graphics::create_buffer(d, mvc, flame::graphics::BufferUsageIndexBuffer |
+	auto ib = flame::graphics::create_buffer(d, mic, flame::graphics::BufferUsageIndexBuffer |
 		flame::graphics::BufferUsageTransferDst, flame::graphics::MemPropDevice);
 
 	flame::graphics::Framebuffer *fbs[2];
@@ -100,6 +102,19 @@ int main(int argc, char **args)
 		auto index = sc->acquire_image(image_avalible);
 		q->submit(cbs[index], image_avalible, render_finished);
 		q->present(index, sc, render_finished);
+
+		//static long long last_ns = 0;
+		//auto t = flame::get_now_ns();
+		//if (t - last_ns >= 10000000)
+		//{
+		//	static int B = 0;
+		//	glm::vec4 color(0.5f, 0.7f, (B / 255.f), 1.f);
+		//	memcpy(ub->mapped, &color, sizeof(glm::vec4));
+		//	B++;
+		//	if (B == 256)
+		//		B = 0;
+		//	last_ns = t;
+		//}
 
 		static long long last_fps = 0;
 		if (last_fps != sm->fps)
