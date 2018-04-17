@@ -17,6 +17,5 @@ void main()
 	outTexcoord = inTexcoord;
 	mat3 normalMatrix = transpose(inverse(mat3(ubo_matrix.view * ubo_matrix.model)));
 	outNormal = normalize(normalMatrix * inNormal);
-	//outNormal = normalize(inNormal);
 	gl_Position = ubo_matrix.proj * ubo_matrix.view * ubo_matrix.model * vec4(inVertex, 1);
 }

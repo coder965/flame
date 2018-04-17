@@ -86,7 +86,7 @@ int main(int argc, char **args)
 	auto ds = dp->create_descriptorset(p, 0);
 	ds->set_uniformbuffer(0, 0, ub);
 
-	auto m = load_model("voyager/voyager.dae");
+	auto m = load_model("../../Vulkan/data/models/voyager/voyager.dae");
 	auto mvs = m->get_vertex_semantics();
 	auto mvc = m->get_vertex_count();
 	auto mic = m->get_indice_count();
@@ -102,13 +102,13 @@ int main(int argc, char **args)
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
-		copy_buffer(c, sb, vb, 0, 0, vb->size);
+		c->copy_buffer(sb, vb, 0, 0, vb->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_indices(), ib->size);
-		copy_buffer(c, sb, ib, 0, 0, ib->size);
+		c->copy_buffer(sb, ib, 0, 0, ib->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
@@ -119,7 +119,7 @@ int main(int argc, char **args)
 	auto sampler = create_sampler(d, FilterLinear, FilterLinear,
 		false);
 
-	auto m_map = create_texture_from_file(d, cp, q, "voyager/voyager_bc3_unorm.ktx");
+	auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/models/voyager/voyager_bc3_unorm.ktx");
 	auto m_map_view = create_textureview(d, m_map);
 	ds->set_texture(1, 0, m_map_view, sampler);
 

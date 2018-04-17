@@ -78,6 +78,12 @@ namespace flame
 			vkCmdDrawIndexed(_priv->v, count, 1, first_index, 0, 0);
 		}
 
+		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int src_offset, int dst_offset, int size)
+		{
+			VkBufferCopy region = {src_offset, dst_offset, size};
+			vkCmdCopyBuffer(_priv->v, src->_priv->v, dst->_priv->v, 1, &region);
+		}
+
 		void Commandbuffer::end()
 		{
 			vk_chk_res(vkEndCommandBuffer(_priv->v));

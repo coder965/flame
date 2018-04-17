@@ -108,15 +108,15 @@ namespace flame
 		{
 			PipelinePrivate *_priv;
 
-			FLAME_GRAPHICS_EXPORTS void set_size(int cx, int cy);
 			FLAME_GRAPHICS_EXPORTS void set_vertex_attributes(const std::initializer_list
 				<std::initializer_list<VertexAttributeType>> &attributes);
+			FLAME_GRAPHICS_EXPORTS void set_primitive_topology(PrimitiveTopology v);
+			FLAME_GRAPHICS_EXPORTS void set_polygon_mode(PolygonMode v);
+			FLAME_GRAPHICS_EXPORTS void set_size(int cx, int cy);
 			FLAME_GRAPHICS_EXPORTS void set_patch_control_points(int v);
 			FLAME_GRAPHICS_EXPORTS void set_depth_test(bool v);
 			FLAME_GRAPHICS_EXPORTS void set_depth_write(bool v);
 			FLAME_GRAPHICS_EXPORTS void set_depth_clamp(bool v);
-			FLAME_GRAPHICS_EXPORTS void set_primitive_topology(PrimitiveTopology v);
-			FLAME_GRAPHICS_EXPORTS void set_polygon_mode(PolygonMode v);
 			FLAME_GRAPHICS_EXPORTS void set_cull_mode(CullMode v);
 			FLAME_GRAPHICS_EXPORTS void set_output_attachment_count(int count);
 			FLAME_GRAPHICS_EXPORTS void set_blend_state(int index, bool enable, 

@@ -19,6 +19,28 @@
 
 #include <algorithm>
 
+struct UBO
+{
+	glm::mat4 proj;
+	glm::mat4 view;
+	glm::mat4 model;
+};
+
+UBO *ubo;
+
+static void update_bone_pos(flame::Model *m, int bone_id, glm::vec2 *dst)
+{
+	auto p_id = m->get_bone_parent(bone_id);
+	if (p_id != -1)
+	{
+
+	}
+
+	auto c_count = m->get_bone_children_count(bone_id);
+	for (auto i = 0; i < c_count; i++)
+		update_bone_pos(m, m->get_bone_child(bone_id, i), dst);
+}
+
 int main(int argc, char **args)
 {
 	using namespace flame;
@@ -36,25 +58,18 @@ int main(int argc, char **args)
 	auto q = create_queue(d);
 	auto cp = create_commandpool(d);
 
-	struct UBO
-	{
-		mat4 proj;
-		mat4 view;
-		mat4 model;
-	};
-
 	auto ub = create_buffer(d, sizeof(mat4) * 3, BufferUsageUniformBuffer, 
 		MemPropHost | MemPropHostCoherent);
 	ub->map();
-	auto ubo = (UBO*)ub->mapped;
+	ubo = (UBO*)ub->mapped;
 	ubo->proj = mat4(
 		vec4(1.f, 0.f, 0.f, 0.f),
 		vec4(0.f, -1.f, 0.f, 0.f),
 		vec4(0.f, 0.f, 1.f, 0.f),
 		vec4(0.f, 0.f, 0.f, 1.f)
-	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);;
-	ubo->view = lookAt(vec3(0.f, 0.f, 10.f), vec3(0.f), vec3(0.f, 1.f, 0.f));
-	ubo->model = mat4(1.f);
+	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
+	ubo->view = lookAt(vec3(0.f, 5.f, 0.f), vec3(0.f), vec3(0.f, 0.f, 1.f));
+	ubo->model = translate(vec3(0.f, 0.f, -2.f)) * scale(vec3(0.001f));
 
 	Format depth_format;
 	depth_format.v = Format::Depth16;
@@ -69,24 +84,37 @@ int main(int argc, char **args)
 	rp->add_subpass({0}, 1);
 	rp->build();
 
-	auto p = create_pipeline(d, rp, 0);
-	p->set_vertex_attributes({{
+	auto pipeline = create_pipeline(d, rp, 0);
+	pipeline->set_vertex_attributes({{
 			VertexAttributeFloat3, 
 			VertexAttributeFloat2,
-			VertexAttributeFloat3
+			VertexAttributeFloat3,
+			VertexAttributeFloat4,
+			VertexAttributeFloat4
 	}});
-	p->set_size(-1, -1);
-	p->set_depth_test(true);
-	p->set_depth_write(true);
-	p->add_shader("test/test.vert", {});
-	p->add_shader("test/test.frag", {});
-	p->build();
+	pipeline->set_size(-1, -1);
+	pipeline->set_depth_test(true);
+	pipeline->set_depth_write(true);
+	pipeline->add_shader("test/test_skeleton.vert", {});
+	pipeline->add_shader("test/test.frag", {});
+	pipeline->build();
+
+	auto pipeline_line = create_pipeline(d, rp, 0);
+	pipeline_line->set_vertex_attributes({{
+			VertexAttributeFloat2
+		}});
+	pipeline_line->set_polygon_mode(PolygonModeLine);
+	pipeline_line->set_size(-1, -1);
+	pipeline_line->set_cull_mode(CullModeNone);
+	pipeline_line->add_shader("test/line2d.vert", {});
+	pipeline_line->add_shader("test/line2d.frag", {});
+	pipeline_line->build();
 
 	auto dp = create_descriptorpool(d);
-	auto ds = dp->create_descriptorset(p, 0);
+	auto ds = dp->create_descriptorset(pipeline, 0);
 	ds->set_uniformbuffer(0, 0, ub);
 
-	auto m = load_model("voyager/voyager.dae");
+	auto m = load_model("../../Vulkan/data/models/goblin.dae");
 	auto mvs = m->get_vertex_semantics();
 	auto mvc = m->get_vertex_count();
 	auto mic = m->get_indice_count();
@@ -102,13 +130,13 @@ int main(int argc, char **args)
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
-		copy_buffer(c, sb, vb, 0, 0, vb->size);
+		c->copy_buffer(sb, vb, 0, 0, vb->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_indices(), ib->size);
-		copy_buffer(c, sb, ib, 0, 0, ib->size);
+		c->copy_buffer(sb, ib, 0, 0, ib->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
@@ -116,10 +144,40 @@ int main(int argc, char **args)
 	}
 	sb->unmap();
 
+	auto bc = m->get_bone_count();
+	auto vb_bone_pos = create_buffer(d, bc * 6 * sizeof(vec2), BufferUsageVertexBuffer,
+		MemPropHost | MemPropHostCoherent);
+	vb_bone_pos->map();
+	auto bone_pos = (vec2*)vb_bone_pos->mapped;
+	for (auto i = 0; i < bc; i++)
+	{
+		bone_pos[i * 3 + 0].x = -10.f;
+		bone_pos[i * 3 + 0].y = -10.f;
+		bone_pos[i * 3 + 1].x = -10.f;
+		bone_pos[i * 3 + 1].y = -10.f;
+		bone_pos[i * 3 + 2].x = -10.f;
+		bone_pos[i * 3 + 2].y = -10.f;
+		bone_pos[i * 3 + 3].x = -10.f;
+		bone_pos[i * 3 + 3].y = -10.f;
+		bone_pos[i * 3 + 4].x = -10.f;
+		bone_pos[i * 3 + 4].y = -10.f;
+		bone_pos[i * 3 + 5].x = -10.f;
+		bone_pos[i * 3 + 5].y = -10.f;
+	}
+	update_bone_pos(m, m->get_bone_root(), bone_pos);
+
+	auto ub_bone = create_buffer(d, sizeof(mat4) * bc, BufferUsageUniformBuffer,
+		MemPropHost | MemPropHostCoherent);
+	ub_bone->map();
+	auto pBone = (mat4*)ub_bone->mapped;
+	for (auto i = 0; i < bc; i++)
+		pBone[i] = mat4(1.f);
+	ds->set_uniformbuffer(2, 0, ub_bone);
+
 	auto sampler = create_sampler(d, FilterLinear, FilterLinear,
 		false);
 
-	auto m_map = create_texture_from_file(d, cp, q, "voyager/voyager_bc3_unorm.ktx");
+	auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/textures/goblin_bc3_unorm.ktx");
 	auto m_map_view = create_textureview(d, m_map);
 	ds->set_texture(1, 0, m_map_view, sampler);
 
@@ -137,7 +195,7 @@ int main(int argc, char **args)
 		cbs[i] = cp->create_commandbuffer();
 		cbs[i]->begin();
 		cbs[i]->begin_renderpass(rp, fbs[i]);
-		cbs[i]->bind_pipeline(p);
+		cbs[i]->bind_pipeline(pipeline);
 		cbs[i]->bind_descriptorset(ds);
 		cbs[i]->bind_vertexbuffer(vb);
 		cbs[i]->bind_indexbuffer(ib, IndiceTypeUint);
@@ -163,7 +221,7 @@ int main(int argc, char **args)
 	sm->run([&](){
 		if (view_changed)
 		{
-			ubo->model = rotate(radians(x_ang), vec3(0.f, 1.f, 0.f));
+			ubo->model = translate(vec3(0.f, 0.f, -2.f)) * rotate(radians(x_ang), vec3(0.f, 0.f, 1.f)) * scale(vec3(0.001f));
 
 			view_changed = false;
 		}
