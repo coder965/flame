@@ -11,6 +11,11 @@ namespace flame
 			VkImage v;
 			VkDeviceMemory m;
 		};
+
+		struct TextureviewPrivate
+		{
+			VkImageView v;
+		};
 	}
 }
 

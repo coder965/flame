@@ -5,7 +5,7 @@ namespace flame
 {
 	namespace graphics
 	{
-		VkImageView create_image_view(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect,
+		VkImageView create_imageview(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect,
 			VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
 		{
 			VkImageViewCreateInfo info;
@@ -27,7 +27,7 @@ namespace flame
 			return v;
 		}
 
-		void destroy_image_view(Device *d, VkImageView v)
+		void destroy_imageview(Device *d, VkImageView v)
 		{
 			vkDestroyImageView(d->_priv->device, v, nullptr);
 		}

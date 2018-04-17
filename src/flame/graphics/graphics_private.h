@@ -21,9 +21,9 @@ namespace flame
 			assert(res == VK_SUCCESS);
 		}
 
-		VkImageView create_image_view(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect, 
+		VkImageView create_imageview(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect, 
 			VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_2D, int base_level = 0, int level_count = 1, int base_layer = 0, int layer_count = 1);
-		void destroy_image_view(Device *d, VkImageView v);
+		void destroy_imageview(Device *d, VkImageView v);
 
 		inline VkFormat Z(Format f)
 		{
@@ -43,6 +43,12 @@ namespace flame
 					return VK_FORMAT_R16G16B16A16_UNORM;
 				case Format::R16G16B16A16_UNSCALED:
 					return VK_FORMAT_R16G16B16A16_SFLOAT;
+
+				case Format::RGBA_BC3:
+					return VK_FORMAT_BC3_UNORM_BLOCK;
+				case Format::RGBA_ETC2:
+					return VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK;
+
 				case Format::Depth16:
 					return VK_FORMAT_D16_UNORM;
 				case Format::Depth32:
@@ -112,6 +118,50 @@ namespace flame
 		inline VkShaderStageFlagBits Z(VkShaderStageFlags f)
 		{
 			return VkShaderStageFlagBits(f);
+		}
+
+		inline VkImageAspectFlags Z(TextureAspect a)
+		{
+			VkImageAspectFlags vk_aspect = 0;
+			if (a & TextureAspectColor)
+				vk_aspect |= VK_IMAGE_ASPECT_COLOR_BIT;
+			if (a & TextureAspectDepth)
+				vk_aspect |= VK_IMAGE_ASPECT_DEPTH_BIT;
+			if (a & TextureAspectStencil)
+				vk_aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+			return vk_aspect;
+		}
+
+		inline VkImageViewType Z(TextureViewType t)
+		{
+			switch (t)
+			{
+				case TextureViewType1D:
+					return VK_IMAGE_VIEW_TYPE_1D;
+				case TextureViewType2D:
+					return VK_IMAGE_VIEW_TYPE_2D;
+				case TextureViewType3D:
+					return VK_IMAGE_VIEW_TYPE_3D;
+				case TextureViewTypeCube:
+					return VK_IMAGE_VIEW_TYPE_CUBE;
+				case TextureViewType1DArray:
+					return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+				case TextureViewType2DArray:
+					return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+				case TextureViewTypeCubeArray:
+					return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+			}
+		}
+
+		inline VkFilter Z(Filter f)
+		{
+			switch (f)
+			{
+				case FilterNearest:
+					return VK_FILTER_NEAREST;
+				case FilterLinear:
+					return VK_FILTER_LINEAR;
+			}
 		}
 	}
 }

@@ -50,23 +50,6 @@ namespace flame
 		return *this;
 	}
 
-	PipelineLayout::PipelineLayout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges) :
-		descriptor_set_layouts(_descriptor_set_layouts),
-		push_constant_ranges(_push_constant_ranges)
-	{
-		std::vector<VkDescriptorSetLayout> vk_descriptor_set_layouts(descriptor_set_layouts.size());
-		for (auto i = 0; i < descriptor_set_layouts.size(); i++)
-			vk_descriptor_set_layouts[i] = descriptor_set_layouts[i]->v;
-
-		std::vector<VkPushConstantRange> vk_push_constant_ranges(push_constant_ranges.size());
-		for (auto i = 0; i < push_constant_ranges.size(); i++)
-		{
-			vk_push_constant_ranges[i].offset = push_constant_ranges[i].offset;
-			vk_push_constant_ranges[i].size = push_constant_ranges[i].size;
-			vk_push_constant_ranges[i].stageFlags = push_constant_ranges[i].stage;
-		}
-	}
-
 	static std::vector<std::weak_ptr<PipelineLayout>> pipelineLayouts;
 
 	std::shared_ptr<PipelineLayout> get_pipeline_layout(const std::vector<std::shared_ptr<DescriptorSetLayout>> &_descriptor_set_layouts, const std::vector<PushConstantRange> &_push_constant_ranges)
@@ -112,65 +95,6 @@ namespace flame
 
 		if (descriptor_set)
 			link_descriptors(descriptor_set.get(), &globalResource);
-	}
-
-	void Pipeline::create()
-	{
-		for (auto &s : shaders)
-		{
-			if (descriptor_sets.size() < s->descriptor_sets.size())
-			{
-				descriptor_sets.resize(s->descriptor_sets.size());
-				descriptor_set_layouts.resize(s->descriptor_sets.size());
-			}
-
-			for (auto set = 0; set < s->descriptor_sets.size(); set++)
-			{
-				for (auto &d : s->descriptor_sets[set])
-				{
-					auto found = false;
-					for (auto &b : descriptor_sets[set])
-					{
-						if (b.binding == d->binding)
-						{
-							b.stage |= s->stage;
-							found = true;
-							break;
-						}
-					}
-					if (found)
-						continue;
-
-					descriptor_sets[set].push_back(d->get_layout_binding(s->stage));
-				}
-			}
-			if (s->push_constant_size > 0)
-			{
-				auto found = false;
-				for (auto &p : push_constant_ranges)
-				{
-					if (p.size == s->push_constant_size)
-					{
-						p.stage |= s->stage;
-						found = true;
-						break;
-					}
-				}
-				if (!found)
-				{
-					PushConstantRange r;
-					r.offset = 0;
-					r.size = s->push_constant_size;
-					r.stage = s->stage;
-					push_constant_ranges.push_back(r);
-				}
-			}
-		}
-
-		for (auto set = 0; set < descriptor_sets.size(); set++)
-			descriptor_set_layouts[set] = get_descriptor_set_layout(descriptor_sets[set]);
-
-		pipeline_layout = get_pipeline_layout(descriptor_set_layouts, push_constant_ranges);
 	}
 
 	void Pipeline::link_descriptors(DescriptorSet *set, Resource *resource)

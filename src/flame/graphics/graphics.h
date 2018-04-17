@@ -23,6 +23,10 @@ namespace flame
 				B8G8R8A8,
 				R16G16B16A16,
 				R16G16B16A16_UNSCALED,
+
+				RGBA_BC3,
+				RGBA_ETC2,
+
 				Depth16,
 				Depth32,
 				Depth24Stencil8
@@ -77,6 +81,30 @@ namespace flame
 			ShaderResourceTexture
 		};
 
+		enum TextureUsage
+		{
+			TextureUsageTransferSrc = 1 << 0,
+			TextureUsageTransferDst = 1 << 1,
+			TextureUsageShaderSampled = 1 << 2,
+			TextureUsageAttachment = 1 << 3
+		};
+
+		enum TextureLayout
+		{
+			TextureLayoutUndefined,
+			TextureLayoutAttachment,
+			TextureLayoutShaderReadOnlyOptimal,
+			TextureLayoutTransferSrc,
+			TextureLayoutTransferDst
+		};
+
+		enum TextureAspect
+		{
+			TextureAspectColor = 1 << 0,
+			TextureAspectDepth = 1 << 1,
+			TextureAspectStencil = 1 << 2
+		};
+
 		enum TextureViewType
 		{
 			TextureViewType1D,
@@ -92,6 +120,12 @@ namespace flame
 		{
 			IndiceTypeUint,
 			IndiceTypeUshort
+		};
+
+		enum Filter
+		{
+			FilterNearest,
+			FilterLinear
 		};
 
 		enum MainDescriptorSetBindings
