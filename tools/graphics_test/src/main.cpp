@@ -29,12 +29,12 @@ int main(int argc, char **args)
 	auto s = sm->create_surface(1280, 720, SurfaceStyleFrame,
 		"Hello");
 
-	auto d = graphics::create_device(true, 1280, 720);
+	auto d = create_device(true, 1280, 720);
 
-	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
+	auto sc = create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
 
-	auto q = graphics::create_queue(d);
-	auto cp = graphics::create_commandpool(d);
+	auto q = create_queue(d);
+	auto cp = create_commandpool(d);
 
 	struct UBO
 	{
