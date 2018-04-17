@@ -52,9 +52,9 @@ int main(int argc, char **args)
 		vec4(0.f, -1.f, 0.f, 0.f),
 		vec4(0.f, 0.f, 1.f, 0.f),
 		vec4(0.f, 0.f, 0.f, 1.f)
-	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);;
-	ubo->view = lookAt(vec3(0.f, 0.f, 10.f), vec3(0.f), vec3(0.f, 1.f, 0.f));
-	ubo->model = mat4(1.f);
+	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
+	ubo->view = lookAt(vec3(0.f, 5.f, 0.f), vec3(0.f), vec3(0.f, 0.f, 1.f));
+	ubo->model = translate(vec3(0.f, 0.f, -2.f)) * scale(vec3(0.001f));
 
 	Format depth_format;
 	depth_format.v = Format::Depth16;
@@ -73,7 +73,9 @@ int main(int argc, char **args)
 	p->set_vertex_attributes({{
 			VertexAttributeFloat3, 
 			VertexAttributeFloat2,
-			VertexAttributeFloat3
+			VertexAttributeFloat3,
+			VertexAttributeFloat4,
+			VertexAttributeFloat4
 	}});
 	p->set_size(-1, -1);
 	p->set_depth_test(true);
@@ -86,7 +88,7 @@ int main(int argc, char **args)
 	auto ds = dp->create_descriptorset(p, 0);
 	ds->set_uniformbuffer(0, 0, ub);
 
-	auto m = load_model("voyager/voyager.dae");
+	auto m = load_model("../../Vulkan/data/models/goblin.dae");
 	auto mvs = m->get_vertex_semantics();
 	auto mvc = m->get_vertex_count();
 	auto mic = m->get_indice_count();
@@ -102,13 +104,13 @@ int main(int argc, char **args)
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
-		copy_buffer(c, sb, vb, 0, 0, vb->size);
+		c->copy_buffer(sb, vb, 0, 0, vb->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_indices(), ib->size);
-		copy_buffer(c, sb, ib, 0, 0, ib->size);
+		c->copy_buffer(sb, ib, 0, 0, ib->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
@@ -116,10 +118,19 @@ int main(int argc, char **args)
 	}
 	sb->unmap();
 
+	auto bc = m->get_bone_count();
+	auto ub_bone = create_buffer(d, sizeof(mat4) * bc, BufferUsageUniformBuffer,
+		MemPropHost | MemPropHostCoherent);
+	ub_bone->map();
+	auto pBone = (mat4*)ub_bone->mapped;
+	for (auto i = 0; i < bc; i++)
+		pBone[i] = mat4(1.f);
+	ds->set_uniformbuffer(2, 0, ub_bone);
+
 	auto sampler = create_sampler(d, FilterLinear, FilterLinear,
 		false);
 
-	auto m_map = create_texture_from_file(d, cp, q, "voyager/voyager_bc3_unorm.ktx");
+	auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/textures/goblin_bc3_unorm.ktx");
 	auto m_map_view = create_textureview(d, m_map);
 	ds->set_texture(1, 0, m_map_view, sampler);
 
@@ -163,7 +174,7 @@ int main(int argc, char **args)
 	sm->run([&](){
 		if (view_changed)
 		{
-			ubo->model = rotate(radians(x_ang), vec3(0.f, 1.f, 0.f));
+			ubo->model = translate(vec3(0.f, 0.f, -2.f)) * rotate(radians(x_ang), vec3(0.f, 0.f, 1.f)) * scale(vec3(0.001f));
 
 			view_changed = false;
 		}

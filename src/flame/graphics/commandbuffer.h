@@ -19,6 +19,7 @@ namespace flame
 			CommandbufferPrivate *_priv;
 
 			FLAME_GRAPHICS_EXPORTS void begin(bool once = false);
+
 			FLAME_GRAPHICS_EXPORTS void begin_renderpass(Renderpass *r, Framebuffer *f);
 			FLAME_GRAPHICS_EXPORTS void end_renderpass();
 			FLAME_GRAPHICS_EXPORTS void bind_pipeline(Pipeline *p);
@@ -27,6 +28,9 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void bind_indexbuffer(Buffer *b, IndiceType t);
 			FLAME_GRAPHICS_EXPORTS void draw(int count);
 			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index);
+
+			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int src_offset, int dst_offset, int size);
+
 			FLAME_GRAPHICS_EXPORTS void end();
 		};
 

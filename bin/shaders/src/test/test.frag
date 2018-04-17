@@ -8,5 +8,4 @@ layout(binding = 1) uniform sampler2D img_tex;
 void main()
 {
 	outColor = vec4(texture(img_tex, inTexcoord).rgb * abs(dot(inNormal, vec3(0, 0, 1))), 1.0);
-	//outColor = vec4(abs(inNormal), 1.0);
 }
