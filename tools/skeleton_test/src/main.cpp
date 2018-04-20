@@ -42,31 +42,40 @@ glm::mat4 *_bone_matrix;
 
 glm::vec2 *bone_pos;
 
+glm::vec2 res(1280, 720);
+
 static void update_bone_pos(flame::Model *m, int bone_id, glm::vec2 *dst)
 {
 	auto &b = bones[bone_id];
 
 	auto mat = b.mat;
 
-	if (b.parent != -1)
-		mat = bones[b.parent].mat * mat;
+	//if (b.parent != -1)
+	//	mat =  bones[b.parent].mat * mat;
 
 	_bone_matrix[bone_id] = mat;
 
 	if (b.parent != -1)
 	{
-		auto p0 = _bone_matrix[b.parent][3] * 0.001f;
-		auto p1 = _bone_matrix[bone_id][3] * 0.001f;
+		auto p0 = _bone_matrix[b.parent][3];
+		p0 = p0 * 0.001f - glm::vec4(0.f, 0.f, 2.f, 0.f);
+		auto p1 = _bone_matrix[bone_id][3];
+		p1 = p1 * 0.001f - glm::vec4(0.f, 0.f, 2.f, 0.f);
+
 		p0 = ubo->proj * ubo->view * p0;
 		p0 /= p0.w;
 		p1 = ubo->proj * ubo->view * p1;
 		p1 /= p1.w;
 		p0.z = p1.z = 0.f;
+
+		//p0.x = 0.5f; p0.y = 0.f;
+		//p1.x = 0.f; p1.y = 0.f;
+
 		if (glm::length(p0 - p1) > 0.001f)
 		{
 			auto w = glm::normalize(
-				glm::cross(glm::vec3(p1) - glm::vec3(p0), glm::vec3(0.f, 1.f, 0.f)));
-			w *= 0.005f;
+				glm::cross(glm::vec3(p1) - glm::vec3(p0), glm::vec3(0.f, 0.f, 1.f)));
+			w *= 5.f / glm::length(glm::vec2(w.x * res.x, w.y * res.y));
 			bone_pos[bone_id * 3 + 0].x = p0.x + w.x;
 			bone_pos[bone_id * 3 + 0].y = p0.y + w.y;
 			bone_pos[bone_id * 3 + 1].x = p0.x - w.x;
@@ -87,10 +96,10 @@ int main(int argc, char **args)
 	using namespace glm;
 
 	auto sm = create_surface_manager();
-	auto s = sm->create_surface(1280, 720, SurfaceStyleFrame,
+	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
 		"Hello");
 
-	auto d = create_device(true, 1280, 720);
+	auto d = create_device(true, s->cx, s->cy);
 
 	auto sc = create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
 
@@ -107,7 +116,7 @@ int main(int argc, char **args)
 		vec4(0.f, 0.f, 1.f, 0.f),
 		vec4(0.f, 0.f, 0.f, 1.f)
 	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
-	ubo->view = lookAt(vec3(0.f, 5.f, 0.f), vec3(0.f), vec3(0.f, 0.f, 1.f));
+	ubo->view = lookAt(vec3(0.f, -5.f, 0.f), vec3(0.f), vec3(0.f, 0.f, 1.f));
 	ubo->model = translate(vec3(0.f, 0.f, -2.f)) * scale(vec3(0.001f));
 
 	Format depth_format;
@@ -169,6 +178,7 @@ int main(int argc, char **args)
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
 		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
+		auto pos = (vec3*)sb->mapped;
 		c->copy_buffer(sb, vb, 0, 0, vb->size);
 		c->end();
 		q->submit(c, nullptr, nullptr);
@@ -188,7 +198,7 @@ int main(int argc, char **args)
 	for (auto i = 0; i < bones.size(); i++)
 	{
 		m->get_bone_matrix(i, &bones[i].mat[0][0]);
-		bones[i].mat = glm::transpose(bones[i].mat);
+		//bones[i].mat = glm::transpose(bones[i].mat);
 		bones[i].parent = m->get_bone_parent(i);
 		bones[i].children.resize(m->get_bone_children_count(i));
 		for (auto j = 0; j < bones[i].children.size(); j++)
