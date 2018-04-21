@@ -72,7 +72,7 @@ int main(int argc, char **args)
 	auto p = create_pipeline(d, rp, 0);
 	p->set_vertex_attributes({{
 			VertexAttributeFloat3, 
-			VertexAttributeFloat2,
+			//VertexAttributeFloat2,
 			VertexAttributeFloat3
 	}});
 	p->set_size(-1, -1);
@@ -86,7 +86,8 @@ int main(int argc, char **args)
 	auto ds = dp->create_descriptorset(p, 0);
 	ds->set_uniformbuffer(0, 0, ub);
 
-	auto m = load_model("../../Vulkan/data/models/voyager/voyager.dae");
+	//auto m = load_model("../../Vulkan/data/models/voyager/voyager.dae");
+	auto m = load_model("my_models/robot.dae");
 	auto mvs = m->get_vertex_semantics();
 	auto mvc = m->get_vertex_count();
 	auto mic = m->get_indice_count();
@@ -119,9 +120,9 @@ int main(int argc, char **args)
 	auto sampler = create_sampler(d, FilterLinear, FilterLinear,
 		false);
 
-	auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/models/voyager/voyager_bc3_unorm.ktx");
-	auto m_map_view = create_textureview(d, m_map);
-	ds->set_texture(1, 0, m_map_view, sampler);
+	//auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/models/voyager/voyager_bc3_unorm.ktx");
+	//auto m_map_view = create_textureview(d, m_map);
+	//ds->set_texture(1, 0, m_map_view, sampler);
 
 	Framebuffer *fbs[2];
 	Commandbuffer *cbs[2];
