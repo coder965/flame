@@ -77,7 +77,8 @@ namespace flame
 
 		enum ShaderResourceType
 		{
-			ShaderResourceUniformBuffer,
+			ShaderResourceUniformbuffer,
+			ShaderResourceStoragebuffer,
 			ShaderResourceTexture
 		};
 

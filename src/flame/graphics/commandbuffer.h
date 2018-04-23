@@ -14,6 +14,13 @@ namespace flame
 		struct Descriptorset;
 		struct Buffer;
 
+		struct CopyBufferRange
+		{
+			int src_offset;
+			int dst_offset;
+			int size;
+		};
+
 		struct Commandbuffer
 		{
 			CommandbufferPrivate *_priv;
@@ -29,7 +36,7 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void draw(int count);
 			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index);
 
-			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int src_offset, int dst_offset, int size);
+			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int range_count, CopyBufferRange *ranges);
 
 			FLAME_GRAPHICS_EXPORTS void end();
 		};

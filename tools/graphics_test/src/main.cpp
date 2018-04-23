@@ -36,25 +36,56 @@ int main(int argc, char **args)
 	auto q = create_queue(d);
 	auto cp = create_commandpool(d);
 
-	struct UBO
+	struct UBO_matrix
 	{
 		mat4 proj;
 		mat4 view;
-		mat4 model;
 	};
 
-	auto ub = create_buffer(d, sizeof(mat4) * 3, BufferUsageUniformBuffer, 
+	auto ub_matrix = create_buffer(d, sizeof(UBO_matrix), BufferUsageTransferDst |
+		BufferUsageUniformBuffer, MemPropDevice);
+
+	struct UBO_matrix_ins
+	{
+		mat4 model[65536];
+	};
+
+	auto ub_matrix_ins = create_buffer(d, sizeof(UBO_matrix_ins), BufferUsageTransferDst |
+		BufferUsageStorageBuffer, MemPropDevice);
+
+	auto ub_stag = create_buffer(d, ub_matrix->size + ub_matrix_ins->size, BufferUsageTransferSrc,
 		MemPropHost | MemPropHostCoherent);
-	ub->map();
-	auto ubo = (UBO*)ub->mapped;
-	ubo->proj = mat4(
+	ub_stag->map();
+
+	struct CopyBufferUpdate
+	{
+		Buffer *src;
+		Buffer *dst;
+		std::vector<CopyBufferRange> ranges;
+	};
+
+	std::vector<CopyBufferUpdate> updates;
+
+	auto ubo_matrix = (UBO_matrix*)ub_stag->mapped;
+	ubo_matrix->proj = mat4(
 		vec4(1.f, 0.f, 0.f, 0.f),
 		vec4(0.f, -1.f, 0.f, 0.f),
 		vec4(0.f, 0.f, 1.f, 0.f),
 		vec4(0.f, 0.f, 0.f, 1.f)
-	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);;
-	ubo->view = lookAt(vec3(0.f, 0.f, 10.f), vec3(0.f), vec3(0.f, 1.f, 0.f));
-	ubo->model = mat4(1.f);
+	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
+	ubo_matrix->view = lookAt(vec3(0.f, 0.f, 10.f), vec3(0.f), vec3(0.f, 1.f, 0.f));
+
+	CopyBufferUpdate upd;
+	upd.src = ub_stag;
+	upd.dst = ub_matrix;
+	upd.ranges.push_back({0, 0, ub_matrix->size});
+	updates.push_back(upd);
+
+	auto ubo_matrix_ins = (UBO_matrix_ins*)((unsigned char*)ub_stag->mapped + ub_matrix->size);
+
+	//auto m = load_model("../../Vulkan/data/models/voyager/voyager.dae");
+	auto m = load_model("d:/my_models/robot.dae");
+	m->root_node->calc_global_matrix();
 
 	Format depth_format;
 	depth_format.v = Format::Depth16;
@@ -84,38 +115,32 @@ int main(int argc, char **args)
 
 	auto dp = create_descriptorpool(d);
 	auto ds = dp->create_descriptorset(p, 0);
-	ds->set_uniformbuffer(0, 0, ub);
+	ds->set_uniformbuffer(0, 0, ub_matrix);
+	ds->set_storagebuffer(1, 0, ub_matrix_ins);
 
-	//auto m = load_model("../../Vulkan/data/models/voyager/voyager.dae");
-	auto m = load_model("my_models/robot.dae");
-	auto mvs = m->get_vertex_semantics();
-	auto mvc = m->get_vertex_count();
-	auto mic = m->get_indice_count();
-
-	auto vb = create_buffer(d, mvc * m->get_vertex_size(0), BufferUsageVertexBuffer | 
+	auto vb = create_buffer(d, m->vertex_count * m->vertex_buffers[0].size * sizeof(float), BufferUsageVertexBuffer | 
 		BufferUsageTransferDst, MemPropDevice);
-	auto ib = create_buffer(d, mic * sizeof(int), BufferUsageIndexBuffer |
+	auto ib = create_buffer(d, m->indice_count * sizeof(int), BufferUsageIndexBuffer |
 		BufferUsageTransferDst, MemPropDevice);
-	auto sb = create_buffer(d, std::max(vb->size, ib->size), BufferUsageTransferSrc, 
+	auto sb = create_buffer(d, vb->size + ib->size, BufferUsageTransferSrc, 
 		MemPropHost | MemPropHostCoherent);
 	sb->map();
 	{
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
-		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
-		c->copy_buffer(sb, vb, 0, 0, vb->size);
-		c->end();
-		q->submit(c, nullptr, nullptr);
-		q->wait_idle();
-		c->begin(true);
-		memcpy(sb->mapped, m->get_indices(), ib->size);
-		c->copy_buffer(sb, ib, 0, 0, ib->size);
+		memcpy(sb->mapped, m->vertex_buffers[0].pVertex, vb->size);
+		CopyBufferRange r1 = {0, 0, vb->size};
+		c->copy_buffer(sb, vb, 1, &r1);
+		memcpy((unsigned char*)sb->mapped + vb->size, m->pIndices, ib->size);
+		CopyBufferRange r2 = {vb->size, 0, ib->size};
+		c->copy_buffer(sb, ib, 1, &r2);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
 		cp->destroy_commandbuffer(c);
 	}
 	sb->unmap();
+	destroy_buffer(d, sb);
 
 	auto sampler = create_sampler(d, FilterLinear, FilterLinear,
 		false);
@@ -142,17 +167,19 @@ int main(int argc, char **args)
 		cbs[i]->bind_descriptorset(ds);
 		cbs[i]->bind_vertexbuffer(vb);
 		cbs[i]->bind_indexbuffer(ib, IndiceTypeUint);
-		cbs[i]->draw_indexed(m->get_indice_count(), 0);
+		cbs[i]->draw_indexed(m->indice_count, 0);
 		//cbs[i]->draw(m->get_vertex_count());
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
 	}
 
+	auto cb_update = cp->create_commandbuffer();
+
 	auto image_avalible = create_semaphore(d);
 	auto render_finished = create_semaphore(d);
 
 	auto x_ang = 0.f;
-	auto view_changed = false;
+	auto view_changed = true;
 	s->add_mousemove_listener([&](Surface *s, int, int){
 		if (s->mouse_buttons[0] & KeyStateDown)
 		{
@@ -164,9 +191,31 @@ int main(int argc, char **args)
 	sm->run([&](){
 		if (view_changed)
 		{
-			ubo->model = rotate(radians(x_ang), vec3(0.f, 1.f, 0.f));
+			for (auto i = 0; i < m->mesh_count; i++)
+			{
+				ubo_matrix_ins->model[i] = rotate(radians(x_ang), vec3(0.f, 1.f, 0.f));
+				if (m->meshes[i]->pNode)
+					ubo_matrix_ins->model[i] = ubo_matrix_ins->model[i] * m->meshes[i]->pNode->global_matrix;
+			}
+
+			CopyBufferUpdate upd;
+			upd.src = ub_stag;
+			upd.dst = ub_matrix_ins;
+			upd.ranges.push_back({ub_matrix->size, 0, int(m->mesh_count * sizeof(mat4))});
+			updates.push_back(upd);
 
 			view_changed = false;
+		}
+
+		if (!updates.empty())
+		{
+			cb_update->begin(true);
+			for (auto &u : updates)
+				cb_update->copy_buffer(u.src, u.dst, u.ranges.size(), u.ranges.data());
+			cb_update->end();
+			q->submit(cb_update, nullptr, nullptr);
+			q->wait_idle();
+			updates.clear();
 		}
 
 		auto index = sc->acquire_image(image_avalible);

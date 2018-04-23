@@ -78,10 +78,16 @@ namespace flame
 			vkCmdDrawIndexed(_priv->v, count, 1, first_index, 0, 0);
 		}
 
-		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int src_offset, int dst_offset, int size)
+		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int range_count, CopyBufferRange *ranges)
 		{
-			VkBufferCopy region = {src_offset, dst_offset, size};
-			vkCmdCopyBuffer(_priv->v, src->_priv->v, dst->_priv->v, 1, &region);
+			std::vector<VkBufferCopy> vk_ranges(range_count);
+			for (auto i = 0; i < range_count; i++)
+			{
+				vk_ranges[i].srcOffset = ranges[i].src_offset;
+				vk_ranges[i].dstOffset = ranges[i].dst_offset;
+				vk_ranges[i].size = ranges[i].size;
+			}
+			vkCmdCopyBuffer(_priv->v, src->_priv->v, dst->_priv->v, range_count, vk_ranges.data());
 		}
 
 		void Commandbuffer::end()

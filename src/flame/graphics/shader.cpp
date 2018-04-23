@@ -130,7 +130,8 @@ namespace flame
 					}
 				};
 
-				_process_resource(ShaderResourceUniformBuffer);
+				_process_resource(ShaderResourceUniformbuffer);
+				_process_resource(ShaderResourceStoragebuffer);
 				_process_resource(ShaderResourceTexture);
 				_priv->push_constant_size = read<int>(res_file);
 			}
@@ -167,7 +168,10 @@ namespace flame
 
 				write<int>(res_file, resources.uniform_buffers.size());
 				for (auto &r : resources.uniform_buffers)
-					_process_resource(ShaderResourceUniformBuffer, r);
+					_process_resource(ShaderResourceUniformbuffer, r);
+				write<int>(res_file, resources.storage_buffers.size());
+				for (auto &r : resources.storage_buffers)
+					_process_resource(ShaderResourceStoragebuffer, r);
 				write<int>(res_file, resources.sampled_images.size());
 				for (auto &r : resources.sampled_images)
 					_process_resource(ShaderResourceTexture, r);
