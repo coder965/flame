@@ -19,81 +19,13 @@
 
 #include <algorithm>
 
-struct UBO
-{
-	glm::mat4 proj;
-	glm::mat4 view;
-	glm::mat4 model;
-};
-
-UBO *ubo;
-
-struct Bone
-{
-	glm::mat4 mat;
-	int parent;
-	std::vector<int> children;
-};
-
-std::vector<Bone> bones;
-
-glm::mat4 *bone_matrix;
-glm::mat4 *_bone_matrix;
-
-glm::vec2 *bone_pos;
-
-glm::vec2 res(1280, 720);
-
-static void update_bone_pos(flame::Model *m, int bone_id, glm::vec2 *dst)
-{
-	auto &b = bones[bone_id];
-
-	auto mat = b.mat;
-
-	//if (b.parent != -1)
-	//	mat =  bones[b.parent].mat * mat;
-
-	_bone_matrix[bone_id] = mat;
-
-	if (b.parent != -1)
-	{
-		auto p0 = _bone_matrix[b.parent][3];
-		p0 = p0 * 0.001f - glm::vec4(0.f, 0.f, 2.f, 0.f);
-		auto p1 = _bone_matrix[bone_id][3];
-		p1 = p1 * 0.001f - glm::vec4(0.f, 0.f, 2.f, 0.f);
-
-		p0 = ubo->proj * ubo->view * p0;
-		p0 /= p0.w;
-		p1 = ubo->proj * ubo->view * p1;
-		p1 /= p1.w;
-		p0.z = p1.z = 0.f;
-
-		//p0.x = 0.5f; p0.y = 0.f;
-		//p1.x = 0.f; p1.y = 0.f;
-
-		if (glm::length(p0 - p1) > 0.001f)
-		{
-			auto w = glm::normalize(
-				glm::cross(glm::vec3(p1) - glm::vec3(p0), glm::vec3(0.f, 0.f, 1.f)));
-			w *= 5.f / glm::length(glm::vec2(w.x * res.x, w.y * res.y));
-			bone_pos[bone_id * 3 + 0].x = p0.x + w.x;
-			bone_pos[bone_id * 3 + 0].y = p0.y + w.y;
-			bone_pos[bone_id * 3 + 1].x = p0.x - w.x;
-			bone_pos[bone_id * 3 + 1].y = p0.y - w.y;
-			bone_pos[bone_id * 3 + 2].x = p1.x;
-			bone_pos[bone_id * 3 + 2].y = p1.y;
-		}
-	}
-
-	for (auto i = 0; i < b.children.size(); i++)
-		update_bone_pos(m, b.children[i], dst);
-}
-
 int main(int argc, char **args)
 {
 	using namespace flame;
 	using namespace graphics;
 	using namespace glm;
+
+	vec2 res(1280, 720);
 
 	auto sm = create_surface_manager();
 	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
@@ -109,7 +41,15 @@ int main(int argc, char **args)
 	auto ub = create_buffer(d, sizeof(mat4) * 3, BufferUsageUniformBuffer, 
 		MemPropHost | MemPropHostCoherent);
 	ub->map();
-	ubo = (UBO*)ub->mapped;
+
+	struct UBO
+	{
+		mat4 proj;
+		mat4 view;
+		mat4 model;
+	};
+
+	auto ubo = (UBO*)ub->mapped;
 	ubo->proj = mat4(
 		vec4(1.f, 0.f, 0.f, 0.f),
 		vec4(0.f, -1.f, 0.f, 0.f),
@@ -163,80 +103,86 @@ int main(int argc, char **args)
 	ds->set_uniformbuffer(0, 0, ub);
 
 	auto m = load_model("../../Vulkan/data/models/goblin.dae");
-	auto mvs = m->get_vertex_semantics();
-	auto mvc = m->get_vertex_count();
-	auto mic = m->get_indice_count();
+	m->root_node->calc_global_matrix();
 
-	auto vb = create_buffer(d, mvc * m->get_vertex_size(0), BufferUsageVertexBuffer | 
+	auto vb = create_buffer(d, m->vertex_count * m->vertex_buffers[0].size * sizeof(float), BufferUsageVertexBuffer | 
 		BufferUsageTransferDst, MemPropDevice);
-	auto ib = create_buffer(d, mic * sizeof(int), BufferUsageIndexBuffer |
+	auto ib = create_buffer(d, m->indice_count * sizeof(int), BufferUsageIndexBuffer |
 		BufferUsageTransferDst, MemPropDevice);
-	auto sb = create_buffer(d, std::max(vb->size, ib->size), BufferUsageTransferSrc, 
+	auto sb = create_buffer(d, vb->size + ib->size, BufferUsageTransferSrc, 
 		MemPropHost | MemPropHostCoherent);
 	sb->map();
 	{
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
-		memcpy(sb->mapped, m->get_vertexes(0), vb->size);
-		auto pos = (vec3*)sb->mapped;
-		c->copy_buffer(sb, vb, 0, 0, vb->size);
-		c->end();
-		q->submit(c, nullptr, nullptr);
-		q->wait_idle();
-		c->begin(true);
-		memcpy(sb->mapped, m->get_indices(), ib->size);
-		c->copy_buffer(sb, ib, 0, 0, ib->size);
+		memcpy(sb->mapped, m->vertex_buffers[0].pVertex, vb->size);
+		CopyBufferRange r1 = {0, 0, vb->size};
+		c->copy_buffer(sb, vb, 1, &r1);
+		memcpy((unsigned char*)sb->mapped + vb->size, m->pIndices, ib->size);
+		CopyBufferRange r2 = {vb->size, 0, ib->size};
+		c->copy_buffer(sb, ib, 1, &r2);
 		c->end();
 		q->submit(c, nullptr, nullptr);
 		q->wait_idle();
 		cp->destroy_commandbuffer(c);
 	}
 	sb->unmap();
+	destroy_buffer(d, sb);
 
-	bones.resize(m->get_bone_count());
-
-	for (auto i = 0; i < bones.size(); i++)
-	{
-		m->get_bone_matrix(i, &bones[i].mat[0][0]);
-		//bones[i].mat = glm::transpose(bones[i].mat);
-		bones[i].parent = m->get_bone_parent(i);
-		bones[i].children.resize(m->get_bone_children_count(i));
-		for (auto j = 0; j < bones[i].children.size(); j++)
-			bones[i].children[j] = m->get_bone_child(i, j);
-	}
-
-	auto vb_bone_pos = create_buffer(d, bones.size() * 3 * sizeof(vec2), BufferUsageVertexBuffer,
+	auto vb_bone_pos = create_buffer(d, m->bone_count * 3 * sizeof(vec2), BufferUsageVertexBuffer,
 		MemPropHost | MemPropHostCoherent);
 	vb_bone_pos->map();
-	bone_pos = (vec2*)vb_bone_pos->mapped;
-	for (auto i = 0; i < bones.size(); i++)
-	{
-		bone_pos[i * 3 + 0].x = -10.f;
-		bone_pos[i * 3 + 0].y = -10.f;
-		bone_pos[i * 3 + 1].x = -10.f;
-		bone_pos[i * 3 + 1].y = -10.f;
-		bone_pos[i * 3 + 2].x = -10.f;
-		bone_pos[i * 3 + 2].y = -10.f;
-	}
+	auto bone_pos = (vec2*)vb_bone_pos->mapped;
 
-	auto ub_bone = create_buffer(d, sizeof(mat4) * bones.size(), BufferUsageUniformBuffer,
+	auto ub_bone = create_buffer(d, sizeof(mat4) * m->bone_count, BufferUsageUniformBuffer,
 		MemPropHost | MemPropHostCoherent);
 	ub_bone->map();
-	bone_matrix = (mat4*)ub_bone->mapped;
-	for (auto i = 0; i < bones.size(); i++)
+	auto bone_matrix = (mat4*)ub_bone->mapped;
+	for (auto i = 0; i < m->bone_count; i++)
 		bone_matrix[i] = mat4(1.f);
-	_bone_matrix = new mat4[bones.size()];
 
-	update_bone_pos(m, m->get_bone_root(), bone_pos);
+	for (auto i = 0; i < m->bone_count; i++)
+	{
+		auto b = m->bones[i];
+
+		if (b->pNode->parent)
+		{
+			auto p0 = b->pNode->parent->global_matrix[3];
+			p0 -= glm::vec4(0.f, 0.f, 2.f, 0.f);
+			auto p1 = b->pNode->global_matrix[3];
+			p1 -= glm::vec4(0.f, 0.f, 2.f, 0.f);
+
+			p0 = ubo->proj * ubo->view * p0;
+			p0 /= p0.w;
+			p1 = ubo->proj * ubo->view * p1;
+			p1 /= p1.w;
+
+			if (glm::length(p0 - p1) > 0.001f)
+			{
+				auto w = glm::normalize(
+					glm::cross(glm::vec3(p1) - glm::vec3(p0), glm::vec3(0.f, 0.f, 1.f)));
+				w *= 5.f / glm::length(glm::vec2(w.x * res.x, w.y * res.y));
+				bone_pos[i * 3 + 0] = vec2(p0) + vec2(w);
+				bone_pos[i * 3 + 1] = vec2(p0) - vec2(w);
+				bone_pos[i * 3 + 2] = p1;
+
+				continue;
+			}
+		}
+
+		bone_pos[i * 3 + 0] = vec2(-10.f, -10.f);
+		bone_pos[i * 3 + 1] = vec2(-10.f, -10.f);
+		bone_pos[i * 3 + 2] = vec2(-10.f, -10.f);
+	}
 
 	ds->set_uniformbuffer(2, 0, ub_bone);
 
 	auto sampler = create_sampler(d, FilterLinear, FilterLinear,
 		false);
 
-	auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/textures/goblin_bc3_unorm.ktx");
-	auto m_map_view = create_textureview(d, m_map);
-	ds->set_texture(1, 0, m_map_view, sampler);
+	//auto m_map = create_texture_from_file(d, cp, q, "../../Vulkan/data/textures/goblin_bc3_unorm.ktx");
+	//auto m_map_view = create_textureview(d, m_map);
+	//ds->set_texture(1, 0, m_map_view, sampler);
 
 	Framebuffer *fbs[2];
 	Commandbuffer *cbs[2];
@@ -256,10 +202,10 @@ int main(int argc, char **args)
 		cbs[i]->bind_descriptorset(ds);
 		cbs[i]->bind_vertexbuffer(vb);
 		cbs[i]->bind_indexbuffer(ib, IndiceTypeUint);
-		cbs[i]->draw_indexed(m->get_indice_count(), 0);
+		cbs[i]->draw_indexed(m->indice_count, 0, 1, 0);
 		cbs[i]->bind_pipeline(pipeline_line);
 		cbs[i]->bind_vertexbuffer(vb_bone_pos);
-		cbs[i]->draw(bones.size() * 3);
+		cbs[i]->draw(m->bone_count * 3);
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
 	}

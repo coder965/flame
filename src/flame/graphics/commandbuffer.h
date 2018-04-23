@@ -34,7 +34,7 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void bind_vertexbuffer(Buffer *b);
 			FLAME_GRAPHICS_EXPORTS void bind_indexbuffer(Buffer *b, IndiceType t);
 			FLAME_GRAPHICS_EXPORTS void draw(int count);
-			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index);
+			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index, int instance_count, int first_instance);
 
 			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int range_count, CopyBufferRange *ranges);
 

@@ -73,7 +73,7 @@ int main(int argc, char **args)
 		vec4(0.f, 0.f, 1.f, 0.f),
 		vec4(0.f, 0.f, 0.f, 1.f)
 	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
-	ubo_matrix->view = lookAt(vec3(0.f, 0.f, 10.f), vec3(0.f), vec3(0.f, 1.f, 0.f));
+	ubo_matrix->view = lookAt(vec3(0.f, 3.f, 10.f), vec3(0.f, 3.f, 0.f), vec3(0.f, 1.f, 0.f));
 
 	CopyBufferUpdate upd;
 	upd.src = ub_stag;
@@ -167,7 +167,8 @@ int main(int argc, char **args)
 		cbs[i]->bind_descriptorset(ds);
 		cbs[i]->bind_vertexbuffer(vb);
 		cbs[i]->bind_indexbuffer(ib, IndiceTypeUint);
-		cbs[i]->draw_indexed(m->indice_count, 0);
+		for (auto j = 0; j < m->mesh_count; j++)
+			cbs[i]->draw_indexed(m->meshes[j]->indice_count, m->meshes[j]->indice_base, 1, j);
 		//cbs[i]->draw(m->get_vertex_count());
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
@@ -196,6 +197,7 @@ int main(int argc, char **args)
 				ubo_matrix_ins->model[i] = rotate(radians(x_ang), vec3(0.f, 1.f, 0.f));
 				if (m->meshes[i]->pNode)
 					ubo_matrix_ins->model[i] = ubo_matrix_ins->model[i] * m->meshes[i]->pNode->global_matrix;
+				//ubo_matrix_ins->model[i] = transpose(ubo_matrix_ins->model[i]);
 			}
 
 			CopyBufferUpdate upd;

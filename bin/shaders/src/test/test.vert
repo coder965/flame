@@ -19,7 +19,7 @@ layout(binding = 1) buffer ubo_matrix_ins_
 void main()
 {
 	//outTexcoord = inTexcoord;
-	mat4 modelview = ubo_matrix.view * ubo_matrix_ins.model[0];
+	mat4 modelview = ubo_matrix.view * ubo_matrix_ins.model[gl_InstanceIndex];
 	mat3 normalMatrix = transpose(inverse(mat3(modelview)));
 	outNormal = normalize(normalMatrix * inNormal);
 	gl_Position = ubo_matrix.proj * modelview * vec4(inVertex, 1);

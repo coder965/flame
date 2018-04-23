@@ -73,9 +73,9 @@ namespace flame
 			vkCmdDraw(_priv->v, count, 1, 0, 0);
 		}
 
-		void Commandbuffer::draw_indexed(int count, int first_index)
+		void Commandbuffer::draw_indexed(int count, int first_index, int instance_count, int first_instance)
 		{
-			vkCmdDrawIndexed(_priv->v, count, 1, first_index, 0, 0);
+			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, 0, first_instance);
 		}
 
 		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int range_count, CopyBufferRange *ranges)

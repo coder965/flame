@@ -4,8 +4,8 @@ layout(location = 2) in vec3 inNormal;
 layout(location = 3) in vec4 inBoneID;
 layout(location = 4) in vec4 inBoneWeight;
 
-layout(location = 0) out vec2 outTexcoord;
-layout(location = 1) out vec3 outNormal;
+//layout(location = 0) out vec2 outTexcoord;
+layout(location = 0) out vec3 outNormal;
 
 layout(binding = 0) uniform ubo_matrix_
 {
@@ -27,7 +27,7 @@ void main()
 	skinMatrix += inBoneWeight[3] * ubo_bone.v[int(inBoneID[3])];
 	mat4 modelMatrix = ubo_matrix.model * skinMatrix;
 
-	outTexcoord = inTexcoord;
+	//outTexcoord = inTexcoord;
 	mat3 normalMatrix = transpose(inverse(mat3(ubo_matrix.view * modelMatrix)));
 	outNormal = normalize(normalMatrix * inNormal);
 	gl_Position = ubo_matrix.proj * ubo_matrix.view * modelMatrix * vec4(inVertex, 1);
