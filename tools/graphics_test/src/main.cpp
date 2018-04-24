@@ -25,11 +25,13 @@ int main(int argc, char **args)
 	using namespace graphics;
 	using namespace glm;
 
+	vec2 res(1280, 720);
+
 	auto sm = create_surface_manager();
-	auto s = sm->create_surface(1280, 720, SurfaceStyleFrame,
+	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
 		"Hello");
 
-	auto d = create_device(true, 1280, 720);
+	auto d = create_device(true, res.x, res.y);
 
 	auto sc = create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
 

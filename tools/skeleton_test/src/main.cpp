@@ -56,7 +56,7 @@ int main(int argc, char **args)
 		vec4(0.f, 0.f, 1.f, 0.f),
 		vec4(0.f, 0.f, 0.f, 1.f)
 	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
-	ubo->view = lookAt(vec3(0.f, -5.f, 0.f), vec3(0.f), vec3(0.f, 0.f, 1.f));
+	ubo->view = lookAt(vec3(0.f, 0.f, 20.f), vec3(0.f), vec3(0.f, 1.f, 0.f));
 
 	Format depth_format;
 	depth_format.v = Format::Depth16;
@@ -103,6 +103,7 @@ int main(int argc, char **args)
 
 	auto m = load_model("../../Vulkan/data/models/goblin.dae");
 	m->root_node->calc_global_matrix();
+	auto global_inverse = inverse(m->root_node->global_matrix);
 
 	auto vb = create_buffer(d, m->vertex_count * m->vertex_buffers[0].size * sizeof(float), BufferUsageVertexBuffer | 
 		BufferUsageTransferDst, MemPropDevice);
@@ -138,51 +139,7 @@ int main(int argc, char **args)
 	ub_bone->map();
 	auto bone_matrix = (mat4*)ub_bone->mapped;
 	for (auto i = 0; i < m->bone_count; i++)
-		bone_matrix[i] = mat4(1.f);
-
-	for (auto i = 0; i < m->bone_count; i++)
-	{
-		auto b = m->bones[i];
-
-		if (b->pNode->parent)
-		{
-			auto p0 = b->pNode->parent->global_matrix[3];
-			auto p1 = b->pNode->global_matrix[3];
-
-			std::swap(p0.y, p0.x);
-			std::swap(p1.y, p1.x);
-
-			//p0.x *= -1.f;
-			//p1.x *= -1.f;
-
-			p0.y += 100.f;
-			p1.y += 100.f;
-
-			printf("%f %f %f\n", p0.x, p0.y, p0.z);
-			printf("%f %f %f\n", p1.x, p1.y, p1.z);
-
-			p0 = ubo->proj * ubo->view * p0;
-			p0 /= p0.w;
-			p1 = ubo->proj * ubo->view * p1;
-			p1 /= p1.w;
-
-			if (glm::length(p0 - p1) > 0.001f)
-			{
-				auto w = glm::normalize(
-					glm::cross(glm::vec3(p1) - glm::vec3(p0), glm::vec3(0.f, 0.f, 1.f)));
-				w *= 5.f / glm::length(glm::vec2(w.x * res.x, w.y * res.y));
-				bone_pos[i * 3 + 0] = vec2(p0) + vec2(w);
-				bone_pos[i * 3 + 1] = vec2(p0) - vec2(w);
-				bone_pos[i * 3 + 2] = p1;
-
-				continue;
-			}
-		}
-
-		bone_pos[i * 3 + 0] = vec2(-10.f, -10.f);
-		bone_pos[i * 3 + 1] = vec2(-10.f, -10.f);
-		bone_pos[i * 3 + 2] = vec2(-10.f, -10.f);
-	}
+		bone_matrix[i] = m->bones[i]->pNode->global_matrix * m->bones[i]->offset_matrix;
 
 	ds->set_uniformbuffer(2, 0, ub_bone);
 
@@ -232,13 +189,188 @@ int main(int argc, char **args)
 		}
 	});
 
+	struct Channel
+	{
+		std::vector<ModelPositionKey> position_keys;
+		std::vector<ModelRotationKey> rotation_keys;
+	};
+
+	auto anim = m->animations[0];
+	auto total_time = (float)anim->total_ticks / anim->ticks_per_second;
+
+	struct AnimationPlayer
+	{
+		float time;
+		ModelNode *root_bone;
+		glm::mat4 *bone_matrix;
+		std::vector<std::unique_ptr<Channel>> channels;
+
+		void update_node(ModelNode *n)
+		{
+			ModelBone *b = nullptr;
+			if (n->type == ModelNodeBone)
+				b = (ModelBone*)n->p;
+			if (b)
+			{
+				auto ch = channels[b->id].get();
+				if (ch)
+				{
+					vec4 quat;
+					if (!ch->rotation_keys.empty())
+					{
+						auto next_frame = std::lower_bound(ch->rotation_keys.begin(), ch->rotation_keys.end(), time, [](const ModelRotationKey &a, float v){
+							return a.time < v;
+						});
+						if (next_frame == ch->rotation_keys.end())
+							next_frame--;
+						float t;
+						auto curr_frame = next_frame;
+						if (ch->rotation_keys.size())
+							t = 0.f;
+						else
+						{
+							curr_frame--;
+							t = (time - curr_frame->time) / (next_frame->time - curr_frame->time);
+						}
+
+						quat = (1 - t) * curr_frame->value + t * next_frame->value;
+					}
+
+					vec3 position;
+					if (!ch->position_keys.empty())
+					{
+						auto next_frame = std::lower_bound(ch->position_keys.begin(), ch->position_keys.end(), time, [](const ModelPositionKey &a, float v){
+							return a.time < v;
+						});
+						if (next_frame == ch->position_keys.end())
+							next_frame--;
+						float t;
+						auto curr_frame = next_frame;
+						if (ch->position_keys.size())
+							t = 0.f;
+						else
+						{
+							curr_frame--;
+							t = (time - curr_frame->time) / (next_frame->time - curr_frame->time);
+						}
+
+						position = (1 - t) * curr_frame->value + t * next_frame->value;
+					}
+
+					n->global_matrix = n->parent->global_matrix * translate(position) * mat4(quaternion_to_mat3(quat));
+				}
+
+				bone_matrix[b->id] = n->global_matrix * b->offset_matrix;
+			}
+			else
+				n->global_matrix = n->parent->global_matrix * transpose(n->local_matrix);
+
+			auto c = n->first_child;
+			while (c)
+			{
+				update_node(c);
+				c = c->next_sibling;
+			}
+		}
+
+		void update(float _time)
+		{
+			time = _time;
+			update_node(root_bone);
+		}
+	}anim_player;
+	anim_player.root_bone = m->root_bone;
+	anim_player.bone_matrix = bone_matrix;
+	anim_player.channels.resize(m->bone_count);
+	for (auto i = 0; i < m->bone_count; i++)
+	{
+		auto iMo = anim->find_motion(m->bones[i]->name);
+		if (iMo == -1)
+			anim_player.channels[i] = nullptr;
+		else
+		{
+			anim_player.channels[i] = std::make_unique<Channel>();
+			auto mo = &anim->motions[iMo];
+			auto ch = anim_player.channels[i].get();
+			ch->position_keys.resize(mo->position_key_count);
+			for (auto j = 0; j < mo->position_key_count; j++)
+			{
+				ch->position_keys[j].time = mo->position_keys[j].time;
+				ch->position_keys[j].value = mo->position_keys[j].value;
+			}
+			ch->rotation_keys.resize(mo->rotation_key_count);
+			for (auto j = 0; j < mo->rotation_key_count; j++)
+			{
+				ch->rotation_keys[j].time = mo->rotation_keys[j].time;
+				ch->rotation_keys[j].value = mo->rotation_keys[j].value;
+			}
+		}
+	}
+
 	sm->run([&](){
+		auto update_bone_pos = [&]() {
+			for (auto i = 0; i < m->bone_count; i++)
+			{
+				auto b = m->bones[i];
+
+				if (b->pNode->parent)
+				{
+					auto p0 = b->pNode->parent->global_matrix[3];
+					auto p1 = b->pNode->global_matrix[3];
+
+					p0 = ubo->model * p0;
+					p1 = ubo->model * p1;
+
+					p0 = ubo->proj * ubo->view * p0;
+					p0 /= p0.w;
+					p1 = ubo->proj * ubo->view * p1;
+					p1 /= p1.w;
+
+					if (glm::length(p0 - p1) > 0.001f)
+					{
+						auto w = glm::normalize(
+							glm::cross(glm::vec3(p1) - glm::vec3(p0), glm::vec3(0.f, 0.f, 1.f)));
+						w *= 5.f / glm::length(glm::vec2(w.x * res.x, w.y * res.y));
+						bone_pos[i * 3 + 0] = vec2(p0) + vec2(w);
+						bone_pos[i * 3 + 1] = vec2(p0) - vec2(w);
+						bone_pos[i * 3 + 2] = p1;
+
+						continue;
+					}
+				}
+
+				bone_pos[i * 3 + 0] = vec2(-10.f, -10.f);
+				bone_pos[i * 3 + 1] = vec2(-10.f, -10.f);
+				bone_pos[i * 3 + 2] = vec2(-10.f, -10.f);
+			}
+		};
+
+		auto need_update_bone_pos = false;
+
 		if (view_changed)
 		{
-			ubo->model = translate(vec3(0.f, 100.f, 0.f)) * rotate(radians(x_ang), vec3(0.f, 0.f, 1.f)) * m->root_bone->last_child->global_matrix;
+			ubo->model = rotate(radians(x_ang), vec3(0.f, 1.f, 0.f)) * scale(vec3(0.1f));
+			need_update_bone_pos = true;
 
 			view_changed = false;
 		}
+		
+		static float time = 0.f;
+		static long long last_ns = 0;
+		auto t = get_now_ns();
+		if (t - last_ns >= 41666666)
+		{
+			time += 0.041666;
+			if (time >= total_time)
+				time -= total_time;
+			anim_player.update(time);
+			need_update_bone_pos = true;
+
+			last_ns = t;
+		}
+
+		if (need_update_bone_pos)
+			update_bone_pos();
 
 		auto index = sc->acquire_image(image_avalible);
 		q->submit(cbs[index], image_avalible, render_finished);
@@ -258,8 +390,8 @@ int main(int argc, char **args)
 		//}
 
 		static long long last_fps = 0;
-		//if (last_fps != sm->fps)
-		//	printf("%lld\n", sm->fps);
+		if (last_fps != sm->fps)
+			printf("%lld\n", sm->fps);
 		last_fps = sm->fps;
 	});
 
