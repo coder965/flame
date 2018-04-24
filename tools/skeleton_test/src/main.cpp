@@ -57,7 +57,6 @@ int main(int argc, char **args)
 		vec4(0.f, 0.f, 0.f, 1.f)
 	) * perspective(radians(d->fovy), d->aspect, d->near_plane, d->far_plane);
 	ubo->view = lookAt(vec3(0.f, -5.f, 0.f), vec3(0.f), vec3(0.f, 0.f, 1.f));
-	ubo->model = translate(vec3(0.f, 0.f, -2.f)) * scale(vec3(0.001f));
 
 	Format depth_format;
 	depth_format.v = Format::Depth16;
@@ -148,9 +147,19 @@ int main(int argc, char **args)
 		if (b->pNode->parent)
 		{
 			auto p0 = b->pNode->parent->global_matrix[3];
-			p0 -= glm::vec4(0.f, 0.f, 2.f, 0.f);
 			auto p1 = b->pNode->global_matrix[3];
-			p1 -= glm::vec4(0.f, 0.f, 2.f, 0.f);
+
+			std::swap(p0.y, p0.x);
+			std::swap(p1.y, p1.x);
+
+			//p0.x *= -1.f;
+			//p1.x *= -1.f;
+
+			p0.y += 100.f;
+			p1.y += 100.f;
+
+			printf("%f %f %f\n", p0.x, p0.y, p0.z);
+			printf("%f %f %f\n", p1.x, p1.y, p1.z);
 
 			p0 = ubo->proj * ubo->view * p0;
 			p0 /= p0.w;
@@ -214,7 +223,7 @@ int main(int argc, char **args)
 	auto render_finished = create_semaphore(d);
 
 	auto x_ang = 0.f;
-	auto view_changed = false;
+	auto view_changed = true;
 	s->add_mousemove_listener([&](Surface *s, int, int){
 		if (s->mouse_buttons[0] & KeyStateDown)
 		{
@@ -226,7 +235,7 @@ int main(int argc, char **args)
 	sm->run([&](){
 		if (view_changed)
 		{
-			ubo->model = translate(vec3(0.f, 0.f, -2.f)) * rotate(radians(x_ang), vec3(0.f, 0.f, 1.f)) * scale(vec3(0.001f));
+			ubo->model = translate(vec3(0.f, 100.f, 0.f)) * rotate(radians(x_ang), vec3(0.f, 0.f, 1.f)) * m->root_bone->last_child->global_matrix;
 
 			view_changed = false;
 		}
@@ -249,8 +258,8 @@ int main(int argc, char **args)
 		//}
 
 		static long long last_fps = 0;
-		if (last_fps != sm->fps)
-			printf("%lld\n", sm->fps);
+		//if (last_fps != sm->fps)
+		//	printf("%lld\n", sm->fps);
 		last_fps = sm->fps;
 	});
 
