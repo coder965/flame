@@ -215,46 +215,40 @@ int main(int argc, char **args)
 				auto ch = channels[b->id].get();
 				if (ch)
 				{
-					vec4 quat;
-					if (!ch->rotation_keys.empty())
+					vec4 quat = vec4(0.f, 0.f, 0.f, 1.f);
+					vec3 position = vec3(0.f);
+
+					if (ch->rotation_keys.size() == 1)
+						quat = ch->rotation_keys[0].value;
+					else if (ch->rotation_keys.size() > 0)
 					{
-						auto next_frame = std::lower_bound(ch->rotation_keys.begin(), ch->rotation_keys.end(), time, [](const ModelRotationKey &a, float v){
+						auto curr_frame = std::lower_bound(ch->rotation_keys.begin() + 1, 
+							ch->rotation_keys.end(), time, 
+							[](const ModelRotationKey &a, float v){
 							return a.time < v;
 						});
-						if (next_frame == ch->rotation_keys.end())
-							next_frame--;
-						float t;
-						auto curr_frame = next_frame;
-						if (ch->rotation_keys.size())
-							t = 0.f;
-						else
-						{
-							curr_frame--;
-							t = (time - curr_frame->time) / (next_frame->time - curr_frame->time);
-						}
+						auto next_frame = ch->rotation_keys.begin() + ((std::distance(ch->rotation_keys.begin(), curr_frame) + 1)
+							% ch->rotation_keys.size());
+						auto t = (time - next_frame->time) / (curr_frame->time - next_frame->time);
 
-						quat = (1 - t) * curr_frame->value + t * next_frame->value;
+						quat = (1 - t) * next_frame->value + t * curr_frame->value;
+						quat = normalize(quat);
 					}
 
-					vec3 position;
-					if (!ch->position_keys.empty())
+					if (ch->position_keys.size() == 1)
+						position = ch->position_keys[0].value;
+					else if (ch->position_keys.size() > 0)
 					{
-						auto next_frame = std::lower_bound(ch->position_keys.begin(), ch->position_keys.end(), time, [](const ModelPositionKey &a, float v){
+						auto curr_frame = std::lower_bound(ch->position_keys.begin() + 1,
+							ch->position_keys.end(), time,
+							[](const ModelPositionKey &a, float v){
 							return a.time < v;
 						});
-						if (next_frame == ch->position_keys.end())
-							next_frame--;
-						float t;
-						auto curr_frame = next_frame;
-						if (ch->position_keys.size())
-							t = 0.f;
-						else
-						{
-							curr_frame--;
-							t = (time - curr_frame->time) / (next_frame->time - curr_frame->time);
-						}
+						auto next_frame = ch->position_keys.begin() + ((std::distance(ch->position_keys.begin(), curr_frame) + 1)
+							% ch->position_keys.size());
+						auto t = (time - next_frame->time) / (curr_frame->time - next_frame->time);
 
-						position = (1 - t) * curr_frame->value + t * next_frame->value;
+						position = (1 - t) * next_frame->value + t * curr_frame->value;
 					}
 
 					n->global_matrix = n->parent->global_matrix * translate(position) * mat4(quaternion_to_mat3(quat));
@@ -360,11 +354,10 @@ int main(int argc, char **args)
 		auto t = get_now_ns();
 		if (t - last_ns >= 41666666)
 		{
-			time += 0.041666;
-			if (time >= total_time)
-				time -= total_time;
 			anim_player.update(time);
 			need_update_bone_pos = true;
+			time += 0.041666;
+			time = fmod(time, total_time);
 
 			last_ns = t;
 		}
