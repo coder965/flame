@@ -116,10 +116,10 @@ int main(int argc, char **args)
 		auto c = cp->create_commandbuffer();
 		c->begin(true);
 		memcpy(sb->mapped, m->vertex_buffers[0].pVertex, vb->size);
-		CopyBufferRange r1 = {0, 0, vb->size};
+		BufferCopy r1 = {0, 0, vb->size};
 		c->copy_buffer(sb, vb, 1, &r1);
 		memcpy((unsigned char*)sb->mapped + vb->size, m->pIndices, ib->size);
-		CopyBufferRange r2 = {vb->size, 0, ib->size};
+		BufferCopy r2 = {vb->size, 0, ib->size};
 		c->copy_buffer(sb, ib, 1, &r2);
 		c->end();
 		q->submit(c, nullptr, nullptr);

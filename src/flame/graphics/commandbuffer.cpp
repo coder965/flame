@@ -5,11 +5,25 @@
 #include "pipeline_private.h"
 #include "descriptor_private.h"
 #include "buffer_private.h"
+#include "texture_private.h"
 
 namespace flame
 {
 	namespace graphics
 	{
+		inline VkImageAspectFlags Z(Format::Type t)
+		{
+			switch (t)
+			{
+				case Format::TypeColor:
+					return VK_IMAGE_ASPECT_COLOR_BIT;
+				case Format::TypeDepth:
+					return VK_IMAGE_ASPECT_DEPTH_BIT;
+				case Format::TypeDepthStencil:
+					return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			}
+		}
+
 		void Commandbuffer::begin(bool once)
 		{
 			VkCommandBufferBeginInfo info;
@@ -78,16 +92,113 @@ namespace flame
 			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, 0, first_instance);
 		}
 
-		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int range_count, CopyBufferRange *ranges)
+		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int copy_count, BufferCopy *copies)
 		{
-			std::vector<VkBufferCopy> vk_ranges(range_count);
-			for (auto i = 0; i < range_count; i++)
+			std::vector<VkBufferCopy> vk_copies(copy_count);
+			for (auto i = 0; i < copy_count; i++)
 			{
-				vk_ranges[i].srcOffset = ranges[i].src_offset;
-				vk_ranges[i].dstOffset = ranges[i].dst_offset;
-				vk_ranges[i].size = ranges[i].size;
+				vk_copies[i].srcOffset = copies[i].src_offset;
+				vk_copies[i].dstOffset = copies[i].dst_offset;
+				vk_copies[i].size = copies[i].size;
 			}
-			vkCmdCopyBuffer(_priv->v, src->_priv->v, dst->_priv->v, range_count, vk_ranges.data());
+			vkCmdCopyBuffer(_priv->v, src->_priv->v, dst->_priv->v, copy_count, vk_copies.data());
+		}
+
+		void Commandbuffer::change_texture_layout(Texture *t, TextureLayout from, TextureLayout to,
+			int base_level, int level_count, int base_layer, int layer_count)
+		{
+			level_count = level_count == 0 ? t->level : level_count;
+			layer_count = layer_count == 0 ? t->layer : layer_count;
+
+			auto ft = t->format.get_type();
+
+			VkImageMemoryBarrier barrier;
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.pNext = nullptr;
+			barrier.oldLayout = Z(from, ft);
+			barrier.newLayout = Z(to, ft);
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = t->_priv->v;
+			barrier.subresourceRange.aspectMask = Z(ft);
+			barrier.subresourceRange.baseMipLevel = base_level;
+			barrier.subresourceRange.levelCount = level_count;
+			barrier.subresourceRange.baseArrayLayer = base_layer;
+			barrier.subresourceRange.layerCount = layer_count;
+
+			switch (barrier.oldLayout)
+			{
+				case VK_IMAGE_LAYOUT_UNDEFINED:
+					barrier.srcAccessMask = 0;
+					break;
+				case VK_IMAGE_LAYOUT_PREINITIALIZED:
+					barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+					barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+					barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+					barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+					barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+					barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+					barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+					break;
+			}
+
+			switch (barrier.newLayout)
+			{
+				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+					barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+					barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+					barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+					barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+					break;
+				case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+					break;
+				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+					if (barrier.srcAccessMask == 0)
+						barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+					barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+					break;
+			}
+
+			vkCmdPipelineBarrier(_priv->v, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+				0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
+
+		void Commandbuffer::copy_buffer_to_image(Buffer *src, Texture *dst, int copy_count, BufferImageCopy *copies)
+		{
+			auto aspect = Z(dst->format.get_type());
+
+			std::vector<VkBufferImageCopy> vk_copies(copy_count);
+			for (auto i = 0; i < copy_count; i++)
+			{
+				vk_copies[i] = {};
+				vk_copies[i].bufferOffset = copies[i].buffer_offset;
+				vk_copies[i].imageExtent.width = copies[i].image_width;
+				vk_copies[i].imageExtent.height = copies[i].image_height;
+				vk_copies[i].imageExtent.depth = 1;
+				vk_copies[i].imageSubresource.aspectMask = aspect;
+				vk_copies[i].imageSubresource.mipLevel = copies[i].image_level;
+				vk_copies[i].imageSubresource.layerCount = 1;
+			}
+			vkCmdCopyBufferToImage(_priv->v, src->_priv->v, dst->_priv->v,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy_count, vk_copies.data());
 		}
 
 		void Commandbuffer::end()

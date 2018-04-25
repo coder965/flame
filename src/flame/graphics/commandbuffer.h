@@ -13,12 +13,21 @@ namespace flame
 		struct Pipeline;
 		struct Descriptorset;
 		struct Buffer;
+		struct Texture;
 
-		struct CopyBufferRange
+		struct BufferCopy
 		{
 			int src_offset;
 			int dst_offset;
 			int size;
+		};
+
+		struct BufferImageCopy
+		{
+			int buffer_offset;
+			int image_width;
+			int image_height;
+			int image_level;
 		};
 
 		struct Commandbuffer
@@ -36,7 +45,10 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void draw(int count);
 			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index, int instance_count, int first_instance);
 
-			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int range_count, CopyBufferRange *ranges);
+			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int copy_count, BufferCopy *copies);
+			FLAME_GRAPHICS_EXPORTS void change_texture_layout(Texture *t, TextureLayout from, TextureLayout to,
+				int base_level = 0, int level_count = 0, int base_layer = 0, int layer_count = 0);
+			FLAME_GRAPHICS_EXPORTS void copy_buffer_to_image(Buffer *src, Texture *dst, int copy_count, BufferImageCopy *copies);
 
 			FLAME_GRAPHICS_EXPORTS void end();
 		};
