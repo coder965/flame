@@ -45,8 +45,8 @@ namespace flame
 			info.framebuffer = f->_priv->v;
 			info.renderArea.offset.x = 0;
 			info.renderArea.offset.y = 0;
-			info.renderArea.extent.width = f->_priv->cx;
-			info.renderArea.extent.height = f->_priv->cy;
+			info.renderArea.extent.width = f->cx;
+			info.renderArea.extent.height = f->cy;
 			info.clearValueCount = r->_priv->clear_values.size();
 			info.pClearValues = r->_priv->clear_values.data();
 

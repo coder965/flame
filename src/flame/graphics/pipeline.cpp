@@ -188,11 +188,6 @@ namespace flame
 
 			auto cx = _priv->cx, cy = _priv->cy;
 
-			if (_priv->cx == -1)
-				cx = _priv->d->resolution_x;
-			if (_priv->cy == -1)
-				cy = _priv->d->resolution_y;
-
 			if (_priv->cx == 0 && _priv->cy == 0)
 			{
 				if (std::find(_priv->dynamic_states.begin(), _priv->dynamic_states.end(),

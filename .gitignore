@@ -8,6 +8,7 @@ bin/*.exe
 *.sln.docstates
 *.userprefs
 build/
+android_build/
 
 .vs/
 

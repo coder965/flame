@@ -1,0 +1,4 @@
+add_subdirectory(surface_test)
+add_subdirectory(terrain_test)
+add_subdirectory(graphics_test)
+add_subdirectory(skeleton_test)

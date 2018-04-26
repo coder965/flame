@@ -1,6 +1,4 @@
 add_subdirectory(SLOC)
 add_subdirectory(spy)
 add_subdirectory(editor)
-add_subdirectory(graphics_test)
-add_subdirectory(skeleton_test)
 add_subdirectory(pin)

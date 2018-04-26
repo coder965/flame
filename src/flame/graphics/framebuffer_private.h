@@ -15,8 +15,6 @@ namespace flame
 		{
 			Device *d;
 			Renderpass *renderpass;
-			int cx;
-			int cy;
 			std::vector<VkImageView> views;
 			VkFramebuffer v;
 		};
