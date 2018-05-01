@@ -37,7 +37,7 @@ namespace flame
 				case PrimitiveTopologyTriangleStripWithAdjacency:
 					return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
 				case PrimitiveTopologyPatchList:
-					return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+					return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 			}
 		}
 
