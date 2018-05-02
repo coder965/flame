@@ -38,8 +38,6 @@ float screenSpaceTessFactor(vec4 p0, vec4 p1)
 
 bool frustumCheck()
 {
-	vec2 uv = (inUV[0] + inUV[1] + inUV[2] + inUV[3]) * 0.25;
-	
 	const float radius = max(terrain_block_size, terrain_block_height);
 	vec4 pos = (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position + gl_in[3].gl_Position) * 0.25;
 	pos = ubo_matrix.projView * pos;
