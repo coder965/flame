@@ -82,9 +82,9 @@ namespace flame
 			vkCmdBindIndexBuffer(_priv->v, b->_priv->v, 0, t == IndiceTypeUint ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
 		}
 
-		void Commandbuffer::draw(int count)
+		void Commandbuffer::draw(int count, int instance_count, int first_instance)
 		{
-			vkCmdDraw(_priv->v, count, 1, 0, 0);
+			vkCmdDraw(_priv->v, count, instance_count, 0, first_instance);
 		}
 
 		void Commandbuffer::draw_indexed(int count, int first_index, int instance_count, int first_instance)
