@@ -10,4 +10,5 @@ layout(binding = 0) uniform ubo_terrain_
 	float dummy1;
 	mat4 view_matrix;
 	mat4 proj_matrix;
+	vec4 frustum_planes[6];
 }ubo_terrain;

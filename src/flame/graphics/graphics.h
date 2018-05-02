@@ -67,19 +67,28 @@ namespace flame
 
 		enum ShaderType
 		{
-			ShaderTypeNone = 1 << 0,
-			ShaderTypeVert = 1 << 1,
-			ShaderTypeTesc = 1 << 2,
-			ShaderTypeTese = 1 << 3,
-			ShaderTypeGeom = 1 << 4,
-			ShaderTypeFrag = 1 << 5
+			ShaderNone = 1 << 0,
+			ShaderVert = 1 << 1,
+			ShaderTesc = 1 << 2,
+			ShaderTese = 1 << 3,
+			ShaderGeom = 1 << 4,
+			ShaderFrag = 1 << 5,
+			ShaderComp = 1 << 6
 		};
 
 		enum ShaderResourceType
 		{
 			ShaderResourceUniformbuffer,
 			ShaderResourceStoragebuffer,
-			ShaderResourceTexture
+			ShaderResourceTexture,
+			ShaderResourceStorageTexture
+		};
+
+		enum PipelineType
+		{
+			PipelineNone,
+			PipelineGraphics,
+			PipelineCompute
 		};
 
 		enum TextureUsage
@@ -87,14 +96,16 @@ namespace flame
 			TextureUsageTransferSrc = 1 << 0,
 			TextureUsageTransferDst = 1 << 1,
 			TextureUsageShaderSampled = 1 << 2,
-			TextureUsageAttachment = 1 << 3
+			TextureUsageShaderStorage = 1 << 3,
+			TextureUsageAttachment = 1 << 4
 		};
 
 		enum TextureLayout
 		{
 			TextureLayoutUndefined,
 			TextureLayoutAttachment,
-			TextureLayoutShaderReadOnlyOptimal,
+			TextureLayoutShaderReadOnly,
+			TextureLayoutShaderStorage,
 			TextureLayoutTransferSrc,
 			TextureLayoutTransferDst
 		};

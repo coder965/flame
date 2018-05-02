@@ -106,6 +106,8 @@ namespace flame
 
 		struct Pipeline
 		{
+			PipelineType type;
+
 			PipelinePrivate *_priv;
 
 			FLAME_GRAPHICS_EXPORTS void set_vertex_attributes(const std::initializer_list
@@ -113,6 +115,7 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void set_primitive_topology(PrimitiveTopology v);
 			FLAME_GRAPHICS_EXPORTS void set_polygon_mode(PolygonMode v);
 			FLAME_GRAPHICS_EXPORTS void set_size(int cx, int cy);
+			FLAME_GRAPHICS_EXPORTS void set_renderpass(Renderpass *r, int subpass_index);
 			FLAME_GRAPHICS_EXPORTS void set_patch_control_points(int v);
 			FLAME_GRAPHICS_EXPORTS void set_depth_test(bool v);
 			FLAME_GRAPHICS_EXPORTS void set_depth_write(bool v);
@@ -125,11 +128,12 @@ namespace flame
 			FLAME_GRAPHICS_EXPORTS void set_dynamic_state(const std::initializer_list<DynamicState> &states);
 			FLAME_GRAPHICS_EXPORTS void add_shader(const std::string &filename,
 				const std::initializer_list<std::string> &defines);
-			FLAME_GRAPHICS_EXPORTS void build();
+			FLAME_GRAPHICS_EXPORTS void build_graphics();
+			FLAME_GRAPHICS_EXPORTS void build_compute();
 			FLAME_GRAPHICS_EXPORTS void release();
 		};
 
-		FLAME_GRAPHICS_EXPORTS Pipeline *create_pipeline(Device *d, Renderpass *renderpass, int subpass_index);
+		FLAME_GRAPHICS_EXPORTS Pipeline *create_pipeline(Device *d);
 		FLAME_GRAPHICS_EXPORTS void destroy_pipeline(Device *d, Pipeline *p);
 	}
 }

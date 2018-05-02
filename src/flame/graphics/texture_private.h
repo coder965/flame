@@ -26,8 +26,10 @@ namespace flame
 				case TextureLayoutAttachment:
 					return ft == Format::TypeColor ?
 						VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-				case TextureLayoutShaderReadOnlyOptimal:
+				case TextureLayoutShaderReadOnly:
 					return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				case TextureLayoutShaderStorage:
+					return VK_IMAGE_LAYOUT_GENERAL;
 				case TextureLayoutTransferSrc:
 					return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 				case TextureLayoutTransferDst:

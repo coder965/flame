@@ -119,7 +119,7 @@ int main(int argc, char **args)
 	p->set_depth_write(true);
 	p->add_shader("test/test.vert", {});
 	p->add_shader("test/test.frag", {});
-	p->build();
+	p->build_graphics();
 
 	auto dp = create_descriptorpool(d);
 	auto ds = dp->create_descriptorset(p, 0);

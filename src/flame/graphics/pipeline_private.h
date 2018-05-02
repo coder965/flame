@@ -185,6 +185,8 @@ namespace flame
 			std::vector<Descriptorsetlayout*> descriptorsetlayouts;
 			Pipelinelayout *pipelinelayout;
 			VkPipeline v;
+
+			std::vector<VkPipelineShaderStageCreateInfo> get_stage_info_and_build_layout();
 		};
 	}
 }

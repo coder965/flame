@@ -98,28 +98,66 @@ namespace flame
 					return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 				case ShaderResourceTexture:
 					return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				case ShaderResourceStorageTexture:
+					return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			}
 		}
 
 		inline VkShaderStageFlags Z(ShaderType t)
 		{
 			VkShaderStageFlags vk_shader_stage = 0;
-			if (t & ShaderTypeVert)
+			if (t & ShaderVert)
 				vk_shader_stage |= VK_SHADER_STAGE_VERTEX_BIT;
-			if (t & ShaderTypeTesc)
+			if (t & ShaderTesc)
 				vk_shader_stage |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			if (t & ShaderTypeTese)
+			if (t & ShaderTese)
 				vk_shader_stage |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			if (t & ShaderTypeGeom)
+			if (t & ShaderGeom)
 				vk_shader_stage |= VK_SHADER_STAGE_GEOMETRY_BIT;
-			if (t & ShaderTypeFrag)
+			if (t & ShaderFrag)
 				vk_shader_stage |= VK_SHADER_STAGE_FRAGMENT_BIT;
+			if (t & ShaderComp)
+				vk_shader_stage |= VK_SHADER_STAGE_COMPUTE_BIT;
 			return vk_shader_stage;
 		}
 
 		inline VkShaderStageFlagBits Z(VkShaderStageFlags f)
 		{
 			return VkShaderStageFlagBits(f);
+		}
+
+		inline VkPipelineBindPoint Z(PipelineType t)
+		{
+			switch (t)
+			{
+				case PipelineNone:
+					return VkPipelineBindPoint(-1);
+				case PipelineGraphics:
+					return VK_PIPELINE_BIND_POINT_GRAPHICS;
+				case PipelineCompute:
+					return VK_PIPELINE_BIND_POINT_COMPUTE;
+			}
+		}
+
+		inline VkImageUsageFlags Z(TextureUsage u, Format::Type ft)
+		{
+			VkImageUsageFlags vk_usage = 0;
+			if (u & TextureUsageTransferSrc)
+				vk_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+			if (u & TextureUsageTransferDst)
+				vk_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			if (u & TextureUsageShaderSampled)
+				vk_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+			if (u & TextureUsageShaderStorage)
+				vk_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+			if (u & TextureUsageAttachment)
+			{
+				if (ft == Format::TypeColor)
+					vk_usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+				else
+					vk_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+			}
+			return vk_usage;
 		}
 
 		inline VkImageAspectFlags Z(TextureAspect a)

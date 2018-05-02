@@ -62,13 +62,14 @@ namespace flame
 		{
 			if (_priv->current_pipeline == p)
 				return;
+			assert(p->type != PipelineNone);
 			_priv->current_pipeline = p;
-			vkCmdBindPipeline(_priv->v, VK_PIPELINE_BIND_POINT_GRAPHICS, p->_priv->v);
+			vkCmdBindPipeline(_priv->v, Z(p->type), p->_priv->v);
 		}
 
 		void Commandbuffer::bind_descriptorset(Descriptorset *s)
 		{
-			vkCmdBindDescriptorSets(_priv->v, VK_PIPELINE_BIND_POINT_GRAPHICS, _priv->current_pipeline->_priv->pipelinelayout->_priv->v, 0, 1, &s->_priv->v, 0, nullptr);
+			vkCmdBindDescriptorSets(_priv->v, Z(_priv->current_pipeline->type), _priv->current_pipeline->_priv->pipelinelayout->_priv->v, 0, 1, &s->_priv->v, 0, nullptr);
 		}
 
 		void Commandbuffer::bind_vertexbuffer(Buffer *b)
@@ -82,6 +83,11 @@ namespace flame
 			vkCmdBindIndexBuffer(_priv->v, b->_priv->v, 0, t == IndiceTypeUint ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
 		}
 
+		void Commandbuffer::push_constant(int shader_stage, int offset, int size, void *data)
+		{
+			vkCmdPushConstants(_priv->v, _priv->current_pipeline->_priv->pipelinelayout->_priv->v, Z(ShaderType(shader_stage)), offset, size, data);
+		}
+
 		void Commandbuffer::draw(int count, int instance_count, int first_instance)
 		{
 			vkCmdDraw(_priv->v, count, instance_count, 0, first_instance);
@@ -90,6 +96,11 @@ namespace flame
 		void Commandbuffer::draw_indexed(int count, int first_index, int instance_count, int first_instance)
 		{
 			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, 0, first_instance);
+		}
+
+		void Commandbuffer::dispatch(int x, int y, int z)
+		{
+			vkCmdDispatch(_priv->v, x, y, z);
 		}
 
 		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int copy_count, BufferCopy *copies)
@@ -131,6 +142,9 @@ namespace flame
 				case VK_IMAGE_LAYOUT_UNDEFINED:
 					barrier.srcAccessMask = 0;
 					break;
+				case VK_IMAGE_LAYOUT_GENERAL:
+					barrier.srcAccessMask = 0;
+					break;
 				case VK_IMAGE_LAYOUT_PREINITIALIZED:
 					barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 					break;
@@ -156,6 +170,9 @@ namespace flame
 
 			switch (barrier.newLayout)
 			{
+				case VK_IMAGE_LAYOUT_GENERAL:
+					barrier.dstAccessMask = 0;
+					break;
 				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
 					barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 					break;

@@ -90,7 +90,7 @@ int main(int argc, char **args)
 	pipeline->set_depth_write(true);
 	pipeline->add_shader("test/test_skeleton.vert", {});
 	pipeline->add_shader("test/test.frag", {});
-	pipeline->build();
+	pipeline->build_graphics();
 
 	auto pipeline_line = create_pipeline(d, rp, 0);
 	pipeline_line->set_vertex_attributes({{
@@ -101,7 +101,7 @@ int main(int argc, char **args)
 	pipeline_line->set_cull_mode(CullModeNone);
 	pipeline_line->add_shader("test/line2d.vert", {});
 	pipeline_line->add_shader("test/line2d.frag", {});
-	pipeline_line->build();
+	pipeline_line->build_graphics();
 
 	auto dp = create_descriptorpool(d);
 	auto ds = dp->create_descriptorset(pipeline, 0);
@@ -175,7 +175,7 @@ int main(int argc, char **args)
 		cbs[i]->draw_indexed(m->indice_count, 0, 1, 0);
 		cbs[i]->bind_pipeline(pipeline_line);
 		cbs[i]->bind_vertexbuffer(vb_bone_pos);
-		cbs[i]->draw(m->bone_count * 3);
+		cbs[i]->draw(m->bone_count * 3, 1, 0);
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
 	}

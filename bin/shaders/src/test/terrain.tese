@@ -24,7 +24,7 @@ void main()
 			gl_TessCoord.y
 		);
 
-	pos.y += (1.0 - texture(displacement_map, outUV).r) * ubo_terrain.height;
+	pos.y += texture(displacement_map, outUV).r * ubo_terrain.height;
 
 	gl_Position = ubo_terrain.proj_matrix * ubo_terrain.view_matrix * pos;
 }

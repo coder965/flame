@@ -10,12 +10,14 @@ namespace flame
 {
 	namespace graphics
 	{
-		static const char additional_lines[] =
+		static const char additional_lines_graphics[] =
 			"#version 450 core\n"
 			"#extension GL_ARB_separate_shader_objects : enable\n"
-			"#extension GL_ARB_shading_language_420pack : enable\n"
-			;
-		static const auto additional_lines_count = std::count(std::begin(additional_lines), std::end(additional_lines), '\n');
+			"#extension GL_ARB_shading_language_420pack : enable\n"; // Allows the setting of Uniform Buffer Object and sampler binding points directly from GLSL
+
+		static const char additional_lines_compute[] =
+			"#version 450 core\n"
+			"#extension GL_ARB_shading_language_420pack : enable\n"; // Allows the setting of Uniform Buffer Object and sampler binding points directly from GLSL
 
 		void Shader::build()
 		{
@@ -39,11 +41,17 @@ namespace flame
 
 			if (!spv_up_to_date)
 			{
+				const char *additional_lines;
+				if (type == ShaderComp)
+					additional_lines = additional_lines_compute;
+				else
+					additional_lines = additional_lines_graphics;
+				auto additional_lines_len = strlen(additional_lines);
 				auto temp_filename = path.parent_path().string() + "/temp." + path.filename().string();
 				{
 					std::ofstream ofile(temp_filename);
 					auto file = get_file_content(_filename);
-					ofile.write(additional_lines, sizeof(additional_lines) - 1);
+					ofile.write(additional_lines, additional_lines_len);
 					ofile.write(file.first.get(), file.second);
 					ofile.close();
 				}
@@ -57,6 +65,7 @@ namespace flame
 				std::filesystem::remove(temp_filename);
 				if (!std::filesystem::exists("temp.spv"))
 				{
+					auto additional_lines_count = std::count(additional_lines, additional_lines + additional_lines_len, '\n');
 					// shader compile error, try to use previous spv file
 					printf("\n=====Shader Compile Error=====\n", output.c_str());
 					auto p = (char*)output.c_str();
@@ -133,6 +142,7 @@ namespace flame
 				_process_resource(ShaderResourceUniformbuffer);
 				_process_resource(ShaderResourceStoragebuffer);
 				_process_resource(ShaderResourceTexture);
+				_process_resource(ShaderResourceStorageTexture);
 				_priv->push_constant_size = read<int>(res_file);
 			}
 			else
@@ -175,14 +185,14 @@ namespace flame
 				write<int>(res_file, resources.sampled_images.size());
 				for (auto &r : resources.sampled_images)
 					_process_resource(ShaderResourceTexture, r);
+				write<int>(res_file, resources.storage_images.size());
+				for (auto &r : resources.storage_images)
+					_process_resource(ShaderResourceStorageTexture, r);
 
 				for (auto &r : resources.push_constant_buffers)
 					_priv->push_constant_size = glsl.get_declared_struct_size(glsl.get_type(r.type_id));
 				write<int>(res_file, _priv->push_constant_size);
 			}
-
-			//for (auto p : referencing_pipelines)
-			//	p->create();
 		}
 
 		void Shader::release()
@@ -202,15 +212,17 @@ namespace flame
 
 			auto ext = std::filesystem::path(filename).extension().string();
 			if (ext == ".vert")
-				s->type = ShaderTypeVert;
+				s->type = ShaderVert;
 			else if (ext == ".tesc")
-				s->type = ShaderTypeTesc;
+				s->type = ShaderTesc;
 			else if (ext == ".tese")
-				s->type = ShaderTypeTese;
+				s->type = ShaderTese;
 			else if (ext == ".geom")
-				s->type = ShaderTypeGeom;
+				s->type = ShaderGeom;
 			else if (ext == ".frag")
-				s->type = ShaderTypeFrag;
+				s->type = ShaderFrag;
+			else if (ext == ".comp")
+				s->type = ShaderComp;
 
 			s->_priv = new ShaderPrivate;
 			s->_priv->push_constant_size = 0;
