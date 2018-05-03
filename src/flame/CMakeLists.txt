@@ -81,6 +81,7 @@ target_link_libraries(flame_surface flame_image)
 
 set_target_properties(flame_surface PROPERTIES FOLDER "flame") 
 
+add_subdirectory(shader)
 add_subdirectory(graphics)
 add_subdirectory(model)
 add_subdirectory(engine)

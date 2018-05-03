@@ -61,14 +61,15 @@ namespace flame
 				command_line += " -flimit-file ";
 				command_line += shader_path + "src/shader_compile_config.conf";
 				command_line += " -o temp.spv";
-				auto output = exec_and_get_output(vk_sdk_path + "/Bin/glslc.exe", command_line);
+				LongString output;
+				exec((vk_sdk_path + "/Bin/glslc.exe").c_str(), command_line.c_str(), &output);
 				std::filesystem::remove(temp_filename);
 				if (!std::filesystem::exists("temp.spv"))
 				{
 					auto additional_lines_count = std::count(additional_lines, additional_lines + additional_lines_len, '\n');
 					// shader compile error, try to use previous spv file
-					printf("\n=====Shader Compile Error=====\n", output.c_str());
-					auto p = (char*)output.c_str();
+					printf("\n=====Shader Compile Error=====\n");
+					auto p = (char*)output.data;
 					while (true)
 					{
 						auto p0 = std::strstr(p, ":");
@@ -87,7 +88,7 @@ namespace flame
 						if (!p)
 							break;
 					}
-					printf("=============================\n", output.c_str());
+					printf("=============================\n");
 				}
 				else
 				{

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flame/global.h>
+
 #include <string>
 #include <locale>
 
@@ -20,6 +22,32 @@ struct EnsureConst
 
 namespace flame
 {
+	template<uint size>
+	struct BasicString
+	{
+		char data[size];
+
+		const char* find(char c)
+		{
+			auto p = data;
+			while (*p && *p != c)
+				p++;
+			return p;
+		}
+	};
+
+	struct ShortString : BasicString<32> // for name, title, number etc
+	{
+	};
+
+	struct MediumString : BasicString<256> // for tip, filepath/filename, etc
+	{
+	};
+
+	struct LongString : BasicString<1024> // for output, article, description, etc
+	{
+	};
+
 	inline int get_str_line_number(const char *str)
 	{
 		int lineNumber = 0;
@@ -41,8 +69,10 @@ namespace flame
 
 	inline std::string translate(const char *src_locale, const char *dst_locale, const std::string &src)
 	{
-		std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> cv1(new std::codecvt_byname<wchar_t, char, mbstate_t>(src_locale));
-		std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> cv2(new std::codecvt_byname<wchar_t, char, mbstate_t>(dst_locale));
+		std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> 
+			cv1(new std::codecvt_byname<wchar_t, char, mbstate_t>(src_locale));
+		std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> 
+			cv2(new std::codecvt_byname<wchar_t, char, mbstate_t>(dst_locale));
 		return cv2.to_bytes(cv1.from_bytes(src));
 	}
 

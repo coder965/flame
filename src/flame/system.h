@@ -6,7 +6,8 @@
 #define FLAME_SYSTEM_EXPORTS __declspec(dllimport)
 #endif
 
-#include <string>
+#include <flame/string.h>
+
 #include <mutex>
 #include <vector>
 #include <memory>
@@ -16,18 +17,13 @@ namespace flame
 	FLAME_SYSTEM_EXPORTS void *get_hinst();
 	FLAME_SYSTEM_EXPORTS int get_screen_cx();
 	FLAME_SYSTEM_EXPORTS int get_screen_cy();
-	FLAME_SYSTEM_EXPORTS std::string get_app_path();
-	FLAME_SYSTEM_EXPORTS void exec(const std::string &filename, const std::string &parameters);
-	FLAME_SYSTEM_EXPORTS std::string exec_and_get_output(const std::string &filename, const std::string &command_line);
+	FLAME_SYSTEM_EXPORTS void get_app_path(MediumString *out);
+	FLAME_SYSTEM_EXPORTS void exec(const char *filename, const char *parameters, LongString *output /* could be nullptr */);
 
-	FLAME_SYSTEM_EXPORTS std::string get_clipBoard();
-	FLAME_SYSTEM_EXPORTS void set_clipBoard(const std::string &);
+	FLAME_SYSTEM_EXPORTS void get_clipboard(LongString *out);
+	FLAME_SYSTEM_EXPORTS void set_clipboard(const char *s);
 
-	struct FileWatcher
-	{
-		bool dirty;
-		void *hEventExpired;
-	};
+	struct FileWatcher;
 
 	enum FileWatcherMode
 	{
@@ -37,23 +33,18 @@ namespace flame
 
 	enum FileChangeType
 	{
-		FileChangeAdded,
-		FileChangeRemoved,
-		FileChangeModified,
-		FileChangeRename
+		FileAdded,
+		FileRemoved,
+		FileModified,
+		FileRenamed
 	};
 
-	struct FileChangeInfo
-	{
-		FileChangeType type;
-		std::string filename;
-	};
-
-	FLAME_SYSTEM_EXPORTS FileWatcher *add_file_watcher(FileWatcherMode mode, const std::string &filepath, const std::function<void(const std::vector<FileChangeInfo> &infos)> &callback = nullptr);
+	FLAME_SYSTEM_EXPORTS FileWatcher *add_file_watcher(FileWatcherMode mode, const char *filepath, 
+		void(*callback)(FileChangeType type, const char *filename, void *user_data), void *user_data);
 	FLAME_SYSTEM_EXPORTS void remove_file_watcher(FileWatcher *w);
 
 	FLAME_SYSTEM_EXPORTS void read_process_memory(void *process, void *address, int size, void *dst);
 
-	FLAME_SYSTEM_EXPORTS void *add_global_key_listener(int key, const std::function<void()> &callback);
-	FLAME_SYSTEM_EXPORTS void remove_global_key_listener(int key, void *p);
+	FLAME_SYSTEM_EXPORTS void *add_global_key_listener(int key, void(*callback)(void *user_data), void *user_data);
+	FLAME_SYSTEM_EXPORTS void remove_global_key_listener(int key, void *p /* whitch is the return of add_global_key_listener */ );
 }
