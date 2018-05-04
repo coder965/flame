@@ -3,107 +3,49 @@
 
 #include <flame/filesystem.h>
 #include <flame/system.h>
-
-#include <spirv_glsl.hpp>
+#include <flame/shader/shader.h>
 
 namespace flame
 {
 	namespace graphics
 	{
-		static const char additional_lines_graphics[] =
-			"#version 450 core\n"
-			"#extension GL_ARB_separate_shader_objects : enable\n"
-			"#extension GL_ARB_shading_language_420pack : enable\n"; // Allows the setting of Uniform Buffer Object and sampler binding points directly from GLSL
-
-		static const char additional_lines_compute[] =
-			"#version 450 core\n"
-			"#extension GL_ARB_shading_language_420pack : enable\n"; // Allows the setting of Uniform Buffer Object and sampler binding points directly from GLSL
+		static std::string shader_path("shaders/");
 
 		void Shader::build()
 		{
-			std::string shader_path("shaders/");
-			std::string vk_sdk_path(getenv("VK_SDK_PATH"));
-			assert(vk_sdk_path != "");
+			std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file. well we did delete it when we finish compiling, but there can be one somehow
 
-			std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file
+			auto glsl_filename = shader_path + "src/" + filename.data;
 
-			auto _filename = shader_path + "src/" + filename;
-			std::filesystem::path path(_filename);
-
-			auto spv_filename = filename;
+			std::string spv_filename(filename.data);
 			for (auto &d : defines)
-				spv_filename += "." + d;
+				spv_filename += std::string(".") + d.data;
 			spv_filename += ".spv";
 			spv_filename = shader_path + "bin/" + spv_filename;
 
-			auto spv_up_to_date = std::filesystem::exists(spv_filename) && 
-				std::filesystem::last_write_time(spv_filename) > std::filesystem::last_write_time(path);
-
-			if (!spv_up_to_date)
+			if (!std::filesystem::exists(spv_filename) ||
+				std::filesystem::last_write_time(spv_filename) <= std::filesystem::last_write_time(glsl_filename))
 			{
-				const char *additional_lines;
-				if (type == ShaderComp)
-					additional_lines = additional_lines_compute;
-				else
-					additional_lines = additional_lines_graphics;
-				auto additional_lines_len = strlen(additional_lines);
-				auto temp_filename = path.parent_path().string() + "/temp." + path.filename().string();
-				{
-					std::ofstream ofile(temp_filename);
-					auto file = get_file_content(_filename);
-					ofile.write(additional_lines, additional_lines_len);
-					ofile.write(file.first.get(), file.second);
-					ofile.close();
-				}
-				std::string command_line(" " + temp_filename + " ");
-				for (auto &d : defines)
-					command_line += "-D" + d + " ";
-				command_line += " -flimit-file ";
-				command_line += shader_path + "src/shader_compile_config.conf";
-				command_line += " -o temp.spv";
-				LongString output;
-				exec((vk_sdk_path + "/Bin/glslc.exe").c_str(), command_line.c_str(), &output);
-				std::filesystem::remove(temp_filename);
-				if (!std::filesystem::exists("temp.spv"))
-				{
-					auto additional_lines_count = std::count(additional_lines, additional_lines + additional_lines_len, '\n');
-					// shader compile error, try to use previous spv file
-					printf("\n=====Shader Compile Error=====\n");
-					auto p = (char*)output.data;
-					while (true)
+				compile_shader(glsl_filename.c_str(), defines.size(), defines.data(),
+					(shader_path + "src/shader_compile_config.conf").c_str(), spv_filename.c_str(), [](const char *filename, int line, const char *what){
+					// shader compile error, try to use previous spv file, we are not going to return here
+					if (filename == nullptr && line == -1)
 					{
-						auto p0 = std::strstr(p, ":");
-						if (!p0)
-							break;
-						auto p1 = std::strstr(p0 + 1, ":");
-						if (!p1)
-							break;
-						*p0 = 0;
-						*p1 = 0;
-						printf("%s:%d:", p, std::atoi(p0 + 1) - additional_lines_count);
-						p = std::strstr(p1 + 1, "\n");
-						if (p)
-							*p = 0;
-						printf("%s\n", p1 + 1);
-						if (!p)
-							break;
+						if (strcmp(what, "##start"))
+							printf("\n=====Shader Compile Error=====\n");
+						else if (strcmp(what, "##end"))
+							printf("=============================\n");
 					}
-					printf("=============================\n");
-				}
-				else
-				{
-					std::filesystem::path spv_dir = std::filesystem::path(spv_filename).parent_path();
-					if (!std::filesystem::exists(spv_dir))
-						std::filesystem::create_directories(spv_dir);
-					std::filesystem::copy_file("temp.spv", spv_filename, std::filesystem::copy_options::overwrite_existing);
-				}
+					else
+						printf("%s:%d:%s\n", filename, line, what);
+				});
 			}
 
 			auto spv_file = get_file_content(spv_filename);
 			if (!spv_file.first)  // missing spv file!
 			{
 				if (!_priv->v) // if we are running first time and no previous spv
-					assert(0);
+					assert(0); // we should not having bad shader TODO : maybe we should add a default shader?
 				return;
 			}
 
@@ -118,82 +60,34 @@ namespace flame
 			vk_chk_res(vkCreateShaderModule(_priv->d->_priv->device, &shader_info, nullptr, &_priv->v));
 
 			auto res_filename = spv_filename + ".res";
-			if (std::filesystem::exists(res_filename) &&
-				std::filesystem::last_write_time(res_filename) > std::filesystem::last_write_time(spv_filename))
-			{
-				std::ifstream res_file(res_filename, std::ios::binary);
+			if (!std::filesystem::exists(res_filename) ||
+				std::filesystem::last_write_time(res_filename) <= std::filesystem::last_write_time(spv_filename))
+				produce_shader_resource_file(spv_filename.c_str(), res_filename.c_str());
 
-				auto _process_resource = [&](ShaderResourceType type) {
-					auto count = read<int>(res_file);
-					for (auto i = 0; i < count; i++)
-					{
-						auto set = read<int>(res_file);
-						if (set >= _priv->resources.size())
-							_priv->resources.resize(set + 1);
+			std::ifstream res_file(res_filename, std::ios::binary);
 
-						ShaderResource r;
-						r.type = type;
-						r.name = read_string(res_file);
-						r.binding = read<int>(res_file);
-						r.count = read<int>(res_file);
-						_priv->resources[set].push_back(r);
-					}
-				};
-
-				_process_resource(ShaderResourceUniformbuffer);
-				_process_resource(ShaderResourceStoragebuffer);
-				_process_resource(ShaderResourceTexture);
-				_process_resource(ShaderResourceStorageTexture);
-				_priv->push_constant_size = read<int>(res_file);
-			}
-			else
-			{
-				// do reflection
-				std::vector<unsigned int> spv_vec(spv_file.second / sizeof(unsigned int));
-				memcpy(spv_vec.data(), spv_file.first.get(), spv_file.second);
-
-				spirv_cross::CompilerGLSL glsl(std::move(spv_vec));
-
-				spirv_cross::ShaderResources resources = glsl.get_shader_resources();
-
-				std::ofstream res_file(res_filename, std::ios::binary);
-
-				auto _process_resource = [&](ShaderResourceType type, spirv_cross::Resource &r) {
-					auto set = glsl.get_decoration(r.id, spv::DecorationDescriptorSet);
+			auto _read_resource = [&](ShaderResourceType type) {
+				auto count = read<int>(res_file);
+				for (auto i = 0; i < count; i++)
+				{
+					auto set = read<int>(res_file);
 					if (set >= _priv->resources.size())
 						_priv->resources.resize(set + 1);
-					write<int>(res_file, set);
 
-					ShaderResource sr;
-					sr.type = type;
-					sr.name = r.name;
-					sr.binding = glsl.get_decoration(r.id, spv::DecorationBinding);
-					auto _type = glsl.get_type(r.type_id);
-					sr.count = _type.array.size() > 0 ? _type.array[0] : 1;
-					_priv->resources[set].emplace_back(sr);
+					ShaderResource r;
+					r.type = type;
+					r.name = read_string(res_file);
+					r.binding = read<int>(res_file);
+					r.count = read<int>(res_file);
+					_priv->resources[set].push_back(r);
+				}
+			};
 
-					write_string(res_file, sr.name);
-					write<int>(res_file, sr.binding);
-					write<int>(res_file, sr.count);
-				};
-
-				write<int>(res_file, resources.uniform_buffers.size());
-				for (auto &r : resources.uniform_buffers)
-					_process_resource(ShaderResourceUniformbuffer, r);
-				write<int>(res_file, resources.storage_buffers.size());
-				for (auto &r : resources.storage_buffers)
-					_process_resource(ShaderResourceStoragebuffer, r);
-				write<int>(res_file, resources.sampled_images.size());
-				for (auto &r : resources.sampled_images)
-					_process_resource(ShaderResourceTexture, r);
-				write<int>(res_file, resources.storage_images.size());
-				for (auto &r : resources.storage_images)
-					_process_resource(ShaderResourceStorageTexture, r);
-
-				for (auto &r : resources.push_constant_buffers)
-					_priv->push_constant_size = glsl.get_declared_struct_size(glsl.get_type(r.type_id));
-				write<int>(res_file, _priv->push_constant_size);
-			}
+			_read_resource(ShaderResourceUniformbuffer);
+			_read_resource(ShaderResourceStoragebuffer);
+			_read_resource(ShaderResourceTexture);
+			_read_resource(ShaderResourceStorageTexture);
+			_priv->push_constant_size = read<int>(res_file);
 		}
 
 		void Shader::release()
@@ -205,11 +99,10 @@ namespace flame
 			}
 		}
 
-		Shader *create_shader(Device *d, const std::string &filename, const std::vector<std::string> &defines)
+		Shader *create_shader(Device *d, const char *filename)
 		{
 			auto s = new Shader;
-			s->filename = filename;
-			s->defines = defines;
+			strcpy(s->filename.data, filename);
 
 			auto ext = std::filesystem::path(filename).extension().string();
 			if (ext == ".vert")
@@ -229,7 +122,6 @@ namespace flame
 			s->_priv->push_constant_size = 0;
 			s->_priv->d = d;
 			s->_priv->v = 0;
-			s->build();
 
 			return s;
 		}

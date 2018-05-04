@@ -11,5 +11,9 @@ target_compile_definitions(flame_shader PRIVATE _FLAME_SHADER_EXPORTS)
 target_include_directories(flame_shader PUBLIC "${CMAKE_SOURCE_DIR}/src")
 
 target_link_libraries(flame_shader flame_filesystem)
+target_link_libraries(flame_shader flame_system)
+target_link_libraries(flame_shader spirv-cross-core)
+target_link_libraries(flame_shader spirv-cross-cpp)
+target_link_libraries(flame_shader spirv-cross-glsl)
 
 set_target_properties(flame_shader PROPERTIES FOLDER "flame") 
