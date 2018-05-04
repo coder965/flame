@@ -8,6 +8,7 @@ namespace flame
 	{
 		struct Device;
 		struct Renderpass;
+		struct Shader;
 		struct Descriptorsetlayout;
 
 		enum VertexAttributeType
@@ -126,8 +127,7 @@ namespace flame
 				BlendFactor src_color = BlendFactorOne, BlendFactor dst_color = BlendFactorZero, 
 				BlendFactor src_alpha = BlendFactorOne, BlendFactor dst_alpha = BlendFactorZero);
 			FLAME_GRAPHICS_EXPORTS void set_dynamic_state(const std::initializer_list<DynamicState> &states);
-			FLAME_GRAPHICS_EXPORTS void add_shader(const std::string &filename,
-				const std::initializer_list<std::string> &defines);
+			FLAME_GRAPHICS_EXPORTS void add_shader(Shader *s);
 			FLAME_GRAPHICS_EXPORTS void build_graphics();
 			FLAME_GRAPHICS_EXPORTS void build_compute();
 			FLAME_GRAPHICS_EXPORTS void release();

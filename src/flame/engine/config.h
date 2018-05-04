@@ -1,3 +1,3 @@
 #pragma once
 
-#define FLAME_ENABLE_PHYSICS 0
+#define FLAME_ENABLE_PHYSICS 1

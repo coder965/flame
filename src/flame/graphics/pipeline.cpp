@@ -232,11 +232,8 @@ namespace flame
 			_priv->dynamic_states = states;
 		}
 
-		void Pipeline::add_shader(const std::string &filename,
-			const std::initializer_list<std::string> &defines)
+		void Pipeline::add_shader(Shader *s)
 		{
-			auto s = create_shader(_priv->d, filename, defines);
-			assert(s);
 			_priv->shaders.emplace_back(s);
 		}
 

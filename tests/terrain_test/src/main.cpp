@@ -7,6 +7,7 @@
 #include <flame/graphics/device.h>
 #include <flame/graphics/swapchain.h>
 #include <flame/graphics/renderpass.h>
+#include <flame/graphics/shader.h>
 #include <flame/graphics/pipeline.h>
 #include <flame/graphics/descriptor.h>
 #include <flame/graphics/buffer.h>
@@ -91,6 +92,19 @@ int main(int argc, char **args)
 	rp->add_subpass({0}, 1);
 	rp->build();
 
+	auto terrain_vert = create_shader(d, "test/terrain.vert");
+	terrain_vert->build();
+	auto terrain_tesc = create_shader(d, "test/terrain.tesc");
+	terrain_tesc->build();
+	auto terrain_tese = create_shader(d, "test/terrain.tese");
+	terrain_tese->build();
+	auto terrain_geom = create_shader(d, "test/terrain.geom");
+	terrain_geom->build();
+	auto terrain_frag = create_shader(d, "test/terrain.frag");
+	terrain_frag->build();
+	auto terrain_mod_comp = create_shader(d, "test/terrain_mod.comp");
+	terrain_mod_comp->build();
+
 	auto pipeline = create_pipeline(d);
 	pipeline->set_size(res.x, res.y);
 	pipeline->set_renderpass(rp, 0);
@@ -99,15 +113,15 @@ int main(int argc, char **args)
 	pipeline->set_depth_write(true);
 	pipeline->set_cull_mode(CullModeFront);
 	pipeline->set_primitive_topology(PrimitiveTopologyPatchList);
-	pipeline->add_shader("test/terrain.vert", {});
-	pipeline->add_shader("test/terrain.tesc", {});
-	pipeline->add_shader("test/terrain.tese", {});
-	pipeline->add_shader("test/terrain.geom", {});
-	pipeline->add_shader("test/terrain.frag", {});
+	pipeline->add_shader(terrain_vert);
+	pipeline->add_shader(terrain_tesc);
+	pipeline->add_shader(terrain_tese);
+	pipeline->add_shader(terrain_geom);
+	pipeline->add_shader(terrain_frag);
 	pipeline->build_graphics();
 
 	auto pipeline_terrain_mod = create_pipeline(d);
-	pipeline_terrain_mod->add_shader("test/terrain_mod.comp", {});
+	pipeline_terrain_mod->add_shader(terrain_mod_comp);
 	pipeline_terrain_mod->build_compute();
 
 	auto dp = create_descriptorpool(d);
