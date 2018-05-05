@@ -1,3 +1,5 @@
+#pragma once
+
 #include "device.h"
 #include "physics_private.h"
 
@@ -7,6 +9,8 @@ namespace flame
 	{
 		struct DevicePrivate
 		{
+			physx::PxDefaultAllocator allocator;
+			physx::PxDefaultErrorCallback error_callback;
 			physx::PxFoundation *foundation;
 			physx::PxPhysics *inst;
 		};

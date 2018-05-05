@@ -1,13 +1,7 @@
 #pragma once
 
-#include <flame/engine/config.h>
-
-#if FLAME_ENABLE_PHYSICS != 0
-
 #include <memory>
 #include <vector>
-
-#include <PxPhysicsAPI.h>
 
 #include <flame/common/math.h>
 
@@ -95,10 +89,6 @@ namespace flame
 		glm::vec3 springConstant = glm::vec3(0.f);
 		glm::vec3 sprintRotationConstant = glm::vec3(0.f);
 	};
-
-	extern physx::PxFoundation *pxFoundation;
-	extern physx::PxPhysics *pxPhysics;
-	extern physx::PxMaterial *pxDefaultMaterial;
 
 	physx::PxRigidActor *createStaticRigidActor(physx::PxTransform &trans);
 	physx::PxRigidActor *createDynamicRigidActor(physx::PxTransform &trans, bool kinematic, float density);

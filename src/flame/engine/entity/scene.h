@@ -39,7 +39,6 @@ namespace flame
 
 		//std::vector<CollisionGroup*> pCollisionGroups;
 
-		//physx::PxScene *pxScene = nullptr;
 		//physx::PxControllerManager *pxControllerManager = nullptr;
 	protected:
 		virtual void on_update() override;

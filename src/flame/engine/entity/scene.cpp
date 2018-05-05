@@ -136,11 +136,6 @@ namespace flame
 		ssao_intensity(100000.f),
 		fog_thickness(0.01f)
 	{
-		//physx::PxSceneDesc pxSceneDesc(pxPhysics->getTolerancesScale());
-		//pxSceneDesc.gravity = physx::PxVec3(0.0f, -gravity, 0.0f);
-		//pxSceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-		//pxSceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-		//pxScene = pxPhysics->createScene(pxSceneDesc);
 		//pxControllerManager = PxCreateControllerManager(*pxScene);
 	}
 
