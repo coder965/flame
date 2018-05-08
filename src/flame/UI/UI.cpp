@@ -18,17 +18,28 @@ namespace flame
 {
 	namespace UI
 	{
-		void Instance::begin()
+		void Instance::begin(int cx, int cy, int mouse_x, int mouse_y,
+			bool mouse_left_pressing, bool mouse_right_pressing, bool mouse_middle_pressing, int mouse_scroll)
 		{
+			ImGuiIO& im_io = ImGui::GetIO();
 
+			im_io.DisplaySize = ImVec2(cx, cy);
+			im_io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
+
+			im_io.DeltaTime = elapsed_time;
+
+			im_io.MousePos = ImVec2(mouse_x, mouse_y);
+
+			im_io.MouseDown[0] = mouse_left_pressing;
+			im_io.MouseDown[1] = mouse_right_pressing;
+			im_io.MouseDown[2] = mouse_middle_pressing;
+
+			im_io.MouseWheel = mouse_scroll;
+
+			ImGui::NewFrame();
 		}
 
-		void Instance::end()
-		{
-
-		}
-
-		void Instance::record_commandbuffer(graphics::Commandbuffer *cb)
+		void Instance::end(graphics::Commandbuffer *cb, graphics::Framebuffer *fb)
 		{
 
 		}
@@ -132,12 +143,12 @@ namespace flame
 			im_io.KeyMap[ImGuiKey_Y] = 'Y';
 			im_io.KeyMap[ImGuiKey_Z] = 'Z';
 			im_io.SetClipboardTextFn = [](void *user_data, const char *s) {
-				set_clipBoard(s);
+				set_clipboard(s);
 			};
 			im_io.GetClipboardTextFn = [](void *user_data) {
-				static std::string s;
-				s = get_clipBoard();
-				return s.c_str();
+				static LongString s;
+				get_clipboard(&s);
+				return (const char*)s.data;
 			};
 
 			return i;

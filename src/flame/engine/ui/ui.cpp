@@ -371,28 +371,6 @@ namespace flame
 			add_resize_listener(on_resize);
 		}
 
-		void begin()
-		{
-			accepted_mouse = false;
-			accepted_key = false;
-
-			ImGuiIO& io = ImGui::GetIO();
-
-			io.DisplaySize = ImVec2((float)surface->cx, (float)surface->cy);
-			io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
-
-			io.DeltaTime = elapsed_time;
-
-			io.MousePos = ImVec2((float)mouse.x, (float)mouse.y);
-
-			for (auto i = 0; i < 3; i++)
-				io.MouseDown[i] = mouse.button[i].pressing;
-
-			io.MouseWheel = mouse.scroll / 120;
-
-			ImGui::NewFrame();
-		}
-
 		void end()
 		{
 			reset_dragging();
@@ -403,189 +381,186 @@ namespace flame
 			ImGui::Render();
 
 			ImGuiIO& io = ImGui::GetIO();
-			if ((int)(io.DisplaySize.x * io.DisplayFramebufferScale.x) > 0 && (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y) > 0)
+			auto draw_data = ImGui::GetDrawData();
+			if (draw_data->CmdListsCount > 0)
 			{
-				auto draw_data = ImGui::GetDrawData();
-				if (draw_data->CmdListsCount > 0)
+				draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+
+				auto vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
+				if (!vertexBuffer_ui || vertexBuffer_ui->size < vertex_size)
 				{
-					draw_data->ScaleClipRects(io.DisplayFramebufferScale);
-
-					auto vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
-					if (!vertexBuffer_ui || vertexBuffer_ui->size < vertex_size)
-					{
-						if (vertexBuffer_ui)
-							vertexBuffer_ui->unmap();
-						vertexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateVertex, vertex_size);
-						vertexBuffer_ui->map();
-					}
-
-					auto index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-					if (!indexBuffer_ui || indexBuffer_ui->size < index_size)
-					{
-						if (indexBuffer_ui)
-							indexBuffer_ui->unmap();
-						indexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateIndex, index_size);
-						indexBuffer_ui->map();
-					}
-
-					auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->mapped;
-					auto idx_dst = (ImDrawIdx*)indexBuffer_ui->mapped;
-
-					for (int n = 0; n < draw_data->CmdListsCount; n++)
-					{
-						const auto cmd_list = draw_data->CmdLists[n];
-						memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-						memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-						vtx_dst += cmd_list->VtxBuffer.Size;
-						idx_dst += cmd_list->IdxBuffer.Size;
-					}
-
-					vertexBuffer_ui->flush();
-					indexBuffer_ui->flush();
+					if (vertexBuffer_ui)
+						vertexBuffer_ui->unmap();
+					vertexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateVertex, vertex_size);
+					vertexBuffer_ui->map();
 				}
 
-				auto _chr_count = 0;
-				if (!sdf_draw_commands.empty())
+				auto index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
+				if (!indexBuffer_ui || indexBuffer_ui->size < index_size)
 				{
-					for (auto &c : sdf_draw_commands)
-					{
-						for (auto i = 0; i < c.text.size(); i++)
-						{
-							auto chr = c.text[i];
-							if (chr == ' ' ||
-								(chr >= '0' && chr <= '9') ||
-								(chr >= 'A' && chr <= 'Z') ||
-								(chr >= 'a' && chr <= 'z'))
-								_chr_count++;
-						}
-					}
-
-					auto sdf_text_vertex_size = _chr_count * 6 * sizeof(SdfVertex);
-					if (!sdf_vertex_buffer || sdf_vertex_buffer->size < sdf_text_vertex_size)
-						sdf_vertex_buffer = std::make_unique<Buffer>(BufferTypeImmediateVertex, sdf_text_vertex_size);
-
-					sdf_vertex_buffer->map(0, sdf_text_vertex_size);
-					auto vtx_dst = (SdfVertex*)sdf_vertex_buffer->mapped;
-					for (auto &cmd : sdf_draw_commands)
-					{
-						auto _chr_count = 0;
-						for (auto i = 0; i < cmd.text.size(); i++)
-						{
-							auto chr = cmd.text[i];
-							int offset;
-							if (chr == ' ')
-								offset = 0;
-							else if (chr >= '0' && chr <= '9')
-								offset = chr - '0' + 1;
-							else if (chr >= 'A' && chr <= 'Z')
-								offset = chr - 'A' + 1 + 10;
-							else if (chr >= 'a' && chr <= 'z')
-								offset = chr - 'a' + 1 + 10 + 26;
-							else
-								continue;
-							auto w_s = glm::vec2(surface->cx, surface->cy);
-							auto hs = glm::vec2(cmd.size, cmd.size) / w_s / 2.f;
-							auto p = glm::vec2(cmd.x + _chr_count * cmd.size, cmd.y) / w_s;
-							auto a_pos = p - hs;
-							a_pos = a_pos * 2.f - 1.f;
-							auto b_pos = p + glm::vec2(hs.x, -hs.y);
-							b_pos = b_pos * 2.f - 1.f;
-							auto c_pos = p + glm::vec2(-hs.x, hs.y);
-							c_pos = c_pos * 2.f - 1.f;
-							auto d_pos = p + hs;
-							d_pos = d_pos * 2.f - 1.f;
-							auto u0 = (float)offset / sdf_char_count;
-							auto u1 = (float)(offset + 1) / sdf_char_count;
-							vtx_dst[0].pos = a_pos;
-							vtx_dst[0].uv = glm::vec2(u0, 0.f);
-							vtx_dst[1].pos = c_pos;
-							vtx_dst[1].uv = glm::vec2(u0, 1.f);
-							vtx_dst[2].pos = d_pos;
-							vtx_dst[2].uv = glm::vec2(u1, 1.f);
-							vtx_dst[3].pos = a_pos;
-							vtx_dst[3].uv = glm::vec2(u0, 0.f);
-							vtx_dst[4].pos = d_pos;
-							vtx_dst[4].uv = glm::vec2(u1, 1.f);
-							vtx_dst[5].pos = b_pos;
-							vtx_dst[5].uv = glm::vec2(u1, 0.f);
-							vtx_dst += 6;
-							_chr_count++;
-						}
-					}
-					sdf_vertex_buffer->unmap();
+					if (indexBuffer_ui)
+						indexBuffer_ui->unmap();
+					indexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateIndex, index_size);
+					indexBuffer_ui->map();
 				}
 
-				cmds->begin();
+				auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->mapped;
+				auto idx_dst = (ImDrawIdx*)indexBuffer_ui->mapped;
 
-				if (main_layout->is_empty(0))
+				for (int n = 0; n < draw_data->CmdListsCount; n++)
 				{
-					VkClearValue clear_value = {bg_color.r, bg_color.g, bg_color.b, 1.f};
-					cmds->begin_renderpass(renderpass_clear.get(), framebuffers[surface->image_index].get(), &clear_value);
-				}
-				else
-					cmds->begin_renderpass(renderpass.get(), framebuffers[surface->image_index].get());
-
-				if (draw_data->CmdListsCount > 0)
-				{
-					cmds->set_viewport_and_scissor(surface->cx, surface->cy);
-
-					cmds->bind_vertex_buffer(vertexBuffer_ui.get());
-					cmds->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
-
-					cmds->bind_pipeline(pipeline_ui);
-					cmds->bind_descriptor_set();
-
-					cmds->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
-
-					int vtx_offset = 0;
-					int idx_offset = 0;
-					for (int n = 0; n < draw_data->CmdListsCount; n++)
-					{
-						const ImDrawList* cmd_list = draw_data->CmdLists[n];
-						for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-						{
-							const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-							if (pcmd->UserCallback)
-							{
-								pcmd->UserCallback(cmd_list, pcmd);
-								pcmd->TextureId;
-							}
-							else
-							{
-								cmds->set_scissor(
-									ImMax((int32_t)(pcmd->ClipRect.x), 0),
-									ImMax((int32_t)(pcmd->ClipRect.y), 0),
-									ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
-									ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
-								);
-								cmds->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
-							}
-							idx_offset += pcmd->ElemCount;
-						}
-						vtx_offset += cmd_list->VtxBuffer.Size;
-					}
+					const auto cmd_list = draw_data->CmdLists[n];
+					memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+					memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+					vtx_dst += cmd_list->VtxBuffer.Size;
+					idx_dst += cmd_list->IdxBuffer.Size;
 				}
 
-				if (!sdf_draw_commands.empty())
-				{
-					cmds->set_scissor(0, 0, surface->cx, surface->cy);
-
-					cmds->bind_vertex_buffer(sdf_vertex_buffer.get());
-
-					cmds->bind_pipeline(pipeline_sdf);
-					cmds->bind_descriptor_set();
-
-					cmds->draw(_chr_count * 6);
-
-					sdf_draw_commands.clear();
-				}
-
-				cmds->end_renderpass();
-
-				cmds->end();
-
-				add_to_draw_list(cmds->v);
+				vertexBuffer_ui->flush();
+				indexBuffer_ui->flush();
 			}
+
+			auto _chr_count = 0;
+			if (!sdf_draw_commands.empty())
+			{
+				for (auto &c : sdf_draw_commands)
+				{
+					for (auto i = 0; i < c.text.size(); i++)
+					{
+						auto chr = c.text[i];
+						if (chr == ' ' ||
+							(chr >= '0' && chr <= '9') ||
+							(chr >= 'A' && chr <= 'Z') ||
+							(chr >= 'a' && chr <= 'z'))
+							_chr_count++;
+					}
+				}
+
+				auto sdf_text_vertex_size = _chr_count * 6 * sizeof(SdfVertex);
+				if (!sdf_vertex_buffer || sdf_vertex_buffer->size < sdf_text_vertex_size)
+					sdf_vertex_buffer = std::make_unique<Buffer>(BufferTypeImmediateVertex, sdf_text_vertex_size);
+
+				sdf_vertex_buffer->map(0, sdf_text_vertex_size);
+				auto vtx_dst = (SdfVertex*)sdf_vertex_buffer->mapped;
+				for (auto &cmd : sdf_draw_commands)
+				{
+					auto _chr_count = 0;
+					for (auto i = 0; i < cmd.text.size(); i++)
+					{
+						auto chr = cmd.text[i];
+						int offset;
+						if (chr == ' ')
+							offset = 0;
+						else if (chr >= '0' && chr <= '9')
+							offset = chr - '0' + 1;
+						else if (chr >= 'A' && chr <= 'Z')
+							offset = chr - 'A' + 1 + 10;
+						else if (chr >= 'a' && chr <= 'z')
+							offset = chr - 'a' + 1 + 10 + 26;
+						else
+							continue;
+						auto w_s = glm::vec2(surface->cx, surface->cy);
+						auto hs = glm::vec2(cmd.size, cmd.size) / w_s / 2.f;
+						auto p = glm::vec2(cmd.x + _chr_count * cmd.size, cmd.y) / w_s;
+						auto a_pos = p - hs;
+						a_pos = a_pos * 2.f - 1.f;
+						auto b_pos = p + glm::vec2(hs.x, -hs.y);
+						b_pos = b_pos * 2.f - 1.f;
+						auto c_pos = p + glm::vec2(-hs.x, hs.y);
+						c_pos = c_pos * 2.f - 1.f;
+						auto d_pos = p + hs;
+						d_pos = d_pos * 2.f - 1.f;
+						auto u0 = (float)offset / sdf_char_count;
+						auto u1 = (float)(offset + 1) / sdf_char_count;
+						vtx_dst[0].pos = a_pos;
+						vtx_dst[0].uv = glm::vec2(u0, 0.f);
+						vtx_dst[1].pos = c_pos;
+						vtx_dst[1].uv = glm::vec2(u0, 1.f);
+						vtx_dst[2].pos = d_pos;
+						vtx_dst[2].uv = glm::vec2(u1, 1.f);
+						vtx_dst[3].pos = a_pos;
+						vtx_dst[3].uv = glm::vec2(u0, 0.f);
+						vtx_dst[4].pos = d_pos;
+						vtx_dst[4].uv = glm::vec2(u1, 1.f);
+						vtx_dst[5].pos = b_pos;
+						vtx_dst[5].uv = glm::vec2(u1, 0.f);
+						vtx_dst += 6;
+						_chr_count++;
+					}
+				}
+				sdf_vertex_buffer->unmap();
+			}
+
+			cmds->begin();
+
+			if (main_layout->is_empty(0))
+			{
+				VkClearValue clear_value = {bg_color.r, bg_color.g, bg_color.b, 1.f};
+				cmds->begin_renderpass(renderpass_clear.get(), framebuffers[surface->image_index].get(), &clear_value);
+			}
+			else
+				cmds->begin_renderpass(renderpass.get(), framebuffers[surface->image_index].get());
+
+			if (draw_data->CmdListsCount > 0)
+			{
+				cmds->set_viewport_and_scissor(surface->cx, surface->cy);
+
+				cmds->bind_vertex_buffer(vertexBuffer_ui.get());
+				cmds->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
+
+				cmds->bind_pipeline(pipeline_ui);
+				cmds->bind_descriptor_set();
+
+				cmds->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
+
+				int vtx_offset = 0;
+				int idx_offset = 0;
+				for (int n = 0; n < draw_data->CmdListsCount; n++)
+				{
+					const ImDrawList* cmd_list = draw_data->CmdLists[n];
+					for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+					{
+						const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+						if (pcmd->UserCallback)
+						{
+							pcmd->UserCallback(cmd_list, pcmd);
+							pcmd->TextureId;
+						}
+						else
+						{
+							cmds->set_scissor(
+								ImMax((int32_t)(pcmd->ClipRect.x), 0),
+								ImMax((int32_t)(pcmd->ClipRect.y), 0),
+								ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
+								ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
+							);
+							cmds->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+						}
+						idx_offset += pcmd->ElemCount;
+					}
+					vtx_offset += cmd_list->VtxBuffer.Size;
+				}
+			}
+
+			if (!sdf_draw_commands.empty())
+			{
+				cmds->set_scissor(0, 0, surface->cx, surface->cy);
+
+				cmds->bind_vertex_buffer(sdf_vertex_buffer.get());
+
+				cmds->bind_pipeline(pipeline_sdf);
+				cmds->bind_descriptor_set();
+
+				cmds->draw(_chr_count * 6);
+
+				sdf_draw_commands.clear();
+			}
+
+			cmds->end_renderpass();
+
+			cmds->end();
+
+			add_to_draw_list(cmds->v);
 
 			accepted_mouse = ImGui::IsMouseHoveringAnyWindow();
 			accepted_key = ImGui::IsAnyItemActive();

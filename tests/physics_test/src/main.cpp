@@ -102,16 +102,13 @@ int main(int argc, char **args)
 	auto m = create_cube_model(&desc, 0.5f);
 	m->root_node->calc_global_matrix();
 
-	graphics::Format depth_format;
-	depth_format.v = graphics::Format::Depth16;
-
-	auto depth_tex = graphics::create_texture(d, res.x, res.y, 1, 1, depth_format,
+	auto depth_tex = graphics::create_texture(d, res.x, res.y, 1, 1, graphics::Format::Depth16,
 		graphics::TextureUsageAttachment, graphics::MemPropDevice);
 	auto depth_tex_view = graphics::create_textureview(d, depth_tex);
 
 	auto rp = graphics::create_renderpass(d);
 	rp->add_attachment_swapchain(sc, true);
-	rp->add_attachment(depth_format, true);
+	rp->add_attachment(graphics::Format::Depth16, true);
 	rp->add_subpass({0}, 1);
 	rp->build();
 
@@ -218,7 +215,7 @@ int main(int argc, char **args)
 	vec3 coord = vec3(0.f);
 	vec4 quat = vec4(0.f, 0.f, 0.f, 1.f);
 
-	auto ui = UI::create_instance(d);
+	auto ui = UI::create_instance(d, dp, cp, q);
 
 	sm->run([&](){
 
