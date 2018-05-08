@@ -552,59 +552,6 @@ namespace flame
 			m->indices.push_back(baseVertex + i);
 	}
 
-	void add_cube_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float length)
-	{
-		int baseVertex = m->vertexes.size();
-
-		glm::vec3 a = center + rotation * (glm::vec3(0.5f, -0.5f, 0.5f) * length);
-		glm::vec3 b = center + rotation * (glm::vec3(0.5f, -0.5f, -0.5f) * length);
-		glm::vec3 c = center + rotation * (glm::vec3(0.5f, 0.5f, -0.5f) * length);
-		glm::vec3 d = center + rotation * (glm::vec3(0.5f, 0.5f, 0.5f) * length);
-		glm::vec3 e = center + rotation * (glm::vec3(-0.5f, -0.5f, 0.5f) * length);
-		glm::vec3 f = center + rotation * (glm::vec3(-0.5f, -0.5f, -0.5f) * length);
-		glm::vec3 g = center + rotation * (glm::vec3(-0.5f, 0.5f, -0.5f) * length);
-		glm::vec3 h = center + rotation * (glm::vec3(-0.5f, 0.5f, 0.5f) * length);
-
-		m->add_vertex_position_normal(a, glm::vec3(1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(b, glm::vec3(1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(c, glm::vec3(1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(d, glm::vec3(1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(e, glm::vec3(-1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(f, glm::vec3(-1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(g, glm::vec3(-1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(h, glm::vec3(-1.f, 0.f, 0.f));
-		m->add_vertex_position_normal(c, glm::vec3(0.f, 1.f, 0.f));
-		m->add_vertex_position_normal(d, glm::vec3(0.f, 1.f, 0.f));
-		m->add_vertex_position_normal(g, glm::vec3(0.f, 1.f, 0.f));
-		m->add_vertex_position_normal(h, glm::vec3(0.f, 1.f, 0.f));
-		m->add_vertex_position_normal(a, glm::vec3(0.f, -1.f, 0.f));
-		m->add_vertex_position_normal(b, glm::vec3(0.f, -1.f, 0.f));
-		m->add_vertex_position_normal(e, glm::vec3(0.f, -1.f, 0.f));
-		m->add_vertex_position_normal(f, glm::vec3(0.f, -1.f, 0.f));
-		m->add_vertex_position_normal(a, glm::vec3(0.f, 0.f, 1.f));
-		m->add_vertex_position_normal(d, glm::vec3(0.f, 0.f, 1.f));
-		m->add_vertex_position_normal(e, glm::vec3(0.f, 0.f, 1.f));
-		m->add_vertex_position_normal(h, glm::vec3(0.f, 0.f, 1.f));
-		m->add_vertex_position_normal(b, glm::vec3(0.f, 0.f, -1.f));
-		m->add_vertex_position_normal(c, glm::vec3(0.f, 0.f, -1.f));
-		m->add_vertex_position_normal(f, glm::vec3(0.f, 0.f, -1.f));
-		m->add_vertex_position_normal(g, glm::vec3(0.f, 0.f, -1.f));
-
-		std::vector<int> list = {
-			3, 0, 1, 3, 1, 2,
-			6, 5, 4, 6, 4, 7,
-			11, 9, 8, 11, 8, 10,
-			12, 14, 15, 12, 15, 13,
-			19, 18, 16, 19, 16, 17,
-			21, 20, 22, 21, 22, 23
-		};
-
-		for (auto &i : list)
-			i += baseVertex;
-
-		m->indices.insert(m->indices.end(), list.begin(), list.end());
-	}
-
 	void add_sphere_vertex(Model *m, glm::mat3 rotation, glm::vec3 center, float radius, int horiSubdiv, int vertSubdiv)
 	{
 		std::vector<std::vector<int>> indexs;

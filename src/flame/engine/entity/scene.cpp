@@ -45,9 +45,7 @@ namespace flame
 		//				o->floatingTime = 0.f;
 		//		}
 		//	}
-		//	pxScene->simulate(dist);
-		//	//pxScene->simulate(1.f / 60.f);
-		//	pxScene->fetchResults(true);
+		
 		//	for (auto &o : objects)
 		//	{
 		//		if (o->physics_type & (int)ObjectPhysicsType::dynamic)
@@ -66,9 +64,6 @@ namespace flame
 		//			{
 		//				if (data->rigidbody->boneID == -1)
 		//				{
-		//					auto trans = data->actor->getGlobalPose();
-		//					auto coord = glm::vec3(trans.p.x, trans.p.y, trans.p.z);
-		//					auto quat = glm::vec4(trans.q.x, trans.q.y, trans.q.z, trans.q.w);
 		//					o->set_coord(coord);
 		//					o->set_quat(quat);
 		//					data->coord = coord;
@@ -293,19 +288,6 @@ namespace flame
 	//				{
 	//					glm::vec3 scale = s->scale * objScale;
 	//					auto trans = get_physx_trans(s->coord * objScale, s->quat);
-	//					switch (s->type)
-	//					{
-	//					case ShapeType::box:
-	//						actor->createShape(physx::PxBoxGeometry(scale[0], scale[1], scale[2]), *pxDefaultMaterial, trans);
-	//						break;
-	//					case ShapeType::sphere:
-	//						actor->createShape(physx::PxSphereGeometry(scale[0]), *pxDefaultMaterial, trans);
-	//						break;
-	//					case ShapeType::capsule:
-	//						actor->createShape(physx::PxCapsuleGeometry(scale[0], scale[1]), *pxDefaultMaterial, trans * 
-	//							physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
-	//						break;
-	//					}
 	//				}
 
 	//				rigidbodyData->actor = actor;

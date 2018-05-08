@@ -221,9 +221,6 @@ namespace flame
 			bg_color = v;
 		}
 
-		static std::shared_ptr<RenderPass> renderpass;
-		static std::shared_ptr<RenderPass> renderpass_clear;
-
 		static std::shared_ptr<Framebuffer> framebuffers[2];
 
 		static void on_resize(int, int)
@@ -239,8 +236,6 @@ namespace flame
 		static std::unique_ptr<Buffer> indexBuffer_ui;
 
 		static Texture *font_image;
-
-		static Pipeline *pipeline_ui;
 
 		static const char *sdf_chars = "\" 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"";
 		static int sdf_char_count = strlen(sdf_chars) - 2;
@@ -297,26 +292,6 @@ namespace flame
 					io.AddInputCharacter((unsigned short)c);
 			});
 
-			renderpass = get_renderpass(RenderPassInfo()
-				.add_attachment(VK_FORMAT_UNDEFINED, false)
-				.add_subpass({0}, -1)
-			);
-
-			renderpass_clear = get_renderpass(RenderPassInfo()
-				.add_attachment(VK_FORMAT_UNDEFINED, true)
-				.add_subpass({0}, -1)
-			);
-
-			pipeline_ui = new Pipeline(PipelineInfo()
-				.set_vertex_input_state({{TokenF32V2, 0},{TokenF32V2, 0},{TokenB8V4, 0}})
-				.set_cull_mode(VK_CULL_MODE_NONE)
-				.add_blend_attachment_state(true, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-					VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
-				.add_dynamic_state(VK_DYNAMIC_STATE_SCISSOR)
-				.add_shader("ui.vert", {})
-				.add_shader("ui.frag", {}),
-				renderpass.get(), 0, true);
-
 			pipeline_sdf = new Pipeline(PipelineInfo()
 				.set_vertex_input_state({{ TokenF32V2, 0 },{ TokenF32V2, 0 }})
 				.set_cull_mode(VK_CULL_MODE_NONE)
@@ -326,11 +301,8 @@ namespace flame
 				.add_shader("sdf_text.frag", {}),
 				renderpass.get(), 0, true);
 
-			ImGui::CreateContext();
-			ImGuiIO& io = ImGui::GetIO();
-
 			//io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msmincho.ttc", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
-			io.Fonts->AddFontDefault();
+
 			static const ImWchar icons_ranges[] = {
 				ICON_MIN_FA,
 				ICON_MAX_FA,
@@ -340,31 +312,7 @@ namespace flame
 			icons_config.MergeMode = true;
 			icons_config.PixelSnapH = true;
 			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
-			{
-				unsigned char* pixels; int width, height;
-				io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-				font_image = new Texture(TextureTypeImage, width, height, VK_FORMAT_R8G8B8A8_UNORM, 0);
 
-				Buffer staging_buffer(BufferTypeStaging, font_image->total_size);
-				staging_buffer.map();
-				memcpy(staging_buffer.mapped, pixels, staging_buffer.size);
-				staging_buffer.unmap();
-
-				VkBufferImageCopy r = {};
-				r.imageExtent.width = width;
-				r.imageExtent.height = height;
-				r.imageExtent.depth = 1;
-				r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				r.imageSubresource.layerCount = 1;
-
-				auto cb = begin_once_command_buffer();
-				font_image->transition_layout(cb, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-				vkCmdCopyBufferToImage(cb->v, staging_buffer.v, font_image->v, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &r);
-				font_image->transition_layout(cb, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-				font_image->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				end_once_command_buffer(cb);
-			}
-			io.Fonts->TexID = (void*)0; // image index
 			for (auto i = 0; i < 128; i++)
 				updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, i, &get_texture_info(font_image, colorSampler)));
 
@@ -405,34 +353,6 @@ namespace flame
 			updateDescriptorSets(&pipeline_sdf->descriptor_set->get_write(0, 0, &get_texture_info(sdf_font_image, colorSampler)));
 
 			cmds = new CommandBuffer;
-
-			io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-			io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-			io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-			io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-			io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-			io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-			io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-			io.KeyMap[ImGuiKey_Home] = VK_HOME;
-			io.KeyMap[ImGuiKey_End] = VK_END;
-			io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-			io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-			io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-			io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-			io.KeyMap[ImGuiKey_A] = 'A';
-			io.KeyMap[ImGuiKey_C] = 'C';
-			io.KeyMap[ImGuiKey_V] = 'V';
-			io.KeyMap[ImGuiKey_X] = 'X';
-			io.KeyMap[ImGuiKey_Y] = 'Y';
-			io.KeyMap[ImGuiKey_Z] = 'Z';
-			io.SetClipboardTextFn = [](void *user_data, const char *s) {
-				set_clipBoard(s);
-			};
-			io.GetClipboardTextFn = [](void *user_data) {
-				static std::string s;
-				s = get_clipBoard();
-				return s.c_str();
-			};
 
 			ImGui::StyleColorsLight(nullptr);
 

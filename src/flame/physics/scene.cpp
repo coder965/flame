@@ -15,6 +15,12 @@ namespace flame
 		{
 			_priv->v->removeActor(*r->_priv->v);
 		}
+		
+		void Scene::update(float disp)
+		{
+			_priv->v->simulate(disp);
+			_priv->v->fetchResults(true);
+		}
 
 		Scene *create_scene(Device *d, float gravity, int thread_count)
 		{

@@ -112,8 +112,6 @@ namespace flame
 
 			for (auto s : shaders)
 			{
-				s->build();
-
 				VkPipelineShaderStageCreateInfo info;
 				info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 				info.flags = 0;

@@ -22,6 +22,7 @@
 #include <flame/physics/scene.h>
 #include <flame/physics/rigid.h>
 #include <flame/physics/shape.h>
+#include <flame/UI/UI.h>
 
 #include <algorithm>
 
@@ -216,6 +217,9 @@ int main(int argc, char **args)
 
 	vec3 coord = vec3(0.f);
 	vec4 quat = vec4(0.f, 0.f, 0.f, 1.f);
+
+	auto ui = UI::create_instance(d);
+
 	sm->run([&](){
 
 		static long long last_ns = 0;

@@ -83,6 +83,7 @@ set_target_properties(flame_surface PROPERTIES FOLDER "flame")
 
 add_subdirectory(shader)
 add_subdirectory(graphics)
+add_subdirectory(UI)
 add_subdirectory(model)
 if (FLAME_ENABLE_PHYSICS)
 add_subdirectory(physics)

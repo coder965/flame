@@ -9,6 +9,7 @@ namespace flame
 	{
 		struct ShapePrivate
 		{
+			physx::PxShape *v;
 		};
 	}
 }

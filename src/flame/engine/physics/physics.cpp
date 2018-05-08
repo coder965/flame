@@ -15,35 +15,6 @@ namespace flame
 		return glm::vec3(r, g, b);
 	}
 
-	glm::vec3 physx_vec3_to_vec3(const physx::PxVec3 &src)
-	{
-		return glm::vec3(src.x, src.y, src.z);
-	}
-
-	physx::PxVec3 vec3_to_physx_vec3(const glm::vec3 &src)
-	{
-		return physx::PxVec3(src.x, src.y, src.z);
-	}
-
-	physx::PxMat33 mat3_to_physx_mat3(const glm::mat3 &src)
-	{
-		return physx::PxMat33(
-			physx::PxVec3(src[0][0], src[0][1], src[0][2]),
-			physx::PxVec3(src[1][0], src[1][1], src[1][2]),
-			physx::PxVec3(src[2][0], src[2][1], src[2][2])
-		);
-	}
-
-	physx::PxTransform get_physx_trans(const glm::vec3 &coord, const glm::vec4 &quat)
-	{
-		return physx::PxTransform(vec3_to_physx_vec3(coord), physx::PxQuat(quat.x, quat.y, quat.z, quat.w));
-	}
-
-	physx::PxTransform get_physx_trans(const glm::vec3 &coord, const glm::mat3 &axis)
-	{
-		return physx::PxTransform(vec3_to_physx_vec3(coord), physx::PxQuat(mat3_to_physx_mat3(axis)));
-	}
-
 	std::string shapeTypeName(ShapeType t)
 	{
 		char *names[] = {
@@ -58,15 +29,6 @@ namespace flame
 		return names[(int)t];
 	}
 
-	Shape::Shape()
-	{
-	}
-
-	Shape::Shape(ShapeType _type)
-		:type(_type)
-	{
-	}
-
 	float Shape::getVolume() const
 	{
 		switch (type)
@@ -79,15 +41,6 @@ namespace flame
 			return 4.f * scale.x * scale.x * scale.x * M_PI / 3.f + M_PI * scale.x * scale.x * scale.y;
 		}
 		return 0.f;
-	}
-
-	Rigidbody::Rigidbody()
-	{
-	}
-
-	Rigidbody::Rigidbody(RigidbodyType _type)
-		:type(_type)
-	{
 	}
 
 	Shape *Rigidbody::new_shape()
@@ -110,21 +63,6 @@ namespace flame
 	}
 
 	physx::PxMaterial *pxDefaultMaterial = nullptr;
-
-	physx::PxRigidActor *createStaticRigidActor(physx::PxTransform &trans)
-	{
-		auto body = pxPhysics->createRigidStatic(trans);
-		return body;
-	}
-
-	physx::PxRigidActor *createDynamicRigidActor(physx::PxTransform &trans, bool kinematic, float density)
-	{
-		auto body = pxPhysics->createRigidDynamic(trans);
-		physx::PxRigidBodyExt::updateMassAndInertia(*body, density);
-		if (kinematic)
-			body->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
-		return body;
-	}
 
 	void createPhysicsScene()
 	{
@@ -163,11 +101,6 @@ namespace flame
 	//	pxControllerManager->release();
 	//	pxScene->release();
 	//}
-
-	void init_physics()
-	{
-		//pxDefaultMaterial = pxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-	}
 }
 
 #endif

@@ -1,19 +1,5 @@
-#pragma once
-
-#include <memory>
-#include <vector>
-
-#include <flame/common/math.h>
-
 namespace flame
 {
-	glm::vec3 physx_u32_to_vec3(const physx::PxU32 &src);
-	glm::vec3 physx_vec3_to_vec3(const physx::PxVec3 &src);
-	physx::PxVec3 vec3_to_physx_vec3(const glm::vec3 &src);
-	physx::PxMat33 mat3_to_physx_mat3(const glm::mat3 &src);
-	physx::PxTransform get_physx_trans(const glm::vec3 &coord, const glm::vec4 &quat);
-	physx::PxTransform get_physx_trans(const glm::vec3 &coord, const glm::mat3 &axis);
-
 	struct CollisionGroup
 	{
 		int originalID;
@@ -40,7 +26,6 @@ namespace flame
 		glm::vec3 scale = glm::vec3(0.f);
 		ShapeType type = ShapeType::box;
 
-		Shape();
 		Shape(ShapeType _type);
 		float getVolume() const;
 	};
@@ -69,7 +54,6 @@ namespace flame
 		float friction;
 		std::vector<std::unique_ptr<Shape>> shapes;
 
-		Rigidbody();
 		Rigidbody(RigidbodyType _type);
 		Shape *new_shape();
 		void remove_shape(Shape *s);
@@ -92,8 +76,4 @@ namespace flame
 
 	physx::PxRigidActor *createStaticRigidActor(physx::PxTransform &trans);
 	physx::PxRigidActor *createDynamicRigidActor(physx::PxTransform &trans, bool kinematic, float density);
-
-	void init_physics();
 }
-
-#endif
