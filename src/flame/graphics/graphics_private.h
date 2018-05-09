@@ -27,53 +27,53 @@ namespace flame
 
 		inline VkFormat Z(Format f)
 		{
-			switch (f.v)
+			switch (f)
 			{
-				case Format::R8:
+				case Format_R8_UNORM:
 					return VK_FORMAT_R8_UNORM;
-				case Format::R16:
+				case Format_R16_UNORM:
 					return VK_FORMAT_R16_UNORM;
-				case Format::R8G8B8A8:
+				case Format_R8G8B8A8_UNORM:
 					return VK_FORMAT_R8G8B8A8_UNORM;
-				case Format::R8G8B8A8_SRGB:
+				case Format_R8G8B8A8_SRGB:
 					return VK_FORMAT_R8G8B8A8_SRGB;
-				case Format::B8G8R8A8:
+				case Format_B8G8R8A8_UNORM: case Format_Swapchain_B8G8R8A8_UNORM:
 					return VK_FORMAT_B8G8R8A8_UNORM;
-				case Format::R16G16B16A16:
+				case Format_B8G8R8A8_SRGB: case Format_Swapchain_B8G8R8A8_SRGB:
+					return VK_FORMAT_B8G8R8A8_SRGB;
+				case Format_R16G16B16A16_UNORM:
 					return VK_FORMAT_R16G16B16A16_UNORM;
-				case Format::R16G16B16A16_UNSCALED:
+				case Format_R16G16B16A16_UNSCALED:
 					return VK_FORMAT_R16G16B16A16_SFLOAT;
-
-				case Format::RGBA_BC3:
+				case Format_RGBA_BC3:
 					return VK_FORMAT_BC3_UNORM_BLOCK;
-				case Format::RGBA_ETC2:
+				case Format_RGBA_ETC2:
 					return VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK;
 
-				case Format::Depth16:
+				case Format_Depth16:
 					return VK_FORMAT_D16_UNORM;
-				case Format::Depth32:
+				case Format_Depth32:
 					return VK_FORMAT_D32_SFLOAT;
-				case Format::Depth24Stencil8:
+				case Format_Depth24Stencil8:
 					return VK_FORMAT_D24_UNORM_S8_UINT;
+
 				default:
 					assert(0);
 			}
 		}
 
-		inline Format Z(VkFormat f)
+		inline Format Z(VkFormat f, bool is_swapchain)
 		{
-			Format ret;
-
 			switch (f)
 			{
 				case VK_FORMAT_B8G8R8A8_UNORM:
-					ret.v = Format::B8G8R8A8;
-					break;
+					return is_swapchain ? Format_Swapchain_B8G8R8A8_UNORM : Format_B8G8R8A8_UNORM;
+				case VK_FORMAT_B8G8R8A8_SRGB:
+					return is_swapchain ? Format_Swapchain_B8G8R8A8_SRGB : Format_B8G8R8A8_SRGB;
+
 				default:
 					assert(0);
 			}
-
-			return ret;
 		}
 
 		inline VkMemoryPropertyFlags Z(MemProp p)
@@ -139,7 +139,7 @@ namespace flame
 			}
 		}
 
-		inline VkImageUsageFlags Z(TextureUsage u, Format::Type ft)
+		inline VkImageUsageFlags Z(TextureUsage u, Format fmt)
 		{
 			VkImageUsageFlags vk_usage = 0;
 			if (u & TextureUsageTransferSrc)
@@ -152,7 +152,7 @@ namespace flame
 				vk_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 			if (u & TextureUsageAttachment)
 			{
-				if (ft == Format::TypeColor)
+				if (fmt >= Format_Color_Begin && fmt <= Format_Color_End)
 					vk_usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 				else
 					vk_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;

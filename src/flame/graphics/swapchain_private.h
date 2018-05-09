@@ -11,7 +11,6 @@ namespace flame
 		{
 			Device *d;
 			VkSurfaceKHR surface;
-			VkFormat format;
 			VkSwapchainKHR swapchain;
 			VkImage images[2];
 			VkImageView image_views[2];

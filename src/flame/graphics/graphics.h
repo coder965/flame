@@ -12,43 +12,32 @@ namespace flame
 {
 	namespace graphics
 	{
-		struct Format
+		enum Format
 		{
-			enum Value
-			{
-				R8,
-				R16,
-				R8G8B8A8,
-				R8G8B8A8_SRGB,
-				B8G8R8A8,
-				R16G16B16A16,
-				R16G16B16A16_UNSCALED,
+			Format_R8_UNORM,
+			Format_R16_UNORM,
+			Format_R8G8B8A8_UNORM,
+			Format_R8G8B8A8_SRGB,
+			Format_B8G8R8A8_UNORM,
+			Format_B8G8R8A8_SRGB,
+			Format_Swapchain_B8G8R8A8_UNORM,
+			Format_Swapchain_B8G8R8A8_SRGB,
+			Format_Swapchain_Begin = Format_Swapchain_B8G8R8A8_UNORM,
+			Format_Swapchain_End = Format_Swapchain_B8G8R8A8_SRGB,
+			Format_R16G16B16A16_UNORM,
+			Format_R16G16B16A16_UNSCALED,
+			Format_RGBA_BC3,
+			Format_RGBA_ETC2,
+			Format_Color_Begin = Format_R8_UNORM,
+			Format_Color_End = Format_RGBA_ETC2,
 
-				RGBA_BC3,
-				RGBA_ETC2,
-
-				Depth16,
-				Depth32,
-				Depth24Stencil8
-			};
-
-			enum Type
-			{
-				TypeColor,
-				TypeDepth,
-				TypeDepthStencil
-			};
-
-			Value v;
-
-			Type get_type()
-			{
-				if (v == Depth16 || v == Depth32)
-					return TypeDepth;
-				if (v == Depth24Stencil8)
-					return TypeDepthStencil;
-				return TypeColor;
-			}
+			Format_Depth16,
+			Format_Depth32,
+			Format_Depth24Stencil8,
+			Format_DepthStencil_Begin = Format_Depth24Stencil8,
+			Format_DepthStencil_End = Format_Depth24Stencil8,
+			Format_Depth_Begin = Format_Depth16,
+			Format_Depth_End = Format_Depth24Stencil8,
 		};
 
 		enum MemProp

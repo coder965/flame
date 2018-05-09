@@ -2,6 +2,7 @@
 
 #include <flame/system.h>
 #include <flame/math.h>
+#include <flame/graphics/device.h>
 #include <flame/graphics/renderpass.h>
 #include <flame/graphics/shader.h>
 #include <flame/graphics/pipeline.h>
@@ -40,7 +41,7 @@ namespace flame
 			ImGui::NewFrame();
 		}
 
-		void Instance::end(bool *out_need_update_commandbuffer)
+		void Instance::end()
 		{
 			ImGui::Render();
 
@@ -50,7 +51,7 @@ namespace flame
 			auto vertex_size = max(draw_data->TotalVtxCount, 1) * sizeof(ImDrawVert);
 			auto index_size = max(draw_data->TotalIdxCount, 1) * sizeof(ImDrawIdx);
 
-			if (!_priv->vtx_buffer || _priv->vtx_buffer->size != vertex_size)
+			if (!_priv->vtx_buffer || _priv->vtx_buffer->size < vertex_size)
 			{
 				if (_priv->vtx_buffer)
 				{
@@ -60,9 +61,6 @@ namespace flame
 				_priv->vtx_buffer =  graphics::create_buffer(_priv->d, vertex_size, 
 					graphics::BufferUsageVertexBuffer, graphics::MemPropHost);
 				_priv->vtx_buffer->map();
-
-				if (out_need_update_commandbuffer)
-					*out_need_update_commandbuffer = true;
 			}
 
 			if (!_priv->idx_buffer || _priv->idx_buffer->size < index_size)
@@ -75,9 +73,6 @@ namespace flame
 				_priv->idx_buffer = graphics::create_buffer(_priv->d, index_size,
 					graphics::BufferUsageIndexBuffer, graphics::MemPropHost);
 				_priv->idx_buffer->map();
-
-				if (out_need_update_commandbuffer)
-					*out_need_update_commandbuffer = true;
 			}
 
 			auto vtx_dst = (ImDrawVert*)_priv->vtx_buffer->mapped;
@@ -131,10 +126,10 @@ namespace flame
 					else
 					{
 						cb->set_scissor(
-							max((int)(pcmd->ClipRect.x), 0),
-							max((int)(pcmd->ClipRect.y), 0),
-							max((uint)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
-							max((uint)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
+							(int)(pcmd->ClipRect.x),
+							(int)(pcmd->ClipRect.y),
+							(uint)(pcmd->ClipRect.z - pcmd->ClipRect.x),
+							(uint)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1)  // TODO: + 1??????
 						);
 						cb->draw_indexed(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 					}
@@ -146,12 +141,22 @@ namespace flame
 			cb->end_renderpass();
 		}
 
+		bool Instance::begin_window(const char *title)
+		{
+			return ImGui::Begin(title);
+		}
+
+		void Instance::end_window()
+		{
+			ImGui::End();
+		}
+
 		bool Instance::button(const char *title)
 		{
 			return ImGui::Button(title);
 		}
 
-		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp, graphics::Descriptorpool *dp, graphics::Commandpool *cp, graphics::Queue *q)
+		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp)
 		{
 			auto i = new Instance;
 
@@ -179,7 +184,7 @@ namespace flame
 			i->_priv->pl->set_renderpass(rp, 0);
 			i->_priv->pl->build_graphics();
 
-			i->_priv->ds = dp->create_descriptorset(i->_priv->pl, 0);
+			i->_priv->ds = d->dp->create_descriptorset(i->_priv->pl, 0);
 
 			ImGui::CreateContext();
 			auto &im_io = ImGui::GetIO();
@@ -187,7 +192,7 @@ namespace flame
 			unsigned char* font_pixels; int font_tex_width, font_tex_height;
 			im_io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_tex_width, &font_tex_height);
 			i->_priv->font_tex = graphics::create_texture(d, font_tex_width, font_tex_height, 
-				1, 1, graphics::Format::R8G8B8A8, graphics::TextureUsageShaderSampled | 
+				1, 1, graphics::Format_R8G8B8A8_UNORM, graphics::TextureUsageShaderSampled |
 				graphics::TextureUsageTransferDst, graphics::MemPropDevice);
 
 			auto font_stag = graphics::create_buffer(d, font_tex_width * font_tex_height * 4, 
@@ -196,7 +201,7 @@ namespace flame
 			memcpy(font_stag->mapped, font_pixels, font_stag->size);
 			font_stag->unmap();
 
-			auto cb_cpy = cp->create_commandbuffer();
+			auto cb_cpy = d->cp->create_commandbuffer();
 			cb_cpy->begin(true);
 			cb_cpy->change_texture_layout(i->_priv->font_tex, graphics::TextureLayoutUndefined, graphics::TextureLayoutTransferDst);
 			graphics::BufferImageCopy font_cpy_range;
@@ -207,9 +212,9 @@ namespace flame
 			cb_cpy->copy_buffer_to_image(font_stag, i->_priv->font_tex, 1, &font_cpy_range);
 			cb_cpy->change_texture_layout(i->_priv->font_tex, graphics::TextureLayoutTransferDst, graphics::TextureLayoutShaderReadOnly);
 			cb_cpy->end();
-			q->submit(cb_cpy, nullptr, nullptr);
-			q->wait_idle();
-			cp->destroy_commandbuffer(cb_cpy);
+			d->q->submit(cb_cpy, nullptr, nullptr);
+			d->q->wait_idle();
+			d->cp->destroy_commandbuffer(cb_cpy);
 
 			graphics::destroy_buffer(d, font_stag);
 
@@ -219,7 +224,8 @@ namespace flame
 
 			i->_priv->font_sam = graphics::create_sampler(d, graphics::FilterLinear, graphics::FilterLinear, false);
 
-			i->_priv->ds->set_texture(0, 0, i->_priv->font_view, i->_priv->font_sam);
+			for (auto j = 0; j < 128; j++)
+				i->_priv->ds->set_texture(0, j, i->_priv->font_view, i->_priv->font_sam);
 
 			i->_priv->vtx_buffer = nullptr;
 			i->_priv->idx_buffer = nullptr;

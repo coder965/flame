@@ -11,19 +11,6 @@ namespace flame
 {
 	namespace graphics
 	{
-		inline VkImageAspectFlags Z(Format::Type t)
-		{
-			switch (t)
-			{
-				case Format::TypeColor:
-					return VK_IMAGE_ASPECT_COLOR_BIT;
-				case Format::TypeDepth:
-					return VK_IMAGE_ASPECT_DEPTH_BIT;
-				case Format::TypeDepthStencil:
-					return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-			}
-		}
-
 		void Commandbuffer::begin(bool once)
 		{
 			VkCommandBufferBeginInfo info;
@@ -143,17 +130,15 @@ namespace flame
 			level_count = level_count == 0 ? t->level : level_count;
 			layer_count = layer_count == 0 ? t->layer : layer_count;
 
-			auto ft = t->format.get_type();
-
 			VkImageMemoryBarrier barrier;
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			barrier.pNext = nullptr;
-			barrier.oldLayout = Z(from, ft);
-			barrier.newLayout = Z(to, ft);
+			barrier.oldLayout = Z(from, t->format);
+			barrier.newLayout = Z(to, t->format);
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.image = t->_priv->v;
-			barrier.subresourceRange.aspectMask = Z(ft);
+			barrier.subresourceRange.aspectMask = Z(format_to_aspect(t->format));
 			barrier.subresourceRange.baseMipLevel = base_level;
 			barrier.subresourceRange.levelCount = level_count;
 			barrier.subresourceRange.baseArrayLayer = base_layer;
@@ -222,7 +207,7 @@ namespace flame
 
 		void Commandbuffer::copy_buffer_to_image(Buffer *src, Texture *dst, int copy_count, BufferImageCopy *copies)
 		{
-			auto aspect = Z(dst->format.get_type());
+			auto aspect = Z(format_to_aspect(dst->format));
 
 			std::vector<VkBufferImageCopy> vk_copies(copy_count);
 			for (auto i = 0; i < copy_count; i++)

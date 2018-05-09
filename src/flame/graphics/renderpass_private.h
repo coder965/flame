@@ -10,7 +10,7 @@ namespace flame
 		struct RenderpassPrivate
 		{
 			Device *d;
-			std::vector<std::tuple<Format, bool, bool>> attachments;
+			std::vector<std::pair<Format, bool>> attachments;
 			std::vector<std::pair<std::vector<int>, int>> subpasses;
 			std::vector<std::pair<int, int>> dependencies;
 			std::vector<VkClearValue> clear_values;

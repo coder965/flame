@@ -42,8 +42,9 @@ namespace flame
 			return r;
 		}
 
-		void destroy_material(Rigid *r)
+		void destroy_rigid(Rigid *r)
 		{
+			r->_priv->v->release();
 			delete r->_priv;
 			delete r;
 		}
