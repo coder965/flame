@@ -9,6 +9,7 @@
 #include <fstream>
 #include <filesystem>
 #include <memory>
+#include <stdarg.h>
 
 namespace std
 {
@@ -67,6 +68,18 @@ namespace flame
 
 		}
 		file.write((char*)v.data(), v.size());
+	}
+
+	inline void write_fmt(std::ofstream &file, const char *fmt, ...)
+	{
+		static char buffer[1024];
+
+		va_list ap;
+		va_start(ap, fmt);
+		auto len = vsprintf(buffer, fmt, ap);
+		va_end(ap);
+
+		file.write(buffer, len);
 	}
 
 	enum FileType

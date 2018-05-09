@@ -1,4 +1,5 @@
 #include <flame/time.h>
+#include <flame/filesystem.h>
 #include <flame/system.h>
 #include <flame/surface.h>
 #include <flame/image.h>
@@ -177,12 +178,29 @@ int main(int argc, char **args)
 		cbs_ui[i] = d->cp->create_commandbuffer();
 	}
 
+	auto p_d = physics::create_device();
+	auto material = physics::create_material(p_d, 0.5f, 0.5f, 0.6f);
+	auto scene = physics::create_scene(p_d, -0.98f, 1);
+
 	struct Ins
 	{
 		physics::Rigid *r;
 		physics::Shape *s;
 		vec3 coord;
 		vec4 quat;
+
+		void create()
+		{
+			r = physics::create_dynamic_rigid(p_d, coord);
+			s = physics::create_box_shape(r, material, vec3(0.f), 0.5f, 0.5f, 0.5f);
+			scene->add_rigid(r);
+		}
+
+		void destroy()
+		{
+			physics::destroy_shape(s);
+			physics::destroy_rigid(r);
+		}
 	};
 
 	std::vector<Ins> inses;
@@ -222,10 +240,6 @@ int main(int argc, char **args)
 
 	auto matrix_need_update = true;
 
-	auto p_d = physics::create_device();
-	auto material = physics::create_material(p_d, 0.5f, 0.5f, 0.6f);
-	auto scene = physics::create_scene(p_d, -0.98f, 1);
-
 	auto ui = UI::create_instance(d, rp_ui);
 
 	sm->run([&](){
@@ -239,14 +253,38 @@ int main(int argc, char **args)
 		{
 			Ins i;
 			i.coord = vec3(0.f, 2.f, 0.f);
-			i.r = physics::create_dynamic_rigid(p_d, i.coord);
-			i.s = physics::create_box_shape(i.r, material, vec3(0.f), 0.5f, 0.5f, 0.5f);
-			scene->add_rigid(i.r);
 			i.quat = vec4(0.f, 0.f, 0.f, 1.f);
+			i.create();
 			inses.push_back(i);
 
 			update_main_cmd();
 			matrix_need_update = true;
+		}
+		if (ui->button("Save Scene"))
+		{
+			std::ofstream out("physics test scene.txt");
+			for (auto &i : inses)
+			{
+				write_fmt(out, "%f %f %f %f %f %f %f\r\n", i.coord.x, i.coord.y, i.coord.z,
+					i.quat.x, i.quat.y, i.quat.z, i.quat.w);
+			}
+		}
+		if (ui->button("Load Scene"))
+		{
+			std::ifstream in("physics test scene.txt");
+			for (auto &i : inses)
+				i.destroy();
+			inses.clear();
+			while (!in.eof())
+			{
+				std::string line;
+				std::getline(in, line);
+				Ins i;
+				scanf("%f %f %f %f %f %f %f", &i.coord.x, &i.coord.y, &i.coord.z,
+					&i.quat.x, &i.quat.y, &i.quat.z, &i.quat.w);
+				i.create();
+				inses.push_back(i);
+			}
 		}
 		ui->end_window();
 		ui->end();
@@ -270,8 +308,7 @@ int main(int argc, char **args)
 				it->r->get_pose(it->coord, it->quat);
 				if (it->coord.y < -4.f)
 				{
-					physics::destroy_shape(it->s);
-					physics::destroy_rigid(it->r);
+					it->destroy();
 					it = inses.erase(it);
 					need_update_cmd = true;
 				}
