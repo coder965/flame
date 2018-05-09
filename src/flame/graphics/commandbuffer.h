@@ -38,13 +38,15 @@ namespace flame
 
 			FLAME_GRAPHICS_EXPORTS void begin_renderpass(Renderpass *r, Framebuffer *f);
 			FLAME_GRAPHICS_EXPORTS void end_renderpass();
+			FLAME_GRAPHICS_EXPORTS void set_viewport(int x, int y, int width, int height);
+			FLAME_GRAPHICS_EXPORTS void set_scissor(int x, int y, int width, int height);
 			FLAME_GRAPHICS_EXPORTS void bind_pipeline(Pipeline *p);
 			FLAME_GRAPHICS_EXPORTS void bind_descriptorset(Descriptorset *s);
 			FLAME_GRAPHICS_EXPORTS void bind_vertexbuffer(Buffer *b);
 			FLAME_GRAPHICS_EXPORTS void bind_indexbuffer(Buffer *b, IndiceType t);
 			FLAME_GRAPHICS_EXPORTS void push_constant(int shader_stage, int offset, int size, void *data);
 			FLAME_GRAPHICS_EXPORTS void draw(int count, int instance_count, int first_instance);
-			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index, int instance_count, int first_instance);
+			FLAME_GRAPHICS_EXPORTS void draw_indexed(int count, int first_index, int vertex_offset, int instance_count, int first_instance);
 			FLAME_GRAPHICS_EXPORTS void dispatch(int x, int y, int z);
 
 			FLAME_GRAPHICS_EXPORTS void copy_buffer(Buffer *src, Buffer *dst, int copy_count, BufferCopy *copies);

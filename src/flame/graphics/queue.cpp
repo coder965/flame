@@ -18,8 +18,8 @@ namespace flame
 			VkSubmitInfo info;
 			info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			info.pNext = nullptr;
-			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			info.pWaitDstStageMask = &waitStage;
+			VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			info.pWaitDstStageMask = &wait_stage;
 			info.waitSemaphoreCount = wait_semaphore ? 1 : 0;
 			info.pWaitSemaphores = wait_semaphore ? &wait_semaphore->_priv->v : nullptr;
 			info.commandBufferCount = 1;

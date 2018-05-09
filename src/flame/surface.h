@@ -47,7 +47,7 @@ namespace flame
 		int mouse_disp_y;
 		int mouse_scroll;
 
-		int mouse_buttons[3];
+		int mouse_buttons[3]; // left, right, middle of KeyState
 
 		SurfacePrivate *_priv;
 
@@ -82,6 +82,7 @@ namespace flame
 	struct SurfaceManager
 	{
 		long long fps;
+		float elapsed_time; // second
 
 		SurfaceManagerPrivate *_priv;
 

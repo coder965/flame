@@ -378,48 +378,6 @@ namespace flame
 			show_windows();
 			show_layout();
 
-			ImGui::Render();
-
-			ImGuiIO& io = ImGui::GetIO();
-			auto draw_data = ImGui::GetDrawData();
-			if (draw_data->CmdListsCount > 0)
-			{
-				draw_data->ScaleClipRects(io.DisplayFramebufferScale);
-
-				auto vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
-				if (!vertexBuffer_ui || vertexBuffer_ui->size < vertex_size)
-				{
-					if (vertexBuffer_ui)
-						vertexBuffer_ui->unmap();
-					vertexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateVertex, vertex_size);
-					vertexBuffer_ui->map();
-				}
-
-				auto index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-				if (!indexBuffer_ui || indexBuffer_ui->size < index_size)
-				{
-					if (indexBuffer_ui)
-						indexBuffer_ui->unmap();
-					indexBuffer_ui = std::make_unique<Buffer>(BufferTypeImmediateIndex, index_size);
-					indexBuffer_ui->map();
-				}
-
-				auto vtx_dst = (ImDrawVert*)vertexBuffer_ui->mapped;
-				auto idx_dst = (ImDrawIdx*)indexBuffer_ui->mapped;
-
-				for (int n = 0; n < draw_data->CmdListsCount; n++)
-				{
-					const auto cmd_list = draw_data->CmdLists[n];
-					memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-					memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-					vtx_dst += cmd_list->VtxBuffer.Size;
-					idx_dst += cmd_list->IdxBuffer.Size;
-				}
-
-				vertexBuffer_ui->flush();
-				indexBuffer_ui->flush();
-			}
-
 			auto _chr_count = 0;
 			if (!sdf_draw_commands.empty())
 			{
@@ -491,8 +449,6 @@ namespace flame
 				sdf_vertex_buffer->unmap();
 			}
 
-			cmds->begin();
-
 			if (main_layout->is_empty(0))
 			{
 				VkClearValue clear_value = {bg_color.r, bg_color.g, bg_color.b, 1.f};
@@ -500,47 +456,6 @@ namespace flame
 			}
 			else
 				cmds->begin_renderpass(renderpass.get(), framebuffers[surface->image_index].get());
-
-			if (draw_data->CmdListsCount > 0)
-			{
-				cmds->set_viewport_and_scissor(surface->cx, surface->cy);
-
-				cmds->bind_vertex_buffer(vertexBuffer_ui.get());
-				cmds->bind_index_buffer(indexBuffer_ui.get(), VK_INDEX_TYPE_UINT16);
-
-				cmds->bind_pipeline(pipeline_ui);
-				cmds->bind_descriptor_set();
-
-				cmds->push_constant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &glm::vec4(2.f / io.DisplaySize.x, 2.f / io.DisplaySize.y, -1.f, -1.f));
-
-				int vtx_offset = 0;
-				int idx_offset = 0;
-				for (int n = 0; n < draw_data->CmdListsCount; n++)
-				{
-					const ImDrawList* cmd_list = draw_data->CmdLists[n];
-					for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-					{
-						const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-						if (pcmd->UserCallback)
-						{
-							pcmd->UserCallback(cmd_list, pcmd);
-							pcmd->TextureId;
-						}
-						else
-						{
-							cmds->set_scissor(
-								ImMax((int32_t)(pcmd->ClipRect.x), 0),
-								ImMax((int32_t)(pcmd->ClipRect.y), 0),
-								ImMax((uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
-								ImMax((uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
-							);
-							cmds->draw_index(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
-						}
-						idx_offset += pcmd->ElemCount;
-					}
-					vtx_offset += cmd_list->VtxBuffer.Size;
-				}
-			}
 
 			if (!sdf_draw_commands.empty())
 			{
@@ -555,10 +470,6 @@ namespace flame
 
 				sdf_draw_commands.clear();
 			}
-
-			cmds->end_renderpass();
-
-			cmds->end();
 
 			add_to_draw_list(cmds->v);
 

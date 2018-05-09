@@ -169,6 +169,7 @@ int main(int argc, char **args)
 
 	graphics::Framebuffer *fbs[2];
 	graphics::Commandbuffer *cbs[2];
+	graphics::Commandbuffer *cbs_ui[2];
 	for (auto i = 0; i < 2; i++)
 	{
 		fbs[i] = create_framebuffer(d, res.x, res.y, rp);
@@ -184,16 +185,18 @@ int main(int argc, char **args)
 		cbs[i]->bind_vertexbuffer(vb);
 		cbs[i]->bind_indexbuffer(ib, graphics::IndiceTypeUint);
 		for (auto j = 0; j < m->mesh_count; j++)
-			cbs[i]->draw_indexed(m->meshes[j]->indice_count, m->meshes[j]->indice_base, 1, j);
-		//cbs[i]->draw(m->get_vertex_count());
+			cbs[i]->draw_indexed(m->meshes[j]->indice_count, m->meshes[j]->indice_base, 0, 1, j);
 		cbs[i]->end_renderpass();
 		cbs[i]->end();
+
+		cbs_ui[i] = cp->create_commandbuffer();
 	}
 
 	auto cb_update = cp->create_commandbuffer();
 
 	auto image_avalible = graphics::create_semaphore(d);
 	auto render_finished = graphics::create_semaphore(d);
+	auto ui_finished = graphics::create_semaphore(d);
 
 	auto x_ang = 0.f;
 	auto matrix_need_update = true;
@@ -215,9 +218,27 @@ int main(int argc, char **args)
 	vec3 coord = vec3(0.f);
 	vec4 quat = vec4(0.f, 0.f, 0.f, 1.f);
 
-	auto ui = UI::create_instance(d, dp, cp, q);
+	auto ui = UI::create_instance(d, rp, dp, cp, q);
 
 	sm->run([&](){
+		ui->begin(res.x, res.y, sm->elapsed_time, s->mouse_x, s->mouse_y,
+			(s->mouse_buttons[0] & KeyStateDown) != 0,
+			(s->mouse_buttons[1] & KeyStateDown) != 0,
+			(s->mouse_buttons[2] & KeyStateDown) != 0,
+			s->mouse_scroll);
+		bool need_record_ui = false;
+		ui->button("Hello");
+		ui->end(&need_record_ui);
+
+		if (need_record_ui)
+		{
+			for (auto i = 0; i < 2; i++)
+			{
+				cbs_ui[i]->begin();
+				ui->record_commandbuffer(cbs_ui[i], rp, fbs[i]);
+				cbs_ui[i]->end();
+			}
+		}
 
 		static long long last_ns = 0;
 		auto t = get_now_ns();
@@ -262,8 +283,12 @@ int main(int argc, char **args)
 		}
 
 		auto index = sc->acquire_image(image_avalible);
+
 		q->submit(cbs[index], image_avalible, render_finished);
-		q->present(index, sc, render_finished);
+		q->wait_idle();
+		q->submit(cbs_ui[index], render_finished, ui_finished);
+		q->wait_idle();
+		q->present(index, sc, ui_finished);
 
 		static long long last_fps = 0;
 		if (last_fps != sm->fps)

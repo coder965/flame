@@ -588,14 +588,21 @@ namespace flame
 			}
 			idle_callback();
 			_priv->counting_frame++;
+			auto et = _priv->last_time;
 			_priv->last_time = get_now_ns();
+			et = _priv->last_time - et;
+			elapsed_time = et / 1000000000.f;
 		}
 	}
 
 	SurfaceManager *create_surface_manager()
 	{
 		auto m = new SurfaceManager;
+		m->fps = 0;
+		m->elapsed_time = 0.f;
+
 		m->_priv = new SurfaceManagerPrivate;
+
 		return m;
 	}
 

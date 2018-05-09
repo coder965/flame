@@ -58,6 +58,28 @@ namespace flame
 			vkCmdEndRenderPass(_priv->v);
 		}
 
+		void Commandbuffer::set_viewport(int x, int y, int width, int height)
+		{
+			VkViewport vp;
+			vp.minDepth = 0.f;
+			vp.maxDepth = 1.f;
+			vp.x = x;
+			vp.y = y;
+			vp.width = width;
+			vp.height = height;
+			vkCmdSetViewport(_priv->v, 0, 1, &vp);
+		}
+
+		void Commandbuffer::set_scissor(int x, int y, int width, int height)
+		{
+			VkRect2D sc;
+			sc.offset.x = x;
+			sc.offset.y = y;
+			sc.extent.width = width;
+			sc.extent.height = height;
+			vkCmdSetScissor(_priv->v, 0, 1, &sc);
+		}
+
 		void Commandbuffer::bind_pipeline(Pipeline *p)
 		{
 			if (_priv->current_pipeline == p)
@@ -93,7 +115,7 @@ namespace flame
 			vkCmdDraw(_priv->v, count, instance_count, 0, first_instance);
 		}
 
-		void Commandbuffer::draw_indexed(int count, int first_index, int instance_count, int first_instance)
+		void Commandbuffer::draw_indexed(int count, int first_index, int vertex_offset, int instance_count, int first_instance)
 		{
 			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, 0, first_instance);
 		}

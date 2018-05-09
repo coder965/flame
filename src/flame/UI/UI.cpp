@@ -1,6 +1,7 @@
 #include "UI_private.h"
 
 #include <flame/system.h>
+#include <flame/math.h>
 #include <flame/graphics/renderpass.h>
 #include <flame/graphics/shader.h>
 #include <flame/graphics/pipeline.h>
@@ -18,12 +19,12 @@ namespace flame
 {
 	namespace UI
 	{
-		void Instance::begin(int cx, int cy, int mouse_x, int mouse_y,
+		void Instance::begin(int cx, int cy, float elapsed_time, int mouse_x, int mouse_y,
 			bool mouse_left_pressing, bool mouse_right_pressing, bool mouse_middle_pressing, int mouse_scroll)
 		{
 			ImGuiIO& im_io = ImGui::GetIO();
 
-			im_io.DisplaySize = ImVec2(cx, cy);
+			im_io.DisplaySize = ImVec2((float)cx, (float)cy);
 			im_io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
 			im_io.DeltaTime = elapsed_time;
@@ -39,26 +40,123 @@ namespace flame
 			ImGui::NewFrame();
 		}
 
-		void Instance::end(graphics::Commandbuffer *cb, graphics::Framebuffer *fb)
+		void Instance::end(bool *out_need_update_commandbuffer)
 		{
+			ImGui::Render();
 
+			ImGuiIO& im_io = ImGui::GetIO();
+			auto draw_data = ImGui::GetDrawData();
+
+			auto vertex_size = max(draw_data->TotalVtxCount, 1) * sizeof(ImDrawVert);
+			auto index_size = max(draw_data->TotalIdxCount, 1) * sizeof(ImDrawIdx);
+
+			if (!_priv->vtx_buffer || _priv->vtx_buffer->size != vertex_size)
+			{
+				if (_priv->vtx_buffer)
+				{
+					_priv->vtx_buffer->unmap();
+					graphics::destroy_buffer(_priv->d, _priv->vtx_buffer);
+				}
+				_priv->vtx_buffer =  graphics::create_buffer(_priv->d, vertex_size, 
+					graphics::BufferUsageVertexBuffer, graphics::MemPropHost);
+				_priv->vtx_buffer->map();
+
+				if (out_need_update_commandbuffer)
+					*out_need_update_commandbuffer = true;
+			}
+
+			if (!_priv->idx_buffer || _priv->idx_buffer->size < index_size)
+			{
+				if (_priv->idx_buffer)
+				{
+					_priv->idx_buffer->unmap();
+					graphics::destroy_buffer(_priv->d, _priv->idx_buffer);
+				}
+				_priv->idx_buffer = graphics::create_buffer(_priv->d, index_size,
+					graphics::BufferUsageIndexBuffer, graphics::MemPropHost);
+				_priv->idx_buffer->map();
+
+				if (out_need_update_commandbuffer)
+					*out_need_update_commandbuffer = true;
+			}
+
+			auto vtx_dst = (ImDrawVert*)_priv->vtx_buffer->mapped;
+			auto idx_dst = (ImDrawIdx*)_priv->idx_buffer->mapped;
+
+			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			{
+				const auto cmd_list = draw_data->CmdLists[n];
+				memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+				memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+				vtx_dst += cmd_list->VtxBuffer.Size;
+				idx_dst += cmd_list->IdxBuffer.Size;
+			}
+
+			_priv->vtx_buffer->flush();
+			_priv->idx_buffer->flush();
 		}
 
-		Instance *create_instance(graphics::Device *d, graphics::Descriptorpool *dp, graphics::Commandpool *cp, graphics::Queue *q)
+		void Instance::record_commandbuffer(graphics::Commandbuffer *cb, graphics::Renderpass *rp, graphics::Framebuffer *fb)
+		{
+			ImGuiIO& im_io = ImGui::GetIO();
+			auto draw_data = ImGui::GetDrawData();
+
+			cb->begin_renderpass(rp, fb);
+			cb->bind_pipeline(_priv->pl);
+			cb->bind_descriptorset(_priv->ds);
+			cb->bind_vertexbuffer(_priv->vtx_buffer);
+			cb->bind_indexbuffer(_priv->idx_buffer, graphics::IndiceTypeUshort);
+			cb->set_viewport(0, 0, im_io.DisplaySize.x, im_io.DisplaySize.y);
+			cb->set_scissor(0, 0, im_io.DisplaySize.x, im_io.DisplaySize.y);
+			glm::vec4 pc;
+			pc.x = 2.f / im_io.DisplaySize.x;
+			pc.y = 2.f / im_io.DisplaySize.y;
+			pc.z = -1.f;
+			pc.w = -1.f;
+			cb->push_constant(graphics::ShaderVert, 0, sizeof(glm::vec4), &pc);
+
+			int vtx_offset = 0;
+			int idx_offset = 0;
+			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			{
+				const ImDrawList* cmd_list = draw_data->CmdLists[n];
+				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+				{
+					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+					if (pcmd->UserCallback)
+					{
+						pcmd->UserCallback(cmd_list, pcmd);
+						pcmd->TextureId;
+					}
+					else
+					{
+						cb->set_scissor(
+							max((int)(pcmd->ClipRect.x), 0),
+							max((int)(pcmd->ClipRect.y), 0),
+							max((uint)(pcmd->ClipRect.z - pcmd->ClipRect.x), 0),
+							max((uint)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1), 0)  // TODO: + 1??????
+						);
+						cb->draw_indexed(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
+					}
+					idx_offset += pcmd->ElemCount;
+				}
+				vtx_offset += cmd_list->VtxBuffer.Size;
+			}
+
+			cb->end_renderpass();
+		}
+
+		bool Instance::button(const char *title)
+		{
+			return ImGui::Button(title);
+		}
+
+		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp, graphics::Descriptorpool *dp, graphics::Commandpool *cp, graphics::Queue *q)
 		{
 			auto i = new Instance;
 
 			i->_priv = new InstancePrivate;
-
-			i->_priv->rp_clear = graphics::create_renderpass(d);
-			i->_priv->rp_clear->add_attachment(graphics::Format::R8G8B8A8, true);
-			i->_priv->rp_clear->add_subpass({0}, -1);
-			i->_priv->rp_clear->build();
-
-			i->_priv->rp_not_clear = graphics::create_renderpass(d);
-			i->_priv->rp_not_clear->add_attachment(graphics::Format::R8G8B8A8, false);
-			i->_priv->rp_not_clear->add_subpass({0}, -1);
-			i->_priv->rp_not_clear->build();
+			i->_priv->d = d;
 
 			i->_priv->vert = graphics::create_shader(d, "ui.vert");
 			i->_priv->vert->build();
@@ -78,7 +176,7 @@ namespace flame
 			i->_priv->pl->set_dynamic_state({graphics::DynamicStateScissor});
 			i->_priv->pl->add_shader(i->_priv->vert);
 			i->_priv->pl->add_shader(i->_priv->frag);
-			i->_priv->pl->set_renderpass(i->_priv->rp_clear, 0);
+			i->_priv->pl->set_renderpass(rp, 0);
 			i->_priv->pl->build_graphics();
 
 			i->_priv->ds = dp->create_descriptorset(i->_priv->pl, 0);
@@ -123,6 +221,9 @@ namespace flame
 
 			i->_priv->ds->set_texture(0, 0, i->_priv->font_view, i->_priv->font_sam);
 
+			i->_priv->vtx_buffer = nullptr;
+			i->_priv->idx_buffer = nullptr;
+
 			im_io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 			im_io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
 			im_io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
@@ -156,8 +257,6 @@ namespace flame
 
 		void destroy_instance(graphics::Device *d, Instance *i)
 		{
-			graphics::destroy_renderpass(d, i->_priv->rp_clear);
-			graphics::destroy_renderpass(d, i->_priv->rp_not_clear);
 			graphics::destroy_shader(d, i->_priv->vert);
 			graphics::destroy_shader(d, i->_priv->frag);
 			graphics::destroy_pipeline(d, i->_priv->pl);
