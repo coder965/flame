@@ -10,7 +10,7 @@ namespace flame
 			
 			d->_priv = new DevicePrivate;
 			d->_priv->foundation = PxCreateFoundation(PX_FOUNDATION_VERSION, d->_priv->allocator, d->_priv->error_callback);
-			d->_priv->inst = PxCreatePhysics(PX_PHYSICS_VERSION, *d->_priv->foundation, physx::PxTolerancesScale());
+			d->_priv->inst = PxCreatePhysics(PX_PHYSICS_VERSION, *d->_priv->foundation, PxTolerancesScale());
 
 			return d;
 		}

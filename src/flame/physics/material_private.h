@@ -9,7 +9,7 @@ namespace flame
 	{
 		struct MaterialPrivate
 		{
-			physx::PxMaterial *v;
+			PxMaterial *v;
 		};
 	}
 }

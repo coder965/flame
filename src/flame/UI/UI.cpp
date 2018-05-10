@@ -15,6 +15,7 @@
 
 #include <imgui.h>
 #include <Windows.h>
+#include <stdarg.h>
 
 namespace flame
 {
@@ -23,6 +24,8 @@ namespace flame
 		void Instance::begin(int cx, int cy, float elapsed_time, int mouse_x, int mouse_y,
 			bool mouse_left_pressing, bool mouse_right_pressing, bool mouse_middle_pressing, int mouse_scroll)
 		{
+			processed_input = false;
+
 			ImGuiIO& im_io = ImGui::GetIO();
 
 			im_io.DisplaySize = ImVec2((float)cx, (float)cy);
@@ -43,6 +46,8 @@ namespace flame
 
 		void Instance::end()
 		{
+			processed_input = ImGui::IsMouseHoveringAnyWindow() | ImGui::IsAnyWindowFocused();
+
 			ImGui::Render();
 
 			ImGuiIO& im_io = ImGui::GetIO();
@@ -156,6 +161,24 @@ namespace flame
 			return ImGui::Button(title);
 		}
 
+		bool Instance::checkbox(const char *title, bool *p)
+		{
+			return ImGui::Checkbox(title, p);
+		}
+
+		bool Instance::dragfloat(const char *title, float *p, float speed)
+		{
+			return ImGui::DragFloat(title, p, speed);
+		}
+
+		void Instance::text(const char *fmt, ...)
+		{
+			va_list ap;
+			va_start(ap, fmt);
+			ImGui::TextV(fmt, ap);
+			va_end(ap);
+		}
+
 		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp)
 		{
 			auto i = new Instance;
@@ -263,6 +286,14 @@ namespace flame
 
 		void destroy_instance(graphics::Device *d, Instance *i)
 		{
+			if (i->_priv->vtx_buffer)
+				graphics::destroy_buffer(d, i->_priv->vtx_buffer);
+			if (i->_priv->idx_buffer)
+				graphics::destroy_buffer(d, i->_priv->idx_buffer);
+			graphics::destroy_sampler(d, i->_priv->font_sam);
+			graphics::destroy_textureview(d, i->_priv->font_view);
+			graphics::destroy_texture(d, i->_priv->font_tex);
+			d->dp->destroy_descriptorset(i->_priv->ds);
 			graphics::destroy_shader(d, i->_priv->vert);
 			graphics::destroy_shader(d, i->_priv->frag);
 			graphics::destroy_pipeline(d, i->_priv->pl);

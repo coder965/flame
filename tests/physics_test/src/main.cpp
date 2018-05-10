@@ -26,6 +26,7 @@
 #include <flame/UI/UI.h>
 
 #include <algorithm>
+#include <Windows.h>
 
 int main(int argc, char **args)
 {
@@ -44,7 +45,7 @@ int main(int argc, char **args)
 	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
 		"Hello");
 
-	auto d = graphics::create_device(true);
+	auto d = graphics::create_device(false);
 
 	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
 
@@ -176,24 +177,33 @@ int main(int argc, char **args)
 
 		cbs[i] = d->cp->create_commandbuffer();
 		cbs_ui[i] = d->cp->create_commandbuffer();
+		cbs_ui[i]->begin();
+		cbs_ui[i]->end();
 	}
 
 	auto p_d = physics::create_device();
-	auto material = physics::create_material(p_d, 0.5f, 0.5f, 0.6f);
-	auto scene = physics::create_scene(p_d, -0.98f, 1);
+	auto material = physics::create_material(p_d, 0.f, 0.f, 0.f);
+	auto scene = physics::create_scene(p_d, -0.98f/*0.f*/, 1);
 
 	struct Ins
 	{
-		physics::Rigid *r;
-		physics::Shape *s;
+		bool dynamic;
 		vec3 coord;
 		vec4 quat;
+		vec3 size;
+		physics::Rigid *r;
+		physics::Shape *s;
 
-		void create()
+		void create(physics::Device *d, bool _dynamic, physics::Material *m, physics::Scene *sc)
 		{
-			r = physics::create_dynamic_rigid(p_d, coord);
-			s = physics::create_box_shape(r, material, vec3(0.f), 0.5f, 0.5f, 0.5f);
-			scene->add_rigid(r);
+			dynamic = _dynamic;
+			if (dynamic)
+				r = physics::create_dynamic_rigid(d, coord);
+			else
+				r = physics::create_static_rigid(d, coord);
+			s = physics::create_box_shape(d, m, vec3(0.f), size.x, size.y, size.z);
+			r->attach_shape(s);
+			sc->add_rigid(r);
 		}
 
 		void destroy()
@@ -228,19 +238,33 @@ int main(int argc, char **args)
 	auto render_finished = graphics::create_semaphore(d);
 	auto ui_finished = graphics::create_semaphore(d);
 
+	auto ui = UI::create_instance(d, rp_ui);
+
 	auto x_ang = 0.f;
 	auto view_need_update = true;
 	s->add_mousemove_listener([&](Surface *s, int, int){
-		if (s->mouse_buttons[0] & KeyStateDown)
+		if (!ui->processed_input && (s->mouse_buttons[0] & KeyStateDown))
 		{
 			x_ang += s->mouse_disp_x;
 			view_need_update = true;
 		}
 	});
 
-	auto matrix_need_update = true;
+	s->add_keydown_listener([&](Surface *s, int vk){
+		switch (vk)
+		{
+			case VK_F1:
+				for (auto it = inses.begin(); it != inses.end(); it++)
+				{
+					if (it->dynamic)
+						it->r->add_force(vec3(10.f, 0.f, 0.f));
+				}
+				break;
+		}
+	});
 
-	auto ui = UI::create_instance(d, rp_ui);
+
+	auto matrix_need_update = true;
 
 	sm->run([&](){
 		ui->begin(res.x, res.y, sm->elapsed_time, s->mouse_x, s->mouse_y,
@@ -249,13 +273,33 @@ int main(int argc, char **args)
 			(s->mouse_buttons[2] & KeyStateDown) != 0,
 			s->mouse_scroll);
 		ui->begin_window("Control Panel");
+		static vec3 coord = vec3(0.f);
+		static vec3 size = vec3(0.5f);
+		static bool dynamic = false;
+		ui->dragfloat("x", &coord.x, 0.1f);
+		ui->dragfloat("y", &coord.y, 0.1f);
+		ui->dragfloat("z", &coord.z, 0.1f);
+		ui->dragfloat("sx", &size.x, 0.1f);
+		ui->dragfloat("sy", &size.y, 0.1f);
+		ui->dragfloat("sz", &size.z, 0.1f);
+		ui->checkbox("dynamic", &dynamic);
 		if (ui->button("Create"))
 		{
 			Ins i;
-			i.coord = vec3(0.f, 2.f, 0.f);
+			i.coord = coord;
 			i.quat = vec4(0.f, 0.f, 0.f, 1.f);
-			i.create();
+			i.size = size;
+			i.create(p_d, dynamic, material, scene);
 			inses.push_back(i);
+
+			update_main_cmd();
+			matrix_need_update = true;
+		}
+		if (ui->button("Clear"))
+		{
+			for (auto &i : inses)
+				i.destroy();
+			inses.clear();
 
 			update_main_cmd();
 			matrix_need_update = true;
@@ -265,8 +309,9 @@ int main(int argc, char **args)
 			std::ofstream out("physics test scene.txt");
 			for (auto &i : inses)
 			{
-				write_fmt(out, "%f %f %f %f %f %f %f\r\n", i.coord.x, i.coord.y, i.coord.z,
-					i.quat.x, i.quat.y, i.quat.z, i.quat.w);
+				write_fmt(out, "%d %f %f %f %f %f %f %f %f %f %f\n", (int)i.dynamic, i.coord.x, i.coord.y, i.coord.z,
+					i.quat.x, i.quat.y, i.quat.z, i.quat.w,
+					i.size.x, i.size.y, i.size.z);
 			}
 		}
 		if (ui->button("Load Scene"))
@@ -280,11 +325,19 @@ int main(int argc, char **args)
 				std::string line;
 				std::getline(in, line);
 				Ins i;
-				scanf("%f %f %f %f %f %f %f", &i.coord.x, &i.coord.y, &i.coord.z,
-					&i.quat.x, &i.quat.y, &i.quat.z, &i.quat.w);
-				i.create();
-				inses.push_back(i);
+				int dynamic;
+				if (sscanf(line.c_str(), "%d %f %f %f %f %f %f %f %f %f %f", &dynamic, &i.coord.x, &i.coord.y, &i.coord.z,
+					&i.quat.x, &i.quat.y, &i.quat.z, &i.quat.w,
+					&i.size.x, &i.size.y, &i.size.z) >= 11)
+				{
+					i.dynamic = dynamic;
+					i.create(p_d, i.dynamic, material, scene);
+					inses.push_back(i);
+				}
 			}
+
+			update_main_cmd();
+			matrix_need_update = true;
 		}
 		ui->end_window();
 		ui->end();
@@ -296,29 +349,33 @@ int main(int argc, char **args)
 			cbs_ui[i]->end();
 		}
 
-		static long long last_ns = 0;
 		auto t = get_now_ns();
-		if (t - last_ns >= 41666666)
+
+		static long long last_ns0 = 0;
+		if (t - last_ns0 >= 41666666)
 		{
 			scene->update(1.f / 24);
 
 			auto need_update_cmd = false;
 			for (auto it = inses.begin(); it != inses.end();)
 			{
-				it->r->get_pose(it->coord, it->quat);
-				if (it->coord.y < -4.f)
+				if (it->dynamic)
 				{
-					it->destroy();
-					it = inses.erase(it);
-					need_update_cmd = true;
+					it->r->get_pose(it->coord, it->quat);
+					if (it->coord.y < -4.f)
+					{
+						it->destroy();
+						it = inses.erase(it);
+						need_update_cmd = true;
+						continue;
+					}
 				}
-				else
-					it++;
+				it++;
 			}
 			if (need_update_cmd)
 				update_main_cmd();
 
-			last_ns = t;
+			last_ns0 = t;
 
 			matrix_need_update = true;
 		}
@@ -326,7 +383,10 @@ int main(int argc, char **args)
 		if (matrix_need_update)
 		{
 			for (auto i = 0; i < inses.size(); i++)
-				ubo_matrix_ins->model[i] = translate(inses[i].coord) * mat4(quaternion_to_mat3(inses[i].quat));
+			{
+				ubo_matrix_ins->model[i] = translate(inses[i].coord) * mat4(quat_to_mat3(inses[i].quat))
+					* scale(inses[i].size / vec3(0.5f));
+			}
 
 			CopyBufferUpdate upd;
 			upd.src = ub_stag;
@@ -339,7 +399,7 @@ int main(int argc, char **args)
 
 		if (view_need_update)
 		{
-			ubo_matrix->view = lookAt(vec3(rotate(radians(x_ang), vec3(0.f, 1.f, 0.f)) * vec4(0.f, 0.f, 10.f, 1.f)),
+			ubo_matrix->view = lookAt(vec3(rotate(radians(-x_ang), vec3(0.f, 1.f, 0.f)) * vec4(0.f, 0.f, 10.f, 1.f)),
 				vec3(0.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
 
 			view_need_update = false;

@@ -9,10 +9,10 @@ namespace flame
 	{
 		struct DevicePrivate
 		{
-			physx::PxDefaultAllocator allocator;
-			physx::PxDefaultErrorCallback error_callback;
-			physx::PxFoundation *foundation;
-			physx::PxPhysics *inst;
+			PxDefaultAllocator allocator;
+			PxDefaultErrorCallback error_callback;
+			PxFoundation *foundation;
+			PxPhysics *inst;
 		};
 	}
 }

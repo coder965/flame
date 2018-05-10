@@ -9,7 +9,7 @@ namespace flame
 	{
 		struct RigidPrivate
 		{
-			physx::PxRigidActor *v;
+			PxRigidActor *v;
 		};
 	}
 }

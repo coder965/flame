@@ -13,7 +13,7 @@ namespace flame
 		return -(numer / denom);
 	}
 
-	glm::mat3 quaternion_to_mat3(glm::vec4 &q)
+	glm::mat3 quat_to_mat3(glm::vec4 &q)
 	{
 		float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
 
@@ -48,7 +48,7 @@ namespace flame
 		return mat;
 	}
 
-	glm::vec4 mat3_to_quaternion(glm::mat3 &mat)
+	glm::vec4 mat3_to_quat(glm::mat3 &mat)
 	{
 		float s;
 		float tq[4];
@@ -104,7 +104,7 @@ namespace flame
 		return q;
 	}
 
-	glm::vec3 quaternion_to_euler(glm::vec4 &q)
+	glm::vec3 quat_to_euler(glm::vec4 &q)
 	{
 		float yaw, pitch, roll;
 
@@ -141,7 +141,7 @@ namespace flame
 		);
 	}
 
-	void quaternion_rotate(glm::vec4 &q, glm::vec3 &v)
+	void quat_rotate(glm::vec4 &q, glm::vec3 &v)
 	{
 		auto s = -q.x * v.x - q.y * v.y - q.z * v.z;
 		auto i = q.w * v.x + q.y * v.z - q.z * v.y;

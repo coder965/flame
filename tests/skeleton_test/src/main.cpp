@@ -255,7 +255,7 @@ int main(int argc, char **args)
 						position = (1 - t) * next_frame->value + t * curr_frame->value;
 					}
 
-					n->global_matrix = n->parent->global_matrix * translate(position) * mat4(quaternion_to_mat3(quat));
+					n->global_matrix = n->parent->global_matrix * translate(position) * mat4(quat_to_mat3(quat));
 				}
 
 				bone_matrix[b->id] = n->global_matrix * b->offset_matrix;

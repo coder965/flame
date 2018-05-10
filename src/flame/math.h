@@ -136,13 +136,13 @@ namespace flame
 
 	FLAME_MATH_EXPORTS float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane);
 
-	FLAME_MATH_EXPORTS glm::mat3 quaternion_to_mat3(glm::vec4 &q);
+	FLAME_MATH_EXPORTS glm::mat3 quat_to_mat3(glm::vec4 &q);
 
-	FLAME_MATH_EXPORTS glm::vec4 mat3_to_quaternion(glm::mat3 &mat);
+	FLAME_MATH_EXPORTS glm::vec4 mat3_to_quat(glm::mat3 &mat);
 
-	FLAME_MATH_EXPORTS glm::vec3 quaternion_to_euler(glm::vec4 &q);
+	FLAME_MATH_EXPORTS glm::vec3 quat_to_euler(glm::vec4 &q);
 
-	FLAME_MATH_EXPORTS void quaternion_rotate(glm::vec4 &q, glm::vec3 &v);
+	FLAME_MATH_EXPORTS void quat_rotate(glm::vec4 &q, glm::vec3 &v);
 
 	FLAME_MATH_EXPORTS glm::mat3 euler_to_mat3(glm::vec3 &e);
 

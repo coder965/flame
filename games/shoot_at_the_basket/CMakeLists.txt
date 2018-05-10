@@ -10,6 +10,7 @@ add_executable(shoot_at_the_basket ${SHOOT_AT_THE_BASKET_HEADER_LIST} ${SHOOT_AT
 
 target_link_libraries(shoot_at_the_basket flame_surface)
 target_link_libraries(shoot_at_the_basket flame_graphics)
+target_link_libraries(shoot_at_the_basket flame_UI)
 target_link_libraries(shoot_at_the_basket flame_model)
 target_link_libraries(shoot_at_the_basket flame_physics)
 
