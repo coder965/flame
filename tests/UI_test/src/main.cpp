@@ -51,9 +51,9 @@ int main(int argc, char **args)
 
 	auto ui = UI::create_instance(d, rp_ui);
 
-	auto lib = LoadLibraryEx("a.dll", NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-	auto e = GetLastError();
-	auto fun = GetProcAddress(lib, "say_hello");
+	auto lib = LoadLibraryEx("test.dll", NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+	auto fun = (const char *(*)())GetProcAddress(lib, "say_hello");
+	auto str = fun();
 
 	sm->run([&](){
 		ui->begin(res.x, res.y, sm->elapsed_time, s->mouse_x, s->mouse_y,
