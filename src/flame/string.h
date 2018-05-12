@@ -44,7 +44,7 @@ namespace flame
 	{
 	};
 
-	struct LongString : BasicString<1024> // for output, article, description, etc
+	struct LongString : BasicString<1024 * 8> // for output, article, description, etc
 	{
 	};
 

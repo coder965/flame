@@ -7,6 +7,8 @@ group_source("${UI_TEST_SOURCE_LIST}" "/src" "Source")
 add_executable(UI_test ${UI_TEST_HEADER_LIST} ${UI_TEST_SOURCE_LIST})
 
 target_link_libraries(UI_test flame_surface)
+target_link_libraries(UI_test flame_system)
+target_link_libraries(UI_test flame_filesystem)
 target_link_libraries(UI_test flame_graphics)
 target_link_libraries(UI_test flame_UI)
 

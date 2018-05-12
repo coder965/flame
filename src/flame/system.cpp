@@ -61,7 +61,7 @@ namespace flame
 
 		assert(SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0));
 
-		char cl_buf[260];
+		char cl_buf[1024 * 8];
 		{
 			auto tail = cl_buf;
 			if (filename[0] == 0)
@@ -92,7 +92,7 @@ namespace flame
 		if (size > sizeof(output->data))
 			size = sizeof(output->data);
 		PeekNamedPipe(hChildStd_OUT_Rd, (void*)output->data, size, NULL, NULL, NULL);
-		output->data[sizeof(output->data) - 1] = 0;
+		output->data[size] = 0;
 	}
 
 	void get_clipboard(LongString *out)
