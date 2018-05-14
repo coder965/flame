@@ -21,7 +21,7 @@ namespace flame
 {
 	namespace UI
 	{
-		void Instance::begin(int cx, int cy, float elapsed_time, int mouse_x, int mouse_y,
+		void Instance::begin(int cx, int cy, float _elapsed_time, int mouse_x, int mouse_y,
 			bool mouse_left_pressing, bool mouse_right_pressing, bool mouse_middle_pressing, int mouse_scroll)
 		{
 			processed_input = false;
@@ -31,6 +31,7 @@ namespace flame
 			im_io.DisplaySize = ImVec2((float)cx, (float)cy);
 			im_io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
 
+			elapsed_time = _elapsed_time;
 			im_io.DeltaTime = elapsed_time;
 
 			im_io.MousePos = ImVec2(mouse_x, mouse_y);

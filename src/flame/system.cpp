@@ -121,7 +121,7 @@ namespace flame
 	};
 
 	FileWatcher *add_file_watcher(FileWatcherMode mode, const char *filepath, 
-		void(*callback)(FileChangeType type, const char *filename, void *user_data), void *user_data)
+		const std::function<void(FileChangeType type, const char *filename)> &callback)
 	{
 		auto w = new FileWatcher;
 		w->hEventExpired = CreateEvent(NULL, false, false, NULL);
@@ -176,29 +176,27 @@ namespace flame
 					if (str_size > sizeof(filename.data))
 						str_size = sizeof(filename.data);
 					WideCharToMultiByte(CP_ACP, 0, p->FileName, p->FileNameLength / sizeof(wchar_t), (char*)filename.data, str_size, NULL, NULL);
-					if (*filename.find('~') != 0)
+					filename.data[str_size] = 0;
+					FileChangeType type;
+					switch (p->Action)
 					{
-						FileChangeType type;
-						switch (p->Action)
-						{
-							case 0x1:
-								type = FileAdded;
-								break;
-							case 0x2:
-								type = FileRemoved;
-								break;
-							case 0x3:
-								type = FileModified;
-								break;
-							case 0x4:
-								type = FileRenamed;
-								break;
-							case 0x5:
-								type = FileRenamed;
-								break;
-						}
-						callback(type, filename.data, user_data);
+					case 0x1:
+						type = FileAdded;
+						break;
+					case 0x2:
+						type = FileRemoved;
+						break;
+					case 0x3:
+						type = FileModified;
+						break;
+					case 0x4:
+						type = FileRenamed;
+						break;
+					case 0x5:
+						type = FileRenamed;
+						break;
 					}
+					callback(type, filename.data);
 
 					if (p->NextEntryOffset <= 0)
 						break;
@@ -223,14 +221,8 @@ namespace flame
 		assert(ReadProcessMemory(process, address, dst, size, &ret_byte));
 	}
 
-	struct Listener
-	{
-		void(*callback)(void *);
-		void *user_data;
-	};
-
 	static HHOOK global_key_hook = 0;
-	static std::map<int, std::list<Listener>> global_key_listeners;
+	static std::map<int, std::list<std::function<void()>>> global_key_listeners;
 
 	LRESULT CALLBACK global_key_callback(int nCode, WPARAM wParam, LPARAM lParam)
 	{
@@ -240,20 +232,20 @@ namespace flame
 		if (it != global_key_listeners.end())
 		{
 			for (auto &e : it->second)
-				e.callback(e.user_data);
+				e();
 		}
 
 		return CallNextHookEx(global_key_hook, nCode, wParam, lParam);
 	}
 
-	void *add_global_key_listener(int key, void(*callback)(void *user_data), void *user_data)
+	void *add_global_key_listener(int key, const std::function<void()> &callback)
 	{
 		void *ret;
 
 		auto it = global_key_listeners.find(key);
 		if (it == global_key_listeners.end())
-			it = global_key_listeners.emplace(key, std::list<Listener>()).first;
-		it->second.push_back({callback, user_data});
+			it = global_key_listeners.emplace(key, std::list<std::function<void()>>()).first;
+		it->second.push_back(callback);
 		ret = &it->second.back();
 
 		if (global_key_hook == 0)

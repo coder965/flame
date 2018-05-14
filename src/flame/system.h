@@ -11,6 +11,7 @@
 #include <mutex>
 #include <vector>
 #include <memory>
+#include <functional>
 
 namespace flame
 {
@@ -40,11 +41,11 @@ namespace flame
 	};
 
 	FLAME_SYSTEM_EXPORTS FileWatcher *add_file_watcher(FileWatcherMode mode, const char *filepath, 
-		void(*callback)(FileChangeType type, const char *filename, void *user_data), void *user_data);
+		const std::function<void(FileChangeType type, const char *filename)> &callback);
 	FLAME_SYSTEM_EXPORTS void remove_file_watcher(FileWatcher *w);
 
 	FLAME_SYSTEM_EXPORTS void read_process_memory(void *process, void *address, int size, void *dst);
 
-	FLAME_SYSTEM_EXPORTS void *add_global_key_listener(int key, void(*callback)(void *user_data), void *user_data);
+	FLAME_SYSTEM_EXPORTS void *add_global_key_listener(int key, const std::function<void()> &callback);
 	FLAME_SYSTEM_EXPORTS void remove_global_key_listener(int key, void *p /* whitch is the return of add_global_key_listener */ );
 }
