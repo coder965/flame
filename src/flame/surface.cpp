@@ -563,16 +563,6 @@ namespace flame
 						s->_priv->resize_event = false;
 					}
 
-					for (int i = 0; i < TK_ARRAYSIZE(s->key_states); i++)
-						s->key_states[i] &= ~KeyStateJust;
-
-					for (auto i = 0; i < TK_ARRAYSIZE(s->mouse_buttons); i++)
-						s->mouse_buttons[i] &= ~KeyStateJust;
-
-					s->_priv->mouse_prev_x = s->mouse_x;
-					s->_priv->mouse_prev_y = s->mouse_y;
-					s->mouse_scroll = 0;
-
 					it++;
 				}
 			}
@@ -586,7 +576,22 @@ namespace flame
 				_priv->counting_frame = 0;
 				_priv->last_frame_time = _priv->last_time;
 			}
+
 			idle_callback();
+
+			for (auto s : _priv->surfaces)
+			{
+				for (int i = 0; i < TK_ARRAYSIZE(s->key_states); i++)
+					s->key_states[i] &= ~KeyStateJust;
+
+				for (auto i = 0; i < TK_ARRAYSIZE(s->mouse_buttons); i++)
+					s->mouse_buttons[i] &= ~KeyStateJust;
+
+				s->_priv->mouse_prev_x = s->mouse_x;
+				s->_priv->mouse_prev_y = s->mouse_y;
+				s->mouse_scroll = 0;
+			}
+
 			_priv->counting_frame++;
 			auto et = _priv->last_time;
 			_priv->last_time = get_now_ns();

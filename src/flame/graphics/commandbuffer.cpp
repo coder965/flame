@@ -104,7 +104,7 @@ namespace flame
 
 		void Commandbuffer::draw_indexed(int count, int first_index, int vertex_offset, int instance_count, int first_instance)
 		{
-			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, 0, first_instance);
+			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, vertex_offset, first_instance);
 		}
 
 		void Commandbuffer::dispatch(int x, int y, int z)

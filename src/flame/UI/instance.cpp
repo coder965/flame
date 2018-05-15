@@ -1,4 +1,4 @@
-#include "UI_private.h"
+#include "instance_private.h"
 
 #include <flame/system.h>
 #include <flame/math.h>
@@ -14,6 +14,7 @@
 #include <flame/graphics/sampler.h>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <Windows.h>
 #include <stdarg.h>
 
@@ -116,12 +117,12 @@ namespace flame
 			pc.w = -1.f;
 			cb->push_constant(graphics::ShaderVert, 0, sizeof(glm::vec4), &pc);
 
-			int vtx_offset = 0;
-			int idx_offset = 0;
-			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			auto vtx_offset = 0;
+			auto idx_offset = 0;
+			for (auto n = 0; n < draw_data->CmdListsCount; n++)
 			{
 				const ImDrawList* cmd_list = draw_data->CmdLists[n];
-				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+				for (auto cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
 				{
 					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
 					if (pcmd->UserCallback)
@@ -147,9 +148,34 @@ namespace flame
 			cb->end_renderpass();
 		}
 
-		bool Instance::begin_window(const char *title)
+		bool Instance::begin_window(const char *title, const glm::vec2 &pos, const glm::vec2 &size, bool need_save_setting)
 		{
-			return ImGui::Begin(title);
+			if (!is_inf(pos.x) && !is_inf(pos.y))
+				ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
+			if (!is_inf(size.x) && !is_inf(size.y))
+				ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
+			return ImGui::Begin(title, nullptr,
+				!need_save_setting ? ImGuiWindowFlags_NoSavedSettings : 0);
+		}
+
+		bool Instance::begin_plain_window(const char *title, const glm::vec2 &pos, const glm::vec2 &size)
+		{
+			ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
+			ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+			auto open = ImGui::Begin(title, nullptr, 
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoNav |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoSavedSettings |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoScrollWithMouse |
+				ImGuiWindowFlags_NoTitleBar);
+			ImGui::PopStyleVar();
+			return open;
 		}
 
 		void Instance::end_window()
@@ -172,12 +198,106 @@ namespace flame
 			return ImGui::DragFloat(title, p, speed);
 		}
 
+		bool Instance::dragfloat2(const char *title, glm::vec2 *p, float speed)
+		{
+			return ImGui::DragFloat2(title, &p->x, speed);
+		}
+
+		bool Instance::dragfloat3(const char *title, glm::vec3 *p, float speed)
+		{
+			return ImGui::DragFloat(title, &p->x, speed);
+		}
+
+		bool Instance::dragfloat4(const char *title, glm::vec4 *p, float speed)
+		{
+			return ImGui::DragFloat(title, &p->x, speed);
+		}
+
 		void Instance::text(const char *fmt, ...)
 		{
 			va_list ap;
 			va_start(ap, fmt);
 			ImGui::TextV(fmt, ap);
 			va_end(ap);
+		}
+
+		bool Instance::inputtext(const char *title, char *dst, int len)
+		{
+			return ImGui::InputText(title, dst, len);
+		}
+
+		unsigned int Instance::get_last_ID()
+		{
+			return GImGui->CurrentWindow->DC.LastItemId;
+		}
+
+		bool Instance::is_last_item_focused()
+		{
+			return ImGui::IsItemFocused();
+		}
+
+		bool Instance::is_curr_window_focused()
+		{
+			return ImGui::IsWindowFocused();
+		}
+
+		bool Instance::is_last_item_hovered()
+		{
+			return ImGui::IsItemHovered();
+		}
+
+		bool Instance::is_curr_window_hovered()
+		{
+			return ImGui::IsWindowHovered();
+		}
+
+		glm::vec4 Instance::get_last_item_rect()
+		{
+			auto LT = ImGui::GetItemRectMin();
+			auto RB = ImGui::GetItemRectMax();
+			return glm::vec4(LT.x, LT.y, RB.x, RB.y);
+		}
+
+		glm::vec4 Instance::get_curr_window_rect()
+		{
+			auto LT = ImGui::GetWindowPos();
+			auto RB = ImGui::GetWindowSize();
+			return glm::vec4(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
+		}
+
+		void Instance::add_line_to_window(const glm::vec2 &a, const glm::vec2 &b, const glm::vec4 &col)
+		{
+			ImGui::GetWindowDrawList()->AddLine(ImVec2(a.x, a.y), ImVec2(b.x, b.y),
+				ImColor(col.r, col.g, col.b, col.a));
+		}
+
+		static inline void add_rect_impl(ImDrawList *dl, const glm::vec4 &rect, const glm::vec4 &col)
+		{
+			dl->AddRect(ImVec2(rect.x, rect.y), ImVec2(rect.z, rect.w),
+				ImColor(col.r, col.g, col.b, col.a));
+		}
+
+		void Instance::add_rect_to_window(const glm::vec4 &rect, const glm::vec4 &col)
+		{
+			add_rect_impl(ImGui::GetWindowDrawList(), rect, col);
+		}
+
+		void Instance::add_text_to_window(const glm::vec2 &pos, const glm::vec4 &col, const char *fmt, ...)
+		{
+			static char buffer[1024];
+
+			va_list ap;
+			va_start(ap, fmt);
+			auto len = vsprintf(buffer, fmt, ap);
+			va_end(ap);
+
+			ImGui::GetWindowDrawList()->AddText(ImVec2(pos.x, pos.y), ImColor(col.r, col.g, col.b, col.a),
+				buffer, buffer + len);
+		}
+
+		void Instance::add_rect_to_overlap(const glm::vec4 &rect, const glm::vec4 &col)
+		{
+			add_rect_impl(ImGui::GetOverlayDrawList(), rect, col);
 		}
 
 		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp)

@@ -70,15 +70,15 @@ bool inline operator >= (glm::vec3 a, float b)
 
 namespace flame
 {
-	inline int digit_num(int a)
+	inline float get_inf()
 	{
-		auto d = 0;
-		do
-		{
-			d++;
-			a /= 10;
-		} while (a);
-		return d;
+		auto zero = 0.f;
+		return 1.f / zero;
+	}
+
+	inline bool is_inf(float v)
+	{
+		return (1.f + v) == v;
 	}
 
 	inline bool is_same(const float a, const float b)
@@ -122,6 +122,14 @@ namespace flame
 		return glm::vec4(normal, glm::dot(normal, p));
 	}
 
+	inline void expand_rect(glm::vec4 &rect, float length)
+	{
+		rect.x -= length;
+		rect.y -= length;
+		rect.z += length;
+		rect.w += length;
+	}
+
 	inline void ortho_normalize(glm::mat3 &mat)
 	{
 		for (auto i = 0; i < 3; i++)
@@ -132,6 +140,17 @@ namespace flame
 	{
 		for (auto i = 0; i < 3; i++)
 			mat[i] = glm::vec4(glm::normalize(glm::vec3(mat[i])), 0.f);
+	}
+
+	inline int digit_num(int a)
+	{
+		auto d = 0;
+		do
+		{
+			d++;
+			a /= 10;
+		} while (a);
+		return d;
 	}
 
 	FLAME_MATH_EXPORTS float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane);
