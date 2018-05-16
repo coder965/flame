@@ -28,6 +28,24 @@ namespace flame
 		KeyStateJust = 1 << 2,
 	};
 
+	enum CusorType
+	{
+		CursorAppStarting, // arrow and small hourglass
+		CursorArrow,
+		CursorCross, // unknown
+		CursorHand,
+		CursorHelp,
+		CursorIBeam,
+		CursorNo,
+		CursorSizeAll,
+		CursorSizeNESW,
+		CursorSizeNS,
+		CursorSizeNWSE,
+		CursorSizeWE,
+		CursorUpArrwo,
+		CursorWait
+	};
+
 	struct SurfacePrivate;
 
 	struct Surface
@@ -52,6 +70,9 @@ namespace flame
 		SurfacePrivate *_priv;
 
 		FLAME_SURFACE_EXPORTS void *get_win32_handle();
+		FLAME_SURFACE_EXPORTS void *get_standard_cursor(CusorType type);
+		FLAME_SURFACE_EXPORTS void set_cursor(void *c);
+		FLAME_SURFACE_EXPORTS void show_cursor(bool show);
 
 		FLAME_SURFACE_EXPORTS void set_size(int _x, int _y, int _cx, int _cy, int _style);
 		FLAME_SURFACE_EXPORTS void set_maximized(bool v);

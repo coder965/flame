@@ -66,6 +66,67 @@ namespace flame
 		return _priv->hWnd;
 	}
 
+	void *Surface::get_standard_cursor(CusorType type)
+	{
+		const char *name;
+		switch (type)
+		{
+		case CursorAppStarting:
+			name = IDC_APPSTARTING;
+			break;
+		case CursorArrow:
+			name = IDC_ARROW;
+			break;
+		case CursorCross:
+			name = IDC_CROSS;
+			break;
+		case CursorHand:
+			name = IDC_HAND;
+			break;
+		case CursorHelp:
+			name = IDC_HELP;
+			break;
+		case CursorIBeam:
+			name = IDC_IBEAM;
+			break;
+		case CursorNo:
+			name = IDC_NO;
+			break;
+		case CursorSizeAll:
+			name = IDC_SIZEALL;
+			break;
+		case CursorSizeNESW:
+			name = IDC_SIZENESW;
+			break;
+		case CursorSizeNS:
+			name = IDC_SIZENS;
+			break;
+		case CursorSizeNWSE:
+			name = IDC_SIZENWSE;
+			break;
+		case CursorSizeWE:
+			name = IDC_SIZEWE;
+			break;
+		case CursorUpArrwo:
+			name = IDC_UPARROW;
+			break;
+		case CursorWait:
+			name = IDC_WAIT;
+			break;
+		}
+		return LoadCursor((HINSTANCE)get_hinst(), name);
+	}
+
+	void Surface::set_cursor(void *c)
+	{
+		SetCursor((HCURSOR)c);
+	}
+
+	void Surface::show_cursor(bool show)
+	{
+		ShowCursor(show);
+	}
+
 	void Surface::set_size(int _x, int _y, int _cx, int _cy, int _style)
 	{
 		if (_cx > 0)
@@ -132,8 +193,8 @@ namespace flame
 
 	void *Surface::add_keyup_listener(const std::function<void(Surface *s, int)> &e)
 	{
-		_priv->keydown_listeners.push_back(e);
-		return &_priv->keydown_listeners.back();
+		_priv->keyup_listeners.push_back(e);
+		return &_priv->keyup_listeners.back();
 	}
 
 	void *Surface::add_char_listener(const std::function<void(Surface *s, int)> &e)

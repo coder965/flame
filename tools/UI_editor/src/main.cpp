@@ -65,7 +65,7 @@ int main(int argc, char **args)
 	struct Widget
 	{
 		WidgetType type;
-		ShortString name; // name ID of text, label of button
+		ShortString name;
 		unsigned int ID;
 
 		virtual void show(UI::Instance *ui) = 0;
@@ -116,10 +116,17 @@ int main(int argc, char **args)
 		{
 			if (ui->menuitem("Text"))
 			{
+				std::string default_name;
+				for (auto i = 0; ; i++)
+				{
+					default_name = "Text" + std::to_string(i);
+					if (!find_widget(default_name.c_str()))
+						break;
+				}
 				ui->add_input_dialog("Please Enter The ID Of Text", "ID", [&](MediumString *input) {
 					if (input->data[0] == 0)
 					{
-						ui->add_message_dialog("Add Text", "Text cannot be empty");
+						ui->add_message_dialog("Add Text", "ID cannot be empty");
 						return;
 					}
 					if (find_widget(input->data))
@@ -132,14 +139,21 @@ int main(int argc, char **args)
 					strcpy(w->name.data, input->data);
 					strcpy(w->text.data, input->data);
 					widgets.emplace_back(w);
-				});
+				}, default_name.c_str());
 			}
 			if (ui->menuitem("Button"))
 			{
+				std::string default_name;
+				for (auto i = 0; ; i++)
+				{
+					default_name = "Button" + std::to_string(i);
+					if (!find_widget(default_name.c_str()))
+						break;
+				}
 				ui->add_input_dialog("Please Enter The ID Of Button", "ID", [&](MediumString *input) {
 					if (input->data[0] == 0)
 					{
-						ui->add_message_dialog("Add Button", "Label cannot be empty");
+						ui->add_message_dialog("Add Button", "ID cannot be empty");
 						return;
 					}
 					if (find_widget(input->data))
@@ -151,7 +165,7 @@ int main(int argc, char **args)
 					w->type = WidgetButton;
 					strcpy(w->name.data, input->data);
 					widgets.emplace_back(w);
-				});
+				}, default_name.c_str());
 			}
 			ui->end_menu();
 		}
@@ -192,29 +206,21 @@ int main(int argc, char **args)
 				want_sel = false;
 			}
 		}
-		static auto need_set_wnd_pos = true;
-		static auto need_set_wnd_size = true;
+
 		if (graping_grid)
 		{
 			off.x += s->mouse_disp_x;
 			off.y += s->mouse_disp_y;
 			if ((s->mouse_buttons[2] & KeyStateDown) == 0)
 				graping_grid = false;
-			need_set_wnd_pos = true;
 		}
 		ui->end_window();
 
 		ui->push_displayrect(vec4(bg_pos, bg_pos + bg_size));
-		ui->begin_window(wnd_name.data, need_set_wnd_pos ? (wnd_pos + off + bg_pos) : vec2(get_inf()),
-			need_set_wnd_size ? wnd_size : vec2(get_inf()));
+		ui->begin_window(wnd_name.data, wnd_pos + off + bg_pos, wnd_size,
+			UI::WindowNoResize);
 
 		auto wnd_rect = ui->get_curr_window_rect();
-		if (!need_set_wnd_pos)
-			wnd_pos = vec2(wnd_rect.x, wnd_rect.y) - off - bg_pos;
-		need_set_wnd_pos = false;
-		if (!need_set_wnd_size)
-			wnd_size = vec2(wnd_rect.z, wnd_rect.w) - wnd_pos;
-		need_set_wnd_size = false;
 
 		for (auto &w : widgets)
 		{
@@ -250,32 +256,46 @@ int main(int argc, char **args)
 		}
 		ui->pop_overlay_cliprect();
 
-		ui->begin_window("Hierarchy", vec2(get_inf()), vec2(get_inf()), true);
+		ui->begin_window("Hierarchy", vec2(get_inf()), vec2(get_inf()), UI::WindowSaveSetting);
+		for (auto &w : widgets)
+		{
+			if (ui->selectable(w->name.data, sel == w.get()) &&
+				want_sel)
+			{
+				sel = w.get();
+				want_sel = false;
+			}
+		}
 		ui->end_window();
 
-		ui->begin_window("Inspector", vec2(get_inf()), vec2(get_inf()), true);
+		ui->begin_window("Inspector", vec2(get_inf()), vec2(get_inf()), UI::WindowSaveSetting);
 		if (sel != (Widget*)0xFFFFFFFF)
 		{
 			if (sel == nullptr)
 			{
 				ui->text("Window:");
 				ui->inputtext("name", wnd_name.data, sizeof(wnd_name.data));
-				if (ui->dragfloat2("pos", &wnd_pos, 1.f))
-					need_set_wnd_pos = true;
-				if (ui->dragfloat2("size", &wnd_size, 1.f))
-					need_set_wnd_size = true;
+				ui->dragfloat2("pos", &wnd_pos, 1.f);
+				ui->dragfloat2("size", &wnd_size, 1.f);
 			}
 			else
 			{
 				switch (sel->type)
 				{
 				case WidgetText:
+				{
+					auto t = (TextWidget*)sel;
 					ui->text("Text:");
-					ui->inputtext("ID", sel->name.data, sizeof(sel->name.data));
+					ui->inputtext("Name", t->name.data, sizeof(t->name.data));
+					ui->inputtext("Text", t->text.data, sizeof(t->text.data));
+				}
 					break;
 				case WidgetButton:
+				{
+					auto b = (ButtonWidget*)sel;
 					ui->text("Button:");
-					ui->inputtext("Label", sel->name.data, sizeof(sel->name.data));
+					ui->inputtext("Label", b->name.data, sizeof(b->name.data));
+				}
 					break;
 				}
 			}

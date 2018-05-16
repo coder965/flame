@@ -14,9 +14,6 @@
 #include <flame/graphics/sampler.h>
 #include <flame/surface.h>
 
-#include <imgui.h>
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui_internal.h>
 #include <Windows.h>
 #include <stdarg.h>
 #include <list>
@@ -44,6 +41,21 @@ namespace flame
 			im_io.MouseDown[2] = (_priv->s->mouse_buttons[2] & KeyStateDown) != 0;
 
 			im_io.MouseWheel = _priv->s->mouse_scroll;
+
+			// Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
+			if ((im_io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) == 0)
+			{
+				ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
+				if (im_io.MouseDrawCursor || cursor == ImGuiMouseCursor_None)
+				{
+					//glfwSetInputMode(g_Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+				}
+				else
+				{
+					//glfwSetCursor(g_Window, g_MouseCursors[cursor] ? g_MouseCursors[cursor] : g_MouseCursors[ImGuiMouseCursor_Arrow]);
+					//glfwSetInputMode(g_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				}
+			}
 
 			ImGui::NewFrame();
 		}
@@ -79,7 +91,8 @@ namespace flame
 
 			virtual void show() override
 			{
-				ImGui::InputText(label.data, input.data, sizeof(input.data));
+				ImGui::InputText(label.data, input.data, sizeof(input.data), 
+					ImGuiInputTextFlags_AutoSelectAll);
 				if (ImGui::Button("OK"))
 				{
 					callback(&input);
@@ -219,14 +232,16 @@ namespace flame
 			cb->end_renderpass();
 		}
 
-		bool Instance::begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, bool need_save_setting)
+		bool Instance::begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, int flags)
 		{
 			if (!is_inf(pos.x) && !is_inf(pos.y))
 				ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 			if (!is_inf(size.x) && !is_inf(size.y))
 				ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
 			return ImGui::Begin(name, nullptr,
-				!need_save_setting ? ImGuiWindowFlags_NoSavedSettings : 0);
+				((flags & WindowSaveSetting) == 0 ? ImGuiWindowFlags_NoSavedSettings : 0) |
+				((flags & WindowNoResize) != 0 ? ImGuiWindowFlags_NoResize : 0) |
+				((flags & WindowNoMove) != 0 ? ImGuiWindowFlags_NoMove : 0));
 		}
 
 		bool Instance::begin_plain_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size)
@@ -348,6 +363,11 @@ namespace flame
 		bool Instance::inputtext(const char *label, char *dst, int len)
 		{
 			return ImGui::InputText(label, dst, len);
+		}
+
+		bool Instance::selectable(const char *label, bool selected)
+		{
+			return ImGui::Selectable(label, selected);
 		}
 
 		unsigned int Instance::get_last_ID()
@@ -582,6 +602,25 @@ namespace flame
 			im_io.KeyMap[ImGuiKey_Y] = 'Y';
 			im_io.KeyMap[ImGuiKey_Z] = 'Z';
 
+			im_io.SetClipboardTextFn = [](void *user_data, const char *s) {
+				set_clipboard(s);
+			};
+			im_io.GetClipboardTextFn = [](void *user_data) {
+				static LongString s;
+				get_clipboard(&s);
+				return (const char*)s.data;
+			};
+			
+			im_io.ImeWindowHandle = s->get_win32_handle();
+
+			i->_priv->cursors[ImGuiMouseCursor_Arrow] = s->get_standard_cursor(CursorArrow);
+			i->_priv->cursors[ImGuiMouseCursor_TextInput] = s->get_standard_cursor(CursorIBeam);
+			//g_MouseCursors[ImGuiMouseCursor_ResizeAll] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+			//g_MouseCursors[ImGuiMouseCursor_ResizeNS] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+			//g_MouseCursors[ImGuiMouseCursor_ResizeEW] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+			//g_MouseCursors[ImGuiMouseCursor_ResizeNESW] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+			//g_MouseCursors[ImGuiMouseCursor_ResizeNWSE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+
 			s->add_keydown_listener([](Surface *, int k) {
 				ImGuiIO& io = ImGui::GetIO();
 				io.KeysDown[k] = true;
@@ -610,15 +649,6 @@ namespace flame
 				if (c > 0 && c < 0x10000)
 					io.AddInputCharacter((unsigned short)c);
 			});
-
-			im_io.SetClipboardTextFn = [](void *user_data, const char *s) {
-				set_clipboard(s);
-			};
-			im_io.GetClipboardTextFn = [](void *user_data) {
-				static LongString s;
-				get_clipboard(&s);
-				return (const char*)s.data;
-			};
 
 			return i;
 		}

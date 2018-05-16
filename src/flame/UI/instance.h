@@ -11,6 +11,13 @@ namespace flame
 
 	namespace UI
 	{
+		enum WindowFlag
+		{
+			WindowSaveSetting = 1 << 0,
+			WindowNoResize = 1 << 1,
+			WindowNoMove = 1 << 2
+		};
+
 		struct InstancePrivate;
 
 		struct Instance
@@ -24,8 +31,9 @@ namespace flame
 			FLAME_UI_EXPORTS void end();
 			FLAME_UI_EXPORTS void record_commandbuffer(graphics::Commandbuffer *cb, graphics::Renderpass *rp, graphics::Framebuffer *fb);
 
-			// use inf to disable setting pos or/and size
-			FLAME_UI_EXPORTS bool begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, bool need_save_setting = false); 
+			// * use inf to disable setting pos or/and size
+			// flags - combination of WindowFlag
+			FLAME_UI_EXPORTS bool begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, int flags = 0); 
 
 			FLAME_UI_EXPORTS bool begin_plain_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size);
 			FLAME_UI_EXPORTS void end_window();
@@ -46,6 +54,7 @@ namespace flame
 			FLAME_UI_EXPORTS void text(const char *fmt, ...);
 			FLAME_UI_EXPORTS void ID_text_unformatted(const char *ID, const char *text);
 			FLAME_UI_EXPORTS bool inputtext(const char *label, char *dst, int len);
+			FLAME_UI_EXPORTS bool selectable(const char *label, bool selected);
 
 			FLAME_UI_EXPORTS unsigned int get_last_ID();
 			FLAME_UI_EXPORTS bool is_last_item_focused();
