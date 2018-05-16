@@ -13,5 +13,6 @@ target_include_directories(flame_UI PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_link_libraries(flame_UI imgui)
 target_link_libraries(flame_UI flame_graphics)
 target_link_libraries(flame_UI flame_system)
+target_link_libraries(flame_UI flame_surface)
 
 set_target_properties(flame_UI PROPERTIES FOLDER "flame") 

@@ -12,18 +12,20 @@
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/sampler.h>
+#include <flame/surface.h>
 
 #include <imgui.h>
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui_internal.h>
 #include <Windows.h>
 #include <stdarg.h>
+#include <list>
 
 namespace flame
 {
 	namespace UI
 	{
-		void Instance::begin(int cx, int cy, float _elapsed_time, int mouse_x, int mouse_y,
-			bool mouse_left_pressing, bool mouse_right_pressing, bool mouse_middle_pressing, int mouse_scroll)
+		void Instance::begin(int cx, int cy, float _elapsed_time)
 		{
 			processed_input = false;
 
@@ -35,19 +37,88 @@ namespace flame
 			elapsed_time = _elapsed_time;
 			im_io.DeltaTime = elapsed_time;
 
-			im_io.MousePos = ImVec2(mouse_x, mouse_y);
+			im_io.MousePos = ImVec2(_priv->s->mouse_x, _priv->s->mouse_y);
 
-			im_io.MouseDown[0] = mouse_left_pressing;
-			im_io.MouseDown[1] = mouse_right_pressing;
-			im_io.MouseDown[2] = mouse_middle_pressing;
+			im_io.MouseDown[0] = (_priv->s->mouse_buttons[0] & KeyStateDown) != 0;
+			im_io.MouseDown[1] = (_priv->s->mouse_buttons[1] & KeyStateDown) != 0;
+			im_io.MouseDown[2] = (_priv->s->mouse_buttons[2] & KeyStateDown) != 0;
 
-			im_io.MouseWheel = mouse_scroll;
+			im_io.MouseWheel = _priv->s->mouse_scroll;
 
 			ImGui::NewFrame();
 		}
 
+		struct Dialog
+		{
+			bool open;
+			ShortString title;
+
+			virtual void show() = 0;
+		};
+
+		struct MessageDialog : Dialog
+		{
+			ShortString message;
+
+			virtual void show() override
+			{
+				ImGui::TextUnformatted(message.data);
+				if (ImGui::Button("OK"))
+				{
+					ImGui::CloseCurrentPopup();
+					open = false;
+				}
+			}
+		};
+
+		struct InputDialog : Dialog
+		{
+			ShortString label;
+			MediumString input;
+			std::function<void(MediumString *input)> callback;
+
+			virtual void show() override
+			{
+				ImGui::InputText(label.data, input.data, sizeof(input.data));
+				if (ImGui::Button("OK"))
+				{
+					callback(&input);
+					ImGui::CloseCurrentPopup();
+					open = false;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel"))
+				{
+					ImGui::CloseCurrentPopup();
+					open = false;
+				}
+			}
+		};
+
+		static std::list<std::unique_ptr<Dialog>> dialogs;
+
 		void Instance::end()
 		{
+			for (auto it = dialogs.begin(); it != dialogs.end();)
+			{
+				auto d = (*it).get();
+				if (!d->open)
+				{
+					ImGui::OpenPopup(d->title.data);
+					d->open = true;
+				}
+				if (ImGui::BeginPopupModal(d->title.data, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+				{
+					d->show();
+					ImGui::EndPopup();
+				}
+
+				if (!d->open)
+					it = dialogs.erase(it);
+				else
+					it++;
+			}
+
 			processed_input = ImGui::IsMouseHoveringAnyWindow() | ImGui::IsAnyWindowFocused();
 
 			ImGui::Render();
@@ -148,22 +219,22 @@ namespace flame
 			cb->end_renderpass();
 		}
 
-		bool Instance::begin_window(const char *title, const glm::vec2 &pos, const glm::vec2 &size, bool need_save_setting)
+		bool Instance::begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, bool need_save_setting)
 		{
 			if (!is_inf(pos.x) && !is_inf(pos.y))
 				ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 			if (!is_inf(size.x) && !is_inf(size.y))
 				ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
-			return ImGui::Begin(title, nullptr,
+			return ImGui::Begin(name, nullptr,
 				!need_save_setting ? ImGuiWindowFlags_NoSavedSettings : 0);
 		}
 
-		bool Instance::begin_plain_window(const char *title, const glm::vec2 &pos, const glm::vec2 &size)
+		bool Instance::begin_plain_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size)
 		{
 			ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 			ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-			auto open = ImGui::Begin(title, nullptr, 
+			auto open = ImGui::Begin(name, nullptr,
 				ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoFocusOnAppearing |
@@ -183,34 +254,64 @@ namespace flame
 			ImGui::End();
 		}
 
-		bool Instance::button(const char *title)
+		bool Instance::begin_mainmenu()
 		{
-			return ImGui::Button(title);
+			return ImGui::BeginMainMenuBar();
 		}
 
-		bool Instance::checkbox(const char *title, bool *p)
+		void Instance::end_mainmenu()
 		{
-			return ImGui::Checkbox(title, p);
+			ImGui::EndMainMenuBar();
 		}
 
-		bool Instance::dragfloat(const char *title, float *p, float speed)
+		bool Instance::begin_menu(const char *label)
 		{
-			return ImGui::DragFloat(title, p, speed);
+			return ImGui::BeginMenu(label);
 		}
 
-		bool Instance::dragfloat2(const char *title, glm::vec2 *p, float speed)
+		void Instance::end_menu()
 		{
-			return ImGui::DragFloat2(title, &p->x, speed);
+			ImGui::EndMenu();
 		}
 
-		bool Instance::dragfloat3(const char *title, glm::vec3 *p, float speed)
+		bool Instance::menuitem(const char *label)
 		{
-			return ImGui::DragFloat(title, &p->x, speed);
+			return ImGui::MenuItem(label);
 		}
 
-		bool Instance::dragfloat4(const char *title, glm::vec4 *p, float speed)
+		bool Instance::button(const char *label)
 		{
-			return ImGui::DragFloat(title, &p->x, speed);
+			return ImGui::Button(label);
+		}
+
+		bool Instance::checkbox(const char *label, bool *p)
+		{
+			return ImGui::Checkbox(label, p);
+		}
+
+		bool Instance::dragfloat(const char *label, float *p, float speed)
+		{
+			return ImGui::DragFloat(label, p, speed);
+		}
+
+		bool Instance::dragfloat2(const char *label, glm::vec2 *p, float speed)
+		{
+			return ImGui::DragFloat2(label, &p->x, speed);
+		}
+
+		bool Instance::dragfloat3(const char *label, glm::vec3 *p, float speed)
+		{
+			return ImGui::DragFloat(label, &p->x, speed);
+		}
+
+		bool Instance::dragfloat4(const char *label, glm::vec4 *p, float speed)
+		{
+			return ImGui::DragFloat(label, &p->x, speed);
+		}
+
+		void Instance::text_unformatted(const char *text)
+		{
+			ImGui::TextUnformatted(text);
 		}
 
 		void Instance::text(const char *fmt, ...)
@@ -221,9 +322,32 @@ namespace flame
 			va_end(ap);
 		}
 
-		bool Instance::inputtext(const char *title, char *dst, int len)
+		void Instance::ID_text_unformatted(const char *ID, const char *text)
 		{
-			return ImGui::InputText(title, dst, len);
+			ImGuiWindow* window = ImGui::GetCurrentWindow();
+			if (window->SkipItems)
+				return;
+
+			ImGuiContext& g = *GImGui;
+			IM_ASSERT(text != NULL);
+			const char* text_begin = text;
+			auto text_end = text + strlen(text);
+
+			const ImGuiID id = window->GetID(ID);
+			const ImVec2 text_pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrentLineTextBaseOffset);
+			const ImVec2 text_size = ImGui::CalcTextSize(text_begin, text_end, false, 0.f);
+
+			ImRect bb(text_pos, text_pos + text_size);
+			ImGui::ItemSize(text_size);
+			if (!ImGui::ItemAdd(bb, id))
+				return;
+
+			window->DrawList->AddText(g.Font, g.FontSize, bb.Min, ImGui::GetColorU32(ImGuiCol_Text), text, text_end);
+		}
+
+		bool Instance::inputtext(const char *label, char *dst, int len)
+		{
+			return ImGui::InputText(label, dst, len);
 		}
 
 		unsigned int Instance::get_last_ID()
@@ -265,9 +389,45 @@ namespace flame
 			return glm::vec4(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
 		}
 
+		static glm::vec4 last_display;
+
+		void Instance::push_displayrect(const glm::vec4 &rect)
+		{
+			auto &im_io = ImGui::GetIO();
+			last_display.x = im_io.DisplayVisibleMin.x;
+			last_display.y = im_io.DisplayVisibleMin.y;
+			last_display.z = im_io.DisplayVisibleMax.x;
+			last_display.w = im_io.DisplayVisibleMax.y;
+			im_io.DisplayVisibleMin.x = rect.x;
+			im_io.DisplayVisibleMin.y = rect.y;
+			im_io.DisplayVisibleMax.x = rect.z;
+			im_io.DisplayVisibleMax.y = rect.w;
+		}
+
+		void Instance::pop_displayrect()
+		{
+			auto &im_io = ImGui::GetIO();
+			im_io.DisplayVisibleMin.x = last_display.x;
+			im_io.DisplayVisibleMin.y = last_display.y;
+			im_io.DisplayVisibleMax.x = last_display.z;
+			im_io.DisplayVisibleMax.y = last_display.w;
+		}
+
+		void Instance::push_overlay_cliprect(const glm::vec4 &rect)
+		{
+			ImGui::GetOverlayDrawList()->PushClipRect(
+				ImVec2(rect.x, rect.y), ImVec2(rect.z, rect.w));
+		}
+
+		void Instance::pop_overlay_cliprect()
+		{
+			ImGui::GetOverlayDrawList()->PopClipRect();
+		}
+
 		void Instance::add_line_to_window(const glm::vec2 &a, const glm::vec2 &b, const glm::vec4 &col)
 		{
-			ImGui::GetWindowDrawList()->AddLine(ImVec2(a.x, a.y), ImVec2(b.x, b.y),
+			auto wpos = ImGui::GetWindowPos();
+			ImGui::GetWindowDrawList()->AddLine(ImVec2(wpos.x + a.x, wpos.y + a.y), ImVec2(wpos.x + b.x, wpos.y + b.y),
 				ImColor(col.r, col.g, col.b, col.a));
 		}
 
@@ -279,7 +439,8 @@ namespace flame
 
 		void Instance::add_rect_to_window(const glm::vec4 &rect, const glm::vec4 &col)
 		{
-			add_rect_impl(ImGui::GetWindowDrawList(), rect, col);
+			auto wpos = ImGui::GetWindowPos();
+			add_rect_impl(ImGui::GetWindowDrawList(), rect + glm::vec4(wpos.x, wpos.y, wpos.x, wpos.y), col);
 		}
 
 		void Instance::add_text_to_window(const glm::vec2 &pos, const glm::vec4 &col, const char *fmt, ...)
@@ -291,7 +452,8 @@ namespace flame
 			auto len = vsprintf(buffer, fmt, ap);
 			va_end(ap);
 
-			ImGui::GetWindowDrawList()->AddText(ImVec2(pos.x, pos.y), ImColor(col.r, col.g, col.b, col.a),
+			auto wpos = ImGui::GetWindowPos();
+			ImGui::GetWindowDrawList()->AddText(ImVec2(wpos.x + pos.x, wpos.y + pos.y), ImColor(col.r, col.g, col.b, col.a),
 				buffer, buffer + len);
 		}
 
@@ -300,7 +462,31 @@ namespace flame
 			add_rect_impl(ImGui::GetOverlayDrawList(), rect, col);
 		}
 
-		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp)
+		void Instance::add_message_dialog(const char *title, const char *message)
+		{
+			auto d = new MessageDialog;
+			d->open = false;
+			strcpy(d->title.data, title);
+			strcpy(d->message.data, message);
+			dialogs.emplace_back(d);
+		}
+
+		void Instance::add_input_dialog(const char *title, const char *label, const
+			std::function<void(MediumString *input)> &callback, const char *default_input)
+		{
+			auto d = new InputDialog;
+			d->open = false;
+			strcpy(d->title.data, title);
+			strcpy(d->label.data, label);
+			d->callback = callback;
+			if (default_input)
+				strcpy(d->input.data, default_input);
+			else
+				d->input.data[0] = 0;
+			dialogs.emplace_back(d);
+		}
+
+		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp, Surface *s)
 		{
 			auto i = new Instance;
 
@@ -374,6 +560,8 @@ namespace flame
 			i->_priv->vtx_buffer = nullptr;
 			i->_priv->idx_buffer = nullptr;
 
+			i->_priv->s = s;
+
 			im_io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 			im_io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
 			im_io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
@@ -393,6 +581,36 @@ namespace flame
 			im_io.KeyMap[ImGuiKey_X] = 'X';
 			im_io.KeyMap[ImGuiKey_Y] = 'Y';
 			im_io.KeyMap[ImGuiKey_Z] = 'Z';
+
+			s->add_keydown_listener([](Surface *, int k) {
+				ImGuiIO& io = ImGui::GetIO();
+				io.KeysDown[k] = true;
+
+				io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
+				io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
+				io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
+				io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
+			});
+
+			s->add_keyup_listener([](Surface *, int k) {
+				ImGuiIO& io = ImGui::GetIO();
+				io.KeysDown[k] = false;
+
+				io.KeyCtrl = io.KeysDown[VK_LCONTROL] || io.KeysDown[VK_RCONTROL] || io.KeysDown[VK_CONTROL];
+				io.KeyShift = io.KeysDown[VK_LSHIFT] || io.KeysDown[VK_RSHIFT] || io.KeysDown[VK_SHIFT];
+				io.KeyAlt = io.KeysDown[VK_LMENU] || io.KeysDown[VK_RMENU];
+				io.KeySuper = io.KeysDown[VK_LWIN] || io.KeysDown[VK_RWIN];
+			});
+
+			s->add_char_listener([](Surface *, int c) {
+				if (c == VK_TAB)
+					return;
+
+				ImGuiIO& io = ImGui::GetIO();
+				if (c > 0 && c < 0x10000)
+					io.AddInputCharacter((unsigned short)c);
+			});
+
 			im_io.SetClipboardTextFn = [](void *user_data, const char *s) {
 				set_clipboard(s);
 			};

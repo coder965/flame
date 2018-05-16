@@ -49,12 +49,12 @@ int main(int argc, char **args)
 	auto image_avalible = graphics::create_semaphore(d);
 	auto ui_finished = graphics::create_semaphore(d);
 
-	auto ui = UI::create_instance(d, rp_ui);
+	auto ui = UI::create_instance(d, rp_ui, s);
 
-	MediumString wnd_title;
-	strcpy(wnd_title.data, "New Form");
-	vec2 wnd_pos{ 0.f, 0.f };
-	vec2 wnd_size{ 100.f, 100.f };
+	MediumString wnd_name;
+	strcpy(wnd_name.data, "New Form");
+	vec2 wnd_pos{ 50.f, 20.f };
+	vec2 wnd_size{ 300.f, 400.f };
 
 	enum WidgetType
 	{
@@ -65,29 +65,104 @@ int main(int argc, char **args)
 	struct Widget
 	{
 		WidgetType type;
-		ShortString name;
+		ShortString name; // name ID of text, label of button
+		unsigned int ID;
+
+		virtual void show(UI::Instance *ui) = 0;
 	};
 
-	std::vector<Widget> widgets;
+	struct TextWidget : Widget
+	{
+		MediumString text;
+
+		virtual void show(UI::Instance *ui) override
+		{
+			ui->ID_text_unformatted(name.data, text.data);
+		}
+	};
+
+	struct ButtonWidget : Widget
+	{
+		virtual void show(UI::Instance *ui) override
+		{
+			ui->button(name.data);
+		}
+	};
+
+	std::vector<std::unique_ptr<Widget>> widgets;
+
+	auto find_widget = [&](const char *name) {
+		for (auto &w : widgets)
+		{
+			if (strcmp(w->name.data, name) == 0)
+				return true;
+		}
+		return false;
+	};
 
 	sm->run([&](){
-		ui->begin(res.x, res.y, sm->elapsed_time, s->mouse_x, s->mouse_y,
-			(s->mouse_buttons[0] & KeyStateDown) != 0,
-			(s->mouse_buttons[1] & KeyStateDown) != 0,
-			(s->mouse_buttons[2] & KeyStateDown) != 0,
-			s->mouse_scroll);
+		ui->begin(res.x, res.y, sm->elapsed_time);
 
 		/*
 		0xFFFFFFFF:selecting nothing
-		         0:selecting the window
-		        >0:selecting an item
+		nullptr:selecting the window
+		else:selecting a widget
 		*/
-		static unsigned int sel_ID = 0xFFFFFFFF;
-		glm::vec4 sel_rect;
+		static Widget *sel = (Widget*)0xFFFFFFFF;
+		vec4 sel_rect;
+
+		ui->begin_mainmenu();
+		if (ui->begin_menu("Add"))
+		{
+			if (ui->menuitem("Text"))
+			{
+				ui->add_input_dialog("Please Enter The ID Of Text", "ID", [&](MediumString *input) {
+					if (input->data[0] == 0)
+					{
+						ui->add_message_dialog("Add Text", "Text cannot be empty");
+						return;
+					}
+					if (find_widget(input->data))
+					{
+						ui->add_message_dialog("Add Text", "This ID already exists");
+						return;
+					}
+					auto w = new TextWidget;
+					w->type = WidgetText;
+					strcpy(w->name.data, input->data);
+					strcpy(w->text.data, input->data);
+					widgets.emplace_back(w);
+				});
+			}
+			if (ui->menuitem("Button"))
+			{
+				ui->add_input_dialog("Please Enter The ID Of Button", "ID", [&](MediumString *input) {
+					if (input->data[0] == 0)
+					{
+						ui->add_message_dialog("Add Button", "Label cannot be empty");
+						return;
+					}
+					if (find_widget(input->data))
+					{
+						ui->add_message_dialog("Add Button", "This ID already exists");
+						return;
+					}
+					auto w = new ButtonWidget;
+					w->type = WidgetButton;
+					strcpy(w->name.data, input->data);
+					widgets.emplace_back(w);
+				});
+			}
+			ui->end_menu();
+		}
+		auto menu_rect = ui->get_curr_window_rect();
+		ui->end_mainmenu();
 
 		static vec2 off{0.f, 0.f};
+		vec2 bg_pos{0.f, menu_rect.w};
+		vec2 bg_size = res - bg_pos;
 		static bool graping_grid = false;
-		ui->begin_plain_window("background", vec2(0.f, 0.f), vec2(res.x, res.y));
+		ui->begin_plain_window("background", bg_pos, bg_size);
 
 		for (auto i = mod((int)off.x, 100); i.y < res.x; i.y += 100, i.x--)
 		{
@@ -104,14 +179,21 @@ int main(int argc, char **args)
 			ui->add_text_to_window(vec2(4.f, i.y), vec4(1.f), "%d", i.x * -100);
 		}
 
+		auto want_sel = true;
+
 		if (ui->is_curr_window_hovered())
 		{
 			if (s->mouse_buttons[2] == (KeyStateJust | KeyStateDown))
 				graping_grid = true;
-			if (s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
-				sel_ID = 0xFFFFFFFF;
+			if (want_sel &&
+				s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			{
+				sel = (Widget*)0xFFFFFFFF;
+				want_sel = false;
+			}
 		}
 		static auto need_set_wnd_pos = true;
+		static auto need_set_wnd_size = true;
 		if (graping_grid)
 		{
 			off.x += s->mouse_disp_x;
@@ -122,44 +204,81 @@ int main(int argc, char **args)
 		}
 		ui->end_window();
 
-		ui->begin_window(wnd_title.data, need_set_wnd_pos ? (wnd_pos + off) : vec2(get_inf()),
-			vec2(get_inf()));
+		ui->push_displayrect(vec4(bg_pos, bg_pos + bg_size));
+		ui->begin_window(wnd_name.data, need_set_wnd_pos ? (wnd_pos + off + bg_pos) : vec2(get_inf()),
+			need_set_wnd_size ? wnd_size : vec2(get_inf()));
+
 		auto wnd_rect = ui->get_curr_window_rect();
 		if (!need_set_wnd_pos)
-			wnd_pos = vec2(wnd_rect.x, wnd_rect.y) - off;
+			wnd_pos = vec2(wnd_rect.x, wnd_rect.y) - off - bg_pos;
 		need_set_wnd_pos = false;
+		if (!need_set_wnd_size)
+			wnd_size = vec2(wnd_rect.z, wnd_rect.w) - wnd_pos;
+		need_set_wnd_size = false;
 
-		ui->button("Button");
-		if (ui->is_last_item_hovered() && 
-			s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
-			sel_ID = ui->get_last_ID();
-		if (sel_ID == ui->get_last_ID())
-			sel_rect = ui->get_last_item_rect();
+		for (auto &w : widgets)
+		{
+			w->show(ui);
+			if (ui->is_last_item_hovered() && want_sel &&
+				s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			{
+				w->ID = ui->get_last_ID();
+				sel = w.get();
+				want_sel = false;
+			}
+			if (sel == w.get())
+				sel_rect = ui->get_last_item_rect();
+		}
 
-		if (ui->is_curr_window_hovered() &&
+		if (ui->is_curr_window_hovered() && want_sel &&
 			s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
-			sel_ID = 0;
-		if (sel_ID == 0)
+		{
+			sel = nullptr;
+			want_sel = false;
+		}
+		if (sel == nullptr)
 			sel_rect = wnd_rect;
-		ui->end_window();
 
-		if (sel_ID != 0xFFFFFFFF)
+		ui->end_window();
+		ui->pop_displayrect();
+
+		ui->push_overlay_cliprect(vec4(bg_pos, bg_pos + bg_size));
+		if (sel != (Widget*)0xFFFFFFFF)
 		{
 			expand_rect(sel_rect, 4.f);
 			ui->add_rect_to_overlap(sel_rect, vec4(1.f, 1.f, 0.f, 1.f));
 		}
+		ui->pop_overlay_cliprect();
 
 		ui->begin_window("Hierarchy", vec2(get_inf()), vec2(get_inf()), true);
 		ui->end_window();
 
 		ui->begin_window("Inspector", vec2(get_inf()), vec2(get_inf()), true);
-		if (sel_ID == 0)
+		if (sel != (Widget*)0xFFFFFFFF)
 		{
-			ui->text("Window");
-			ui->inputtext("title", wnd_title.data, sizeof(wnd_title.data));
-			if (ui->dragfloat2("pos", &wnd_pos, 1.f))
-				need_set_wnd_pos = true;
-			ui->dragfloat2("size", &wnd_size, 1.f);
+			if (sel == nullptr)
+			{
+				ui->text("Window:");
+				ui->inputtext("name", wnd_name.data, sizeof(wnd_name.data));
+				if (ui->dragfloat2("pos", &wnd_pos, 1.f))
+					need_set_wnd_pos = true;
+				if (ui->dragfloat2("size", &wnd_size, 1.f))
+					need_set_wnd_size = true;
+			}
+			else
+			{
+				switch (sel->type)
+				{
+				case WidgetText:
+					ui->text("Text:");
+					ui->inputtext("ID", sel->name.data, sizeof(sel->name.data));
+					break;
+				case WidgetButton:
+					ui->text("Button:");
+					ui->inputtext("Label", sel->name.data, sizeof(sel->name.data));
+					break;
+				}
+			}
 		}
 		ui->end_window();
 
