@@ -27,6 +27,11 @@ namespace flame
 
 			FLAME_UI_EXPORTS bool begin_plain_window(const char *title, const glm::vec2 &pos, const glm::vec2 &size);
 			FLAME_UI_EXPORTS void end_window();
+			FLAME_UI_EXPORTS void begin_mainmenu();
+			FLAME_UI_EXPORTS void end_mainmenu();
+			FLAME_UI_EXPORTS bool begin_menu();
+			FLAME_UI_EXPORTS void end_menu();
+			FLAME_UI_EXPORTS bool menuitem();
 			FLAME_UI_EXPORTS bool button(const char *title);
 			FLAME_UI_EXPORTS bool checkbox(const char *title, bool *p);
 			FLAME_UI_EXPORTS bool dragfloat(const char *title, float *p, float speed);

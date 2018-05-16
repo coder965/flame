@@ -110,6 +110,11 @@ namespace flame
 			std::abs(a.w - b.w) <= TK_EPS;
 	}
 
+	inline glm::ivec2 mod(int a, int b)
+	{
+		return glm::ivec2(a / b, a % b);
+	}
+
 	inline glm::vec3 transform(const glm::vec3 &v, const glm::mat4 &mat)
 	{
 		auto v_ = mat * glm::vec4(v, 1.f);
