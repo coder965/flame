@@ -172,9 +172,16 @@ int main(int argc, char **args)
 		auto menu_rect = ui->get_curr_window_rect();
 		ui->end_mainmenu();
 
+		ui->begin_status_window();
+		ui->text_unformatted("Ready.");
+		auto status_rect = ui->get_curr_window_rect();
+		ui->end_window();
+
 		static vec2 off{0.f, 0.f};
 		vec2 bg_pos{0.f, menu_rect.w};
-		vec2 bg_size = res - bg_pos;
+		vec2 bg_size{res.x, res.y - 
+			(menu_rect.w - menu_rect.y) - 
+			(status_rect.w - status_rect.y)};
 		static bool graping_grid = false;
 		ui->begin_plain_window("background", bg_pos, bg_size);
 

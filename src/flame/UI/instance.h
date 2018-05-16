@@ -2,6 +2,7 @@
 
 #include <flame/math.h>
 #include <flame/string.h>
+#include <flame/surface.h>
 
 #include "UI.h"
 
@@ -36,6 +37,7 @@ namespace flame
 			FLAME_UI_EXPORTS bool begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, int flags = 0); 
 
 			FLAME_UI_EXPORTS bool begin_plain_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size);
+			FLAME_UI_EXPORTS bool begin_status_window();
 			FLAME_UI_EXPORTS void end_window();
 
 			FLAME_UI_EXPORTS bool begin_mainmenu();
@@ -78,6 +80,8 @@ namespace flame
 			FLAME_UI_EXPORTS void add_message_dialog(const char *title, const char *message);
 			FLAME_UI_EXPORTS void add_input_dialog(const char *title, const char *label, const 
 				std::function<void(MediumString *input)> &callback, const char *default_input = nullptr);
+
+			FLAME_UI_EXPORTS void set_cursor(CursorType type);
 		};
 
 		FLAME_UI_EXPORTS Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp, Surface *s);

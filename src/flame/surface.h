@@ -28,7 +28,7 @@ namespace flame
 		KeyStateJust = 1 << 2,
 	};
 
-	enum CusorType
+	enum CursorType
 	{
 		CursorAppStarting, // arrow and small hourglass
 		CursorArrow,
@@ -70,7 +70,7 @@ namespace flame
 		SurfacePrivate *_priv;
 
 		FLAME_SURFACE_EXPORTS void *get_win32_handle();
-		FLAME_SURFACE_EXPORTS void *get_standard_cursor(CusorType type);
+		FLAME_SURFACE_EXPORTS void *get_standard_cursor(CursorType type);
 		FLAME_SURFACE_EXPORTS void set_cursor(void *c);
 		FLAME_SURFACE_EXPORTS void show_cursor(bool show);
 

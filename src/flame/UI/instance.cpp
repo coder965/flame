@@ -12,7 +12,6 @@
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/sampler.h>
-#include <flame/surface.h>
 
 #include <Windows.h>
 #include <stdarg.h>
@@ -42,18 +41,15 @@ namespace flame
 
 			im_io.MouseWheel = _priv->s->mouse_scroll;
 
-			// Update OS/hardware mouse cursor if imgui isn't drawing a software cursor
 			if ((im_io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) == 0)
 			{
 				ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
 				if (im_io.MouseDrawCursor || cursor == ImGuiMouseCursor_None)
-				{
-					//glfwSetInputMode(g_Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-				}
+					_priv->s->show_cursor(false);
 				else
 				{
-					//glfwSetCursor(g_Window, g_MouseCursors[cursor] ? g_MouseCursors[cursor] : g_MouseCursors[ImGuiMouseCursor_Arrow]);
-					//glfwSetInputMode(g_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+					_priv->s->set_cursor(_priv->cursors[cursor]);
+					_priv->s->show_cursor(true);
 				}
 			}
 
@@ -250,6 +246,29 @@ namespace flame
 			ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 			auto open = ImGui::Begin(name, nullptr,
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoNav |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoSavedSettings |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoScrollWithMouse |
+				ImGuiWindowFlags_NoTitleBar);
+			ImGui::PopStyleVar();
+			return open;
+		}
+
+		bool Instance::begin_status_window()
+		{
+			ImGuiIO& im_io = ImGui::GetIO();
+			ImGuiContext& im_g = *GImGui;
+			auto height = im_g.FontSize + im_g.Style.WindowPadding.y * 2.f;
+			ImGui::SetNextWindowPos(ImVec2(0.f, im_io.DisplaySize.y - height));
+			ImGui::SetNextWindowSize(ImVec2(im_io.DisplaySize.x, height));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+			auto open = ImGui::Begin("##status", nullptr,
 				ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoFocusOnAppearing |
@@ -506,6 +525,36 @@ namespace flame
 			dialogs.emplace_back(d);
 		}
 
+		void Instance::set_cursor(CursorType type)
+		{
+			ImGuiMouseCursor c;
+			switch (type)
+			{
+			case CursorArrow:
+				c = ImGuiMouseCursor_Arrow;
+				break;
+			case CursorIBeam:
+				c = ImGuiMouseCursor_TextInput;
+				break;
+			case CursorSizeAll:
+				c = ImGuiMouseCursor_ResizeAll;
+				break;
+			case CursorSizeNS:
+				c = ImGuiMouseCursor_ResizeNS;
+				break;
+			case CursorSizeWE:
+				c = ImGuiMouseCursor_ResizeEW;
+				break;
+			case CursorSizeNESW:
+				c = ImGuiMouseCursor_ResizeNESW;
+				break;
+			case CursorSizeNWSE:
+				c = ImGuiMouseCursor_ResizeNWSE;
+				break;
+			}
+			ImGui::SetMouseCursor(c);
+		}
+
 		Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp, Surface *s)
 		{
 			auto i = new Instance;
@@ -615,11 +664,11 @@ namespace flame
 
 			i->_priv->cursors[ImGuiMouseCursor_Arrow] = s->get_standard_cursor(CursorArrow);
 			i->_priv->cursors[ImGuiMouseCursor_TextInput] = s->get_standard_cursor(CursorIBeam);
-			//g_MouseCursors[ImGuiMouseCursor_ResizeAll] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-			//g_MouseCursors[ImGuiMouseCursor_ResizeNS] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-			//g_MouseCursors[ImGuiMouseCursor_ResizeEW] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-			//g_MouseCursors[ImGuiMouseCursor_ResizeNESW] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-			//g_MouseCursors[ImGuiMouseCursor_ResizeNWSE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+			i->_priv->cursors[ImGuiMouseCursor_ResizeAll] = s->get_standard_cursor(CursorSizeAll);
+			i->_priv->cursors[ImGuiMouseCursor_ResizeNS] = s->get_standard_cursor(CursorSizeNS);
+			i->_priv->cursors[ImGuiMouseCursor_ResizeEW] = s->get_standard_cursor(CursorSizeWE);
+			i->_priv->cursors[ImGuiMouseCursor_ResizeNESW] = s->get_standard_cursor(CursorSizeNESW);
+			i->_priv->cursors[ImGuiMouseCursor_ResizeNWSE] = s->get_standard_cursor(CursorSizeNWSE);
 
 			s->add_keydown_listener([](Surface *, int k) {
 				ImGuiIO& io = ImGui::GetIO();

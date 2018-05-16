@@ -66,7 +66,7 @@ namespace flame
 		return _priv->hWnd;
 	}
 
-	void *Surface::get_standard_cursor(CusorType type)
+	void *Surface::get_standard_cursor(CursorType type)
 	{
 		const char *name;
 		switch (type)
@@ -114,7 +114,7 @@ namespace flame
 			name = IDC_WAIT;
 			break;
 		}
-		return LoadCursor((HINSTANCE)get_hinst(), name);
+		return LoadCursor(nullptr, name);
 	}
 
 	void Surface::set_cursor(void *c)
