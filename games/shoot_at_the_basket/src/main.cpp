@@ -260,7 +260,7 @@ int main(int argc, char **args)
 	auto x_ang = 0.f;
 	auto view_need_update = true;
 	s->add_mousemove_listener([&](Surface *s, int, int){
-		if (!ui->processed_input && (s->mouse_buttons[0] & KeyStateDown))
+		if (!ui->processed_mouse_input && (s->mouse_buttons[0] & KeyStateDown))
 		{
 			x_ang += s->mouse_disp_x;
 			view_need_update = true;

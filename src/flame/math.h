@@ -115,6 +115,57 @@ namespace flame
 		return glm::ivec2(a / b, a % b);
 	}
 
+	inline bool in(const glm::vec2 &pos, const glm::vec4 &rect)
+	{
+		return pos.x > rect.x && pos.x < rect.z &&
+			pos.y > rect.y && pos.y < rect.w;
+	}
+
+	enum RectSide
+	{
+		OutSide,
+		SideN,
+		SideS,
+		SideE,
+		SideW,
+		SideNE,
+		SideNW,
+		SideSE,
+		SideSW,
+		InSide
+	};
+
+	inline RectSide rect_side(const glm::vec2 &pos, const glm::vec4 &rect, float threshold)
+	{
+		if (pos.x < rect.z + threshold && pos.x > rect.z &&
+			pos.y > rect.y - threshold && pos.y < rect.y)
+			return SideNE;
+		if (pos.x > rect.x - threshold && pos.x < rect.x &&
+			pos.y > rect.y - threshold && pos.y < rect.y)
+			return SideNW;
+		if (pos.x < rect.z + threshold && pos.x > rect.z &&
+			pos.y < rect.w + threshold && pos.y > rect.w)
+			return SideSE;
+		if (pos.x > rect.x - threshold && pos.x < rect.x &&
+			pos.y < rect.w + threshold && pos.y > rect.w)
+			return SideSW;
+		if (pos.y > rect.y - threshold && pos.y < rect.y &&
+			pos.x > rect.x && pos.x < rect.z)
+			return SideN;
+		if (pos.y < rect.w + threshold && pos.y > rect.w &&
+			pos.x > rect.x && pos.x < rect.z)
+			return SideS;
+		if (pos.x < rect.z + threshold && pos.x > rect.z &&
+			pos.y > rect.y && pos.y < rect.w)
+			return SideE;
+		if (pos.x > rect.x - threshold && pos.x < rect.x &&
+			pos.y > rect.y && pos.y < rect.w)
+			return SideW;
+		if (in(pos, rect))
+			return InSide;
+		return OutSide;
+	}
+
 	inline glm::vec3 transform(const glm::vec3 &v, const glm::mat4 &mat)
 	{
 		auto v_ = mat * glm::vec4(v, 1.f);
@@ -133,6 +184,16 @@ namespace flame
 		rect.y -= length;
 		rect.z += length;
 		rect.w += length;
+	}
+
+	inline glm::vec4 get_expand_rect(glm::vec4 &rect, float length)
+	{
+		glm::vec4 new_rect;
+		new_rect.x = rect.x - length;
+		new_rect.y = rect.y - length;
+		new_rect.z = rect.z + length;
+		new_rect.w = rect.w + length;
+		return new_rect;
 	}
 
 	inline void ortho_normalize(glm::mat3 &mat)

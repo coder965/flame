@@ -13,6 +13,7 @@
 #include <flame/graphics/queue.h>
 #include <flame/UI/instance.h>
 
+#define NOMINMAX
 #include <Windows.h>
 
 int main(int argc, char **args)
@@ -64,6 +65,8 @@ int main(int argc, char **args)
 
 	struct Widget
 	{
+		vec4 rect;
+
 		WidgetType type;
 		ShortString name;
 		unsigned int ID;
@@ -111,7 +114,45 @@ int main(int argc, char **args)
 		static Widget *sel = (Widget*)0xFFFFFFFF;
 		vec4 sel_rect;
 
+		static bool transform_mode = false;
+		static bool transform_mode_moving = false;
+		static bool transform_mode_sizing = false;
+		static CursorType transform_mode_cursor;
+		static ivec2 transform_mode_anchor;
+		static RectSide transform_mode_sizing_side;
+		auto toggle_transform_mode = []() {
+			if (transform_mode)
+				transform_mode = false;
+			else
+			{
+				if (sel != (Widget*)0xFFFFFFFF)
+				{
+					transform_mode = true;
+					transform_mode_moving = false;
+					transform_mode_sizing = false;
+				}
+			}
+		};
+
+		static bool hierarchy = false;
+		bool hierarchy_need_set_to_center = false;
+		static bool inspector = false;
+		bool inspector_need_set_to_center = false;
+
 		ui->begin_mainmenu();
+		if (ui->begin_menu("File"))
+		{
+			if (ui->menuitem("New", "Ctrl+N"))
+			{
+			}
+			if (ui->menuitem("Open", "Ctrl+O"))
+			{
+			}
+			if (ui->menuitem("Save", "Ctrl+S"))
+			{
+			}
+			ui->end_menu();
+		}
 		if (ui->begin_menu("Add"))
 		{
 			if (ui->menuitem("Text"))
@@ -169,11 +210,87 @@ int main(int argc, char **args)
 			}
 			ui->end_menu();
 		}
+		if (ui->begin_menu("Edit"))
+		{
+			if (ui->menuitem("Undo", "Ctrl+Z"))
+				;
+			if (ui->menuitem("Redo", "Ctrl+Y"))
+				;
+			if (ui->menuitem("Cut", "Ctrl+X"))
+				;
+			if (ui->menuitem("Copy", "Ctrl+C"))
+				;
+			if (ui->menuitem("Paste", "Ctrl+V"))
+				;
+			if (ui->menuitem("Delete", "Del"))
+				;
+			if (ui->menuitem("Transform Mode", "T", transform_mode))
+				toggle_transform_mode();
+			ui->end_menu();
+		}
+		if (ui->begin_menu("View"))
+		{
+			ui->end_menu();
+		}
 		auto menu_rect = ui->get_curr_window_rect();
 		ui->end_mainmenu();
 
+		auto transform_mode_move_off = ivec2(s->mouse_x - transform_mode_anchor.x, 
+			s->mouse_y - transform_mode_anchor.y);
+		auto transform_mode_size_off = ivec2(s->mouse_x - transform_mode_anchor.x,
+			s->mouse_y - transform_mode_anchor.y);
+		switch (transform_mode_sizing_side)
+		{
+		case SideN:
+			transform_mode_size_off.x = 0;
+			transform_mode_size_off.y = glm::min(transform_mode_size_off.y, (int)wnd_size.y - 40);
+			break;
+		case SideS:
+			transform_mode_size_off.x = 0;
+			transform_mode_size_off.y = glm::max(transform_mode_size_off.y, -(int)wnd_size.y + 40);
+			break;
+		case SideE:
+			transform_mode_size_off.y = 0;
+			transform_mode_size_off.x = glm::max(transform_mode_size_off.x, -(int)wnd_size.x + 40);
+			break;
+		case SideW:
+			transform_mode_size_off.y = 0;
+			transform_mode_size_off.x = glm::min(transform_mode_size_off.x, (int)wnd_size.x - 40);
+			break;
+		case SideNE:
+			transform_mode_size_off.x = glm::max(transform_mode_size_off.x, -(int)wnd_size.x + 40);
+			transform_mode_size_off.y = glm::min(transform_mode_size_off.y, (int)wnd_size.y - 40);
+			break;
+		case SideNW:
+			transform_mode_size_off.x = glm::min(transform_mode_size_off.x, (int)wnd_size.x - 40);
+			transform_mode_size_off.y = glm::min(transform_mode_size_off.y, (int)wnd_size.y - 40);
+			break;
+		case SideSE:
+			transform_mode_size_off.x = glm::max(transform_mode_size_off.x, -(int)wnd_size.x + 40);
+			transform_mode_size_off.y = glm::max(transform_mode_size_off.y, -(int)wnd_size.y + 40);
+			break;
+		case SideSW:
+			transform_mode_size_off.x = glm::min(transform_mode_size_off.x, (int)wnd_size.x - 40);
+			transform_mode_size_off.y = glm::max(transform_mode_size_off.y, -(int)wnd_size.y + 40);
+			break;
+		}
+
 		ui->begin_status_window();
-		ui->text_unformatted("Ready.");
+		if (transform_mode)
+		{
+			if (transform_mode_moving)
+				ui->text("Moving: (%d, %d) %d, %d", 
+					transform_mode_move_off.x, transform_mode_move_off.y,
+					s->mouse_x, s->mouse_y);
+			else if (transform_mode_sizing)
+				ui->text("Sizing: (%d, %d) %d, %d",
+					transform_mode_size_off.x, transform_mode_size_off.y,
+					s->mouse_x, s->mouse_y);
+			else
+				ui->text_unformatted("Transform mode, press 'T' or 'Esc' to exit.");
+		}
+		else
+			ui->text_unformatted("Ready.");
 		auto status_rect = ui->get_curr_window_rect();
 		ui->end_window();
 
@@ -200,7 +317,7 @@ int main(int argc, char **args)
 			ui->add_text_to_window(vec2(4.f, i.y), vec4(1.f), "%d", i.x * -100);
 		}
 
-		auto want_sel = true;
+		auto want_sel = !transform_mode;
 
 		if (ui->is_curr_window_hovered())
 		{
@@ -226,8 +343,7 @@ int main(int argc, char **args)
 		ui->push_displayrect(vec4(bg_pos, bg_pos + bg_size));
 		ui->begin_window(wnd_name.data, wnd_pos + off + bg_pos, wnd_size,
 			UI::WindowNoResize);
-
-		auto wnd_rect = ui->get_curr_window_rect();
+		auto wnd_inner_rect = ui->get_curr_window_inner_rect();
 
 		for (auto &w : widgets)
 		{
@@ -239,8 +355,9 @@ int main(int argc, char **args)
 				sel = w.get();
 				want_sel = false;
 			}
+			w->rect = ui->get_last_item_rect();
 			if (sel == w.get())
-				sel_rect = ui->get_last_item_rect();
+				sel_rect = w->rect;
 		}
 
 		if (ui->is_curr_window_hovered() && want_sel &&
@@ -250,7 +367,108 @@ int main(int argc, char **args)
 			want_sel = false;
 		}
 		if (sel == nullptr)
-			sel_rect = wnd_rect;
+			sel_rect = ui->get_curr_window_rect();
+
+		if (transform_mode)
+		{
+			if (!transform_mode_moving && !transform_mode_sizing)
+			{
+				auto just_clicked = s->mouse_buttons[0] == (KeyStateJust | KeyStateDown);
+				if (just_clicked)
+					transform_mode_anchor = ivec2(s->mouse_x, s->mouse_y);
+				auto side = rect_side(vec2(s->mouse_x, s->mouse_y), sel_rect, 4.f);
+				switch (side)
+				{
+				case SideN: case SideS:
+					transform_mode_cursor = CursorSizeNS;
+					break;
+				case SideE: case SideW:
+					transform_mode_cursor = CursorSizeWE;
+					break;
+				case SideNE: case SideSW:
+					transform_mode_cursor = CursorSizeNESW;
+					break;
+				case SideNW: case SideSE:
+					transform_mode_cursor = CursorSizeNWSE;
+					break;
+				case InSide:
+					transform_mode_cursor = CursorSizeAll;
+					break;
+				}
+				if (side != OutSide)
+				{
+					ui->set_cursor(transform_mode_cursor);
+					if (just_clicked)
+					{
+						if (side == InSide)
+							transform_mode_moving = true;
+						else
+						{
+							transform_mode_sizing = true;
+							transform_mode_sizing_side = side;
+						}
+					}
+				}
+			}
+			if (transform_mode_moving)
+			{
+				ui->set_cursor(transform_mode_cursor);
+				if ((s->mouse_buttons[0] & KeyStateDown) == 0)
+				{
+					if (sel == nullptr)
+						wnd_pos += transform_mode_move_off;
+					transform_mode_moving = false;
+				}
+			}
+			if (transform_mode_sizing)
+			{
+				ui->set_cursor(transform_mode_cursor);
+				if ((s->mouse_buttons[0] & KeyStateDown) == 0)
+				{
+					if (sel == nullptr)
+					{
+						switch (transform_mode_sizing_side)
+						{
+						case SideN:
+							wnd_pos.y += transform_mode_size_off.y;
+							wnd_size.y -= transform_mode_size_off.y;
+							break;
+						case SideS:
+							wnd_size.y += transform_mode_size_off.y;
+							break;
+						case SideW:
+							wnd_pos.x += transform_mode_size_off.x;
+							wnd_size.x -= transform_mode_size_off.x;
+							break;
+						case SideE:
+							wnd_size.x += transform_mode_size_off.x;
+							break;
+						case SideNE:
+							wnd_pos.y += transform_mode_size_off.y;
+							wnd_size.y -= transform_mode_size_off.y;
+							wnd_size.x += transform_mode_size_off.x;
+							break;
+						case SideNW:
+							wnd_pos.y += transform_mode_size_off.y;
+							wnd_size.y -= transform_mode_size_off.y;
+							wnd_pos.x += transform_mode_size_off.x;
+							wnd_size.x -= transform_mode_size_off.x;
+							break;
+						case SideSE:
+							wnd_size.y += transform_mode_size_off.y;
+							wnd_size.x += transform_mode_size_off.x;
+							break;
+						case SideSW:
+							wnd_size.y += transform_mode_size_off.y;
+							wnd_pos.x += transform_mode_size_off.x;
+							wnd_size.x -= transform_mode_size_off.x;
+							break;
+						}
+					}
+					transform_mode_sizing = false;
+				}
+			}
+		}
 
 		ui->end_window();
 		ui->pop_displayrect();
@@ -258,8 +476,61 @@ int main(int argc, char **args)
 		ui->push_overlay_cliprect(vec4(bg_pos, bg_pos + bg_size));
 		if (sel != (Widget*)0xFFFFFFFF)
 		{
-			expand_rect(sel_rect, 4.f);
+			if (!transform_mode)
+				expand_rect(sel_rect, 4.f);
 			ui->add_rect_to_overlap(sel_rect, vec4(1.f, 1.f, 0.f, 1.f));
+			if (transform_mode)
+			{
+				if (transform_mode_moving)
+				{
+					ui->add_rect_to_overlap(sel_rect + vec4(transform_mode_move_off, 
+						transform_mode_move_off), vec4(1.f));
+					ui->add_line_to_overlap(vec2(transform_mode_anchor), vec2(s->mouse_x,
+						s->mouse_y), vec4(1.f));
+					if (sel != nullptr)
+					{
+						ui->add_line_to_overlap(vec2(wnd_inner_rect.x, wnd_inner_rect.y), 
+							vec2(wnd_inner_rect.z, wnd_inner_rect.y), 
+							vec4(1.f, 0.f, 0.f, 1.f));
+					}
+				}
+				if (transform_mode_sizing)
+				{
+					auto rect = sel_rect;
+					switch (transform_mode_sizing_side)
+					{
+					case SideN:
+						rect.y += transform_mode_size_off.y;
+						break;
+					case SideS:
+						rect.w += transform_mode_size_off.y;
+						break;
+					case SideW:
+						rect.x += transform_mode_size_off.x;
+						break;
+					case SideE:
+						rect.z += transform_mode_size_off.x;
+						break;
+					case SideNE:
+						rect.y += transform_mode_size_off.y;
+						rect.z += transform_mode_size_off.x;
+						break;
+					case SideNW:
+						rect.y += transform_mode_size_off.y;
+						rect.x += transform_mode_size_off.x;
+						break;
+					case SideSE:
+						rect.w += transform_mode_size_off.y;
+						rect.z += transform_mode_size_off.x;
+						break;
+					case SideSW:
+						rect.w += transform_mode_size_off.y;
+						rect.x += transform_mode_size_off.x;
+						break;
+					}
+					ui->add_rect_to_overlap(rect, vec4(1.f));
+				}
+			}
 		}
 		ui->pop_overlay_cliprect();
 
@@ -310,6 +581,17 @@ int main(int argc, char **args)
 		ui->end_window();
 
 		ui->end();
+
+		if (!ui->processed_keyboard_input)
+		{
+			if (s->key_states['T'] == (KeyStateJust | KeyStateDown))
+				toggle_transform_mode();
+			if (s->key_states[VK_ESCAPE] == (KeyStateJust | KeyStateDown))
+			{
+				if (transform_mode)
+					transform_mode = false;
+			}
+		}
 
 		auto index = sc->acquire_image(image_avalible);
 

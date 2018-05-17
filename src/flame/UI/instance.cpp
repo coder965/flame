@@ -23,7 +23,8 @@ namespace flame
 	{
 		void Instance::begin(int cx, int cy, float _elapsed_time)
 		{
-			processed_input = false;
+			processed_mouse_input = false;
+			processed_keyboard_input = false;
 
 			ImGuiIO& im_io = ImGui::GetIO();
 
@@ -128,7 +129,8 @@ namespace flame
 					it++;
 			}
 
-			processed_input = ImGui::IsMouseHoveringAnyWindow() | ImGui::IsAnyWindowFocused();
+			processed_mouse_input = ImGui::IsMouseHoveringAnyWindow() | ImGui::IsAnyWindowFocused();
+			processed_keyboard_input = ImGui::IsAnyItemActive();
 
 			ImGui::Render();
 
@@ -308,9 +310,9 @@ namespace flame
 			ImGui::EndMenu();
 		}
 
-		bool Instance::menuitem(const char *label)
+		bool Instance::menuitem(const char *label, const char *shortcut, bool checked)
 		{
-			return ImGui::MenuItem(label);
+			return ImGui::MenuItem(label, shortcut, checked);
 		}
 
 		bool Instance::button(const char *label)
@@ -428,6 +430,14 @@ namespace flame
 			return glm::vec4(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
 		}
 
+		glm::vec4 Instance::get_curr_window_inner_rect()
+		{
+			auto pos = ImGui::GetWindowPos();
+			auto LT = ImGui::GetWindowContentRegionMin() + pos;
+			auto RB = ImGui::GetWindowContentRegionMax() + pos;
+			return glm::vec4(LT.x, LT.y, RB.x, RB.y);
+		}
+
 		static glm::vec4 last_display;
 
 		void Instance::push_displayrect(const glm::vec4 &rect)
@@ -501,6 +511,12 @@ namespace flame
 			add_rect_impl(ImGui::GetOverlayDrawList(), rect, col);
 		}
 
+		void Instance::add_line_to_overlap(const glm::vec2 &a, const glm::vec2 &b, const glm::vec4 &col)
+		{
+			ImGui::GetOverlayDrawList()->AddLine(ImVec2(a.x, a.y), ImVec2(b.x, b.y),
+				ImColor(col.r, col.g, col.b, col.a));
+		}
+
 		void Instance::add_message_dialog(const char *title, const char *message)
 		{
 			auto d = new MessageDialog;
@@ -551,6 +567,8 @@ namespace flame
 			case CursorSizeNWSE:
 				c = ImGuiMouseCursor_ResizeNWSE;
 				break;
+			default:
+				c = ImGuiMouseCursor_Arrow;
 			}
 			ImGui::SetMouseCursor(c);
 		}

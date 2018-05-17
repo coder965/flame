@@ -23,7 +23,8 @@ namespace flame
 
 		struct Instance
 		{
-			bool processed_input;
+			bool processed_mouse_input;
+			bool processed_keyboard_input;
 			float elapsed_time;
 
 			InstancePrivate *_priv;
@@ -44,7 +45,7 @@ namespace flame
 			FLAME_UI_EXPORTS void end_mainmenu();
 			FLAME_UI_EXPORTS bool begin_menu(const char *label);
 			FLAME_UI_EXPORTS void end_menu();
-			FLAME_UI_EXPORTS bool menuitem(const char *label);
+			FLAME_UI_EXPORTS bool menuitem(const char *label, const char *shortcut = nullptr, bool checked = false);
 
 			FLAME_UI_EXPORTS bool button(const char *label);
 			FLAME_UI_EXPORTS bool checkbox(const char *label, bool *p);
@@ -65,6 +66,7 @@ namespace flame
 			FLAME_UI_EXPORTS bool is_curr_window_hovered();
 			FLAME_UI_EXPORTS glm::vec4 get_last_item_rect();
 			FLAME_UI_EXPORTS glm::vec4 get_curr_window_rect();
+			FLAME_UI_EXPORTS glm::vec4 get_curr_window_inner_rect();
 
 			// only one layer
 			FLAME_UI_EXPORTS void push_displayrect(const glm::vec4 &rect);
@@ -76,6 +78,7 @@ namespace flame
 			FLAME_UI_EXPORTS void add_rect_to_window(const glm::vec4 &rect, const glm::vec4 &col);
 			FLAME_UI_EXPORTS void add_text_to_window(const glm::vec2 &pos, const glm::vec4 &col, const char *fmt, ...);
 			FLAME_UI_EXPORTS void add_rect_to_overlap(const glm::vec4 &rect, const glm::vec4 &col);
+			FLAME_UI_EXPORTS void add_line_to_overlap(const glm::vec2 &a, const glm::vec2 &b, const glm::vec4 &col);
 
 			FLAME_UI_EXPORTS void add_message_dialog(const char *title, const char *message);
 			FLAME_UI_EXPORTS void add_input_dialog(const char *title, const char *label, const 
