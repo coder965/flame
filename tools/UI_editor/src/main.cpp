@@ -252,6 +252,10 @@ int main(int argc, char **args)
 		}
 		if (ui->begin_menu("View"))
 		{
+			if (ui->menuitem("Hierarchy", "H", hierarchy))
+				;
+			if (ui->menuitem("Inspector", "I", inspector))
+				;
 			ui->end_menu();
 		}
 		auto menu_rect = ui->get_curr_window_rect();

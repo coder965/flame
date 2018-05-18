@@ -28,7 +28,6 @@
 #define FLAME_MATH_EXPORTS __declspec(dllimport)
 #endif
 
-#include <fstream>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -88,10 +87,21 @@ bool inline operator >= (glm::vec3 a, float b)
 	return a.x >= b && a.y >= b && a.z >= b;
 }
 
-#define TK_EPS (0.000001f)
-
 namespace flame
 {
+	inline int count_digit(int a)
+	{
+		auto d = 0;
+		do
+		{
+			d++;
+			a /= 10;
+		} while (a);
+		return d;
+	}
+
+	const float EPS = 0.000001f;
+
 	inline float get_inf()
 	{
 		auto zero = 0.f;
@@ -105,31 +115,31 @@ namespace flame
 
 	inline bool is_same(const float a, const float b)
 	{
-		return std::abs(a - b) <= TK_EPS;
+		return std::abs(a - b) <= EPS;
 	}
 
 	inline bool is_same(const glm::vec2 &a, const glm::vec2 &b)
 	{
 		return 
-			std::abs(a.x - b.x) <= TK_EPS &&
-			std::abs(a.y - b.y) <= TK_EPS;
+			std::abs(a.x - b.x) <= EPS &&
+			std::abs(a.y - b.y) <= EPS;
 	}
 
 	inline bool is_same(const glm::vec3 &a, const glm::vec3 &b)
 	{
 		return
-			std::abs(a.x - b.x) <= TK_EPS &&
-			std::abs(a.y - b.y) <= TK_EPS &&
-			std::abs(a.z - b.z) <= TK_EPS;
+			std::abs(a.x - b.x) <= EPS &&
+			std::abs(a.y - b.y) <= EPS &&
+			std::abs(a.z - b.z) <= EPS;
 	}
 
 	inline bool is_same(const glm::vec4 &a, const glm::vec4 &b)
 	{
 		return
-			std::abs(a.x - b.x) <= TK_EPS &&
-			std::abs(a.y - b.y) <= TK_EPS &&
-			std::abs(a.z - b.z) <= TK_EPS &&
-			std::abs(a.w - b.w) <= TK_EPS;
+			std::abs(a.x - b.x) <= EPS &&
+			std::abs(a.y - b.y) <= EPS &&
+			std::abs(a.z - b.z) <= EPS &&
+			std::abs(a.w - b.w) <= EPS;
 	}
 
 	inline glm::ivec2 mod(int a, int b)
@@ -228,17 +238,6 @@ namespace flame
 	{
 		for (auto i = 0; i < 3; i++)
 			mat[i] = glm::vec4(glm::normalize(glm::vec3(mat[i])), 0.f);
-	}
-
-	inline int digit_num(int a)
-	{
-		auto d = 0;
-		do
-		{
-			d++;
-			a /= 10;
-		} while (a);
-		return d;
 	}
 
 	FLAME_MATH_EXPORTS float ray_intersect_plane(const glm::vec3 &origin, const glm::vec3 &vector, const glm::vec4 &plane);
