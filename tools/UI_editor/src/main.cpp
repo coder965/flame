@@ -41,9 +41,8 @@
 int main(int argc, char **args)
 {
 	using namespace flame;
-	using namespace glm;
 
-	vec2 res(1280, 720);
+	Vec2 res(1280, 720);
 
 	auto sm = create_surface_manager();
 	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
@@ -76,8 +75,8 @@ int main(int argc, char **args)
 
 	MediumString wnd_name;
 	strcpy(wnd_name.data, "New Form");
-	vec2 wnd_pos{ 50.f, 20.f };
-	vec2 wnd_size{ 300.f, 400.f };
+	Vec2 wnd_pos(50.f, 20.f);
+	Vec2 wnd_size(300.f, 400.f);
 
 	enum WidgetType
 	{
@@ -87,7 +86,7 @@ int main(int argc, char **args)
 
 	struct Widget
 	{
-		vec4 rect;
+		Rect rect;
 
 		WidgetType type;
 		ShortString name;
@@ -134,14 +133,14 @@ int main(int argc, char **args)
 		else:selecting a widget
 		*/
 		static Widget *sel = (Widget*)0xFFFFFFFF;
-		vec4 sel_rect;
+		Rect sel_rect;
 
 		static bool transform_mode = false;
 		static bool transform_mode_moving = false;
 		static bool transform_mode_sizing = false;
 		static CursorType transform_mode_cursor;
-		static ivec2 transform_mode_anchor;
-		static RectSide transform_mode_sizing_side;
+		static Ivec2 transform_mode_anchor;
+		static Rect::Side transform_mode_sizing_side;
 		auto toggle_transform_mode = []() {
 			if (transform_mode)
 				transform_mode = false;
@@ -261,43 +260,43 @@ int main(int argc, char **args)
 		auto menu_rect = ui->get_curr_window_rect();
 		ui->end_mainmenu();
 
-		auto transform_mode_move_off = ivec2(s->mouse_x - transform_mode_anchor.x, 
+		auto transform_mode_move_off = Ivec2(s->mouse_x - transform_mode_anchor.x, 
 			s->mouse_y - transform_mode_anchor.y);
-		auto transform_mode_size_off = ivec2(s->mouse_x - transform_mode_anchor.x,
+		auto transform_mode_size_off = Ivec2(s->mouse_x - transform_mode_anchor.x,
 			s->mouse_y - transform_mode_anchor.y);
 		switch (transform_mode_sizing_side)
 		{
-		case SideN:
+		case Rect::SideN:
 			transform_mode_size_off.x = 0;
-			transform_mode_size_off.y = glm::min(transform_mode_size_off.y, (int)wnd_size.y - 40);
+			transform_mode_size_off.y = min(transform_mode_size_off.y, wnd_size.y - 40);
 			break;
-		case SideS:
+		case Rect::SideS:
 			transform_mode_size_off.x = 0;
-			transform_mode_size_off.y = glm::max(transform_mode_size_off.y, -(int)wnd_size.y + 40);
+			transform_mode_size_off.y = max(transform_mode_size_off.y, -wnd_size.y + 40);
 			break;
-		case SideE:
+		case Rect::SideE:
 			transform_mode_size_off.y = 0;
-			transform_mode_size_off.x = glm::max(transform_mode_size_off.x, -(int)wnd_size.x + 40);
+			transform_mode_size_off.x = max(transform_mode_size_off.x, -wnd_size.x + 40);
 			break;
-		case SideW:
+		case Rect::SideW:
 			transform_mode_size_off.y = 0;
-			transform_mode_size_off.x = glm::min(transform_mode_size_off.x, (int)wnd_size.x - 40);
+			transform_mode_size_off.x = min(transform_mode_size_off.x, wnd_size.x - 40);
 			break;
-		case SideNE:
-			transform_mode_size_off.x = glm::max(transform_mode_size_off.x, -(int)wnd_size.x + 40);
-			transform_mode_size_off.y = glm::min(transform_mode_size_off.y, (int)wnd_size.y - 40);
+		case Rect::SideNE:
+			transform_mode_size_off.x = max(transform_mode_size_off.x, -wnd_size.x + 40);
+			transform_mode_size_off.y = min(transform_mode_size_off.y, wnd_size.y - 40);
 			break;
-		case SideNW:
-			transform_mode_size_off.x = glm::min(transform_mode_size_off.x, (int)wnd_size.x - 40);
-			transform_mode_size_off.y = glm::min(transform_mode_size_off.y, (int)wnd_size.y - 40);
+		case Rect::SideNW:
+			transform_mode_size_off.x = min(transform_mode_size_off.x, wnd_size.x - 40);
+			transform_mode_size_off.y = min(transform_mode_size_off.y, wnd_size.y - 40);
 			break;
-		case SideSE:
-			transform_mode_size_off.x = glm::max(transform_mode_size_off.x, -(int)wnd_size.x + 40);
-			transform_mode_size_off.y = glm::max(transform_mode_size_off.y, -(int)wnd_size.y + 40);
+		case Rect::SideSE:
+			transform_mode_size_off.x = max(transform_mode_size_off.x, -wnd_size.x + 40);
+			transform_mode_size_off.y = max(transform_mode_size_off.y, -wnd_size.y + 40);
 			break;
-		case SideSW:
-			transform_mode_size_off.x = glm::min(transform_mode_size_off.x, (int)wnd_size.x - 40);
-			transform_mode_size_off.y = glm::max(transform_mode_size_off.y, -(int)wnd_size.y + 40);
+		case Rect::SideSW:
+			transform_mode_size_off.x = min(transform_mode_size_off.x, wnd_size.x - 40);
+			transform_mode_size_off.y = max(transform_mode_size_off.y, -wnd_size.y + 40);
 			break;
 		}
 
@@ -320,11 +319,11 @@ int main(int argc, char **args)
 		auto status_rect = ui->get_curr_window_rect();
 		ui->end_window();
 
-		static vec2 off{0.f, 0.f};
-		vec2 bg_pos{0.f, menu_rect.w};
-		vec2 bg_size{res.x, res.y - 
+		static Vec2 off(0.f);
+		Vec2 bg_pos(0.f, menu_rect.w);
+		Vec2 bg_size(res.x, res.y - 
 			(menu_rect.w - menu_rect.y) - 
-			(status_rect.w - status_rect.y)};
+			(status_rect.w - status_rect.y));
 		static bool graping_grid = false;
 		ui->begin_plain_window("background", bg_pos, bg_size);
 
@@ -332,15 +331,15 @@ int main(int argc, char **args)
 		{
 			if (i.y < 0)
 				continue;
-			ui->add_line_to_window(vec2(i.y, 0.f), vec2(i.y, res.y), vec4(1.f));
-			ui->add_text_to_window(vec2(i.y + 4, 0.f), vec4(1.f), "%d", i.x * -100);
+			ui->add_line_to_window(Vec2(i.y, 0.f), Vec2(i.y, res.y), Vec4(1.f));
+			ui->add_text_to_window(Vec2(i.y + 4, 0.f), Vec4(1.f), "%d", i.x * -100);
 		}
 		for (auto i = mod((int)off.y, 100); i.y < res.y; i.y += 100, i.x--)
 		{
 			if (i.y < 0)
 				continue;
-			ui->add_line_to_window(vec2(0.f, i.y), vec2(res.x, i.y), vec4(1.f));
-			ui->add_text_to_window(vec2(4.f, i.y), vec4(1.f), "%d", i.x * -100);
+			ui->add_line_to_window(Vec2(0.f, i.y), Vec2(res.x, i.y), Vec4(1.f));
+			ui->add_text_to_window(Vec2(4.f, i.y), Vec4(1.f), "%d", i.x * -100);
 		}
 
 		auto want_sel = !transform_mode;
@@ -366,7 +365,7 @@ int main(int argc, char **args)
 		}
 		ui->end_window();
 
-		ui->push_displayrect(vec4(bg_pos, bg_pos + bg_size));
+		ui->push_displayrect(Vec4(bg_pos, bg_pos + bg_size));
 		ui->begin_window(wnd_name.data, wnd_pos + off + bg_pos, wnd_size,
 			UI::WindowNoResize);
 		auto wnd_inner_rect = ui->get_curr_window_inner_rect();
@@ -405,28 +404,28 @@ int main(int argc, char **args)
 				auto side = rect_side(vec2(s->mouse_x, s->mouse_y), sel_rect, 4.f);
 				switch (side)
 				{
-				case SideN: case SideS:
+				case Rect::SideN: case Rect::SideS:
 					transform_mode_cursor = CursorSizeNS;
 					break;
-				case SideE: case SideW:
+				case Rect::SideE: case Rect::SideW:
 					transform_mode_cursor = CursorSizeWE;
 					break;
-				case SideNE: case SideSW:
+				case Rect::SideNE: case Rect::SideSW:
 					transform_mode_cursor = CursorSizeNESW;
 					break;
-				case SideNW: case SideSE:
+				case Rect::SideNW: case Rect::SideSE:
 					transform_mode_cursor = CursorSizeNWSE;
 					break;
-				case InSide:
+				case Rect::Inside:
 					transform_mode_cursor = CursorSizeAll;
 					break;
 				}
-				if (side != OutSide)
+				if (side != Rect::Outside)
 				{
 					ui->set_cursor(transform_mode_cursor);
 					if (just_clicked)
 					{
-						if (side == InSide)
+						if (side == Rect::Inside)
 							transform_mode_moving = true;
 						else
 						{
@@ -455,36 +454,36 @@ int main(int argc, char **args)
 					{
 						switch (transform_mode_sizing_side)
 						{
-						case SideN:
+						case Rect::SideN:
 							wnd_pos.y += transform_mode_size_off.y;
 							wnd_size.y -= transform_mode_size_off.y;
 							break;
-						case SideS:
+						case Rect::SideS:
 							wnd_size.y += transform_mode_size_off.y;
 							break;
-						case SideW:
+						case Rect::SideW:
 							wnd_pos.x += transform_mode_size_off.x;
 							wnd_size.x -= transform_mode_size_off.x;
 							break;
-						case SideE:
+						case Rect::SideE:
 							wnd_size.x += transform_mode_size_off.x;
 							break;
-						case SideNE:
+						case Rect::SideNE:
 							wnd_pos.y += transform_mode_size_off.y;
 							wnd_size.y -= transform_mode_size_off.y;
 							wnd_size.x += transform_mode_size_off.x;
 							break;
-						case SideNW:
+						case Rect::SideNW:
 							wnd_pos.y += transform_mode_size_off.y;
 							wnd_size.y -= transform_mode_size_off.y;
 							wnd_pos.x += transform_mode_size_off.x;
 							wnd_size.x -= transform_mode_size_off.x;
 							break;
-						case SideSE:
+						case Rect::SideSE:
 							wnd_size.y += transform_mode_size_off.y;
 							wnd_size.x += transform_mode_size_off.x;
 							break;
-						case SideSW:
+						case Rect::SideSW:
 							wnd_size.y += transform_mode_size_off.y;
 							wnd_pos.x += transform_mode_size_off.x;
 							wnd_size.x -= transform_mode_size_off.x;
@@ -525,31 +524,31 @@ int main(int argc, char **args)
 					auto rect = sel_rect;
 					switch (transform_mode_sizing_side)
 					{
-					case SideN:
+					case Rect::SideN:
 						rect.y += transform_mode_size_off.y;
 						break;
-					case SideS:
+					case Rect::SideS:
 						rect.w += transform_mode_size_off.y;
 						break;
-					case SideW:
+					case Rect::SideW:
 						rect.x += transform_mode_size_off.x;
 						break;
-					case SideE:
+					case Rect::SideE:
 						rect.z += transform_mode_size_off.x;
 						break;
-					case SideNE:
+					case Rect::SideNE:
 						rect.y += transform_mode_size_off.y;
 						rect.z += transform_mode_size_off.x;
 						break;
-					case SideNW:
+					case Rect::SideNW:
 						rect.y += transform_mode_size_off.y;
 						rect.x += transform_mode_size_off.x;
 						break;
-					case SideSE:
+					case Rect::SideSE:
 						rect.w += transform_mode_size_off.y;
 						rect.z += transform_mode_size_off.x;
 						break;
-					case SideSW:
+					case Rect::SideSW:
 						rect.w += transform_mode_size_off.y;
 						rect.x += transform_mode_size_off.x;
 						break;

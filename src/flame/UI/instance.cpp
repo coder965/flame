@@ -214,12 +214,12 @@ namespace flame
 			cb->bind_indexbuffer(_priv->idx_buffer, graphics::IndiceTypeUshort);
 			cb->set_viewport(0, 0, im_io.DisplaySize.x, im_io.DisplaySize.y);
 			cb->set_scissor(0, 0, im_io.DisplaySize.x, im_io.DisplaySize.y);
-			glm::vec4 pc;
+			Vec4 pc;
 			pc.x = 2.f / im_io.DisplaySize.x;
 			pc.y = 2.f / im_io.DisplaySize.y;
 			pc.z = -1.f;
 			pc.w = -1.f;
-			cb->push_constant(graphics::ShaderVert, 0, sizeof(glm::vec4), &pc);
+			cb->push_constant(graphics::ShaderVert, 0, sizeof(Vec4), &pc);
 
 			auto vtx_offset = 0;
 			auto idx_offset = 0;
@@ -252,7 +252,7 @@ namespace flame
 			cb->end_renderpass();
 		}
 
-		bool Instance::begin_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size, int flags)
+		bool Instance::begin_window(const char *name, const Vec2 &pos, const Vec2 &size, int flags)
 		{
 			if (!is_inf(pos.x) && !is_inf(pos.y))
 				ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
@@ -264,7 +264,7 @@ namespace flame
 				((flags & WindowNoMove) != 0 ? ImGuiWindowFlags_NoMove : 0));
 		}
 
-		bool Instance::begin_plain_window(const char *name, const glm::vec2 &pos, const glm::vec2 &size)
+		bool Instance::begin_plain_window(const char *name, const Vec2 &pos, const Vec2 &size)
 		{
 			ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 			ImGui::SetNextWindowSize(ImVec2(size.x, size.y));
@@ -352,17 +352,17 @@ namespace flame
 			return ImGui::DragFloat(label, p, speed);
 		}
 
-		bool Instance::dragfloat2(const char *label, glm::vec2 *p, float speed)
+		bool Instance::dragfloat2(const char *label, Vec2 *p, float speed)
 		{
 			return ImGui::DragFloat2(label, &p->x, speed);
 		}
 
-		bool Instance::dragfloat3(const char *label, glm::vec3 *p, float speed)
+		bool Instance::dragfloat3(const char *label, Vec3 *p, float speed)
 		{
 			return ImGui::DragFloat(label, &p->x, speed);
 		}
 
-		bool Instance::dragfloat4(const char *label, glm::vec4 *p, float speed)
+		bool Instance::dragfloat4(const char *label, Vec4 *p, float speed)
 		{
 			return ImGui::DragFloat(label, &p->x, speed);
 		}
@@ -438,31 +438,31 @@ namespace flame
 			return ImGui::IsWindowHovered();
 		}
 
-		glm::vec4 Instance::get_last_item_rect()
+		Vec4 Instance::get_last_item_rect()
 		{
 			auto LT = ImGui::GetItemRectMin();
 			auto RB = ImGui::GetItemRectMax();
-			return glm::vec4(LT.x, LT.y, RB.x, RB.y);
+			return Vec4(LT.x, LT.y, RB.x, RB.y);
 		}
 
-		glm::vec4 Instance::get_curr_window_rect()
+		Vec4 Instance::get_curr_window_rect()
 		{
 			auto LT = ImGui::GetWindowPos();
 			auto RB = ImGui::GetWindowSize();
-			return glm::vec4(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
+			return Vec4(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
 		}
 
-		glm::vec4 Instance::get_curr_window_inner_rect()
+		Vec4 Instance::get_curr_window_inner_rect()
 		{
 			auto pos = ImGui::GetWindowPos();
 			auto LT = ImGui::GetWindowContentRegionMin() + pos;
 			auto RB = ImGui::GetWindowContentRegionMax() + pos;
-			return glm::vec4(LT.x, LT.y, RB.x, RB.y);
+			return Vec4(LT.x, LT.y, RB.x, RB.y);
 		}
 
-		static glm::vec4 last_display;
+		static Vec4 last_display;
 
-		void Instance::push_displayrect(const glm::vec4 &rect)
+		void Instance::push_displayrect(const Vec4 &rect)
 		{
 			auto &im_io = ImGui::GetIO();
 			last_display.x = im_io.DisplayVisibleMin.x;
@@ -484,7 +484,7 @@ namespace flame
 			im_io.DisplayVisibleMax.y = last_display.w;
 		}
 
-		void Instance::push_overlay_cliprect(const glm::vec4 &rect)
+		void Instance::push_overlay_cliprect(const Vec4 &rect)
 		{
 			ImGui::GetOverlayDrawList()->PushClipRect(
 				ImVec2(rect.x, rect.y), ImVec2(rect.z, rect.w));
@@ -495,26 +495,26 @@ namespace flame
 			ImGui::GetOverlayDrawList()->PopClipRect();
 		}
 
-		void Instance::add_line_to_window(const glm::vec2 &a, const glm::vec2 &b, const glm::vec4 &col)
+		void Instance::add_line_to_window(const Vec2 &a, const Vec2 &b, const Vec4 &col)
 		{
 			auto wpos = ImGui::GetWindowPos();
 			ImGui::GetWindowDrawList()->AddLine(ImVec2(wpos.x + a.x, wpos.y + a.y), ImVec2(wpos.x + b.x, wpos.y + b.y),
-				ImColor(col.r, col.g, col.b, col.a));
+				ImColor(col.x, col.y, col.z, col.w));
 		}
 
-		static inline void add_rect_impl(ImDrawList *dl, const glm::vec4 &rect, const glm::vec4 &col)
+		static inline void add_rect_impl(ImDrawList *dl, const Vec4 &rect, const Vec4 &col)
 		{
 			dl->AddRect(ImVec2(rect.x, rect.y), ImVec2(rect.z, rect.w),
-				ImColor(col.r, col.g, col.b, col.a));
+				ImColor(col.x, col.y, col.z, col.w));
 		}
 
-		void Instance::add_rect_to_window(const glm::vec4 &rect, const glm::vec4 &col)
+		void Instance::add_rect_to_window(const Vec4 &rect, const Vec4 &col)
 		{
 			auto wpos = ImGui::GetWindowPos();
-			add_rect_impl(ImGui::GetWindowDrawList(), rect + glm::vec4(wpos.x, wpos.y, wpos.x, wpos.y), col);
+			add_rect_impl(ImGui::GetWindowDrawList(), rect + Rect(wpos.x, wpos.y, wpos.x, wpos.y), col);
 		}
 
-		void Instance::add_text_to_window(const glm::vec2 &pos, const glm::vec4 &col, const char *fmt, ...)
+		void Instance::add_text_to_window(const Vec2 &pos, const Vec4 &col, const char *fmt, ...)
 		{
 			static char buffer[1024];
 
@@ -524,19 +524,19 @@ namespace flame
 			va_end(ap);
 
 			auto wpos = ImGui::GetWindowPos();
-			ImGui::GetWindowDrawList()->AddText(ImVec2(wpos.x + pos.x, wpos.y + pos.y), ImColor(col.r, col.g, col.b, col.a),
-				buffer, buffer + len);
+			ImGui::GetWindowDrawList()->AddText(ImVec2(wpos.x + pos.x, wpos.y + pos.y), 
+				ImColor(col.x, col.y, col.z, col.w), buffer, buffer + len);
 		}
 
-		void Instance::add_rect_to_overlap(const glm::vec4 &rect, const glm::vec4 &col)
+		void Instance::add_rect_to_overlap(const Vec4 &rect, const Vec4 &col)
 		{
 			add_rect_impl(ImGui::GetOverlayDrawList(), rect, col);
 		}
 
-		void Instance::add_line_to_overlap(const glm::vec2 &a, const glm::vec2 &b, const glm::vec4 &col)
+		void Instance::add_line_to_overlap(const Vec2 &a, const Vec2 &b, const Vec4 &col)
 		{
 			ImGui::GetOverlayDrawList()->AddLine(ImVec2(a.x, a.y), ImVec2(b.x, b.y),
-				ImColor(col.r, col.g, col.b, col.a));
+				ImColor(col.x, col.y, col.z, col.w));
 		}
 
 		void Instance::add_message_dialog(const char *title, const char *message)
