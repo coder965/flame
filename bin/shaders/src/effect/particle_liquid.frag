@@ -26,8 +26,8 @@ void main()
 		
 	if (v >= 0.5)
 		outColor = vec4(1.0);
-	else if (v >= 0.4)
-		outColor = vec4(0.0, 0.0, 0.0, (0.5 - v) / 0.1);
+	else if (v >= 0.47)
+		outColor = vec4(1.0, 1.0, 1.0, (v - 0.47) / 0.03);
 	else
 		outColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
