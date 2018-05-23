@@ -12,7 +12,6 @@ target_include_directories(flame_physics PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_physics PUBLIC "${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Include")
 target_include_directories(flame_physics PUBLIC "${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PxShared/include")
 
-target_link_libraries(flame_physics flame_math)
 target_link_libraries(flame_physics ${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Lib/vc15win${FLAME_SYS_BIT}/PhysX3DEBUG_x${FLAME_SYS_NAME}.lib)
 target_link_libraries(flame_physics ${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Lib/vc15win${FLAME_SYS_BIT}/PhysX3CommonDEBUG_x${FLAME_SYS_NAME}.lib)
 target_link_libraries(flame_physics ${CMAKE_SOURCE_DIR}/ext/Physx-3.4/PhysX_3.4/Lib/vc15win${FLAME_SYS_BIT}/PhysX3ExtensionsDEBUG.lib)

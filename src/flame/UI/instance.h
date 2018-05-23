@@ -31,6 +31,11 @@
 namespace flame
 {
 	struct Surface;
+	
+	namespace graphics
+	{
+		struct Textureview;
+	}
 
 	namespace UI
 	{
@@ -46,6 +51,14 @@ namespace flame
 		struct Drawlist
 		{
 			DrawlistPrivate *_priv;
+
+			FLAME_UI_EXPORTS void push_cliprect(const Rect &rect);
+			FLAME_UI_EXPORTS void pop_cliprect();
+			FLAME_UI_EXPORTS void add_line(const Vec2 &a, const Vec2 &b, const Vec4 &col);
+			FLAME_UI_EXPORTS void add_rect(const Rect &rect, const Vec4 &col);
+			FLAME_UI_EXPORTS void add_text(const Vec2 &pos, const Vec4 &col, const char *fmt, ...);
+			FLAME_UI_EXPORTS void add_image();
+			FLAME_UI_EXPORTS void draw_grid(const Vec2 &off, const Vec2 &size);
 		};
 
 		struct InstancePrivate;
@@ -57,6 +70,8 @@ namespace flame
 			float elapsed_time;
 
 			InstancePrivate *_priv;
+
+			FLAME_UI_EXPORTS void set_texture(int index, graphics::Textureview *tv);
 
 			FLAME_UI_EXPORTS void begin(int cx, int cy, float _elapsed_time);
 			FLAME_UI_EXPORTS void end();
@@ -87,6 +102,7 @@ namespace flame
 			FLAME_UI_EXPORTS void ID_text_unformatted(const char *ID, const char *text);
 			FLAME_UI_EXPORTS bool inputtext(const char *label, char *dst, int len);
 			FLAME_UI_EXPORTS bool selectable(const char *label, bool selected);
+			FLAME_UI_EXPORTS void image(int index, const Vec2 &size);
 
 			FLAME_UI_EXPORTS unsigned int get_last_ID();
 			FLAME_UI_EXPORTS bool is_last_item_focused();
@@ -97,17 +113,11 @@ namespace flame
 			FLAME_UI_EXPORTS Rect get_curr_window_rect();
 			FLAME_UI_EXPORTS Rect get_curr_window_inner_rect();
 
-			// only one layer
-			FLAME_UI_EXPORTS void push_displayrect(const Rect &rect);
+			// return value - curr clip
+			FLAME_UI_EXPORTS Rect set_global_cliprect(const Rect &rect);
 
-			FLAME_UI_EXPORTS void pop_displayrect();
-			FLAME_UI_EXPORTS void push_overlay_cliprect(const Rect &rect);
-			FLAME_UI_EXPORTS void pop_overlay_cliprect();
-			FLAME_UI_EXPORTS void add_line_to_window(const Vec2 &a, const Vec2 &b, const Vec4 &col);
-			FLAME_UI_EXPORTS void add_rect_to_window(const Vec4 &rect, const Vec4 &col);
-			FLAME_UI_EXPORTS void add_text_to_window(const Vec2 &pos, const Vec4 &col, const char *fmt, ...);
-			FLAME_UI_EXPORTS void add_rect_to_overlap(const Vec4 &rect, const Vec4 &col);
-			FLAME_UI_EXPORTS void add_line_to_overlap(const Vec2 &a, const Vec2 &b, const Vec4 &col);
+			FLAME_UI_EXPORTS Drawlist get_overlap_drawlist();
+			FLAME_UI_EXPORTS Drawlist get_curr_window_drawlist();
 
 			FLAME_UI_EXPORTS void add_message_dialog(const char *title, const char *message);
 			FLAME_UI_EXPORTS void add_input_dialog(const char *title, const char *label, const 

@@ -43,6 +43,76 @@ namespace flame
 {
 	namespace UI
 	{
+		void Drawlist::push_cliprect(const Rect &rect)
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->PushClipRect(
+				ImVec2(rect.min.x, rect.min.y), ImVec2(rect.max.x, rect.max.y));
+		}
+
+		void Drawlist::pop_cliprect()
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->PopClipRect();
+		}
+
+		void Drawlist::add_line(const Vec2 &a, const Vec2 &b, const Vec4 &col)
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->AddLine(ImVec2(a.x, a.y), ImVec2(b.x, b.y),
+				ImColor(col.x, col.y, col.z, col.w));
+		}
+
+		void Drawlist::add_rect(const Rect &rect, const Vec4 &col)
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->AddRect(ImVec2(rect.min.x, rect.min.y), ImVec2(rect.max.x, rect.max.y),
+				ImColor(col.x, col.y, col.z, col.w));
+		}
+
+		void Drawlist::add_text(const Vec2 &pos, const Vec4 &col, const char *fmt, ...)
+		{
+			static char buffer[1024];
+
+			va_list ap;
+			va_start(ap, fmt);
+			auto len = vsprintf(buffer, fmt, ap);
+			va_end(ap);
+
+			auto dl = (ImDrawList*)_priv;
+			dl->AddText(ImVec2(pos.x, pos.y),
+				ImColor(col.x, col.y, col.z, col.w), buffer, buffer + len);
+		}
+
+		void Drawlist::add_image()
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->AddImage(ImTextureID(1), ImVec2(0, 0), ImVec2(100, 100));
+		}
+
+		void Drawlist::draw_grid(const Vec2 &off, const Vec2 &size)
+		{
+			for (auto i = mod((int)off.x, 100); i.y < size.x; i.y += 100, i.x--)
+			{
+				if (i.y < 0)
+					continue;
+				add_line(Vec2(i.y, 0.f), Vec2(i.y, size.y), Vec4(1.f));
+				add_text(Vec2(i.y + 4, 0.f), Vec4(1.f), "%d", i.x * -100);
+			}
+			for (auto i = mod((int)off.y, 100); i.y < size.y; i.y += 100, i.x--)
+			{
+				if (i.y < 0)
+					continue;
+				add_line(Vec2(0.f, i.y), Vec2(size.x, i.y), Vec4(1.f));
+				add_text(Vec2(4.f, i.y), Vec4(1.f), "%d", i.x * -100);
+			}
+		}
+
+		void Instance::set_texture(int index, graphics::Textureview *tv)
+		{
+			_priv->ds->set_texture(0, index, tv, _priv->font_sam);
+		}
+
 		void Instance::begin(int cx, int cy, float _elapsed_time)
 		{
 			processed_mouse_input = false;
@@ -413,6 +483,11 @@ namespace flame
 			return ImGui::Selectable(label, selected);
 		}
 
+		void Instance::image(int index, const Vec2 &size)
+		{
+			ImGui::Image(ImTextureID(index), ImVec2(size.x, size.y));
+		}
+
 		unsigned int Instance::get_last_ID()
 		{
 			return GImGui->CurrentWindow->DC.LastItemId;
@@ -438,105 +513,56 @@ namespace flame
 			return ImGui::IsWindowHovered();
 		}
 
-		Vec4 Instance::get_last_item_rect()
+		Rect Instance::get_last_item_rect()
 		{
 			auto LT = ImGui::GetItemRectMin();
 			auto RB = ImGui::GetItemRectMax();
-			return Vec4(LT.x, LT.y, RB.x, RB.y);
+			return Rect(LT.x, LT.y, RB.x, RB.y);
 		}
 
-		Vec4 Instance::get_curr_window_rect()
+		Rect Instance::get_curr_window_rect()
 		{
 			auto LT = ImGui::GetWindowPos();
 			auto RB = ImGui::GetWindowSize();
-			return Vec4(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
+			return Rect(LT.x, LT.y, LT.x + RB.x, LT.y + RB.y);
 		}
 
-		Vec4 Instance::get_curr_window_inner_rect()
+		Rect Instance::get_curr_window_inner_rect()
 		{
 			auto pos = ImGui::GetWindowPos();
 			auto LT = ImGui::GetWindowContentRegionMin() + pos;
 			auto RB = ImGui::GetWindowContentRegionMax() + pos;
-			return Vec4(LT.x, LT.y, RB.x, RB.y);
+			return Rect(LT.x, LT.y, RB.x, RB.y);
 		}
 
 		static Vec4 last_display;
 
-		void Instance::push_displayrect(const Vec4 &rect)
+		Rect Instance::set_global_cliprect(const Rect &rect)
 		{
 			auto &im_io = ImGui::GetIO();
-			last_display.x = im_io.DisplayVisibleMin.x;
-			last_display.y = im_io.DisplayVisibleMin.y;
-			last_display.z = im_io.DisplayVisibleMax.x;
-			last_display.w = im_io.DisplayVisibleMax.y;
-			im_io.DisplayVisibleMin.x = rect.x;
-			im_io.DisplayVisibleMin.y = rect.y;
-			im_io.DisplayVisibleMax.x = rect.z;
-			im_io.DisplayVisibleMax.y = rect.w;
+			Rect last(im_io.DisplayVisibleMin.x,
+				im_io.DisplayVisibleMin.y,
+				im_io.DisplayVisibleMax.x,
+				im_io.DisplayVisibleMax.y);
+			im_io.DisplayVisibleMin.x = rect.min.x;
+			im_io.DisplayVisibleMin.y = rect.min.y;
+			im_io.DisplayVisibleMax.x = rect.max.x;
+			im_io.DisplayVisibleMax.y = rect.max.y;
+			return last;
 		}
 
-		void Instance::pop_displayrect()
+		Drawlist Instance::get_overlap_drawlist()
 		{
-			auto &im_io = ImGui::GetIO();
-			im_io.DisplayVisibleMin.x = last_display.x;
-			im_io.DisplayVisibleMin.y = last_display.y;
-			im_io.DisplayVisibleMax.x = last_display.z;
-			im_io.DisplayVisibleMax.y = last_display.w;
+			Drawlist dl;
+			dl._priv = (DrawlistPrivate*)ImGui::GetOverlayDrawList();
+			return dl;
 		}
 
-		void Instance::push_overlay_cliprect(const Vec4 &rect)
+		Drawlist Instance::get_curr_window_drawlist()
 		{
-			ImGui::GetOverlayDrawList()->PushClipRect(
-				ImVec2(rect.x, rect.y), ImVec2(rect.z, rect.w));
-		}
-
-		void Instance::pop_overlay_cliprect()
-		{
-			ImGui::GetOverlayDrawList()->PopClipRect();
-		}
-
-		void Instance::add_line_to_window(const Vec2 &a, const Vec2 &b, const Vec4 &col)
-		{
-			auto wpos = ImGui::GetWindowPos();
-			ImGui::GetWindowDrawList()->AddLine(ImVec2(wpos.x + a.x, wpos.y + a.y), ImVec2(wpos.x + b.x, wpos.y + b.y),
-				ImColor(col.x, col.y, col.z, col.w));
-		}
-
-		static inline void add_rect_impl(ImDrawList *dl, const Vec4 &rect, const Vec4 &col)
-		{
-			dl->AddRect(ImVec2(rect.x, rect.y), ImVec2(rect.z, rect.w),
-				ImColor(col.x, col.y, col.z, col.w));
-		}
-
-		void Instance::add_rect_to_window(const Vec4 &rect, const Vec4 &col)
-		{
-			auto wpos = ImGui::GetWindowPos();
-			add_rect_impl(ImGui::GetWindowDrawList(), rect + Rect(wpos.x, wpos.y, wpos.x, wpos.y), col);
-		}
-
-		void Instance::add_text_to_window(const Vec2 &pos, const Vec4 &col, const char *fmt, ...)
-		{
-			static char buffer[1024];
-
-			va_list ap;
-			va_start(ap, fmt);
-			auto len = vsprintf(buffer, fmt, ap);
-			va_end(ap);
-
-			auto wpos = ImGui::GetWindowPos();
-			ImGui::GetWindowDrawList()->AddText(ImVec2(wpos.x + pos.x, wpos.y + pos.y), 
-				ImColor(col.x, col.y, col.z, col.w), buffer, buffer + len);
-		}
-
-		void Instance::add_rect_to_overlap(const Vec4 &rect, const Vec4 &col)
-		{
-			add_rect_impl(ImGui::GetOverlayDrawList(), rect, col);
-		}
-
-		void Instance::add_line_to_overlap(const Vec2 &a, const Vec2 &b, const Vec4 &col)
-		{
-			ImGui::GetOverlayDrawList()->AddLine(ImVec2(a.x, a.y), ImVec2(b.x, b.y),
-				ImColor(col.x, col.y, col.z, col.w));
+			Drawlist dl;
+			dl._priv = (DrawlistPrivate*)ImGui::GetWindowDrawList();
+			return dl;
 		}
 
 		void Instance::add_message_dialog(const char *title, const char *message)

@@ -22,18 +22,7 @@
 
 #pragma once
 
-#ifdef _FLAME_MATH_EXPORTS
-#define FLAME_MATH_EXPORTS __declspec(dllexport)
-#else
-#define FLAME_MATH_EXPORTS __declspec(dllimport)
-#endif
-
 #include <math.h>
-
-//#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-//#include <glm/gtc/matrix_transform.hpp>
-//#include <glm/gtx/transform2.hpp>
 
 namespace flame
 {
@@ -48,6 +37,8 @@ namespace flame
 	const float PI_4        = 0.7853981f;  // pi/4
 	const float PI_INV      = 0.3183098f;  // 1/pi
 	const float PI_INV2     = 0.6366197f;  // 2/pi
+	const float RAD_ANG     = 180.f / PI;  // rad to angle
+	const float ANG_RAD     = PI / 180.f;  // angle to rad
 	const float SQRTPI_INV2 = 1.1283791f;  // 2/sqrt(pi)
 	const float SQRT2       = 1.4142135f;  // sqrt(2)
 	const float SQRT1_2     = 0.7071067f;  // 1/sqrt(2)
@@ -57,7 +48,6 @@ namespace flame
 
 	inline float get_inf()
 	{
-		glm::mat3 a, b;
 		auto zero = 0.f;
 		return 1.f / zero;
 	}
@@ -117,6 +107,11 @@ namespace flame
 		return abs(a - b) < EPS;
 	}
 
+	inline float fract(float v)
+	{
+		return v - floor(v);
+	}
+
 	inline int count_digit(int a)
 	{
 		auto d = 0;
@@ -154,6 +149,22 @@ namespace flame
 	struct Quat;
 	struct Rect;
 	struct Plane;
+
+	Ivec2 mod(int a, int b);
+	float mix(float v0, float v1, float q);
+
+	float dot(const Vec2 &lhs, const Vec2 &rhs);
+	float dot(const Vec3 &lhs, const Vec3 &rhs);
+	float dot(const Vec4 &lhs, const Vec4 &rhs);
+
+	Vec3 cross(const Vec3 &lhs, const Vec3 &rhs);
+
+	Rect get_fit_rect(const Vec2 &desired_size, float xy_aspect);
+	Rect get_fit_rect_no_zoom_in(const Vec2 &desired_size, const Vec2 &size);
+
+	float rand(const Vec2 &v);
+	float noise(const Vec2 &v);
+	float fbm(const Vec2 &v);
 
 	struct Vec2
 	{
@@ -539,15 +550,20 @@ namespace flame
 		Vec3 cols[3];
 
 		Mat3();
-		explicit Mat3(float diagonal);
+		explicit Mat3(float diagonal /* scale */);
 		Mat3(float Xx, float Xy, float Xz,
 			float Yx, float Yy, float Yz,
 			float Zx, float Zy, float Zz);
 		Mat3(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2);
+		explicit Mat3(const EulerYawPitchRoll &e);
+		explicit Mat3(const Quat &q);
+		Mat3(const Vec3 &axis, float rad);
 		Mat3(const Mat3 &v);
 		explicit Mat3(const Mat4 &v);
 		Vec3 &operator[](int i);
 		Vec3 const &operator[](int i) const;
+		Mat3 &operator=(const EulerYawPitchRoll &e);
+		Mat3 &operator=(const Quat &q);
 		Mat3 &operator=(const Mat3 &v);
 		Mat3 &operator=(const Mat4 &v);
 		Mat3 &operator+=(const Mat3 &v);
@@ -558,6 +574,7 @@ namespace flame
 		Mat3 &operator-=(float v);
 		Mat3 &operator*=(float v);
 		Mat3 &operator/=(float v);
+		void normalize();
 		void transpose();
 		Mat3 get_transpose() const;
 		void inverse();
@@ -590,7 +607,7 @@ namespace flame
 			float Wx, float Wy, float Wz, float Ww);
 		Mat4(const Vec4 &v0, const Vec4 &v1, const Vec4 &v2, const Vec4 &v3);
 		Mat4(const Mat4 &v);
-		Mat4(const Mat3 &rotation, const Vec3 &coord);
+		Mat4(const Mat3 &mat3, const Vec3 &coord);
 		Mat4(const Vec3 &x_axis, const Vec3 &y_axis, const Vec3 &coord);
 		Vec4 &operator[](int i);
 		Vec4 const &operator[](int i) const;
@@ -603,6 +620,7 @@ namespace flame
 		Mat4 &operator-=(float v);
 		Mat4 &operator*=(float v);
 		Mat4 &operator/=(float v);
+		void normalize_33();
 		void transpose();
 		Mat4 get_transpose() const;
 		void inverse();
@@ -624,12 +642,7 @@ namespace flame
 	Mat4 operator*(float lhs, const Mat4 &rhs);
 	Mat4 operator/(float lhs, const Mat4 &rhs);
 
-	float dot(const Vec2 &lhs, const Vec2 &rhs);
-	float dot(const Vec3 &lhs, const Vec3 &rhs);
-	float dot(const Vec4 &lhs, const Vec4 &rhs);
-
-	Vec3 cross(const Vec3 &lhs, const Vec3 &rhs);
-
+	// in angle
 	struct EulerYawPitchRoll
 	{
 		float yaw;
@@ -637,7 +650,7 @@ namespace flame
 		float roll;
 
 		EulerYawPitchRoll();
-		EulerYawPitchRoll(const Quat &q);
+		explicit EulerYawPitchRoll(const Quat &q);
 	};
 
 	struct Quat
@@ -648,7 +661,11 @@ namespace flame
 		float w;
 
 		Quat();
+		Quat(float _x, float _y, float _z, float _w);
+		void normalize();
 	};
+	
+	Quat operator*(const Quat &lhs, const Quat &rhs);
 
 	struct Rect
 	{
@@ -679,20 +696,136 @@ namespace flame
 		Side calc_side(const Vec2 &p, float threshold);
 	};
 
+	Rect operator+(const Rect &r, const Vec2 &off);
+	Rect operator-(const Rect &r, const Vec2 &off);
+
 	struct Plane 
 	{
 		Vec3 normal;
 		float d;
 
 		Plane();
-		Plane(const Vec3 &n, float d);
+		Plane(const Vec3 &n, float _d);
 		Plane(const Vec3 &n, const Vec3 &p);
 		float intersect(const Vec3 &origin, const Vec3 &dir);
 	};
 
+	namespace math_detail
+	{
+		void rotate(const Vec3 &axis, float rad, Mat3 &m);
+		void mat3_to_quat(const Mat3 &m, Quat &q);
+		void euler_to_mat3(const EulerYawPitchRoll &e, Mat3 &m);
+		void quat_to_euler(const Quat &q, EulerYawPitchRoll &e);
+		void quat_to_mat3(const Quat &q, Mat3 &m);
+	}
+
 	inline Ivec2 mod(int a, int b)
 	{
 		return Ivec2(a / b, a % b);
+	}
+
+	inline float mix(float v0, float v1, float q)
+	{
+		return v0 + q * (v1 - v0);
+	}
+
+	inline float dot(const Vec2 &lhs, const Vec2 &rhs)
+	{
+		return lhs.x * rhs.x + lhs.y * rhs.y;
+	}
+
+	inline float dot(const Vec3 &lhs, const Vec3 &rhs)
+	{
+		return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
+	}
+
+	inline float dot(const Vec4 &lhs, const Vec4 &rhs)
+	{
+		return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z + lhs.w * rhs.w;
+	}
+
+	inline float rand(const Vec2 &v)
+	{
+		return fract(cos(v.x * (12.9898) + v.y * (4.1414)) * 43758.5453);
+	}
+
+	inline Rect get_fit_rect(const Vec2 &desired_size, float xy_aspect)
+	{
+		if (desired_size.x <= 0.f || desired_size.y <= 0.f)
+			return Rect(0.f, 0.f, 1.f, 1.f);
+		Rect ret;
+		if (desired_size.x / desired_size.y > xy_aspect)
+		{
+			ret.max.x = xy_aspect * desired_size.y;
+			ret.max.y = desired_size.y;
+			ret.min.x = (desired_size.x - ret.max.x) * 0.5f;
+			ret.min.y = 0;
+			ret.max += ret.min;
+		}
+		else
+		{
+			ret.max.x = desired_size.x;
+			ret.max.y = desired_size.x / xy_aspect;
+			ret.min.x = 0;
+			ret.min.y = (desired_size.y - ret.max.y) * 0.5f;
+			ret.max += ret.min;
+		}
+		return ret;
+	}
+
+	inline Rect get_fit_rect_no_zoom_in(const Vec2 &desired_size, const Vec2 &size)
+	{
+		if (desired_size.x <= 0.f || desired_size.y <= 0.f)
+			return Rect(0.f, 0.f, 1.f, 1.f);
+		if (size.x <= desired_size.x && size.y <= desired_size.y)
+		{
+			Rect ret;
+			ret.max.x = size.x;
+			ret.max.y = size.y;
+			ret.min.x = (desired_size.x - size.x) * 0.5f;
+			ret.min.y = (desired_size.y - size.y) * 0.5f;
+			ret.max += ret.min;
+			return ret;
+		}
+		else
+			return get_fit_rect(desired_size, size.x / size.y);
+	}
+
+	inline float noise(const Vec2 &_v)
+	{
+		const auto SC = 250;
+
+		auto v = _v / SC;
+		Vec2 vf(fract(v.x), fract(v.y));
+		Vec2 vi(floor(v.x), floor(v.y));
+
+		auto r0 = rand(vi);
+		auto r1 = rand(vi + Vec2(1.f, 0.f));
+		auto r2 = rand(vi + Vec2(0.f, 1.f));
+		auto r3 = rand(vi + Vec2(1.f, 1.f));
+
+		auto vs = 3.f * vf * vf - 2.f * vf * vf * vf;
+
+		return mix(
+			mix(r0, r1, vs.x),
+			mix(r2, r3, vs.x),
+			vs.y);
+	}
+
+	inline float fbm(const Vec2 &_v)
+	{
+		auto v = _v;
+		auto r = 0.f;
+
+		auto a = 1.f / 3.f;
+		for (auto i = 0; i < 4; i++)
+		{
+			r += noise(v) * a;
+			a /= 3.f;
+			v *= 3.f;
+		}
+
+		return r;
 	}
 
 	inline Vec2::Vec2() 
@@ -3025,18 +3158,18 @@ namespace flame
 		return ret;
 	}
 
-	Mat3::Mat3()
+	inline Mat3::Mat3()
 	{
 	}
 
-	Mat3::Mat3(float diagonal)
+	inline Mat3::Mat3(float diagonal)
 	{
 		(*this)[0][0] = diagonal; (*this)[1][0] = 0.f;      (*this)[2][0] = 0.f;
 		(*this)[0][1] = 0.f;      (*this)[1][1] = diagonal; (*this)[2][1] = 0.f;
 		(*this)[0][2] = 0.f;      (*this)[1][2] = 0.f;      (*this)[2][2] = diagonal;
 	}
 
-	Mat3::Mat3(float Xx, float Xy, float Xz,
+	inline Mat3::Mat3(float Xx, float Xy, float Xz,
 		float Yx, float Yy, float Yz,
 		float Zx, float Zy, float Zz)
 	{
@@ -3148,6 +3281,13 @@ namespace flame
 		(*this)[1] /= v;
 		(*this)[2] /= v;
 		return *this;
+	}
+
+	inline void Mat3::normalize()
+	{
+		(*this)[0].normalize();
+		(*this)[1].normalize();
+		(*this)[2].normalize();
 	}
 
 	inline void Mat3::transpose()
@@ -3313,11 +3453,11 @@ namespace flame
 		return ret;
 	}
 
-	Mat4::Mat4()
+	inline Mat4::Mat4()
 	{
 	}
 
-	Mat4::Mat4(float diagonal)
+	inline Mat4::Mat4(float diagonal)
 	{
 		(*this)[0][0] = diagonal; (*this)[1][0] = 0.f;      (*this)[2][0] = 0.f;      (*this)[3][0] = 0.f;
 		(*this)[0][1] = 0.f;      (*this)[1][1] = diagonal; (*this)[2][1] = 0.f;      (*this)[3][1] = 0.f;
@@ -3325,7 +3465,7 @@ namespace flame
 		(*this)[0][3] = 0.f;      (*this)[1][3] = 0.f;      (*this)[2][3] = 0.f;      (*this)[3][3] = diagonal;
 	}
 
-	Mat4::Mat4(float Xx, float Xy, float Xz, float Xw,
+	inline Mat4::Mat4(float Xx, float Xy, float Xz, float Xw,
 		float Yx, float Yy, float Yz, float Yw,
 		float Zx, float Zy, float Zz, float Zw,
 		float Wx, float Wy, float Wz, float Ww)
@@ -3352,11 +3492,11 @@ namespace flame
 		(*this)[3] = v[3];
 	}
 
-	inline Mat4::Mat4(const Mat3 &rotation, const Vec3 &coord)
+	inline Mat4::Mat4(const Mat3 &mat3, const Vec3 &coord)
 	{
-		(*this)[0] = Vec4(rotation[0], 0.f);
-		(*this)[1] = Vec4(rotation[1], 0.f);
-		(*this)[2] = Vec4(rotation[2], 0.f);
+		(*this)[0] = Vec4(mat3[0], 0.f);
+		(*this)[1] = Vec4(mat3[1], 0.f);
+		(*this)[2] = Vec4(mat3[2], 0.f);
 		(*this)[3] = Vec4(coord, 1.f);
 	}
 
@@ -3449,6 +3589,13 @@ namespace flame
 		(*this)[2] /= v;
 		(*this)[3] /= v;
 		return *this;
+	}
+
+	inline void Mat4::normalize_33()
+	{
+		(*this)[0] = Vec4(Vec3((*this)[0]).get_normalize(), 0.f);
+		(*this)[1] = Vec4(Vec3((*this)[1]).get_normalize(), 0.f);
+		(*this)[2] = Vec4(Vec3((*this)[2]).get_normalize(), 0.f);
 	}
 
 	inline void Mat4::transpose()
@@ -3682,21 +3829,6 @@ namespace flame
 		return ret;
 	}
 
-	inline float dot(const Vec2 &lhs, const Vec2 &rhs)
-	{
-		return lhs.x * rhs.x + lhs.y * rhs.y;
-	}
-
-	inline float dot(const Vec3 &lhs, const Vec3 &rhs)
-	{
-		return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
-	}
-
-	inline float dot(const Vec4 &lhs, const Vec4 &rhs)
-	{
-		return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z + lhs.w * rhs.w;
-	}
-
 	inline Vec3 cross(const Vec3 &lhs, const Vec3 &rhs)
 	{
 		return Vec3(
@@ -3705,29 +3837,69 @@ namespace flame
 			lhs.x * rhs.y - rhs.x * lhs.y);
 	}
 
-	Rect::Rect()
+	inline EulerYawPitchRoll::EulerYawPitchRoll()
 	{
 	}
 
-	Rect::Rect(const Vec2 &_min, const Vec2 &_max) :
+	inline EulerYawPitchRoll::EulerYawPitchRoll(const Quat &q)
+	{
+		math_detail::quat_to_euler(q, *this);
+	}
+
+	inline Quat::Quat()
+	{
+	}
+
+	inline Quat::Quat(float _x, float _y, float _z, float _w) :
+		x(_x),
+		y(_y),
+		z(_z),
+		w(_w)
+	{
+	}
+
+	inline void Quat::normalize()
+	{
+		auto l = sqrt(x * x + y * y + z * z + w * w);
+		x /= l;
+		y /= l;
+		z /= l;
+		w /= l;
+	}
+
+	inline Quat operator*(const Quat &lhs, const Quat &rhs)
+	{
+		Quat ret;
+		ret.x = lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y;
+		ret.y = lhs.w * rhs.y - lhs.x * rhs.z + lhs.y * rhs.w + lhs.z * rhs.x;
+		ret.z = lhs.w * rhs.z + lhs.x * rhs.y + lhs.y * rhs.w + lhs.z * rhs.x;
+		ret.w = lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z;
+		return ret;
+	}
+
+	inline Rect::Rect()
+	{
+	}
+
+	inline Rect::Rect(const Vec2 &_min, const Vec2 &_max) :
 		min(_min),
 		max(_max)
 	{
 	}
 
-	Rect::Rect(float min_x, float min_y, float max_x, float max_y) :
+	inline Rect::Rect(float min_x, float min_y, float max_x, float max_y) :
 		min(min_x, min_y),
 		max(max_x, max_y)
 	{
 	}
 
-	Rect::Rect(const Rect &v) :
+	inline Rect::Rect(const Rect &v) :
 		min(v.min),
 		max(v.max)
 	{
 	}
 
-	void Rect::expand(float length)
+	inline void Rect::expand(float length)
 	{
 		min.x -= length;
 		min.y -= length;
@@ -3735,7 +3907,7 @@ namespace flame
 		max.y += length;
 	}
 
-	Rect Rect::get_expanded(float length)
+	inline Rect Rect::get_expanded(float length)
 	{
 		Rect ret(*this);
 		ret.expand(length);
@@ -3779,42 +3951,202 @@ namespace flame
 		return Outside;
 	}
 
-	//inline glm::vec4 plane(const glm::vec3 &p, const glm::vec3 &normal)
-	//{
-	//	return glm::vec4(normal, glm::dot(normal, p));
-	//}
+	inline Rect operator+(const Rect &r, const Vec2 &off)
+	{
+		Rect ret(r);
+		ret.min += off;
+		ret.max += off;
+		return ret;
+	}
 
-	//inline void ortho_normalize(glm::mat3 &mat)
-	//{
-	//	for (auto i = 0; i < 3; i++)
-	//		mat[i] = glm::normalize(mat[i]);
-	//}
+	inline Rect operator-(const Rect &r, const Vec2 &off)
+	{
+		Rect ret(r);
+		ret.min -= off;
+		ret.max -= off;
+		return ret;
+	}
 
-	//inline void ortho_normalize(glm::mat4 &mat)
-	//{
-	//	for (auto i = 0; i < 3; i++)
-	//		mat[i] = glm::vec4(glm::normalize(glm::vec3(mat[i])), 0.f);
-	//}
+	inline Plane::Plane()
+	{
+	}
 
-	//FLAME_MATH_EXPORTS glm::mat3 quat_to_mat3(glm::vec4 &q);
+	inline Plane::Plane(const Vec3 &n, float _d) :
+		normal(n),
+		d(_d)
+	{
+	}
 
-	//FLAME_MATH_EXPORTS glm::vec4 mat3_to_quat(glm::mat3 &mat);
+	inline Plane::Plane(const Vec3 &n, const Vec3 &p) :
+		normal(n),
+		d(dot(normal, p))
+	{
+	}
 
-	//FLAME_MATH_EXPORTS glm::vec3 quat_to_euler(glm::vec4 &q);
+	inline float Plane::intersect(const Vec3 &origin, const Vec3 &dir)
+	{
+		auto numer = dot(normal, origin) - d;
+		auto denom = dot(normal, dir);
 
-	//FLAME_MATH_EXPORTS void quat_rotate(glm::vec4 &q, glm::vec3 &v);
+		if (abs(denom) < EPS)
+			return -1.f;
 
-	//FLAME_MATH_EXPORTS glm::mat3 euler_to_mat3(glm::vec3 &e);
+		return -(numer / denom);
+	}
 
-	//inline glm::mat3 euler_to_mat3(float x, float y, float z)
-	//{
-	//	return euler_to_mat3(glm::vec3(x, y, z));
-	//}
+	namespace math_detail
+	{
+		inline void rotate(const Vec3 &axis, float rad, Mat3 &m)
+		{
+			const auto c = cos(rad);
+			const auto s = sin(rad);
 
-	//FLAME_MATH_EXPORTS float rand2d(const glm::vec2 &v);
-	//FLAME_MATH_EXPORTS float noise2d(glm::vec2 v);
-	//FLAME_MATH_EXPORTS float fbm2d(glm::vec2 v);
+			Vec3 temp((1.f - c) * axis);
 
-	//FLAME_MATH_EXPORTS glm::vec4 fit_rect(const glm::vec2 &desired_size, float xy_aspect);
-	//FLAME_MATH_EXPORTS glm::vec4 fit_rect_no_zoom_in(const glm::vec2 &desired_size, const glm::vec2 &size);
+			m[0][0] = c + temp[0] * axis[0];
+			m[0][1] = 0 + temp[0] * axis[1] + s * axis[2];
+			m[0][2] = 0 + temp[0] * axis[2] - s * axis[1];
+
+			m[1][0] = 0 + temp[1] * axis[0] - s * axis[2];
+			m[1][1] = c + temp[1] * axis[1];
+			m[1][2] = 0 + temp[1] * axis[2] + s * axis[0];
+
+			m[2][0] = 0 + temp[2] * axis[0] + s * axis[1];
+			m[2][1] = 0 + temp[2] * axis[1] - s * axis[0];
+			m[2][2] = c + temp[2] * axis[2];
+		}
+
+		inline void mat3_to_quat(const Mat3 &m, Quat &q)
+		{
+			float s;
+			float tq[4];
+			int   i, j;
+			// Use tq to store the largest trace
+			tq[0] = 1.f + m[0][0] + m[1][1] + m[2][2];
+			tq[1] = 1.f + m[0][0] - m[1][1] - m[2][2];
+			tq[2] = 1.f - m[0][0] + m[1][1] - m[2][2];
+			tq[3] = 1.f - m[0][0] - m[1][1] + m[2][2];
+			// Find the maximum (could also use stacked if's later)
+			j = 0;
+			for (i = 1; i < 4; i++)
+			{
+				j = (tq[i] > tq[j]) ? i : j;
+			}
+
+			// check the diagonal
+			if (j == 0)
+			{
+				/* perform instant calculation */
+				q.w = tq[0];
+				q.x = m[1][2] - m[2][1];
+				q.y = m[2][0] - m[0][2];
+				q.z = m[0][1] - m[1][0];
+			}
+			else if (j == 1)
+			{
+				q.w = m[1][2] - m[2][1];
+				q.x = tq[1];
+				q.y = m[0][1] + m[1][0];
+				q.z = m[2][0] + m[0][2];
+			}
+			else if (j == 2)
+			{
+				q.w = m[2][0] - m[0][2];
+				q.x = m[0][1] + m[1][0];
+				q.y = tq[2];
+				q.z = m[1][2] + m[2][1];
+			}
+			else /* if (j==3) */
+			{
+				q.w = m[0][1] - m[1][0];
+				q.x = m[2][0] + m[0][2];
+				q.y = m[1][2] + m[2][1];
+				q.z = tq[3];
+			}
+			s = sqrt(0.25f / tq[j]);
+			q.w *= s;
+			q.x *= s;
+			q.y *= s;
+			q.z *= s;
+			q.normalize();
+		}
+
+		inline void euler_to_mat3(const EulerYawPitchRoll &e, Mat3 &m)
+		{
+			m[0] = Vec3(1.f, 0.f, 0.f);
+			m[1] = Vec3(0.f, 1.f, 0.f);
+			m[2] = Vec3(0.f, 0.f, 1.f);
+			Mat3 mat_yaw(Vec3(m[1]), e.yaw * ANG_RAD);
+			m[0] = mat_yaw * m[0];
+			m[2] = mat_yaw * m[2];
+			Mat3 mat_pitch(Vec3(m[0]), e.pitch * ANG_RAD);
+			m[2] = mat_pitch * m[2];
+			m[1] = mat_pitch * m[1];
+			Mat3 mat_roll(Vec3(m[2]), e.roll * ANG_RAD);
+			m[1] = mat_roll * m[1];
+			m[0] = mat_roll * m[0];
+		}
+
+		inline void quat_to_euler(const Quat &q, EulerYawPitchRoll &e)
+		{
+			auto sqw = q.w * q.w;
+			auto sqx = q.x * q.x;
+			auto sqy = q.y * q.y;
+			auto sqz = q.z * q.z;
+
+			auto unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
+			auto test = q.x * q.y + q.z * q.w;
+			if (test > 0.499f * unit)
+			{ // singularity at north pole
+				e.yaw = 2.f * atan2(q.x, q.w);
+				e.pitch = PI / 2.f;
+				e.roll = 0;
+				return;
+			}
+			if (test < -0.499f * unit)
+			{ // singularity at south pole
+				e.yaw = -2.f * atan2(q.x, q.w);
+				e.pitch = -PI / 2.f;
+				e.roll = 0;
+				return;
+			}
+
+			e.yaw = atan2(2.f * q.y * q.w - 2.f * q.x * q.z, sqx - sqy - sqz + sqw) * RAD_ANG;
+			e.pitch = asin(2.f * test / unit) * RAD_ANG;
+			e.roll = atan2(2.f * q.x * q.w - 2.f * q.y * q.z, -sqx + sqy - sqz + sqw) * RAD_ANG;
+		}
+
+		inline void quat_to_mat3(const Quat &q, Mat3 &m)
+		{
+			float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
+
+			x2 = 2.f * q.x;
+			y2 = 2.f * q.y;
+			z2 = 2.f * q.z;
+
+			xx = q.x * x2;
+			xy = q.x * y2;
+			xz = q.x * z2;
+
+			yy = q.y * y2;
+			yz = q.y * z2;
+			zz = q.z * z2;
+
+			wx = q.w * x2;
+			wy = q.w * y2;
+			wz = q.w * z2;
+
+			m[0][0] = 1.f - (yy + zz);
+			m[1][0] = xy - wz;
+			m[2][0] = xz + wy;
+
+			m[0][1] = xy + wz;
+			m[1][1] = 1.f - (xx + zz);
+			m[2][1] = yz - wx;
+
+			m[0][2] = xz - wy;
+			m[1][2] = yz + wx;
+			m[2][2] = 1.f - (xx + yy);
+		}
+	}
 }

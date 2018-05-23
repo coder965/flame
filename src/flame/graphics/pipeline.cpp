@@ -185,6 +185,13 @@ namespace flame
 		void Pipeline::set_vertex_attributes(const std::initializer_list<
 			std::initializer_list<VertexAttributeType>> &attributes)
 		{
+			if (attributes.size() == 1 &&
+				attributes.begin()[0].size() == 0)
+			{
+				_priv->vertex_attributes.resize(0);
+				return;
+			}
+
 			_priv->vertex_attributes.resize(attributes.size());
 			auto index = 0;
 			for (auto &v : attributes)

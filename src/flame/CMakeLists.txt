@@ -15,22 +15,6 @@ target_include_directories(flame_filesystem PUBLIC "${CMAKE_SOURCE_DIR}/ext/glm"
 
 set_target_properties(flame_filesystem PROPERTIES FOLDER "flame")
 
-# math
-set(FLAME_MATH_HEADER_LIST "math.h")
-set(FLAME_MATH_SOURCE_LIST "math.cpp")
-
-group_source("${FLAME_MATH_HEADER_LIST}" "" "Header")
-group_source("${FLAME_MATH_SOURCE_LIST}" "" "Source")
-
-add_library(flame_math SHARED ${FLAME_MATH_HEADER_LIST} ${FLAME_MATH_SOURCE_LIST})
-
-target_compile_definitions(flame_math PRIVATE _FLAME_MATH_EXPORTS)
-
-target_include_directories(flame_math PUBLIC "${CMAKE_SOURCE_DIR}/src")
-target_include_directories(flame_math PUBLIC "${CMAKE_SOURCE_DIR}/ext/glm")
-
-set_target_properties(flame_math PROPERTIES FOLDER "flame")
-
 # image
 set(FLAME_IMAGE_HEADER_LIST "image.h")
 set(FLAME_IMAGE_SOURCE_LIST "image.cpp")

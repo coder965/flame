@@ -12,7 +12,6 @@ target_include_directories(flame_model PUBLIC "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(flame_model PUBLIC "${CMAKE_SOURCE_DIR}/ext/assimp/include")
 
 target_link_libraries(flame_model flame_filesystem)
-target_link_libraries(flame_model flame_math)
 target_link_libraries(flame_model assimp)
 
 set_target_properties(flame_model PROPERTIES FOLDER "flame") 

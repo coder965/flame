@@ -320,27 +320,14 @@ int main(int argc, char **args)
 		ui->end_window();
 
 		static Vec2 off(0.f);
-		Vec2 bg_pos(0.f, menu_rect.w);
+		Vec2 bg_pos(0.f, menu_rect.max.y);
 		Vec2 bg_size(res.x, res.y - 
-			(menu_rect.w - menu_rect.y) - 
-			(status_rect.w - status_rect.y));
+			(menu_rect.max.y - menu_rect.min.y) -
+			(status_rect.max.y - status_rect.min.y));
 		static bool graping_grid = false;
 		ui->begin_plain_window("background", bg_pos, bg_size);
 
-		for (auto i = mod((int)off.x, 100); i.y < res.x; i.y += 100, i.x--)
-		{
-			if (i.y < 0)
-				continue;
-			ui->add_line_to_window(Vec2(i.y, 0.f), Vec2(i.y, res.y), Vec4(1.f));
-			ui->add_text_to_window(Vec2(i.y + 4, 0.f), Vec4(1.f), "%d", i.x * -100);
-		}
-		for (auto i = mod((int)off.y, 100); i.y < res.y; i.y += 100, i.x--)
-		{
-			if (i.y < 0)
-				continue;
-			ui->add_line_to_window(Vec2(0.f, i.y), Vec2(res.x, i.y), Vec4(1.f));
-			ui->add_text_to_window(Vec2(4.f, i.y), Vec4(1.f), "%d", i.x * -100);
-		}
+		ui->get_curr_window_drawlist().draw_grid(off, res);
 
 		auto want_sel = !transform_mode;
 
@@ -363,9 +350,12 @@ int main(int argc, char **args)
 			if ((s->mouse_buttons[2] & KeyStateDown) == 0)
 				graping_grid = false;
 		}
+
+		auto dl_bg = ui->get_curr_window_drawlist();
+
 		ui->end_window();
 
-		ui->push_displayrect(Vec4(bg_pos, bg_pos + bg_size));
+		auto last_global_clip = ui->set_global_cliprect(Rect(bg_pos, bg_pos + bg_size));
 		ui->begin_window(wnd_name.data, wnd_pos + off + bg_pos, wnd_size,
 			UI::WindowNoResize);
 		auto wnd_inner_rect = ui->get_curr_window_inner_rect();
@@ -394,14 +384,16 @@ int main(int argc, char **args)
 		if (sel == nullptr)
 			sel_rect = ui->get_curr_window_rect();
 
+		auto dl_wnd = ui->get_curr_window_drawlist();
+
 		if (transform_mode)
 		{
 			if (!transform_mode_moving && !transform_mode_sizing)
 			{
 				auto just_clicked = s->mouse_buttons[0] == (KeyStateJust | KeyStateDown);
 				if (just_clicked)
-					transform_mode_anchor = ivec2(s->mouse_x, s->mouse_y);
-				auto side = rect_side(vec2(s->mouse_x, s->mouse_y), sel_rect, 4.f);
+					transform_mode_anchor = Ivec2(s->mouse_x, s->mouse_y);
+				auto side = sel_rect.calc_side(Vec2(s->mouse_x, s->mouse_y), 4.f);
 				switch (side)
 				{
 				case Rect::SideN: case Rect::SideS:
@@ -496,27 +488,29 @@ int main(int argc, char **args)
 		}
 
 		ui->end_window();
-		ui->pop_displayrect();
+		ui->set_global_cliprect(last_global_clip);
 
-		ui->push_overlay_cliprect(vec4(bg_pos, bg_pos + bg_size));
+		auto dl_ol = ui->get_overlap_drawlist();
+
 		if (sel != (Widget*)0xFFFFFFFF)
 		{
 			if (!transform_mode)
-				expand_rect(sel_rect, 4.f);
-			ui->add_rect_to_overlap(sel_rect, vec4(1.f, 1.f, 0.f, 1.f));
+				sel_rect.expand(4.f);
+			else
+				sel_rect.expand(1.f);
+			(sel == nullptr ? dl_bg : dl_wnd).add_rect(sel_rect, Vec4(1.f, 1.f, 0.f, 1.f));
 			if (transform_mode)
 			{
 				if (transform_mode_moving)
 				{
-					ui->add_rect_to_overlap(sel_rect + vec4(transform_mode_move_off, 
-						transform_mode_move_off), vec4(1.f));
-					ui->add_line_to_overlap(vec2(transform_mode_anchor), vec2(s->mouse_x,
-						s->mouse_y), vec4(1.f));
+					dl_ol.add_rect(sel_rect + Vec2(transform_mode_move_off), Vec4(1.f));
+					dl_ol.add_line(Vec2(transform_mode_anchor), Vec2(s->mouse_x,
+						s->mouse_y), Vec4(1.f));
 					if (sel != nullptr)
 					{
-						ui->add_line_to_overlap(vec2(wnd_inner_rect.x, wnd_inner_rect.y), 
-							vec2(wnd_inner_rect.z, wnd_inner_rect.y), 
-							vec4(1.f, 0.f, 0.f, 1.f));
+						dl_ol.add_line(Vec2(wnd_inner_rect.min.x, wnd_inner_rect.min.y),
+							Vec2(wnd_inner_rect.max.x, wnd_inner_rect.min.y), 
+							Vec4(1.f, 0.f, 0.f, 1.f));
 					}
 				}
 				if (transform_mode_sizing)
@@ -525,41 +519,40 @@ int main(int argc, char **args)
 					switch (transform_mode_sizing_side)
 					{
 					case Rect::SideN:
-						rect.y += transform_mode_size_off.y;
+						rect.min.y += transform_mode_size_off.y;
 						break;
 					case Rect::SideS:
-						rect.w += transform_mode_size_off.y;
+						rect.max.y += transform_mode_size_off.y;
 						break;
 					case Rect::SideW:
-						rect.x += transform_mode_size_off.x;
+						rect.min.x += transform_mode_size_off.x;
 						break;
 					case Rect::SideE:
-						rect.z += transform_mode_size_off.x;
+						rect.max.x += transform_mode_size_off.x;
 						break;
 					case Rect::SideNE:
-						rect.y += transform_mode_size_off.y;
-						rect.z += transform_mode_size_off.x;
+						rect.min.y += transform_mode_size_off.y;
+						rect.max.x += transform_mode_size_off.x;
 						break;
 					case Rect::SideNW:
-						rect.y += transform_mode_size_off.y;
-						rect.x += transform_mode_size_off.x;
+						rect.min.y += transform_mode_size_off.y;
+						rect.min.x += transform_mode_size_off.x;
 						break;
 					case Rect::SideSE:
-						rect.w += transform_mode_size_off.y;
-						rect.z += transform_mode_size_off.x;
+						rect.max.y += transform_mode_size_off.y;
+						rect.max.x += transform_mode_size_off.x;
 						break;
 					case Rect::SideSW:
-						rect.w += transform_mode_size_off.y;
-						rect.x += transform_mode_size_off.x;
+						rect.max.y += transform_mode_size_off.y;
+						rect.min.x += transform_mode_size_off.x;
 						break;
 					}
-					ui->add_rect_to_overlap(rect, vec4(1.f));
+					dl_ol.add_rect(rect, Vec4(1.f));
 				}
 			}
 		}
-		ui->pop_overlay_cliprect();
 
-		ui->begin_window("Hierarchy", vec2(get_inf()), vec2(get_inf()), UI::WindowSaveSetting);
+		ui->begin_window("Hierarchy", Vec2(get_inf()), Vec2(get_inf()), UI::WindowSaveSetting);
 		for (auto &w : widgets)
 		{
 			if (ui->selectable(w->name.data, sel == w.get()) &&
@@ -571,7 +564,7 @@ int main(int argc, char **args)
 		}
 		ui->end_window();
 
-		ui->begin_window("Inspector", vec2(get_inf()), vec2(get_inf()), UI::WindowSaveSetting);
+		ui->begin_window("Inspector", Vec2(get_inf()), Vec2(get_inf()), UI::WindowSaveSetting);
 		if (sel != (Widget*)0xFFFFFFFF)
 		{
 			if (sel == nullptr)
