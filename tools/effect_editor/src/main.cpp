@@ -24,6 +24,8 @@
 #include <flame/system.h>
 #include <flame/filesystem.h>
 #include <flame/math.h>
+#include <flame/string.h>
+#include <flame/select.h>
 #include <flame/graphics/device.h>
 #include <flame/graphics/swapchain.h>
 #include <flame/graphics/renderpass.h>
@@ -38,8 +40,9 @@
 #include <flame/graphics/queue.h>
 #include <flame/UI/instance.h>
 
-#define NOMINMAX
-#include <Windows.h>
+const float BP_node_titlebar_height = 18.f;
+
+bool running = false;
 
 int main(int argc, char **args)
 {
@@ -58,7 +61,7 @@ int main(int argc, char **args)
 	Vec2 effect_size(800, 600);
 
 	auto t = graphics::create_texture(d, effect_size.x, effect_size.y, 1, 1,
-		graphics::Format_R8G8B8A8_UNORM, 
+		graphics::Format_R8G8B8A8_UNORM,
 		graphics::TextureUsageAttachment | graphics::TextureUsageShaderSampled,
 		graphics::MemPropDevice);
 	auto tv = graphics::create_textureview(d, t);
@@ -120,7 +123,7 @@ int main(int argc, char **args)
 
 	auto rp_ui = graphics::create_renderpass(d);
 	rp_ui->add_attachment(sc->format, true);
-	rp_ui->add_subpass({0}, -1);
+	rp_ui->add_subpass({ 0 }, -1);
 	rp_ui->build();
 
 	graphics::Framebuffer *fbs_ui[2];
@@ -153,14 +156,207 @@ int main(int argc, char **args)
 
 		for (auto i = 0; i < particles.size(); i++)
 		{
-			ubo_particle_liquid->particles[i].coord = 
+			ubo_particle_liquid->particles[i].coord =
 				Vec4(particles[i]->coord + effect_size / 2, 0.f, 0.f);
 		}
 	};
 
 	auto need_update_ubo = true;
 
-	Particle *sel = nullptr;
+	// BP = Blue Print
+
+	struct BP_Node;
+
+	struct BP_Slot
+	{
+		ShortString name;
+		Vec2 pos;
+		float text_width;
+
+		BP_Node *n;
+		int io;
+
+		std::vector<BP_Slot*> links;
+
+		inline bool contains(const Vec2 &p)
+		{
+			if (p.x > pos.x - 4 && p.x < pos.x + 4 &&
+				p.y > pos.y - 4 && p.y < pos.y + 4)
+				return true;
+			return false;
+		}
+	};
+
+	enum BP_NodeType
+	{
+		BP_NodeInterval,
+		BP_NodeParticleGenerator
+	};
+
+	struct BP_Node
+	{
+		BP_NodeType type;
+		Rect rect;
+		std::vector<std::unique_ptr<BP_Slot>> slots[2];
+
+		bool uptodate;
+
+		BP_Node()
+		{
+			uptodate = false;
+		}
+
+		virtual const char*name() = 0;
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) = 0;
+
+		virtual void solve(float elapsed_time) = 0;
+
+		virtual bool get_bool()
+		{
+			return false;
+		}
+
+		inline void add_slot(int io, BP_Slot *s)
+		{
+			s->n = this;
+			s->io = io;
+			s->text_width = 0.f;
+			slots[io].emplace_back(s);
+		}
+
+		inline void *touch(const Vec2 &p)
+		{
+			for (auto i = 0; i < 2; i++)
+			{
+				for (auto &s : slots[i])
+				{
+					if (s->contains(p))
+						return s.get();
+				}
+			}
+			if (rect.contains(p))
+				return this;
+			return nullptr;
+		}
+	};
+
+	struct BP_N_Intervaler : BP_Node
+	{
+		float interval_time;
+
+		float accumulated_time;
+		bool signal;
+
+		BP_N_Intervaler()
+		{
+			type = BP_NodeInterval;
+			rect = Rect(0, 0, 200, 60) + Vec2(10);
+			auto sl_output = new BP_Slot;
+			strcpy(sl_output->name.data, "Output");
+			add_slot(1, sl_output);
+
+			interval_time = 1.f;
+			accumulated_time = 0.f;
+			signal = false;
+		}
+
+		virtual const char*name() override
+		{
+			return "Intervaler";
+		}
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
+		{
+			ui->push_item_width(100.f);
+			ui->set_cursor_pos(rect.min + Vec2(8.f, BP_node_titlebar_height + 8.f) + off);
+			ui->dragfloat("sec", &interval_time, 0.01f, 0.f, 10000.f);
+			ui->pop_item_width();
+		}
+
+		virtual void solve(float elapsed_time) override
+		{
+			if (uptodate)
+				return;
+
+			signal = false;
+
+			accumulated_time += elapsed_time;
+			if (accumulated_time >= interval_time)
+			{
+				signal = true;
+				accumulated_time = 0.f;
+			}
+
+			uptodate = true;
+		}
+
+		virtual bool get_bool() override
+		{
+			return signal;
+		}
+	};
+
+	struct BP_N_ParticleGenerator : BP_Node
+	{
+		BP_N_ParticleGenerator()
+		{
+			type = BP_NodeParticleGenerator;
+			rect = Rect(0, 0, 150, 60) + Vec2(10);
+			auto sl_trigger = new BP_Slot;
+			strcpy(sl_trigger->name.data, "Trigger");
+			add_slot(0, sl_trigger);
+		}
+
+		virtual const char*name() override
+		{
+			return "Particle Generator";
+		}
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
+		{
+
+		}
+
+		virtual void solve(float elapsed_time) override
+		{
+			if (uptodate)
+				return;
+
+			bool trigger = false;
+			for (auto &s : slots[0][0]->links)
+			{
+				auto n = s->n;
+				if (!n->uptodate)
+					n->solve(elapsed_time);
+				trigger |= n->get_bool();
+			}
+
+			if (trigger)
+				printf("ParticleGenerator: Triggered\n");
+
+			uptodate = true;
+		}
+	};
+
+	std::vector<std::unique_ptr<BP_Node>> bp_nodes;
+
+	enum SelType
+	{
+		SelPtc,
+		SelBPn,
+		SelBPs
+	};
+
+	Select sel;
+
+	enum TabType
+	{
+		TabScene,
+		TabBluePrint
+	};
+
+	auto curr_tab = TabScene;
 
 	sm->run([&](){
 		ui->begin(res.x, res.y, sm->elapsed_time);
@@ -181,12 +377,29 @@ int main(int argc, char **args)
 		}
 		if (ui->begin_menu("Add"))
 		{
-			if (ui->menuitem("Particle"))
+			switch (curr_tab)
 			{
-				auto p = new Particle;
-				p->coord = Vec2(0.f);
-				particles.emplace_back(p);
-				need_update_ubo = true;
+			case TabScene:
+				if (ui->menuitem("Particle"))
+				{
+					auto p = new Particle;
+					p->coord = Vec2(0.f);
+					particles.emplace_back(p);
+					need_update_ubo = true;
+				}
+				break;
+			case TabBluePrint:
+				if (ui->menuitem("Interval"))
+				{
+					auto n = new BP_N_Intervaler;
+					bp_nodes.emplace_back(n);
+				}
+				if (ui->menuitem("Particle Generator"))
+				{
+					auto n = new BP_N_ParticleGenerator;
+					bp_nodes.emplace_back(n);
+				}
+				break;
 			}
 			ui->end_menu();
 		}
@@ -204,18 +417,25 @@ int main(int argc, char **args)
 				;
 			if (ui->menuitem("Delete", "Del"))
 			{
-				if (sel)
+				switch (curr_tab)
 				{
-					for (auto it = particles.begin(); it != particles.end(); it++)
+				case TabScene:
+					if (sel.type == SelPtc)
 					{
-						if (it->get() == sel)
+						for (auto it = particles.begin(); it != particles.end(); it++)
 						{
-							particles.erase(it);
-							break;
+							if (it->get() == (Particle*)sel.v)
+							{
+								particles.erase(it);
+								break;
+							}
 						}
+						sel.reset();
+						need_update_ubo = true;
 					}
-					sel = nullptr;
-					need_update_ubo = true;
+					break;
+				case TabBluePrint:
+					break;
 				}
 			}
 			ui->end_menu();
@@ -238,57 +458,218 @@ int main(int argc, char **args)
 			(status_rect.max.y - status_rect.min.y));
 		ui->begin_plain_window("ws", ws_pos, ws_size);
 
+		if (ui->button("Run"))
+			running = true;
+		ui->sameline();
+		if (ui->button("Pause"))
+			running = false;
+		ui->sameline();
+		if (ui->button("Stop"))
+		{
+
+		}
+		ui->separator();
+
 		ui->begin_tabbar("tabbar");
 
 		if (ui->tabitem("scene"))
 		{
+			curr_tab = TabScene;
+
 			ui->image(1, effect_size);
 			auto img_rect = ui->get_last_item_rect();
 			auto dl_ws = ui->get_curr_window_drawlist();
 
-			static Vec2 anchor;
+			auto mpos = Vec2(s->mouse_x, s->mouse_y);
+			mpos -= effect_size / 2;
+			mpos -= Vec2(img_rect.min.x, img_rect.min.y);
 
-			if (ui->is_curr_window_hovered() && s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			if (ui->is_last_item_hovered() && s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
 			{
 				auto clicked_blank = true;
-				auto mpos = Vec2(s->mouse_x, s->mouse_y);
-				mpos -= effect_size / 2;
-				mpos -= Vec2(img_rect.min.x, img_rect.min.y);
 				for (int i = particles.size() - 1; i >= 0; i--)
 				{
 					Rect r(particles[i]->coord - Vec2(50), particles[i]->coord + Vec2(50));
 					if (r.contains(mpos))
 					{
-						sel = particles[i].get();
-						anchor = mpos;
+						sel.set(SelPtc, particles[i].get());
 						clicked_blank = false;
 						break;
 					}
 				}
 				if (clicked_blank)
-					sel = nullptr;
+					sel.reset();
 			}
 
-			if (sel != nullptr)
+			if (sel.type == SelPtc)
 			{
-				if ((s->mouse_buttons[0] & KeyStateDown) != 0)
+				auto sel_ptc = (Particle*)sel.v;
+				if (ui->is_last_item_hovered() && (s->mouse_buttons[0] & KeyStateDown) != 0)
 				{
 					if (s->mouse_disp_x != 0 || s->mouse_disp_y != 0)
 					{
-						sel->coord.x += s->mouse_disp_x;
-						sel->coord.y += s->mouse_disp_y;
+						sel_ptc->coord.x += s->mouse_disp_x;
+						sel_ptc->coord.y += s->mouse_disp_y;
 						update_ubo();
 					}
 				}
 
-				dl_ws.add_rect(Rect(sel->coord - Vec2(50), sel->coord + Vec2(50)) +
+				dl_ws.add_rect(Rect(sel_ptc->coord - Vec2(50), sel_ptc->coord + Vec2(50)) +
 					effect_size / 2 + Vec2(img_rect.min.x, img_rect.min.y), Vec4(1, 1, 0, 1));
 			}
 		}
 
 		if (ui->tabitem("blueprint"))
 		{
+			curr_tab = TabBluePrint;
 
+			ui->begin_child("bp", Vec2(800, 600), true);
+
+			auto wnd_rect = ui->get_curr_window_rect();
+
+			auto mpos = Vec2(s->mouse_x, s->mouse_y);
+			mpos -= wnd_rect.min;
+
+			auto dl = ui->get_curr_window_drawlist();
+
+			const Vec4 n_colors[] = {
+				Vec4(0.5f, 0.5f, 1.f, 1.f),
+				Vec4(1.f, 0.5f, 0.5f, 1.f)
+			};
+
+			for (auto &n : bp_nodes)
+			{
+				dl.add_rect_filled(n->rect + wnd_rect.min,
+					Vec4(0.3f, 0.3f, 0.3f, 1.f), 4.f);
+				dl.add_rect_filled(Rect(Vec2(0.f), Vec2(n->rect.width(), BP_node_titlebar_height)) + 
+					n->rect.min + wnd_rect.min, n_colors[n->type], 4.f, true, true, false, false);
+				dl.add_text(n->rect.min + Vec2(6.f, 2.f) + wnd_rect.min, Vec4(1.f), n->name());
+
+				n->show(ui, wnd_rect.min);
+
+				for (auto i = 0; i < 2; i++)
+				{
+					auto disp = (n->rect.height() - BP_node_titlebar_height) / (n->slots[i].size() + 1);
+					auto y = disp;
+					for (auto &s : n->slots[i])
+					{
+						s->pos = Vec2(s->io == 0 ? n->rect.min.x : n->rect.max.x,
+							BP_node_titlebar_height + y + n->rect.min.y);
+						dl.add_circle_filled(s->pos + wnd_rect.min,
+							4, Vec4(1.f, 1.f, 0.f, 1.f));
+						ui->set_cursor_pos(s->pos +
+							Vec2(s->io == 1 ? -s->text_width - 8.f : 8.f, -7.f) + wnd_rect.min);
+						ui->text_unformatted(s->name.data);
+						s->text_width = ui->get_last_item_rect().width();
+
+						if (i == 1)
+						{
+							for (auto ss : s->links)
+							{
+								auto p1 = s->pos + wnd_rect.min;
+								auto p2 = ss->pos + wnd_rect.min;
+								
+								dl.add_bezier(p1, p1 + Vec2(50.f, 0.f),
+									p2 + Vec2(-50.f, 0.f), p2, Vec4(1.f), 3);
+							}
+						}
+
+						y += disp;
+					}
+				}
+			}
+
+			if (ui->is_curr_window_hovered() && s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			{
+				auto clicked_blank = true;
+				for (int i = bp_nodes.size() - 1; i >= 0; i--)
+				{
+					auto n = bp_nodes[i].get();
+					auto what = n->touch(mpos);
+					if (what == nullptr)
+						continue;
+					if (what == n)
+					{
+						sel.set(SelBPn, n);
+						if (i != bp_nodes.size() - 1)
+							std::swap(bp_nodes[i], bp_nodes[bp_nodes.size() - 1]);
+						clicked_blank = false;
+						break;
+					}
+					else
+					{
+						sel.set(SelBPs, what);
+						clicked_blank = false;
+						break;
+					}
+				}
+				if (clicked_blank)
+					sel.reset();
+			}
+			if (sel.type == SelBPn)
+			{
+				auto sel_bpn = (BP_Node*)sel.v;
+				if (ui->is_curr_window_hovered() && (s->mouse_buttons[0] & KeyStateDown) != 0)
+				{
+					if (s->mouse_disp_x != 0 || s->mouse_disp_y != 0)
+						sel_bpn->rect += Vec2(s->mouse_disp_x, s->mouse_disp_y);
+				}
+				dl.add_rect(sel_bpn->rect.get_expanded(4.f) + wnd_rect.min,
+					Vec4(1.f, 1.f, 0.f, 1.f));
+			}
+			if (sel.type == SelBPs)
+			{
+				auto sel_bps = (BP_Slot*)sel.v;
+				dl.add_circle(sel_bps->pos + wnd_rect.min,
+					6, Vec4(1.f, 1.f, 0.f, 1.f));
+				if ((s->mouse_buttons[0] & KeyStateDown) != 0)
+				{
+					auto p1 = sel_bps->pos + wnd_rect.min;
+					auto p2 = mpos + wnd_rect.min;
+					dl.add_bezier(p1, p1 + Vec2(50.f * (sel_bps->io == 1 ? 1.f : -1.f), 0.f),
+						p2, p2, Vec4(1.f), 3);
+				}
+				else
+				{
+					sel.reset();
+					for (int i = bp_nodes.size() - 1; i >= 0; i--)
+					{
+						auto n = bp_nodes[i].get();
+						auto what = n->touch(mpos);
+						if (what != nullptr && what != n)
+						{
+							auto s1 = sel_bps;
+							auto s2 = (BP_Slot*)what;
+
+							auto already_exist = false;
+							for (auto ss : s1->links)
+							{
+								if (ss == s2)
+								{
+									already_exist = true;
+									break;
+								}
+							}
+							for (auto ss : s2->links)
+							{
+								if (ss == s1)
+								{
+									already_exist = true;
+									break;
+								}
+							}
+
+							if (!already_exist)
+							{
+								s1->links.push_back(s2);
+								s2->links.push_back(s1);
+							}
+						}
+					}
+				}
+			}
+
+			ui->end_child();
 		}
 
 		ui->end_tabbar();
@@ -296,6 +677,15 @@ int main(int argc, char **args)
 		ui->end_window();
 
 		ui->end();
+
+		if (running)
+		{
+			for (auto &n : bp_nodes)
+				n->uptodate = false;
+
+			for (auto &n : bp_nodes)
+				n->solve(sm->elapsed_time);
+		}
 
 		if (need_update_ubo)
 		{

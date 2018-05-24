@@ -674,15 +674,15 @@ namespace flame
 
 		enum Side
 		{
-			Outside,
 			SideN,
 			SideS,
-			SideE,
 			SideW,
-			SideNE,
+			SideE,
 			SideNW,
-			SideSE,
+			SideNE,
 			SideSW,
+			SideSE,
+			Outside,
 			Inside
 		};
 
@@ -690,11 +690,17 @@ namespace flame
 		Rect(const Vec2 &_min, const Vec2 &_max);
 		Rect(float min_x, float min_y, float max_x, float max_y);
 		Rect(const Rect &v);
+		Rect &operator+=(const Vec2 &v);
+		Rect &operator-=(const Vec2 &v);
+		float width() const;
+		float height() const;
 		void expand(float length);
 		Rect get_expanded(float length);
 		bool contains(const Vec2 &p);
 		Side calc_side(const Vec2 &p, float threshold);
 	};
+
+	Vec2 get_side_dir();
 
 	Rect operator+(const Rect &r, const Vec2 &off);
 	Rect operator-(const Rect &r, const Vec2 &off);
@@ -3898,6 +3904,30 @@ namespace flame
 		max(v.max)
 	{
 	}
+	
+	inline Rect &Rect::operator+=(const Vec2 &v)
+	{
+		min += v;
+		max += v;
+		return *this;
+	}
+
+	inline Rect &Rect::operator-=(const Vec2 &v)
+	{
+		min -= v;
+		max -= v;
+		return *this;
+	}
+
+	inline float Rect::width() const
+	{
+		return max.x - min.x;
+	}
+
+	inline float Rect::height() const
+	{
+		return max.y - min.y;
+	}
 
 	inline void Rect::expand(float length)
 	{
@@ -3951,19 +3981,44 @@ namespace flame
 		return Outside;
 	}
 
+	inline Vec2 get_side_dir(Rect::Side s)
+	{
+		switch (s)
+		{
+		case Rect::SideN:
+			return Vec2(0.f, -1.f);
+		case Rect::SideS:
+			return Vec2(0.f, 1.f);
+		case Rect::SideW:
+			return Vec2(-1.f, 0.f);
+		case Rect::SideE:
+			return Vec2(1.f, 0.f);
+		case Rect::SideNW:
+			return Vec2(-1.f, -1.f);
+		case Rect::SideNE:
+			return Vec2(1.f, -1.f);
+		case Rect::SideSW:
+			return Vec2(-1.f, 1.f);
+		case Rect::SideSE:
+			return Vec2(1.f, 1.f);
+		case Rect::Outside:
+			return Vec2(2.f);
+		case Rect::Inside:
+			return Vec2(0.f);
+		}
+	}
+
 	inline Rect operator+(const Rect &r, const Vec2 &off)
 	{
 		Rect ret(r);
-		ret.min += off;
-		ret.max += off;
+		ret += off;
 		return ret;
 	}
 
 	inline Rect operator-(const Rect &r, const Vec2 &off)
 	{
 		Rect ret(r);
-		ret.min -= off;
-		ret.max -= off;
+		ret -= off;
 		return ret;
 	}
 

@@ -55,7 +55,11 @@ namespace flame
 			FLAME_UI_EXPORTS void push_cliprect(const Rect &rect);
 			FLAME_UI_EXPORTS void pop_cliprect();
 			FLAME_UI_EXPORTS void add_line(const Vec2 &a, const Vec2 &b, const Vec4 &col);
-			FLAME_UI_EXPORTS void add_rect(const Rect &rect, const Vec4 &col);
+			FLAME_UI_EXPORTS void add_rect(const Rect &rect, const Vec4 &col, float round = 0.f, bool round_LT = true, bool round_RT = true, bool round_LB = true, bool round_RB = true);
+			FLAME_UI_EXPORTS void add_rect_filled(const Rect &rect, const Vec4 &col, float round = 0.f, bool round_LT = true, bool round_RT = true, bool round_LB = true, bool round_RB = true);
+			FLAME_UI_EXPORTS void add_circle(const Vec2 &center, float radius, const Vec4 &col);
+			FLAME_UI_EXPORTS void add_circle_filled(const Vec2 &center, float radius, const Vec4 &col);
+			FLAME_UI_EXPORTS void add_bezier(const Vec2 &p0, const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec4 &col, float thickness);
 			FLAME_UI_EXPORTS void add_text(const Vec2 &pos, const Vec4 &col, const char *fmt, ...);
 			FLAME_UI_EXPORTS void add_image();
 			FLAME_UI_EXPORTS void draw_grid(const Vec2 &off, const Vec2 &size);
@@ -95,12 +99,16 @@ namespace flame
 			FLAME_UI_EXPORTS void end_tabbar();
 			FLAME_UI_EXPORTS bool tabitem(const char *label);
 
+			FLAME_UI_EXPORTS bool begin_child(const char *str_id, const Vec2 &size, bool border);
+			FLAME_UI_EXPORTS void end_child();
+
+			FLAME_UI_EXPORTS void separator();
 			FLAME_UI_EXPORTS bool button(const char *label);
 			FLAME_UI_EXPORTS bool checkbox(const char *label, bool *p);
-			FLAME_UI_EXPORTS bool dragfloat(const char *label, float *p, float speed);
-			FLAME_UI_EXPORTS bool dragfloat2(const char *label, Vec2 *p, float speed);
-			FLAME_UI_EXPORTS bool dragfloat3(const char *label, Vec3 *p, float speed);
-			FLAME_UI_EXPORTS bool dragfloat4(const char *label, Vec4 *p, float speed);
+			FLAME_UI_EXPORTS bool dragfloat(const char *label, float *p, float speed, float v_min = 0.f, float v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragfloat2(const char *label, Vec2 *p, float speed, float v_min = 0.f, float v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragfloat3(const char *label, Vec3 *p, float speed, float v_min = 0.f, float v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragfloat4(const char *label, Vec4 *p, float speed, float v_min = 0.f, float v_max = 0.f);
 			FLAME_UI_EXPORTS void text_unformatted(const char *text);
 			FLAME_UI_EXPORTS void text(const char *fmt, ...);
 			FLAME_UI_EXPORTS void ID_text_unformatted(const char *ID, const char *text);
@@ -108,11 +116,22 @@ namespace flame
 			FLAME_UI_EXPORTS bool selectable(const char *label, bool selected);
 			FLAME_UI_EXPORTS void image(int index, const Vec2 &size);
 
+			FLAME_UI_EXPORTS void set_cursor_pos(const Vec2 &pos);
+
+			FLAME_UI_EXPORTS void sameline();
+
+			FLAME_UI_EXPORTS void push_item_width(float width);
+			FLAME_UI_EXPORTS void pop_item_width();
+
+			FLAME_UI_EXPORTS void push_ID(int ID);
+			FLAME_UI_EXPORTS void pop_ID();
+
 			FLAME_UI_EXPORTS unsigned int get_last_ID();
 			FLAME_UI_EXPORTS bool is_last_item_focused();
 			FLAME_UI_EXPORTS bool is_curr_window_focused();
 			FLAME_UI_EXPORTS bool is_last_item_hovered();
 			FLAME_UI_EXPORTS bool is_curr_window_hovered();
+			FLAME_UI_EXPORTS bool is_last_item_active();
 			FLAME_UI_EXPORTS Rect get_last_item_rect();
 			FLAME_UI_EXPORTS Rect get_curr_window_rect();
 			FLAME_UI_EXPORTS Rect get_curr_window_inner_rect();
@@ -127,7 +146,7 @@ namespace flame
 			FLAME_UI_EXPORTS void add_input_dialog(const char *title, const char *label, const 
 				std::function<void(MediumString *input)> &callback, const char *default_input = nullptr);
 
-			FLAME_UI_EXPORTS void set_cursor(CursorType type);
+			FLAME_UI_EXPORTS void set_mousecursor(CursorType type);
 		};
 
 		FLAME_UI_EXPORTS Instance *create_instance(graphics::Device *d, graphics::Renderpass *rp, Surface *s);

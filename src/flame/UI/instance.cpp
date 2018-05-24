@@ -63,11 +63,57 @@ namespace flame
 				ImColor(col.x, col.y, col.z, col.w));
 		}
 
-		void Drawlist::add_rect(const Rect &rect, const Vec4 &col)
+		void Drawlist::add_rect(const Rect &rect, const Vec4 &col, float round, bool round_LT, bool round_RT, bool round_LB, bool round_RB)
 		{
+			auto corner_flags = 0;
+			if (round_LT)
+				corner_flags |= ImDrawCornerFlags_TopLeft;
+			if (round_RT)
+				corner_flags |= ImDrawCornerFlags_TopRight;
+			if (round_LB)
+				corner_flags |= ImDrawCornerFlags_BotLeft;
+			if (round_RB)
+				corner_flags |= ImDrawCornerFlags_BotRight;
 			auto dl = (ImDrawList*)_priv;
 			dl->AddRect(ImVec2(rect.min.x, rect.min.y), ImVec2(rect.max.x, rect.max.y),
+				ImColor(col.x, col.y, col.z, col.w), round, corner_flags);
+		}
+
+		void Drawlist::add_rect_filled(const Rect &rect, const Vec4 &col, float round, bool round_LT, bool round_RT, bool round_LB, bool round_RB)
+		{
+			auto corner_flags = 0;
+			if (round_LT)
+				corner_flags |= ImDrawCornerFlags_TopLeft;
+			if (round_RT)
+				corner_flags |= ImDrawCornerFlags_TopRight;
+			if (round_LB)
+				corner_flags |= ImDrawCornerFlags_BotLeft;
+			if (round_RB)
+				corner_flags |= ImDrawCornerFlags_BotRight;
+			auto dl = (ImDrawList*)_priv;
+			dl->AddRectFilled(ImVec2(rect.min.x, rect.min.y), ImVec2(rect.max.x, rect.max.y),
+				ImColor(col.x, col.y, col.z, col.w), round, corner_flags);
+		}
+
+		void Drawlist::add_circle(const Vec2 &center, float radius, const Vec4 &col)
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->AddCircle(ImVec2(center.x, center.y), radius,
 				ImColor(col.x, col.y, col.z, col.w));
+		}
+
+		void Drawlist::add_circle_filled(const Vec2 &center, float radius, const Vec4 &col)
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->AddCircleFilled(ImVec2(center.x, center.y), radius, 
+				ImColor(col.x, col.y, col.z, col.w));
+		}
+
+		void Drawlist::add_bezier(const Vec2 &p0, const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec4 &col, float thickness)
+		{
+			auto dl = (ImDrawList*)_priv;
+			dl->AddBezierCurve(ImVec2(p0.x, p0.y), ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), ImVec2(p3.x, p3.y),
+				ImColor(col.x, col.y, col.z, col.w), thickness);
 		}
 
 		void Drawlist::add_text(const Vec2 &pos, const Vec4 &col, const char *fmt, ...)
@@ -422,6 +468,21 @@ namespace flame
 			return ImGui::TabItem(label);
 		}
 
+		bool Instance::begin_child(const char *str_id, const Vec2 &size, bool border)
+		{
+			return ImGui::BeginChild(str_id, ImVec2(size.x, size.y), border);
+		}
+
+		void Instance::end_child()
+		{
+			ImGui::EndChild();
+		}
+
+		void Instance::separator()
+		{
+			ImGui::Separator();
+		}
+
 		bool Instance::button(const char *label)
 		{
 			return ImGui::Button(label);
@@ -432,24 +493,24 @@ namespace flame
 			return ImGui::Checkbox(label, p);
 		}
 
-		bool Instance::dragfloat(const char *label, float *p, float speed)
+		bool Instance::dragfloat(const char *label, float *p, float speed, float v_min, float v_max)
 		{
-			return ImGui::DragFloat(label, p, speed);
+			return ImGui::DragFloat(label, p, speed, v_min, v_max);
 		}
 
-		bool Instance::dragfloat2(const char *label, Vec2 *p, float speed)
+		bool Instance::dragfloat2(const char *label, Vec2 *p, float speed, float v_min, float v_max)
 		{
-			return ImGui::DragFloat2(label, &p->x, speed);
+			return ImGui::DragFloat2(label, &p->x, speed, v_min, v_max);
 		}
 
-		bool Instance::dragfloat3(const char *label, Vec3 *p, float speed)
+		bool Instance::dragfloat3(const char *label, Vec3 *p, float speed, float v_min, float v_max)
 		{
-			return ImGui::DragFloat(label, &p->x, speed);
+			return ImGui::DragFloat(label, &p->x, speed, v_min, v_max);
 		}
 
-		bool Instance::dragfloat4(const char *label, Vec4 *p, float speed)
+		bool Instance::dragfloat4(const char *label, Vec4 *p, float speed, float v_min, float v_max)
 		{
-			return ImGui::DragFloat(label, &p->x, speed);
+			return ImGui::DragFloat(label, &p->x, speed, v_min, v_max);
 		}
 
 		void Instance::text_unformatted(const char *text)
@@ -503,6 +564,36 @@ namespace flame
 			ImGui::Image(ImTextureID(index), ImVec2(size.x, size.y));
 		}
 
+		void Instance::set_cursor_pos(const Vec2 &pos)
+		{
+			ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y));
+		}
+
+		void Instance::sameline()
+		{
+			ImGui::SameLine();
+		}
+
+		void Instance::push_item_width(float width)
+		{
+			ImGui::PushItemWidth(width);
+		}
+
+		void Instance::pop_item_width()
+		{
+			ImGui::PopItemWidth();
+		}
+
+		void Instance::push_ID(int ID)
+		{
+			ImGui::PushID(ID);
+		}
+
+		void Instance::pop_ID()
+		{
+			ImGui::PopID();
+		}
+
 		unsigned int Instance::get_last_ID()
 		{
 			return GImGui->CurrentWindow->DC.LastItemId;
@@ -526,6 +617,11 @@ namespace flame
 		bool Instance::is_curr_window_hovered()
 		{
 			return ImGui::IsWindowHovered();
+		}
+
+		bool Instance::is_last_item_active()
+		{
+			return ImGui::IsItemActive();
 		}
 
 		Rect Instance::get_last_item_rect()
@@ -604,7 +700,7 @@ namespace flame
 			dialogs.emplace_back(d);
 		}
 
-		void Instance::set_cursor(CursorType type)
+		void Instance::set_mousecursor(CursorType type)
 		{
 			ImGuiMouseCursor c;
 			switch (type)
