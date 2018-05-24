@@ -147,12 +147,6 @@ int main(int argc, char **args)
 	};
 
 	std::vector<std::unique_ptr<Particle>> particles;
-	auto np0 = new Particle;
-	np0->coord = Vec2(0.f);
-	particles.emplace_back(np0);
-	auto np1 = new Particle;
-	np1->coord = Vec2(0.f);
-	particles.emplace_back(np1);
 
 	auto update_ubo = [&]() {
 		ubo_particle_liquid->data.x = particles.size();
@@ -164,7 +158,7 @@ int main(int argc, char **args)
 		}
 	};
 
-	update_ubo();
+	auto need_update_ubo = true;
 
 	Particle *sel = nullptr;
 
@@ -189,6 +183,10 @@ int main(int argc, char **args)
 		{
 			if (ui->menuitem("Particle"))
 			{
+				auto p = new Particle;
+				p->coord = Vec2(0.f);
+				particles.emplace_back(p);
+				need_update_ubo = true;
 			}
 			ui->end_menu();
 		}
@@ -205,7 +203,21 @@ int main(int argc, char **args)
 			if (ui->menuitem("Paste", "Ctrl+V"))
 				;
 			if (ui->menuitem("Delete", "Del"))
-				;
+			{
+				if (sel)
+				{
+					for (auto it = particles.begin(); it != particles.end(); it++)
+					{
+						if (it->get() == sel)
+						{
+							particles.erase(it);
+							break;
+						}
+					}
+					sel = nullptr;
+					need_update_ubo = true;
+				}
+			}
 			ui->end_menu();
 		}
 		if (ui->begin_menu("View"))
@@ -225,51 +237,71 @@ int main(int argc, char **args)
 			(menu_rect.max.y - menu_rect.min.y) -
 			(status_rect.max.y - status_rect.min.y));
 		ui->begin_plain_window("ws", ws_pos, ws_size);
-		ui->image(1, effect_size);
-		auto img_rect = ui->get_last_item_rect();
-		auto dl_ws = ui->get_curr_window_drawlist();
+
+		ui->begin_tabbar("tabbar");
+
+		if (ui->tabitem("scene"))
+		{
+			ui->image(1, effect_size);
+			auto img_rect = ui->get_last_item_rect();
+			auto dl_ws = ui->get_curr_window_drawlist();
+
+			static Vec2 anchor;
+
+			if (ui->is_curr_window_hovered() && s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			{
+				auto clicked_blank = true;
+				auto mpos = Vec2(s->mouse_x, s->mouse_y);
+				mpos -= effect_size / 2;
+				mpos -= Vec2(img_rect.min.x, img_rect.min.y);
+				for (int i = particles.size() - 1; i >= 0; i--)
+				{
+					Rect r(particles[i]->coord - Vec2(50), particles[i]->coord + Vec2(50));
+					if (r.contains(mpos))
+					{
+						sel = particles[i].get();
+						anchor = mpos;
+						clicked_blank = false;
+						break;
+					}
+				}
+				if (clicked_blank)
+					sel = nullptr;
+			}
+
+			if (sel != nullptr)
+			{
+				if ((s->mouse_buttons[0] & KeyStateDown) != 0)
+				{
+					if (s->mouse_disp_x != 0 || s->mouse_disp_y != 0)
+					{
+						sel->coord.x += s->mouse_disp_x;
+						sel->coord.y += s->mouse_disp_y;
+						update_ubo();
+					}
+				}
+
+				dl_ws.add_rect(Rect(sel->coord - Vec2(50), sel->coord + Vec2(50)) +
+					effect_size / 2 + Vec2(img_rect.min.x, img_rect.min.y), Vec4(1, 1, 0, 1));
+			}
+		}
+
+		if (ui->tabitem("blueprint"))
+		{
+
+		}
+
+		ui->end_tabbar();
+
 		ui->end_window();
 
-		static Vec2 anchor;
-
-		if (s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
-		{
-			auto clicked_blank = true;
-			auto mpos = Vec2(s->mouse_x, s->mouse_y);
-			mpos -= effect_size / 2;
-			mpos -= Vec2(img_rect.min.x, img_rect.min.y);
-			for (int i = particles.size() - 1; i >= 0; i--)
-			{
-				Rect r(particles[i]->coord - Vec2(50), particles[i]->coord + Vec2(50));
-				if (r.contains(mpos))
-				{
-					sel = particles[i].get();
-					anchor = mpos;
-					clicked_blank = false;
-					break;
-				}
-			}
-			if (clicked_blank)
-				sel = nullptr;
-		}
-
-		if (sel != nullptr)
-		{
-			if ((s->mouse_buttons[0] & KeyStateDown) != 0)
-			{
-				if (s->mouse_disp_x != 0 || s->mouse_disp_y != 0)
-				{
-					sel->coord.x += s->mouse_disp_x;
-					sel->coord.y += s->mouse_disp_y;
-					update_ubo();
-				}
-			}
-
-			dl_ws.add_rect(Rect(sel->coord - Vec2(50), sel->coord + Vec2(50)) +
-				effect_size / 2 + Vec2(img_rect.min.x, img_rect.min.y), Vec4(1, 1, 0, 1));
-		}
-
 		ui->end();
+
+		if (need_update_ubo)
+		{
+			update_ubo();
+			need_update_ubo = false;
+		}
 
 		auto index = sc->acquire_image(image_avalible);
 

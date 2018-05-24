@@ -91,6 +91,10 @@ namespace flame
 			FLAME_UI_EXPORTS void end_menu();
 			FLAME_UI_EXPORTS bool menuitem(const char *label, const char *shortcut = nullptr, bool checked = false);
 
+			FLAME_UI_EXPORTS void begin_tabbar(const char *str_id);
+			FLAME_UI_EXPORTS void end_tabbar();
+			FLAME_UI_EXPORTS bool tabitem(const char *label);
+
 			FLAME_UI_EXPORTS bool button(const char *label);
 			FLAME_UI_EXPORTS bool checkbox(const char *label, bool *p);
 			FLAME_UI_EXPORTS bool dragfloat(const char *label, float *p, float speed);

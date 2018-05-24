@@ -407,6 +407,21 @@ namespace flame
 			return ImGui::MenuItem(label, shortcut, checked);
 		}
 
+		void Instance::begin_tabbar(const char *str_id)
+		{
+			ImGui::BeginTabBar(str_id);
+		}
+
+		void Instance::end_tabbar()
+		{
+			ImGui::EndTabBar();
+		}
+
+		bool Instance::tabitem(const char *label)
+		{
+			return ImGui::TabItem(label);
+		}
+
 		bool Instance::button(const char *label)
 		{
 			return ImGui::Button(label);
