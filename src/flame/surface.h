@@ -91,6 +91,21 @@ namespace flame
 
 		SurfacePrivate *_priv;
 
+		inline bool just_down(int idx)
+		{
+			return mouse_buttons[idx] == (KeyStateJust | KeyStateDown);
+		}
+
+		inline bool just_up(int idx)
+		{
+			return mouse_buttons[idx] == (KeyStateJust | KeyStateUp);
+		}
+
+		inline bool pressing(int idx)
+		{
+			return (mouse_buttons[idx] & KeyStateDown) != 0;
+		}
+
 		FLAME_SURFACE_EXPORTS void *get_win32_handle();
 		FLAME_SURFACE_EXPORTS void *get_standard_cursor(CursorType type);
 		FLAME_SURFACE_EXPORTS void set_cursor(void *c);

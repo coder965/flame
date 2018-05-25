@@ -110,11 +110,13 @@ namespace flame
 			FLAME_UI_EXPORTS bool dragfloat3(const char *label, Vec3 *p, float speed, float v_min = 0.f, float v_max = 0.f);
 			FLAME_UI_EXPORTS bool dragfloat4(const char *label, Vec4 *p, float speed, float v_min = 0.f, float v_max = 0.f);
 			FLAME_UI_EXPORTS void text_unformatted(const char *text);
+			FLAME_UI_EXPORTS void text_unformatted_RA(const char *text); // right align
 			FLAME_UI_EXPORTS void text(const char *fmt, ...);
-			FLAME_UI_EXPORTS void ID_text_unformatted(const char *ID, const char *text);
+			FLAME_UI_EXPORTS void ID_text_unformatted(const char *str_id, const char *text);
 			FLAME_UI_EXPORTS bool inputtext(const char *label, char *dst, int len);
 			FLAME_UI_EXPORTS bool selectable(const char *label, bool selected);
 			FLAME_UI_EXPORTS void image(int index, const Vec2 &size);
+			FLAME_UI_EXPORTS void invisibleitem(const char *str_id, const Vec2 &size);
 
 			FLAME_UI_EXPORTS void set_cursor_pos(const Vec2 &pos);
 

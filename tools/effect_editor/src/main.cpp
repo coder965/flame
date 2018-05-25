@@ -225,7 +225,7 @@ int main(int argc, char **args)
 			slots[io].emplace_back(s);
 		}
 
-		inline void *touch(const Vec2 &p)
+		inline BP_Slot *hovering_slot(const Vec2 &p)
 		{
 			for (auto i = 0; i < 2; i++)
 			{
@@ -235,8 +235,6 @@ int main(int argc, char **args)
 						return s.get();
 				}
 			}
-			if (rect.contains(p))
-				return this;
 			return nullptr;
 		}
 	};
@@ -344,8 +342,7 @@ int main(int argc, char **args)
 	enum SelType
 	{
 		SelPtc,
-		SelBPn,
-		SelBPs
+		SelBPn
 	};
 
 	Select sel;
@@ -537,13 +534,29 @@ int main(int argc, char **args)
 				Vec4(1.f, 0.5f, 0.5f, 1.f)
 			};
 
+			static BP_Slot *dragging_slot = nullptr;
+			auto node_selected_idx_in_this_frame = -1;
+
+			auto node_num = 0;
 			for (auto &n : bp_nodes)
 			{
-				dl.add_rect_filled(n->rect + wnd_rect.min,
-					Vec4(0.3f, 0.3f, 0.3f, 1.f), 4.f);
-				dl.add_rect_filled(Rect(Vec2(0.f), Vec2(n->rect.width(), BP_node_titlebar_height)) + 
-					n->rect.min + wnd_rect.min, n_colors[n->type], 4.f, true, true, false, false);
-				dl.add_text(n->rect.min + Vec2(6.f, 2.f) + wnd_rect.min, Vec4(1.f), n->name());
+				auto pos = n->rect.min + wnd_rect.min;
+				auto size = n->rect.max - n->rect.min;
+
+				ui->push_ID(node_num);
+
+				if (sel.v == n.get())
+				{
+					dl.add_rect(n->rect.get_expanded(4.f) + wnd_rect.min,
+						Vec4(1.f, 1.f, 0.f, 1.f));
+				}
+
+				dl.add_rect_filled(Rect(pos, pos + Vec2(size.x, BP_node_titlebar_height)),
+					n_colors[n->type], 4.f, true, true, false, false);
+				dl.add_rect_filled(Rect(pos + Vec2(0.f, BP_node_titlebar_height), pos + size), 
+					Vec4(0.3f, 0.3f, 0.3f, 1.f), 4.f,
+					false, false);
+				dl.add_text(pos + Vec2(6.f, 2.f), Vec4(1.f), n->name());
 
 				n->show(ui, wnd_rect.min);
 
@@ -553,13 +566,16 @@ int main(int argc, char **args)
 					auto y = disp;
 					for (auto &s : n->slots[i])
 					{
-						s->pos = Vec2(s->io == 0 ? n->rect.min.x : n->rect.max.x,
+						s->pos = Vec2(s->io == 0 ? n->rect.min.x + 8.f : n->rect.max.x - 8.f,
 							BP_node_titlebar_height + y + n->rect.min.y);
 						dl.add_circle_filled(s->pos + wnd_rect.min,
 							4, Vec4(1.f, 1.f, 0.f, 1.f));
 						ui->set_cursor_pos(s->pos +
-							Vec2(s->io == 1 ? -s->text_width - 8.f : 8.f, -7.f) + wnd_rect.min);
-						ui->text_unformatted(s->name.data);
+							Vec2(s->io == 1 ?  -8.f : 8.f, -7.f) + wnd_rect.min);
+						if (s->io == 1)
+							ui->text_unformatted_RA(s->name.data);
+						else
+							ui->text_unformatted(s->name.data);
 						s->text_width = ui->get_last_item_rect().width();
 
 						if (i == 1)
@@ -577,95 +593,91 @@ int main(int argc, char **args)
 						y += disp;
 					}
 				}
+
+				ui->set_cursor_pos(pos);
+				ui->invisibleitem("node", size);
+
+				auto active = ui->is_last_item_active();
+				if (active)
+				{
+					sel.set(SelBPn, n.get());
+					node_selected_idx_in_this_frame = node_num;
+
+					auto slot = n->hovering_slot(mpos);
+					if (slot)
+						dragging_slot = slot;
+
+					if (!dragging_slot && (s->mouse_disp_x != 0 || s->mouse_disp_y != 0))
+						n->rect += Vec2(s->mouse_disp_x, s->mouse_disp_y);
+				}
+
+				ui->pop_ID();
+
+				node_num++;
 			}
 
-			if (ui->is_curr_window_hovered() && s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			if (s->just_down(0))
 			{
-				auto clicked_blank = true;
-				for (int i = bp_nodes.size() - 1; i >= 0; i--)
-				{
-					auto n = bp_nodes[i].get();
-					auto what = n->touch(mpos);
-					if (what == nullptr)
-						continue;
-					if (what == n)
-					{
-						sel.set(SelBPn, n);
-						if (i != bp_nodes.size() - 1)
-							std::swap(bp_nodes[i], bp_nodes[bp_nodes.size() - 1]);
-						clicked_blank = false;
-						break;
-					}
-					else
-					{
-						sel.set(SelBPs, what);
-						clicked_blank = false;
-						break;
-					}
-				}
-				if (clicked_blank)
+				if (node_selected_idx_in_this_frame == -1)
 					sel.reset();
-			}
-			if (sel.type == SelBPn)
-			{
-				auto sel_bpn = (BP_Node*)sel.v;
-				if (ui->is_curr_window_hovered() && (s->mouse_buttons[0] & KeyStateDown) != 0)
+				else
 				{
-					if (s->mouse_disp_x != 0 || s->mouse_disp_y != 0)
-						sel_bpn->rect += Vec2(s->mouse_disp_x, s->mouse_disp_y);
+					if (node_selected_idx_in_this_frame != bp_nodes.size() - 1)
+						std::swap(bp_nodes[node_selected_idx_in_this_frame], bp_nodes[bp_nodes.size() - 1]);
 				}
-				dl.add_rect(sel_bpn->rect.get_expanded(4.f) + wnd_rect.min,
-					Vec4(1.f, 1.f, 0.f, 1.f));
 			}
-			if (sel.type == SelBPs)
+
+			if (dragging_slot)
 			{
-				auto sel_bps = (BP_Slot*)sel.v;
-				dl.add_circle(sel_bps->pos + wnd_rect.min,
+				dl.add_circle(dragging_slot->pos + wnd_rect.min,
 					6, Vec4(1.f, 1.f, 0.f, 1.f));
 				if ((s->mouse_buttons[0] & KeyStateDown) != 0)
 				{
-					auto p1 = sel_bps->pos + wnd_rect.min;
+					auto p1 = dragging_slot->pos + wnd_rect.min;
 					auto p2 = mpos + wnd_rect.min;
-					dl.add_bezier(p1, p1 + Vec2(50.f * (sel_bps->io == 1 ? 1.f : -1.f), 0.f),
+					dl.add_bezier(p1, p1 + Vec2(50.f * (dragging_slot->io == 1 ? 1.f : -1.f), 0.f),
 						p2, p2, Vec4(1.f), 3);
 				}
 				else
 				{
-					sel.reset();
 					for (int i = bp_nodes.size() - 1; i >= 0; i--)
 					{
 						auto n = bp_nodes[i].get();
-						auto what = n->touch(mpos);
-						if (what != nullptr && what != n)
+						auto s = n->hovering_slot(mpos);
+						if (s && dragging_slot != s)
 						{
-							auto s1 = sel_bps;
-							auto s2 = (BP_Slot*)what;
-
-							auto already_exist = false;
-							for (auto ss : s1->links)
+							if (dragging_slot != s)
 							{
-								if (ss == s2)
+								auto already_exist = false;
+								for (auto ss : dragging_slot->links)
 								{
-									already_exist = true;
-									break;
+									if (ss == s)
+									{
+										already_exist = true;
+										break;
+									}
 								}
-							}
-							for (auto ss : s2->links)
-							{
-								if (ss == s1)
+								if (!already_exist)
 								{
-									already_exist = true;
-									break;
-								}
-							}
+									for (auto ss : s->links)
+									{
+										if (ss == dragging_slot)
+										{
+											already_exist = true;
+											break;
+										}
+									}
 
-							if (!already_exist)
-							{
-								s1->links.push_back(s2);
-								s2->links.push_back(s1);
+									if (!already_exist)
+									{
+										dragging_slot->links.push_back(s);
+										s->links.push_back(dragging_slot);
+									}
+								}
 							}
 						}
 					}
+					dragging_slot = nullptr;
 				}
 			}
 

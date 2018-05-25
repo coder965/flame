@@ -518,6 +518,32 @@ namespace flame
 			ImGui::TextUnformatted(text);
 		}
 
+		void Instance::text_unformatted_RA(const char *text)
+		{
+			ImGuiWindow* window = ImGui::GetCurrentWindow();
+			if (window->SkipItems)
+				return;
+
+			ImGuiContext& g = *GImGui;
+
+			auto text_begin = text;
+			auto text_end = text + strlen(text);
+
+			const ImVec2 text_size = ImGui::CalcTextSize(text_begin, text_end, false, 0.f);
+			auto pos = ImGui::GetCursorScreenPos();
+			pos.x -= text_size.x;
+			ImGui::SetCursorScreenPos(pos);
+
+			const ImVec2 text_pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrentLineTextBaseOffset);
+
+			ImRect bb(text_pos, text_pos + text_size);
+			ImGui::ItemSize(text_size);
+			if (!ImGui::ItemAdd(bb, 0))
+				return;
+
+			ImGui::RenderTextWrapped(bb.Min, text_begin, text_end, 0.f);
+		}
+
 		void Instance::text(const char *fmt, ...)
 		{
 			va_list ap;
@@ -526,7 +552,7 @@ namespace flame
 			va_end(ap);
 		}
 
-		void Instance::ID_text_unformatted(const char *ID, const char *text)
+		void Instance::ID_text_unformatted(const char *str_id, const char *text)
 		{
 			ImGuiWindow* window = ImGui::GetCurrentWindow();
 			if (window->SkipItems)
@@ -537,7 +563,7 @@ namespace flame
 			const char* text_begin = text;
 			auto text_end = text + strlen(text);
 
-			const ImGuiID id = window->GetID(ID);
+			const ImGuiID id = window->GetID(str_id);
 			const ImVec2 text_pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrentLineTextBaseOffset);
 			const ImVec2 text_size = ImGui::CalcTextSize(text_begin, text_end, false, 0.f);
 
@@ -562,6 +588,11 @@ namespace flame
 		void Instance::image(int index, const Vec2 &size)
 		{
 			ImGui::Image(ImTextureID(index), ImVec2(size.x, size.y));
+		}
+
+		void Instance::invisibleitem(const char *str_id, const Vec2 &size)
+		{
+			ImGui::InvisibleButton(str_id, ImVec2(size.x, size.y));
 		}
 
 		void Instance::set_cursor_pos(const Vec2 &pos)

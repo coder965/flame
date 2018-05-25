@@ -690,6 +690,8 @@ namespace flame
 		Rect(const Vec2 &_min, const Vec2 &_max);
 		Rect(float min_x, float min_y, float max_x, float max_y);
 		Rect(const Rect &v);
+		Rect &operator+=(const Rect &v);
+		Rect &operator-=(const Rect &v);
 		Rect &operator+=(const Vec2 &v);
 		Rect &operator-=(const Vec2 &v);
 		float width() const;
@@ -702,6 +704,8 @@ namespace flame
 
 	Vec2 get_side_dir();
 
+	Rect operator+(const Rect &lhs, const Rect &rhs);
+	Rect operator-(const Rect &lhs, const Rect &rhs);
 	Rect operator+(const Rect &r, const Vec2 &off);
 	Rect operator-(const Rect &r, const Vec2 &off);
 
@@ -3904,6 +3908,20 @@ namespace flame
 		max(v.max)
 	{
 	}
+
+	inline Rect &Rect::operator+=(const Rect &v)
+	{
+		min += v.min;
+		max += v.max;
+		return *this;
+	}
+
+	inline Rect &Rect::operator-=(const Rect &v)
+	{
+		min -= v.min;
+		max -= v.max;
+		return *this;
+	}
 	
 	inline Rect &Rect::operator+=(const Vec2 &v)
 	{
@@ -4006,6 +4024,20 @@ namespace flame
 		case Rect::Inside:
 			return Vec2(0.f);
 		}
+	}
+
+	inline Rect operator+(const Rect &lhs, const Rect &rhs)
+	{
+		Rect ret(lhs);
+		ret += rhs;
+		return ret;
+	}
+
+	inline Rect operator-(const Rect &lhs, const Rect &rhs)
+	{
+		Rect ret(lhs);
+		ret -= rhs;
+		return ret;
 	}
 
 	inline Rect operator+(const Rect &r, const Vec2 &off)

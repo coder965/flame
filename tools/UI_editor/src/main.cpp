@@ -414,7 +414,7 @@ int main(int argc, char **args)
 				}
 				if (side != Rect::Outside)
 				{
-					ui->set_cursor(transform_mode_cursor);
+					ui->set_mousecursor(transform_mode_cursor);
 					if (just_clicked)
 					{
 						if (side == Rect::Inside)
@@ -429,7 +429,7 @@ int main(int argc, char **args)
 			}
 			if (transform_mode_moving)
 			{
-				ui->set_cursor(transform_mode_cursor);
+				ui->set_mousecursor(transform_mode_cursor);
 				if ((s->mouse_buttons[0] & KeyStateDown) == 0)
 				{
 					if (sel == nullptr)
@@ -439,7 +439,7 @@ int main(int argc, char **args)
 			}
 			if (transform_mode_sizing)
 			{
-				ui->set_cursor(transform_mode_cursor);
+				ui->set_mousecursor(transform_mode_cursor);
 				if ((s->mouse_buttons[0] & KeyStateDown) == 0)
 				{
 					if (sel == nullptr)
