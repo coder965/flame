@@ -30,6 +30,7 @@
 #include <flame/graphics/shader.h>
 #include <flame/graphics/pipeline.h>
 #include <flame/graphics/framebuffer.h>
+#include <flame/graphics/texture.h>
 #include <flame/graphics/commandbuffer.h>
 #include <flame/graphics/semaphore.h>
 #include <flame/graphics/queue.h>
@@ -38,17 +39,87 @@
 #define NOMINMAX
 #include <Windows.h>
 
+using namespace flame;
+
+graphics::Device *d;
+UI::Instance *ui;
+graphics::Texture *rpm_tex;
+
+// track UI textures
+
+struct UITextureTracker
+{
+	MediumString filename;
+	int use_count;
+
+	graphics::Texture *tex;
+	graphics::Textureview *tv;
+};
+
+UITextureTracker ui_texture_trackers[126]; // total = 128, 
+										   // first one is reserved for font
+										   // second ont is reserved for replace me
+
+int add_ui_texture(const char *filename)
+{
+	auto first_spare_ID = -1;
+	for (auto i = 0; i < 126; i++)
+	{
+		if (ui_texture_trackers[i].use_count > 0)
+		{
+			if (strcmp(ui_texture_trackers[i].filename.data, filename) == 0)
+			{
+				ui_texture_trackers[i].use_count++;
+				return i;
+			}
+		}
+		else if (first_spare_ID == -1)
+			first_spare_ID = i;
+	}
+
+	if (first_spare_ID == -1)
+		return -1;
+
+	auto tex = graphics::create_texture_from_file(d, filename);
+	if (tex)
+	{
+		ui_texture_trackers[first_spare_ID].use_count++;
+		ui_texture_trackers[first_spare_ID].tex = tex;
+		ui_texture_trackers[first_spare_ID].tv = graphics::create_textureview(d, tex);
+		ui->set_texture(first_spare_ID + 2, ui_texture_trackers[first_spare_ID].tv);
+		return first_spare_ID + 2;
+	}
+	return -1;
+}
+
+int add_ui_texture(int cx, int cy)
+{
+	for (auto i = 0; i < 126; i++)
+	{
+		if (ui_texture_trackers[i].use_count == 0)
+		{
+			ui_texture_trackers[i].use_count++;
+			ui_texture_trackers[i].tex = graphics::create_texture(d, cx, cy, 1, 1, graphics::Format_R8G8B8A8_UNORM,
+				graphics::TextureUsageAttachment | graphics::TextureUsageShaderSampled,
+				graphics::MemPropDevice);
+			ui_texture_trackers[i].tv = graphics::create_textureview(d, ui_texture_trackers[i].tex);
+			ui->set_texture(i + 2, ui_texture_trackers[i].tv);
+			return i + 2;
+		}
+	}
+
+	return -1;
+}
+
 int main(int argc, char **args)
 {
-	using namespace flame;
-
 	Vec2 res(1280, 720);
 
 	auto sm = create_surface_manager();
 	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
 		"UI Editor");
 
-	auto d = graphics::create_device(false);
+	d = graphics::create_device(false);
 
 	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
 
@@ -71,7 +142,17 @@ int main(int argc, char **args)
 	auto image_avalible = graphics::create_semaphore(d);
 	auto ui_finished = graphics::create_semaphore(d);
 
-	auto ui = UI::create_instance(d, rp_ui, s);
+	ui = UI::create_instance(d, rp_ui, s);
+
+	// add replace me texture to ui
+	rpm_tex = graphics::create_texture_from_file(d, "replaceme.jpg");
+	auto rpm_tv = graphics::create_textureview(d, rpm_tex);
+	ui->set_texture(1, rpm_tv);
+
+	// init ui texture trackers
+
+	for (auto i = 0; i < 126; i++)
+		ui_texture_trackers[i].use_count = 0;
 
 	MediumString wnd_name;
 	strcpy(wnd_name.data, "New Form");
@@ -80,36 +161,70 @@ int main(int argc, char **args)
 
 	enum WidgetType
 	{
-		WidgetText,
-		WidgetButton
+		WidgetTypeText,
+		WidgetTypeButton,
+		WidgetTypeImage,
+		WidgetTypeParticleWorld
 	};
 
 	struct Widget
 	{
+		Vec2 pos;
+		Vec2 size;
+
 		Rect rect;
 
 		WidgetType type;
 		ShortString name;
 		unsigned int ID;
 
-		virtual void show(UI::Instance *ui) = 0;
+		virtual void show(UI::Instance *ui, const Vec2 &off) = 0;
 	};
 
-	struct TextWidget : Widget
+	struct WidgetText : Widget
 	{
 		MediumString text;
 
-		virtual void show(UI::Instance *ui) override
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
 		{
+			ui->set_cursor_pos(off + pos);
 			ui->ID_text_unformatted(name.data, text.data);
 		}
 	};
 
-	struct ButtonWidget : Widget
+	struct WidgetButton : Widget
 	{
-		virtual void show(UI::Instance *ui) override
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
 		{
+			ui->set_cursor_pos(off + pos);
 			ui->button(name.data);
+		}
+	};
+
+	struct WidgetImage : Widget
+	{
+		MediumString filename;
+
+		int img_idx;
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
+		{
+			ui->set_cursor_pos(off + pos);
+			ui->image(img_idx, size);
+		}
+	};
+
+	struct WidgetParticleWorld : Widget
+	{
+		MediumString shader_filename;
+		MediumString blueprint_filename;
+
+		int img_idx;
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
+		{
+			ui->set_cursor_pos(off + pos);
+			ui->image(img_idx, size);
 		}
 	};
 
@@ -196,10 +311,11 @@ int main(int argc, char **args)
 						ui->add_message_dialog("Add Text", "This ID already exists");
 						return;
 					}
-					auto w = new TextWidget;
-					w->type = WidgetText;
+					auto w = new WidgetText;
+					w->type = WidgetTypeText;
 					strcpy(w->name.data, input->data);
 					strcpy(w->text.data, input->data);
+					w->pos = Vec2(10.f, 30.f);
 					widgets.emplace_back(w);
 				}, default_name.c_str());
 			}
@@ -223,9 +339,90 @@ int main(int argc, char **args)
 						ui->add_message_dialog("Add Button", "This ID already exists");
 						return;
 					}
-					auto w = new ButtonWidget;
-					w->type = WidgetButton;
+					auto w = new WidgetButton;
+					w->type = WidgetTypeButton;
 					strcpy(w->name.data, input->data);
+					w->pos = Vec2(10.f, 30.f);
+					widgets.emplace_back(w);
+				}, default_name.c_str());
+			}
+			if (ui->menuitem("Image"))
+			{
+				std::string default_name;
+				for (auto i = 0; ; i++)
+				{
+					default_name = "Image" + std::to_string(i);
+					if (!find_widget(default_name.c_str()))
+						break;
+				}
+				ui->add_input_dialog("Please Enter The ID Of Image", "ID", [&](MediumString *input) {
+					if (input->data[0] == 0)
+					{
+						ui->add_message_dialog("Add Image", "ID cannot be empty");
+						return;
+					}
+					if (find_widget(input->data))
+					{
+						ui->add_message_dialog("Add Image", "This ID already exists");
+						return;
+					}
+
+					auto w = new WidgetImage;
+					w->type = WidgetTypeImage;
+					strcpy(w->name.data, input->data);
+					w->pos = Vec2(10.f, 30.f);
+					w->size = Vec2(rpm_tex->cx, rpm_tex->cy);
+					w->filename.data[0] = 0;
+					w->img_idx = 1;
+					widgets.emplace_back(w);
+				}, default_name.c_str());
+			}
+			if (ui->menuitem("Particle World"))
+			{
+				std::string default_name;
+				for (auto i = 0; ; i++)
+				{
+					default_name = "ParticleWorld" + std::to_string(i);
+					if (!find_widget(default_name.c_str()))
+						break;
+				}
+
+				ui->add_input_dialog("Please Enter The ID And Size Of Particle World", "Format is (ID cx cy)", [&](MediumString *input) {
+					if (input->data[0] == 0)
+					{
+						ui->add_message_dialog("Add Particle World", "ID cannot be empty");
+						return;
+					}
+
+					ShortString ID;
+					int cx, cy;
+					if (sscanf(input->data, "%s %d %d", ID.data, &cx, &cy) != 3)
+					{
+						ui->add_message_dialog("Error", "Format is not correct");
+						return;
+					}
+
+					if (find_widget(ID.data))
+					{
+						ui->add_message_dialog("Add Particle World", "This ID already exists");
+						return;
+					}
+
+					auto img_idx = add_ui_texture(cx, cy);
+					if (img_idx == -1)
+					{
+						ui->add_message_dialog("Add Particle World", "No enough space for ui texture (total 126)");
+						return;
+					}
+
+					auto w = new WidgetParticleWorld;
+					w->type = WidgetTypeParticleWorld;
+					strcpy(w->name.data, ID.data);
+					w->pos = Vec2(10.f, 30.f);
+					w->size = Vec2(cx, cy);
+					w->shader_filename.data[0] = 0;
+					w->blueprint_filename.data[0] = 0;
+					w->img_idx = img_idx;
 					widgets.emplace_back(w);
 				}, default_name.c_str());
 			}
@@ -359,10 +556,11 @@ int main(int argc, char **args)
 		ui->begin_window(wnd_name.data, wnd_pos + off + bg_pos, wnd_size,
 			UI::WindowNoResize);
 		auto wnd_inner_rect = ui->get_curr_window_inner_rect();
+		auto wnd_rect = ui->get_curr_window_rect();
 
 		for (auto &w : widgets)
 		{
-			w->show(ui);
+			w->show(ui, wnd_rect.min);
 			if (ui->is_last_item_hovered() && want_sel &&
 				s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
 			{
@@ -430,10 +628,12 @@ int main(int argc, char **args)
 			if (transform_mode_moving)
 			{
 				ui->set_mousecursor(transform_mode_cursor);
-				if ((s->mouse_buttons[0] & KeyStateDown) == 0)
+				if (!s->pressing(0))
 				{
 					if (sel == nullptr)
 						wnd_pos += transform_mode_move_off;
+					else if (sel != (Widget*)0xFFFFFFFF)
+						sel->pos += transform_mode_move_off;;
 					transform_mode_moving = false;
 				}
 			}
@@ -506,12 +706,12 @@ int main(int argc, char **args)
 					dl_ol.add_rect(sel_rect + Vec2(transform_mode_move_off), Vec4(1.f));
 					dl_ol.add_line(Vec2(transform_mode_anchor), Vec2(s->mouse_x,
 						s->mouse_y), Vec4(1.f));
-					if (sel != nullptr)
-					{
-						dl_ol.add_line(Vec2(wnd_inner_rect.min.x, wnd_inner_rect.min.y),
-							Vec2(wnd_inner_rect.max.x, wnd_inner_rect.min.y), 
-							Vec4(1.f, 0.f, 0.f, 1.f));
-					}
+					//if (sel != nullptr)
+					//{
+					//	dl_ol.add_line(Vec2(wnd_inner_rect.min.x, wnd_inner_rect.min.y),
+					//		Vec2(wnd_inner_rect.max.x, wnd_inner_rect.min.y), 
+					//		Vec4(1.f, 0.f, 0.f, 1.f));
+					//}
 				}
 				if (transform_mode_sizing)
 				{
@@ -578,21 +778,74 @@ int main(int argc, char **args)
 			{
 				switch (sel->type)
 				{
-				case WidgetText:
+				case WidgetTypeText:
 				{
-					auto t = (TextWidget*)sel;
+					auto t = (WidgetText*)sel;
 					ui->text("Text:");
 					ui->inputtext("Name", t->name.data, sizeof(t->name.data));
 					ui->inputtext("Text", t->text.data, sizeof(t->text.data));
-				}
 					break;
-				case WidgetButton:
+				}
+				case WidgetTypeButton:
 				{
-					auto b = (ButtonWidget*)sel;
+					auto b = (WidgetButton*)sel;
 					ui->text("Button:");
 					ui->inputtext("Label", b->name.data, sizeof(b->name.data));
-				}
 					break;
+				}
+				case WidgetTypeImage:
+				{
+					auto i = (WidgetImage*)sel;
+					ui->text("Image:");
+					ui->inputtext("Name", i->name.data, sizeof(i->name.data));
+					ui->text("Filename:%s", i->filename.data);
+					ui->sameline();
+					if (ui->button("set"))
+					{
+						ui->add_input_dialog("Enter The Filename", "File", [&](MediumString *input) {
+							if (input->data[0] == 0)
+							{
+								i->img_idx = 1;
+								i->filename.data[0] = 0;
+								return;
+							}
+
+							auto id = add_ui_texture(input->data);
+							if (id == -1)
+							{
+								ui->add_message_dialog("Error", "File does not exist or no enough space for ui texture (total 126)");
+								return;
+							}
+
+							i->img_idx = id;
+							strcpy(i->filename.data, input->data);
+						});
+					}
+					ui->dragfloat2("size", &i->size, 0.1f, 0.f, 100000.f);
+					if (ui->button("set to file size"))
+					{
+						auto tex = i->img_idx == 1 ? rpm_tex : 
+							ui_texture_trackers[i->img_idx - 2].tex;
+						i->size = Vec2(tex->cx, tex->cy);
+					}
+					break;
+				}
+				case WidgetTypeParticleWorld:
+				{
+					auto p = (WidgetParticleWorld*)sel;
+					ui->text("Particle World:");
+					ui->inputtext("Name", p->name.data, sizeof(p->name.data));
+					ui->text("Shader Filename:%s", p->shader_filename.data);
+					if (ui->button("set##shader"))
+					{
+					}
+					ui->text("Blue Print Filename:%s", p->blueprint_filename.data);
+					if (ui->button("set##blueprint"))
+					{
+					}
+					ui->text("%d %d size", (int)p->size.x, (int)p->size.y);
+					break;
+				}
 				}
 			}
 		}

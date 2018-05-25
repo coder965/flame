@@ -156,7 +156,7 @@ namespace flame
 
 		void Instance::set_texture(int index, graphics::Textureview *tv)
 		{
-			_priv->ds->set_texture(0, index, tv, _priv->font_sam);
+			_priv->ds->set_texture(0, index, tv ? tv : _priv->font_view, _priv->font_sam);
 		}
 
 		void Instance::begin(int cx, int cy, float _elapsed_time)
@@ -205,7 +205,7 @@ namespace flame
 
 		struct MessageDialog : Dialog
 		{
-			ShortString message;
+			MediumString message;
 
 			virtual void show() override
 			{
@@ -593,6 +593,12 @@ namespace flame
 		void Instance::invisibleitem(const char *str_id, const Vec2 &size)
 		{
 			ImGui::InvisibleButton(str_id, ImVec2(size.x, size.y));
+		}
+
+		Vec2 Instance::get_cursor_pos()
+		{
+			auto pos = ImGui::GetCursorScreenPos();
+			return Vec2(pos.x, pos.y);
 		}
 
 		void Instance::set_cursor_pos(const Vec2 &pos)

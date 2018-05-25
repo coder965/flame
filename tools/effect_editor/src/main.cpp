@@ -40,13 +40,37 @@
 #include <flame/graphics/queue.h>
 #include <flame/UI/instance.h>
 
+using namespace flame;
+
 const float BP_node_titlebar_height = 18.f;
 
 bool running = false;
 
+struct Particle
+{
+	Vec2 coord;
+	Vec2 velocity;
+	float remaining_time;
+};
+
+std::vector<std::unique_ptr<Particle>> particles;
+
+auto need_update_ubo = true;
+
+void add_particle(const Vec2 &coord)
+{
+	auto p = new Particle;
+	p->coord = coord;
+	particles.emplace_back(p);
+	need_update_ubo = true;
+}
+
+bool scene_clear_outside_particles = true;
+float scene_clear_outside_particles_range = 50.f;
+
 int main(int argc, char **args)
 {
-	using namespace flame;
+	srand(time(0));
 
 	Vec2 res(1280, 720);
 
@@ -144,13 +168,6 @@ int main(int argc, char **args)
 	auto ui = UI::create_instance(d, rp_ui, s);
 	ui->set_texture(1, tv);
 
-	struct Particle
-	{
-		Vec2 coord;
-	};
-
-	std::vector<std::unique_ptr<Particle>> particles;
-
 	auto update_ubo = [&]() {
 		ubo_particle_liquid->data.x = particles.size();
 
@@ -161,41 +178,23 @@ int main(int argc, char **args)
 		}
 	};
 
-	auto need_update_ubo = true;
-
 	// BP = Blue Print
 
 	struct BP_Node;
-
+	 
 	struct BP_Slot
 	{
 		ShortString name;
 		Vec2 pos;
-		float text_width;
 
 		BP_Node *n;
-		int io;
+		int io; // in or out, 0 - in, 1 - out
 
 		std::vector<BP_Slot*> links;
-
-		inline bool contains(const Vec2 &p)
-		{
-			if (p.x > pos.x - 4 && p.x < pos.x + 4 &&
-				p.y > pos.y - 4 && p.y < pos.y + 4)
-				return true;
-			return false;
-		}
-	};
-
-	enum BP_NodeType
-	{
-		BP_NodeInterval,
-		BP_NodeParticleGenerator
 	};
 
 	struct BP_Node
 	{
-		BP_NodeType type;
 		Rect rect;
 		std::vector<std::unique_ptr<BP_Slot>> slots[2];
 
@@ -207,6 +206,7 @@ int main(int argc, char **args)
 		}
 
 		virtual const char*name() = 0;
+		virtual Vec4 color() = 0;
 
 		virtual void show(UI::Instance *ui, const Vec2 &off) = 0;
 
@@ -217,39 +217,208 @@ int main(int argc, char **args)
 			return false;
 		}
 
+		virtual int get_int()
+		{
+			return 0;
+		}
+
+		virtual float get_float()
+		{
+			return 0.f;
+		}
+
+		virtual Vec2 get_vec2()
+		{
+			return Vec2(0.f);
+		}
+
+		virtual Vec3 get_vec3()
+		{
+			return Vec3(0.f);
+		}
+
+		virtual Vec4 get_vec4()
+		{
+			return Vec4(0.f);
+		}
+
+		virtual Ivec2 get_ivec2()
+		{
+			return Ivec2(0);
+		}
+
+		virtual Ivec3 get_ivec3()
+		{
+			return Ivec3(0);
+		}
+
+		virtual Ivec4 get_ivec4()
+		{
+			return Ivec4(0);
+		}
+
 		inline void add_slot(int io, BP_Slot *s)
 		{
 			s->n = this;
 			s->io = io;
-			s->text_width = 0.f;
 			slots[io].emplace_back(s);
-		}
-
-		inline BP_Slot *hovering_slot(const Vec2 &p)
-		{
-			for (auto i = 0; i < 2; i++)
-			{
-				for (auto &s : slots[i])
-				{
-					if (s->contains(p))
-						return s.get();
-				}
-			}
-			return nullptr;
 		}
 	};
 
-	struct BP_N_Intervaler : BP_Node
+	auto hovering_slot = [](BP_Node *n, const Vec2 &p)->BP_Slot* {
+		for (auto i = 0; i < 2; i++)
+		{
+			for (auto &s : n->slots[i])
+			{
+				if (p.x > s->pos.x - 4 && p.x < s->pos.x + 4 &&
+					p.y > s->pos.y - 4 && p.y < s->pos.y + 4)
+					return s.get();
+			}
+		}
+		return nullptr;
+	};
+
+	struct BP_Node_MakeVec2 : BP_Node
+	{
+		Vec2 ret;
+
+		BP_Node_MakeVec2()
+		{
+			rect = Rect(0, 0, 160, 80) + Vec2(10);
+
+			auto sl_x = new BP_Slot;
+			strcpy(sl_x->name.data, "X");
+			add_slot(0, sl_x);
+
+			auto sl_y = new BP_Slot;
+			strcpy(sl_y->name.data, "Y");
+			add_slot(0, sl_y);
+
+			auto sl_ret = new BP_Slot;
+			strcpy(sl_ret->name.data, "Return Value");
+			add_slot(1, sl_ret);
+
+			ret = Vec2(0.f);
+		}
+
+		virtual const char*name() override
+		{
+			return "Make Vec2";
+		}
+
+		virtual Vec4 color() override
+		{
+			return Vec4(0.f, 1.f, 0.f, 1.f);
+		}
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
+		{
+
+		}
+
+		virtual void solve(float elapsed_time) override
+		{
+			if (uptodate)
+				return;
+
+			ret = Vec2(0.f);
+
+			for (auto &s : slots[0][0]->links)
+			{
+				auto n = s->n;
+				if (!n->uptodate)
+					n->solve(elapsed_time);
+				ret.x += n->get_float();
+			}
+
+			for (auto &s : slots[0][1]->links)
+			{
+				auto n = s->n;
+				if (!n->uptodate)
+					n->solve(elapsed_time);
+				ret.y += n->get_float();
+			}
+
+			uptodate = true;
+		}
+
+		virtual Vec2 get_vec2() override
+		{
+			return ret;
+		}
+	};
+
+	struct BP_Node_RandomNumber : BP_Node
+	{
+		float v_min;
+		float v_max;
+
+		float ret;
+
+		BP_Node_RandomNumber()
+		{
+			rect = Rect(0, 0, 250, 80) + Vec2(10);
+
+			auto sl_ret = new BP_Slot;
+			strcpy(sl_ret->name.data, "Return Value");
+			add_slot(1, sl_ret);
+
+			v_min = 0.f;
+			v_max = 0.f;
+			ret = 0.f;
+		}
+
+		virtual const char*name() override
+		{
+			return "Random Number";
+		}
+
+		virtual Vec4 color() override
+		{
+			return Vec4(0.f, 1.f, 0.3f, 1.f);
+		}
+
+		virtual void show(UI::Instance *ui, const Vec2 &off) override
+		{
+			ui->push_item_width(100.f);
+			auto x = rect.min.x + off.x + 8.f;
+			auto y = rect.min.y + off.y + BP_node_titlebar_height + 8.f;
+			ui->set_cursor_pos(Vec2(x, y));
+			ui->dragfloat("min", &v_min, 0.05f);
+			y = ui->get_cursor_pos().y;
+			ui->set_cursor_pos(Vec2(x, y));
+			ui->dragfloat("max", &v_max, 0.05f);
+			ui->pop_item_width();
+		}
+
+		virtual void solve(float elapsed_time) override
+		{
+			if (uptodate)
+				return;
+
+			ret = (float)rand() / (float)RAND_MAX;
+			ret = v_min + ret * (v_max - v_min);
+
+			uptodate = true;
+		}
+
+		virtual float get_float() override
+		{
+			return ret;
+		}
+	};
+
+	struct BP_Node_Intervaler : BP_Node
 	{
 		float interval_time;
 
 		float accumulated_time;
 		bool signal;
 
-		BP_N_Intervaler()
+		BP_Node_Intervaler()
 		{
-			type = BP_NodeInterval;
 			rect = Rect(0, 0, 200, 60) + Vec2(10);
+
 			auto sl_output = new BP_Slot;
 			strcpy(sl_output->name.data, "Output");
 			add_slot(1, sl_output);
@@ -264,11 +433,16 @@ int main(int argc, char **args)
 			return "Intervaler";
 		}
 
+		virtual Vec4 color() override
+		{
+			return Vec4(0.5f, 0.5f, 1.f, 1.f);
+		}
+
 		virtual void show(UI::Instance *ui, const Vec2 &off) override
 		{
 			ui->push_item_width(100.f);
 			ui->set_cursor_pos(rect.min + Vec2(8.f, BP_node_titlebar_height + 8.f) + off);
-			ui->dragfloat("sec", &interval_time, 0.01f, 0.f, 10000.f);
+			ui->dragfloat("sec", &interval_time, 0.05f, 0.f, 10000.f);
 			ui->pop_item_width();
 		}
 
@@ -295,20 +469,33 @@ int main(int argc, char **args)
 		}
 	};
 
-	struct BP_N_ParticleGenerator : BP_Node
+	struct BP_Node_ParticleGenerator : BP_Node
 	{
-		BP_N_ParticleGenerator()
+		Vec2 coord;
+
+		BP_Node_ParticleGenerator()
 		{
-			type = BP_NodeParticleGenerator;
-			rect = Rect(0, 0, 150, 60) + Vec2(10);
+			rect = Rect(0, 0, 150, 80) + Vec2(10);
+
 			auto sl_trigger = new BP_Slot;
 			strcpy(sl_trigger->name.data, "Trigger");
 			add_slot(0, sl_trigger);
+
+			auto sl_coord = new BP_Slot;
+			strcpy(sl_coord->name.data, "Coord");
+			add_slot(0, sl_coord);
+
+			coord = Vec2(0.f);
 		}
 
 		virtual const char*name() override
 		{
 			return "Particle Generator";
+		}
+
+		virtual Vec4 color() override
+		{
+			return Vec4(1.f, 0.5f, 0.5f, 1.f);
 		}
 
 		virtual void show(UI::Instance *ui, const Vec2 &off) override
@@ -330,8 +517,20 @@ int main(int argc, char **args)
 				trigger |= n->get_bool();
 			}
 
+			coord = Vec2(0.f);
+			for (auto &s : slots[0][1]->links)
+			{
+				auto n = s->n;
+				if (!n->uptodate)
+					n->solve(elapsed_time);
+				coord = n->get_vec2();
+			}
+
 			if (trigger)
-				printf("ParticleGenerator: Triggered\n");
+			{
+				add_particle(coord);
+				printf("ParticleGenerator: Triggered x:%f y:%f\n", coord.x, coord.y);
+			}
 
 			uptodate = true;
 		}
@@ -366,9 +565,117 @@ int main(int argc, char **args)
 			}
 			if (ui->menuitem("Open", "Ctrl+O"))
 			{
+				auto xml = load_xml("BP", "blue print.xml");
+
+				for (auto &xml_n_node : xml->children)
+				{
+					auto name = xml_n_node->find_attribute("name")->value;
+					BP_Node *n = nullptr;
+					if (name == "Make Vec2")
+						n = new BP_Node_MakeVec2;
+					else if (name == "Random Number")
+						n = new BP_Node_RandomNumber;
+					else if (name == "Intervaler")
+						n = new BP_Node_Intervaler;
+					else if (name == "Particle Generator")
+						n = new BP_Node_ParticleGenerator;
+					auto x = std::stof(xml_n_node->find_attribute("x")->value);
+					auto y = std::stof(xml_n_node->find_attribute("y")->value);
+					n->rect += Vec2(x, y);
+					bp_nodes.emplace_back(n);
+
+					XMLNode *xml_n_slots[2];
+					xml_n_slots[0] = xml_n_node->find_node("Input_Slots");
+					xml_n_slots[1] = xml_n_node->find_node("Output_Slots");
+
+					auto read_slots = [&](int idx) {
+						for (auto i = 0; i < xml_n_slots[idx]->children.size(); i++)
+						{
+							auto xml_n_slot = xml_n_slots[idx]->children[i].get();
+							for (auto &xml_n_link : xml_n_slot->children)
+							{
+								auto ID = std::stoi(xml_n_link->find_attribute("ID")->value);
+								n->slots[idx][i]->links.push_back((BP_Slot*)ID);
+							}
+						}
+					};
+					for (auto i = 0; i < 2; i++)
+						read_slots(i);
+				}
+
+				for (auto &n : bp_nodes)
+				{
+					for (auto i = 0; i < 2; i++)
+					{
+						for (auto &s : n->slots[i])
+						{
+							for (auto &l : s->links)
+							{
+								auto ID = (int)l;
+								l = bp_nodes[ID >> 8]->slots[1 - i][ID & 0xff].get();
+							}
+						}
+					}
+				}
+
+				release_xml(xml);
 			}
 			if (ui->menuitem("Save", "Ctrl+S"))
 			{
+				XMLDoc xml("BP");
+
+				for (auto &n : bp_nodes)
+				{
+					auto xml_n_node = new XMLNode("Node");
+					xml.children.emplace_back(xml_n_node);
+					xml_n_node->attributes.emplace_back(new XMLAttribute("name", n->name()));
+					xml_n_node->attributes.emplace_back(new XMLAttribute("x", std::to_string(n->rect.min.x)));
+					xml_n_node->attributes.emplace_back(new XMLAttribute("y", std::to_string(n->rect.min.y)));
+
+					XMLNode *xml_n_slots[2];
+					xml_n_slots[0] = new XMLNode("Input_Slots");
+					xml_n_node->children.emplace_back(xml_n_slots[0]);
+
+					xml_n_slots[1] = new XMLNode("Output_Slots");
+					xml_n_node->children.emplace_back(xml_n_slots[1]);
+
+					auto add_slots = [&](int idx) {
+						for (auto &s : n->slots[idx])
+						{
+							auto xml_n_slot = new XMLNode("Slot");
+							xml_n_slots[idx]->children.emplace_back(xml_n_slot);
+
+							for (auto &l : s->links)
+							{
+								auto xml_n_link = new XMLNode("Link");
+								xml_n_slot->children.emplace_back(xml_n_link);
+								auto ID = -1;
+								for (auto i = 0; i < l->n->slots[1 - idx].size(); i++)
+								{
+									if (l == l->n->slots[1 - idx][i].get())
+									{
+										ID = i;
+										break;
+									}
+								}
+								for (auto i = 0; i < bp_nodes.size(); i++)
+								{
+									if (bp_nodes[i].get() == l->n)
+									{
+										ID = ID + (i << 8);
+										break;
+									}
+								}
+								xml_n_link->attributes.emplace_back(new XMLAttribute("ID",
+									std::to_string(ID)));
+							}
+						}
+					};
+					for (auto i = 0; i < 2; i++)
+						add_slots(i);
+				}
+
+				save_xml(&xml, "blue print.xml");
 			}
 			ui->end_menu();
 		}
@@ -378,22 +685,27 @@ int main(int argc, char **args)
 			{
 			case TabScene:
 				if (ui->menuitem("Particle"))
-				{
-					auto p = new Particle;
-					p->coord = Vec2(0.f);
-					particles.emplace_back(p);
-					need_update_ubo = true;
-				}
+					add_particle(Vec2(0.f));
 				break;
 			case TabBluePrint:
-				if (ui->menuitem("Interval"))
+				if (ui->menuitem("Make Vec2"))
 				{
-					auto n = new BP_N_Intervaler;
+					auto n = new BP_Node_MakeVec2;
+					bp_nodes.emplace_back(n);
+				}
+				if (ui->menuitem("Random Number"))
+				{
+					auto n = new BP_Node_RandomNumber;
+					bp_nodes.emplace_back(n);
+				}
+				if (ui->menuitem("Intervaler"))
+				{
+					auto n = new BP_Node_Intervaler;
 					bp_nodes.emplace_back(n);
 				}
 				if (ui->menuitem("Particle Generator"))
 				{
-					auto n = new BP_N_ParticleGenerator;
+					auto n = new BP_Node_ParticleGenerator;
 					bp_nodes.emplace_back(n);
 				}
 				break;
@@ -437,15 +749,20 @@ int main(int argc, char **args)
 			}
 			ui->end_menu();
 		}
-		if (ui->begin_menu("View"))
+		if (ui->begin_menu("Setting"))
 		{
+			if (ui->menuitem("Scene Options"))
+			{
+
+			}
+
 			ui->end_menu();
 		}
 		auto menu_rect = ui->get_curr_window_rect();
 		ui->end_mainmenu();
 
 		ui->begin_status_window();
-		ui->text_unformatted("Ready.");
+		ui->text("Ready. (%d particles in scene)", particles.size());
 		auto status_rect = ui->get_curr_window_rect();
 		ui->end_window();
 
@@ -455,21 +772,38 @@ int main(int argc, char **args)
 			(status_rect.max.y - status_rect.min.y));
 		ui->begin_plain_window("ws", ws_pos, ws_size);
 
-		if (ui->button("Run"))
-			running = true;
-		ui->sameline();
-		if (ui->button("Pause"))
-			running = false;
-		ui->sameline();
-		if (ui->button("Stop"))
+		if (!running)
 		{
-
+			if (ui->button("Run"))
+			{
+				running = true;
+				need_update_ubo = true;
+			}
+			ui->sameline();
+		}
+		if (running)
+		{
+			if (sel.type == SelPtc)
+				sel.reset();
+			if (ui->button("Pause"))
+			{
+				running = false;
+				need_update_ubo = true;
+			}
+			ui->sameline();
+		}
+		if (ui->button("Reset"))
+		{
+			if (sel.type == SelPtc)
+				sel.reset();
+			particles.clear();
+			need_update_ubo = true;
 		}
 		ui->separator();
 
 		ui->begin_tabbar("tabbar");
 
-		if (ui->tabitem("scene"))
+		if (ui->tabitem("Scene"))
 		{
 			curr_tab = TabScene;
 
@@ -516,7 +850,7 @@ int main(int argc, char **args)
 			}
 		}
 
-		if (ui->tabitem("blueprint"))
+		if (ui->tabitem("Blue Print"))
 		{
 			curr_tab = TabBluePrint;
 
@@ -529,11 +863,6 @@ int main(int argc, char **args)
 
 			auto dl = ui->get_curr_window_drawlist();
 
-			const Vec4 n_colors[] = {
-				Vec4(0.5f, 0.5f, 1.f, 1.f),
-				Vec4(1.f, 0.5f, 0.5f, 1.f)
-			};
-
 			static BP_Slot *dragging_slot = nullptr;
 			auto node_selected_idx_in_this_frame = -1;
 
@@ -543,7 +872,7 @@ int main(int argc, char **args)
 				auto pos = n->rect.min + wnd_rect.min;
 				auto size = n->rect.max - n->rect.min;
 
-				ui->push_ID(node_num);
+				ui->push_ID((int)n.get());
 
 				if (sel.v == n.get())
 				{
@@ -552,11 +881,11 @@ int main(int argc, char **args)
 				}
 
 				dl.add_rect_filled(Rect(pos, pos + Vec2(size.x, BP_node_titlebar_height)),
-					n_colors[n->type], 4.f, true, true, false, false);
+					n->color(), 4.f, true, true, false, false);
 				dl.add_rect_filled(Rect(pos + Vec2(0.f, BP_node_titlebar_height), pos + size), 
 					Vec4(0.3f, 0.3f, 0.3f, 1.f), 4.f,
 					false, false);
-				dl.add_text(pos + Vec2(6.f, 2.f), Vec4(1.f), n->name());
+				dl.add_text(pos + Vec2(6.f, 2.f), Vec4(0.f, 0.f, 0.f, 1.f), n->name());
 
 				n->show(ui, wnd_rect.min);
 
@@ -576,7 +905,6 @@ int main(int argc, char **args)
 							ui->text_unformatted_RA(s->name.data);
 						else
 							ui->text_unformatted(s->name.data);
-						s->text_width = ui->get_last_item_rect().width();
 
 						if (i == 1)
 						{
@@ -603,7 +931,7 @@ int main(int argc, char **args)
 					sel.set(SelBPn, n.get());
 					node_selected_idx_in_this_frame = node_num;
 
-					auto slot = n->hovering_slot(mpos);
+					auto slot = hovering_slot(n.get(), mpos);
 					if (slot)
 						dragging_slot = slot;
 
@@ -643,7 +971,7 @@ int main(int argc, char **args)
 					for (int i = bp_nodes.size() - 1; i >= 0; i--)
 					{
 						auto n = bp_nodes[i].get();
-						auto s = n->hovering_slot(mpos);
+						auto s = hovering_slot(n, mpos);
 						if (s && dragging_slot != s)
 						{
 							if (dragging_slot != s)

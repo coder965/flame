@@ -118,6 +118,7 @@ namespace flame
 			FLAME_UI_EXPORTS void image(int index, const Vec2 &size);
 			FLAME_UI_EXPORTS void invisibleitem(const char *str_id, const Vec2 &size);
 
+			FLAME_UI_EXPORTS Vec2 get_cursor_pos();
 			FLAME_UI_EXPORTS void set_cursor_pos(const Vec2 &pos);
 
 			FLAME_UI_EXPORTS void sameline();
