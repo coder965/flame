@@ -23,7 +23,7 @@
 #include "device.h"
 #include "graphics_private.h"
 
-#include <flame/global.h>
+#include <flame/type.h>
 
 namespace flame
 {

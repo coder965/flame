@@ -20,27 +20,25 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-#include <vector>
-#include <assert.h>
+#pragma once
 
-#include <flame/type.h>
-#include <flame/system.h>
+#if defined(_WIN64)
+typedef long long FLAME_LONG_PTR;
+typedef unsigned long long FLAME_ULONG_PTR;
+#else
+typedef long FLAME_LONG_PTR;
+typedef unsigned long FLAME_ULONG_PTR;
+#endif
 
-#include "graphics.h"
-#include "graphics_private.h"
+#define FLAME_ARRAYSIZE(_ARR) ((int)(sizeof(_ARR)/sizeof(*_ARR)))
+#define FLAME_DERIVE_OFFSET(D, B) (TK_LONG_PTR((B*)((D*)1))-1)
+#define FLAME_LOW(I) ((I) & 0xffff)
+#define FLAME_HIGH(I) ((I) >> 16)
+#define FLAME_MAKEINT(H, L) ((L) | ((H) << 16))
 
 namespace flame
 {
-	const char *vk_device_type_names[] = {
-		"other",
-		"integrated gpu",
-		"discrete gpu",
-		"virtual gpu",
-		"cpu"
-	};
-}
-
-extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
-{
-	return TRUE;
+	typedef unsigned char uchar;
+	typedef unsigned short ushort;
+	typedef unsigned int uint;
 }

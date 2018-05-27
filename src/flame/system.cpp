@@ -27,7 +27,7 @@
 #include <list>
 #include <map>
 
-#include <flame/global.h>
+#include <flame/type.h>
 #include <flame/filesystem.h>
 #include <flame/system.h>
 

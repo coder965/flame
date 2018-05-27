@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <flame/global.h>
+#include <flame/type.h>
 
 #include "graphics.h"
 

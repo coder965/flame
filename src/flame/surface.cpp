@@ -471,7 +471,7 @@ namespace flame
 			wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 			wcex.lpfnWndProc = _wnd_proc;
 			wcex.cbClsExtra = 0;
-			wcex.cbWndExtra = sizeof(TK_ULONG_PTR);
+			wcex.cbWndExtra = sizeof(FLAME_ULONG_PTR);
 			wcex.hInstance = (HINSTANCE)get_hinst();
 			if (std::filesystem::exists("ico.png"))
 			{
@@ -496,14 +496,14 @@ namespace flame
 		auto s = new Surface;
 		s->title = _title;
 
-		for (auto i = 0; i < TK_ARRAYSIZE(s->key_states); i++)
+		for (auto i = 0; i < FLAME_ARRAYSIZE(s->key_states); i++)
 			s->key_states[i] = KeyStateUp;
 
 		s->mouse_x = s->mouse_y = 0;
 		s->mouse_disp_x = s->mouse_disp_y = 0;
 		s->mouse_scroll = 0;
 
-		for (auto i = 0; i < TK_ARRAYSIZE(s->mouse_buttons); i++)
+		for (auto i = 0; i < FLAME_ARRAYSIZE(s->mouse_buttons); i++)
 			s->mouse_buttons[i] = KeyStateUp;
 
 		s->_priv = new SurfacePrivate;
@@ -664,10 +664,10 @@ namespace flame
 
 			for (auto s : _priv->surfaces)
 			{
-				for (int i = 0; i < TK_ARRAYSIZE(s->key_states); i++)
+				for (int i = 0; i < FLAME_ARRAYSIZE(s->key_states); i++)
 					s->key_states[i] &= ~KeyStateJust;
 
-				for (auto i = 0; i < TK_ARRAYSIZE(s->mouse_buttons); i++)
+				for (auto i = 0; i < FLAME_ARRAYSIZE(s->mouse_buttons); i++)
 					s->mouse_buttons[i] &= ~KeyStateJust;
 
 				s->_priv->mouse_prev_x = s->mouse_x;

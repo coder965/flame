@@ -145,6 +145,8 @@ namespace flame
 			FLAME_UI_EXPORTS Drawlist get_overlap_drawlist();
 			FLAME_UI_EXPORTS Drawlist get_curr_window_drawlist();
 
+			FLAME_UI_EXPORTS void add_dialog(const char *title, int user_data_size, void *user_data,
+				const std::function<void(Instance *ui, void *user_data, bool &out_open)> &show_callback);
 			FLAME_UI_EXPORTS void add_message_dialog(const char *title, const char *message);
 			FLAME_UI_EXPORTS void add_input_dialog(const char *title, const char *label, const 
 				std::function<void(MediumString *input)> &callback, const char *default_input = nullptr);

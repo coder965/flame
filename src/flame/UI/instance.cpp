@@ -199,49 +199,55 @@ namespace flame
 		{
 			bool open;
 			ShortString title;
+			void *user_data;
+			std::function<void(Instance *ui, void *user_data, bool &out_open)> show_callback;
 
-			virtual void show() = 0;
-		};
-
-		struct MessageDialog : Dialog
-		{
-			MediumString message;
-
-			virtual void show() override
+			Dialog(const char *_title) :
+				open(false)
 			{
-				ImGui::TextUnformatted(message.data);
-				if (ImGui::Button("OK"))
-				{
-					ImGui::CloseCurrentPopup();
-					open = false;
-				}
+				strcpy(title.data, _title);
 			}
 		};
 
-		struct InputDialog : Dialog
-		{
-			ShortString label;
-			MediumString input;
-			std::function<void(MediumString *input)> callback;
+		//struct MessageDialog : Dialog
+		//{
+		//	MediumString message;
 
-			virtual void show() override
-			{
-				ImGui::InputText(label.data, input.data, sizeof(input.data), 
-					ImGuiInputTextFlags_AutoSelectAll);
-				if (ImGui::Button("OK"))
-				{
-					callback(&input);
-					ImGui::CloseCurrentPopup();
-					open = false;
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Cancel"))
-				{
-					ImGui::CloseCurrentPopup();
-					open = false;
-				}
-			}
-		};
+		//	virtual void show() override
+		//	{
+		//		ImGui::TextUnformatted(message.data);
+		//		if (ImGui::Button("OK"))
+		//		{
+		//			ImGui::CloseCurrentPopup();
+		//			open = false;
+		//		}
+		//	}
+		//};
+
+		//struct InputDialog : Dialog
+		//{
+		//	ShortString label;
+		//	MediumString input;
+		//	std::function<void(MediumString *input)> callback;
+
+		//	virtual void show() override
+		//	{
+		//		ImGui::InputText(label.data, input.data, sizeof(input.data), 
+		//			ImGuiInputTextFlags_AutoSelectAll);
+		//		if (ImGui::Button("OK"))
+		//		{
+		//			callback(&input);
+		//			ImGui::CloseCurrentPopup();
+		//			open = false;
+		//		}
+		//		ImGui::SameLine();
+		//		if (ImGui::Button("Cancel"))
+		//		{
+		//			ImGui::CloseCurrentPopup();
+		//			open = false;
+		//		}
+		//	}
+		//};
 
 		static std::list<std::unique_ptr<Dialog>> dialogs;
 
@@ -257,7 +263,7 @@ namespace flame
 				}
 				if (ImGui::BeginPopupModal(d->title.data, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 				{
-					d->show();
+					d->show_callback(this, d->user_data, d->open);
 					ImGui::EndPopup();
 				}
 

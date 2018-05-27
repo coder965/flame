@@ -32,7 +32,7 @@
 #include <string>
 #include <functional>
 
-#include <flame/global.h>
+#include <flame/type.h>
 
 namespace flame
 {
