@@ -36,9 +36,6 @@
 #include <flame/graphics/queue.h>
 #include <flame/UI/instance.h>
 
-#define NOMINMAX
-#include <Windows.h>
-
 using namespace flame;
 
 graphics::Device *d;
@@ -111,13 +108,16 @@ int add_ui_texture(int cx, int cy)
 	return -1;
 }
 
+#define ICON_TEXT u8"\uf001"
+#define ICON_BUTTON u8"\uf002"
+#define ICON_IMAGE u8"\uf003"
+
 int main(int argc, char **args)
 {
 	Vec2 res(1280, 720);
 
 	auto sm = create_surface_manager();
-	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
-		"UI Editor");
+	auto s = sm->create_surface(res, SurfaceStyleFrame, "UI Editor");
 
 	d = graphics::create_device(false);
 
@@ -143,6 +143,8 @@ int main(int argc, char **args)
 	auto ui_finished = graphics::create_semaphore(d);
 
 	ui = UI::create_instance(d, rp_ui, s);
+	ui->add_font("icon_.ttf", 0xf001, 0xf003);
+	ui->build();
 
 	// add replace me texture to ui
 	rpm_tex = graphics::create_texture_from_file(d, "replaceme.jpg");
@@ -161,6 +163,7 @@ int main(int argc, char **args)
 
 	enum WidgetType
 	{
+		WidgetTypeNull,
 		WidgetTypeText,
 		WidgetTypeButton,
 		WidgetTypeImage,
@@ -249,26 +252,6 @@ int main(int argc, char **args)
 		*/
 		static Widget *sel = (Widget*)0xFFFFFFFF;
 		Rect sel_rect;
-
-		static bool transform_mode = false;
-		static bool transform_mode_moving = false;
-		static bool transform_mode_sizing = false;
-		static CursorType transform_mode_cursor;
-		static Ivec2 transform_mode_anchor;
-		static Rect::Side transform_mode_sizing_side;
-		auto toggle_transform_mode = []() {
-			if (transform_mode)
-				transform_mode = false;
-			else
-			{
-				if (sel != (Widget*)0xFFFFFFFF)
-				{
-					transform_mode = true;
-					transform_mode_moving = false;
-					transform_mode_sizing = false;
-				}
-			}
-		};
 
 		static bool hierarchy = false;
 		bool hierarchy_need_set_to_center = false;
@@ -387,44 +370,57 @@ int main(int argc, char **args)
 						break;
 				}
 
-				ui->add_input_dialog("Please Enter The ID And Size Of Particle World", "Format is (ID cx cy)", [&](MediumString *input) {
-					if (input->data[0] == 0)
-					{
-						ui->add_message_dialog("Add Particle World", "ID cannot be empty");
-						return;
-					}
-
+				struct AddParticleWorldDialog
+				{
 					ShortString ID;
-					int cx, cy;
-					if (sscanf(input->data, "%s %d %d", ID.data, &cx, &cy) != 3)
-					{
-						ui->add_message_dialog("Error", "Format is not correct");
-						return;
-					}
+					int cx;
+					int cy;
+				};
 
-					if (find_widget(ID.data))
+				auto dialog_user_data = ui->add_dialog("Add Particle World", sizeof(AddParticleWorldDialog), [&](UI::Instance *ui, void *user_data, bool &open) {
+					auto dialog_data = (AddParticleWorldDialog*)user_data;
+					ui->inputtext("ID", dialog_data->ID.data,
+						sizeof(dialog_data->ID.data), true);
+					ui->dragint("cx", &dialog_data->cx, 1.f, 0, 10000);
+					ui->dragint("cy", &dialog_data->cy, 1.f, 0, 10000);
+					if (ui->button("OK"))
 					{
-						ui->add_message_dialog("Add Particle World", "This ID already exists");
-						return;
-					}
+						if (dialog_data->ID.data[0] != 0)
+						{
+							if (!find_widget(dialog_data->ID.data))
+							{
+								auto img_idx = add_ui_texture(dialog_data->cx, dialog_data->cy);
+								if (img_idx != -1)
+								{
+									auto w = new WidgetParticleWorld;
+									w->type = WidgetTypeParticleWorld;
+									strcpy(w->name.data, dialog_data->ID.data);
+									w->pos = Vec2(10.f, 30.f);
+									w->size = Vec2(dialog_data->cx, dialog_data->cy);
+									w->shader_filename.data[0] = 0;
+									w->blueprint_filename.data[0] = 0;
+									w->img_idx = img_idx;
+									widgets.emplace_back(w);
+								}
+								else
+									ui->add_message_dialog("Add Particle World", "No enough space for ui texture (total 126)");
+							}
+							else
+								ui->add_message_dialog("Add Particle World", "This ID already exists");
+						}
+						else
+							ui->add_message_dialog("Add Particle World", "ID cannot be empty");
 
-					auto img_idx = add_ui_texture(cx, cy);
-					if (img_idx == -1)
-					{
-						ui->add_message_dialog("Add Particle World", "No enough space for ui texture (total 126)");
-						return;
+						open = false;
 					}
-
-					auto w = new WidgetParticleWorld;
-					w->type = WidgetTypeParticleWorld;
-					strcpy(w->name.data, ID.data);
-					w->pos = Vec2(10.f, 30.f);
-					w->size = Vec2(cx, cy);
-					w->shader_filename.data[0] = 0;
-					w->blueprint_filename.data[0] = 0;
-					w->img_idx = img_idx;
-					widgets.emplace_back(w);
-				}, default_name.c_str());
+					ui->sameline();
+					if (ui->button("Cancel"))
+						open = false;
+				});
+				auto dialog_data = (AddParticleWorldDialog*)dialog_user_data;
+				strcpy(dialog_data->ID.data, default_name.c_str());
+				dialog_data->cx = 200;
+				dialog_data->cy = 200;
 			}
 			ui->end_menu();
 		}
@@ -442,8 +438,6 @@ int main(int argc, char **args)
 				;
 			if (ui->menuitem("Delete", "Del"))
 				;
-			if (ui->menuitem("Transform Mode", "T", transform_mode))
-				toggle_transform_mode();
 			ui->end_menu();
 		}
 		if (ui->begin_menu("View"))
@@ -457,83 +451,91 @@ int main(int argc, char **args)
 		auto menu_rect = ui->get_curr_window_rect();
 		ui->end_mainmenu();
 
-		auto transform_mode_move_off = Ivec2(s->mouse_x - transform_mode_anchor.x, 
-			s->mouse_y - transform_mode_anchor.y);
-		auto transform_mode_size_off = Ivec2(s->mouse_x - transform_mode_anchor.x,
-			s->mouse_y - transform_mode_anchor.y);
-		switch (transform_mode_sizing_side)
+		static bool mode_moving = false;
+		static bool mode_sizing = false;
+		static CursorType cursor;
+		static Ivec2 anchor;
+		static Rect::Side sizing_side;
+
+		auto move_off = Ivec2(s->mouse_x - anchor.x, s->mouse_y - anchor.y);
+		auto size_off = Ivec2(s->mouse_x - anchor.x, s->mouse_y - anchor.y);
+		switch (sizing_side)
 		{
 		case Rect::SideN:
-			transform_mode_size_off.x = 0;
-			transform_mode_size_off.y = min(transform_mode_size_off.y, wnd_size.y - 40);
+			size_off.x = 0;
+			size_off.y = min(size_off.y, wnd_size.y - 40);
 			break;
 		case Rect::SideS:
-			transform_mode_size_off.x = 0;
-			transform_mode_size_off.y = max(transform_mode_size_off.y, -wnd_size.y + 40);
+			size_off.x = 0;
+			size_off.y = max(size_off.y, -wnd_size.y + 40);
 			break;
 		case Rect::SideE:
-			transform_mode_size_off.y = 0;
-			transform_mode_size_off.x = max(transform_mode_size_off.x, -wnd_size.x + 40);
+			size_off.y = 0;
+			size_off.x = max(size_off.x, -wnd_size.x + 40);
 			break;
 		case Rect::SideW:
-			transform_mode_size_off.y = 0;
-			transform_mode_size_off.x = min(transform_mode_size_off.x, wnd_size.x - 40);
+			size_off.y = 0;
+			size_off.x = min(size_off.x, wnd_size.x - 40);
 			break;
 		case Rect::SideNE:
-			transform_mode_size_off.x = max(transform_mode_size_off.x, -wnd_size.x + 40);
-			transform_mode_size_off.y = min(transform_mode_size_off.y, wnd_size.y - 40);
+			size_off.x = max(size_off.x, -wnd_size.x + 40);
+			size_off.y = min(size_off.y, wnd_size.y - 40);
 			break;
 		case Rect::SideNW:
-			transform_mode_size_off.x = min(transform_mode_size_off.x, wnd_size.x - 40);
-			transform_mode_size_off.y = min(transform_mode_size_off.y, wnd_size.y - 40);
+			size_off.x = min(size_off.x, wnd_size.x - 40);
+			size_off.y = min(size_off.y, wnd_size.y - 40);
 			break;
 		case Rect::SideSE:
-			transform_mode_size_off.x = max(transform_mode_size_off.x, -wnd_size.x + 40);
-			transform_mode_size_off.y = max(transform_mode_size_off.y, -wnd_size.y + 40);
+			size_off.x = max(size_off.x, -wnd_size.x + 40);
+			size_off.y = max(size_off.y, -wnd_size.y + 40);
 			break;
 		case Rect::SideSW:
-			transform_mode_size_off.x = min(transform_mode_size_off.x, wnd_size.x - 40);
-			transform_mode_size_off.y = max(transform_mode_size_off.y, -wnd_size.y + 40);
+			size_off.x = min(size_off.x, wnd_size.x - 40);
+			size_off.y = max(size_off.y, -wnd_size.y + 40);
 			break;
 		}
 
 		ui->begin_status_window();
-		if (transform_mode)
-		{
-			if (transform_mode_moving)
-				ui->text("Moving: (%d, %d) %d, %d", 
-					transform_mode_move_off.x, transform_mode_move_off.y,
-					s->mouse_x, s->mouse_y);
-			else if (transform_mode_sizing)
-				ui->text("Sizing: (%d, %d) %d, %d",
-					transform_mode_size_off.x, transform_mode_size_off.y,
-					s->mouse_x, s->mouse_y);
-			else
-				ui->text_unformatted("Transform mode, press 'T' or 'Esc' to exit.");
-		}
+		if (mode_moving)
+			ui->text("Moving: (%d, %d) %d, %d", move_off.x, move_off.y, s->mouse_x, s->mouse_y);
+		else if (mode_sizing)
+			ui->text("Sizing: (%d, %d) %d, %d", size_off.x, size_off.y, s->mouse_x, s->mouse_y);
 		else
 			ui->text_unformatted("Ready.");
 		auto status_rect = ui->get_curr_window_rect();
 		ui->end_window();
 
+		auto dragging_widget = WidgetTypeNull;
+
+		ui->begin_sidebarL_window(menu_rect.max.y);
+		ui->button(ICON_TEXT);
+		if (ui->is_last_item_active())
+			dragging_widget = WidgetTypeText;
+		ui->button(ICON_BUTTON);
+		if (ui->is_last_item_active())
+			dragging_widget = WidgetTypeButton;
+		ui->button(ICON_IMAGE);
+		if (ui->is_last_item_active())
+			dragging_widget = WidgetTypeImage;
+		auto sidebar_rect = ui->get_curr_window_rect();
+		ui->end_window();
+
 		static Vec2 off(0.f);
-		Vec2 bg_pos(0.f, menu_rect.max.y);
-		Vec2 bg_size(res.x, res.y - 
-			(menu_rect.max.y - menu_rect.min.y) -
-			(status_rect.max.y - status_rect.min.y));
+		Vec2 bg_pos(sidebar_rect.max.x, menu_rect.max.y);
+		Vec2 bg_size(res.x - sidebar_rect.max.x, res.y -
+			menu_rect.max.y - status_rect.height());
 		static bool graping_grid = false;
 		ui->begin_plain_window("background", bg_pos, bg_size);
 
-		ui->get_curr_window_drawlist().draw_grid(off, res);
+		ui->get_curr_window_drawlist().draw_grid(bg_pos, off, res);
 
-		auto want_sel = !transform_mode;
+		auto want_sel = true;
 
 		if (ui->is_curr_window_hovered())
 		{
-			if (s->mouse_buttons[2] == (KeyStateJust | KeyStateDown))
+			if (s->just_down_M(2))
 				graping_grid = true;
-			if (want_sel &&
-				s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			if (want_sel && s->just_down_M(0))
 			{
 				sel = (Widget*)0xFFFFFFFF;
 				want_sel = false;
@@ -544,7 +546,7 @@ int main(int argc, char **args)
 		{
 			off.x += s->mouse_disp_x;
 			off.y += s->mouse_disp_y;
-			if ((s->mouse_buttons[2] & KeyStateDown) == 0)
+			if (!s->pressing_M(2))
 				graping_grid = false;
 		}
 
@@ -561,8 +563,7 @@ int main(int argc, char **args)
 		for (auto &w : widgets)
 		{
 			w->show(ui, wnd_rect.min);
-			if (ui->is_last_item_hovered() && want_sel &&
-				s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			if (ui->is_last_item_hovered() && want_sel && s->just_down_M(0))
 			{
 				w->ID = ui->get_last_ID();
 				sel = w.get();
@@ -573,8 +574,7 @@ int main(int argc, char **args)
 				sel_rect = w->rect;
 		}
 
-		if (ui->is_curr_window_hovered() && want_sel &&
-			s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+		if (ui->is_curr_window_hovered() && want_sel && s->just_down_M(0))
 		{
 			sel = nullptr;
 			want_sel = false;
@@ -584,106 +584,103 @@ int main(int argc, char **args)
 
 		auto dl_wnd = ui->get_curr_window_drawlist();
 
-		if (transform_mode)
+		if (dragging_widget == WidgetTypeNull && !mode_moving && !mode_sizing)
 		{
-			if (!transform_mode_moving && !transform_mode_sizing)
+			auto just_clicked = s->just_down_M(0);
+			if (just_clicked)
+				anchor = Ivec2(s->mouse_x, s->mouse_y);
+			auto side = sel_rect.calc_side(Vec2(s->mouse_x, s->mouse_y), 4.f);
+			switch (side)
 			{
-				auto just_clicked = s->mouse_buttons[0] == (KeyStateJust | KeyStateDown);
+			case Rect::SideN: case Rect::SideS:
+				cursor = CursorSizeNS;
+				break;
+			case Rect::SideE: case Rect::SideW:
+				cursor = CursorSizeWE;
+				break;
+			case Rect::SideNE: case Rect::SideSW:
+				cursor = CursorSizeNESW;
+				break;
+			case Rect::SideNW: case Rect::SideSE:
+				cursor = CursorSizeNWSE;
+				break;
+			case Rect::Inside:
+				cursor = CursorSizeAll;
+				break;
+			}
+			if (side != Rect::Outside)
+			{
+				ui->set_mousecursor(cursor);
 				if (just_clicked)
-					transform_mode_anchor = Ivec2(s->mouse_x, s->mouse_y);
-				auto side = sel_rect.calc_side(Vec2(s->mouse_x, s->mouse_y), 4.f);
-				switch (side)
 				{
-				case Rect::SideN: case Rect::SideS:
-					transform_mode_cursor = CursorSizeNS;
-					break;
-				case Rect::SideE: case Rect::SideW:
-					transform_mode_cursor = CursorSizeWE;
-					break;
-				case Rect::SideNE: case Rect::SideSW:
-					transform_mode_cursor = CursorSizeNESW;
-					break;
-				case Rect::SideNW: case Rect::SideSE:
-					transform_mode_cursor = CursorSizeNWSE;
-					break;
-				case Rect::Inside:
-					transform_mode_cursor = CursorSizeAll;
-					break;
-				}
-				if (side != Rect::Outside)
-				{
-					ui->set_mousecursor(transform_mode_cursor);
-					if (just_clicked)
+					if (side == Rect::Inside)
+						mode_moving = true;
+					else
 					{
-						if (side == Rect::Inside)
-							transform_mode_moving = true;
-						else
-						{
-							transform_mode_sizing = true;
-							transform_mode_sizing_side = side;
-						}
+						mode_sizing = true;
+						sizing_side = side;
 					}
 				}
 			}
-			if (transform_mode_moving)
+		}
+		if (mode_moving)
+		{
+			ui->set_mousecursor(cursor);
+			if (!s->pressing_M(0))
 			{
-				ui->set_mousecursor(transform_mode_cursor);
-				if (!s->pressing(0))
-				{
-					if (sel == nullptr)
-						wnd_pos += transform_mode_move_off;
-					else if (sel != (Widget*)0xFFFFFFFF)
-						sel->pos += transform_mode_move_off;;
-					transform_mode_moving = false;
-				}
+				if (sel == nullptr)
+					wnd_pos += move_off;
+				else if (sel != (Widget*)0xFFFFFFFF)
+					sel->pos += move_off;;
+				mode_moving = false;
 			}
-			if (transform_mode_sizing)
+		}
+		if (mode_sizing)
+		{
+			ui->set_mousecursor(cursor);
+			if (!s->pressing_M(0))
 			{
-				ui->set_mousecursor(transform_mode_cursor);
-				if ((s->mouse_buttons[0] & KeyStateDown) == 0)
+				if (sel == nullptr)
 				{
-					if (sel == nullptr)
+					switch (sizing_side)
 					{
-						switch (transform_mode_sizing_side)
-						{
-						case Rect::SideN:
-							wnd_pos.y += transform_mode_size_off.y;
-							wnd_size.y -= transform_mode_size_off.y;
-							break;
-						case Rect::SideS:
-							wnd_size.y += transform_mode_size_off.y;
-							break;
-						case Rect::SideW:
-							wnd_pos.x += transform_mode_size_off.x;
-							wnd_size.x -= transform_mode_size_off.x;
-							break;
-						case Rect::SideE:
-							wnd_size.x += transform_mode_size_off.x;
-							break;
-						case Rect::SideNE:
-							wnd_pos.y += transform_mode_size_off.y;
-							wnd_size.y -= transform_mode_size_off.y;
-							wnd_size.x += transform_mode_size_off.x;
-							break;
-						case Rect::SideNW:
-							wnd_pos.y += transform_mode_size_off.y;
-							wnd_size.y -= transform_mode_size_off.y;
-							wnd_pos.x += transform_mode_size_off.x;
-							wnd_size.x -= transform_mode_size_off.x;
-							break;
-						case Rect::SideSE:
-							wnd_size.y += transform_mode_size_off.y;
-							wnd_size.x += transform_mode_size_off.x;
-							break;
-						case Rect::SideSW:
-							wnd_size.y += transform_mode_size_off.y;
-							wnd_pos.x += transform_mode_size_off.x;
-							wnd_size.x -= transform_mode_size_off.x;
-							break;
-						}
+					case Rect::SideN:
+						wnd_pos.y += size_off.y;
+						wnd_size.y -= size_off.y;
+						break;
+					case Rect::SideS:
+						wnd_size.y += size_off.y;
+						break;
+					case Rect::SideW:
+						wnd_pos.x += size_off.x;
+						wnd_size.x -= size_off.x;
+						break;
+					case Rect::SideE:
+						wnd_size.x += size_off.x;
+						break;
+					case Rect::SideNE:
+						wnd_pos.y += size_off.y;
+						wnd_size.y -= size_off.y;
+						wnd_size.x += size_off.x;
+						break;
+					case Rect::SideNW:
+						wnd_pos.y += size_off.y;
+						wnd_size.y -= size_off.y;
+						wnd_pos.x += size_off.x;
+						wnd_size.x -= size_off.x;
+						break;
+					case Rect::SideSE:
+						wnd_size.y += size_off.y;
+						wnd_size.x += size_off.x;
+						break;
+					case Rect::SideSW:
+						wnd_size.y += size_off.y;
+						wnd_pos.x += size_off.x;
+						wnd_size.x -= size_off.x;
+						break;
 					}
-					transform_mode_sizing = false;
 				}
+				mode_sizing = false;
 			}
 		}
 
@@ -692,63 +689,62 @@ int main(int argc, char **args)
 
 		auto dl_ol = ui->get_overlap_drawlist();
 
+		if (dragging_widget != WidgetTypeNull)
+		{
+			dl_ol.add_text(Vec2(s->mouse_x, s->mouse_y), Vec4(1.f, 1.f, 0.f, 1.f),
+				ICON_IMAGE);
+		}
 		if (sel != (Widget*)0xFFFFFFFF)
 		{
-			if (!transform_mode)
-				sel_rect.expand(4.f);
-			else
-				sel_rect.expand(1.f);
+			sel_rect.expand(1.f);
 			(sel == nullptr ? dl_bg : dl_wnd).add_rect(sel_rect, Vec4(1.f, 1.f, 0.f, 1.f));
-			if (transform_mode)
+			if (mode_moving)
 			{
-				if (transform_mode_moving)
+				dl_ol.add_rect(sel_rect + Vec2(move_off), Vec4(1.f));
+				dl_ol.add_line(Vec2(anchor), Vec2(s->mouse_x,
+					s->mouse_y), Vec4(1.f));
+				//if (sel != nullptr)
+				//{
+				//	dl_ol.add_line(Vec2(wnd_inner_rect.min.x, wnd_inner_rect.min.y),
+				//		Vec2(wnd_inner_rect.max.x, wnd_inner_rect.min.y), 
+				//		Vec4(1.f, 0.f, 0.f, 1.f));
+				//}
+			}
+			if (mode_sizing)
+			{
+				auto rect = sel_rect;
+				switch (sizing_side)
 				{
-					dl_ol.add_rect(sel_rect + Vec2(transform_mode_move_off), Vec4(1.f));
-					dl_ol.add_line(Vec2(transform_mode_anchor), Vec2(s->mouse_x,
-						s->mouse_y), Vec4(1.f));
-					//if (sel != nullptr)
-					//{
-					//	dl_ol.add_line(Vec2(wnd_inner_rect.min.x, wnd_inner_rect.min.y),
-					//		Vec2(wnd_inner_rect.max.x, wnd_inner_rect.min.y), 
-					//		Vec4(1.f, 0.f, 0.f, 1.f));
-					//}
+				case Rect::SideN:
+					rect.min.y += size_off.y;
+					break;
+				case Rect::SideS:
+					rect.max.y += size_off.y;
+					break;
+				case Rect::SideW:
+					rect.min.x += size_off.x;
+					break;
+				case Rect::SideE:
+					rect.max.x += size_off.x;
+					break;
+				case Rect::SideNE:
+					rect.min.y += size_off.y;
+					rect.max.x += size_off.x;
+					break;
+				case Rect::SideNW:
+					rect.min.y += size_off.y;
+					rect.min.x += size_off.x;
+					break;
+				case Rect::SideSE:
+					rect.max.y += size_off.y;
+					rect.max.x += size_off.x;
+					break;
+				case Rect::SideSW:
+					rect.max.y += size_off.y;
+					rect.min.x += size_off.x;
+					break;
 				}
-				if (transform_mode_sizing)
-				{
-					auto rect = sel_rect;
-					switch (transform_mode_sizing_side)
-					{
-					case Rect::SideN:
-						rect.min.y += transform_mode_size_off.y;
-						break;
-					case Rect::SideS:
-						rect.max.y += transform_mode_size_off.y;
-						break;
-					case Rect::SideW:
-						rect.min.x += transform_mode_size_off.x;
-						break;
-					case Rect::SideE:
-						rect.max.x += transform_mode_size_off.x;
-						break;
-					case Rect::SideNE:
-						rect.min.y += transform_mode_size_off.y;
-						rect.max.x += transform_mode_size_off.x;
-						break;
-					case Rect::SideNW:
-						rect.min.y += transform_mode_size_off.y;
-						rect.min.x += transform_mode_size_off.x;
-						break;
-					case Rect::SideSE:
-						rect.max.y += transform_mode_size_off.y;
-						rect.max.x += transform_mode_size_off.x;
-						break;
-					case Rect::SideSW:
-						rect.max.y += transform_mode_size_off.y;
-						rect.min.x += transform_mode_size_off.x;
-						break;
-					}
-					dl_ol.add_rect(rect, Vec4(1.f));
-				}
+				dl_ol.add_rect(rect, Vec4(1.f));
 			}
 		}
 
@@ -852,17 +848,6 @@ int main(int argc, char **args)
 		ui->end_window();
 
 		ui->end();
-
-		if (!ui->processed_keyboard_input)
-		{
-			if (s->key_states['T'] == (KeyStateJust | KeyStateDown))
-				toggle_transform_mode();
-			if (s->key_states[VK_ESCAPE] == (KeyStateJust | KeyStateDown))
-			{
-				if (transform_mode)
-					transform_mode = false;
-			}
-		}
 
 		auto index = sc->acquire_image(image_avalible);
 

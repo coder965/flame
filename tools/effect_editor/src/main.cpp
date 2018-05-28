@@ -603,6 +603,7 @@ int main(int argc, char **args)
 						read_slots(i);
 				}
 
+				// find the real pointer using the index
 				for (auto &n : bp_nodes)
 				{
 					for (auto i = 0; i < 2; i++)
@@ -639,6 +640,8 @@ int main(int argc, char **args)
 					xml_n_slots[1] = new XMLNode("Output_Slots");
 					xml_n_node->children.emplace_back(xml_n_slots[1]);
 
+					// save the index of slots and index of nodes
+					// than compress them into a int(node_index<<8+slot_index)
 					auto add_slots = [&](int idx) {
 						for (auto &s : n->slots[idx])
 						{
@@ -815,7 +818,7 @@ int main(int argc, char **args)
 			mpos -= effect_size / 2;
 			mpos -= Vec2(img_rect.min.x, img_rect.min.y);
 
-			if (ui->is_last_item_hovered() && s->mouse_buttons[0] == (KeyStateJust | KeyStateDown))
+			if (ui->is_last_item_hovered() && s->just_down_M(0))
 			{
 				auto clicked_blank = true;
 				for (int i = particles.size() - 1; i >= 0; i--)
@@ -944,7 +947,7 @@ int main(int argc, char **args)
 				node_num++;
 			}
 
-			if (s->just_down(0))
+			if (s->just_down_M(0))
 			{
 				if (node_selected_idx_in_this_frame == -1)
 					sel.reset();
@@ -959,7 +962,7 @@ int main(int argc, char **args)
 			{
 				dl.add_circle(dragging_slot->pos + wnd_rect.min,
 					6, Vec4(1.f, 1.f, 0.f, 1.f));
-				if ((s->mouse_buttons[0] & KeyStateDown) != 0)
+				if (s->pressing_M(0))
 				{
 					auto p1 = dragging_slot->pos + wnd_rect.min;
 					auto p2 = mpos + wnd_rect.min;

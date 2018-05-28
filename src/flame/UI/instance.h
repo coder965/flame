@@ -62,7 +62,7 @@ namespace flame
 			FLAME_UI_EXPORTS void add_bezier(const Vec2 &p0, const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec4 &col, float thickness);
 			FLAME_UI_EXPORTS void add_text(const Vec2 &pos, const Vec4 &col, const char *fmt, ...);
 			FLAME_UI_EXPORTS void add_image();
-			FLAME_UI_EXPORTS void draw_grid(const Vec2 &off, const Vec2 &size);
+			FLAME_UI_EXPORTS void draw_grid(const Vec2 &wnd_off, const Vec2 &off, const Vec2 &size);
 		};
 
 		struct InstancePrivate;
@@ -74,6 +74,9 @@ namespace flame
 			float elapsed_time;
 
 			InstancePrivate *_priv;
+
+			FLAME_UI_EXPORTS void add_font(const char *ttf_filename, int code_min, int code_max);
+			FLAME_UI_EXPORTS void build();
 
 			FLAME_UI_EXPORTS void set_texture(int index, graphics::Textureview *tv);
 
@@ -87,6 +90,7 @@ namespace flame
 
 			FLAME_UI_EXPORTS bool begin_plain_window(const char *name, const Vec2 &pos, const Vec2 &size);
 			FLAME_UI_EXPORTS bool begin_status_window();
+			FLAME_UI_EXPORTS bool begin_sidebarL_window(int base_y);
 			FLAME_UI_EXPORTS void end_window();
 
 			FLAME_UI_EXPORTS bool begin_mainmenu();
@@ -109,11 +113,15 @@ namespace flame
 			FLAME_UI_EXPORTS bool dragfloat2(const char *label, Vec2 *p, float speed, float v_min = 0.f, float v_max = 0.f);
 			FLAME_UI_EXPORTS bool dragfloat3(const char *label, Vec3 *p, float speed, float v_min = 0.f, float v_max = 0.f);
 			FLAME_UI_EXPORTS bool dragfloat4(const char *label, Vec4 *p, float speed, float v_min = 0.f, float v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragint(const char *label, int *p, float speed, int v_min = 0.f, int v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragint2(const char *label, Ivec2 *p, float speed, int v_min = 0.f, int v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragint3(const char *label, Ivec3 *p, float speed, int v_min = 0.f, int v_max = 0.f);
+			FLAME_UI_EXPORTS bool dragint4(const char *label, Ivec4 *p, float speed, int v_min = 0.f, int v_max = 0.f);
 			FLAME_UI_EXPORTS void text_unformatted(const char *text);
 			FLAME_UI_EXPORTS void text_unformatted_RA(const char *text); // right align
 			FLAME_UI_EXPORTS void text(const char *fmt, ...);
 			FLAME_UI_EXPORTS void ID_text_unformatted(const char *str_id, const char *text);
-			FLAME_UI_EXPORTS bool inputtext(const char *label, char *dst, int len);
+			FLAME_UI_EXPORTS bool inputtext(const char *label, char *dst, int len, bool auto_select_all = false);
 			FLAME_UI_EXPORTS bool selectable(const char *label, bool selected);
 			FLAME_UI_EXPORTS void image(int index, const Vec2 &size);
 			FLAME_UI_EXPORTS void invisibleitem(const char *str_id, const Vec2 &size);
@@ -145,8 +153,12 @@ namespace flame
 			FLAME_UI_EXPORTS Drawlist get_overlap_drawlist();
 			FLAME_UI_EXPORTS Drawlist get_curr_window_drawlist();
 
-			FLAME_UI_EXPORTS void add_dialog(const char *title, int user_data_size, void *user_data,
-				const std::function<void(Instance *ui, void *user_data, bool &out_open)> &show_callback);
+			// You have responsibility to construct and destruct your user data(which is allocated
+			// by the API, in the return value). You should do destruct when you set the 'open' to false in
+			// the show_callback. See impl of add_message_dialog for more details.
+			FLAME_UI_EXPORTS void *add_dialog(const char *title, int user_data_size,
+				const std::function<void(Instance *ui, void *user_data, bool &open)> &show_callback);
+
 			FLAME_UI_EXPORTS void add_message_dialog(const char *title, const char *message);
 			FLAME_UI_EXPORTS void add_input_dialog(const char *title, const char *label, const 
 				std::function<void(MediumString *input)> &callback, const char *default_input = nullptr);

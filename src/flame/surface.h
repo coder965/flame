@@ -33,6 +33,7 @@
 #include <functional>
 
 #include <flame/type.h>
+#include <flame/math.h>
 
 namespace flame
 {
@@ -48,6 +49,98 @@ namespace flame
 		KeyStateUp = 1 << 0,
 		KeyStateDown = 1 << 1,
 		KeyStateJust = 1 << 2,
+	};
+
+	enum Key
+	{
+		Key_Unknown,
+		Key_Backspace,
+		Key_Tab,
+		Key_Enter,
+		Key_Shift,
+		Key_Ctrl,
+		Key_Alt,
+		Key_Pause,
+		Key_CapsLock,
+		Key_Esc,
+		Key_Space,
+		Key_PgUp,
+		Key_PgDn,
+		Key_End,
+		Key_Home,
+		Key_Left,
+		Key_Up,
+		Key_Right,
+		Key_Down,
+		Key_PrtSc,
+		Key_Ins,
+		Key_Del,
+		Key_0,
+		Key_1,
+		Key_2,
+		Key_3,
+		Key_4,
+		Key_5,
+		Key_6,
+		Key_7,
+		Key_8,
+		Key_9,
+		Key_A,
+		Key_B,
+		Key_C,
+		Key_D,
+		Key_E,
+		Key_F,
+		Key_G,
+		Key_H,
+		Key_I,
+		Key_J,
+		Key_K,
+		Key_L,
+		Key_M,
+		Key_N,
+		Key_O,
+		Key_P,
+		Key_Q,
+		Key_R,
+		Key_S,
+		Key_T,
+		Key_U,
+		Key_V,
+		Key_W,
+		Key_X,
+		Key_Y,
+		Key_Z,
+		Key_Numpad0,
+		Key_Numpad1,
+		Key_Numpad2,
+		Key_Numpad3,
+		Key_Numpad4,
+		Key_Numpad5,
+		Key_Numpad6,
+		Key_Numpad7,
+		Key_Numpad8,
+		Key_Numpad9,
+		Key_Add,
+		Key_Subtract,
+		Key_Multiply,
+		Key_Divide,
+		Key_Separator,
+		Key_Decimal,
+		Key_F1,
+		Key_F2,
+		Key_F3,
+		Key_F4,
+		Key_F5,
+		Key_F6,
+		Key_F7,
+		Key_F8,
+		Key_F9,
+		Key_F10,
+		Key_F11,
+		Key_F12,
+		Key_NumLock,
+		Key_ScrollLock
 	};
 
 	enum CursorType
@@ -72,38 +165,55 @@ namespace flame
 
 	struct Surface
 	{
-		int x;
-		int y;
-		int cx;
-		int cy;
+		Ivec2 pos;
+		Ivec2 size;
 		int style;
 		std::string title;
 
-		int key_states[512];
+		int key_states[128];
 
-		int mouse_x;
-		int mouse_y;
-		int mouse_disp_x;
-		int mouse_disp_y;
+		Ivec2 mouse_pos;
+		Ivec2 mouse_disp;
 		int mouse_scroll;
 
 		int mouse_buttons[3]; // left, right, middle of KeyState
 
 		SurfacePrivate *_priv;
-
-		inline bool just_down(int idx)
+		
+		// mouse just down
+		inline bool just_down_M(int idx)
 		{
 			return mouse_buttons[idx] == (KeyStateJust | KeyStateDown);
 		}
 
-		inline bool just_up(int idx)
+		// mouse just up
+		inline bool just_up_M(int idx)
 		{
 			return mouse_buttons[idx] == (KeyStateJust | KeyStateUp);
 		}
 
-		inline bool pressing(int idx)
+		// mouse pressing
+		inline bool pressing_M(int idx)
 		{
 			return (mouse_buttons[idx] & KeyStateDown) != 0;
+		}
+
+		// key just down
+		inline bool just_down_K(Key k)
+		{
+			return key_states[k] == (KeyStateJust | KeyStateDown);
+		}
+
+		// key just up
+		inline bool just_up_K(Key k)
+		{
+			return key_states[k] == (KeyStateJust | KeyStateUp);
+		}
+
+		// key pressing
+		inline bool pressing_K(Key k)
+		{
+			return (key_states[k] & KeyStateDown) != 0;
 		}
 
 		FLAME_SURFACE_EXPORTS void *get_win32_handle();
@@ -111,17 +221,17 @@ namespace flame
 		FLAME_SURFACE_EXPORTS void set_cursor(void *c);
 		FLAME_SURFACE_EXPORTS void show_cursor(bool show);
 
-		FLAME_SURFACE_EXPORTS void set_size(int _x, int _y, int _cx, int _cy, int _style);
+		FLAME_SURFACE_EXPORTS void set_size(const Ivec2 &_pos, const Ivec2 &_size, int _style);
 		FLAME_SURFACE_EXPORTS void set_maximized(bool v);
 
 		FLAME_SURFACE_EXPORTS void *add_keydown_listener(const std::function<void(Surface *, int)> &e);
 		FLAME_SURFACE_EXPORTS void *add_keyup_listener(const std::function<void(Surface *, int)> &e);
 		FLAME_SURFACE_EXPORTS void *add_char_listener(const std::function<void(Surface *, int)> &e);
-		FLAME_SURFACE_EXPORTS void *add_mousedown_listener(const std::function<void(Surface *, int, int, int)> &e);
-		FLAME_SURFACE_EXPORTS void *add_mouseup_listener(const std::function<void(Surface *, int, int, int)> &e);
-		FLAME_SURFACE_EXPORTS void *add_mousemove_listener(const std::function<void(Surface *, int, int)> &e);
+		FLAME_SURFACE_EXPORTS void *add_mousedown_listener(const std::function<void(Surface *, int, const Ivec2 &pos)> &e);
+		FLAME_SURFACE_EXPORTS void *add_mouseup_listener(const std::function<void(Surface *, int, const Ivec2 &pos)> &e);
+		FLAME_SURFACE_EXPORTS void *add_mousemove_listener(const std::function<void(Surface *, const Ivec2 &pos)> &e);
 		FLAME_SURFACE_EXPORTS void *add_mousescroll_listener(const std::function<void(Surface *, int)> &e);
-		FLAME_SURFACE_EXPORTS void *add_resize_listener(const std::function<void(Surface *, int, int)> &e);
+		FLAME_SURFACE_EXPORTS void *add_resize_listener(const std::function<void(Surface *, const Ivec2 &size)> &e);
 		FLAME_SURFACE_EXPORTS void *add_destroy_listener(const std::function<void(Surface *)> &e);
 
 		FLAME_SURFACE_EXPORTS void remove_keydown_listener(void *p);
@@ -133,6 +243,10 @@ namespace flame
 		FLAME_SURFACE_EXPORTS void remove_mousescroll_listener(void *p);
 		FLAME_SURFACE_EXPORTS void remove_resize_listener(void *p);
 		FLAME_SURFACE_EXPORTS void remove_destroy_listener(void *p);
+
+		// Acceptable keys: Key_Shift, Key_Ctrl and Key_Alt.
+		// left_or_right - 0: left, 1: right
+		FLAME_SURFACE_EXPORTS bool is_modifier_pressing(Key k, int left_or_right);
 	};
 
 	struct SurfaceManagerPrivate;
@@ -144,7 +258,7 @@ namespace flame
 
 		SurfaceManagerPrivate *_priv;
 
-		FLAME_SURFACE_EXPORTS Surface *create_surface(int _cx, int _cy, int _style, const std::string &_title);
+		FLAME_SURFACE_EXPORTS Surface *create_surface(const Ivec2 &_size, int _style, const std::string &_title);
 		FLAME_SURFACE_EXPORTS void     destroy_surface(Surface *s);
 		FLAME_SURFACE_EXPORTS int      run(const std::function<void()> &idle_callback);
 	};

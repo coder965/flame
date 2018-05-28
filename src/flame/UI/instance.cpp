@@ -136,22 +136,79 @@ namespace flame
 			dl->AddImage(ImTextureID(1), ImVec2(0, 0), ImVec2(100, 100));
 		}
 
-		void Drawlist::draw_grid(const Vec2 &off, const Vec2 &size)
+		void Drawlist::draw_grid(const Vec2 &wnd_off, const Vec2 &off, const Vec2 &size)
 		{
 			for (auto i = mod((int)off.x, 100); i.y < size.x; i.y += 100, i.x--)
 			{
 				if (i.y < 0)
 					continue;
-				add_line(Vec2(i.y, 0.f), Vec2(i.y, size.y), Vec4(1.f));
-				add_text(Vec2(i.y + 4, 0.f), Vec4(1.f), "%d", i.x * -100);
+				add_line(Vec2(i.y, 0.f) + wnd_off, Vec2(i.y, size.y) + wnd_off, Vec4(1.f));
+				add_text(Vec2(i.y + 4, 0.f) + wnd_off, Vec4(1.f), "%d", i.x * -100);
 			}
 			for (auto i = mod((int)off.y, 100); i.y < size.y; i.y += 100, i.x--)
 			{
 				if (i.y < 0)
 					continue;
-				add_line(Vec2(0.f, i.y), Vec2(size.x, i.y), Vec4(1.f));
-				add_text(Vec2(4.f, i.y), Vec4(1.f), "%d", i.x * -100);
+				add_line(Vec2(0.f, i.y) + wnd_off, Vec2(size.x, i.y) + wnd_off, Vec4(1.f));
+				add_text(Vec2(4.f, i.y) + wnd_off, Vec4(1.f), "%d", i.x * -100);
 			}
+		}
+
+		void Instance::add_font(const char *ttf_filename, int code_min, int code_max)
+		{
+			auto &im_io = ImGui::GetIO();
+			static const ImWchar ranges[] = {
+				code_min,
+				code_max,
+				0
+			};
+			ImFontConfig config;
+			config.MergeMode = true;
+			config.PixelSnapH = true;
+			im_io.Fonts->AddFontFromFileTTF(ttf_filename, 16.f, &config, ranges);
+		}
+
+		void Instance::build()
+		{
+			auto &im_io = ImGui::GetIO();
+
+			unsigned char* font_pixels; int font_tex_width, font_tex_height;
+			im_io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_tex_width, &font_tex_height);
+			_priv->font_tex = graphics::create_texture(_priv->d, font_tex_width, font_tex_height,
+				1, 1, graphics::Format_R8G8B8A8_UNORM, graphics::TextureUsageShaderSampled |
+				graphics::TextureUsageTransferDst, graphics::MemPropDevice);
+
+			auto font_stag = graphics::create_buffer(_priv->d, font_tex_width * font_tex_height * 4,
+				graphics::BufferUsageTransferSrc, graphics::MemPropHost | graphics::MemPropHostCoherent);
+			font_stag->map();
+			memcpy(font_stag->mapped, font_pixels, font_stag->size);
+			font_stag->unmap();
+
+			auto cb_cpy = _priv->d->cp->create_commandbuffer();
+			cb_cpy->begin(true);
+			cb_cpy->change_texture_layout(_priv->font_tex, graphics::TextureLayoutUndefined, graphics::TextureLayoutTransferDst);
+			graphics::BufferImageCopy font_cpy_range;
+			font_cpy_range.buffer_offset = 0;
+			font_cpy_range.image_width = font_tex_width;
+			font_cpy_range.image_height = font_tex_height;
+			font_cpy_range.image_level = 0;
+			cb_cpy->copy_buffer_to_image(font_stag, _priv->font_tex, 1, &font_cpy_range);
+			cb_cpy->change_texture_layout(_priv->font_tex, graphics::TextureLayoutTransferDst, graphics::TextureLayoutShaderReadOnly);
+			cb_cpy->end();
+			_priv->d->q->submit(cb_cpy, nullptr, nullptr);
+			_priv->d->q->wait_idle();
+			_priv->d->cp->destroy_commandbuffer(cb_cpy);
+
+			graphics::destroy_buffer(_priv->d, font_stag);
+
+			im_io.Fonts->TexID = (void*)0; // image index
+
+			_priv->font_view = graphics::create_textureview(_priv->d, _priv->font_tex);
+
+			_priv->font_sam = graphics::create_sampler(_priv->d, graphics::FilterLinear, graphics::FilterLinear, false);
+
+			for (auto j = 0; j < 128; j++)
+				_priv->ds->set_texture(0, j, _priv->font_view, _priv->font_sam);
 		}
 
 		void Instance::set_texture(int index, graphics::Textureview *tv)
@@ -164,7 +221,7 @@ namespace flame
 			processed_mouse_input = false;
 			processed_keyboard_input = false;
 
-			ImGuiIO& im_io = ImGui::GetIO();
+			auto &im_io = ImGui::GetIO();
 
 			im_io.DisplaySize = ImVec2((float)cx, (float)cy);
 			im_io.DisplayFramebufferScale = ImVec2(1.f, 1.f);
@@ -200,54 +257,22 @@ namespace flame
 			bool open;
 			ShortString title;
 			void *user_data;
-			std::function<void(Instance *ui, void *user_data, bool &out_open)> show_callback;
+			std::function<void(Instance *ui, void *user_data, bool &open)> show_callback;
 
-			Dialog(const char *_title) :
-				open(false)
+			Dialog(const char *_title, int user_data_size,
+				const std::function<void(Instance *ui, void *user_data, bool &open)> &_show_callback) :
+				open(false),
+				show_callback(_show_callback)
 			{
 				strcpy(title.data, _title);
+				user_data = malloc(user_data_size);
+			}
+
+			~Dialog()
+			{
+				free(user_data);
 			}
 		};
-
-		//struct MessageDialog : Dialog
-		//{
-		//	MediumString message;
-
-		//	virtual void show() override
-		//	{
-		//		ImGui::TextUnformatted(message.data);
-		//		if (ImGui::Button("OK"))
-		//		{
-		//			ImGui::CloseCurrentPopup();
-		//			open = false;
-		//		}
-		//	}
-		//};
-
-		//struct InputDialog : Dialog
-		//{
-		//	ShortString label;
-		//	MediumString input;
-		//	std::function<void(MediumString *input)> callback;
-
-		//	virtual void show() override
-		//	{
-		//		ImGui::InputText(label.data, input.data, sizeof(input.data), 
-		//			ImGuiInputTextFlags_AutoSelectAll);
-		//		if (ImGui::Button("OK"))
-		//		{
-		//			callback(&input);
-		//			ImGui::CloseCurrentPopup();
-		//			open = false;
-		//		}
-		//		ImGui::SameLine();
-		//		if (ImGui::Button("Cancel"))
-		//		{
-		//			ImGui::CloseCurrentPopup();
-		//			open = false;
-		//		}
-		//	}
-		//};
 
 		static std::list<std::unique_ptr<Dialog>> dialogs;
 
@@ -264,6 +289,8 @@ namespace flame
 				if (ImGui::BeginPopupModal(d->title.data, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 				{
 					d->show_callback(this, d->user_data, d->open);
+					if (!d->open)
+						ImGui::CloseCurrentPopup();
 					ImGui::EndPopup();
 				}
 
@@ -429,6 +456,29 @@ namespace flame
 			return open;
 		}
 
+		bool Instance::begin_sidebarL_window(int base_y)
+		{
+			ImGuiIO& im_io = ImGui::GetIO();
+			ImGuiContext& im_g = *GImGui;
+			auto width = im_g.FontSize + im_g.Style.WindowPadding.y * 2.f;
+			ImGui::SetNextWindowPos(ImVec2(0.f, base_y));
+			ImGui::SetNextWindowSize(ImVec2(width, im_io.DisplaySize.y - base_y));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+			auto open = ImGui::Begin("##sidebarL", nullptr,
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoNav |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoSavedSettings |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoScrollWithMouse |
+				ImGuiWindowFlags_NoTitleBar);
+			ImGui::PopStyleVar();
+			return open;
+		}
+
 		void Instance::end_window()
 		{
 			ImGui::End();
@@ -519,6 +569,26 @@ namespace flame
 			return ImGui::DragFloat(label, &p->x, speed, v_min, v_max);
 		}
 
+		bool Instance::dragint(const char *label, int *p, float speed, int v_min, int v_max)
+		{
+			return ImGui::DragInt(label, p, speed, v_min, v_max);
+		}
+
+		bool Instance::dragint2(const char *label, Ivec2 *p, float speed, int v_min, int v_max)
+		{
+			return ImGui::DragInt2(label, &p->x, speed, v_min, v_max);
+		}
+
+		bool Instance::dragint3(const char *label, Ivec3 *p, float speed, int v_min, int v_max)
+		{
+			return ImGui::DragInt3(label, &p->x, speed, v_min, v_max);
+		}
+
+		bool Instance::dragint4(const char *label, Ivec4 *p, float speed, int v_min, int v_max)
+		{
+			return ImGui::DragInt4(label, &p->x, speed, v_min, v_max);
+		}
+
 		void Instance::text_unformatted(const char *text)
 		{
 			ImGui::TextUnformatted(text);
@@ -581,9 +651,9 @@ namespace flame
 			window->DrawList->AddText(g.Font, g.FontSize, bb.Min, ImGui::GetColorU32(ImGuiCol_Text), text, text_end);
 		}
 
-		bool Instance::inputtext(const char *label, char *dst, int len)
+		bool Instance::inputtext(const char *label, char *dst, int len, bool auto_select_all)
 		{
-			return ImGui::InputText(label, dst, len);
+			return ImGui::InputText(label, dst, len, auto_select_all ? ImGuiInputTextFlags_AutoSelectAll : 0);
 		}
 
 		bool Instance::selectable(const char *label, bool selected)
@@ -719,28 +789,78 @@ namespace flame
 			return dl;
 		}
 
+		void *Instance::add_dialog(const char *title, int user_data_size,
+			const std::function<void(Instance *ui, void *user_data, bool &open)> &show_callback)
+		{
+			auto d = new Dialog(title, user_data_size, show_callback);
+			dialogs.emplace_back(d);
+			return d->user_data;
+		}
+
+		struct MessageDialogData
+		{
+			MediumString message;
+
+			MessageDialogData()
+			{
+			}
+
+			~MessageDialogData() 
+			{
+			}
+		};
+
 		void Instance::add_message_dialog(const char *title, const char *message)
 		{
-			auto d = new MessageDialog;
-			d->open = false;
-			strcpy(d->title.data, title);
-			strcpy(d->message.data, message);
-			dialogs.emplace_back(d);
+			auto user_data = add_dialog(title, sizeof(MessageDialogData), [](Instance *ui, void *user_data, bool &open) {
+				auto dialog_data = (MessageDialogData*)user_data;
+				ui->text_unformatted(dialog_data->message.data);
+				if (ui->button("OK"))
+				{
+					dialog_data->~MessageDialogData(); // pod struct do not need to use destruct, here just for demonstration
+					open = false;
+				}
+			});
+			auto dialog_data = (MessageDialogData*)user_data;
+			new (dialog_data) MessageDialogData(); // pod struct do not need to use new, here just for demonstration
+			strcpy(dialog_data->message.data, message);
 		}
+
+		struct InputDialogData
+		{
+			ShortString label;
+			MediumString input;
+			std::function<void(MediumString *input)> callback;
+		};
 
 		void Instance::add_input_dialog(const char *title, const char *label, const
 			std::function<void(MediumString *input)> &callback, const char *default_input)
 		{
-			auto d = new InputDialog;
-			d->open = false;
-			strcpy(d->title.data, title);
-			strcpy(d->label.data, label);
-			d->callback = callback;
+			auto user_data = add_dialog(title, sizeof(InputDialogData), [](Instance *ui, void *user_data, bool &open) {
+				auto dialog_data = (InputDialogData*)user_data;
+				ui->inputtext(dialog_data->label.data, dialog_data->input.data, 
+					sizeof(dialog_data->input.data), true);
+				if (ui->button("OK"))
+				{
+					dialog_data->callback(&dialog_data->input);
+					open = false;
+				}
+				ui->sameline();
+				if (ui->button("Cancel"))
+					open = false;
+
+				if (!open)
+					dialog_data->~InputDialogData();
+			});
+			auto dialog_data = (InputDialogData*)user_data;
+			new (dialog_data) InputDialogData();
+			strcpy(dialog_data->label.data, label);
+			dialog_data->callback = callback;
 			if (default_input)
-				strcpy(d->input.data, default_input);
+				strcpy(dialog_data->input.data, default_input);
 			else
-				d->input.data[0] = 0;
-			dialogs.emplace_back(d);
+				dialog_data->input.data[0] = 0;
+
 		}
 
 		void Instance::set_mousecursor(CursorType type)
@@ -808,43 +928,6 @@ namespace flame
 			ImGui::CreateContext();
 			auto &im_io = ImGui::GetIO();
 			im_io.Fonts->AddFontDefault();
-			unsigned char* font_pixels; int font_tex_width, font_tex_height;
-			im_io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_tex_width, &font_tex_height);
-			i->_priv->font_tex = graphics::create_texture(d, font_tex_width, font_tex_height, 
-				1, 1, graphics::Format_R8G8B8A8_UNORM, graphics::TextureUsageShaderSampled |
-				graphics::TextureUsageTransferDst, graphics::MemPropDevice);
-
-			auto font_stag = graphics::create_buffer(d, font_tex_width * font_tex_height * 4, 
-				graphics::BufferUsageTransferSrc, graphics::MemPropHost | graphics::MemPropHostCoherent);
-			font_stag->map();
-			memcpy(font_stag->mapped, font_pixels, font_stag->size);
-			font_stag->unmap();
-
-			auto cb_cpy = d->cp->create_commandbuffer();
-			cb_cpy->begin(true);
-			cb_cpy->change_texture_layout(i->_priv->font_tex, graphics::TextureLayoutUndefined, graphics::TextureLayoutTransferDst);
-			graphics::BufferImageCopy font_cpy_range;
-			font_cpy_range.buffer_offset = 0;
-			font_cpy_range.image_width = font_tex_width;
-			font_cpy_range.image_height = font_tex_height;
-			font_cpy_range.image_level = 0;
-			cb_cpy->copy_buffer_to_image(font_stag, i->_priv->font_tex, 1, &font_cpy_range);
-			cb_cpy->change_texture_layout(i->_priv->font_tex, graphics::TextureLayoutTransferDst, graphics::TextureLayoutShaderReadOnly);
-			cb_cpy->end();
-			d->q->submit(cb_cpy, nullptr, nullptr);
-			d->q->wait_idle();
-			d->cp->destroy_commandbuffer(cb_cpy);
-
-			graphics::destroy_buffer(d, font_stag);
-
-			im_io.Fonts->TexID = (void*)0; // image index
-
-			i->_priv->font_view = graphics::create_textureview(d, i->_priv->font_tex);
-
-			i->_priv->font_sam = graphics::create_sampler(d, graphics::FilterLinear, graphics::FilterLinear, false);
-
-			for (auto j = 0; j < 128; j++)
-				i->_priv->ds->set_texture(0, j, i->_priv->font_view, i->_priv->font_sam);
 
 			i->_priv->vtx_buffer = nullptr;
 			i->_priv->idx_buffer = nullptr;

@@ -35,6 +35,189 @@
 
 namespace flame
 {
+	inline Key Z(int code)
+	{
+		switch (code)
+		{
+		case VK_BACK:
+			return Key_Backspace;
+		case VK_TAB:
+			return Key_Tab;
+		case VK_RETURN:
+			return Key_Enter;
+		case VK_SHIFT:
+			return Key_Shift;
+		case VK_CONTROL:
+			return Key_Ctrl;
+		case VK_MENU:
+			return Key_Alt;
+		case VK_PAUSE:
+			return Key_Pause;
+		case VK_CAPITAL:
+			return Key_CapsLock;
+		case VK_ESCAPE:
+			return Key_Esc;
+		case VK_SPACE:
+			return Key_Space;
+		case VK_PRIOR:
+			return Key_PgUp;
+		case VK_NEXT:
+			return Key_PgDn;
+		case VK_END:
+			return Key_End;
+		case VK_HOME:
+			return Key_Home;
+		case VK_LEFT:
+			return Key_Left;
+		case VK_UP:
+			return Key_Up;
+		case VK_RIGHT:
+			return Key_Right;
+		case VK_DOWN:
+			return Key_Down;
+		case VK_SNAPSHOT:
+			return Key_PrtSc;
+		case VK_INSERT:
+			return Key_Ins;
+		case VK_DELETE:
+			return Key_Del;
+		case '0':
+			return Key_0;
+		case '1':
+			return Key_1;
+		case '2':
+			return Key_2;
+		case '3':
+			return Key_3;
+		case '4':
+			return Key_4;
+		case '5':
+			return Key_5;
+		case '6':
+			return Key_6;
+		case '7':
+			return Key_7;
+		case '8':
+			return Key_8;
+		case '9':
+			return Key_9;
+		case 'A':
+			return Key_A;
+		case 'B':
+			return Key_B;
+		case 'C':
+			return Key_C;
+		case 'D':
+			return Key_D;
+		case 'E':
+			return Key_E;
+		case 'F':
+			return Key_F;
+		case 'G':
+			return Key_G;
+		case 'H':
+			return Key_H;
+		case 'I':
+			return Key_I;
+		case 'J':
+			return Key_J;
+		case 'K':
+			return Key_K;
+		case 'L':
+			return Key_L;
+		case 'M':
+			return Key_M;
+		case 'N':
+			return Key_N;
+		case 'O':
+			return Key_O;
+		case 'P':
+			return Key_P;
+		case 'Q':
+			return Key_Q;
+		case 'R':
+			return Key_R;
+		case 'S':
+			return Key_S;
+		case 'T':
+			return Key_T;
+		case 'U':
+			return Key_U;
+		case 'V':
+			return Key_V;
+		case 'W':
+			return Key_W;
+		case 'X':
+			return Key_X;
+		case 'Y':
+			return Key_Y;
+		case 'Z':
+			return Key_Z;
+		case VK_NUMPAD0:
+			return Key_Numpad0;
+		case VK_NUMPAD1:
+			return Key_Numpad1;
+		case VK_NUMPAD2:
+			return Key_Numpad2;
+		case VK_NUMPAD3:
+			return Key_Numpad3;
+		case VK_NUMPAD4:
+			return Key_Numpad4;
+		case VK_NUMPAD5:
+			return Key_Numpad5;
+		case VK_NUMPAD6:
+			return Key_Numpad6;
+		case VK_NUMPAD7:
+			return Key_Numpad7;
+		case VK_NUMPAD8:
+			return Key_Numpad8;
+		case VK_NUMPAD9:
+			return Key_Numpad9;
+		case VK_ADD:
+			return Key_Add;
+		case VK_SUBTRACT:
+			return Key_Subtract;
+		case VK_MULTIPLY:
+			return Key_Multiply;
+		case VK_DIVIDE:
+			return Key_Divide;
+		case VK_SEPARATOR:
+			return Key_Separator;
+		case VK_DECIMAL:
+			return Key_Decimal;
+		case VK_F1:
+			return Key_F1;
+		case VK_F2:
+			return Key_F2;
+		case VK_F3:
+			return Key_F3;
+		case VK_F4:
+			return Key_F4;
+		case VK_F5:
+			return Key_F5;
+		case VK_F6:
+			return Key_F6;
+		case VK_F7:
+			return Key_F7;
+		case VK_F8:
+			return Key_F8;
+		case VK_F9:
+			return Key_F9;
+		case VK_F10:
+			return Key_F10;
+		case VK_F11:
+			return Key_F11;
+		case VK_F12:
+			return Key_F12;
+		case VK_NUMLOCK:
+			return Key_NumLock;
+		case VK_SCROLL:
+			return Key_ScrollLock;
+		default:
+			return Key_Unknown;
+		}
+	}
+
 	enum KeyEventType
 	{
 		KeyEventNull,
@@ -55,18 +238,17 @@ namespace flame
 	{
 		HWND hWnd;
 
-		int mouse_prev_x;
-		int mouse_prev_y;
+		Ivec2 mouse_prev_pos;
 
-		std::list<std::function<void(Surface *, int)>>           keydown_listeners;
-		std::list<std::function<void(Surface *, int)>>           keyup_listeners;
-		std::list<std::function<void(Surface *, int)>>           char_listeners;
-		std::list<std::function<void(Surface *, int, int, int)>> mousedown_listeners;
-		std::list<std::function<void(Surface *, int, int, int)>> mouseup_listeners;
-		std::list<std::function<void(Surface *, int, int)>>      mousemove_listeners;
-		std::list<std::function<void(Surface *, int)>>           mousescroll_listeners;
-		std::list<std::function<void(Surface *, int, int)>>      resize_listeners;
-		std::list<std::function<void(Surface *)>>                destroy_listeners;
+		std::list<std::function<void(Surface *, int)>>					 keydown_listeners;
+		std::list<std::function<void(Surface *, int)>>					 keyup_listeners;
+		std::list<std::function<void(Surface *, int)>>					 char_listeners;
+		std::list<std::function<void(Surface *, int, const Ivec2 &pos)>> mousedown_listeners;
+		std::list<std::function<void(Surface *, int, const Ivec2 &pos)>> mouseup_listeners;
+		std::list<std::function<void(Surface *, const Ivec2 &pos)>>      mousemove_listeners;
+		std::list<std::function<void(Surface *, int)>>					 mousescroll_listeners;
+		std::list<std::function<void(Surface *, const Ivec2 &size)>>	 resize_listeners;
+		std::list<std::function<void(Surface *)>>						 destroy_listeners;
 
 		KeyEventType key_event_type;
 		int key_event_key;
@@ -149,12 +331,12 @@ namespace flame
 		ShowCursor(show);
 	}
 
-	void Surface::set_size(int _x, int _y, int _cx, int _cy, int _style)
+	void Surface::set_size(const Ivec2 &_pos, const Ivec2 &_size, int _style)
 	{
-		if (_cx > 0)
-			cx = _cx;
-		if (_cy > 0)
-			cy = _cy;
+		if (_size.x > 0)
+			size.x = _size.x;
+		if (_size.y > 0)
+			size.y = _size.y;
 
 		bool style_changed = false;
 		if (_style != -1 && _style != style)
@@ -165,6 +347,9 @@ namespace flame
 
 		assert(!(style & SurfaceStyleFullscreen) || (!(style & SurfaceStyleFrame) && !(style & SurfaceStyleResizable)));
 
+		int total_size_x;
+		int total_size_y;
+
 		auto win32_style = WS_VISIBLE;
 		if (style == 0)
 			win32_style |= WS_POPUP | WS_BORDER;
@@ -172,8 +357,8 @@ namespace flame
 		{
 			if (style & SurfaceStyleFullscreen)
 			{
-				_cx = get_screen_cx();
-				_cy = get_screen_cy();
+				total_size_x = get_screen_cx();
+				total_size_y = get_screen_cy();
 			}
 			if (style & SurfaceStyleFrame)
 				win32_style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
@@ -181,24 +366,24 @@ namespace flame
 				win32_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 		}
 
-		RECT rect = {0, 0, cx, cy};
+		RECT rect = {0, 0, size.x, size.y};
 		AdjustWindowRect(&rect, win32_style, false);
-		_cx = rect.right - rect.left;
-		_cy = rect.bottom - rect.top;
+		total_size_x = rect.right - rect.left;
+		total_size_y = rect.bottom - rect.top;
 
-		x = _x == -1 ? (get_screen_cx() - _cx) / 2 : _x;
-		y = _y == -1 ? (get_screen_cy() - _cy) / 2 : _y;
+		pos.x = _pos.x == -1 ? (get_screen_cx() - total_size_x) / 2 : _pos.x;
+		pos.y = _pos.y == -1 ? (get_screen_cy() - total_size_y) / 2 : _pos.y;
 
 		if (_priv->hWnd)
 		{
 			if (style_changed)
 				SetWindowLong(_priv->hWnd, GWL_STYLE, win32_style);
-			MoveWindow(_priv->hWnd, x, y, cx, cy, true);
+			MoveWindow(_priv->hWnd, pos.x, pos.y, size.x, size.y, true);
 		}
 		else
 		{
 			_priv->hWnd = CreateWindowA("tke_wnd", title.c_str(), win32_style,
-				x, y, _cx, _cy, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
+				pos.x, pos.y, total_size_x, total_size_y, NULL, NULL, (HINSTANCE)get_hinst(), NULL);
 		}
 	}
 
@@ -225,19 +410,19 @@ namespace flame
 		return &_priv->char_listeners.back();
 	}
 
-	void *Surface::add_mousedown_listener(const std::function<void(Surface *, int, int, int)> &e)
+	void *Surface::add_mousedown_listener(const std::function<void(Surface *, int, const Ivec2 &pos)> &e)
 	{
 		_priv->mousedown_listeners.push_back(e);
 		return &_priv->mousedown_listeners.back();
 	}
 
-	void *Surface::add_mouseup_listener(const std::function<void(Surface *, int, int, int)> &e)
+	void *Surface::add_mouseup_listener(const std::function<void(Surface *, int, const Ivec2 &pos)> &e)
 	{
 		_priv->mouseup_listeners.push_back(e);
 		return &_priv->mouseup_listeners.back();
 	}
 
-	void *Surface::add_mousemove_listener(const std::function<void(Surface *, int, int)> &e)
+	void *Surface::add_mousemove_listener(const std::function<void(Surface *, const Ivec2 &pos)> &e)
 	{
 		_priv->mousemove_listeners.push_back(e);
 		return &_priv->mousemove_listeners.back();
@@ -249,7 +434,7 @@ namespace flame
 		return &_priv->mousescroll_listeners.back();
 	}
 
-	void *Surface::add_resize_listener(const std::function<void(Surface *s, int, int)> &e)
+	void *Surface::add_resize_listener(const std::function<void(Surface *s, const Ivec2 &size)> &e)
 	{
 		_priv->resize_listeners.push_back(e);
 		return &_priv->resize_listeners.back();
@@ -369,6 +554,11 @@ namespace flame
 		}
 	}
 
+	bool Surface::is_modifier_pressing(Key k, int left_or_right)
+	{
+		return false;
+	}
+
 	static LRESULT CALLBACK _wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		auto s = (Surface*)GetWindowLongPtr(hWnd, 0);
@@ -378,12 +568,12 @@ namespace flame
 			switch (message)
 			{
 				case WM_KEYDOWN:
-					s->key_states[wParam] = KeyStateDown | KeyStateJust;
+					s->key_states[Z(wParam)] = KeyStateDown | KeyStateJust;
 					s->_priv->key_event_type = KeyEventDown;
 					s->_priv->key_event_key = wParam;
 					break;
 				case WM_KEYUP:
-					s->key_states[wParam] = KeyStateUp | KeyStateJust;
+					s->key_states[Z(wParam)] = KeyStateUp | KeyStateJust;
 					s->_priv->key_event_type = KeyEventUp;
 					s->_priv->key_event_key = wParam;
 					break;
@@ -392,49 +582,42 @@ namespace flame
 					break;
 				case WM_LBUTTONDOWN:
 					s->mouse_buttons[0] = KeyStateDown | KeyStateJust;
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_event_type = KeyEventDown;
 					s->_priv->mouse_event_key = 0;
 					break;
 				case WM_LBUTTONUP:
 					s->mouse_buttons[0] = KeyStateUp | KeyStateJust;
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_event_type = KeyEventUp;
 					s->_priv->mouse_event_key = 0;
 					break;
 				case WM_MBUTTONDOWN:
 					s->mouse_buttons[2] = KeyStateDown | KeyStateJust;
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_event_type = KeyEventDown;
 					s->_priv->mouse_event_key = 2;
 					break;
 				case WM_MBUTTONUP:
 					s->mouse_buttons[2] = KeyStateUp | KeyStateJust;
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_event_type = KeyEventUp;
 					s->_priv->mouse_event_key = 2;
 					break;
 				case WM_RBUTTONDOWN:
 					s->mouse_buttons[1] = KeyStateDown | KeyStateJust;
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_event_type = KeyEventDown;
 					s->_priv->mouse_event_key = 1;
 					break;
 				case WM_RBUTTONUP:
 					s->mouse_buttons[1] = KeyStateUp | KeyStateJust;
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_event_type = KeyEventUp;
 					s->_priv->mouse_event_key = 1;
 					break;
 				case WM_MOUSEMOVE:
-					s->mouse_x = LOWORD(lParam);
-					s->mouse_y = HIWORD(lParam);
+					s->mouse_pos = Ivec2(LOWORD(lParam), HIWORD(lParam));
 					s->_priv->mouse_move_event = true;
 					break;
 				case WM_MOUSEWHEEL:
@@ -447,10 +630,10 @@ namespace flame
 				{
 					auto x = std::max((int)LOWORD(lParam), 1);
 					auto y = std::max((int)HIWORD(lParam), 1);
-					if (x != s->cx || y != s->cy)
+					if (x != s->size.x || y != s->size.y)
 					{
-						s->cx = x;
-						s->cy = y;
+						s->size.x = x;
+						s->size.y = y;
 						s->_priv->resize_event = true;
 					}
 					break;
@@ -461,7 +644,7 @@ namespace flame
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	Surface *SurfaceManager::create_surface(int _cx, int _cy, int _style, const std::string &_title)
+	Surface *SurfaceManager::create_surface(const Ivec2 &_size, int _style, const std::string &_title)
 	{
 		static bool initialized = false;
 		if (!initialized)
@@ -499,8 +682,8 @@ namespace flame
 		for (auto i = 0; i < FLAME_ARRAYSIZE(s->key_states); i++)
 			s->key_states[i] = KeyStateUp;
 
-		s->mouse_x = s->mouse_y = 0;
-		s->mouse_disp_x = s->mouse_disp_y = 0;
+		s->mouse_pos = Ivec2(0);
+		s->mouse_disp = Ivec2(0);
 		s->mouse_scroll = 0;
 
 		for (auto i = 0; i < FLAME_ARRAYSIZE(s->mouse_buttons); i++)
@@ -513,7 +696,7 @@ namespace flame
 		s->_priv->key_event_type = KeyEventNull;
 		s->_priv->key_event_key = 0;
 
-		s->_priv->mouse_prev_x = s->_priv->mouse_prev_y = 0;
+		s->_priv->mouse_prev_pos = Ivec2(0);
 		s->_priv->mouse_event_type = KeyEventNull;
 		s->_priv->mouse_event_key = 0;
 		s->_priv->mouse_move_event = false;
@@ -524,7 +707,7 @@ namespace flame
 		s->_priv->destroy_event = false;
 
 		s->style = 0;
-		s->set_size(-1, -1, _cx, _cy, _style);
+		s->set_size(Ivec2(-1), _size, _style);
 
 		SetWindowLongPtr(s->_priv->hWnd, 0, (LONG_PTR)s);
 
@@ -575,8 +758,7 @@ namespace flame
 			{
 				auto s = *it;
 
-				s->mouse_disp_x = s->mouse_x - s->_priv->mouse_prev_x;
-				s->mouse_disp_y = s->mouse_y - s->_priv->mouse_prev_y;
+				s->mouse_disp = s->mouse_pos - s->_priv->mouse_prev_pos;
 
 				if (s->_priv->destroy_event)
 				{
@@ -605,11 +787,11 @@ namespace flame
 					{
 						case KeyEventDown:
 							for (auto &e : s->_priv->mousedown_listeners)
-								e(s, s->_priv->mouse_event_key, s->mouse_x, s->mouse_y);
+								e(s, s->_priv->mouse_event_key, s->mouse_pos);
 							break;
 						case KeyEventUp:
 							for (auto &e : s->_priv->mouseup_listeners)
-								e(s, s->_priv->mouse_event_key, s->mouse_x, s->mouse_y);
+								e(s, s->_priv->mouse_event_key, s->mouse_pos);
 							break;
 					}
 					s->_priv->mouse_event_type = KeyEventNull;
@@ -628,7 +810,7 @@ namespace flame
 					if (s->_priv->mouse_move_event)
 					{
 						for (auto &e : s->_priv->mousemove_listeners)
-							e(s, s->mouse_x, s->mouse_y);
+							e(s, s->mouse_pos);
 						s->_priv->mouse_move_event = false;
 					}
 
@@ -642,7 +824,7 @@ namespace flame
 					if (s->_priv->resize_event)
 					{
 						for (auto &e : s->_priv->resize_listeners)
-							e(s, s->cx, s->cy);
+							e(s, s->size);
 						s->_priv->resize_event = false;
 					}
 
@@ -670,8 +852,7 @@ namespace flame
 				for (auto i = 0; i < FLAME_ARRAYSIZE(s->mouse_buttons); i++)
 					s->mouse_buttons[i] &= ~KeyStateJust;
 
-				s->_priv->mouse_prev_x = s->mouse_x;
-				s->_priv->mouse_prev_y = s->mouse_y;
+				s->_priv->mouse_prev_pos = s->mouse_pos;
 				s->mouse_scroll = 0;
 			}
 

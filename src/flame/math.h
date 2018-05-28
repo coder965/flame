@@ -3970,28 +3970,28 @@ namespace flame
 
 	inline Rect::Side Rect::calc_side(const Vec2 &p, float threshold)
 	{
-		if (p.x < max.x + threshold && p.x > max.x &&
-			p.y > min.y - threshold && p.y < min.y)
+		if (p.x < max.x && p.x > max.x - threshold &&
+			p.y > min.y && p.y < min.y + threshold)
 			return SideNE;
-		if (p.x > min.x - threshold && p.x < min.x &&
-			p.y > min.y - threshold && p.y < min.y)
+		if (p.x > min.x && p.x < min.x + threshold &&
+			p.y > min.y && p.y < min.y + threshold)
 			return SideNW;
-		if (p.x < max.x + threshold && p.x > max.x &&
-			p.y < max.y + threshold && p.y > max.y)
+		if (p.x < max.x && p.x > max.x - threshold &&
+			p.y < max.y && p.y > max.y - threshold)
 			return SideSE;
-		if (p.x > min.x - threshold && p.x < min.x &&
-			p.y < max.y + threshold && p.y > max.y)
+		if (p.x > min.x && p.x < min.x + threshold &&
+			p.y < max.y && p.y > max.y - threshold)
 			return SideSW;
-		if (p.y > min.y - threshold && p.y < min.y &&
+		if (p.y > min.y - threshold && p.y < min.y + threshold &&
 			p.x > min.x && p.x < max.x)
 			return SideN;
-		if (p.y < max.y + threshold && p.y > max.y &&
+		if (p.y < max.y && p.y > max.y - threshold &&
 			p.x > min.x && p.x < max.x)
 			return SideS;
-		if (p.x < max.x + threshold && p.x > max.x &&
+		if (p.x < max.x && p.x > max.x - threshold &&
 			p.y > min.y && p.y < max.y)
 			return SideE;
-		if (p.x > min.x - threshold && p.x < min.x &&
+		if (p.x > min.x && p.x < min.x + threshold &&
 			p.y > min.y && p.y < max.y)
 			return SideW;
 		if (contains(p))

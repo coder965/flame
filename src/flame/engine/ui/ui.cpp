@@ -313,9 +313,6 @@ namespace flame
 			icons_config.PixelSnapH = true;
 			io.Fonts->AddFontFromFileTTF("icon.ttf", 16.0f, &icons_config, icons_ranges);
 
-			for (auto i = 0; i < 128; i++)
-				updateDescriptorSets(&pipeline_ui->descriptor_set->get_write(0, i, &get_texture_info(font_image, colorSampler)));
-
 			if (!std::filesystem::exists("sdf.rimg"))
 			{
 				std::string cl(sdf_chars);
