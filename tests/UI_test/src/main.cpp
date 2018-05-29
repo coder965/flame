@@ -33,24 +33,22 @@
 #include <flame/graphics/commandbuffer.h>
 #include <flame/graphics/semaphore.h>
 #include <flame/graphics/queue.h>
-#include <flame/UI/UI.h>
+#include <flame/UI/instance.h>
 
 #include <Windows.h>
 
 int main(int argc, char **args)
 {
 	using namespace flame;
-	using namespace glm;
 
-	vec2 res(1280, 720);
+	Ivec2 res(1280, 720);
 
 	auto sm = create_surface_manager();
-	auto s = sm->create_surface(res.x, res.y, SurfaceStyleFrame,
-		"Hello");
+	auto s = sm->create_surface(res, SurfaceStyleFrame, "Hello");
 
 	auto d = graphics::create_device(false);
 
-	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
+	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->size);
 
 	auto rp_ui = graphics::create_renderpass(d);
 	rp_ui->add_attachment(sc->format, true);
@@ -73,7 +71,7 @@ int main(int argc, char **args)
 	auto image_avalible = graphics::create_semaphore(d);
 	auto ui_finished = graphics::create_semaphore(d);
 
-	auto ui = UI::create_instance(d, rp_ui);
+	auto ui = UI::create_instance(d, rp_ui, s);
 
 	HMODULE lib = 0;
 	void(*fun)(void*) = nullptr;
@@ -134,11 +132,7 @@ int main(int argc, char **args)
 			need_reload_fun = false;
 		}
 
-		ui->begin(res.x, res.y, sm->elapsed_time, s->mouse_x, s->mouse_y,
-			(s->mouse_buttons[0] & KeyStateDown) != 0,
-			(s->mouse_buttons[1] & KeyStateDown) != 0,
-			(s->mouse_buttons[2] & KeyStateDown) != 0,
-			s->mouse_scroll);
+		ui->begin(res.x, res.y, sm->elapsed_time);
 		fun(ui);
 		ui->end();
 

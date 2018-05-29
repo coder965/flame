@@ -70,6 +70,11 @@ namespace flame
 	{
 	};
 
+	inline bool is_slash(char ch)
+	{
+		return ch == '\\' || ch == '/';
+	}
+
 	inline int get_str_line_number(const char *str)
 	{
 		int lineNumber = 0;

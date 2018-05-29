@@ -174,7 +174,7 @@ namespace flame
 
 			unsigned char* font_pixels; int font_tex_width, font_tex_height;
 			im_io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_tex_width, &font_tex_height);
-			_priv->font_tex = graphics::create_texture(_priv->d, font_tex_width, font_tex_height,
+			_priv->font_tex = graphics::create_texture(_priv->d, Ivec2(font_tex_width, font_tex_height),
 				1, 1, graphics::Format_R8G8B8A8_UNORM, graphics::TextureUsageShaderSampled |
 				graphics::TextureUsageTransferDst, graphics::MemPropDevice);
 
@@ -229,7 +229,7 @@ namespace flame
 			elapsed_time = _elapsed_time;
 			im_io.DeltaTime = elapsed_time;
 
-			im_io.MousePos = ImVec2(_priv->s->mouse_x, _priv->s->mouse_y);
+			im_io.MousePos = ImVec2(_priv->s->mouse_pos.x, _priv->s->mouse_pos.y);
 
 			im_io.MouseDown[0] = (_priv->s->mouse_buttons[0] & KeyStateDown) != 0;
 			im_io.MouseDown[1] = (_priv->s->mouse_buttons[1] & KeyStateDown) != 0;
@@ -239,13 +239,18 @@ namespace flame
 
 			if ((im_io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) == 0)
 			{
-				ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-				if (im_io.MouseDrawCursor || cursor == ImGuiMouseCursor_None)
-					_priv->s->show_cursor(false);
-				else
+				static ImGuiMouseCursor last_cursor = ImGuiMouseCursor_Arrow;
+				auto cursor = ImGui::GetMouseCursor();
+				if (last_cursor != cursor)
 				{
-					_priv->s->set_cursor(_priv->cursors[cursor]);
-					_priv->s->show_cursor(true);
+					if (im_io.MouseDrawCursor || cursor == ImGuiMouseCursor_None)
+						_priv->s->show_cursor(false);
+					else
+					{
+						_priv->s->set_cursor(_priv->cursors[cursor]);
+						_priv->s->show_cursor(true);
+					}
+					last_cursor = cursor;
 				}
 			}
 
@@ -361,8 +366,8 @@ namespace flame
 			cb->bind_descriptorset(_priv->ds);
 			cb->bind_vertexbuffer(_priv->vtx_buffer);
 			cb->bind_indexbuffer(_priv->idx_buffer, graphics::IndiceTypeUshort);
-			cb->set_viewport(0, 0, im_io.DisplaySize.x, im_io.DisplaySize.y);
-			cb->set_scissor(0, 0, im_io.DisplaySize.x, im_io.DisplaySize.y);
+			cb->set_viewport(Ivec2(0), Ivec2(im_io.DisplaySize.x, im_io.DisplaySize.y));
+			cb->set_scissor(Ivec2(0), Ivec2(im_io.DisplaySize.x, im_io.DisplaySize.y));
 			Vec4 pc;
 			pc.x = 2.f / im_io.DisplaySize.x;
 			pc.y = 2.f / im_io.DisplaySize.y;
@@ -385,11 +390,9 @@ namespace flame
 					}
 					else
 					{
-						cb->set_scissor(
-							(int)(pcmd->ClipRect.x),
-							(int)(pcmd->ClipRect.y),
-							(uint)(pcmd->ClipRect.z - pcmd->ClipRect.x),
-							(uint)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1)  // TODO: + 1??????
+						cb->set_scissor(Ivec2((int)(pcmd->ClipRect.x), (int)(pcmd->ClipRect.y)),
+							Ivec2((uint)(pcmd->ClipRect.z - pcmd->ClipRect.x),
+							(uint)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1))  // TODO: + 1??????
 						);
 						cb->draw_indexed(pcmd->ElemCount, idx_offset, vtx_offset, 1, (int)pcmd->TextureId);
 					}
@@ -868,6 +871,9 @@ namespace flame
 			ImGuiMouseCursor c;
 			switch (type)
 			{
+			case CursorNone:
+				c = ImGuiMouseCursor_None;
+				break;
 			case CursorArrow:
 				c = ImGuiMouseCursor_Arrow;
 				break;
@@ -913,7 +919,7 @@ namespace flame
 				graphics::VertexAttributeFloat2,
 				graphics::VertexAttributeByte4
 			}});
-			i->_priv->pl->set_size(0, 0);
+			i->_priv->pl->set_size(Ivec2(0));
 			i->_priv->pl->set_cull_mode(graphics::CullModeNone);
 			i->_priv->pl->set_blend_state(0, true, graphics::BlendFactorSrcAlpha, graphics::BlendFactorOneMinusSrcAlpha,
 				graphics::BlendFactorZero, graphics::BlendFactorOneMinusSrcAlpha);

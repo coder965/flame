@@ -22,6 +22,9 @@
 
 #pragma once
 
+#ifndef FLAME_GRAPHICS_HEAD
+#define FLAME_GRAPHICS_HEAD
+
 #ifdef _FLAME_GRAPHICS_EXPORTS
 #define FLAME_GRAPHICS_EXPORTS __declspec(dllexport)
 #else
@@ -187,3 +190,5 @@ namespace flame
 		};
 	}
 }
+
+#endif

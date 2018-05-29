@@ -145,6 +145,7 @@ namespace flame
 
 	enum CursorType
 	{
+		CursorNone = -1,
 		CursorAppStarting, // arrow and small hourglass
 		CursorArrow,
 		CursorCross, // unknown

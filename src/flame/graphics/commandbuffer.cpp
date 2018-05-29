@@ -54,8 +54,8 @@ namespace flame
 			info.framebuffer = f->_priv->v;
 			info.renderArea.offset.x = 0;
 			info.renderArea.offset.y = 0;
-			info.renderArea.extent.width = f->cx;
-			info.renderArea.extent.height = f->cy;
+			info.renderArea.extent.width = f->size.x;
+			info.renderArea.extent.height = f->size.y;
 			info.clearValueCount = r->_priv->clear_values.size();
 			info.pClearValues = r->_priv->clear_values.data();
 
@@ -67,25 +67,25 @@ namespace flame
 			vkCmdEndRenderPass(_priv->v);
 		}
 
-		void Commandbuffer::set_viewport(int x, int y, int width, int height)
+		void Commandbuffer::set_viewport(const Ivec2 &pos, const Ivec2 &size)
 		{
 			VkViewport vp;
 			vp.minDepth = 0.f;
 			vp.maxDepth = 1.f;
-			vp.x = x;
-			vp.y = y;
-			vp.width = width;
-			vp.height = height;
+			vp.x = pos.x;
+			vp.y = pos.y;
+			vp.width = size.x;
+			vp.height = size.y;
 			vkCmdSetViewport(_priv->v, 0, 1, &vp);
 		}
 
-		void Commandbuffer::set_scissor(int x, int y, int width, int height)
+		void Commandbuffer::set_scissor(const Ivec2 &pos, const Ivec2 &size)
 		{
 			VkRect2D sc;
-			sc.offset.x = x;
-			sc.offset.y = y;
-			sc.extent.width = width;
-			sc.extent.height = height;
+			sc.offset.x = pos.x;
+			sc.offset.y = pos.y;
+			sc.extent.width = size.x;
+			sc.extent.height = size.y;
 			vkCmdSetScissor(_priv->v, 0, 1, &sc);
 		}
 
@@ -129,9 +129,9 @@ namespace flame
 			vkCmdDrawIndexed(_priv->v, count, instance_count, first_index, vertex_offset, first_instance);
 		}
 
-		void Commandbuffer::dispatch(int x, int y, int z)
+		void Commandbuffer::dispatch(const Ivec3 &v)
 		{
-			vkCmdDispatch(_priv->v, x, y, z);
+			vkCmdDispatch(_priv->v, v.x, v.y, v.z);
 		}
 
 		void Commandbuffer::copy_buffer(Buffer *src, Buffer *dst, int copy_count, BufferCopy *copies)

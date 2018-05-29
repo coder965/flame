@@ -22,6 +22,9 @@
 
 #pragma once
 
+#ifndef FLAME_MATH_HEAD
+#define FLAME_MATH_HEAD
+
 #include <math.h>
 
 namespace flame
@@ -3711,7 +3714,7 @@ namespace flame
 		return ret;
 	}
 
-	Mat4 operator*(const Mat4 &lhs, const Mat4 &rhs)
+	inline Mat4 operator*(const Mat4 &lhs, const Mat4 &rhs)
 	{
 		Mat4 ret;
 		ret[0][0] = lhs[0][0] * rhs[0][0] + lhs[1][0] * rhs[0][1] + lhs[2][0] * rhs[0][2] + lhs[3][0] * rhs[0][3];
@@ -4237,3 +4240,5 @@ namespace flame
 		}
 	}
 }
+
+#endif

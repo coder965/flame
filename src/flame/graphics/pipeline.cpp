@@ -170,10 +170,10 @@ namespace flame
 			return vk_stage_infos;
 		}
 
-		void Pipeline::set_size(int cx, int cy)
+		void Pipeline::set_size(const Ivec2 &size)
 		{
-			_priv->cx = cx;
-			_priv->cy = cy;
+			_priv->cx = size.x;
+			_priv->cy = size.y;
 		}
 
 		void Pipeline::set_renderpass(Renderpass *r, int subpass_index)

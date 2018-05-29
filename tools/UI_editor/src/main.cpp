@@ -89,14 +89,14 @@ int add_ui_texture(const char *filename)
 	return -1;
 }
 
-int add_ui_texture(int cx, int cy)
+int add_ui_texture(const Ivec2 &size)
 {
 	for (auto i = 0; i < 126; i++)
 	{
 		if (ui_texture_trackers[i].use_count == 0)
 		{
 			ui_texture_trackers[i].use_count++;
-			ui_texture_trackers[i].tex = graphics::create_texture(d, cx, cy, 1, 1, graphics::Format_R8G8B8A8_UNORM,
+			ui_texture_trackers[i].tex = graphics::create_texture(d, size, 1, 1, graphics::Format_R8G8B8A8_UNORM,
 				graphics::TextureUsageAttachment | graphics::TextureUsageShaderSampled,
 				graphics::MemPropDevice);
 			ui_texture_trackers[i].tv = graphics::create_textureview(d, ui_texture_trackers[i].tex);
@@ -111,6 +111,7 @@ int add_ui_texture(int cx, int cy)
 #define ICON_TEXT u8"\uf001"
 #define ICON_BUTTON u8"\uf002"
 #define ICON_IMAGE u8"\uf003"
+#define ICON_PTCWRD u8"\uf004"
 
 int main(int argc, char **args)
 {
@@ -119,7 +120,7 @@ int main(int argc, char **args)
 	auto sm = create_surface_manager();
 	auto s = sm->create_surface(res, SurfaceStyleFrame, "UI Editor");
 
-	d = graphics::create_device(false);
+	d = graphics::create_device(true);
 
 	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->size);
 
@@ -131,7 +132,7 @@ int main(int argc, char **args)
 	graphics::Framebuffer *fbs_ui[2];
 	for (auto i = 0; i < 2; i++)
 	{
-		fbs_ui[i] = create_framebuffer(d, res.x, res.y, rp_ui);
+		fbs_ui[i] = create_framebuffer(d, res, rp_ui);
 		fbs_ui[i]->set_view_swapchain(0, sc, i);
 		fbs_ui[i]->build();
 	}
@@ -143,7 +144,7 @@ int main(int argc, char **args)
 	auto ui_finished = graphics::create_semaphore(d);
 
 	ui = UI::create_instance(d, rp_ui, s);
-	ui->add_font("icon_.ttf", 0xf001, 0xf003);
+	ui->add_font("icon_.ttf", 0xf001, 0xf004);
 	ui->build();
 
 	// add replace me texture to ui
@@ -163,11 +164,25 @@ int main(int argc, char **args)
 
 	enum WidgetType
 	{
-		WidgetTypeNull,
+		WidgetTypeNull = -1,
 		WidgetTypeText,
 		WidgetTypeButton,
 		WidgetTypeImage,
 		WidgetTypeParticleWorld
+	};
+
+	const char *widget_icons[] = {
+		ICON_TEXT,
+		ICON_BUTTON,
+		ICON_IMAGE,
+		ICON_PTCWRD
+	};
+
+	const char *widget_names[] = {
+		"Text",
+		"Button",
+		"Image",
+		"Particle World"
 	};
 
 	struct Widget
@@ -241,6 +256,8 @@ int main(int argc, char **args)
 		}
 		return false;
 	};
+
+	Rect wnd_rect;
 
 	sm->run([&](){
 		ui->begin(res.x, res.y, sm->elapsed_time);
@@ -354,7 +371,7 @@ int main(int argc, char **args)
 					w->type = WidgetTypeImage;
 					strcpy(w->name.data, input->data);
 					w->pos = Vec2(10.f, 30.f);
-					w->size = Vec2(rpm_tex->cx, rpm_tex->cy);
+					w->size = Vec2(rpm_tex->size);
 					w->filename.data[0] = 0;
 					w->img_idx = 1;
 					widgets.emplace_back(w);
@@ -373,30 +390,29 @@ int main(int argc, char **args)
 				struct AddParticleWorldDialog
 				{
 					ShortString ID;
-					int cx;
-					int cy;
+					Ivec2 size;
 				};
 
 				auto dialog_user_data = ui->add_dialog("Add Particle World", sizeof(AddParticleWorldDialog), [&](UI::Instance *ui, void *user_data, bool &open) {
 					auto dialog_data = (AddParticleWorldDialog*)user_data;
 					ui->inputtext("ID", dialog_data->ID.data,
 						sizeof(dialog_data->ID.data), true);
-					ui->dragint("cx", &dialog_data->cx, 1.f, 0, 10000);
-					ui->dragint("cy", &dialog_data->cy, 1.f, 0, 10000);
+					ui->dragint("cx", &dialog_data->size.x, 1.f, 0, 10000);
+					ui->dragint("cy", &dialog_data->size.y, 1.f, 0, 10000);
 					if (ui->button("OK"))
 					{
 						if (dialog_data->ID.data[0] != 0)
 						{
 							if (!find_widget(dialog_data->ID.data))
 							{
-								auto img_idx = add_ui_texture(dialog_data->cx, dialog_data->cy);
+								auto img_idx = add_ui_texture(dialog_data->size);
 								if (img_idx != -1)
 								{
 									auto w = new WidgetParticleWorld;
 									w->type = WidgetTypeParticleWorld;
 									strcpy(w->name.data, dialog_data->ID.data);
 									w->pos = Vec2(10.f, 30.f);
-									w->size = Vec2(dialog_data->cx, dialog_data->cy);
+									w->size = Vec2(dialog_data->size);
 									w->shader_filename.data[0] = 0;
 									w->blueprint_filename.data[0] = 0;
 									w->img_idx = img_idx;
@@ -419,8 +435,7 @@ int main(int argc, char **args)
 				});
 				auto dialog_data = (AddParticleWorldDialog*)dialog_user_data;
 				strcpy(dialog_data->ID.data, default_name.c_str());
-				dialog_data->cx = 200;
-				dialog_data->cy = 200;
+				dialog_data->size = Ivec2(200);
 			}
 			ui->end_menu();
 		}
@@ -495,17 +510,20 @@ int main(int argc, char **args)
 			break;
 		}
 
+		static auto dragging_widget = WidgetTypeNull;
+		auto drop_pos = s->mouse_pos - wnd_rect.min;
+
 		ui->begin_status_window();
 		if (mode_moving)
 			ui->text("Moving: (%d, %d) %d, %d", move_off.x, move_off.y, s->mouse_pos.x, s->mouse_pos.y);
 		else if (mode_sizing)
 			ui->text("Sizing: (%d, %d) %d, %d", size_off.x, size_off.y, s->mouse_pos.x, s->mouse_pos.y);
+		else if (dragging_widget != WidgetTypeNull)
+			ui->text("Add %s (%d, %d)", widget_names[dragging_widget], drop_pos.x, drop_pos.y);
 		else
 			ui->text_unformatted("Ready.");
 		auto status_rect = ui->get_curr_window_rect();
 		ui->end_window();
-
-		auto dragging_widget = WidgetTypeNull;
 
 		ui->begin_sidebarL_window(menu_rect.max.y);
 		ui->button(ICON_TEXT);
@@ -517,6 +535,9 @@ int main(int argc, char **args)
 		ui->button(ICON_IMAGE);
 		if (ui->is_last_item_active())
 			dragging_widget = WidgetTypeImage;
+		ui->button(ICON_PTCWRD);
+		if (ui->is_last_item_active())
+			dragging_widget = WidgetTypeParticleWorld;
 		auto sidebar_rect = ui->get_curr_window_rect();
 		ui->end_window();
 
@@ -558,7 +579,7 @@ int main(int argc, char **args)
 		ui->begin_window(wnd_name.data, wnd_pos + off + bg_pos, wnd_size,
 			UI::WindowNoResize);
 		auto wnd_inner_rect = ui->get_curr_window_inner_rect();
-		auto wnd_rect = ui->get_curr_window_rect();
+		wnd_rect = ui->get_curr_window_rect();
 
 		for (auto &w : widgets)
 		{
@@ -584,7 +605,14 @@ int main(int argc, char **args)
 
 		auto dl_wnd = ui->get_curr_window_drawlist();
 
-		if (dragging_widget == WidgetTypeNull && !mode_moving && !mode_sizing)
+		if (dragging_widget != WidgetTypeNull)
+		{
+			if (!s->pressing_M(0))
+			{
+				dragging_widget = WidgetTypeNull;
+			}
+		}
+		else if (!mode_moving && !mode_sizing)
 		{
 			auto just_clicked = s->just_down_M(0);
 			if (just_clicked)
@@ -691,8 +719,8 @@ int main(int argc, char **args)
 
 		if (dragging_widget != WidgetTypeNull)
 		{
-			dl_ol.add_text(Vec2(s->mouse_pos), Vec4(1.f, 1.f, 0.f, 1.f),
-				ICON_IMAGE);
+			ui->set_mousecursor(CursorNone);
+			dl_ol.add_text(Vec2(s->mouse_pos), Vec4(1.f, 1.f, 0.f, 1.f), widget_icons[dragging_widget]);
 		}
 		if (sel != (Widget*)0xFFFFFFFF)
 		{
@@ -821,7 +849,7 @@ int main(int argc, char **args)
 					{
 						auto tex = i->img_idx == 1 ? rpm_tex : 
 							ui_texture_trackers[i->img_idx - 2].tex;
-						i->size = Vec2(tex->cx, tex->cy);
+						i->size = Vec2(tex->size);
 					}
 					break;
 				}

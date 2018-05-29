@@ -1,5 +1,6 @@
 add_subdirectory(SLOC)
-add_subdirectory(spy)
-add_subdirectory(pin)
+add_subdirectory(auto_compiler)
 add_subdirectory(UI_editor)
 add_subdirectory(effect_editor)
+add_subdirectory(spy)
+add_subdirectory(pin)

@@ -1,0 +1,1 @@
+../../bin/auto_compiler windows/test.cpp -i ../../src -l ../../bin/flame_UI.lib -d windows/test.cpp -o dlls
