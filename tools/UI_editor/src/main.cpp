@@ -114,14 +114,14 @@ int add_ui_texture(int cx, int cy)
 
 int main(int argc, char **args)
 {
-	Vec2 res(1280, 720);
+	Ivec2 res(1280, 720);
 
 	auto sm = create_surface_manager();
 	auto s = sm->create_surface(res, SurfaceStyleFrame, "UI Editor");
 
 	d = graphics::create_device(false);
 
-	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->cx, s->cy);
+	auto sc = graphics::create_swapchain(d, s->get_win32_handle(), s->size);
 
 	auto rp_ui = graphics::create_renderpass(d);
 	rp_ui->add_attachment(sc->format, true);
@@ -457,8 +457,8 @@ int main(int argc, char **args)
 		static Ivec2 anchor;
 		static Rect::Side sizing_side;
 
-		auto move_off = Ivec2(s->mouse_x - anchor.x, s->mouse_y - anchor.y);
-		auto size_off = Ivec2(s->mouse_x - anchor.x, s->mouse_y - anchor.y);
+		auto move_off = s->mouse_pos - anchor;
+		auto size_off = move_off;
 		switch (sizing_side)
 		{
 		case Rect::SideN:
@@ -497,9 +497,9 @@ int main(int argc, char **args)
 
 		ui->begin_status_window();
 		if (mode_moving)
-			ui->text("Moving: (%d, %d) %d, %d", move_off.x, move_off.y, s->mouse_x, s->mouse_y);
+			ui->text("Moving: (%d, %d) %d, %d", move_off.x, move_off.y, s->mouse_pos.x, s->mouse_pos.y);
 		else if (mode_sizing)
-			ui->text("Sizing: (%d, %d) %d, %d", size_off.x, size_off.y, s->mouse_x, s->mouse_y);
+			ui->text("Sizing: (%d, %d) %d, %d", size_off.x, size_off.y, s->mouse_pos.x, s->mouse_pos.y);
 		else
 			ui->text_unformatted("Ready.");
 		auto status_rect = ui->get_curr_window_rect();
@@ -527,7 +527,7 @@ int main(int argc, char **args)
 		static bool graping_grid = false;
 		ui->begin_plain_window("background", bg_pos, bg_size);
 
-		ui->get_curr_window_drawlist().draw_grid(bg_pos, off, res);
+		ui->get_curr_window_drawlist().draw_grid(bg_pos, off, Vec2(res));
 
 		auto want_sel = true;
 
@@ -544,8 +544,8 @@ int main(int argc, char **args)
 
 		if (graping_grid)
 		{
-			off.x += s->mouse_disp_x;
-			off.y += s->mouse_disp_y;
+			off.x += s->mouse_disp.x;
+			off.y += s->mouse_disp.y;
 			if (!s->pressing_M(2))
 				graping_grid = false;
 		}
@@ -588,8 +588,8 @@ int main(int argc, char **args)
 		{
 			auto just_clicked = s->just_down_M(0);
 			if (just_clicked)
-				anchor = Ivec2(s->mouse_x, s->mouse_y);
-			auto side = sel_rect.calc_side(Vec2(s->mouse_x, s->mouse_y), 4.f);
+				anchor = s->mouse_pos;
+			auto side = sel_rect.calc_side(Vec2(s->mouse_pos), 4.f);
 			switch (side)
 			{
 			case Rect::SideN: case Rect::SideS:
@@ -691,7 +691,7 @@ int main(int argc, char **args)
 
 		if (dragging_widget != WidgetTypeNull)
 		{
-			dl_ol.add_text(Vec2(s->mouse_x, s->mouse_y), Vec4(1.f, 1.f, 0.f, 1.f),
+			dl_ol.add_text(Vec2(s->mouse_pos), Vec4(1.f, 1.f, 0.f, 1.f),
 				ICON_IMAGE);
 		}
 		if (sel != (Widget*)0xFFFFFFFF)
@@ -701,8 +701,7 @@ int main(int argc, char **args)
 			if (mode_moving)
 			{
 				dl_ol.add_rect(sel_rect + Vec2(move_off), Vec4(1.f));
-				dl_ol.add_line(Vec2(anchor), Vec2(s->mouse_x,
-					s->mouse_y), Vec4(1.f));
+				dl_ol.add_line(Vec2(anchor), Vec2(s->mouse_pos), Vec4(1.f));
 				//if (sel != nullptr)
 				//{
 				//	dl_ol.add_line(Vec2(wnd_inner_rect.min.x, wnd_inner_rect.min.y),

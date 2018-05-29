@@ -137,7 +137,7 @@ namespace flame
 				<std::initializer_list<VertexAttributeType>> &attributes);
 			FLAME_GRAPHICS_EXPORTS void set_primitive_topology(PrimitiveTopology v);
 			FLAME_GRAPHICS_EXPORTS void set_polygon_mode(PolygonMode v);
-			FLAME_GRAPHICS_EXPORTS void set_size(int cx, int cy);
+			FLAME_GRAPHICS_EXPORTS void set_size(const Ivec2 &size);
 			FLAME_GRAPHICS_EXPORTS void set_renderpass(Renderpass *r, int subpass_index);
 			FLAME_GRAPHICS_EXPORTS void set_patch_control_points(int v);
 			FLAME_GRAPHICS_EXPORTS void set_depth_test(bool v);

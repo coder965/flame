@@ -28,6 +28,8 @@
 #define FLAME_GRAPHICS_EXPORTS __declspec(dllimport)
 #endif
 
+#include <flame/math.h>
+
 #include <functional>
 
 namespace flame
