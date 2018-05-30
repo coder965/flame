@@ -108,6 +108,7 @@ namespace flame
 			DynamicStateStencilReference
 		};
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct PipelinelayoutPrivate;
 
 		struct Pipelinelayout
@@ -124,6 +125,7 @@ namespace flame
 
 		FLAME_GRAPHICS_EXPORTS Pipelinelayout *create_pipelinelayout(Device *d);
 		FLAME_GRAPHICS_EXPORTS void destroy_pipelinelayout(Device *d, Pipelinelayout *p);
+#endif
 
 		struct PipelinePrivate;
 

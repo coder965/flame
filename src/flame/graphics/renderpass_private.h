@@ -29,6 +29,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct RenderpassPrivate
 		{
 			Device *d;
@@ -38,5 +39,6 @@ namespace flame
 			std::vector<VkClearValue> clear_values;
 			VkRenderPass v;
 		};
+#endif
 	}
 }

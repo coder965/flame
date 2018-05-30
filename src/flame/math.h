@@ -27,6 +27,9 @@
 
 #include <math.h>
 
+#undef min
+#undef max
+
 namespace flame
 {
 	// == copy from math.h of C ==

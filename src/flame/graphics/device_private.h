@@ -31,6 +31,7 @@ namespace flame
 	{
 		struct DevicePrivate
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			VkInstance instance;
 			VkPhysicalDevice physical_device;
 			VkPhysicalDeviceProperties physical_device_properties;
@@ -47,6 +48,7 @@ namespace flame
 				}
 				return -1;
 			}
+#endif
 		};
 	}
 }

@@ -29,11 +29,19 @@ namespace flame
 	{
 		struct TexturePrivate
 		{
+			int usage;
+			int mem_prop;
+
 			Device *d;
+#if defined(FLAME_GRAPHICS_VULKAN)
 			VkImage v;
 			VkDeviceMemory m;
+#else
+			GLuint v;
+#endif
 		};
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct TextureviewPrivate
 		{
 			VkImageView v;
@@ -73,7 +81,36 @@ namespace flame
 				return (TextureAspect)a;
 			}
 		}
+#else
+		inline GLuint internal_format(Format fmt)
+		{
+			switch (fmt)
+			{
+			case Format_R8_UNORM:
+				return GL_R8;
+			case Format_R8G8B8A8_UNORM:
+				return GL_RGBA8;
+			default:
+				return 0;
+			}
+		}
 
+		inline GLuint external_format(Format fmt, GLuint &out_type)
+		{
+			switch (fmt)
+			{
+			case Format_R8_UNORM:
+				out_type = GL_UNSIGNED_BYTE;
+				return GL_RED;
+			case Format_R8G8B8A8_UNORM:
+				out_type = GL_UNSIGNED_BYTE;
+				return GL_RGBA;
+			default:
+				out_type = 0;
+				return 0;
+			}
+		}
+#endif
 	}
 }
 

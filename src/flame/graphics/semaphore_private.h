@@ -29,9 +29,11 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct SemaphorePrivate
 		{
 			VkSemaphore v;
 		};
+#endif
 	}
 }

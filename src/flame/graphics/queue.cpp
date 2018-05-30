@@ -30,6 +30,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		void Queue::wait_idle()
 		{
 			vk_chk_res(vkQueueWaitIdle(_priv->v));
@@ -93,5 +94,6 @@ namespace flame
 
 			queue_count++;;
 		}
+#endif
 	}
 }

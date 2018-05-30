@@ -27,6 +27,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		VkImageView create_imageview(Device *d, VkImage i, VkFormat format, VkImageAspectFlags aspect,
 			VkImageViewType view_type, int base_level, int level_count, int base_layer, int layer_count)
 		{
@@ -53,5 +54,6 @@ namespace flame
 		{
 			vkDestroyImageView(d->_priv->device, v, nullptr);
 		}
+#endif
 	}
 }

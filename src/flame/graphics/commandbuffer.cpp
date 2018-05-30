@@ -33,6 +33,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		void Commandbuffer::begin(bool once)
 		{
 			VkCommandBufferBeginInfo info;
@@ -303,5 +304,6 @@ namespace flame
 			delete p->_priv;
 			delete p;
 		}
+#endif
 	}
 }

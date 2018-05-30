@@ -22,10 +22,16 @@
 
 #pragma once
 
+#include "graphics.h"
+
+#if defined(FLAME_GRAPHICS_OPENGL_3_2)
+#include <GL/glew.h>
+#else
 #define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #undef INFINITE
+#endif
 
 #include <list>
 #include <assert.h>
@@ -36,6 +42,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct Device;
 
 		inline void vk_chk_res(VkResult res)
@@ -225,5 +232,19 @@ namespace flame
 					return VK_FILTER_LINEAR;
 			}
 		}
+#else
+		inline GLuint Z(ShaderType t)
+		{
+			switch (t)
+			{
+			case ShaderVert:
+				return GL_VERTEX_SHADER;
+			case ShaderFrag:
+				return GL_FRAGMENT_SHADER;
+			default:
+				return 0;
+			}
+		}
+#endif
 	}
 }

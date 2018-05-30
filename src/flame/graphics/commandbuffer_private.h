@@ -27,6 +27,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct CommandbufferPrivate
 		{
 			Pipeline *current_pipeline;
@@ -38,5 +39,6 @@ namespace flame
 			Device *d;
 			VkCommandPool v;
 		};
+#endif
 	}
 }

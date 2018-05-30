@@ -31,6 +31,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct Renderpass;
 
 		struct FramebufferPrivate
@@ -40,5 +41,6 @@ namespace flame
 			std::vector<VkImageView> views;
 			VkFramebuffer v;
 		};
+#endif
 	}
 }

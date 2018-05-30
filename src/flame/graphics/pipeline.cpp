@@ -30,6 +30,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		void Pipelinelayout::clear_descriptorsetlayouts()
 		{
 			_priv->descriptorsetlayouts.clear();;
@@ -169,6 +170,7 @@ namespace flame
 
 			return vk_stage_infos;
 		}
+#endif
 
 		void Pipeline::set_size(const Ivec2 &size)
 		{
@@ -266,6 +268,7 @@ namespace flame
 
 		void Pipeline::build_graphics()
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			std::vector<VkVertexInputBindingDescription> vk_vertex_input_state_bindings;
 			std::vector<VkVertexInputAttributeDescription> vk_vertex_input_state_attributes;
 			std::vector<VkPipelineColorBlendAttachmentState> vk_blend_attachment_states;
@@ -472,12 +475,33 @@ namespace flame
 			pipeline_info.pDynamicState = vk_dynamic_states.size() ? &dynamic_state : nullptr;
 
 			vk_chk_res(vkCreateGraphicsPipelines(_priv->d->_priv->device, 0, 1, &pipeline_info, nullptr, &_priv->v));
+#endif
+			release();
+
+			_priv->v = glCreateProgram();
+			for (auto s : _priv->shaders)
+				glAttachShader(_priv->v, s->_priv->v);
+			glLinkProgram(_priv->v);
+
+			int success;
+			glGetProgramiv(_priv->v, GL_LINK_STATUS, &success);
+			if (success == 0)
+			{
+				LongString output;
+				GLsizei len;
+				glGetProgramInfoLog(_priv->v, sizeof(output.data), &len, output.data);
+				release();
+
+				printf(output.data);
+				return;
+			}
 
 			type = PipelineGraphics;
 		}
 
 		void Pipeline::build_compute()
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			auto vk_stage_infos = _priv->get_stage_info_and_build_layout();
 			assert(vk_stage_infos.size() == 1);
 
@@ -493,10 +517,12 @@ namespace flame
 			vk_chk_res(vkCreateComputePipelines(_priv->d->_priv->device, 0, 1, &pipeline_info, nullptr, &_priv->v));
 
 			type = PipelineCompute;
+#endif
 		}
 
 		void Pipeline::release()
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			for (auto l : _priv->descriptorsetlayouts)
 			{
 				l->release();
@@ -509,6 +535,13 @@ namespace flame
 				vkDestroyPipeline(_priv->d->_priv->device, _priv->v, nullptr);
 				_priv->v = 0;
 			}
+#else
+			if (_priv->v)
+			{
+				glDeleteProgram(_priv->v);
+				_priv->v = 0;
+			}
+#endif
 			type = PipelineNone;
 		}
 
@@ -535,7 +568,9 @@ namespace flame
 			p->_priv->attachment_blend_states[0].src_alpha = BlendFactorOne;
 			p->_priv->attachment_blend_states[0].dst_alpha = BlendFactorZero;
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			p->_priv->pipelinelayout = create_pipelinelayout(d);
+#endif
 			p->_priv->v = 0;
 
 			return p;
@@ -547,7 +582,9 @@ namespace flame
 
 			p->release();
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			destroy_pipelinelayout(d, p->_priv->pipelinelayout);
+#endif
 
 			delete p->_priv;
 			delete p;

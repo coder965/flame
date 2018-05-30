@@ -31,6 +31,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct Shader;
 		struct Descriptorsetlayout;
 
@@ -175,6 +176,7 @@ namespace flame
 			std::vector<PushconstantDescription> pushconstants;
 			VkPipelineLayout v;
 		};
+#endif
 
 		struct AttachmentBlendState
 		{
@@ -204,11 +206,15 @@ namespace flame
 			std::vector<DynamicState> dynamic_states;
 			std::vector<Shader*> shaders;
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			std::vector<Descriptorsetlayout*> descriptorsetlayouts;
 			Pipelinelayout *pipelinelayout;
 			VkPipeline v;
 
 			std::vector<VkPipelineShaderStageCreateInfo> get_stage_info_and_build_layout();
+#else
+			GLuint v;
+#endif
 		};
 	}
 }

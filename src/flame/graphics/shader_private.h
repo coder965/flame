@@ -39,7 +39,11 @@ namespace flame
 			int push_constant_size;
 
 			Device *d;
+#if defined(FLAME_GRAPHICS_VULKAN)
 			VkShaderModule v;
+#else
+			GLuint v;
+#endif
 		};
 	}
 }

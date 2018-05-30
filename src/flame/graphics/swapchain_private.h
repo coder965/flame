@@ -29,6 +29,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct SwapchainPrivate
 		{
 			Device *d;
@@ -37,5 +38,6 @@ namespace flame
 			VkImage images[2];
 			VkImageView image_views[2];
 		};
+#endif
 	}
 }

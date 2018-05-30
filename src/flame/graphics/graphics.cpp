@@ -31,6 +31,7 @@
 
 namespace flame
 {
+#if defined(FLAME_GRAPHICS_VULKAN)
 	const char *vk_device_type_names[] = {
 		"other",
 		"integrated gpu",
@@ -38,9 +39,5 @@ namespace flame
 		"virtual gpu",
 		"cpu"
 	};
-}
-
-extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
-{
-	return TRUE;
+#endif
 }

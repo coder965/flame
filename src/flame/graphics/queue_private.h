@@ -29,10 +29,12 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct QueuePrivate
 		{
 			Device *d;
 			VkQueue v;
 		};
+#endif
 	}
 }

@@ -31,6 +31,7 @@ namespace flame
 {
 	namespace graphics
 	{
+#if defined(FLAME_GRAPHICS_VULKAN)
 		struct DescriptorsetlayoutBinding
 		{
 			ShaderResourceType type;
@@ -58,5 +59,6 @@ namespace flame
 			Device *d;
 			VkDescriptorPool v;
 		};
+#endif
 	}
 }

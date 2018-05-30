@@ -105,7 +105,7 @@ namespace flame
 		void Drawlist::add_circle_filled(const Vec2 &center, float radius, const Vec4 &col)
 		{
 			auto dl = (ImDrawList*)_priv;
-			dl->AddCircleFilled(ImVec2(center.x, center.y), radius, 
+			dl->AddCircleFilled(ImVec2(center.x, center.y), radius,
 				ImColor(col.x, col.y, col.z, col.w));
 		}
 
@@ -178,6 +178,7 @@ namespace flame
 				1, 1, graphics::Format_R8G8B8A8_UNORM, graphics::TextureUsageShaderSampled |
 				graphics::TextureUsageTransferDst, graphics::MemPropDevice);
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			auto font_stag = graphics::create_buffer(_priv->d, font_tex_width * font_tex_height * 4,
 				graphics::BufferUsageTransferSrc, graphics::MemPropHost | graphics::MemPropHostCoherent);
 			font_stag->map();
@@ -206,14 +207,21 @@ namespace flame
 			_priv->font_view = graphics::create_textureview(_priv->d, _priv->font_tex);
 
 			_priv->font_sam = graphics::create_sampler(_priv->d, graphics::FilterLinear, graphics::FilterLinear, false);
+#else
+			_priv->font_tex->set_data(font_pixels);
+#endif
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			for (auto j = 0; j < 128; j++)
 				_priv->ds->set_texture(0, j, _priv->font_view, _priv->font_sam);
+#endif
 		}
 
 		void Instance::set_texture(int index, graphics::Textureview *tv)
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			_priv->ds->set_texture(0, index, tv ? tv : _priv->font_view, _priv->font_sam);
+#endif
 		}
 
 		void Instance::begin(int cx, int cy, float _elapsed_time)
@@ -310,6 +318,7 @@ namespace flame
 
 			ImGui::Render();
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			ImGuiIO& im_io = ImGui::GetIO();
 			auto draw_data = ImGui::GetDrawData();
 
@@ -323,7 +332,7 @@ namespace flame
 					_priv->vtx_buffer->unmap();
 					graphics::destroy_buffer(_priv->d, _priv->vtx_buffer);
 				}
-				_priv->vtx_buffer =  graphics::create_buffer(_priv->d, vertex_size, 
+				_priv->vtx_buffer = graphics::create_buffer(_priv->d, vertex_size,
 					graphics::BufferUsageVertexBuffer, graphics::MemPropHost);
 				_priv->vtx_buffer->map();
 			}
@@ -354,8 +363,10 @@ namespace flame
 
 			_priv->vtx_buffer->flush();
 			_priv->idx_buffer->flush();
+#endif
 		}
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 		void Instance::record_commandbuffer(graphics::Commandbuffer *cb, graphics::Renderpass *rp, graphics::Framebuffer *fb)
 		{
 			ImGuiIO& im_io = ImGui::GetIO();
@@ -403,6 +414,12 @@ namespace flame
 
 			cb->end_renderpass();
 		}
+#else
+		void Instance::render()
+		{
+
+		}
+#endif
 
 		bool Instance::begin_window(const char *name, const Vec2 &pos, const Vec2 &size, int flags)
 		{
@@ -808,7 +825,7 @@ namespace flame
 			{
 			}
 
-			~MessageDialogData() 
+			~MessageDialogData()
 			{
 			}
 		};
@@ -841,7 +858,7 @@ namespace flame
 		{
 			auto user_data = add_dialog(title, sizeof(InputDialogData), [](Instance *ui, void *user_data, bool &open) {
 				auto dialog_data = (InputDialogData*)user_data;
-				ui->inputtext(dialog_data->label.data, dialog_data->input.data, 
+				ui->inputtext(dialog_data->label.data, dialog_data->input.data,
 					sizeof(dialog_data->input.data), true);
 				if (ui->button("OK"))
 				{
@@ -908,28 +925,30 @@ namespace flame
 			i->_priv = new InstancePrivate;
 			i->_priv->d = d;
 
-			i->_priv->vert = graphics::create_shader(d, "ui.vert");
+			i->_priv->vert = graphics::create_shader(d, "ui.glsl3.vert");
 			i->_priv->vert->build();
-			i->_priv->frag = graphics::create_shader(d, "ui.frag");
+			i->_priv->frag = graphics::create_shader(d, "ui.glsl3.frag");
 			i->_priv->frag->build();
 
 			i->_priv->pl = create_pipeline(d);
-			i->_priv->pl->set_vertex_attributes({{
+			i->_priv->pl->set_vertex_attributes({ {
 				graphics::VertexAttributeFloat2,
 				graphics::VertexAttributeFloat2,
 				graphics::VertexAttributeByte4
-			}});
+			} });
 			i->_priv->pl->set_size(Ivec2(0));
 			i->_priv->pl->set_cull_mode(graphics::CullModeNone);
 			i->_priv->pl->set_blend_state(0, true, graphics::BlendFactorSrcAlpha, graphics::BlendFactorOneMinusSrcAlpha,
 				graphics::BlendFactorZero, graphics::BlendFactorOneMinusSrcAlpha);
-			i->_priv->pl->set_dynamic_state({graphics::DynamicStateScissor});
+			i->_priv->pl->set_dynamic_state({ graphics::DynamicStateScissor });
 			i->_priv->pl->add_shader(i->_priv->vert);
 			i->_priv->pl->add_shader(i->_priv->frag);
 			i->_priv->pl->set_renderpass(rp, 0);
 			i->_priv->pl->build_graphics();
 
+#if defined(FLAME_GRAPHICS_VULKAN)
 			i->_priv->ds = d->dp->create_descriptorset(i->_priv->pl, 0);
+#endif
 
 			ImGui::CreateContext();
 			auto &im_io = ImGui::GetIO();
@@ -968,7 +987,7 @@ namespace flame
 				get_clipboard(&s);
 				return (const char*)s.data;
 			};
-			
+
 			im_io.ImeWindowHandle = s->get_win32_handle();
 
 			i->_priv->cursors[ImGuiMouseCursor_Arrow] = s->get_standard_cursor(CursorArrow);
@@ -1017,10 +1036,14 @@ namespace flame
 				graphics::destroy_buffer(d, i->_priv->vtx_buffer);
 			if (i->_priv->idx_buffer)
 				graphics::destroy_buffer(d, i->_priv->idx_buffer);
+#if defined(FLAME_GRAPHICS_VULKAN)
 			graphics::destroy_sampler(d, i->_priv->font_sam);
 			graphics::destroy_textureview(d, i->_priv->font_view);
+#endif
 			graphics::destroy_texture(d, i->_priv->font_tex);
+#if defined(FLAME_GRAPHICS_VULKAN)
 			d->dp->destroy_descriptorset(i->_priv->ds);
+#endif
 			graphics::destroy_shader(d, i->_priv->vert);
 			graphics::destroy_shader(d, i->_priv->frag);
 			graphics::destroy_pipeline(d, i->_priv->pl);

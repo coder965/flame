@@ -25,7 +25,9 @@
 
 #include <flame/filesystem.h>
 #include <flame/system.h>
+#if defined(FLAME_GRAPHICS_VULKAN)
 #include <flame/shader/shader.h>
+#endif
 
 namespace flame
 {
@@ -35,6 +37,7 @@ namespace flame
 
 		void Shader::build()
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			std::filesystem::remove("temp.spv"); // glslc cannot write to an existed file. well we did delete it when we finish compiling, but there can be one somehow
 
 			auto glsl_filename = shader_path + "src/" + filename.data;
@@ -110,13 +113,45 @@ namespace flame
 			_read_resource(ShaderResourceTexture);
 			_read_resource(ShaderResourceStorageTexture);
 			_priv->push_constant_size = read<int>(res_file);
+#else
+			release();
+
+			_priv->v = glCreateShader(Z(type));
+			if (_priv->v == 0)
+			{
+				auto error = glGetError();
+				assert(0);
+			}
+
+			auto shader_data = get_file_content(filename.data);
+			auto p_data = shader_data.first.get();
+			int len = shader_data.second;
+			glShaderSource(_priv->v, 1, &p_data, &len);
+			glCompileShader(_priv->v);
+
+			int success;
+			glGetShaderiv(_priv->v, GL_COMPILE_STATUS, &success);
+			if (success == 0)
+			{
+				LongString output;
+				GLsizei len;
+				glGetShaderInfoLog(_priv->v, sizeof(output.data), &len, output.data);
+				release();
+
+				printf(output.data);
+			}
+#endif
 		}
 
 		void Shader::release()
 		{
 			if (_priv->v)
 			{
+#if defined(FLAME_GRAPHICS_VULKAN)
 				vkDestroyShaderModule(_priv->d->_priv->device, _priv->v, nullptr);
+#else
+				glDeleteShader(_priv->v);
+#endif
 				_priv->v = 0;
 			}
 		}

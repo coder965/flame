@@ -82,7 +82,11 @@ namespace flame
 
 			FLAME_UI_EXPORTS void begin(int cx, int cy, float _elapsed_time);
 			FLAME_UI_EXPORTS void end();
+#if defined(FLAME_GRAPHICS_VULKAN)
 			FLAME_UI_EXPORTS void record_commandbuffer(graphics::Commandbuffer *cb, graphics::Renderpass *rp, graphics::Framebuffer *fb);
+#else
+			FLAME_UI_EXPORTS void render();
+#endif
 
 			// * use inf to disable setting pos or/and size
 			// flags - combination of WindowFlag
