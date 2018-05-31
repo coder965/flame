@@ -30,10 +30,9 @@ namespace flame
 		struct BufferPrivate
 		{
 			int usage;
-			int mem_prop;
-
-			Device *d;
 #if defined(FLAME_GRAPHICS_VULKAN)
+			int mem_prop;
+			Device *d;
 			VkBuffer v;
 			VkDeviceMemory m;
 #else
@@ -42,15 +41,19 @@ namespace flame
 		};
 
 #if !defined(FLAME_GRAPHICS_VULKAN)
-		GLuint inline buffer_target(int usage)
+		GLuint inline buffer_target(BufferUsage usage)
 		{
-			if (usage & BufferUsageUniformBuffer)
+			switch (usage)
+			{
+			case BufferUsageUniformBuffer:
 				return GL_UNIFORM_BUFFER;
-			else if (usage & BufferUsageVertexBuffer)
+			case BufferUsageVertexBuffer:
 				return GL_ARRAY_BUFFER;
-			else if (usage & BufferUsageIndexBuffer)
+			case BufferUsageIndexBuffer:
 				return GL_ELEMENT_ARRAY_BUFFER;
-			return 0;
+			default:
+				return 0;
+			}
 		}
 #endif
 	}

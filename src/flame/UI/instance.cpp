@@ -34,6 +34,10 @@
 #include <flame/graphics/buffer.h>
 #include <flame/graphics/texture.h>
 #include <flame/graphics/sampler.h>
+#if !defined(FLAME_GRAPHICS_VULKAN)
+#include <flame/graphics/ogl.h>
+#include <flame/graphics/vao.h>
+#endif
 
 #include <Windows.h>
 #include <stdarg.h>
@@ -174,11 +178,11 @@ namespace flame
 
 			unsigned char* font_pixels; int font_tex_width, font_tex_height;
 			im_io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_tex_width, &font_tex_height);
+
+#if defined(FLAME_GRAPHICS_VULKAN)
 			_priv->font_tex = graphics::create_texture(_priv->d, Ivec2(font_tex_width, font_tex_height),
 				1, 1, graphics::Format_R8G8B8A8_UNORM, graphics::TextureUsageShaderSampled |
 				graphics::TextureUsageTransferDst, graphics::MemPropDevice);
-
-#if defined(FLAME_GRAPHICS_VULKAN)
 			auto font_stag = graphics::create_buffer(_priv->d, font_tex_width * font_tex_height * 4,
 				graphics::BufferUsageTransferSrc, graphics::MemPropHost | graphics::MemPropHostCoherent);
 			font_stag->map();
@@ -208,7 +212,9 @@ namespace flame
 
 			_priv->font_sam = graphics::create_sampler(_priv->d, graphics::FilterLinear, graphics::FilterLinear, false);
 #else
-			_priv->font_tex->set_data(font_pixels);
+			_priv->font_tex = graphics::create_texture(_priv->d);
+			_priv->font_tex->image2D(graphics::Format_R8G8B8A8_UNORM, Ivec2(font_tex_width, font_tex_height), font_pixels);
+			im_io.Fonts->TexID = _priv->font_tex;
 #endif
 
 #if defined(FLAME_GRAPHICS_VULKAN)
@@ -237,6 +243,8 @@ namespace flame
 			elapsed_time = _elapsed_time;
 			im_io.DeltaTime = elapsed_time;
 
+			// FIX-ME: Currently we disable io while testing ogl binding
+#if defined(FLAME_GRAPHICS_VULKAN)
 			im_io.MousePos = ImVec2(_priv->s->mouse_pos.x, _priv->s->mouse_pos.y);
 
 			im_io.MouseDown[0] = (_priv->s->mouse_buttons[0] & KeyStateDown) != 0;
@@ -261,6 +269,15 @@ namespace flame
 					last_cursor = cursor;
 				}
 			}
+#else
+			im_io.MousePos = ImVec2(-1, -1);
+
+			im_io.MouseDown[0] = false;
+			im_io.MouseDown[1] = false;
+			im_io.MouseDown[2] = false;
+
+			im_io.MouseWheel = 0;
+#endif
 
 			ImGui::NewFrame();
 		}
@@ -417,7 +434,49 @@ namespace flame
 #else
 		void Instance::render()
 		{
+			ImGuiIO& im_io = ImGui::GetIO();
+			auto draw_data = ImGui::GetDrawData();
 
+			graphics::ogl_fast_set(_priv->pl);
+			graphics::ogl_viewport(im_io.DisplaySize.x, im_io.DisplaySize.y);
+			graphics::ogl_uniform_int(_priv->uniform_loc_tex, 0);
+			graphics::ogl_uniform_mat4(_priv->uniform_loc_projmtx, Mat4(
+				2.0f / im_io.DisplaySize.x, 0.0f, 0.0f, 0.0f,
+				0.0f, 2.0f / -im_io.DisplaySize.y, 0.0f, 0.0f,
+				0.0f, 0.0f, -1.0f, 0.0f,
+				-1.0f, 1.0f, 0.0f, 1.0f
+			));
+			graphics::ogl_bind_vao(_priv->vao);
+			_priv->vao->bind_buffer(_priv->vtx_buffer);
+			_priv->vao->vertex_attribute_pointer(_priv->vtx_attrib_loc_position,
+				graphics::VertexAttributeFloat2, false, sizeof(ImDrawVert), offsetof(ImDrawVert, pos));
+			_priv->vao->vertex_attribute_pointer(_priv->vtx_attrib_loc_UV,
+				graphics::VertexAttributeFloat2, false, sizeof(ImDrawVert), offsetof(ImDrawVert, uv));
+			_priv->vao->vertex_attribute_pointer(_priv->vtx_attrib_loc_color,
+				graphics::VertexAttributeByte4, true, sizeof(ImDrawVert), offsetof(ImDrawVert, col));
+
+			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			{
+				const ImDrawList* cmd_list = draw_data->CmdLists[n];
+				const ImDrawIdx* idx_buffer_offset = 0;
+
+				_priv->vtx_buffer->data(graphics::BufferUsageVertexBuffer, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), cmd_list->VtxBuffer.Data);
+				_priv->idx_buffer->data(graphics::BufferUsageIndexBuffer, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), cmd_list->IdxBuffer.Data);
+
+				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+				{
+					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+					graphics::ogl_bind_texture((graphics::Texture*)pcmd->TextureId);
+					graphics::ogl_scissor((int)pcmd->ClipRect.x, (int)im_io.DisplaySize.y - pcmd->ClipRect.w,
+						(int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+					graphics::ogl_draw_elements(pcmd->ElemCount,
+						sizeof(ImDrawIdx) == 2 ? graphics::IndiceTypeUshort : graphics::IndiceTypeUint,
+						(void*)idx_buffer_offset);
+					idx_buffer_offset += pcmd->ElemCount;
+				}
+			}
+
+			graphics::ogl_fast_reset();
 		}
 #endif
 
@@ -925,40 +984,56 @@ namespace flame
 			i->_priv = new InstancePrivate;
 			i->_priv->d = d;
 
-			i->_priv->vert = graphics::create_shader(d, "ui.glsl3.vert");
+			i->_priv->vert = graphics::create_shader(d, "ui.vert");
 			i->_priv->vert->build();
-			i->_priv->frag = graphics::create_shader(d, "ui.glsl3.frag");
+			i->_priv->frag = graphics::create_shader(d, "ui.frag");
 			i->_priv->frag->build();
 
 			i->_priv->pl = create_pipeline(d);
-			i->_priv->pl->set_vertex_attributes({ {
-				graphics::VertexAttributeFloat2,
-				graphics::VertexAttributeFloat2,
-				graphics::VertexAttributeByte4
-			} });
-			i->_priv->pl->set_size(Ivec2(0));
 			i->_priv->pl->set_cull_mode(graphics::CullModeNone);
 			i->_priv->pl->set_blend_state(0, true, graphics::BlendFactorSrcAlpha, graphics::BlendFactorOneMinusSrcAlpha,
 				graphics::BlendFactorZero, graphics::BlendFactorOneMinusSrcAlpha);
-			i->_priv->pl->set_dynamic_state({ graphics::DynamicStateScissor });
 			i->_priv->pl->add_shader(i->_priv->vert);
 			i->_priv->pl->add_shader(i->_priv->frag);
+#if defined(FLAME_GRAPHICS_VULKAN)
+			i->_priv->pl->set_vertex_attributes({ {
+					graphics::VertexAttributeFloat2,
+					graphics::VertexAttributeFloat2,
+					graphics::VertexAttributeByte4
+				} });
+			i->_priv->pl->set_size(Ivec2(0));
+			i->_priv->pl->set_dynamic_state({ graphics::DynamicStateScissor });
 			i->_priv->pl->set_renderpass(rp, 0);
 			i->_priv->pl->build_graphics();
+#else
+			i->_priv->pl->build_graphics();
+			i->_priv->uniform_loc_tex = i->_priv->pl->get_uniform_location("Texture");
+			i->_priv->uniform_loc_projmtx = i->_priv->pl->get_uniform_location("ProjMtx");
+			i->_priv->vtx_attrib_loc_position = i->_priv->pl->get_vertex_attribute_location("Position");
+			i->_priv->vtx_attrib_loc_UV = i->_priv->pl->get_vertex_attribute_location("UV");
+			i->_priv->vtx_attrib_loc_color = i->_priv->pl->get_vertex_attribute_location("Color");
+#endif
 
 #if defined(FLAME_GRAPHICS_VULKAN)
 			i->_priv->ds = d->dp->create_descriptorset(i->_priv->pl, 0);
+
+			i->_priv->vtx_buffer = nullptr;
+			i->_priv->idx_buffer = nullptr;
+#else
+			i->_priv->vtx_buffer = graphics::create_buffer(d);
+			i->_priv->idx_buffer = graphics::create_buffer(d);
+
+			i->_priv->vao = graphics::create_vao();
 #endif
 
 			ImGui::CreateContext();
 			auto &im_io = ImGui::GetIO();
 			im_io.Fonts->AddFontDefault();
 
-			i->_priv->vtx_buffer = nullptr;
-			i->_priv->idx_buffer = nullptr;
-
 			i->_priv->s = s;
 
+			// FIX-ME: Currently we disable io while testing ogl binding
+#if defined(FLAME_GRAPHICS_VULKAN)
 			im_io.KeyMap[ImGuiKey_Tab] = VK_TAB;
 			im_io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
 			im_io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
@@ -1026,6 +1101,7 @@ namespace flame
 				if (c > 0 && c < 0x10000)
 					io.AddInputCharacter((unsigned short)c);
 			});
+#endif
 
 			return i;
 		}

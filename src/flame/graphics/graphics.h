@@ -42,6 +42,8 @@ namespace flame
 	{
 		enum Format
 		{
+			Format_Undefined = -1,
+
 			Format_R8_UNORM,
 			Format_R16_UNORM,
 			Format_R8G8B8A8_UNORM,
@@ -73,6 +75,15 @@ namespace flame
 			MemPropDevice = 1 << 0,
 			MemPropHost = 1 << 1,
 			MemPropHostCoherent = 1 << 2
+		};
+
+		enum VertexAttributeType
+		{
+			VertexAttributeFloat,
+			VertexAttributeFloat2,
+			VertexAttributeFloat3,
+			VertexAttributeFloat4,
+			VertexAttributeByte4
 		};
 
 		enum DescriptorSetBindings

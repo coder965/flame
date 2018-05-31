@@ -171,41 +171,14 @@ namespace flame
 			return vk_stage_infos;
 		}
 #endif
-
-		void Pipeline::set_size(const Ivec2 &size)
+		void Pipeline::set_primitive_topology(PrimitiveTopology v)
 		{
-			_priv->cx = size.x;
-			_priv->cy = size.y;
+			_priv->primitive_topology = v;
 		}
 
-		void Pipeline::set_renderpass(Renderpass *r, int subpass_index)
+		void Pipeline::set_polygon_mode(PolygonMode v)
 		{
-			_priv->renderpass = r;
-			_priv->subpass_index = subpass_index;
-		}
-
-		void Pipeline::set_vertex_attributes(const std::initializer_list<
-			std::initializer_list<VertexAttributeType>> &attributes)
-		{
-			if (attributes.size() == 1 &&
-				attributes.begin()[0].size() == 0)
-			{
-				_priv->vertex_attributes.resize(0);
-				return;
-			}
-
-			_priv->vertex_attributes.resize(attributes.size());
-			auto index = 0;
-			for (auto &v : attributes)
-			{
-				_priv->vertex_attributes[index] = v;
-				index++;
-			}
-		}
-
-		void Pipeline::set_patch_control_points(int v)
-		{
-			_priv->patch_control_points = v;
+			_priv->polygon_mode = v;
 		}
 
 		void Pipeline::set_depth_test(bool v)
@@ -223,24 +196,9 @@ namespace flame
 			_priv->depth_clamp = v;
 		}
 
-		void Pipeline::set_primitive_topology(PrimitiveTopology v)
-		{
-			_priv->primitive_topology = v;
-		}
-
-		void Pipeline::set_polygon_mode(PolygonMode v)
-		{
-			_priv->polygon_mode = v;
-		}
-
 		void Pipeline::set_cull_mode(CullMode v)
 		{
 			_priv->cull_mode = v;
-		}
-
-		void Pipeline::set_output_attachment_count(int count)
-		{
-			_priv->attachment_blend_states.resize(count);
 		}
 
 		void Pipeline::set_blend_state(int index, bool enable,
@@ -248,17 +206,15 @@ namespace flame
 			BlendFactor src_alpha, BlendFactor dst_alpha)
 		{
 			assert(index < _priv->attachment_blend_states.size());
+#if !defined(FLAME_GRAPHICS_VULKAN)
+			assert(index == 0);
+#endif
 
 			_priv->attachment_blend_states[index].enable = enable;
 			_priv->attachment_blend_states[index].src_color = src_color;
 			_priv->attachment_blend_states[index].dst_color = dst_color;
 			_priv->attachment_blend_states[index].src_alpha = src_alpha;
 			_priv->attachment_blend_states[index].dst_alpha = dst_alpha;
-		}
-
-		void Pipeline::set_dynamic_state(const  std::initializer_list<DynamicState> &states)
-		{
-			_priv->dynamic_states = states;
 		}
 
 		void Pipeline::add_shader(Shader *s)
@@ -353,10 +309,10 @@ namespace flame
 
 			for (auto &b : _priv->attachment_blend_states)
 			{
-				vk_blend_attachment_states.push_back({b.enable,
+				vk_blend_attachment_states.push_back({ b.enable,
 					Z(b.src_color), Z(b.dst_color), VK_BLEND_OP_ADD,
 					Z(b.src_alpha), Z(b.dst_alpha), VK_BLEND_OP_ADD,
-					VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT});
+					VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT });
 			}
 
 			VkPipelineColorBlendStateCreateInfo blend_state;
@@ -407,26 +363,26 @@ namespace flame
 						d.offset = size;
 						switch (a)
 						{
-							case VertexAttributeFloat:
-								d.format = VK_FORMAT_R32_SFLOAT;
-								size += 4;
-								break;
-							case VertexAttributeFloat2:
-								d.format = VK_FORMAT_R32G32_SFLOAT;
-								size += 8;
-								break;
-							case VertexAttributeFloat3:
-								d.format = VK_FORMAT_R32G32B32_SFLOAT;
-								size += 12;
-								break;
-							case VertexAttributeFloat4:
-								d.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-								size += 16;
-								break;
-							case VertexAttributeByte4:
-								d.format = VK_FORMAT_R8G8B8A8_UNORM;
-								size += 4;
-								break;
+						case VertexAttributeFloat:
+							d.format = VK_FORMAT_R32_SFLOAT;
+							size += 4;
+							break;
+						case VertexAttributeFloat2:
+							d.format = VK_FORMAT_R32G32_SFLOAT;
+							size += 8;
+							break;
+						case VertexAttributeFloat3:
+							d.format = VK_FORMAT_R32G32B32_SFLOAT;
+							size += 12;
+							break;
+						case VertexAttributeFloat4:
+							d.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+							size += 16;
+							break;
+						case VertexAttributeByte4:
+							d.format = VK_FORMAT_R8G8B8A8_UNORM;
+							size += 4;
+							break;
 						}
 						vk_vertex_input_state_attributes.push_back(d);
 						location++;
@@ -499,9 +455,55 @@ namespace flame
 			type = PipelineGraphics;
 		}
 
+#if defined(FLAME_GRAPHICS_VULKAN)
+		void Pipeline::set_vertex_attributes(const std::initializer_list<
+			std::initializer_list<VertexAttributeType>> &attributes)
+		{
+			if (attributes.size() == 1 &&
+				attributes.begin()[0].size() == 0)
+			{
+				_priv->vertex_attributes.resize(0);
+				return;
+			}
+
+			_priv->vertex_attributes.resize(attributes.size());
+			auto index = 0;
+			for (auto &v : attributes)
+			{
+				_priv->vertex_attributes[index] = v;
+				index++;
+			}
+		}
+
+		void Pipeline::set_size(const Ivec2 &size)
+		{
+			_priv->cx = size.x;
+			_priv->cy = size.y;
+		}
+
+		void Pipeline::set_renderpass(Renderpass *r, int subpass_index)
+		{
+			_priv->renderpass = r;
+			_priv->subpass_index = subpass_index;
+		}
+
+		void Pipeline::set_patch_control_points(int v)
+		{
+			_priv->patch_control_points = v;
+		}
+
+		void Pipeline::set_output_attachment_count(int count)
+		{
+			_priv->attachment_blend_states.resize(count);
+		}
+
+		void Pipeline::set_dynamic_state(const  std::initializer_list<DynamicState> &states)
+		{
+			_priv->dynamic_states = states;
+		}
+
 		void Pipeline::build_compute()
 		{
-#if defined(FLAME_GRAPHICS_VULKAN)
 			auto vk_stage_infos = _priv->get_stage_info_and_build_layout();
 			assert(vk_stage_infos.size() == 1);
 
@@ -517,8 +519,18 @@ namespace flame
 			vk_chk_res(vkCreateComputePipelines(_priv->d->_priv->device, 0, 1, &pipeline_info, nullptr, &_priv->v));
 
 			type = PipelineCompute;
-#endif
 		}
+#else
+		int Pipeline::get_uniform_location(const char *name)
+		{
+			return glGetUniformLocation(_priv->v, name);
+		}
+
+		int Pipeline::get_vertex_attribute_location(const char *name)
+		{
+			return glGetAttribLocation(_priv->v, name);
+		}
+#endif
 
 		void Pipeline::release()
 		{

@@ -3526,12 +3526,12 @@ namespace flame
 
 	inline Vec4 &Mat4::operator[](int i)
 	{
-		return (*this)[i];
+		return cols[i];
 	}
 
 	inline Vec4 const&Mat4::operator[](int i) const
 	{
-		return (*this)[i];
+		return cols[i];
 	}
 
 	inline Mat4 &Mat4::operator=(const Mat4 &v)

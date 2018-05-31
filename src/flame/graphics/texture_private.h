@@ -29,11 +29,10 @@ namespace flame
 	{
 		struct TexturePrivate
 		{
+#if defined(FLAME_GRAPHICS_VULKAN)
 			int usage;
 			int mem_prop;
-
 			Device *d;
-#if defined(FLAME_GRAPHICS_VULKAN)
 			VkImage v;
 			VkDeviceMemory m;
 #else
@@ -87,27 +86,29 @@ namespace flame
 			switch (fmt)
 			{
 			case Format_R8_UNORM:
-				return GL_R8;
+				return GL_R;
 			case Format_R8G8B8A8_UNORM:
-				return GL_RGBA8;
+				return GL_RGBA;
 			default:
 				return 0;
 			}
 		}
 
-		inline GLuint external_format(Format fmt, GLuint &out_type)
+		inline void external_format(Format fmt, GLuint &out_fmt, GLuint &out_type)
 		{
 			switch (fmt)
 			{
 			case Format_R8_UNORM:
+				out_fmt = GL_RED;
 				out_type = GL_UNSIGNED_BYTE;
-				return GL_RED;
+				break;
 			case Format_R8G8B8A8_UNORM:
+				out_fmt = GL_RGBA;
 				out_type = GL_UNSIGNED_BYTE;
-				return GL_RGBA;
+				break;
 			default:
+				out_fmt = 0;
 				out_type = 0;
-				return 0;
 			}
 		}
 #endif

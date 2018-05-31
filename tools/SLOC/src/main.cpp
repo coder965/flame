@@ -21,15 +21,12 @@
 //SOFTWARE.
 
 #include <vector>
-#include <filesystem>
-#include <fstream>
 #include <iterator>
 
-#include <flame/common/filesystem.h>
+#include <flame/filesystem.h>
 
-namespace fs = std::experimental::filesystem;
-
-static std::vector<std::string> excludes;
+static std::vector<std::string> accepted_exts;
+static std::vector<std::string> ignores;
 
 static long long total_lines = 0;
 static long long SLOC = 0;
@@ -83,6 +80,35 @@ void calc(const fs::path &path)
 
 int main(int argc, char **args)
 {
+	std::ifstream policy_file("SLOC_Policy.txt");
+	if (policy_file.good())
+	{
+		enum State
+		{
+			StateNone,
+			StateIgnore,
+			StateAccept
+		}state = StateNone;
+
+		while (!policy_file.eof())
+		{
+			std::string line;
+			std::getline(policy_file, line);
+			if (line == "ignore:")
+				state = StateIgnore;
+			else if (line == "accept:")
+				state = StateAccept;
+			else
+			{
+				switch (state)
+				{
+
+				}
+			}
+		}
+		policy_file.close();
+	}
+
 	if (argc < 2)
 		return 0;
 
